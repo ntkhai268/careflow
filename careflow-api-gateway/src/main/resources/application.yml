@@ -1,0 +1,66 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+      routes:
+        - id: identity-service
+          uri: lb://identity-service
+          predicates:
+            - Path=/api/auth/**, /api/users/**
+        - id: patient-service
+          uri: lb://patient-service
+          predicates:
+            - Path=/api/patients/**
+        - id: appointment-service
+          uri: lb://appointment-service
+          predicates:
+            - Path=/api/appointments/**
+        - id: queue-service
+          uri: lb://queue-service
+          predicates:
+            - Path=/api/queues/**
+        - id: notification-service
+          uri: lb://notification-service
+          predicates:
+            - Path=/api/notifications/**, /ws/**
+        - id: consultation-service
+          uri: lb://consultation-service
+          predicates:
+            - Path=/api/consultations/**
+        - id: prescription-service
+          uri: lb://prescription-service
+          predicates:
+            - Path=/api/prescriptions/**
+        - id: emr-service
+          uri: lb://emr-service
+          predicates:
+            - Path=/api/emr/**
+        - id: lab-service
+          uri: lb://lab-service
+          predicates:
+            - Path=/api/labs/**
+        - id: ai-service
+          uri: lb://ai-service
+          predicates:
+            - Path=/api/ai/**
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway
