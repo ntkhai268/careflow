@@ -1,0 +1,40 @@
+# IDE
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Java / Spring Boot
+target/
+*.class
+*.jar
+*.war
+*.log
+application-local.yml
+application-local.properties
+
+# Node / React
+node_modules/
+dist/
+build/
+.env
+.env.local
+
+# Flutter / Dart
+.dart_tool/
+.packages
+.flutter-plugins
+.flutter-plugins-dependencies
+*.g.dart
+
+# Docker
+docker-compose.override.yml
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Word docs (báo cáo gốc)
+*.docx
