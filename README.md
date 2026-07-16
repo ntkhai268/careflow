@@ -88,8 +88,18 @@ medici/ (careflow/)
 
 ---
 
-## 👥 Thành viên nhóm & Phân công
-- 👤 **Người A (dangkhoii - Leader)**: Thiết kế & phát triển Phân hệ Hệ thống + DevOps.
-- 👤 **Người B**: Phát triển Phân hệ Bệnh nhân (Patient Service, Appointment Service, Mobile App).
-- 👤 **Người C**: Phát triển Phân hệ Bác sỹ (Consultation Service, Prescription Service, Web App).
+## 🗄️ Thiết kế Cơ sở dữ liệu (Database Schema)
 
+Phân hệ Hệ thống sử dụng 2 Database độc lập trên PostgreSQL (tuân thủ nguyên tắc *Database-per-Service*):
+
+### 1. Database: `careflow_identity` (Identity Service)
+Quản lý tài khoản, thông tin đăng nhập và phân quyền.
+- **`identity.users`**: Lưu trữ thông tin tài khoản, email, mật khẩu đã hash, vai trò (`PATIENT`, `DOCTOR`, `ADMIN`), trạng thái tài khoản và thông tin phục vụ cơ chế khóa tài khoản khi đăng nhập sai.
+
+### 2. Database: `careflow_queue` (Queue Service)
+Quản lý hàng đợi, số thứ tự khám và đảm bảo truyền nhận message tin cậy.
+- **`queue.queue_configs`**: Lưu cấu hình hàng đợi của từng chuyên khoa (chỉ số N:M, thời gian khám trung bình, phòng khám, chính sách lỡ lượt) và trạng thái bộ lập lịch tại thời điểm chạy.
+- **`queue.queue_number_sequences`**: Sinh số thứ tự tự động tăng dần theo ngày nghiệp vụ của từng khoa.
+- **`queue.queue_entries`**: Lưu trạng thái chi tiết của từng lượt khám bệnh (ngày, số thứ tự, mức độ ưu tiên, trạng thái khám, các mốc thời gian check-in, gọi khám, hoàn thành, hủy).
+- **`queue.outbox_events`**: Lưu trữ các sự kiện nghiệp vụ phục vụ mô hình *Transactional Outbox* để gửi tin nhắn tin cậy sang RabbitMQ.
+- **`queue.processed_events`**: Lưu lịch sử các sự kiện đã xử lý từ các service khác nhằm đảm bảo tính *Idempotency* (tránh xử lý trùng lặp).
