@@ -7,7 +7,7 @@ Phân hệ Hệ thống đóng vai trò xương sống của dự án CareFlow, 
 
 Các thành phần chính do **dangkhoii** thiết kế & triển khai:
 - **API Gateway**: Điểm vào duy nhất của hệ thống, xử lý định tuyến và xác thực JWT.
-- **Identity & Auth Service**: Đăng ký/đăng nhập, quản lý tài khoản và phân quyền người dùng (PATIENT, DOCTOR, ADMIN).
+- **Identity & eKYC Service**: Đăng ký/đăng nhập, quản lý tài khoản, phân quyền người dùng (PATIENT, DOCTOR, ADMIN) và xác thực eKYC.
 - **Queue Management Service (Trọng tâm)**: Quản lý số thứ tự, check-in QR, và thuật toán gọi khám xen kẽ N:M động.
 - **Notification Service**: Đẩy thông báo real-time đến bệnh nhân và bác sỹ qua WebSocket.
 - **Hạ tầng chung**: Service Discovery (Eureka Server), Message Broker (RabbitMQ), Docker Compose.
@@ -73,7 +73,7 @@ medici/ (careflow/)
 ├── services/
 │   ├── eureka-server/          # Service Discovery (Eureka Server)
 │   ├── api-gateway/            # API Gateway (Spring Cloud Gateway)
-│   ├── identity-service/       # Xác thực & Quản lý tài khoản (Port: 8081)
+│   ├── identity-service/       # Xác thực, Quản lý tài khoản & eKYC (Port: 8081)
 │   ├── queue-service/          # Quản lý hàng đợi & Số thứ tự (Port: 8084) ⭐
 │   └── notification-service/   # Đẩy thông báo real-time qua WebSocket (Port: 8085)
 ```
@@ -196,8 +196,8 @@ erDiagram
     queue_configs ||--o{ queue_number_sequences : "owns"
 ```
 
-### 1. Database: `careflow_identity` (Identity Service)
-Quản lý tài khoản, thông tin đăng nhập và phân quyền.
+### 1. Database: `careflow_identity` (Identity & eKYC Service)
+Quản lý tài khoản, thông tin đăng nhập, phân quyền và dữ liệu eKYC.
 - **`identity.users`**: Lưu trữ thông tin tài khoản, email, mật khẩu đã hash, vai trò (`PATIENT`, `DOCTOR`, `ADMIN`), trạng thái tài khoản và thông tin phục vụ cơ chế khóa tài khoản khi đăng nhập sai.
 
 ### 2. Database: `careflow_queue` (Queue Service)
