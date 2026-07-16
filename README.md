@@ -97,13 +97,37 @@ erDiagram
     users {
         uuid id PK
         varchar username
+        varchar email
+        varchar password_hash
         varchar role
+        varchar status
+        int failed_login_attempts
+        timestamptz locked_until
+        timestamptz last_login_at
+        bigint version
+        timestamptz created_at
+        timestamptz updated_at
     }
 
     queue_configs {
         uuid id PK
         uuid department_id UK
+        varchar department_name_snapshot
         varchar queue_prefix
+        varchar room_code
+        smallint priority_ratio_n
+        smallint normal_ratio_m
+        smallint avg_consultation_minutes
+        smallint near_turn_threshold
+        varchar missed_policy
+        date scheduler_date
+        varchar cycle_phase
+        smallint served_in_phase
+        varchar normal_cursor
+        boolean is_active
+        bigint version
+        timestamptz created_at
+        timestamptz updated_at
     }
 
     queue_number_sequences {
@@ -111,32 +135,65 @@ erDiagram
         uuid queue_config_id FK
         date queue_date
         int last_number
+        bigint version
+        timestamptz updated_at
     }
 
     queue_entries {
         uuid id PK
         uuid queue_config_id FK
+        uuid department_id
+        uuid appointment_id
+        uuid patient_id
         uuid user_id FK
+        date queue_date
+        int sequence_number
         varchar queue_number
         varchar priority_level
         varchar status
+        timestamptz checked_in_at
+        timestamptz eligible_since_at
+        timestamptz called_at
+        timestamptz started_at
+        timestamptz completed_at
+        timestamptz missed_at
+        timestamptz cancelled_at
+        smallint missed_count
+        int estimated_wait_minutes
+        bigint version
+        timestamptz created_at
+        timestamptz updated_at
     }
 
     outbox_events {
         uuid event_id PK
+        varchar aggregate_type
+        uuid aggregate_id
         varchar event_type
+        int event_version
+        bigint aggregate_version
+        varchar exchange_name
+        varchar routing_key
+        jsonb payload
         varchar status
+        int attempts
+        timestamptz occurred_at
+        timestamptz next_attempt_at
+        timestamptz published_at
+        text last_error
+        timestamptz created_at
     }
 
     processed_events {
         uuid event_id PK
         varchar consumer_name PK
         varchar event_type
+        timestamptz processed_at
     }
 
-    queue_configs ||--o{ queue_number_sequences : "owns"
-    queue_configs ||--o{ queue_entries : "owns"
     users ||..o{ queue_entries : "logical_reference"
+    queue_configs ||--o{ queue_entries : "owns"
+    queue_configs ||--o{ queue_number_sequences : "owns"
 ```
 
 ### 1. Database: `careflow_identity` (Identity Service)
