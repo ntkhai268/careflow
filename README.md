@@ -14,6 +14,38 @@ Các thành phần chính do **dangkhoii** thiết kế & triển khai:
 
 ---
 
+## 📋 Tính năng Nghiệp vụ Chi tiết (Business Features)
+
+Dưới đây là các tính năng nghiệp vụ cụ thể của từng dịch vụ thuộc phân hệ do **dangkhoii** phụ trách:
+
+### 1. API Gateway Service (Cổng kết nối)
+- **Định tuyến (Routing)**: Chuyển tiếp các request từ client đến các backend microservice tương ứng thông qua Service Discovery (Eureka).
+- **Xác thực tập trung (Authentication Filter)**: Kiểm tra chữ ký và tính hợp lệ của JWT token ở mọi protected request, tự động bóc tách và chuyển đổi thông tin định danh vào request headers (`X-User-Id`, `X-User-Role`).
+- **Gắn vết Trace ID**: Tự động đính kèm `X-Correlation-Id` vào mọi request đầu vào để phục vụ ghi log tập trung xuyên suốt các service.
+
+### 2. Identity & eKYC Service (Tài khoản & Định danh)
+- **Đăng ký tài khoản (Register)**: Cho phép bệnh nhân đăng ký tài khoản mới tự động với vai trò `PATIENT`.
+- **Đăng nhập (Login)**: Xác thực mật khẩu đã mã hóa (BCrypt/Argon2) và cấp mã thông báo JWT.
+- **Phân quyền (RBAC)**: Định cấu hình và phân quyền chặt chẽ theo vai trò: `PATIENT` (Bệnh nhân), `DOCTOR` (Bác sỹ), `ADMIN` (Quản trị viên).
+- **Định danh điện tử (Mock eKYC)**: Cung cấp API tải lên ảnh CMND/CCCD và trả về thông tin giả lập đã trích xuất tự động để định danh nhanh tài khoản.
+- **Bảo mật tài khoản**: Theo dõi số lần đăng nhập sai liên tiếp và tự động khóa tài khoản tạm thời khi vượt ngưỡng.
+
+### 3. Queue Management Service (Điều phối hàng đợi khám)
+- **Cấp số thứ tự tự động**: Lắng nghe sự kiện tạo lịch hẹn từ RabbitMQ (`AppointmentCreated`) để tự động sinh số thứ tự (mỗi khoa một chuỗi số riêng biệt theo ngày).
+- **Hủy số thứ tự**: Lắng nghe sự kiện hủy lịch hẹn (`AppointmentCancelled`) để chuyển trạng thái số khám sang `CANCELLED`.
+- **Sinh mã & Check-in QR**: Bệnh nhân sinh mã QR an toàn (chứa token ký HMAC có hạn giờ) từ Mobile App và quét check-in tại bệnh viện để đưa số thứ tự vào hàng chờ khám kích hoạt (`CHECKED_IN`).
+- **Lập lịch gọi khám N:M động**: Lập lịch gọi bệnh nhân tiếp theo xen kẽ giữa nhóm Ưu tiên (P1) và nhóm Thường (P2, P3) theo tỷ số cấu hình động, tự động ưu tiên tối đa ca cấp cứu (P0).
+- **Xử lý lỡ lượt (Missed Turn)**: Bác sỹ đánh dấu bệnh nhân lỡ lượt; hệ thống hỗ trợ xếp lại (Requeue) theo chính sách cấu hình (Về cuối hàng, lên đầu hàng sau N lượt, hoặc tiếp nhận thủ công).
+- **Ước tính thời gian chờ**: Tính toán động thời gian chờ còn lại của bệnh nhân dựa trên số lượng người chờ trước đó theo thuật toán N:M và thời gian khám trung bình động (`moving average`) của khoa.
+- **Tiếp nhận thủ công**: Admin tiếp nhận và tạo số khám trực tiếp tại quầy đối với các ca cấp cứu (P0) hoặc khám vãng lai (P3).
+
+### 4. Notification Service (Thông báo Real-time)
+- **Kênh truyền tải thời gian thực**: Thiết lập kết nối WebSocket có xác thực (STOMP protocol) để đẩy thông báo trực tiếp đến Client.
+- **Thông báo bệnh nhân**: Tự động thông báo qua WebSocket khi số thứ tự của bệnh nhân được cấp, check-in thành công, sắp đến lượt (cách N người), và khi bác sỹ gọi vào phòng khám.
+- **Cập nhật màn hình bác sỹ**: Đẩy thông báo thay đổi hàng đợi theo thời gian thực tới màn hình dashboard làm việc của bác sỹ trong khoa.
+
+---
+
 ## 🛠️ Kiến trúc Hệ thống & Luồng tích hợp
 
 ```
