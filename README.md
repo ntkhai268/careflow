@@ -52,6 +52,8 @@ Web App (React)       ──┘         │                │
 ## Tài liệu
 
 - [Implementation Plan](docs/implementation_plan.md)
+- [Person A OOAD](ooad-person-a.md)
+- [Person A Database Model (DBML)](docs/database/careflow-person-a.dbml)
 
 ## Team
 
