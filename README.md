@@ -1,60 +1,95 @@
-# CareFlow 🏥
+# CareFlow 🏥 — Phân Hệ Hệ Thống (Core/Infrastructure)
 
-> Hệ thống phần mềm trợ giúp khám chữa bệnh tại bệnh viện công theo kiến trúc Microservices
+> Phần việc đảm nhận bởi **Người A (dangkhoii)** trong dự án CareFlow - Hệ thống hỗ trợ khám chữa bệnh tại bệnh viện công theo kiến trúc Microservices.
 
-## Tổng quan
+## 📌 Tổng quan phân hệ
+Phân hệ Hệ thống đóng vai trò xương sống của dự án CareFlow, chịu trách nhiệm quản lý luồng điều phối chính (routing, authentication), thuật toán hàng đợi khám bệnh và cơ chế giao tiếp real-time giữa các dịch vụ.
 
-CareFlow là hệ thống quản lý quy trình khám bệnh tại bệnh viện công, xây dựng theo kiến trúc Microservices. Hệ thống hỗ trợ:
+Các thành phần chính do **dangkhoii** thiết kế & triển khai:
+- **API Gateway**: Điểm vào duy nhất của hệ thống, xử lý định tuyến và xác thực JWT.
+- **Identity & Auth Service**: Đăng ký/đăng nhập, quản lý tài khoản và phân quyền người dùng (PATIENT, DOCTOR, ADMIN).
+- **Queue Management Service (Trọng tâm)**: Quản lý số thứ tự, check-in QR, và thuật toán gọi khám xen kẽ N:M động.
+- **Notification Service**: Đẩy thông báo real-time đến bệnh nhân và bác sỹ qua WebSocket.
+- **Hạ tầng chung**: Service Discovery (Eureka Server), Message Broker (RabbitMQ), Docker Compose.
 
-- **Bệnh nhân** (Mobile App): Đăng ký khám, theo dõi hàng đợi, nhận thông báo, xem toa thuốc
-- **Bác sỹ** (Web App): Tra cứu hồ sơ, chẩn bệnh, kê toa, ChatBot AI gợi ý phác đồ
-- **Hệ thống** (Core): Quản lý hàng đợi đa độ ưu tiên, xác thực, thông báo real-time
+---
 
-## Kiến trúc
+## 🛠️ Kiến trúc Hệ thống & Luồng tích hợp
 
 ```
-Mobile App (Flutter)  ──┐
-                        ├──▶ API Gateway ──▶ Microservices ──▶ PostgreSQL
-Web App (React)       ──┘         │                │
-                            Eureka Server     RabbitMQ
+                       [CLIENT LAYER]
+  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐
+  │ Mobile App   │    │ Web App      │    │ Admin Panel  │
+  │ (Bệnh nhân)  │    │  (Bác sỹ)    │    │   (Admin)    │
+  └──────┬───────┘    └──────┬───────┘    └──────┬───────┘
+         │                   │                   │
+         ▼                   ▼                   ▼
+┌─────────────────────────────────────────────────────────┐
+│            API GATEWAY (Spring Cloud Gateway)           │
+│         JWT Filter · Rate Limiting · Route Routing      │
+└────────────────────────────┬────────────────────────────┘
+                             │
+            ┌────────────────┼────────────────┐
+            ▼                ▼                ▼
+┌─────────────────┐  ┌──────────────┐  ┌──────────────────┐
+│  Eureka Server  │  │  RabbitMQ    │  │  Shared Library  │
+│  (Discovery)    │  │(Event Broker)│  │ (common utility) │
+└─────────────────┘  └──────────────┘  └──────────────────┘
+                             │
+     ┌────────┬────────┬─────┴─┬────────┐
+     ▼        ▼        ▼       ▼        ▼
+┌────────┐┌────────┐┌────────┐┌────────┐┌────────┐
+│Identity││Patient ││Appoint-││Queue   ││Notifi- │
+│Service ││Service ││ment Svc││Mgmt Svc││cation  │ (Các service
+│  (A)   ││ (B)    ││  (B)   ││  (A)   ││  (A)   │  khác...)
+└───┬────┘└───┬────┘└───┬────┘└───┬────┘└───┬────┘
+    ▼         ▼         ▼         ▼         ▼
+[Auth DB] [Pat DB]  [Appt DB] [Queue DB] WebSocket
 ```
 
-## Tech Stack
+---
 
-| Layer | Công nghệ |
-|-------|-----------|
-| Backend | Spring Boot 3, Java 17 |
-| Mobile | Flutter |
-| Web | React + Vite |
-| Database | PostgreSQL |
-| Message Broker | RabbitMQ |
-| Service Discovery | Spring Cloud Eureka |
-| API Gateway | Spring Cloud Gateway |
-| Container | Docker + Docker Compose |
+## 🚀 Thuật toán nổi bật (Queue Management)
 
-## Services
+### 1. Phân cấp độ ưu tiên (4 mức)
+- **P0 - `EMERGENCY`**: Ca cấp cứu, luôn được gọi ngay lập tức mà không làm ảnh hưởng đến chu kỳ N:M.
+- **P1 - `PRIORITY`**: Người già, trẻ em, phụ nữ mang thai (Được phục vụ theo chu kỳ N:M).
+- **P2 - `APPOINTMENT`**: Đã đặt lịch trước (Xếp vào nhóm Normal).
+- **P3 - `WALK_IN`**: Đến trực tiếp (Xếp vào nhóm Normal).
 
-| Service | Trạng thái |
-|---------|------------|
-| API Gateway | 🔧 Planned |
-| Identity & Auth | 🔧 Planned |
-| Patient Service | 🔧 Planned |
-| Appointment Service | 🔧 Planned |
-| Queue Management ⭐ | 🔧 Planned |
-| Notification Service | 🔧 Planned |
-| Doctor Consultation | 🔧 Planned |
-| Prescription Service | 🔧 Planned |
-| EMR Service | 🔧 Planned |
-| Laboratory Order | 🔧 Mock |
-| Analytics Service | 🔧 Mock |
-| AI Clinical Assistant | 🔧 Mock |
+### 2. Thuật toán gọi khám xen kẽ động N:M
+- Điều phối thông minh giữa nhóm **Ưu tiên (P1)** và nhóm **Thường (P2, P3)** theo tỉ lệ cấu hình động (Ví dụ: 2 bệnh nhân ưu tiên : 1 bệnh nhân thường).
+- Tự động fallback/chuyển phase khi một trong các hàng chờ trống để tránh tắc nghẽn queue.
 
-## Tài liệu
+---
 
-- [Implementation Plan](docs/implementation_plan.md)
-- [Person A OOAD](ooad-person-a.md)
-- [Person A Database Model (DBML)](docs/database/careflow-person-a.dbml)
+## 🗄️ Cấu trúc thư mục phân hệ (Người A)
+```text
+medici/ (careflow/)
+├── docker-compose.infra.yml    # Docker Compose chạy infra (PostgreSQL, RabbitMQ, Eureka)
+├── docker-compose.yml          # Docker Compose khởi chạy toàn bộ hệ thống
+├── shared/
+│   └── common-lib/             # Thư viện dùng chung (DTOs, JWT Utils, Exceptions)
+├── services/
+│   ├── eureka-server/          # Service Discovery (Eureka Server)
+│   ├── api-gateway/            # API Gateway (Spring Cloud Gateway)
+│   ├── identity-service/       # Xác thực & Quản lý tài khoản (Port: 8081)
+│   ├── queue-service/          # Quản lý hàng đợi & Số thứ tự (Port: 8084) ⭐
+│   └── notification-service/   # Đẩy thông báo real-time qua WebSocket (Port: 8085)
+```
 
-## Team
+---
 
-Đề tài thực tập tốt nghiệp — PTIT
+## 📄 Tài liệu Phân tích & Thiết kế (OOAD)
+
+- 📘 [Tài liệu OOAD chi tiết của Người A](ooad-person-a.md)
+- 🗃️ [Database Model DBML của Người A](docs/database/careflow-person-a.dbml)
+- 📋 [Kế hoạch triển khai tổng thể](docs/implementation_plan.md)
+
+---
+
+## 👥 Thành viên nhóm & Phân công
+- 👤 **Người A (dangkhoii - Leader)**: Thiết kế & phát triển Phân hệ Hệ thống + DevOps.
+- 👤 **Người B**: Phát triển Phân hệ Bệnh nhân (Patient Service, Appointment Service, Mobile App).
+- 👤 **Người C**: Phát triển Phân hệ Bác sỹ (Consultation Service, Prescription Service, Web App).
+
