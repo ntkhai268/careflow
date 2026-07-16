@@ -185,7 +185,7 @@ erDiagram
 
     queue_configs ||--o{ queue_number_sequences : "owns"
     queue_configs ||--o{ queue_entries : "owns"
-    users ..o{ queue_entries : "logical_reference"
+    users ||..o{ queue_entries : "logical_reference"
 ```
 
 ### 1. Database: `careflow_identity` (Identity Service)
