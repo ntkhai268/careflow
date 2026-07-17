@@ -650,6 +650,7 @@ classDiagram
             +String phone
             +String idCardNumber
             +String insuranceNumber
+            +String occupation
             +String address
             +String avatarUrl
             +LocalDateTime createdAt
@@ -758,6 +759,7 @@ classDiagram
 | `phone` | String(15) | nullable | Số điện thoại |
 | `idCardNumber` | String(20) | nullable, UNIQUE | CMND/CCCD |
 | `insuranceNumber` | String(20) | nullable | Số thẻ BHYT |
+| `occupation` | String(100) | nullable | Nghề nghiệp (hỗ trợ chẩn đoán — bác sĩ biết môi trường tiếp xúc) |
 | `address` | String(500) | nullable | Địa chỉ |
 | `avatarUrl` | String(255) | nullable | URL ảnh đại diện |
 | `createdAt` | LocalDateTime | auto | Thời điểm tạo |
