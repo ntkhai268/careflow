@@ -1,0 +1,50 @@
+name: careflow_patient
+description: "CareFlow - Ứng dụng đặt lịch khám bệnh cho bệnh nhân"
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+
+  # State Management
+  flutter_riverpod: ^2.6.1
+
+  # HTTP & Networking
+  dio: ^5.7.0
+
+  # Navigation
+  go_router: ^14.8.1
+
+  # Storage
+  shared_preferences: ^2.3.4
+  flutter_secure_storage: ^9.2.4
+
+  # UI
+  google_fonts: ^6.2.1
+  shimmer: ^3.0.0
+  smooth_page_indicator: ^1.2.0+3
+  flutter_svg: ^2.0.17
+  cached_network_image: ^3.4.1
+
+  # Utils
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/icons/
