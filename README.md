@@ -118,6 +118,18 @@ medici/ (careflow/)
 - 🗃️ [Database Model DBML của Người A](docs/database/careflow-person-a.dbml)
 - 📋 [Kế hoạch triển khai tổng thể](docs/implementation_plan.md)
 
+## ▶️ Chạy phân hệ Người A
+
+```bash
+cp .env.example .env
+# Thay JWT_SECRET trong .env bằng chuỗi ngẫu nhiên tối thiểu 32 byte
+docker compose up --build
+```
+
+Gateway chạy tại `http://localhost:8080`, Eureka tại `http://localhost:8761`,
+RabbitMQ Management tại `http://localhost:15672`. Flyway tự tạo schema `identity`
+và `queue` khi hai service khởi động.
+
 ---
 
 ## 🗄️ Thiết kế Cơ sở dữ liệu (Database Schema)
@@ -239,4 +251,3 @@ Quản lý hàng đợi, số thứ tự khám và đảm bảo truyền nhận 
 - **`queue.queue_entries`**: Lưu trạng thái chi tiết của từng lượt khám bệnh (ngày, số thứ tự, mức độ ưu tiên, trạng thái khám, các mốc thời gian check-in, gọi khám, hoàn thành, hủy).
 - **`queue.outbox_events`**: Lưu trữ các sự kiện nghiệp vụ phục vụ mô hình *Transactional Outbox* để gửi tin nhắn tin cậy sang RabbitMQ.
 - **`queue.processed_events`**: Lưu lịch sử các sự kiện đã xử lý từ các service khác nhằm đảm bảo tính *Idempotency* (tránh xử lý trùng lặp).
-
