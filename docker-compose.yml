@@ -229,6 +229,18 @@ services:
       - careflow-net
     restart: unless-stopped
 
+  # ==================== FRONTEND ====================
+  careflow-doctor-web:
+    build:
+      context: ./frontend/doctor-web
+      dockerfile: Dockerfile
+    container_name: careflow-doctor-web
+    ports:
+      - "3000:3000"
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
 networks:
   careflow-net:
     name: careflow-net
