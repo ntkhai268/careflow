@@ -17,11 +17,66 @@ nghiệp vụ riêng của Identity, Gateway, Queue hay Notification.
 - Khai báo exchange/routing key RabbitMQ trong `AppConstants`.
 - Cung cấp `EventEnvelope` dùng chung cho giao tiếp bất đồng bộ.
 
-### Kiểm tra
+### Yêu cầu môi trường
+
+- JDK 21 (`java -version`).
+- Maven 3.9+ (`mvn -version`), hoặc Maven tương thích với Spring Boot 3.
+- Git để lấy đúng branch này.
+
+### Cài đặt
+
+```bash
+git clone <repository-url>
+cd careflow
+git switch feature/dangkhoii/common-foundation
+mvn -pl careflow-common -am clean install
+```
+
+Lệnh trên build parent project, chạy test và cài `careflow-common` vào Maven local để
+các service khác có thể dùng chung DTO, exception, constant và event contract.
+
+### Sử dụng trong service khác
+
+Khai báo dependency trong `pom.xml` của service:
+
+```xml
+<dependency>
+    <groupId>com.careflow</groupId>
+    <artifactId>careflow-common</artifactId>
+    <version>${project.version}</version>
+</dependency>
+```
+
+Ví dụ tạo response thống nhất:
+
+```java
+return ApiResponse.success("Thành công", data);
+```
+
+Event RabbitMQ phải tuân theo envelope dùng chung:
+
+```json
+{
+  "eventId": "<uuid>",
+  "eventType": "MyEvent",
+  "eventVersion": 1,
+  "aggregateId": "<uuid>",
+  "aggregateVersion": 1,
+  "occurredAt": "2026-07-19T10:00:00Z",
+  "producer": "service-name",
+  "correlationId": "<correlation-id>",
+  "payload": {}
+}
+```
+
+### Chạy kiểm thử
 
 ```bash
 mvn -pl careflow-common -am test
 ```
+
+Module common là thư viện, không phải ứng dụng Spring Boot độc lập nên không có port
+và không chạy bằng `spring-boot:run`.
 
 Branch này nên được review/merge vào `develop` trước các branch service của Người A.
 
