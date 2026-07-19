@@ -1,0 +1,52 @@
+# Dùng cho máy Mac server (production/demo)
+# Chạy: docker-compose -f docker-compose.infra.yml -f docker-compose.yml -f docker-compose.prod.yml up -d
+# Ở môi trường production, dùng Image đã build sẵn từ CI/CD thay vì build từ source
+
+services:
+  careflow-eureka-server:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-eureka-server:latest
+    build: !override
+
+  careflow-api-gateway:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-api-gateway:latest
+    build: !override
+
+  careflow-identity-service:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-identity-service:latest
+    build: !override
+
+  careflow-patient-service:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-patient-service:latest
+    build: !override
+
+  careflow-appointment-service:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-appointment-service:latest
+    build: !override
+
+  careflow-queue-service:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-queue-service:latest
+    build: !override
+
+  careflow-notification-service:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-notification-service:latest
+    build: !override
+
+  careflow-consultation-service:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-consultation-service:latest
+    build: !override
+
+  careflow-prescription-service:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-prescription-service:latest
+    build: !override
+
+  careflow-emr-service:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-emr-service:latest
+    build: !override
+
+  careflow-lab-service:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-lab-service:latest
+    build: !override
+
+  careflow-ai-service:
+    image: ghcr.io/${GITHUB_USERNAME}/careflow-ai-service:latest
+    build: !override
