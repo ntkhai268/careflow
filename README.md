@@ -2,6 +2,29 @@
 
 > Hệ thống phần mềm trợ giúp khám chữa bệnh tại bệnh viện công theo kiến trúc Microservices
 
+## Branch hiện tại: Common Foundation
+
+Branch: `feature/dangkhoii/common-foundation`
+
+Đây là lớp nền dùng chung cho các service của Người A (`dangkhoii`). Branch không chứa
+nghiệp vụ riêng của Identity, Gateway, Queue hay Notification.
+
+### Thành phần dùng chung
+
+- Sửa dependency management trong parent Maven POM và cấu hình Java 21/Lombok.
+- Chuẩn hóa `ApiResponse`, timestamp UTC và validation error response.
+- Cung cấp `BaseEntity`, business exception và global exception handler.
+- Khai báo exchange/routing key RabbitMQ trong `AppConstants`.
+- Cung cấp `EventEnvelope` dùng chung cho giao tiếp bất đồng bộ.
+
+### Kiểm tra
+
+```bash
+mvn -pl careflow-common -am test
+```
+
+Branch này nên được review/merge vào `develop` trước các branch service của Người A.
+
 ## Tổng quan
 
 CareFlow là hệ thống quản lý quy trình khám bệnh tại bệnh viện công, xây dựng theo kiến trúc Microservices. Hệ thống hỗ trợ:
@@ -23,7 +46,7 @@ Web App (React)       ──┘         │                │
 
 | Layer | Công nghệ |
 |-------|-----------|
-| Backend | Spring Boot 3, Java 17 |
+| Backend | Spring Boot 3, Java 21 |
 | Mobile | Flutter |
 | Web | React + Vite |
 | Database | PostgreSQL |
