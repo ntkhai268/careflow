@@ -76,7 +76,7 @@ public class AppointmentEventConsumer {
         QueueEntry snapshot = entries.findByAppointmentId(appointmentId).orElse(null);
         if (snapshot == null || snapshot.getStatus() != QueueStatus.WAITING) return;
         QueueConfig config = queueService.requireLockedConfig(snapshot.getDepartmentId());
-        QueueEntry entry = entries.findByAppointmentIdForUpdate(appointmentId).orElse(null);
+        QueueEntry entry = entries.findFirstByAppointmentId(appointmentId).orElse(null);
         if (entry == null || entry.getStatus() != QueueStatus.WAITING) return;
         entry.setStatus(QueueStatus.CANCELLED);
         entry.setCancelledAt(Instant.now());

@@ -108,7 +108,7 @@ public class QueueManagementService {
         QrTokenService.QrClaims claims = qrTokens.verify(token);
         if (!claims.userId().equals(authenticatedUserId)) throw new BusinessException(403, "QR không thuộc tài khoản hiện tại");
         if (!claims.queueDate().equals(businessDate())) throw new BusinessException(422, "QR không thuộc ngày hiện tại");
-        QueueEntry entry = entries.findByAppointmentIdForUpdate(claims.appointmentId())
+        QueueEntry entry = entries.findFirstByAppointmentId(claims.appointmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "appointmentId", claims.appointmentId()));
         if (!entry.getUserId().equals(authenticatedUserId)) throw new BusinessException(403, "Không có quyền check-in lượt này");
         QueueConfig config = requireConfig(entry.getDepartmentId());
@@ -268,7 +268,7 @@ public class QueueManagementService {
     }
 
     public QueueConfig requireLockedConfig(UUID departmentId) {
-        return configs.findActiveForUpdate(departmentId)
+        return configs.findFirstByDepartmentIdAndActiveTrue(departmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Active QueueConfig", "departmentId", departmentId));
     }
 
@@ -278,11 +278,12 @@ public class QueueManagementService {
     }
 
     private QueueEntry requireEntryForUpdate(UUID id) {
-        return entries.findByIdForUpdate(id).orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "id", id));
+        return entries.findFirstById(id).orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "id", id));
     }
 
     private QueueEntry firstCandidate(QueueConfig config, LocalDate date, PriorityLevel level) {
-        return entries.findCandidatesForUpdate(config.getId(), date, level, PageRequest.of(0, 1)).stream().findFirst().orElse(null);
+        return entries.findByQueueConfigIdAndQueueDateAndStatusAndPriorityLevelOrderByEligibleSinceAtAscSequenceNumberAsc(
+                config.getId(), date, QueueStatus.CHECKED_IN, level, PageRequest.of(0, 1)).stream().findFirst().orElse(null);
     }
 
     private void advancePriority(QueueConfig config) {
@@ -342,7 +343,9 @@ public class QueueManagementService {
     }
 
     private void updateAverage(QueueConfig config, LocalDate date) {
-        List<QueueEntry> completed = entries.findRecentCompleted(config.getId(), date, PageRequest.of(0, 20));
+        List<QueueEntry> completed = entries
+                .findByQueueConfigIdAndQueueDateAndStatusAndStartedAtIsNotNullAndCompletedAtIsNotNullOrderByCompletedAtDesc(
+                        config.getId(), date, QueueStatus.COMPLETED, PageRequest.of(0, 20));
         if (!completed.isEmpty()) {
             int average = (int) Math.round(completed.stream().mapToLong(this::consultationMinutes).average()
                     .orElse(config.getAvgConsultationMinutes()));
