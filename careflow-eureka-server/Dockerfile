@@ -17,6 +17,9 @@ COPY careflow-emr-service/pom.xml careflow-emr-service/pom.xml
 COPY careflow-lab-service/pom.xml careflow-lab-service/pom.xml
 COPY careflow-ai-service/pom.xml careflow-ai-service/pom.xml
 
+# Install parent POM into Maven local repo
+RUN mvn -N install -DskipTests -B -q
+
 # Build service
 COPY careflow-eureka-server/src careflow-eureka-server/src
 RUN mvn -pl careflow-eureka-server package -DskipTests -B -q
