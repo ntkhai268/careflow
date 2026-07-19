@@ -25,6 +25,64 @@ Branch: `feature/dangkhoii/api-gateway` · Port: `8080`
 | `/api/queues/**` | Queue |
 | `/api/notifications/**`, `/ws/**` | Notification |
 
+### Yêu cầu môi trường
+
+- JDK 21 và Maven 3.9+.
+- Eureka Server và service đích đang chạy.
+- `JWT_SECRET` phải giống chính xác secret của Identity và Notification Service.
+
+### Cài đặt và khởi chạy
+
+```bash
+git clone <repository-url>
+cd careflow
+git switch feature/dangkhoii/api-gateway
+export JWT_SECRET='<same-secret-as-identity-service>'
+
+mvn -pl careflow-api-gateway -am clean package
+java -jar careflow-api-gateway/target/careflow-api-gateway-*.jar
+```
+
+Gateway chạy tại `http://localhost:8080` và mặc định tìm Eureka tại
+`http://localhost:8761/eureka/`. Có thể đổi địa chỉ bằng `EUREKA_URL`.
+
+Nếu chưa có Eureka Server, build và chạy ở một terminal khác:
+
+```bash
+mvn -pl careflow-eureka-server -am package
+java -jar careflow-eureka-server/target/careflow-eureka-server-*.jar
+```
+
+### Hướng dẫn sử dụng
+
+Kiểm tra Gateway đã sẵn sàng:
+
+```bash
+curl http://localhost:8080/actuator/health
+```
+
+Hai API đăng ký/đăng nhập là public và được chuyển tới Identity Service:
+
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "usernameOrEmail": "patient01",
+    "password": "Patient@123"
+  }'
+```
+
+Với endpoint protected, gửi JWT nhận từ API đăng nhập:
+
+```bash
+curl http://localhost:8080/api/auth/me \
+  -H 'Authorization: Bearer <ACCESS_TOKEN>'
+```
+
+Kết quả mong đợi khi không có token là HTTP `401`. Gateway luôn xóa
+`X-User-Id`, `X-User-Role`, `X-Correlation-Id` do client tự gửi rồi tạo lại trusted
+headers từ JWT. Vì vậy client không được dùng các header này để tự khai báo danh tính.
+
 ### Chạy kiểm thử
 
 ```bash
