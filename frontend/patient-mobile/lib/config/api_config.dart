@@ -7,6 +7,10 @@ class ApiConfig {
   static const String baseUrl = 'http://localhost:8080/api';
   static const String wsUrl = 'http://localhost:8080/ws';
 
+  // Direct service URLs (bypass Gateway for dev)
+  // TODO: In production, all traffic goes through API Gateway
+  static const String patientServiceUrl = 'http://10.0.2.2:8082';
+
   // Service-specific endpoints
   static const String authLogin = '/auth/login';
   static const String authRegister = '/auth/register';
@@ -16,3 +20,4 @@ class ApiConfig {
   static const String emrRecords = '/emr/records';
   static const String prescriptions = '/prescriptions';
 }
+

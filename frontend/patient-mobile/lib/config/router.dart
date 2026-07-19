@@ -5,6 +5,9 @@ import '../screens/auth/onboarding_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/main_shell.dart';
+import '../screens/profile/create_profile_screen.dart';
+import '../screens/profile/profile_detail_screen.dart';
+import '../screens/profile/edit_profile_screen.dart';
 
 /// GoRouter configuration for CareFlow app.
 final GoRouter appRouter = GoRouter(
@@ -31,6 +34,19 @@ final GoRouter appRouter = GoRouter(
       path: '/',
       builder: (context, state) => const MainShell(),
     ),
+    // Profile routes
+    GoRoute(
+      path: '/profile/create',
+      builder: (context, state) => const CreateProfileScreen(),
+    ),
+    GoRoute(
+      path: '/profile/:id',
+      builder: (context, state) => const ProfileDetailScreen(),
+    ),
+    GoRoute(
+      path: '/profile/:id/edit',
+      builder: (context, state) => const EditProfileScreen(),
+    ),
   ],
   errorBuilder: (context, state) => Scaffold(
     body: Center(
@@ -55,3 +71,4 @@ final GoRouter appRouter = GoRouter(
     ),
   ),
 );
+
