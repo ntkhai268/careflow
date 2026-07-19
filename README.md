@@ -25,6 +25,79 @@ Branch: `feature/dangkhoii/identity-service` · Port: `8081` · Database: `caref
 | `POST` | `/api/auth/ekyc` | Authenticated |
 | `PATCH` | `/api/users/{id}/status` | ADMIN |
 
+### Yêu cầu môi trường
+
+- JDK 21 và Maven 3.9+.
+- Docker và Docker Compose để chạy PostgreSQL/RabbitMQ cục bộ.
+- `JWT_SECRET` tối thiểu 32 byte và phải giống secret của API Gateway.
+
+### Cài đặt và khởi chạy
+
+```bash
+git clone <repository-url>
+cd careflow
+git switch feature/dangkhoii/identity-service
+
+docker compose -f docker-compose.infra.yml up -d postgres rabbitmq
+export JWT_SECRET="$(openssl rand -base64 48)"
+
+mvn -pl careflow-identity-service -am clean package
+java -jar careflow-identity-service/target/careflow-identity-service-*.jar
+```
+
+Mặc định service dùng PostgreSQL tại `localhost:5432/careflow_identity`, tài khoản
+`careflow/careflow`, RabbitMQ tại `localhost:5672` và chạy ở `http://localhost:8081`.
+Có thể ghi đè bằng các biến:
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `IDENTITY_DB_URL` | `jdbc:postgresql://localhost:5432/careflow_identity` | JDBC URL |
+| `IDENTITY_DB_USERNAME` | `careflow` | Database username |
+| `IDENTITY_DB_PASSWORD` | `careflow` | Database password |
+| `EUREKA_URL` | `http://localhost:8761/eureka/` | Eureka Server |
+| `JWT_SECRET` | Bắt buộc | Secret ký JWT |
+| `JWT_EXPIRATION_MS` | `86400000` | Thời hạn token (ms) |
+
+### Hướng dẫn sử dụng
+
+Đăng ký bệnh nhân:
+
+```bash
+curl -X POST http://localhost:8081/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "username": "patient01",
+    "email": "patient01@example.com",
+    "password": "Patient@123"
+  }'
+```
+
+Đăng nhập bằng username hoặc email:
+
+```bash
+curl -X POST http://localhost:8081/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "usernameOrEmail": "patient01",
+    "password": "Patient@123"
+  }'
+```
+
+Lấy trường `data.accessToken` trong response và gọi endpoint được bảo vệ qua API
+Gateway:
+
+```bash
+curl http://localhost:8080/api/auth/me \
+  -H 'Authorization: Bearer <ACCESS_TOKEN>'
+
+curl -X POST http://localhost:8080/api/auth/ekyc \
+  -H 'Authorization: Bearer <ACCESS_TOKEN>' \
+  -F 'image=@/absolute/path/to/cccd.jpg'
+```
+
+Không gửi trực tiếp `X-User-Id`/`X-User-Role` từ client; API Gateway sẽ xác minh JWT
+và tự tạo các trusted header này.
+
 ### Chạy kiểm thử
 
 ```bash
