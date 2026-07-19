@@ -61,7 +61,7 @@ class AuthServiceTest {
     void fifthWrongPasswordTemporarilyLocksAccount() {
         User user = activeUser();
         user.setFailedLoginAttempts(4);
-        when(users.findForLogin("patient")).thenReturn(Optional.of(user));
+        when(users.findByUsernameIgnoreCaseOrEmailIgnoreCase("patient", "patient")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong", "hash")).thenReturn(false);
 
         assertThatThrownBy(() -> service.login(new LoginRequest("patient", "wrong")))
@@ -76,7 +76,7 @@ class AuthServiceTest {
     void successfulLoginResetsFailuresAndReturnsJwt() {
         User user = activeUser();
         user.setFailedLoginAttempts(3);
-        when(users.findForLogin("patient")).thenReturn(Optional.of(user));
+        when(users.findByUsernameIgnoreCaseOrEmailIgnoreCase("patient", "patient")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("correct", "hash")).thenReturn(true);
         when(jwtService.issue(user)).thenReturn("jwt");
         when(jwtService.expirationSeconds()).thenReturn(86400L);

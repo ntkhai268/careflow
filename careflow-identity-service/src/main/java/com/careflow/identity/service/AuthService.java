@@ -55,7 +55,7 @@ public class AuthService {
     @Transactional(noRollbackFor = BusinessException.class)
     public LoginResponse login(LoginRequest request) {
         String login = request.usernameOrEmail().trim().toLowerCase(Locale.ROOT);
-        User user = users.findForLogin(login)
+        User user = users.findByUsernameIgnoreCaseOrEmailIgnoreCase(login, login)
                 .orElseThrow(() -> new BusinessException(401, "Thông tin đăng nhập không hợp lệ"));
 
         Instant now = Instant.now();
