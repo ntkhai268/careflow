@@ -2,6 +2,39 @@
 
 > Hệ thống phần mềm trợ giúp khám chữa bệnh tại bệnh viện công theo kiến trúc Microservices
 
+## Branch hiện tại: Notification WebSocket Service
+
+Branch: `feature/dangkhoii/notification-websocket` · Port: `8085`
+
+### Chức năng
+
+- Khai báo durable RabbitMQ queue và DLQ cho các sự kiện `queue.#`.
+- Consume sự kiện cấp số, check-in, gần lượt, gọi lượt, missed và completed.
+- Cung cấp STOMP WebSocket endpoint `/ws`.
+- Xác thực JWT trong STOMP `CONNECT` và dùng `sub` làm WebSocket principal.
+- Gửi thông báo riêng tới `/user/queue/notifications`.
+- Gửi cập nhật dashboard tới `/topic/queues/departments/{departmentId}`.
+- Chỉ cho `DOCTOR`/`ADMIN` subscribe topic khoa; bệnh nhân chỉ nhận user destination.
+
+### Contract realtime
+
+| Thành phần | Giá trị |
+|---|---|
+| Handshake | `/ws` |
+| Patient destination | `/user/queue/notifications` |
+| Doctor/Admin topic | `/topic/queues/departments/{departmentId}` |
+| RabbitMQ input | `queue.exchange` với routing key `queue.#` |
+| REST source of truth | Queue Management API |
+
+### Chạy kiểm thử
+
+```bash
+export JWT_SECRET="replace-with-at-least-32-random-bytes"
+mvn -pl careflow-notification-service -am test
+```
+
+WebSocket là kênh best-effort; sau reconnect client phải gọi lại Queue REST API để đồng bộ.
+
 ## Tổng quan
 
 CareFlow là hệ thống quản lý quy trình khám bệnh tại bệnh viện công, xây dựng theo kiến trúc Microservices. Hệ thống hỗ trợ:
@@ -23,7 +56,7 @@ Web App (React)       ──┘         │                │
 
 | Layer | Công nghệ |
 |-------|-----------|
-| Backend | Spring Boot 3, Java 17 |
+| Backend | Spring Boot 3, Java 21 |
 | Mobile | Flutter |
 | Web | React + Vite |
 | Database | PostgreSQL |
@@ -41,7 +74,7 @@ Web App (React)       ──┘         │                │
 | Patient Service | 🔧 Planned |
 | Appointment Service | 🔧 Planned |
 | Queue Management ⭐ | 🔧 Planned |
-| Notification Service | 🔧 Planned |
+| Notification Service | ✅ Implemented on this branch |
 | Doctor Consultation | 🔧 Planned |
 | Prescription Service | 🔧 Planned |
 | EMR Service | 🔧 Planned |
