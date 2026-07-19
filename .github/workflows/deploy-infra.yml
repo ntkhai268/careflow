@@ -1,0 +1,22 @@
+name: Deploy Infrastructure Config
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docker-compose.yml'
+      - 'docker-compose.infra.yml'
+      - '.env.example'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Update infrastructure
+        run: |
+          echo "🔄 Updating docker-compose config..."
+          docker-compose up -d
+          echo "✅ Infrastructure config updated!"
