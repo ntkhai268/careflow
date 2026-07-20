@@ -1,29 +1,43 @@
 package com.careflow.identity.controller;
 
-import com.careflow.common.constants.AppConstants;
 import com.careflow.common.dto.ApiResponse;
-import com.careflow.common.exception.BusinessException;
 import com.careflow.identity.dto.*;
 import com.careflow.identity.service.AuthService;
+import com.careflow.identity.service.EkycService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/auth")
+@Tag(name = "Identity & eKYC", description = "Đăng ký, xác thực phiên và định danh điện tử giả lập")
 public class AuthController {
     private final AuthService authService;
+    private final EkycService ekycService;
 
-    public AuthController(AuthService authService) {
+    public AuthController(AuthService authService, EkycService ekycService) {
         this.authService = authService;
+        this.ekycService = ekycService;
     }
 
     @PostMapping("/register")
+    @Operation(summary = "Đăng ký tài khoản bệnh nhân")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Đăng ký thành công"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Dữ liệu không hợp lệ", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Username hoặc email đã tồn tại", content = @Content)
+    })
     public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest request) {
         UserResponse user = authService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<UserResponse>builder()
@@ -31,39 +45,51 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Đăng nhập bằng username hoặc email")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Trả access token và refresh token"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Sai thông tin đăng nhập", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "Tài khoản bị khóa hoặc vô hiệu hóa", content = @Content)
+    })
     public ApiResponse<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
         return ApiResponse.success("Đăng nhập thành công", authService.login(request));
     }
 
     @PostMapping("/refresh")
+    @Operation(summary = "Xoay refresh token và cấp cặp token mới")
     public ApiResponse<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         return ApiResponse.success("Làm mới token thành công", authService.refresh(request));
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "Thu hồi refresh token")
     public ApiResponse<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
         authService.logout(request);
         return ApiResponse.<Void>success("Đăng xuất thành công", null);
     }
 
     @GetMapping("/me")
-    public ApiResponse<UserResponse> me(@RequestHeader(AppConstants.HEADER_USER_ID) UUID userId) {
-        return ApiResponse.success(authService.me(userId));
+    @Operation(summary = "Xem tài khoản hiện tại")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<UserResponse> me(Authentication authentication) {
+        return ApiResponse.success(authService.me(UUID.fromString(authentication.getName())));
     }
 
     @PostMapping(value = "/ekyc", consumes = "multipart/form-data")
-    public ApiResponse<Map<String, Object>> mockEkyc(
-            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+    @Operation(summary = "Xác thực eKYC giả lập",
+            description = "MVP mock: kiểm tra ảnh JPEG/PNG thật, tối đa 5MB và trả kết quả định danh giả lập có cờ mock=true")
+    @SecurityRequirement(name = "bearerAuth")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Xác thực giả lập thành công"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Ảnh trống hoặc không đọc được", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Thiếu hoặc sai JWT", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "413", description = "Ảnh vượt quá 5MB", content = @Content),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "415", description = "Không phải JPEG/PNG hợp lệ", content = @Content)
+    })
+    public ApiResponse<EkycResponse> mockEkyc(
+            Authentication authentication,
             @RequestPart("image") MultipartFile image) {
-        if (image.isEmpty() || image.getContentType() == null || !image.getContentType().startsWith("image/")) {
-            throw new BusinessException(400, "Cần tải lên một tệp ảnh CCCD hợp lệ");
-        }
-        return ApiResponse.success("eKYC giả lập thành công", Map.of(
-                "userId", userId,
-                "documentNumber", "001099000001",
-                "fullName", "NGUYEN VAN A",
-                "dateOfBirth", "1999-01-01",
-                "confidence", 0.98,
-                "verified", true));
+        UUID userId = UUID.fromString(authentication.getName());
+        return ApiResponse.success("eKYC giả lập thành công", ekycService.verify(userId, image));
     }
 }

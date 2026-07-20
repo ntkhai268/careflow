@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/api_config.dart';
 import 'api_service.dart';
@@ -19,37 +20,44 @@ class AuthResponse {
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    final user = json['user'];
+    if (json['accessToken'] is! String || user is! Map<String, dynamic>) {
+      throw const FormatException('Identity API response không đúng contract');
+    }
     return AuthResponse(
-      token: json['token'] ?? '',
-      refreshToken: json['refreshToken'],
-      userId: json['userId'] ?? '',
-      email: json['email'] ?? '',
-      fullName: json['fullName'] ?? '',
+      token: json['accessToken'] as String,
+      refreshToken: json['refreshToken'] as String?,
+      userId: user['id'] as String? ?? '',
+      email: user['email'] as String? ?? '',
+      fullName: user['username'] as String? ?? '',
     );
   }
 }
 
 /// Authentication service — handles login, register, logout.
-/// Falls back to mock when API is unavailable.
+/// Mock mode is opt-in with --dart-define=USE_MOCK_AUTH=true.
 class AuthService {
   final ApiService _apiService;
-  bool _useMock = true; // Set to false when Identity Service API is ready
+  final bool _useMock;
 
-  AuthService(this._apiService);
+  AuthService(
+    this._apiService, {
+    bool useMock = const bool.fromEnvironment(
+      'USE_MOCK_AUTH',
+      defaultValue: false,
+    ),
+  }) : _useMock = useMock;
 
-  /// Toggle mock mode
-  void setUseMock(bool value) => _useMock = value;
-
-  /// Login with email and password
-  Future<AuthResponse> login(String email, String password) async {
+  /// Login with username/email and password.
+  Future<AuthResponse> login(String usernameOrEmail, String password) async {
     if (_useMock) {
-      return _mockLogin(email, password);
+      return _mockLogin(usernameOrEmail, password);
     }
 
     try {
       final response = await _apiService.post(
         ApiConfig.authLogin,
-        data: {'email': email, 'password': password},
+        data: {'usernameOrEmail': usernameOrEmail, 'password': password},
       );
 
       final authResponse = AuthResponse.fromJson(response.data['data']);
@@ -59,47 +67,44 @@ class AuthService {
       }
       return authResponse;
     } catch (e) {
-      // Fallback to mock if API unreachable
-      return _mockLogin(email, password);
+      throw Exception(_messageFrom(e));
     }
   }
 
-  /// Register new account
+  /// Register Identity account, then login to obtain the token pair.
   Future<AuthResponse> register({
-    required String fullName,
+    required String username,
     required String email,
-    required String phone,
     required String password,
   }) async {
     if (_useMock) {
-      return _mockRegister(fullName, email);
+      return _mockRegister(username, email);
     }
 
     try {
-      final response = await _apiService.post(
+      await _apiService.post(
         ApiConfig.authRegister,
-        data: {
-          'fullName': fullName,
-          'email': email,
-          'phone': phone,
-          'password': password,
-        },
+        data: {'username': username, 'email': email, 'password': password},
       );
-
-      final authResponse = AuthResponse.fromJson(response.data['data']);
-      await _apiService.saveToken(authResponse.token);
-      if (authResponse.refreshToken != null) {
-        await _apiService.saveRefreshToken(authResponse.refreshToken!);
-      }
-      return authResponse;
+      return await login(username, password);
     } catch (e) {
-      return _mockRegister(fullName, email);
+      throw Exception(_messageFrom(e));
     }
   }
 
   /// Logout
   Future<void> logout() async {
-    await _apiService.clearTokens();
+    try {
+      final refreshToken = await _apiService.getRefreshToken();
+      if (!_useMock && refreshToken != null && refreshToken.isNotEmpty) {
+        await _apiService.post(
+          ApiConfig.authLogout,
+          data: {'refreshToken': refreshToken},
+        );
+      }
+    } finally {
+      await _apiService.clearTokens();
+    }
   }
 
   /// Check if user is authenticated
@@ -109,27 +114,32 @@ class AuthService {
 
   // --- Mock implementations ---
 
-  Future<AuthResponse> _mockLogin(String email, String password) async {
+  Future<AuthResponse> _mockLogin(
+    String usernameOrEmail,
+    String password,
+  ) async {
     // Simulate network delay
     await Future.delayed(const Duration(milliseconds: 800));
 
-    if (email.isEmpty || password.isEmpty) {
-      throw Exception('Email và mật khẩu không được để trống');
+    if (usernameOrEmail.isEmpty || password.isEmpty) {
+      throw Exception('Tên đăng nhập/email và mật khẩu không được để trống');
     }
 
     final mockResponse = AuthResponse(
       token: 'mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}',
       refreshToken: 'mock_refresh_token',
       userId: 'mock-user-001',
-      email: email,
-      fullName: 'Nguyễn Văn A',
+      email: usernameOrEmail.contains('@')
+          ? usernameOrEmail
+          : '$usernameOrEmail@example.com',
+      fullName: usernameOrEmail,
     );
 
     await _apiService.saveToken(mockResponse.token);
     return mockResponse;
   }
 
-  Future<AuthResponse> _mockRegister(String fullName, String email) async {
+  Future<AuthResponse> _mockRegister(String username, String email) async {
     await Future.delayed(const Duration(milliseconds: 1000));
 
     final mockResponse = AuthResponse(
@@ -137,11 +147,22 @@ class AuthService {
       refreshToken: 'mock_refresh_token',
       userId: 'mock-user-${DateTime.now().millisecondsSinceEpoch}',
       email: email,
-      fullName: fullName,
+      fullName: username,
     );
 
     await _apiService.saveToken(mockResponse.token);
     return mockResponse;
+  }
+
+  String _messageFrom(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      if (data is Map<String, dynamic> && data['message'] is String) {
+        return data['message'] as String;
+      }
+      return 'Không thể kết nối Identity Service';
+    }
+    return error.toString();
   }
 }
 

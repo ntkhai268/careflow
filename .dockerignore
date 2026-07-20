@@ -1,0 +1,9 @@
+.git
+.idea
+.vscode
+**/target
+**/.dart_tool
+**/build
+frontend
+*.log
+.DS_Store
