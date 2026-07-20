@@ -1,43 +1,54 @@
-# CareFlow 🏥
+# CareFlow — Common Foundation
 
-> Hệ thống phần mềm trợ giúp khám chữa bệnh tại bệnh viện công theo kiến trúc Microservices
+Nhánh: `feature/dangkhoii/common-foundation`
 
-## Branch hiện tại: Common Foundation
+`careflow-common` là shared foundation cho các Spring Boot microservice của CareFlow.
+Module cung cấp contract HTTP, error mapping, correlation ID, event envelope và JPA
+base entity. Đây là thư viện, không phải service độc lập: không có port hoặc Swagger
+riêng.
 
-Branch: `feature/dangkhoii/common-foundation`
+## Phạm vi
 
-Đây là lớp nền dùng chung cho các service của Người A (`dangkhoii`). Branch không chứa
-nghiệp vụ riêng của Identity, Gateway, Queue hay Notification.
+| Thành phần | Trách nhiệm |
+|---|---|
+| `ApiResponse<T>` | JSON response envelope thống nhất |
+| `ApiError` | Error code, path, correlation ID và field violations |
+| `GlobalExceptionHandler` | Chuyển exception thành HTTP response an toàn |
+| `CorrelationIdFilter` | Propagate/sinh `X-Correlation-Id` và đưa vào MDC |
+| `EventEnvelope` | Metadata bắt buộc cho event RabbitMQ |
+| `BaseEntity` | UUID, audit timestamps, optimistic locking và identity semantics |
+| `AppConstants` | Role, trusted header, exchange và routing-key constants |
 
-### Thành phần dùng chung
+Spring MVC dependencies được đánh dấu optional, vì vậy một consumer chỉ dùng DTO
+hoặc event contract không bị kéo theo Tomcat, Hibernate, HikariCP hay JDBC. Servlet
+service có `spring-boot-starter-web` sẽ tự nhận common web beans qua Spring Boot
+auto-configuration.
 
-- Sửa dependency management trong parent Maven POM và cấu hình Java 21/Lombok.
-- Chuẩn hóa `ApiResponse`, timestamp UTC và validation error response.
-- Cung cấp `BaseEntity`, business exception và global exception handler.
-- Khai báo exchange/routing key RabbitMQ trong `AppConstants`.
-- Cung cấp `EventEnvelope` dùng chung cho giao tiếp bất đồng bộ.
+## Yêu cầu
 
-### Yêu cầu môi trường
+- Java 21 trở lên; bytecode luôn compile với `--release 21`.
+- Maven 3.9 trở lên, hoặc Maven Wrapper đi kèm repository.
+- Docker Engine với Compose v2 nếu cần PostgreSQL/RabbitMQ cục bộ.
 
-- JDK 21 (`java -version`).
-- Maven 3.9+ (`mvn -version`), hoặc Maven tương thích với Spring Boot 3.
-- Git để lấy đúng branch này.
+Maven Enforcer kiểm tra phiên bản Java/Maven trong mọi module. CI sử dụng Temurin 21.
 
-### Cài đặt
+## Build và kiểm thử
 
 ```bash
-git clone <repository-url>
-cd careflow
-git switch feature/dangkhoii/common-foundation
-mvn -pl careflow-common -am clean install
+./mvnw -pl careflow-common -am clean test
+./mvnw clean verify
 ```
 
-Lệnh trên build parent project, chạy test và cài `careflow-common` vào Maven local để
-các service khác có thể dùng chung DTO, exception, constant và event contract.
+Common test suite bao phủ:
 
-### Sử dụng trong service khác
+- JSON/status contract của `ApiResponse`.
+- Entity equality, stable hash code và audit lifecycle.
+- Event metadata validation.
+- Error detail masking.
+- Correlation-ID propagation/sanitization.
+- Auto-configuration trong servlet consumer context.
 
-Khai báo dependency trong `pom.xml` của service:
+## Sử dụng trong service
 
 ```xml
 <dependency>
@@ -47,90 +58,204 @@ Khai báo dependency trong `pom.xml` của service:
 </dependency>
 ```
 
-Ví dụ tạo response thống nhất:
+Không cần thêm `@ComponentScan("com.careflow.common")`. File
+`AutoConfiguration.imports` tự đăng ký `GlobalExceptionHandler` và
+`CorrelationIdFilter` khi consumer là servlet web application. Consumer vẫn có thể
+override bằng bean cùng type.
+
+## HTTP response contract
+
+### Success output
+
+Input Java:
 
 ```java
-return ApiResponse.success("Thành công", data);
+ApiResponse.success("Thành công", data);
+ApiResponse.created("Đã tạo", data);
+ApiResponse.of(202, "Đã tiếp nhận", data);
 ```
 
-Event RabbitMQ phải tuân theo envelope dùng chung:
+Output JSON:
 
 ```json
 {
-  "eventId": "<uuid>",
-  "eventType": "MyEvent",
+  "status": 200,
+  "message": "Thành công",
+  "data": {},
+  "timestamp": "2026-07-20T17:00:00Z"
+}
+```
+
+Status ngoài khoảng `100..599` bị từ chối. `ApiResponse.error` chỉ chấp nhận status
+`4xx` hoặc `5xx`, tránh body báo lỗi nhưng HTTP status lại thành công.
+
+### Error output
+
+```json
+{
+  "status": 400,
+  "message": "Validation failed",
+  "data": {
+    "code": "VALIDATION_FAILED",
+    "path": "/api/patients",
+    "correlationId": "request-123",
+    "violations": [
+      {"field": "email", "message": "must be a well-formed email address"}
+    ]
+  },
+  "timestamp": "2026-07-20T17:00:00Z"
+}
+```
+
+Handler mặc định hỗ trợ:
+
+| Exception | HTTP | Code |
+|---|---:|---|
+| `ResourceNotFoundException` | 404 | `RESOURCE_NOT_FOUND` |
+| `BusinessException` | 4xx/5xx do service khai báo | Code nghiệp vụ |
+| Bean/constraint validation | 400 | `VALIDATION_FAILED` |
+| Body JSON sai | 400 | `MALFORMED_REQUEST` |
+| Thiếu/sai parameter, header, multipart part | 400 | `INVALID_REQUEST` |
+| Upload quá lớn | 413 | `PAYLOAD_TOO_LARGE` |
+| Media type không hỗ trợ | 415 | `UNSUPPORTED_MEDIA_TYPE` |
+| Method không hỗ trợ | 405 | `METHOD_NOT_ALLOWED` |
+| Exception chưa xử lý | 500 | `INTERNAL_ERROR` |
+
+Lỗi `500` được log server-side cùng correlation ID nhưng response không chứa message,
+SQL, credential hay stack trace nội bộ.
+
+Business error có code ổn định:
+
+```java
+throw new BusinessException(
+    409,
+    "USERNAME_EXISTS",
+    "Username already exists"
+);
+```
+
+## Correlation ID
+
+Client có thể gửi:
+
+```http
+X-Correlation-Id: mobile-request-123
+```
+
+Chỉ giá trị `[A-Za-z0-9._-]`, tối đa 128 ký tự được chấp nhận. Giá trị thiếu hoặc
+không an toàn được thay bằng UUID. ID được:
+
+- trả lại trong response header;
+- lưu trong request attribute;
+- đưa vào MDC với key `correlationId`;
+- gắn vào mọi error response.
+
+`X-User-Id` và `X-User-Role` chỉ là tên header thống nhất; common foundation không
+tự coi chúng là trusted identity. Việc xác thực và loại header giả mạo thuộc API
+Gateway/service security layer.
+
+## Event contract
+
+Tạo event bằng factory:
+
+```java
+EventEnvelope event = EventEnvelope.create(
+    "AppointmentCreated",
+    1,
+    appointmentId,
+    0,
+    "appointment-service",
+    correlationId,
+    objectMapper.valueToTree(payload)
+);
+```
+
+Output:
+
+```json
+{
+  "eventId": "842a1071-c719-4a16-bbe2-bb18961b81b7",
+  "eventType": "AppointmentCreated",
   "eventVersion": 1,
-  "aggregateId": "<uuid>",
-  "aggregateVersion": 1,
-  "occurredAt": "2026-07-19T10:00:00Z",
-  "producer": "service-name",
-  "correlationId": "<correlation-id>",
+  "aggregateId": "b2cd77c5-f7ed-49d4-a5a9-4b686c808492",
+  "aggregateVersion": 0,
+  "occurredAt": "2026-07-20T17:00:00Z",
+  "producer": "appointment-service",
+  "correlationId": "mobile-request-123",
   "payload": {}
 }
 ```
 
-### Chạy kiểm thử
+Các ID, timestamp, producer, correlation ID và payload không được null; string không
+được blank; `eventVersion >= 1` và `aggregateVersion >= 0`. Factory tự sinh
+`eventId` và `occurredAt`.
+
+Consumer vẫn phải triển khai idempotency theo `eventId`, retry/DLQ và transactional
+outbox ở service sở hữu dữ liệu.
+
+## JPA base entity
+
+```java
+@Entity
+public class Patient extends BaseEntity {
+}
+```
+
+`BaseEntity` cung cấp:
+
+- UUID primary key.
+- UTC `createdAt` và `updatedAt` bằng JPA lifecycle callbacks.
+- `@Version` để chống lost update.
+- Equality chỉ đúng khi hai entity cùng type có cùng non-null ID.
+- Hash code ổn định trước và sau persist.
+
+Schema của entity kế thừa phải có cột `version BIGINT NOT NULL`. Khi áp dụng common
+foundation vào database đã tồn tại, hãy thêm cột bằng Flyway trước khi bật
+`ddl-auto=validate`.
+
+## Infrastructure cục bộ
 
 ```bash
-mvn -pl careflow-common -am test
+cp .env.example .env
+docker compose -f docker-compose.infra.yml up -d
+docker compose -f docker-compose.infra.yml ps
 ```
 
-Module common là thư viện, không phải ứng dụng Spring Boot độc lập nên không có port
-và không chạy bằng `spring-boot:run`.
+Compose khởi chạy PostgreSQL 16 và RabbitMQ Management với healthcheck, persistent
+volume và restart policy. Password là biến bắt buộc; không có credential production
+hard-code. RabbitMQ dùng user `careflow` thay cho `guest` để service trong container
+khác có thể kết nối.
 
-Branch này nên được review/merge vào `develop` trước các branch service của Người A.
+Các service đọc `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_USER` và
+`RABBITMQ_PASSWORD`; mặc định local tương thích với `.env.example`. Hãy thay toàn bộ
+password mặc định ở môi trường dùng chung hoặc production.
 
-## Tổng quan
-
-CareFlow là hệ thống quản lý quy trình khám bệnh tại bệnh viện công, xây dựng theo kiến trúc Microservices. Hệ thống hỗ trợ:
-
-- **Bệnh nhân** (Mobile App): Đăng ký khám, theo dõi hàng đợi, nhận thông báo, xem toa thuốc
-- **Bác sỹ** (Web App): Tra cứu hồ sơ, chẩn bệnh, kê toa, ChatBot AI gợi ý phác đồ
-- **Hệ thống** (Core): Quản lý hàng đợi đa độ ưu tiên, xác thực, thông báo real-time
-
-## Kiến trúc
-
-```
-Mobile App (Flutter)  ──┐
-                        ├──▶ API Gateway ──▶ Microservices ──▶ PostgreSQL
-Web App (React)       ──┘         │                │
-                            Eureka Server     RabbitMQ
+```bash
+docker compose -f docker-compose.infra.yml down
 ```
 
-## Tech Stack
+Thêm `-v` chỉ khi chủ động muốn xóa toàn bộ dữ liệu local.
 
-| Layer | Công nghệ |
-|-------|-----------|
-| Backend | Spring Boot 3, Java 21 |
-| Mobile | Flutter |
-| Web | React + Vite |
-| Database | PostgreSQL |
-| Message Broker | RabbitMQ |
-| Service Discovery | Spring Cloud Eureka |
-| API Gateway | Spring Cloud Gateway |
-| Container | Docker + Docker Compose |
+## CI và build reproducibility
 
-## Services
+- Maven Wrapper khóa Maven `3.9.9`.
+- GitHub Actions chạy `clean verify` bằng Temurin 21.
+- Compose được validate trong CI.
+- Maven compiler dùng `release=21`.
+- JAR timestamp được cố định để hỗ trợ reproducible build.
 
-| Service | Trạng thái |
-|---------|------------|
-| API Gateway | 🔧 Planned |
-| Identity & Auth | 🔧 Planned |
-| Patient Service | 🔧 Planned |
-| Appointment Service | 🔧 Planned |
-| Queue Management ⭐ | 🔧 Planned |
-| Notification Service | 🔧 Planned |
-| Doctor Consultation | 🔧 Planned |
-| Prescription Service | 🔧 Planned |
-| EMR Service | 🔧 Planned |
-| Laboratory Order | 🔧 Mock |
-| Analytics Service | 🔧 Mock |
-| AI Clinical Assistant | 🔧 Mock |
+## Giới hạn kiến trúc
 
-## Tài liệu
+Common foundation không chứa JWT/security policy, business DTO của từng bounded
+context, database repository hoặc RabbitMQ publisher/consumer implementation. Các
+thành phần này phải thuộc service sở hữu nghiệp vụ để tránh biến shared library
+thành distributed monolith.
 
-- [Implementation Plan](docs/implementation_plan.md)
+Nếu hệ thống bổ sung consumer không dùng Spring hoặc mở rộng mạnh sang WebFlux, nên
+tách artifact thành `common-contracts`, `common-web-starter` và `common-jpa` trong
+một major-version migration có kiểm soát.
 
-## Team
+## Tài liệu liên quan
 
-Đề tài thực tập tốt nghiệp — PTIT
+- [Implementation plan](docs/implementation_plan.md)
+- [Git workflow](docs/git-workflow.md)

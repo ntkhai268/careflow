@@ -1,0 +1,29 @@
+name: Java CI
+
+on:
+  push:
+    branches: [main, develop, "feature/**"]
+  pull_request:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+      - name: Verify all Maven modules
+        run: ./mvnw --batch-mode --no-transfer-progress clean verify
+      - name: Validate infrastructure Compose file
+        env:
+          POSTGRES_PASSWORD: ci-postgres-password
+          RABBITMQ_PASSWORD: ci-rabbitmq-password
+        run: docker compose -f docker-compose.infra.yml config --quiet
