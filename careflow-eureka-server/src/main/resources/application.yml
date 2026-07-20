@@ -1,13 +1,36 @@
 server:
-  port: 8761
+  port: ${SERVER_PORT:8761}
+  shutdown: graceful
 
 spring:
   application:
     name: eureka-server
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  security:
+    user:
+      name: ${EUREKA_USERNAME:careflow}
+      password: ${EUREKA_PASSWORD:careflow}
 
 eureka:
+  instance:
+    hostname: ${EUREKA_HOSTNAME:localhost}
   client:
     register-with-eureka: false
     fetch-registry: false
+    service-url:
+      defaultZone: "${EUREKA_PEER_URL:http://${EUREKA_USERNAME:careflow}:${EUREKA_PASSWORD:careflow}@${EUREKA_HOSTNAME:localhost}:${SERVER_PORT:8761}/eureka/}"
   server:
     wait-time-in-ms-when-sync-empty: 0
+    enable-self-preservation: ${EUREKA_SELF_PRESERVATION:true}
+
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: when_authorized
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus

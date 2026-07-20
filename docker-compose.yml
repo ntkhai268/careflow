@@ -1,28 +1,46 @@
+x-app-defaults: &app-defaults
+  restart: unless-stopped
+  init: true
+  read_only: true
+  tmpfs:
+    - /tmp
+  security_opt:
+    - no-new-privileges:true
+  networks:
+    - careflow-backend
+
 services:
   postgres:
     image: postgres:16-alpine
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: careflow
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
+      POSTGRES_USER: ${POSTGRES_USER:-careflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
     ports:
-      - "5432:5432"
+      - "${BIND_ADDRESS:-127.0.0.1}:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U careflow"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-careflow} -d postgres"]
       interval: 5s
       timeout: 3s
       retries: 20
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - careflow-backend
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
+    restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: careflow
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-careflow}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-careflow}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${BIND_ADDRESS:-127.0.0.1}:5672:5672"
+      - "${BIND_ADDRESS:-127.0.0.1}:15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
@@ -30,33 +48,46 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - careflow-backend
 
   eureka-server:
+    <<: *app-defaults
     build:
       context: .
       args:
         MODULE: careflow-eureka-server
+    environment:
+      EUREKA_HOSTNAME: eureka-server
+      EUREKA_USERNAME: ${EUREKA_USERNAME:?EUREKA_USERNAME must be set}
+      EUREKA_PASSWORD: ${EUREKA_PASSWORD:?EUREKA_PASSWORD must be set}
+      EUREKA_PEER_URL: "http://${EUREKA_USERNAME}:${EUREKA_PASSWORD}@eureka-server:8761/eureka/"
     ports:
-      - "8761:8761"
+      - "${BIND_ADDRESS:-127.0.0.1}:8761:8761"
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8761/"]
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8761/actuator/health/readiness"]
       interval: 5s
       timeout: 3s
       retries: 30
+      start_period: 15s
 
   identity-service:
+    <<: *app-defaults
     build:
       context: .
       args:
         MODULE: careflow-identity-service
     environment:
-      IDENTITY_DB_URL: jdbc:postgresql://postgres:5432/careflow_identity
-      IDENTITY_DB_USERNAME: careflow
-      IDENTITY_DB_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
+      DB_URL: jdbc:postgresql://postgres:5432/careflow_identity
+      DB_USERNAME: ${POSTGRES_USER:-careflow}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
       RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USERNAME: careflow
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-careflow}
-      EUREKA_URL: http://eureka-server:8761/eureka/
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-careflow}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      EUREKA_URL: "http://${EUREKA_USERNAME}:${EUREKA_PASSWORD}@eureka-server:8761/eureka/"
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
     depends_on:
       postgres:
@@ -65,22 +96,29 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
   queue-service:
+    <<: *app-defaults
     build:
       context: .
       args:
         MODULE: careflow-queue-service
     environment:
-      QUEUE_DB_URL: jdbc:postgresql://postgres:5432/careflow_queue
-      QUEUE_DB_USERNAME: careflow
-      QUEUE_DB_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
+      DB_URL: jdbc:postgresql://postgres:5432/careflow_queue
+      DB_USERNAME: ${POSTGRES_USER:-careflow}
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
       RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USERNAME: careflow
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-careflow}
-      EUREKA_URL: http://eureka-server:8761/eureka/
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-careflow}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      EUREKA_URL: "http://${EUREKA_USERNAME}:${EUREKA_PASSWORD}@eureka-server:8761/eureka/"
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
-      QUEUE_BUSINESS_ZONE: Asia/Ho_Chi_Minh
+      QUEUE_BUSINESS_ZONE: ${QUEUE_BUSINESS_ZONE:-Asia/Ho_Chi_Minh}
     depends_on:
       postgres:
         condition: service_healthy
@@ -88,17 +126,24 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8084/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
 
   notification-service:
+    <<: *app-defaults
     build:
       context: .
       args:
         MODULE: careflow-notification-service
     environment:
       RABBITMQ_HOST: rabbitmq
-      RABBITMQ_USERNAME: careflow
-      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-careflow}
-      EUREKA_URL: http://eureka-server:8761/eureka/
+      RABBITMQ_USERNAME: ${RABBITMQ_USERNAME:-careflow}
+      RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      EUREKA_URL: "http://${EUREKA_USERNAME}:${EUREKA_PASSWORD}@eureka-server:8761/eureka/"
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:5173}
     depends_on:
@@ -106,27 +151,44 @@ services:
         condition: service_healthy
       eureka-server:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8085/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
   api-gateway:
+    <<: *app-defaults
     build:
       context: .
       args:
         MODULE: careflow-api-gateway
     environment:
-      EUREKA_URL: http://eureka-server:8761/eureka/
+      EUREKA_URL: "http://${EUREKA_USERNAME}:${EUREKA_PASSWORD}@eureka-server:8761/eureka/"
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
     ports:
-      - "8080:8080"
+      - "${BIND_ADDRESS:-127.0.0.1}:8080:8080"
     depends_on:
       eureka-server:
         condition: service_healthy
       identity-service:
-        condition: service_started
+        condition: service_healthy
       queue-service:
-        condition: service_started
+        condition: service_healthy
       notification-service:
-        condition: service_started
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
 
 volumes:
   postgres_data:
   rabbitmq_data:
+
+networks:
+  careflow-backend:
+    driver: bridge

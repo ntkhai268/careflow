@@ -20,6 +20,13 @@
             <groupId>com.careflow</groupId>
             <artifactId>careflow-common</artifactId>
             <version>${project.version}</version>
+            <exclusions>
+                <!-- Notification is stateless; do not inherit JPA/DataSource auto-configuration. -->
+                <exclusion>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-starter-data-jpa</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <!-- Spring Boot Starters -->

@@ -1,38 +1,52 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
-    container_name: careflow-postgres
+    restart: unless-stopped
     environment:
-      POSTGRES_USER: careflow
-      POSTGRES_PASSWORD: careflow
+      POSTGRES_USER: ${POSTGRES_USER:-careflow}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}
     ports:
-      - "5432:5432"
+      - "${BIND_ADDRESS:-127.0.0.1}:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
+      - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-careflow} -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
     networks:
-      - careflow-network
+      - careflow-backend
 
   rabbitmq:
     image: rabbitmq:3-management-alpine
-    container_name: careflow-rabbitmq
+    restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USERNAME:-careflow}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:?RABBITMQ_PASSWORD must be set}
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "${BIND_ADDRESS:-127.0.0.1}:5672:5672"
+      - "${BIND_ADDRESS:-127.0.0.1}:15672:15672"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
     networks:
-      - careflow-network
+      - careflow-backend
 
 volumes:
   postgres_data:
   rabbitmq_data:
 
 networks:
-  careflow-network:
+  careflow-backend:
     driver: bridge

@@ -4,3 +4,9 @@
 **/target
 **/.DS_Store
 *.log
+*.md
+.env*
+.gitignore
+docker-compose*.yml
+docs
+scripts
