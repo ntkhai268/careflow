@@ -26,11 +26,14 @@ public class AuthService {
     private final UserRepository users;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final RefreshTokenService refreshTokens;
 
-    public AuthService(UserRepository users, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public AuthService(UserRepository users, PasswordEncoder passwordEncoder, JwtService jwtService,
+                       RefreshTokenService refreshTokens) {
         this.users = users;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.refreshTokens = refreshTokens;
     }
 
     @Transactional
@@ -86,7 +89,17 @@ public class AuthService {
         user.setLockedUntil(null);
         user.setLastLoginAt(now);
         users.save(user);
-        return new LoginResponse(jwtService.issue(user), "Bearer", jwtService.expirationSeconds(), UserResponse.from(user));
+        RefreshTokenService.IssuedRefreshToken refreshToken = refreshTokens.issue(user);
+        return tokenResponse(user, refreshToken.value(), refreshToken.expiresInSeconds());
+    }
+
+    public LoginResponse refresh(RefreshTokenRequest request) {
+        RefreshTokenService.RotatedRefreshToken refreshToken = refreshTokens.rotate(request.refreshToken());
+        return tokenResponse(refreshToken.user(), refreshToken.value(), refreshToken.expiresInSeconds());
+    }
+
+    public void logout(RefreshTokenRequest request) {
+        refreshTokens.revoke(request.refreshToken());
     }
 
     @Transactional(readOnly = true)
@@ -105,5 +118,15 @@ public class AuthService {
 
     private User requireUser(UUID id) {
         return users.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
+    }
+
+    private LoginResponse tokenResponse(User user, String refreshToken, long refreshExpiresInSeconds) {
+        return new LoginResponse(
+                jwtService.issue(user),
+                refreshToken,
+                "Bearer",
+                jwtService.expirationSeconds(),
+                refreshExpiresInSeconds,
+                UserResponse.from(user));
     }
 }

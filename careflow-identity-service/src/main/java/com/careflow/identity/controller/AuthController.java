@@ -35,6 +35,17 @@ public class AuthController {
         return ApiResponse.success("Đăng nhập thành công", authService.login(request));
     }
 
+    @PostMapping("/refresh")
+    public ApiResponse<LoginResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+        return ApiResponse.success("Làm mới token thành công", authService.refresh(request));
+    }
+
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
+        authService.logout(request);
+        return ApiResponse.<Void>success("Đăng xuất thành công", null);
+    }
+
     @GetMapping("/me")
     public ApiResponse<UserResponse> me(@RequestHeader(AppConstants.HEADER_USER_ID) UUID userId) {
         return ApiResponse.success(authService.me(userId));

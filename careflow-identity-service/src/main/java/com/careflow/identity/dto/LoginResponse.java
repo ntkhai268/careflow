@@ -1,4 +1,10 @@
 package com.careflow.identity.dto;
 
-public record LoginResponse(String accessToken, String tokenType, long expiresInSeconds, UserResponse user) {
+public record LoginResponse(
+        String accessToken,
+        String refreshToken,
+        String tokenType,
+        long expiresInSeconds,
+        long refreshTokenExpiresInSeconds,
+        UserResponse user) {
 }

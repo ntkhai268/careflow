@@ -24,11 +24,12 @@ class AuthServiceTest {
     @Mock UserRepository users;
     @Mock PasswordEncoder passwordEncoder;
     @Mock JwtService jwtService;
+    @Mock RefreshTokenService refreshTokens;
     AuthService service;
 
     @BeforeEach
     void setUp() {
-        service = new AuthService(users, passwordEncoder, jwtService);
+        service = new AuthService(users, passwordEncoder, jwtService, refreshTokens);
     }
 
     @Test
@@ -80,12 +81,38 @@ class AuthServiceTest {
         when(passwordEncoder.matches("correct", "hash")).thenReturn(true);
         when(jwtService.issue(user)).thenReturn("jwt");
         when(jwtService.expirationSeconds()).thenReturn(86400L);
+        when(refreshTokens.issue(user))
+                .thenReturn(new RefreshTokenService.IssuedRefreshToken("refresh", 2592000L));
 
         LoginResponse response = service.login(new LoginRequest("patient", "correct"));
 
         assertThat(response.accessToken()).isEqualTo("jwt");
+        assertThat(response.refreshToken()).isEqualTo("refresh");
+        assertThat(response.refreshTokenExpiresInSeconds()).isEqualTo(2592000L);
         assertThat(user.getFailedLoginAttempts()).isZero();
         assertThat(user.getLastLoginAt()).isNotNull();
+    }
+
+    @Test
+    void refreshRotatesTokenAndReturnsNewTokenPair() {
+        User user = activeUser();
+        when(refreshTokens.rotate("old-refresh"))
+                .thenReturn(new RefreshTokenService.RotatedRefreshToken(user, "new-refresh", 2592000L));
+        when(jwtService.issue(user)).thenReturn("new-jwt");
+        when(jwtService.expirationSeconds()).thenReturn(86400L);
+
+        LoginResponse response = service.refresh(new RefreshTokenRequest("old-refresh"));
+
+        assertThat(response.accessToken()).isEqualTo("new-jwt");
+        assertThat(response.refreshToken()).isEqualTo("new-refresh");
+        verify(refreshTokens).rotate("old-refresh");
+    }
+
+    @Test
+    void logoutRevokesRefreshToken() {
+        service.logout(new RefreshTokenRequest("refresh"));
+
+        verify(refreshTokens).revoke("refresh");
     }
 
     private User activeUser() {

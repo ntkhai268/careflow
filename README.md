@@ -9,11 +9,12 @@ Branch: `feature/dangkhoii/identity-service` · Port: `8081` · Database: `caref
 ### Chức năng
 
 - Đăng ký tài khoản công khai với role cố định `PATIENT`.
-- Đăng nhập bằng username/email, mã hóa mật khẩu BCrypt và cấp JWT.
+- Đăng nhập bằng username/email, mã hóa mật khẩu BCrypt và cấp access/refresh token.
+- Xoay refresh token khi làm mới phiên, hỗ trợ thu hồi khi đăng xuất và phát hiện token bị tái sử dụng.
 - Khóa tài khoản tạm thời 15 phút sau 5 lần đăng nhập sai.
 - Xem tài khoản hiện tại và cho phép Admin cập nhật trạng thái tài khoản.
 - Mock eKYC bằng API upload ảnh CCCD.
-- Flyway migration cho schema `identity.users`.
+- Flyway migration cho schema `identity.users` và `identity.refresh_tokens`.
 
 ### API chính
 
@@ -21,6 +22,8 @@ Branch: `feature/dangkhoii/identity-service` · Port: `8081` · Database: `caref
 |---|---|---|
 | `POST` | `/api/auth/register` | Public |
 | `POST` | `/api/auth/login` | Public |
+| `POST` | `/api/auth/refresh` | Public |
+| `POST` | `/api/auth/logout` | Public |
 | `GET` | `/api/auth/me` | Authenticated |
 | `POST` | `/api/auth/ekyc` | Authenticated |
 | `PATCH` | `/api/users/{id}/status` | ADMIN |
@@ -56,7 +59,8 @@ Có thể ghi đè bằng các biến:
 | `IDENTITY_DB_PASSWORD` | `careflow` | Database password |
 | `EUREKA_URL` | `http://localhost:8761/eureka/` | Eureka Server |
 | `JWT_SECRET` | Bắt buộc | Secret ký JWT |
-| `JWT_EXPIRATION_MS` | `86400000` | Thời hạn token (ms) |
+| `JWT_EXPIRATION_MS` | `86400000` | Thời hạn access token (ms) |
+| `JWT_REFRESH_EXPIRATION_MS` | `2592000000` | Thời hạn refresh token (ms, mặc định 30 ngày) |
 
 ### Hướng dẫn sử dụng
 
@@ -93,6 +97,23 @@ curl http://localhost:8080/api/auth/me \
 curl -X POST http://localhost:8080/api/auth/ekyc \
   -H 'Authorization: Bearer <ACCESS_TOKEN>' \
   -F 'image=@/absolute/path/to/cccd.jpg'
+```
+
+Khi access token hết hạn, gửi refresh token nhận được từ `/login` để lấy một cặp
+token mới. Refresh token cũ sẽ bị thu hồi ngay sau lần sử dụng này:
+
+```bash
+curl -X POST http://localhost:8081/api/auth/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"<REFRESH_TOKEN>"}'
+```
+
+Đăng xuất và thu hồi refresh token hiện tại:
+
+```bash
+curl -X POST http://localhost:8081/api/auth/logout \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"<REFRESH_TOKEN>"}'
 ```
 
 Không gửi trực tiếp `X-User-Id`/`X-User-Role` từ client; API Gateway sẽ xác minh JWT
