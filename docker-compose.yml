@@ -1,103 +1,248 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: careflow
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql:ro
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U careflow -d postgres"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-    restart: unless-stopped
-    networks: [careflow-network]
-
-  eureka-server:
+  # ==================== SERVICE DISCOVERY ====================
+  careflow-eureka-server:
     build:
       context: .
-      args:
-        MODULE: careflow-eureka-server
+      dockerfile: careflow-eureka-server/Dockerfile
+    container_name: careflow-eureka-server
     ports:
       - "8761:8761"
+    networks:
+      - careflow-net
     healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8761/"]
-      interval: 5s
-      timeout: 3s
-      retries: 30
-    read_only: true
-    tmpfs: [/tmp]
-    init: true
-    mem_limit: 512m
-    restart: unless-stopped
-    networks: [careflow-network]
-
-  identity-service:
-    build:
-      context: .
-      args:
-        MODULE: careflow-identity-service
-    environment:
-      IDENTITY_DB_URL: jdbc:postgresql://postgres:5432/careflow_identity
-      IDENTITY_DB_USERNAME: careflow
-      IDENTITY_DB_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
-      EUREKA_URL: http://eureka-server:8761/eureka/
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
-    ports:
-      - "8081:8081"
-    depends_on:
-      postgres:
-        condition: service_healthy
-      eureka-server:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "wget", "-qO-", "http://localhost:8761/actuator/health"]
       interval: 10s
-      timeout: 3s
-      retries: 15
-      start_period: 20s
-    read_only: true
-    tmpfs: [/tmp]
-    init: true
-    mem_limit: 768m
+      timeout: 5s
+      retries: 5
     restart: unless-stopped
-    networks: [careflow-network]
 
-  api-gateway:
+  # ==================== API GATEWAY ====================
+  careflow-api-gateway:
     build:
       context: .
-      args:
-        MODULE: careflow-api-gateway
-    environment:
-      EUREKA_URL: http://eureka-server:8761/eureka/
-      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET must be set}
+      dockerfile: careflow-api-gateway/Dockerfile
+    container_name: careflow-api-gateway
     ports:
       - "8080:8080"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
     depends_on:
-      eureka-server:
+      careflow-eureka-server:
         condition: service_healthy
-      identity-service:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/actuator/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 15
-      start_period: 20s
-    read_only: true
-    tmpfs: [/tmp]
-    init: true
-    mem_limit: 512m
+    networks:
+      - careflow-net
     restart: unless-stopped
-    networks: [careflow-network]
 
-volumes:
-  postgres_data:
+  # ==================== BUSINESS SERVICES ====================
+  careflow-identity-service:
+    build:
+      context: .
+      dockerfile: careflow-identity-service/Dockerfile
+    container_name: careflow-identity-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://careflow-postgres:5432/careflow_identity
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-careflow}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
+      SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+    depends_on:
+      careflow-eureka-server:
+        condition: service_healthy
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
+  careflow-patient-service:
+    build:
+      context: .
+      dockerfile: careflow-patient-service/Dockerfile
+    container_name: careflow-patient-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://careflow-postgres:5432/careflow_patient
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-careflow}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
+      SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+      EUREKA_CLIENT_ENABLED: "true"
+    depends_on:
+      careflow-eureka-server:
+        condition: service_healthy
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
+  careflow-appointment-service:
+    build:
+      context: .
+      dockerfile: careflow-appointment-service/Dockerfile
+    container_name: careflow-appointment-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://careflow-postgres:5432/careflow_appointment
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-careflow}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
+      SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+    depends_on:
+      careflow-eureka-server:
+        condition: service_healthy
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
+  careflow-queue-service:
+    build:
+      context: .
+      dockerfile: careflow-queue-service/Dockerfile
+    container_name: careflow-queue-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://careflow-postgres:5432/careflow_queue
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-careflow}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
+      SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+    depends_on:
+      careflow-eureka-server:
+        condition: service_healthy
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
+  careflow-notification-service:
+    build:
+      context: .
+      dockerfile: careflow-notification-service/Dockerfile
+    container_name: careflow-notification-service
+    ports:
+      - "8085:8085"
+    environment:
+      SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+    depends_on:
+      careflow-eureka-server:
+        condition: service_healthy
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
+  careflow-consultation-service:
+    build:
+      context: .
+      dockerfile: careflow-consultation-service/Dockerfile
+    container_name: careflow-consultation-service
+    ports:
+      - "8086:8086"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://careflow-postgres:5432/careflow_consultation
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-careflow}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
+      SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+    depends_on:
+      careflow-eureka-server:
+        condition: service_healthy
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
+  careflow-prescription-service:
+    build:
+      context: .
+      dockerfile: careflow-prescription-service/Dockerfile
+    container_name: careflow-prescription-service
+    ports:
+      - "8087:8087"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://careflow-postgres:5432/careflow_prescription
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-careflow}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
+      SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+    depends_on:
+      careflow-eureka-server:
+        condition: service_healthy
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
+  careflow-emr-service:
+    build:
+      context: .
+      dockerfile: careflow-emr-service/Dockerfile
+    container_name: careflow-emr-service
+    ports:
+      - "8088:8088"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://careflow-postgres:5432/careflow_emr
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-careflow}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
+      SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+    depends_on:
+      careflow-eureka-server:
+        condition: service_healthy
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
+  careflow-lab-service:
+    build:
+      context: .
+      dockerfile: careflow-lab-service/Dockerfile
+    container_name: careflow-lab-service
+    ports:
+      - "8089:8089"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://careflow-postgres:5432/careflow_lab
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-careflow}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
+      SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+    depends_on:
+      careflow-eureka-server:
+        condition: service_healthy
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
+  careflow-ai-service:
+    build:
+      context: .
+      dockerfile: careflow-ai-service/Dockerfile
+    container_name: careflow-ai-service
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+    depends_on:
+      careflow-eureka-server:
+        condition: service_healthy
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
+  # ==================== FRONTEND ====================
+  careflow-doctor-web:
+    build:
+      context: ./frontend/doctor-web
+      dockerfile: Dockerfile
+    container_name: careflow-doctor-web
+    ports:
+      - "3000:3000"
+    networks:
+      - careflow-net
+    restart: unless-stopped
 
 networks:
-  careflow-network:
-    driver: bridge
+  careflow-net:
+    name: careflow-net
+    external: true
+
