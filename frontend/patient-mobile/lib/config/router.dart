@@ -8,6 +8,13 @@ import '../screens/main_shell.dart';
 import '../screens/profile/create_profile_screen.dart';
 import '../screens/profile/profile_detail_screen.dart';
 import '../screens/profile/edit_profile_screen.dart';
+import '../screens/appointment/booking_step1_screen.dart';
+import '../screens/appointment/booking_step2_screen.dart';
+import '../screens/appointment/booking_step3_screen.dart';
+import '../screens/appointment/booking_step4_screen.dart';
+import '../screens/appointment/appointment_detail_screen.dart';
+import '../models/patient.dart';
+import '../models/appointment.dart';
 
 /// GoRouter configuration for CareFlow app.
 final GoRouter appRouter = GoRouter(
@@ -46,6 +53,48 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/profile/:id/edit',
       builder: (context, state) => const EditProfileScreen(),
+    ),
+    // Booking flow routes
+    GoRoute(
+      path: '/booking/step1',
+      builder: (context, state) => const BookingStep1Screen(),
+    ),
+    GoRoute(
+      path: '/booking/step2',
+      builder: (context, state) {
+        final patient = state.extra as Patient;
+        return BookingStep2Screen(patient: patient);
+      },
+    ),
+    GoRoute(
+      path: '/booking/step3',
+      builder: (context, state) {
+        final data = state.extra as Map<String, dynamic>;
+        return BookingStep3Screen(
+          patient: data['patient'] as Patient,
+          department: data['department'] as Department,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/booking/step4',
+      builder: (context, state) {
+        final data = state.extra as Map<String, dynamic>;
+        return BookingStep4Screen(
+          patient: data['patient'] as Patient,
+          department: data['department'] as Department,
+          date: data['date'] as DateTime,
+          timeSlot: data['timeSlot'] as String,
+        );
+      },
+    ),
+    // Appointment detail
+    GoRoute(
+      path: '/appointment/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return AppointmentDetailScreen(appointmentId: id);
+      },
     ),
   ],
   errorBuilder: (context, state) => Scaffold(

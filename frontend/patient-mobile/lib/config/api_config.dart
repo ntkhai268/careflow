@@ -9,7 +9,8 @@ class ApiConfig {
 
   // Direct service URLs (bypass Gateway for dev)
   // TODO: In production, all traffic goes through API Gateway
-  static const String patientServiceUrl = 'http://10.0.2.2:8082';
+  static const String patientServiceUrl = 'http://localhost:8082';
+  static const String appointmentServiceUrl = 'http://localhost:8083';
 
   // Service-specific endpoints
   static const String authLogin = '/auth/login';
