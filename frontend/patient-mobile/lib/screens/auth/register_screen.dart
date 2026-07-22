@@ -6,7 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/careflow_button.dart';
 import '../../widgets/careflow_text_field.dart';
 
-/// Register screen with full name, email, phone, password.
+/// Register screen aligned with the Identity Service contract.
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
 
@@ -16,26 +16,22 @@ class RegisterScreen extends ConsumerStatefulWidget {
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _nameController = TextEditingController();
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
   final _emailFocus = FocusNode();
-  final _phoneFocus = FocusNode();
   final _passwordFocus = FocusNode();
   final _confirmPasswordFocus = FocusNode();
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
-    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     _emailFocus.dispose();
-    _phoneFocus.dispose();
     _passwordFocus.dispose();
     _confirmPasswordFocus.dispose();
     super.dispose();
@@ -43,10 +39,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   void _handleRegister() {
     if (_formKey.currentState?.validate() ?? false) {
-      ref.read(authProvider.notifier).register(
-            fullName: _nameController.text.trim(),
+      ref
+          .read(authProvider.notifier)
+          .register(
+            username: _usernameController.text.trim(),
             email: _emailController.text.trim(),
-            phone: _phoneController.text.trim(),
             password: _passwordController.text,
           );
     }
@@ -82,8 +79,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_rounded,
-              color: AppColors.textPrimary),
+          icon: const Icon(
+            Icons.arrow_back_ios_rounded,
+            color: AppColors.textPrimary,
+          ),
           onPressed: () => context.go('/login'),
         ),
       ),
@@ -116,17 +115,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Full Name
+                // Username
                 CareFlowTextField(
-                  label: 'Họ và tên',
-                  hint: 'Nhập họ và tên đầy đủ',
-                  controller: _nameController,
+                  label: 'Tên đăng nhập',
+                  hint: '3-50 ký tự: chữ, số, . _ -',
+                  controller: _usernameController,
                   prefixIcon: Icons.person_outlined,
                   textInputAction: TextInputAction.next,
                   onFieldSubmitted: (_) => _emailFocus.requestFocus(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập họ và tên';
+                      return 'Vui lòng nhập tên đăng nhập';
+                    }
+                    if (!RegExp(r'^[A-Za-z0-9._-]{3,50}$').hasMatch(value)) {
+                      return 'Tên đăng nhập không hợp lệ';
                     }
                     return null;
                   },
@@ -142,36 +144,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   prefixIcon: Icons.email_outlined,
                   focusNode: _emailFocus,
                   textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => _phoneFocus.requestFocus(),
+                  onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Vui lòng nhập email';
                     }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
+                    if (!RegExp(
+                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                    ).hasMatch(value)) {
                       return 'Email không hợp lệ';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-
-                // Phone
-                CareFlowTextField(
-                  label: 'Số điện thoại',
-                  hint: 'Nhập số điện thoại',
-                  controller: _phoneController,
-                  keyboardType: TextInputType.phone,
-                  prefixIcon: Icons.phone_outlined,
-                  focusNode: _phoneFocus,
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập số điện thoại';
-                    }
-                    if (value.length < 10) {
-                      return 'Số điện thoại phải có ít nhất 10 chữ số';
                     }
                     return null;
                   },
@@ -181,20 +162,22 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 // Password
                 CareFlowTextField(
                   label: 'Mật khẩu',
-                  hint: 'Nhập mật khẩu (tối thiểu 6 ký tự)',
+                  hint: 'Tối thiểu 8 ký tự, đủ hoa/thường/số/ký tự đặc biệt',
                   controller: _passwordController,
                   obscureText: true,
                   prefixIcon: Icons.lock_outlined,
                   focusNode: _passwordFocus,
                   textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) =>
-                      _confirmPasswordFocus.requestFocus(),
+                  onFieldSubmitted: (_) => _confirmPasswordFocus.requestFocus(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Vui lòng nhập mật khẩu';
                     }
-                    if (value.length < 6) {
-                      return 'Mật khẩu phải có ít nhất 6 ký tự';
+                    if (value.length < 8 ||
+                        !RegExp(
+                          r'(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])',
+                        ).hasMatch(value)) {
+                      return 'Mật khẩu chưa đạt yêu cầu bảo mật';
                     }
                     return null;
                   },
