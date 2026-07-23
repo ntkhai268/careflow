@@ -11,9 +11,13 @@ public final class AppConstants {
 
     // RabbitMQ routing keys
     public static final String RK_APPOINTMENT_CREATED = "appointment.created";
+    public static final String RK_APPOINTMENT_CANCELLED = "appointment.cancelled";
     public static final String RK_QUEUE_NUMBER_ASSIGNED = "queue.number.assigned";
+    public static final String RK_QUEUE_CHECKED_IN = "queue.checked-in";
     public static final String RK_QUEUE_CALLED = "queue.called";
     public static final String RK_QUEUE_MISSED = "queue.missed";
+    public static final String RK_QUEUE_COMPLETED = "queue.completed";
+    public static final String RK_QUEUE_NEAR_TURN = "queue.near-turn";
     public static final String RK_PRESCRIPTION_CREATED = "prescription.created";
     public static final String RK_NOTIFICATION_SEND = "notification.send";
 
@@ -21,4 +25,8 @@ public final class AppConstants {
     public static final String ROLE_PATIENT = "PATIENT";
     public static final String ROLE_DOCTOR = "DOCTOR";
     public static final String ROLE_ADMIN = "ADMIN";
+
+    public static final String HEADER_USER_ID = "X-User-Id";
+    public static final String HEADER_USER_ROLE = "X-User-Role";
+    public static final String HEADER_CORRELATION_ID = "X-Correlation-Id";
 }
