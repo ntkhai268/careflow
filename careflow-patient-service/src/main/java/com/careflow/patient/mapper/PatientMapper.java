@@ -20,8 +20,8 @@ public class PatientMapper {
                 .occupation(patient.getOccupation())
                 .address(patient.getAddress())
                 .avatarUrl(patient.getAvatarUrl())
-                .createdAt(patient.getCreatedAt())
-                .updatedAt(patient.getUpdatedAt())
+                .createdAt(patient.getCreatedAt() != null ? java.time.LocalDateTime.ofInstant(patient.getCreatedAt(), java.time.ZoneId.systemDefault()) : null)
+                .updatedAt(patient.getUpdatedAt() != null ? java.time.LocalDateTime.ofInstant(patient.getUpdatedAt(), java.time.ZoneId.systemDefault()) : null)
                 .build();
     }
 }

@@ -27,10 +27,13 @@ sleep 12
 # 4. Start API Gateway (Port 8080)
 run_service "api-gateway" "mvn -pl careflow-api-gateway spring-boot:run"
 
-# 5. Start Consultation Service (Port 8086)
+# 5. Start Identity Service (Port 8081)
+run_service "identity-service" "mvn -pl careflow-identity-service spring-boot:run"
+
+# 6. Start Consultation Service (Port 8086)
 run_service "consultation-service" "mvn -pl careflow-consultation-service spring-boot:run"
 
-# 6. Start Prescription Service (Port 8087)
+# 7. Start Prescription Service (Port 8087)
 run_service "prescription-service" "mvn -pl careflow-prescription-service spring-boot:run"
 
 # 7. Start Frontend Web (Port 3000)

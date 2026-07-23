@@ -81,5 +81,5 @@ management:
         include: health,info,gateway
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:careflow_super_secret_jwt_key_2026_very_long_secret_key_minimum_256_bits}
   issuer: careflow-identity

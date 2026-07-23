@@ -8,10 +8,17 @@ import com.careflow.prescription.model.Prescription;
 import com.careflow.prescription.model.PrescriptionItem;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Component
 public class PrescriptionMapper {
+
+    private LocalDateTime toLocalDateTime(Instant instant) {
+        return instant != null ? LocalDateTime.ofInstant(instant, ZoneId.systemDefault()) : null;
+    }
 
     public PrescriptionResponse toResponse(Prescription entity) {
         List<PrescriptionItemResponse> itemResponses = entity.getItems().stream()
@@ -28,8 +35,8 @@ public class PrescriptionMapper {
                 .followUpDate(entity.getFollowUpDate())
                 .status(entity.getStatus())
                 .items(itemResponses)
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(toLocalDateTime(entity.getCreatedAt()))
+                .updatedAt(toLocalDateTime(entity.getUpdatedAt()))
                 .build();
     }
 
@@ -45,7 +52,7 @@ public class PrescriptionMapper {
                 .duration(item.getDuration())
                 .quantity(item.getQuantity())
                 .notes(item.getNotes())
-                .createdAt(item.getCreatedAt())
+                .createdAt(toLocalDateTime(item.getCreatedAt()))
                 .build();
     }
 
