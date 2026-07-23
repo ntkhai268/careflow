@@ -5,9 +5,9 @@ spring:
   application:
     name: consultation-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/careflow_consultation
-    username: careflow
-    password: careflow
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:100.116.233.60}:${DB_PORT:5432}/careflow_consultation}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:careflow}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASS:careflow}}
   jpa:
     hibernate:
       ddl-auto: update

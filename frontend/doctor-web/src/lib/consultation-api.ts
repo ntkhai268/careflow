@@ -1,0 +1,67 @@
+import { api } from "./api";
+
+export interface CreateConsultationRequest {
+  appointmentId?: string;
+  patientId: string;
+  doctorId: string;
+}
+
+export interface UpdateConsultationRequest {
+  temperature?: number;
+  bloodPressure?: string;
+  heartRate?: number;
+  spo2?: number;
+  height?: number;
+  weight?: number;
+  symptoms?: string;
+  clinicalNotes?: string;
+  icd10Code?: string;
+  icd10Name?: string;
+  diagnosis?: string;
+}
+
+export interface ConsultationResponse {
+  id: string;
+  appointmentId?: string;
+  patientId: string;
+  doctorId: string;
+  temperature?: number;
+  bloodPressure?: string;
+  heartRate?: number;
+  spo2?: number;
+  height?: number;
+  weight?: number;
+  symptoms?: string;
+  clinicalNotes?: string;
+  icd10Code?: string;
+  icd10Name?: string;
+  diagnosis?: string;
+  status: "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  startedAt: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const consultationApi = {
+  createConsultation: (data: CreateConsultationRequest) => 
+    api.post<ConsultationResponse>("/api/consultations", data),
+    
+  getConsultation: (id: string) => 
+    api.get<ConsultationResponse>(`/api/consultations/${id}`),
+    
+  updateConsultation: (id: string, data: UpdateConsultationRequest) => 
+    api.put<ConsultationResponse>(`/api/consultations/${id}`, data),
+    
+  completeConsultation: (id: string) => 
+    api.put<ConsultationResponse>(`/api/consultations/${id}/complete`, {}),
+    
+  getByPatient: (patientId: string) => 
+    api.get<ConsultationResponse[]>(`/api/consultations/patient/${patientId}`),
+    
+  getByDoctor: (doctorId: string) => 
+    api.get<ConsultationResponse[]>(`/api/consultations/doctor/${doctorId}`),
+    
+  getTodayByDoctor: (doctorId: string) => 
+    api.get<ConsultationResponse[]>(`/api/consultations/doctor/${doctorId}/today`),
+};

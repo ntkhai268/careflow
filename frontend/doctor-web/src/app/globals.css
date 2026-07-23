@@ -1,26 +1,156 @@
 @import "tailwindcss";
 
+/* ==========================================
+   CareFlow Doctor Web — Design System
+   ========================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Primary — Medical Purple (SJD Style) */
+  --primary-50: #F3E8F5;
+  --primary-100: #e6cceb;
+  --primary-200: #cc99d6;
+  --primary-300: #b366c2;
+  --primary-400: #9933ad;
+  --primary-500: #6E2582;
+  --primary-600: #6E2582;
+  --primary-700: #561A66;
+  --primary-800: #3e124d;
+  --primary-900: #2b1d30;
+
+  /* Accent Cam (SJD Style) */
+  --accent: #E05A17;
+
+  /* Neutral (Warm Eggplant tones) */
+  --gray-50: #F8F6F9;
+  --gray-100: #f1eff2;
+  --gray-200: #EAE4EC;
+  --gray-300: #d6cbd9;
+  --gray-400: #B8AFBC;
+  --gray-500: #938799;
+  --gray-600: #6A5C70;
+  --gray-700: #4e4054;
+  --gray-800: #2B1D30;
+  --gray-900: #1b1020;
+  --gray-950: #0d0612;
+
+  /* Semantic */
+  --success: #1F9D55;
+  --success-light: #e8f5ed;
+  --warning: #E8A427;
+  --warning-light: #fdf6e9;
+  --danger: #D9381E;
+  --danger-light: #fdebeb;
+  --info: #2F80ED;
+  --info-light: #eaf2fd;
+
+  /* Light theme */
+  --background: #F8F6F9;
+  --foreground: #2B1D30;
+  --card-bg: #ffffff;
+  --card-border: #EAE4EC;
+  --sidebar-bg: #2B1D30;
+  --sidebar-text: #6A5C70;
+  --sidebar-active: #6E2582;
+  --sidebar-hover: #1E1322;
+  --topbar-bg: #ffffff;
+  --topbar-border: #EAE4EC;
+  --input-bg: #ffffff;
+  --input-border: #EAE4EC;
+  --input-focus: #6E2582;
+}
+
+.dark {
+  --background: #0d0612;
+  --foreground: #f1eff2;
+  --card-bg: #1b1020;
+  --card-border: #2b1d30;
+  --sidebar-bg: #0d0612;
+  --sidebar-text: #938799;
+  --sidebar-active: #6E2582;
+  --sidebar-hover: #07030a;
+  --topbar-bg: #1b1020;
+  --topbar-border: #2b1d30;
+  --input-bg: #2b1d30;
+  --input-border: #4e4054;
+  --input-focus: #6E2582;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-sidebar-bg: var(--sidebar-bg);
+  --color-sidebar-text: var(--sidebar-text);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-topbar-bg: var(--topbar-bg);
+  --color-topbar-border: var(--topbar-border);
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+  --color-input-focus: var(--input-focus);
+  --color-primary-50: var(--primary-50);
+  --color-primary-100: var(--primary-100);
+  --color-primary-200: var(--primary-200);
+  --color-primary-300: var(--primary-300);
+  --color-primary-400: var(--primary-400);
+  --color-primary-500: var(--primary-500);
+  --color-primary-600: var(--primary-600);
+  --color-primary-700: var(--primary-700);
+  --color-primary-800: var(--primary-800);
+  --color-primary-900: var(--primary-900);
+  --color-accent: var(--accent);
+  --color-success: var(--success);
+  --color-success-light: var(--success-light);
+  --color-warning: var(--warning);
+  --color-warning-light: var(--warning-light);
+  --color-danger: var(--danger);
+  --color-danger-light: var(--danger-light);
+  --color-info: var(--info);
+  --color-info-light: var(--info-light);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Force completely flat and square corners for a practical layout */
+  --radius-xs: 0px;
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+  --radius-xl: 0px;
+  --radius-2xl: 0px;
+  --radius-3xl: 0px;
+  --radius-full: 9999px; /* keeps circles/avatars circular if needed */
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans, "Inter", system-ui, sans-serif);
+}
+
+/* Smooth transitions for dark mode */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--gray-300);
+  border-radius: 3px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--gray-700);
+}
+
+/* Focus ring utility */
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-500);
 }
