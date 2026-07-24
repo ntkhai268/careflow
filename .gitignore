@@ -41,8 +41,8 @@ desktop.ini
 # Word docs (báo cáo gốc)
 *.docx
 
-# Service-level DB design docs (DBML files)
-docs_*/
+# Service-level DB design docs
+#.planning/
 
 # tài liệu cá nhân của duvnguyen
 /docs

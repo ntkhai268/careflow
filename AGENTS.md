@@ -41,3 +41,23 @@ This project is indexed by GitNexus as **careflow** (1581 symbols, 3142 relation
 | Index, status, clean, wiki CLI commands | `.claude/skills/gitnexus/gitnexus-cli/SKILL.md` |
 
 <!-- gitnexus:end -->
+
+# Project Rules - CareFlow
+
+## Git & Work Branch Strategy
+- **Prescription Feat Scope:** Only code and edit features related to Prescription on the `feature/vi/prescription-service` branch. 
+- **Isolation of Features:** Keep consultation-service and prescription-service cleanly implemented. Do not implement Lab Orders or EMR logic directly on this branch. Mock external dependencies when necessary, and document them clearly.
+- **Commit discipline:** Ensure focused commits so that changes can be easily cherry-picked or reverted without affecting other services.
+- **Branch Scope & No Push Main**: Chỉ lập trình và push code lên nhánh cá nhân của service đó (`feature/...`), **TUYỆT ĐỐI KHÔNG PUSH LÊN NHÁNH `main`**.
+- **Pull Main Before Coding**: Trước khi lập trình bất kỳ tính năng mới nào, **BẮT BUỘC** phải pull code mới nhất từ `main` về (`git pull origin main`) để tránh xung đột và code bị outdated.
+- **English Commit Messages**: All git commit messages **MUST be written in English** (e.g. `feat: ...`, `fix: ...`).
+
+## DB Schema & Planning Rules
+- **Đồng bộ DBML**: Mỗi khi lập trình xong một tính năng có bổ sung/chỉnh sửa DB Schema (JPA Entity, Flyway Migration, bảng/cột mới), **BẮT BUỘC** phải cập nhật lại sơ đồ DBML tương ứng tại thư mục `.planning/<service_name>/<service_name>-db.dbml`.
+- **Thư mục Planning**: Tất cả tài liệu thiết kế, logic nghiệp vụ, và file `.dbml` phải được quản lý tập trung trong thư mục `.planning/` ở gốc dự án phân theo từng service:
+  - `.planning/emr-service/`
+  - `.planning/consultation-service/`
+  - `.planning/prescription-service/`
+  - `.planning/identity-service/`
+- **Remote DB Default**: Mọi cấu hình kết nối DB phải ưu tiên chạy với Remote Server (`100.116.233.60:5432`). File `application-remote.yml` và `.env` không được commit lên Git.
+

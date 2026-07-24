@@ -28,13 +28,13 @@ sleep 12
 run_service "api-gateway" "mvn -pl careflow-api-gateway spring-boot:run"
 
 # 5. Start Identity Service (Port 8081)
-run_service "identity-service" "mvn -pl careflow-identity-service spring-boot:run"
+run_service "identity-service" "mvn -pl careflow-identity-service spring-boot:run -Dspring-boot.run.profiles=remote"
 
 # 6. Start Consultation Service (Port 8086)
-run_service "consultation-service" "mvn -pl careflow-consultation-service spring-boot:run"
+run_service "consultation-service" "mvn -pl careflow-consultation-service spring-boot:run -Dspring-boot.run.profiles=remote"
 
 # 7. Start Prescription Service (Port 8087)
-run_service "prescription-service" "mvn -pl careflow-prescription-service spring-boot:run"
+run_service "prescription-service" "mvn -pl careflow-prescription-service spring-boot:run -Dspring-boot.run.profiles=remote"
 
 # 7. Start Frontend Web (Port 3000)
 echo "--> Launching Doctor Web Frontend..."
@@ -66,13 +66,14 @@ echo "================================================================="
 echo " All services have been launched!                                "
 echo " - Eureka Server:         http://localhost:8761                  "
 echo " - API Gateway:           http://localhost:8080                  "
+echo " - Identity Service:      http://localhost:8081                  "
 echo " - Doctor Web Frontend:   http://localhost:3000                  "
 echo "================================================================="
 echo " Tailing logs in real-time. Press [Ctrl + C] to STOP all services. "
 echo "================================================================="
 
 # Create empty log files if they don't exist yet to avoid tail errors
-touch logs_eureka-server.log logs_api-gateway.log logs_consultation-service.log logs_prescription-service.log logs_frontend.log
+touch logs_eureka-server.log logs_api-gateway.log logs_identity-service.log logs_consultation-service.log logs_prescription-service.log logs_frontend.log
 
 # Tail all logs
-tail -f logs_eureka-server.log -f logs_api-gateway.log -f logs_consultation-service.log -f logs_prescription-service.log -f logs_frontend.log
+tail -f logs_eureka-server.log -f logs_api-gateway.log -f logs_identity-service.log -f logs_consultation-service.log -f logs_prescription-service.log -f logs_frontend.log

@@ -21,38 +21,22 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock doctor accounts for development
-const MOCK_DOCTORS: Record<string, User> = {
-  "an@careflow.vn": {
-    id: "d0000001-0000-0000-0000-000000000001",
-    fullName: "BS. Nguyễn Văn An",
-    email: "an@careflow.vn",
-    role: "DOCTOR",
-    department: "Nội tổng quát",
-  },
-  "binh@careflow.vn": {
-    id: "d0000001-0000-0000-0000-000000000002",
-    fullName: "BS. Trần Thị Bình",
-    email: "binh@careflow.vn",
-    role: "DOCTOR",
-    department: "Nhi khoa",
-  },
-  "cuong@careflow.vn": {
-    id: "d0000001-0000-0000-0000-000000000003",
-    fullName: "BS. Lê Hoàng Cường",
-    email: "cuong@careflow.vn",
-    role: "DOCTOR",
-    department: "Ngoại tổng quát",
-  },
-};
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // Check localStorage for existing session
+    // Purge legacy mock token if present
+    const savedToken = localStorage.getItem("careflow_token");
+    if (savedToken && savedToken.startsWith("mock_jwt_")) {
+      localStorage.removeItem("careflow_user");
+      localStorage.removeItem("careflow_token");
+      setUser(null);
+      setIsLoading(false);
+      return;
+    }
+
     const savedUser = localStorage.getItem("careflow_user");
     if (savedUser) {
       try {
@@ -66,24 +50,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    // Simulate network delay
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+    const response = await fetch(`${BASE_URL}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ usernameOrEmail: email, password: password }),
+    });
 
-    // Mock authentication — accept any password for listed doctors
-    const doctor = MOCK_DOCTORS[email];
-    if (!doctor) {
-      throw new Error("Email không tồn tại trong hệ thống");
+    const resJson = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(resJson.message || `Đăng nhập thất bại (${response.status})`);
     }
 
-    if (!password || password.length < 3) {
-      throw new Error("Mật khẩu không hợp lệ");
+    if (resJson.data && resJson.data.accessToken) {
+      const realUser = resJson.data.user;
+      const doctorUser: User = {
+        id: realUser.id,
+        fullName: realUser.title || realUser.username || "Bác Sĩ",
+        email: realUser.email,
+        role: realUser.role,
+        department: realUser.title?.includes("-") ? realUser.title.split("-")[1].trim() : "Chuyên khoa",
+      };
+
+      localStorage.setItem("careflow_token", resJson.data.accessToken);
+      localStorage.setItem("careflow_user", JSON.stringify(doctorUser));
+      setUser(doctorUser);
+      router.push("/dashboard");
+      return;
     }
 
-    // Save mock token and user
-    localStorage.setItem("careflow_token", `mock_jwt_${Date.now()}`);
-    localStorage.setItem("careflow_user", JSON.stringify(doctor));
-    setUser(doctor);
-    router.push("/dashboard");
+    throw new Error("Không nhận được Access Token từ Identity Service");
   }, [router]);
 
   const logout = useCallback(() => {

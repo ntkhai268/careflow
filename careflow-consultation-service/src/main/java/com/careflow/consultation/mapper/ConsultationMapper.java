@@ -5,8 +5,16 @@ import com.careflow.consultation.dto.response.ConsultationResponse;
 import com.careflow.consultation.model.Consultation;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+
 @Component
 public class ConsultationMapper {
+
+    private LocalDateTime toLocalDateTime(Instant instant) {
+        return instant != null ? LocalDateTime.ofInstant(instant, ZoneId.systemDefault()) : null;
+    }
 
     public ConsultationResponse toResponse(Consultation entity) {
         return ConsultationResponse.builder()
@@ -28,8 +36,8 @@ public class ConsultationMapper {
                 .status(entity.getStatus())
                 .startedAt(entity.getStartedAt())
                 .completedAt(entity.getCompletedAt())
-                .createdAt(entity.getCreatedAt())
-                .updatedAt(entity.getUpdatedAt())
+                .createdAt(toLocalDateTime(entity.getCreatedAt()))
+                .updatedAt(toLocalDateTime(entity.getUpdatedAt()))
                 .build();
     }
 

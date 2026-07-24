@@ -1,0 +1,23 @@
+// CareFlow - EMR (Electronic Medical Record) Service Database Design
+// Schema: careflow_emr
+
+Project CareFlow_EMR_Service {
+  database_type: 'PostgreSQL'
+  note: 'Database Schema cho dịch vụ Bệnh án Điện tử liên thông (CareFlow EMR Service)'
+}
+
+Table medical_records {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bệnh nhân (Patient Service)']
+  record_number varchar(50) [not null, unique, note: 'Mã số hồ sơ bệnh án']
+  blood_type varchar(10) [note: 'Nhóm máu (A, B, AB, O, Rh+, Rh-)']
+  allergies text [note: 'Tiền sử dị ứng (thuốc, thức ăn,...)']
+  medical_history text [note: 'Tiền sử bệnh bản thân & gia đình']
+  created_at timestamptz [not null, note: 'Thời điểm tạo hồ sơ bệnh án']
+  updated_at timestamptz [not null, note: 'Thời điểm cập nhật gần nhất']
+
+  indexes {
+    patient_id [name: 'idx_emr_patient', note: 'Index tra cứu hồ sơ theo bệnh nhân']
+    record_number [name: 'uk_emr_record_number', unique, note: 'Index Unique mã hồ sơ']
+  }
+}
