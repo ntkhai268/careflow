@@ -5,7 +5,7 @@ spring:
   application:
     name: appointment-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/careflow_appointment
+    url: jdbc:postgresql://100.116.233.60:5432/careflow_appointment
     username: careflow
     password: careflow
   jpa:
@@ -14,20 +14,21 @@ spring:
     show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
   rabbitmq:
-    host: localhost
+    host: 100.116.233.60
     port: 5672
-    username: guest
-    password: guest
+    username: admin
+    password: admin123
   threads:
     virtual:
       enabled: true
 
 eureka:
   client:
+    enabled: ${EUREKA_CLIENT_ENABLED:false}
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
 
