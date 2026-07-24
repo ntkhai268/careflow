@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/patient.dart';
+import '../providers/auth_provider.dart';
 import '../services/patient_service.dart';
 
 /// State for patient data
@@ -29,36 +30,48 @@ class PatientState {
   }
 }
 
-/// Provider managing patient profile state
+/// Provider managing patient profile state.
+/// Uses the authenticated user's real userId from authProvider.
 class PatientNotifier extends StateNotifier<PatientState> {
   final PatientService _service;
+  final Ref _ref;
 
-  // TODO: Replace with actual userId from Auth when available
-  static const String _tempUserId = '550e8400-e29b-41d4-a716-446655440000';
+  PatientNotifier(this._service, this._ref) : super(const PatientState());
 
-  PatientNotifier(this._service) : super(const PatientState());
+  /// Get the authenticated user's userId from AuthProvider.
+  String? get _userId => _ref.read(authProvider).userId;
 
-  String get currentUserId => _tempUserId;
-
-  /// Load patient profile for current user
+  /// Load patient profile for the currently authenticated user.
   Future<void> loadPatient() async {
+    final userId = _userId;
+    if (userId == null || userId.isEmpty) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Chưa đăng nhập. Vui lòng đăng nhập lại.',
+      );
+      return;
+    }
+
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final patient = await _service.getPatientByUserId(_tempUserId);
+      final patient = await _service.getPatientByUserId(userId);
       state = PatientState(patient: patient, isLoading: false);
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        errorMessage: 'Không thể tải hồ sơ: ${e.toString()}',
+        errorMessage: 'Không thể tải hồ sơ: ${_parseError(e)}',
       );
     }
   }
 
-  /// Create a new patient profile
+  /// Create a new patient profile linked to the current user.
   Future<bool> createPatient(Map<String, dynamic> data) async {
+    final userId = _userId;
+    if (userId == null || userId.isEmpty) return false;
+
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      data['userId'] = _tempUserId;
+      data['userId'] = userId;
       final patient = await _service.createPatient(data);
       state = PatientState(patient: patient, isLoading: false);
       return true;
@@ -116,5 +129,5 @@ class PatientNotifier extends StateNotifier<PatientState> {
 final patientProvider =
     StateNotifierProvider<PatientNotifier, PatientState>((ref) {
   final service = ref.watch(patientServiceProvider);
-  return PatientNotifier(service);
+  return PatientNotifier(service, ref);
 });

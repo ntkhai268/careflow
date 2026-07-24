@@ -2,34 +2,29 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/api_config.dart';
 import '../models/patient.dart';
+import 'api_service.dart';
 
-/// Service for communicating with the Patient Service backend API.
+/// Service for communicating with the Patient Service via API Gateway.
+/// Uses the shared ApiService (with JWT interceptor) so all requests
+/// carry the authenticated user's Bearer token automatically.
 class PatientService {
-  final Dio _dio;
+  final ApiService _apiService;
 
-  PatientService()
-      : _dio = Dio(
-          BaseOptions(
-            baseUrl: ApiConfig.patientServiceUrl,
-            connectTimeout: const Duration(seconds: 15),
-            receiveTimeout: const Duration(seconds: 15),
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-          ),
-        );
+  PatientService(this._apiService);
 
   /// Create a new patient profile
   Future<Patient> createPatient(Map<String, dynamic> data) async {
-    final response = await _dio.post('/api/patients', data: data);
+    final response = await _apiService.post(
+      ApiConfig.patients,
+      data: data,
+    );
     final apiResponse = response.data as Map<String, dynamic>;
     return Patient.fromJson(apiResponse['data'] as Map<String, dynamic>);
   }
 
   /// Get patient by ID
   Future<Patient> getPatientById(String id) async {
-    final response = await _dio.get('/api/patients/$id');
+    final response = await _apiService.get('${ApiConfig.patients}/$id');
     final apiResponse = response.data as Map<String, dynamic>;
     return Patient.fromJson(apiResponse['data'] as Map<String, dynamic>);
   }
@@ -37,7 +32,8 @@ class PatientService {
   /// Get patient by user ID
   Future<Patient?> getPatientByUserId(String userId) async {
     try {
-      final response = await _dio.get('/api/patients/user/$userId');
+      final response =
+          await _apiService.get('${ApiConfig.patients}/user/$userId');
       final apiResponse = response.data as Map<String, dynamic>;
       if (apiResponse['data'] == null) return null;
       return Patient.fromJson(apiResponse['data'] as Map<String, dynamic>);
@@ -49,18 +45,23 @@ class PatientService {
 
   /// Update patient profile
   Future<Patient> updatePatient(String id, Map<String, dynamic> data) async {
-    final response = await _dio.put('/api/patients/$id', data: data);
+    final response = await _apiService.put(
+      '${ApiConfig.patients}/$id',
+      data: data,
+    );
     final apiResponse = response.data as Map<String, dynamic>;
     return Patient.fromJson(apiResponse['data'] as Map<String, dynamic>);
   }
 
   /// Delete patient profile
   Future<void> deletePatient(String id) async {
-    await _dio.delete('/api/patients/$id');
+    await _apiService.delete('${ApiConfig.patients}/$id');
   }
 }
 
-/// Global provider for PatientService
+/// Global provider for PatientService — uses the shared ApiService
+/// so JWT Bearer token is automatically attached to all requests.
 final patientServiceProvider = Provider<PatientService>((ref) {
-  return PatientService();
+  final apiService = ref.read(apiServiceProvider);
+  return PatientService(apiService);
 });

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
 import '../../models/patient.dart';
+import '../../providers/auth_provider.dart';
 import '../../services/patient_service.dart';
 
 /// Booking Step 1: Choose patient profile
@@ -27,11 +28,12 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
     setState(() { _isLoading = true; });
     try {
       final service = ref.read(patientServiceProvider);
-      // TODO: Use real userId from auth
-      // For now, try to get patient by a test userId
-      // We'll show all patients the user has created
-      final patient = await service.getPatientByUserId(
-          '00000000-0000-0000-0000-000000000001');
+      final userId = ref.read(authProvider).userId;
+      if (userId == null || userId.isEmpty) {
+        setState(() { _patients = []; _isLoading = false; });
+        return;
+      }
+      final patient = await service.getPatientByUserId(userId);
       if (patient != null) {
         setState(() { _patients = [patient]; _isLoading = false; });
       } else {

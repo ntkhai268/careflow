@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
 import '../../models/appointment.dart';
+import '../../providers/patient_provider.dart';
 import '../../services/appointment_service.dart';
 import 'package:intl/intl.dart';
 
@@ -19,15 +20,24 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
   bool _isLoading = false;
   String? _error;
 
-  // TODO: Replace with real patientId from auth
-  // For now we'll show all appointments (need to fetch by patient)
-  static const String _tempPatientId = '';
-
   @override
   void initState() {
     super.initState();
-    // Don't auto-load since we don't have patientId yet
-    // Appointments will be shown after booking
+    // Load appointments once we have patient data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _tryLoadAppointments();
+    });
+  }
+
+  /// Get the current patient ID from patientProvider.
+  String? get _patientId => ref.read(patientProvider).patient?.id;
+
+  /// Try loading appointments if patient profile is available.
+  void _tryLoadAppointments() {
+    final patientId = _patientId;
+    if (patientId != null && patientId.isNotEmpty) {
+      _loadAppointments(patientId);
+    }
   }
 
   Future<void> _loadAppointments(String patientId) async {
@@ -44,6 +54,10 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch patient state to re-load appointments when patient changes
+    final patientState = ref.watch(patientProvider);
+    final currentPatientId = patientState.patient?.id;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -55,9 +69,9 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
           : _isLoading
               ? const Center(child: CircularProgressIndicator())
               : _error != null
-                  ? _buildErrorState()
+                  ? _buildErrorState(currentPatientId)
                   : RefreshIndicator(
-                      onRefresh: () => _loadAppointments(_tempPatientId),
+                      onRefresh: () => _loadAppointments(currentPatientId ?? ''),
                       child: _buildAppointmentList(),
                     ),
       floatingActionButton: FloatingActionButton.extended(
@@ -66,6 +80,9 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
           if (result != null && result is String) {
             // result is patientId — reload appointments for that patient
             _loadAppointments(result);
+          } else {
+            // Reload with current patient
+            _tryLoadAppointments();
           }
         },
         backgroundColor: AppColors.primary,
@@ -124,7 +141,7 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(String? patientId) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -134,7 +151,7 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
           Text('Đã xảy ra lỗi', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           TextButton(
-            onPressed: () => _loadAppointments(_tempPatientId),
+            onPressed: () => _loadAppointments(patientId ?? ''),
             child: const Text('Thử lại'),
           ),
         ],
