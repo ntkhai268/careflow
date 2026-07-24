@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **careflow** (1581 symbols, 3142 relationships, 89 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **careflow** (1589 symbols, 3160 relationships, 89 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -60,4 +60,3 @@ This project is indexed by GitNexus as **careflow** (1581 symbols, 3142 relation
   - `.planning/prescription-service/`
   - `.planning/identity-service/`
 - **Remote DB Default**: Mọi cấu hình kết nối DB phải ưu tiên chạy với Remote Server (`100.116.233.60:5432`). File `application-remote.yml` và `.env` không được commit lên Git.
-

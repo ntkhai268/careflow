@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { consultationApi } from "@/lib/consultation-api";
@@ -75,6 +75,26 @@ export default function DashboardPage() {
   const router = useRouter();
   const [isCalling, setIsCalling] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [todayCompletedCount, setTodayCompletedCount] = useState<number>(MOCK_STATS.completed);
+  const [todayTotalCount, setTodayTotalCount] = useState<number>(MOCK_STATS.totalToday);
+
+  useEffect(() => {
+    async function loadTodayStats() {
+      if (!user?.id) return;
+      try {
+        const res = await consultationApi.getTodayByDoctor(user.id);
+        const todayCons = res.data || [];
+        if (todayCons.length > 0) {
+          const completed = todayCons.filter(c => c.status === "COMPLETED").length;
+          setTodayCompletedCount(completed);
+          setTodayTotalCount(todayCons.length + MOCK_STATS.waiting);
+        }
+      } catch (err) {
+        console.log("Could not load today stats from API, using fallback", err);
+      }
+    }
+    loadTodayStats();
+  }, [user]);
 
   const handleCallPatient = async (patientId: string) => {
     if (!user) return;
@@ -100,7 +120,7 @@ export default function DashboardPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-[#2B1D30] tracking-tight">
-          Xin chào, {user?.fullName}
+          Xin chào, {user?.title || user?.username || "Bác sĩ"}
         </h1>
         <p className="mt-1 text-sm text-[#6A5C70]">
           Tổng quan hoạt động khám bệnh hôm nay
@@ -117,7 +137,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Tổng bệnh nhân hôm nay"
-          value={MOCK_STATS.totalToday}
+          value={todayTotalCount}
         />
         <StatCard
           label="Đang chờ khám"
@@ -125,7 +145,7 @@ export default function DashboardPage() {
         />
         <StatCard
           label="Đã khám xong"
-          value={MOCK_STATS.completed}
+          value={todayCompletedCount}
         />
         <StatCard
           label="Thời gian khám TB"

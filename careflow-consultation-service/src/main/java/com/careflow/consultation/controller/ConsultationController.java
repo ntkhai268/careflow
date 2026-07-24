@@ -35,6 +35,12 @@ public class ConsultationController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    @GetMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<String>> getConsultationStatus(@PathVariable UUID id) {
+        String status = consultationService.getConsultationStatus(id);
+        return ResponseEntity.ok(ApiResponse.success("Success", status));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<ConsultationResponse>> updateConsultation(
             @PathVariable UUID id,

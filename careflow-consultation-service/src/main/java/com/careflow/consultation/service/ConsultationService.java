@@ -1,5 +1,6 @@
 package com.careflow.consultation.service;
 
+import com.careflow.common.constants.AppConstants;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.common.exception.ResourceNotFoundException;
 import com.careflow.consultation.dto.request.CreateConsultationRequest;
@@ -11,6 +12,7 @@ import com.careflow.consultation.model.ConsultationStatus;
 import com.careflow.consultation.repository.ConsultationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ public class ConsultationService {
 
     private final ConsultationRepository consultationRepository;
     private final ConsultationMapper consultationMapper;
+    private final RabbitTemplate rabbitTemplate;
 
     /**
      * Tạo phiên khám mới — status mặc định là IN_PROGRESS.
@@ -57,6 +60,14 @@ public class ConsultationService {
     }
 
     /**
+     * Lấy trạng thái phiên khám dưới dạng String.
+     */
+    public String getConsultationStatus(UUID id) {
+        Consultation consultation = findConsultationOrThrow(id);
+        return consultation.getStatus().name();
+    }
+
+    /**
      * Cập nhật phiên khám (sinh hiệu, triệu chứng, chẩn đoán).
      * Chỉ cho phép cập nhật khi status = IN_PROGRESS.
      */
@@ -76,7 +87,7 @@ public class ConsultationService {
     }
 
     /**
-     * Hoàn tất phiên khám — chuyển status sang COMPLETED.
+     * Hoàn tất phiên khám — chuyển status sang COMPLETED và publish event RabbitMQ.
      */
     @Transactional
     public ConsultationResponse completeConsultation(UUID id) {
@@ -93,10 +104,21 @@ public class ConsultationService {
         log.info("Completed consultation {} — started: {}, completed: {}",
                 saved.getId(), saved.getStartedAt(), saved.getCompletedAt());
 
-        // TODO: Đồng bộ dữ liệu sang EMR Service khi EMR sẵn sàng
-        // TODO: Publish event cho Analytics Service (thời gian khám + ICD-10)
+        ConsultationResponse response = consultationMapper.toResponse(saved);
 
-        return consultationMapper.toResponse(saved);
+        // Publish event ConsultationCompleted lên RabbitMQ Broker
+        try {
+            rabbitTemplate.convertAndSend(
+                AppConstants.EXCHANGE_CONSULTATION,
+                AppConstants.RK_CONSULTATION_COMPLETED,
+                response
+            );
+            log.info("Published consultation.completed event for ID {}", saved.getId());
+        } catch (Exception e) {
+            log.warn("Failed to publish consultation.completed event for ID {}: {}", saved.getId(), e.getMessage());
+        }
+
+        return response;
     }
 
     /**

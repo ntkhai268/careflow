@@ -487,6 +487,23 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
+      {/* Locked Consultation Banner */}
+      {isConsultationLocked && (
+        <div className="border border-amber-300 bg-amber-50 p-4 text-amber-900 text-xs font-semibold flex items-center justify-between rounded-none shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-amber-700 uppercase tracking-wider text-[11px]">Đã khóa phiên khám</span>
+            <span>· Phiên khám này đã HOÀN TẤT. Hồ sơ bệnh án đã được lưu trữ an toàn và ở chế độ chỉ xem (Read-Only).</span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => router.push("/dashboard")}
+            className="px-3 py-1 bg-amber-800 text-white text-xs font-bold hover:bg-amber-900 rounded-none transition-all"
+          >
+            Về Bảng điều khiển
+          </button>
+        </div>
+      )}
+
       {/* Main two-column workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         
