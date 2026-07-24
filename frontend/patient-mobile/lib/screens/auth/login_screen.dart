@@ -6,7 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../widgets/careflow_button.dart';
 import '../../widgets/careflow_text_field.dart';
 
-/// Login screen with email and password.
+/// Login screen with username/email and password.
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
 
@@ -30,10 +30,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   void _handleLogin() {
     if (_formKey.currentState?.validate() ?? false) {
-      ref.read(authProvider.notifier).login(
-            _emailController.text.trim(),
-            _passwordController.text,
-          );
+      ref
+          .read(authProvider.notifier)
+          .login(_emailController.text.trim(), _passwordController.text);
     }
   }
 
@@ -141,10 +140,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Email
+                // Username or email
                 CareFlowTextField(
-                  label: 'Email',
-                  hint: 'Nhập email của bạn',
+                  label: 'Tên đăng nhập hoặc email',
+                  hint: 'Nhập tên đăng nhập hoặc email',
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
@@ -152,11 +151,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập email';
-                    }
-                    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$')
-                        .hasMatch(value)) {
-                      return 'Email không hợp lệ';
+                      return 'Vui lòng nhập tên đăng nhập hoặc email';
                     }
                     return null;
                   },
@@ -177,8 +172,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Vui lòng nhập mật khẩu';
                     }
-                    if (value.length < 6) {
-                      return 'Mật khẩu phải có ít nhất 6 ký tự';
+                    if (value.length < 8) {
+                      return 'Mật khẩu phải có ít nhất 8 ký tự';
                     }
                     return null;
                   },
