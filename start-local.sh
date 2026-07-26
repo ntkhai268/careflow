@@ -1,61 +1,63 @@
 #!/bin/bash
 
 echo "================================================================="
-echo "     CareFlow Ecosystem Services Starter (Connected Mode)        "
+echo "     CareFlow Ecosystem Services Starter (LOCAL Profile Mode)    "
 echo "================================================================="
 
-# 1. Check working directory
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd "$SCRIPT_DIR" || exit 1
+# Export local DB env vars
+export DB_HOST=localhost
+export DB_PORT=5432
+export DB_USERNAME=careflow
+export DB_PASSWORD=careflow
 
-echo "--> Infrastructure checks: assuming Postgres & RabbitMQ are running..."
+echo "--> Connecting to Local PostgreSQL at ${DB_HOST}:${DB_PORT} (User: ${DB_USERNAME})..."
 
 # Array to keep track of background service PIDs
 declare -a SERVICE_PIDS
 
-# 2. Helper to run mvn commands in background
+# Helper to run mvn commands in background
 run_service() {
     local service_name=$1
     local cmd=$2
-    echo "--> Launching $service_name..."
+    echo "--> Launching $service_name (Profile: local)..."
     eval "$cmd" > "logs_${service_name}.log" 2>&1 &
     SERVICE_PIDS+=($!)
 }
 
-# 3. Start Eureka Server (Port 8761)
+# 1. Start Eureka Server (Port 8761)
 run_service "eureka-server" "mvn -pl careflow-eureka-server spring-boot:run"
-echo "Waiting 12 seconds for Eureka Server to register..."
+echo "Waiting 12 seconds for Eureka Server to initialize..."
 sleep 12
 
-# 4. Start API Gateway (Port 8080)
-run_service "api-gateway" "mvn -pl careflow-api-gateway spring-boot:run"
+# 2. Start API Gateway (Port 8080)
+run_service "api-gateway" "mvn -pl careflow-api-gateway spring-boot:run -Dspring-boot.run.profiles=local"
 
-# 5. Start Identity Service (Port 8081)
-run_service "identity-service" "mvn -pl careflow-identity-service spring-boot:run -Dspring-boot.run.profiles=remote"
+# 3. Start Identity Service (Port 8081)
+run_service "identity-service" "mvn -pl careflow-identity-service spring-boot:run -Dspring-boot.run.profiles=local"
 
-# 6. Start Patient Service (Port 8082)
-run_service "patient-service" "mvn -pl careflow-patient-service spring-boot:run -Dspring-boot.run.profiles=remote"
+# 4. Start Patient Service (Port 8082)
+run_service "patient-service" "mvn -pl careflow-patient-service spring-boot:run -Dspring-boot.run.profiles=local"
 
-# 7. Start Appointment Service (Port 8083)
-run_service "appointment-service" "mvn -pl careflow-appointment-service spring-boot:run -Dspring-boot.run.profiles=remote"
+# 5. Start Appointment Service (Port 8083)
+run_service "appointment-service" "mvn -pl careflow-appointment-service spring-boot:run -Dspring-boot.run.profiles=local"
 
-# 8. Start Consultation Service (Port 8086)
-run_service "consultation-service" "mvn -pl careflow-consultation-service spring-boot:run -Dspring-boot.run.profiles=remote"
+# 6. Start Consultation Service (Port 8086)
+run_service "consultation-service" "mvn -pl careflow-consultation-service spring-boot:run -Dspring-boot.run.profiles=local"
 
-# 9. Start Prescription Service (Port 8087)
-run_service "prescription-service" "mvn -pl careflow-prescription-service spring-boot:run -Dspring-boot.run.profiles=remote"
+# 7. Start Prescription Service (Port 8087)
+run_service "prescription-service" "mvn -pl careflow-prescription-service spring-boot:run -Dspring-boot.run.profiles=local"
 
-# 10. Start Frontend Web (Port 3000)
+# 8. Start Frontend Web (Port 3000)
 echo "--> Launching Doctor Web Frontend..."
-if [ -d "frontend/doctor-web" ]; then
-    (cd frontend/doctor-web && npm run dev > "../../logs_frontend.log" 2>&1) &
-    SERVICE_PIDS+=($!)
-fi
+cd frontend/doctor-web
+npm run dev > ../../logs_frontend.log 2>&1 &
+SERVICE_PIDS+=($!)
+cd ../..
 
 # Cleanup function to FORCE KILL all started processes and Java/Node children on exit
 cleanup() {
     echo ""
-    echo "--> Stopping all CareFlow services and child processes..."
+    echo "--> Stopping all CareFlow Local services..."
     for pid in "${SERVICE_PIDS[@]}"; do
         pkill -9 -P "$pid" 2>/dev/null || true
         kill -9 "$pid" 2>/dev/null || true
@@ -63,7 +65,8 @@ cleanup() {
     pkill -9 -f "spring-boot:run" 2>/dev/null || true
     pkill -9 -f "careflow" 2>/dev/null || true
     pkill -9 -f "next-server" 2>/dev/null || true
-    echo "--> All CareFlow services stopped cleanly. Goodbye!"
+    killall -9 java node 2>/dev/null || true
+    echo "--> All CareFlow Local services stopped cleanly. Goodbye!"
     exit 0
 }
 
@@ -71,7 +74,7 @@ cleanup() {
 trap cleanup SIGINT SIGTERM EXIT
 
 echo "================================================================="
-echo " All services have been launched!                                "
+echo " All Local services have been launched!                          "
 echo " - Eureka Server:         http://localhost:8761                  "
 echo " - API Gateway:           http://localhost:8080                  "
 echo " - Identity Service:      http://localhost:8081                  "

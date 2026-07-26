@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **careflow** (1589 symbols, 3160 relationships, 89 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **careflow** (1938 symbols, 3892 relationships, 123 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -51,6 +51,7 @@ This project is indexed by GitNexus as **careflow** (1589 symbols, 3160 relation
 - **Branch Scope & No Push Main**: Chỉ lập trình và push code lên nhánh cá nhân của service đó (`feature/...`), **TUYỆT ĐỐI KHÔNG PUSH LÊN NHÁNH `main`**.
 - **Pull Main Before Coding**: Trước khi lập trình bất kỳ tính năng mới nào, **BẮT BUỘC** phải pull code mới nhất từ `main` về (`git pull origin main`) để tránh xung đột và code bị outdated.
 - **English Commit Messages**: All git commit messages **MUST be written in English** (e.g. `feat: ...`, `fix: ...`).
+- **No Unrequested Commits**: KHÔNG tự động thực hiện `git add` hay `git commit` trừ khi được người dùng chỉ định rõ ràng.
 
 ## DB Schema & Planning Rules
 - **Đồng bộ DBML**: Mỗi khi lập trình xong một tính năng có bổ sung/chỉnh sửa DB Schema (JPA Entity, Flyway Migration, bảng/cột mới), **BẮT BUỘC** phải cập nhật lại sơ đồ DBML tương ứng tại thư mục `.planning/<service_name>/<service_name>-db.dbml`.
@@ -60,3 +61,71 @@ This project is indexed by GitNexus as **careflow** (1589 symbols, 3160 relation
   - `.planning/prescription-service/`
   - `.planning/identity-service/`
 - **Remote DB Default**: Mọi cấu hình kết nối DB phải ưu tiên chạy với Remote Server (`100.116.233.60:5432`). File `application-remote.yml` và `.env` không được commit lên Git.
+
+---
+
+# Behavioral Guidelines (LLM Coding)
+
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.

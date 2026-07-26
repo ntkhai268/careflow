@@ -3,6 +3,7 @@ package com.careflow.consultation.controller;
 import com.careflow.common.dto.ApiResponse;
 import com.careflow.consultation.dto.request.CreateConsultationRequest;
 import com.careflow.consultation.dto.request.UpdateConsultationRequest;
+import com.careflow.consultation.dto.request.UpdateConsultationStatusRequest;
 import com.careflow.consultation.dto.response.ConsultationResponse;
 import com.careflow.consultation.service.ConsultationService;
 import jakarta.validation.Valid;
@@ -49,6 +50,14 @@ public class ConsultationController {
         return ResponseEntity.ok(ApiResponse.success("Consultation updated successfully", response));
     }
 
+    @PutMapping("/{id}/status")
+    public ResponseEntity<ApiResponse<ConsultationResponse>> updateStatus(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateConsultationStatusRequest request) {
+        ConsultationResponse response = consultationService.updateStatus(id, request);
+        return ResponseEntity.ok(ApiResponse.success("Consultation status updated successfully", response));
+    }
+
     @PutMapping("/{id}/complete")
     public ResponseEntity<ApiResponse<ConsultationResponse>> completeConsultation(@PathVariable UUID id) {
         ConsultationResponse response = consultationService.completeConsultation(id);
@@ -70,6 +79,12 @@ public class ConsultationController {
     @GetMapping("/doctor/{doctorId}/today")
     public ResponseEntity<ApiResponse<List<ConsultationResponse>>> getTodayByDoctor(@PathVariable UUID doctorId) {
         List<ConsultationResponse> responses = consultationService.getTodayConsultationsByDoctor(doctorId);
+        return ResponseEntity.ok(ApiResponse.success(responses));
+    }
+
+    @GetMapping("/appointment/{appointmentId}")
+    public ResponseEntity<ApiResponse<List<ConsultationResponse>>> getByAppointment(@PathVariable UUID appointmentId) {
+        List<ConsultationResponse> responses = consultationService.getConsultationsByAppointment(appointmentId);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 }

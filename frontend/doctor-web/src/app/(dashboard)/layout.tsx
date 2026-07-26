@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import Sidebar from "@/components/layout/Sidebar";
 import Topbar from "@/components/layout/Topbar";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import AiAssistantWidget from "@/components/AiAssistantWidget";
 
 export default function DashboardLayout({
   children,
@@ -13,6 +15,7 @@ export default function DashboardLayout({
 }) {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -22,8 +25,8 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600" />
+      <div className="flex h-screen items-center justify-center bg-[#F1F5F9]">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -31,14 +34,24 @@ export default function DashboardLayout({
   if (!isAuthenticated) return null;
 
   return (
-    <div className="flex h-screen bg-background">
-      <Sidebar />
-      <div className="ml-64 flex flex-1 flex-col overflow-hidden relative">
-        {/* Decorative Grid Background */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#2B1D3003_1px,transparent_1px),linear-gradient(to_bottom,#2B1D3003_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
-        
+    <div className="flex h-screen bg-[#F1F5F9]">
+      <Sidebar
+        isCollapsed={isCollapsed}
+        onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+      />
+      <div
+        className={`flex flex-1 flex-col overflow-hidden relative transition-all duration-300 ease-in-out ${
+          isCollapsed ? "ml-16" : "ml-64"
+        }`}
+      >
+        {/* Subtle decorative grid — light cyan tinted lines */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#6366F108_1px,transparent_1px),linear-gradient(to_bottom,#6366F108_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+
         <Topbar />
-        <main className="flex-1 overflow-y-auto p-6 relative z-10">{children}</main>
+        <main className="flex-1 overflow-y-auto p-6 pb-24 relative z-10">{children}</main>
+
+        {/* Floating AI Assistant Widget */}
+        <AiAssistantWidget />
       </div>
     </div>
   );

@@ -4,8 +4,8 @@
 /// Change to Mac Mini IP when deploying to home server.
 class ApiConfig {
   // TODO: Tối về nhà sửa thành IP Mac Mini (ví dụ: http://192.168.x.x:8080/api)
-  static const String baseUrl = 'http://localhost:8080/api';
-  static const String wsUrl = 'http://localhost:8080/ws';
+  static const String baseUrl = 'https://api.careflow-demo.online/api';
+  static const String wsUrl = 'https://api.careflow-demo.online/ws';
 
   // Service-specific endpoints
   static const String authLogin = '/auth/login';

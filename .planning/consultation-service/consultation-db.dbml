@@ -7,14 +7,18 @@ Project CareFlow_Consultation_Service {
 }
 
 Enum ConsultationStatus {
-  IN_PROGRESS [note: 'Đang khám bệnh']
+  IN_PROGRESS [note: 'Đang khám bệnh ban đầu']
+  AWAITING_CLS [note: 'Đã có chỉ định, chờ làm/kết quả cận lâm sàng']
+  AWAITING_REVIEW [note: 'Có kết quả CLS, chờ bác sĩ xem & kết luận']
+  READY_TO_COMPLETE [note: 'Đã đủ dữ liệu, sẵn sàng chốt ca khám']
   COMPLETED [note: 'Đã hoàn tất ca khám']
   CANCELLED [note: 'Đã hủy ca khám']
+  TRANSFERRED [note: 'Đã chuyển khoa / chuyển tuyến']
 }
 
 Table consultations {
   id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
-  appointment_id uuid [note: 'Khóa ngoại tham chiếu lịch hẹn (Appointment Service)']
+  appointment_id uuid [not null, note: 'Khóa ngoại bắt buộc tham chiếu lịch hẹn (Appointment Service)']
   patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bệnh nhân (Patient Service)']
   doctor_id uuid [not null, note: 'Khóa ngoại tham chiếu bác sĩ (Identity Service)']
 
@@ -36,7 +40,7 @@ Table consultations {
   diagnosis text [note: 'Chẩn đoán chi tiết của bác sĩ']
 
   // Trạng thái (Status)
-  status ConsultationStatus [not null, default: 'IN_PROGRESS', note: 'Trạng thái ca khám (IN_PROGRESS, COMPLETED, CANCELLED)']
+  status ConsultationStatus [not null, default: 'IN_PROGRESS', note: 'Trạng thái ca khám (IN_PROGRESS, AWAITING_CLS, AWAITING_REVIEW, READY_TO_COMPLETE, COMPLETED, CANCELLED, TRANSFERRED)']
   started_at timestamptz [note: 'Thời điểm bắt đầu ca khám']
   completed_at timestamptz [note: 'Thời điểm kết thúc ca khám']
 

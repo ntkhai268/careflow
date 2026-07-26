@@ -184,7 +184,7 @@ public class AppointmentService {
         // IN_PROGRESS → COMPLETED
         boolean valid = switch (current) {
             case PENDING -> next == AppointmentStatus.CONFIRMED || next == AppointmentStatus.CANCELLED;
-            case CONFIRMED -> next == AppointmentStatus.CHECKED_IN || next == AppointmentStatus.CANCELLED;
+            case CONFIRMED -> next == AppointmentStatus.CHECKED_IN || next == AppointmentStatus.IN_PROGRESS || next == AppointmentStatus.CANCELLED;
             case CHECKED_IN -> next == AppointmentStatus.IN_PROGRESS || next == AppointmentStatus.CANCELLED;
             case IN_PROGRESS -> next == AppointmentStatus.COMPLETED;
             case COMPLETED, CANCELLED -> false;

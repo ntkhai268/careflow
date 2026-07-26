@@ -52,37 +52,47 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
-    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
-    const response = await fetch(`${BASE_URL}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ usernameOrEmail: email, password: password }),
-    });
+    const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.careflow-demo.online";
+    const targetUrl = `${BASE_URL}/api/auth/login`;
+    console.log(`[AUTH DEBUG] Attempting login to: ${targetUrl}`, { email });
 
-    const resJson = await response.json().catch(() => ({}));
+    try {
+      const response = await fetch(targetUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ usernameOrEmail: email, password: password }),
+      });
 
-    if (!response.ok) {
-      throw new Error(resJson.message || `Đăng nhập thất bại (${response.status})`);
+      console.log(`[AUTH DEBUG] Response status: ${response.status}`, response);
+      const resJson = await response.json().catch(() => ({}));
+      console.log(`[AUTH DEBUG] Response JSON:`, resJson);
+
+      if (!response.ok) {
+        throw new Error(resJson.message || `Đăng nhập thất bại (${response.status})`);
+      }
+
+      if (resJson.data && resJson.data.accessToken) {
+        const realUser = resJson.data.user;
+        const doctorUser: User = {
+          id: realUser.id,
+          fullName: realUser.title || realUser.username || "Bác Sĩ",
+          email: realUser.email,
+          role: realUser.role,
+          department: realUser.title?.includes("-") ? realUser.title.split("-")[1].trim() : "Chuyên khoa",
+        };
+
+        localStorage.setItem("careflow_token", resJson.data.accessToken);
+        localStorage.setItem("careflow_user", JSON.stringify(doctorUser));
+        setUser(doctorUser);
+        router.push("/dashboard");
+        return;
+      }
+
+      throw new Error("Không nhận được Access Token từ Identity Service");
+    } catch (err: any) {
+      console.error(`[AUTH DEBUG] Login Error:`, err);
+      throw err;
     }
-
-    if (resJson.data && resJson.data.accessToken) {
-      const realUser = resJson.data.user;
-      const doctorUser: User = {
-        id: realUser.id,
-        fullName: realUser.title || realUser.username || "Bác Sĩ",
-        email: realUser.email,
-        role: realUser.role,
-        department: realUser.title?.includes("-") ? realUser.title.split("-")[1].trim() : "Chuyên khoa",
-      };
-
-      localStorage.setItem("careflow_token", resJson.data.accessToken);
-      localStorage.setItem("careflow_user", JSON.stringify(doctorUser));
-      setUser(doctorUser);
-      router.push("/dashboard");
-      return;
-    }
-
-    throw new Error("Không nhận được Access Token từ Identity Service");
   }, [router]);
 
   const logout = useCallback(() => {

@@ -6,9 +6,10 @@ interface ConfirmModalProps {
   isOpen: boolean;
   title: string;
   message: string;
+  children?: React.ReactNode;
   confirmText?: string;
   cancelText?: string;
-  variant?: "primary" | "warning" | "danger";
+  variant?: "primary" | "warning" | "danger" | "purple";
   onConfirm: () => void;
   onCancel: () => void;
 }
@@ -17,40 +18,44 @@ export default function ConfirmModal({
   isOpen,
   title,
   message,
+  children,
   confirmText = "XÁC NHẬN",
   cancelText = "HỦY BỎ",
-  variant = "primary",
+  variant = "purple",
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
   if (!isOpen) return null;
 
+  // Primary confirmation buttons in all modals use SJD Purple (#6E2582 / bg-primary-600)
   const confirmBtnBg =
     variant === "danger"
       ? "bg-rose-600 hover:bg-rose-700"
-      : variant === "warning"
-      ? "bg-amber-600 hover:bg-amber-700"
       : "bg-primary-600 hover:bg-primary-700";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-      <div className="w-full max-w-md bg-card-bg border border-card-border shadow-2xl p-6 rounded-none space-y-4">
+      {/* Strict Fixed Height & Internal Flex Container */}
+      <div className="w-full max-w-lg max-h-[85vh] bg-card-bg border border-card-border shadow-2xl p-6 rounded-none flex flex-col space-y-4">
         {/* Header */}
-        <div className="border-b border-card-border pb-3">
+        <div className="border-b border-card-border pb-3 flex-shrink-0">
           <h3 className="text-base font-bold text-[#2B1D30] uppercase tracking-wide">
             {title}
           </h3>
         </div>
 
-        {/* Message body */}
-        <div className="py-2">
-          <p className="text-sm text-[#6A5C70] leading-relaxed">
+        {/* Message body with internal scroll if overflowing */}
+        <div className="flex-1 overflow-y-auto min-h-0 py-1 space-y-3 pr-1 custom-scrollbar">
+          <p className="text-xs text-[#6A5C70] leading-relaxed">
             {message}
           </p>
+
+          {/* Additional Content (e.g., Medicine List preview) */}
+          {children}
         </div>
 
         {/* Footer Actions */}
-        <div className="pt-3 border-t border-card-border flex justify-end gap-3">
+        <div className="pt-3 border-t border-card-border flex justify-end gap-3 flex-shrink-0">
           <button
             type="button"
             onClick={onCancel}

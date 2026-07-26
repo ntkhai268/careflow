@@ -1,4 +1,4 @@
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.careflow-demo.online";
 
 export interface ApiResponse<T> {
   status: string;
@@ -8,6 +8,7 @@ export interface ApiResponse<T> {
 
 export async function request<T>(path: string, options?: RequestInit): Promise<ApiResponse<T>> {
   const url = `${BASE_URL}${path}`;
+  console.log(`[API DEBUG] Requesting: ${url}`, options?.method || "GET");
   
   // Retrieve token from localStorage if available
   const token = typeof window !== "undefined" ? localStorage.getItem("careflow_token") : null;
@@ -21,23 +22,30 @@ export async function request<T>(path: string, options?: RequestInit): Promise<A
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
 
-  // Handle No Content (204)
-  if (response.status === 204) {
-    return { status: "success", data: {} as T };
+    console.log(`[API DEBUG] Response ${response.status} for ${url}`);
+
+    // Handle No Content (204)
+    if (response.status === 204) {
+      return { status: "success", data: {} as T };
+    }
+
+    const resJson = await response.json().catch(() => ({}));
+    
+    if (!response.ok) {
+      throw new Error(resJson.message || `Lỗi kết nối máy chủ (${response.status})`);
+    }
+
+    return resJson;
+  } catch (err: any) {
+    console.warn(`[API DEBUG] Request Error for ${url}:`, err?.message || err);
+    throw err;
   }
-
-  const resJson = await response.json().catch(() => ({}));
-  
-  if (!response.ok) {
-    throw new Error(resJson.message || `Lỗi kết nối máy chủ (${response.status})`);
-  }
-
-  return resJson;
 }
 
 export const api = {

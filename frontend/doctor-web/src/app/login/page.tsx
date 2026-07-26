@@ -30,7 +30,7 @@ export default function LoginPage() {
       if (email === "locked@careflow.vn") {
         await new Promise((resolve) => setTimeout(resolve, 800));
         setError({
-          message: "Tài khoản của bạn đã bị khóa do nhập sai nhiều lần. Vui lòng liên hệ quản trị viên hệ thống.",
+          message: "Tài khoản của Bác sĩ đã bị khóa do nhập sai nhiều lần. Vui lòng liên hệ quản trị viên hệ thống.",
           type: "warning"
         });
         return;
@@ -39,7 +39,7 @@ export default function LoginPage() {
       if (email === "expired@careflow.vn") {
         await new Promise((resolve) => setTimeout(resolve, 800));
         setError({
-          message: "Mật khẩu của bạn đã hết hạn sử dụng theo chính sách bảo mật định kỳ. Vui lòng đổi mật khẩu mới.",
+          message: "Mật khẩu của Bác sĩ đã hết hạn sử dụng theo chính sách bảo mật định kỳ. Vui lòng đổi mật khẩu mới.",
           type: "warning"
         });
         return;

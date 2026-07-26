@@ -17,6 +17,9 @@ Tài liệu này quy định các quy tắc bắt buộc áp dụng cho toàn b�
 3. **Ngôn ngữ Git Commit Messages (English Commits)**:
    - Tất cả các Git commit messages **BẮT BUỘC phải viết bằng Tiếng Anh** theo chuẩn Conventional Commits (ví dụ: `feat: connect prescription-service directly to remote postgres database`, `fix: remove mock jwt logic in doctor web auth context`).
 
+4. **Không tự ý thực hiện Git Add / Commit**:
+   - **KHÔNG TỰ Ý** chạy lệnh `git add` hay `git commit` nếu người dùng **chưa yêu cầu hoặc chưa chỉ định cụ thể**. AI chỉ được phép thực hiện commit khi người dùng đưa ra câu lệnh/yêu cầu trực tiếp.
+
 ---
 
 ## 📌 Quy tắc Thiết kế & Cập nhật Database Schema (DB Rules)

@@ -1,7 +1,7 @@
 import { api } from "./api";
 
 export interface CreateConsultationRequest {
-  appointmentId?: string;
+  appointmentId: string;
   patientId: string;
   doctorId: string;
 }

@@ -5,7 +5,7 @@ import com.careflow.consultation.model.ConsultationStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,7 +19,7 @@ public interface ConsultationRepository extends JpaRepository<Consultation, UUID
     List<Consultation> findByDoctorIdAndStatus(UUID doctorId, ConsultationStatus status);
 
     List<Consultation> findByDoctorIdAndCreatedAtBetweenOrderByCreatedAtDesc(
-            UUID doctorId, LocalDateTime startOfDay, LocalDateTime endOfDay);
+            UUID doctorId, Instant startOfDay, Instant endOfDay);
 
     List<Consultation> findByAppointmentId(UUID appointmentId);
 }

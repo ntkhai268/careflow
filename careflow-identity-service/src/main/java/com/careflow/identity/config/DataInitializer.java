@@ -12,6 +12,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.transaction.annotation.Transactional;
+
 @Component
 @RequiredArgsConstructor
 @Slf4j
@@ -20,49 +24,42 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
+    @PersistenceContext
+    private final EntityManager entityManager;
+
     @Override
+    @Transactional
     public void run(String... args) {
-        // Seed default Doctor account
-        if (!userRepository.existsByUsernameIgnoreCase("doctor")) {
-            User doctor = new User();
-            doctor.setId(UUID.fromString("11111111-1111-1111-1111-111111111111"));
-            doctor.setUsername("doctor");
-            doctor.setEmail("doctor@careflow.com");
-            doctor.setPasswordHash(passwordEncoder.encode("Password123@"));
-            doctor.setRole(UserRole.DOCTOR);
-            doctor.setTitle("Bác sĩ Chuyên khoa I");
-            doctor.setStatus(UserStatus.ACTIVE);
+        seedUser(UUID.fromString("d0000001-0000-0000-0000-000000000001"), "an@careflow.vn", "an@careflow.vn",
+                "BS. Nguyễn Văn An - Bác sĩ Chuyên khoa I - Khoa Nội tổng quát", UserRole.DOCTOR);
 
-            userRepository.save(doctor);
-            log.info("Successfully seeded default Doctor user (username: doctor, role: DOCTOR)");
-        }
+        seedUser(UUID.fromString("11111111-1111-1111-1111-111111111111"), "doctor", "doctor@careflow.com",
+                "BS. Phạm Hoàng Nam - Bác sĩ Chuyên khoa I", UserRole.DOCTOR);
 
-        // Seed default Patient account
-        if (!userRepository.existsByUsernameIgnoreCase("patient")) {
-            User patient = new User();
-            patient.setId(UUID.fromString("22222222-2222-2222-2222-222222222222"));
-            patient.setUsername("patient");
-            patient.setEmail("patient@careflow.com");
-            patient.setPasswordHash(passwordEncoder.encode("Password123@"));
-            patient.setRole(UserRole.PATIENT);
-            patient.setStatus(UserStatus.ACTIVE);
+        seedUser(UUID.fromString("22222222-2222-2222-2222-222222222222"), "patient", "patient@careflow.com",
+                "Nguyễn Văn Bệnh", UserRole.PATIENT);
 
-            userRepository.save(patient);
-            log.info("Successfully seeded default Patient user (username: patient, role: PATIENT)");
-        }
+        seedUser(UUID.fromString("33333333-3333-3333-3333-333333333333"), "admin", "admin@careflow.com",
+                "Quản trị hệ thống", UserRole.ADMIN);
+    }
 
-        // Seed default Admin account
-        if (!userRepository.existsByUsernameIgnoreCase("admin")) {
-            User admin = new User();
-            admin.setId(UUID.fromString("33333333-3333-3333-3333-333333333333"));
-            admin.setUsername("admin");
-            admin.setEmail("admin@careflow.com");
-            admin.setPasswordHash(passwordEncoder.encode("Password123@"));
-            admin.setRole(UserRole.ADMIN);
-            admin.setStatus(UserStatus.ACTIVE);
+    private void seedUser(UUID id, String username, String email, String title, UserRole role) {
+        try {
+            if (!userRepository.existsById(id) && !userRepository.existsByUsernameIgnoreCase(username)) {
+                User user = new User();
+                user.setId(id);
+                user.setUsername(username);
+                user.setEmail(email);
+                user.setPasswordHash(passwordEncoder.encode("Password123@"));
+                user.setRole(role);
+                user.setTitle(title);
+                user.setStatus(UserStatus.ACTIVE);
 
-            userRepository.save(admin);
-            log.info("Successfully seeded default Admin user (username: admin, role: ADMIN)");
+                entityManager.persist(user);
+                log.info("Successfully seeded user: {} (role: {})", username, role);
+            }
+        } catch (Exception e) {
+            log.warn("Skipping seed for user {} (ID: {}): {}", username, id, e.getMessage());
         }
     }
 }

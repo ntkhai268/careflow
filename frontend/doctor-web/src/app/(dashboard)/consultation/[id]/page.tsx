@@ -5,23 +5,18 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { consultationApi, ConsultationResponse, UpdateConsultationRequest } from "@/lib/consultation-api";
 import { prescriptionApi, PrescriptionResponse, PrescriptionItemRequest, MedicineCatalogItem } from "@/lib/prescription-api";
+import { patientApi } from "@/lib/patient-api";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmModal from "@/components/ConfirmModal";
 
-// Simple mock dictionary to map patient UUIDs to display names in UI
-const MOCK_PATIENTS: Record<string, { name: string; age: number; gender: string }> = {
-  "f0000001-0000-0000-0000-000000000001": { name: "Nguyễn Thị Mai", age: 45, gender: "Nữ" },
-  "f0000001-0000-0000-0000-000000000002": { name: "Trần Văn Hùng", age: 62, gender: "Nam" },
-  "f0000001-0000-0000-0000-000000000003": { name: "Lê Thị Hoa", age: 28, gender: "Nữ" },
-  "f0000001-0000-0000-0000-000000000004": { name: "Phạm Đức Anh", age: 7, gender: "Nam" },
-  "f0000001-0000-0000-0000-000000000005": { name: "Võ Thị Lan", age: 55, gender: "Nữ" },
-};
-
-const MOCK_ICD10 = [
+const ICD10_CATALOG = [
   { code: "K21.9", name: "Bệnh trào ngược dạ dày - thực quản không có viêm thực quản" },
   { code: "I10", name: "Bệnh tăng huyết áp vô căn (nguyên phát)" },
   { code: "E11.9", name: "Bệnh đái tháo đường không phụ thuộc insulin không có biến chứng" },
   { code: "M17.9", name: "Thoái hóa khớp gối không xác định" },
   { code: "J00", name: "Viêm mũi họng cấp (cảm thường)" },
+  { code: "J18.9", name: "Viêm phổi không xác định" },
+  { code: "K29.7", name: "Viêm dạ dày không xác định" },
 ];
 
 export default function ConsultationPage({ params }: { params: Promise<{ id: string }> }) {
@@ -38,7 +33,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     isOpen: boolean;
     title: string;
     message: string;
-    variant?: "primary" | "warning" | "danger";
+    variant?: "primary" | "warning" | "danger" | "purple";
+    showItemList?: boolean;
     onConfirm: () => void;
   }>({
     isOpen: false,
@@ -51,6 +47,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [consultation, setConsultation] = useState<ConsultationResponse | null>(null);
   const [patientName, setPatientName] = useState("Bệnh nhân");
   const [patientAge, setPatientAge] = useState(30);
+  const [patientGender, setPatientGender] = useState("Nam");
   
   // Vital signs & Clinical states
   const [temperature, setTemperature] = useState("");
@@ -154,10 +151,22 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         const consData = consRes.data;
         setConsultation(consData);
 
-        // Map mock patient info
-        const pInfo = MOCK_PATIENTS[consData.patientId] || { name: "Bệnh nhân thử nghiệm", age: 38, gender: "Nam" };
-        setPatientName(pInfo.name);
-        setPatientAge(pInfo.age);
+        // Fetch real patient info from patient-service
+        try {
+          const pRes = await patientApi.getPatientById(consData.patientId);
+          if (pRes.data) {
+            setPatientName(pRes.data.fullName || "Bệnh nhân");
+            if (pRes.data.dateOfBirth) {
+              const birthYear = new Date(pRes.data.dateOfBirth).getFullYear();
+              setPatientAge(new Date().getFullYear() - birthYear);
+            }
+            if (pRes.data.gender) {
+              setPatientGender(pRes.data.gender === "FEMALE" ? "Nữ" : "Nam");
+            }
+          }
+        } catch {
+          setPatientName(`Bệnh nhân (ID: ${consData.patientId.slice(0, 8)})`);
+        }
 
         // Prepopulate inputs
         setTemperature(consData.temperature?.toString() || "");
@@ -208,7 +217,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   }, [consultationId]);
 
   // Handle ICD-10 Search
-  const filteredIcd10 = MOCK_ICD10.filter(item => 
+  const filteredIcd10 = ICD10_CATALOG.filter(item => 
     item.code.toLowerCase().includes(icdSearchQuery.toLowerCase()) ||
     item.name.toLowerCase().includes(icdSearchQuery.toLowerCase())
   );
@@ -284,7 +293,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       showToast(`Đã cập nhật thuốc ${selectedMedicine.name}`);
     } else {
       if (prescriptionItems.some(item => item.medicineCode === selectedMedicine.code)) {
-        showToast(`Thuốc ${selectedMedicine.name} đã có trong đơn.`, "warning");
+        setPrescriptionItems(prescriptionItems.map(item => item.medicineCode === selectedMedicine.code ? newItem : item));
+        showToast(`Thuốc ${selectedMedicine.name} đã có trong đơn. Hệ thống đã cập nhật lại số lượng và liều dùng mới.`, "warning");
+        setIsMedicineDrawerOpen(false);
         return;
       }
       setPrescriptionItems([...prescriptionItems, newItem]);
@@ -295,8 +306,22 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   };
 
   const removeMedicine = (code: string, name: string) => {
-    setPrescriptionItems(prescriptionItems.filter(item => item.medicineCode !== code));
+    const updatedItems = prescriptionItems.filter(item => item.medicineCode !== code);
+    setPrescriptionItems(updatedItems);
     showToast(`Đã xóa ${name} khỏi đơn thuốc`, "warning");
+
+    // If no medicines left in prescription, clear draft prescription state
+    if (updatedItems.length === 0) {
+      setPrescriptionId(null);
+      setPrescriptionStatus(null);
+    }
+  };
+
+  const clearAllMedicines = () => {
+    setPrescriptionItems([]);
+    setPrescriptionId(null);
+    setPrescriptionStatus(null);
+    showToast("Đã xóa toàn bộ đơn thuốc nháp", "warning");
   };
 
   // Save draft
@@ -376,8 +401,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     setConfirmModalConfig({
       isOpen: true,
       title: "Ký & Xác nhận Đơn thuốc",
-      message: "Bạn có chắc chắn muốn KÝ và XÁC NHẬN đơn thuốc này? Sau khi xác nhận, đơn thuốc sẽ được chuyển tới Quầy thuốc và không thể sửa đổi.",
-      variant: "warning",
+      message: "Bác sĩ có chắc chắn muốn KÝ và XÁC NHẬN đơn thuốc này? Sau khi xác nhận, đơn thuốc sẽ được chuyển tới Quầy thuốc và không thể sửa đổi.",
+      variant: "purple",
+      showItemList: true,
       onConfirm: executeConfirmPrescription
     });
   };
@@ -391,8 +417,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       
       showToast("Hoàn tất lượt khám thành công. Đang chuyển về bảng điều khiển...");
       setTimeout(() => {
-        router.replace("/dashboard");
-      }, 1500);
+        router.replace("/dashboard/general");
+      }, 1200);
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Đã xảy ra lỗi khi hoàn tất phiên khám.", "danger");
     } finally {
@@ -405,14 +431,21 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const completeConsultation = () => {
     if (prescriptionId && prescriptionStatus !== "CONFIRMED") {
       showToast("Vui lòng KÝ và XÁC NHẬN đơn thuốc trước khi hoàn tất phiên khám.", "warning");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
+          detail: {
+            text: "Bác sĩ ơi, đơn thuốc đang ở dạng Nháp. Bác sĩ vui lòng nhấn KÝ & XÁC NHẬN ĐƠN trước khi hoàn tất ca khám nha!"
+          }
+        }));
+      }
       return;
     }
 
     setConfirmModalConfig({
       isOpen: true,
       title: "Hoàn tất Phiên khám",
-      message: "Xác nhận hoàn tất phiên khám lâm sàng cho bệnh nhân? Hồ sơ bệnh án sẽ được đóng và lưu trữ.",
-      variant: "primary",
+      message: "Bác sĩ có chắc chắn muốn HOÀN TẤT phiên khám lâm sàng cho bệnh nhân? Hồ sơ bệnh án sẽ được đóng và lưu trữ.",
+      variant: "purple",
       onConfirm: executeCompleteConsultation
     });
   };
@@ -420,7 +453,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   if (isLoading) {
     return (
       <div className="flex h-[calc(100vh-200px)] items-center justify-center">
-        <div className="h-8 w-8 animate-spin border-4 border-primary-200 border-t-primary-600 rounded-none" />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -455,7 +488,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         <div>
           <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Phiên khám hiện hành</span>
           <h1 className="text-xl font-bold text-[#2B1D30]">{patientName}</h1>
-          <p className="text-xs text-[#6A5C70]">{patientAge} tuổi · {MOCK_PATIENTS[consultation?.patientId || ""]?.gender || "Nam"}</p>
+          <p className="text-xs text-[#6A5C70]">{patientAge} tuổi · {patientGender}</p>
         </div>
         <div className="flex gap-4">
           <div className="text-right">
@@ -808,15 +841,29 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   </h2>
                   <p className="text-[10px] text-[#6A5C70]">Tổng số thuốc: {prescriptionItems.length}</p>
                 </div>
-                {!isPrescriptionLocked && (
-                  <button
-                    type="button"
-                    onClick={openAddMedicineDrawer}
-                    className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-3 py-1.5 text-xs transition-all flex items-center gap-1.5 rounded-none shadow-sm"
-                  >
-                    + THÊM THUỐC
-                  </button>
-                )}
+                <div className="flex items-center gap-3">
+                  {prescriptionItems.length > 0 && !isPrescriptionLocked && (
+                    <button
+                      type="button"
+                      onClick={clearAllMedicines}
+                      className="text-[11px] font-medium text-slate-400 hover:text-rose-600 transition-colors hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <span>Xóa toàn bộ đơn</span>
+                    </button>
+                  )}
+                  {!isPrescriptionLocked && (
+                    <button
+                      type="button"
+                      onClick={openAddMedicineDrawer}
+                      className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-3 py-1.5 text-xs transition-all flex items-center gap-1.5 rounded-none shadow-sm"
+                    >
+                      + THÊM THUỐC
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Prescription Items List or Empty State */}
@@ -858,20 +905,28 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                       </div>
 
                       {!isPrescriptionLocked && (
-                        <div className="flex gap-2">
+                        <div className="flex items-center gap-3">
                           <button
                             type="button"
                             onClick={() => openEditMedicineDrawer(item)}
-                            className="text-primary-600 hover:text-primary-800 text-xs font-bold underline"
+                            className="text-[11px] font-medium text-slate-500 hover:text-primary-700 flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Sửa thông tin thuốc"
                           >
-                            Sửa
+                            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                            </svg>
+                            <span>Sửa</span>
                           </button>
                           <button
                             type="button"
                             onClick={() => removeMedicine(item.medicineCode, item.medicineName)}
-                            className="text-rose-600 hover:text-rose-800 text-xs font-bold underline"
+                            className="text-[11px] font-medium text-slate-400 hover:text-rose-600 flex items-center gap-1 transition-colors cursor-pointer"
+                            title="Xóa khỏi đơn"
                           >
-                            Xóa
+                            <svg className="w-3.5 h-3.5 text-slate-400 hover:text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            <span>Xóa</span>
                           </button>
                         </div>
                       )}
@@ -1130,11 +1185,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             </button>
           )}
           
-          {prescriptionId && prescriptionStatus === "DRAFT" && !isConsultationLocked && (
+          {prescriptionId && prescriptionStatus === "DRAFT" && prescriptionItems.length > 0 && !isConsultationLocked && (
             <button
               onClick={confirmPrescription}
               disabled={isSaving}
-              className="bg-accent hover:bg-orange-600 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-none shadow-sm"
+              className="border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-none"
             >
               {isSaving ? "ĐANG KÝ..." : "KÝ & XÁC NHẬN ĐƠN"}
             </button>
@@ -1144,7 +1199,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <button
               onClick={completeConsultation}
               disabled={isSaving}
-              className="bg-primary-500 hover:bg-primary-600 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-none shadow-sm"
+              className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-none shadow-sm"
             >
               {isSaving ? "ĐANG XỬ LÝ..." : "HOÀN TẤT PHIÊN KHÁM"}
             </button>
@@ -1167,7 +1222,28 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         variant={confirmModalConfig.variant}
         onConfirm={confirmModalConfig.onConfirm}
         onCancel={() => setConfirmModalConfig(prev => ({ ...prev, isOpen: false }))}
-      />
+      >
+        {confirmModalConfig.showItemList && prescriptionItems.length > 0 && (
+          <div className="mt-3 space-y-2">
+            <div className="text-[11px] font-bold text-[#2B1D30] uppercase border-b border-card-border pb-1 flex justify-between items-center">
+              <span>Danh sách thuốc trong đơn ({prescriptionItems.length} loại):</span>
+              {prescriptionItems.length > 5 && (
+                <span className="text-[10px] text-primary-600 font-normal italic">Cuộn xuống để xem hết</span>
+              )}
+            </div>
+            <div className="max-h-[160px] overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
+              {prescriptionItems.map((item, idx) => (
+                <div key={item.medicineCode} className="text-xs text-[#6A5C70] font-medium leading-relaxed">
+                  <span className="font-bold text-[#2B1D30]">{idx + 1}. {item.medicineName}</span>{" "}
+                  <span className="text-gray-900 font-semibold">x{item.quantity} {item.unit}</span>{" "}
+                  <span className="text-gray-500">({item.frequency})</span>{" "}
+                  <span className="text-gray-400 font-mono text-[11px]">- {item.medicineCode}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </ConfirmModal>
 
     </div>
   );
