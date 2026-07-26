@@ -79,6 +79,9 @@ class AuthService {
     }
 
     try {
+      print('🔐 [AUTH] baseUrl: ${ApiConfig.baseUrl}');
+      print('🔐 [AUTH] login endpoint: ${ApiConfig.authLogin}');
+      print('🔐 [AUTH] full URL: ${ApiConfig.baseUrl}${ApiConfig.authLogin}');
       final response = await _apiService.post(
         ApiConfig.authLogin,
         data: {'usernameOrEmail': usernameOrEmail, 'password': password},
@@ -91,6 +94,7 @@ class AuthService {
       }
       return authResponse;
     } catch (e) {
+      print('❌ [AUTH] login error: $e');
       throw Exception(_messageFrom(e));
     }
   }
@@ -106,12 +110,25 @@ class AuthService {
     }
 
     try {
-      await _apiService.post(
+      print('📝 [AUTH] register URL: ${ApiConfig.baseUrl}${ApiConfig.authRegister}');
+      print('📝 [AUTH] register data: username=$username, email=$email');
+      final regResponse = await _apiService.post(
         ApiConfig.authRegister,
         data: {'username': username, 'email': email, 'password': password},
       );
+      print('✅ [AUTH] register success: ${regResponse.statusCode}');
       return await login(username, password);
     } catch (e) {
+      if (e is DioException) {
+        print('❌ [AUTH] register status: ${e.response?.statusCode}');
+        print('❌ [AUTH] register headers: ${e.response?.headers.map}');
+        print('❌ [AUTH] register body type: ${e.response?.data?.runtimeType}');
+        print('❌ [AUTH] register body: ${e.response?.data}');
+        print('❌ [AUTH] request headers: ${e.requestOptions.headers}');
+        print('❌ [AUTH] request URL: ${e.requestOptions.uri}');
+      } else {
+        print('❌ [AUTH] register error: $e');
+      }
       throw Exception(_messageFrom(e));
     }
   }
@@ -203,10 +220,25 @@ class AuthService {
   String _messageFrom(Object error) {
     if (error is DioException) {
       final data = error.response?.data;
-      if (data is Map<String, dynamic> && data['message'] is String) {
-        return data['message'] as String;
+      final statusCode = error.response?.statusCode;
+
+      // Try to extract server error message
+      if (data is Map<String, dynamic>) {
+        if (data['message'] is String) return data['message'] as String;
+        if (data['error'] is String) return data['error'] as String;
+        // Nested in 'data' field
+        if (data['data'] is Map && data['data']['message'] is String) {
+          return data['data']['message'] as String;
+        }
       }
-      return 'Không thể kết nối Identity Service';
+
+      // Fallback by status code
+      if (statusCode == 401) return 'Sai tên đăng nhập hoặc mật khẩu';
+      if (statusCode == 400) return 'Thông tin không hợp lệ';
+      if (statusCode == 409) return 'Tài khoản đã tồn tại';
+      if (statusCode == 403) return 'Tài khoản bị khóa';
+
+      return 'Không thể kết nối server (${statusCode ?? 'timeout'})';
     }
     return error.toString();
   }

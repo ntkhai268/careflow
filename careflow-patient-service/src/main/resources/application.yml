@@ -5,7 +5,7 @@ spring:
   application:
     name: patient-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/careflow_patient
+    url: jdbc:postgresql://100.116.233.60:5432/careflow_patient
     username: careflow
     password: careflow
   jpa:
