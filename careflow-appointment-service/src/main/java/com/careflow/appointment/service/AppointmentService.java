@@ -1,6 +1,7 @@
 package com.careflow.appointment.service;
 
 import com.careflow.appointment.config.RabbitMQConfig;
+import com.careflow.common.constants.AppConstants;
 import com.careflow.appointment.dto.request.CreateAppointmentRequest;
 import com.careflow.appointment.dto.request.UpdateAppointmentStatusRequest;
 import com.careflow.appointment.dto.response.AppointmentResponse;
@@ -129,7 +130,8 @@ public class AppointmentService {
         }
 
         // Validate state transition
-        validateStatusTransition(appointment.getStatus(), newStatus);
+        AppointmentStatus oldStatus = appointment.getStatus();
+        validateStatusTransition(oldStatus, newStatus);
 
         appointment.setStatus(newStatus);
         if (request.getNotes() != null) {
@@ -138,7 +140,7 @@ public class AppointmentService {
 
         Appointment updated = appointmentRepository.save(appointment);
         log.info("Updated appointment {} status: {} → {}",
-                id, appointment.getStatus(), newStatus);
+                id, oldStatus, newStatus);
 
         return AppointmentMapper.toResponse(updated);
     }
@@ -208,8 +210,8 @@ public class AppointmentService {
             );
 
             rabbitTemplate.convertAndSend(
-                    RabbitMQConfig.EXCHANGE_NAME,
-                    RabbitMQConfig.ROUTING_KEY_CREATED,
+                    AppConstants.EXCHANGE_APPOINTMENT,
+                    AppConstants.RK_APPOINTMENT_CREATED,
                     event);
 
             log.info("Published AppointmentCreated event for {}", appointment.getId());
@@ -228,8 +230,8 @@ public class AppointmentService {
             );
 
             rabbitTemplate.convertAndSend(
-                    RabbitMQConfig.EXCHANGE_NAME,
-                    RabbitMQConfig.ROUTING_KEY_CANCELLED,
+                    AppConstants.EXCHANGE_APPOINTMENT,
+                    AppConstants.RK_APPOINTMENT_CANCELLED,
                     event);
 
             log.info("Published AppointmentCancelled event for {}", appointment.getId());
