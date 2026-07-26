@@ -29,4 +29,5 @@ public final class AppConstants {
     public static final String HEADER_USER_ID = "X-User-Id";
     public static final String HEADER_USER_ROLE = "X-User-Role";
     public static final String HEADER_CORRELATION_ID = "X-Correlation-Id";
+    public static final String HEADER_IDEMPOTENCY_KEY = "Idempotency-Key";
 }

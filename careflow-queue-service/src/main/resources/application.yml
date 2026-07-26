@@ -57,3 +57,4 @@ queue:
   qr-secret: ${QR_SECRET:${JWT_SECRET}}
   qr-expiration-minutes: ${QR_EXPIRATION_MINUTES:30}
   outbox-poll-ms: ${OUTBOX_POLL_MS:1000}
+  outbox-max-attempts: ${OUTBOX_MAX_ATTEMPTS:12}

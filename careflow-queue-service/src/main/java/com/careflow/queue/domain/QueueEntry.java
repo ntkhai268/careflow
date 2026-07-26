@@ -29,12 +29,14 @@ public class QueueEntry {
     @Column(name = "checked_in_at") private Instant checkedInAt;
     @Column(name = "eligible_since_at") private Instant eligibleSinceAt;
     @Column(name = "called_at") private Instant calledAt;
+    @Column(name = "call_attempts", nullable = false, columnDefinition = "smallint") private int callAttempts;
     @Column(name = "started_at") private Instant startedAt;
     @Column(name = "completed_at") private Instant completedAt;
     @Column(name = "missed_at") private Instant missedAt;
     @Column(name = "cancelled_at") private Instant cancelledAt;
     @Column(name = "missed_count", nullable = false, columnDefinition = "smallint") private int missedCount;
     @Column(name = "estimated_wait_minutes") private Integer estimatedWaitMinutes;
+    @Column(name = "near_turn_notified_at") private Instant nearTurnNotifiedAt;
     @Version @Column(nullable = false) private long version;
     @CreationTimestamp @Column(name = "created_at", nullable = false, updatable = false) private Instant createdAt;
     @UpdateTimestamp @Column(name = "updated_at", nullable = false) private Instant updatedAt;

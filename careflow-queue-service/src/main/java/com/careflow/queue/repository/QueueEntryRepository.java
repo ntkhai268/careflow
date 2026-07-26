@@ -16,7 +16,10 @@ public interface QueueEntryRepository extends JpaRepository<QueueEntry, UUID> {
     Optional<QueueEntry> findByAppointmentId(UUID appointmentId);
     Optional<QueueEntry> findByAppointmentIdAndUserId(UUID appointmentId, UUID userId);
     List<QueueEntry> findByUserIdAndQueueDateOrderByCreatedAtDesc(UUID userId, LocalDate date);
-    boolean existsByQueueConfigIdAndQueueDateAndStatus(UUID configId, LocalDate date, QueueStatus status);
+    boolean existsByQueueConfigIdAndQueueDateAndStatusIn(
+            UUID configId, LocalDate date, Collection<QueueStatus> statuses);
+    boolean existsByPatientIdAndDepartmentIdAndQueueDateAndStatusIn(
+            UUID patientId, UUID departmentId, LocalDate date, Collection<QueueStatus> statuses);
     List<QueueEntry> findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
             UUID configId, LocalDate date, Collection<QueueStatus> statuses);
 
@@ -25,6 +28,10 @@ public interface QueueEntryRepository extends JpaRepository<QueueEntry, UUID> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<QueueEntry> findFirstByAppointmentId(UUID appointmentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    Optional<QueueEntry> findFirstByQueueConfigIdAndQueueDateAndStatusInOrderByCalledAtAsc(
+            UUID configId, LocalDate date, Collection<QueueStatus> statuses);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<QueueEntry> findByQueueConfigIdAndQueueDateAndStatusAndPriorityLevelOrderByEligibleSinceAtAscSequenceNumberAsc(

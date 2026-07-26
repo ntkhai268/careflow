@@ -12,28 +12,42 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.*;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 @Service
 public class QueueManagementService {
+    private static final String COMMAND_MANUAL_INTAKE = "MANUAL_INTAKE";
+    private static final String COMMAND_CALL_NEXT = "CALL_NEXT";
+    private static final int MAX_CALL_ATTEMPTS = 3;
     private static final Set<PriorityLevel> MANUAL_LEVELS = EnumSet.of(
             PriorityLevel.EMERGENCY, PriorityLevel.PRIORITY, PriorityLevel.WALK_IN);
     private static final Set<QueueStatus> DASHBOARD_STATUSES = EnumSet.of(
             QueueStatus.CHECKED_IN, QueueStatus.CALLED, QueueStatus.IN_PROGRESS);
+    private static final Set<QueueStatus> ACTIVE_PATIENT_STATUSES = EnumSet.of(
+            QueueStatus.WAITING, QueueStatus.CHECKED_IN, QueueStatus.CALLED,
+            QueueStatus.IN_PROGRESS, QueueStatus.MISSED);
+    private static final Set<QueueStatus> SERVING_STATUSES = EnumSet.of(
+            QueueStatus.CALLED, QueueStatus.IN_PROGRESS);
 
     private final QueueConfigRepository configs;
     private final QueueNumberSequenceRepository sequences;
     private final QueueEntryRepository entries;
+    private final IdempotencyRecordRepository idempotencyRecords;
     private final QueueEventService events;
     private final QrTokenService qrTokens;
     private final ZoneId businessZone;
 
     public QueueManagementService(QueueConfigRepository configs, QueueNumberSequenceRepository sequences,
-                                  QueueEntryRepository entries, QueueEventService events, QrTokenService qrTokens,
+                                  QueueEntryRepository entries, IdempotencyRecordRepository idempotencyRecords,
+                                  QueueEventService events, QrTokenService qrTokens,
                                   @Value("${queue.business-zone:Asia/Ho_Chi_Minh}") String businessZone) {
         this.configs = configs;
         this.sequences = sequences;
         this.entries = entries;
+        this.idempotencyRecords = idempotencyRecords;
         this.events = events;
         this.qrTokens = qrTokens;
         this.businessZone = ZoneId.of(businessZone);
@@ -46,6 +60,9 @@ public class QueueManagementService {
     @Transactional
     public QueueConfigResponse saveConfig(UUID departmentId, QueueConfigRequest request) {
         QueueConfig config = configs.findByDepartmentId(departmentId).orElseGet(QueueConfig::new);
+        boolean schedulingChanged = config.getId() != null
+                && (config.getPriorityRatioN() != request.priorityRatioN()
+                || config.getNormalRatioM() != request.normalRatioM());
         config.setDepartmentId(departmentId);
         config.setDepartmentNameSnapshot(request.departmentName().trim());
         config.setQueuePrefix(request.queuePrefix().trim().toUpperCase(Locale.ROOT));
@@ -56,7 +73,7 @@ public class QueueManagementService {
         config.setNearTurnThreshold(request.nearTurnThreshold());
         config.setMissedPolicy(request.missedPolicy());
         config.setActive(request.active());
-        if (config.getSchedulerDate() == null) config.resetScheduler(businessDate());
+        if (config.getSchedulerDate() == null || schedulingChanged) config.resetScheduler(businessDate());
         return QueueConfigResponse.from(configs.save(config));
     }
 
@@ -66,11 +83,17 @@ public class QueueManagementService {
     }
 
     @Transactional
-    public QueueEntryResponse manualIntake(ManualIntakeRequest request, String correlationId) {
+    public QueueEntryResponse manualIntake(ManualIntakeRequest request, String idempotencyKey, String correlationId) {
         if (!MANUAL_LEVELS.contains(request.priorityLevel())) {
             throw new BusinessException(400, "Tiếp nhận thủ công chỉ cho EMERGENCY, PRIORITY hoặc WALK_IN");
         }
+        String normalizedKey = requireIdempotencyKey(idempotencyKey);
+        String requestFingerprint = fingerprint(
+                request.patientId(), request.userId(), request.departmentId(), request.priorityLevel());
         QueueConfig config = requireLockedConfig(request.departmentId());
+        Optional<QueueEntryResponse> replay = replay(
+                COMMAND_MANUAL_INTAKE, request.departmentId(), normalizedKey, requestFingerprint);
+        if (replay.isPresent()) return replay.get();
         LocalDate date = businessDate();
         QueueEntry entry = newEntry(config, date, request.patientId(), request.userId(), null,
                 request.priorityLevel(), QueueStatus.CHECKED_IN);
@@ -80,6 +103,7 @@ public class QueueManagementService {
         entries.saveAndFlush(entry);
         events.append(entry, config, "QUEUE_CHECKED_IN", AppConstants.RK_QUEUE_CHECKED_IN,
                 correlationId, Map.of("priorityLevel", entry.getPriorityLevel().name()));
+        recordCommand(COMMAND_MANUAL_INTAKE, request.departmentId(), normalizedKey, requestFingerprint, entry);
         return response(entry, config);
     }
 
@@ -129,17 +153,55 @@ public class QueueManagementService {
     public QueueDashboardResponse dashboard(UUID departmentId) {
         QueueConfig config = requireConfig(departmentId);
         LocalDate date = businessDate();
-        List<QueueEntry> queue = entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+        List<QueueEntry> active = entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                 config.getId(), date, DASHBOARD_STATUSES);
-        List<QueueEntryResponse> response = queue.stream().map(e -> response(e, config)).toList();
-        return new QueueDashboardResponse(departmentId, config.getDepartmentNameSnapshot(), config.getRoomCode(), date, response);
+        List<QueueEntry> serving = active.stream()
+                .filter(entry -> SERVING_STATUSES.contains(entry.getStatus()))
+                .sorted(Comparator.comparing((QueueEntry entry) -> entry.getStatus() == QueueStatus.IN_PROGRESS ? 0 : 1)
+                        .thenComparing(QueueEntry::getCalledAt, Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+        List<QueueEntry> waiting = active.stream()
+                .filter(entry -> entry.getStatus() == QueueStatus.CHECKED_IN)
+                .toList();
+        Map<UUID, QueueEntry> waitingById = new HashMap<>();
+        waiting.forEach(entry -> waitingById.put(entry.getId(), entry));
+        List<UUID> scheduledOrder = QueueScheduleSimulator.order(config, date, waiting);
+        int currentWorkload = serving.isEmpty() ? 0 : config.getAvgConsultationMinutes();
+        List<QueueEntryResponse> response = new ArrayList<>();
+        serving.forEach(entry -> response.add(response(entry, config, 0, 0)));
+        for (int index = 0; index < scheduledOrder.size(); index++) {
+            QueueEntry entry = waitingById.get(scheduledOrder.get(index));
+            int position = index + 1;
+            int wait = currentWorkload + index * config.getAvgConsultationMinutes();
+            response.add(response(entry, config, position, wait));
+        }
+        return new QueueDashboardResponse(departmentId, config.getDepartmentNameSnapshot(),
+                config.getRoomCode(), date, response);
     }
 
     @Transactional
-    public Optional<QueueEntryResponse> callNext(UUID departmentId, String correlationId) {
+    public Optional<QueueEntryResponse> callNext(UUID departmentId, String idempotencyKey, String correlationId) {
+        String normalizedKey = requireIdempotencyKey(idempotencyKey);
+        String requestFingerprint = fingerprint(departmentId);
         QueueConfig config = requireLockedConfig(departmentId);
         LocalDate date = businessDate();
         if (!date.equals(config.getSchedulerDate())) config.resetScheduler(date);
+        Optional<IdempotencyRecord> existingCommand = idempotencyRecords
+                .findByCommandNameAndScopeIdAndIdempotencyKey(
+                        COMMAND_CALL_NEXT, departmentId, normalizedKey);
+        if (existingCommand.isPresent()) {
+            IdempotencyRecord record = existingCommand.get();
+            requireSameFingerprint(record, requestFingerprint);
+            if (record.isEmptyResult()) return Optional.empty();
+            QueueEntry replayed = entries.findById(record.getResultEntryId())
+                    .orElseThrow(() -> new IllegalStateException("Idempotency result entry is missing"));
+            return Optional.of(response(replayed, config));
+        }
+        if (entries.findFirstByQueueConfigIdAndQueueDateAndStatusInOrderByCalledAtAsc(
+                config.getId(), date, SERVING_STATUSES).isPresent()) {
+            throw new BusinessException(409,
+                    "Khoa đang có bệnh nhân ở trạng thái CALLED hoặc IN_PROGRESS; hãy hoàn tất hoặc đánh dấu lỡ lượt trước");
+        }
 
         QueueEntry candidate = firstCandidate(config, date, PriorityLevel.EMERGENCY);
         if (candidate == null && config.getCyclePhase() == CyclePhase.PRIORITY) {
@@ -163,21 +225,47 @@ public class QueueManagementService {
                 advancePriority(config);
             }
         }
-        if (candidate == null) return Optional.empty();
+        if (candidate == null) {
+            recordEmptyCommand(COMMAND_CALL_NEXT, departmentId, normalizedKey, requestFingerprint);
+            return Optional.empty();
+        }
 
         candidate.setStatus(QueueStatus.CALLED);
         candidate.setCalledAt(Instant.now());
+        candidate.setCallAttempts(1);
         entries.saveAndFlush(candidate);
         configs.save(config);
-        events.append(candidate, config, "QUEUE_CALLED", AppConstants.RK_QUEUE_CALLED, correlationId, Map.of());
+        events.append(candidate, config, "QUEUE_CALLED", AppConstants.RK_QUEUE_CALLED,
+                correlationId, Map.of("callAttempt", candidate.getCallAttempts()));
+        recordCommand(COMMAND_CALL_NEXT, departmentId, normalizedKey, requestFingerprint, candidate);
         appendNearTurnEvents(config, date, correlationId);
         return Optional.of(response(candidate, config));
+    }
+
+    @Transactional
+    public QueueEntryResponse recall(UUID entryId, String correlationId) {
+        QueueEntry entry = requireEntryForUpdate(entryId);
+        if (entry.getStatus() != QueueStatus.CALLED) throw invalidTransition(entry, QueueStatus.CALLED);
+        if (entry.getCallAttempts() >= MAX_CALL_ATTEMPTS) {
+            throw new BusinessException(409, "Đã gọi đủ " + MAX_CALL_ATTEMPTS + " lần; hãy đánh dấu lỡ lượt");
+        }
+        QueueConfig config = requireConfig(entry.getDepartmentId());
+        entry.setCallAttempts(entry.getCallAttempts() + 1);
+        entry.setCalledAt(Instant.now());
+        entries.saveAndFlush(entry);
+        events.append(entry, config, "QUEUE_CALLED", AppConstants.RK_QUEUE_CALLED,
+                correlationId, Map.of("callAttempt", entry.getCallAttempts(), "recalled", true));
+        return response(entry, config);
     }
 
     @Transactional
     public QueueEntryResponse miss(UUID entryId, String correlationId) {
         QueueEntry entry = requireEntryForUpdate(entryId);
         if (entry.getStatus() != QueueStatus.CALLED) throw invalidTransition(entry, QueueStatus.MISSED);
+        if (entry.getCallAttempts() < MAX_CALL_ATTEMPTS) {
+            throw new BusinessException(409,
+                    "Phải gọi đủ " + MAX_CALL_ATTEMPTS + " lần trước khi đánh dấu lỡ lượt");
+        }
         QueueConfig config = requireConfig(entry.getDepartmentId());
         entry.setStatus(QueueStatus.MISSED);
         entry.setMissedAt(Instant.now());
@@ -190,9 +278,11 @@ public class QueueManagementService {
 
     @Transactional
     public QueueEntryResponse requeue(UUID entryId, RequeueRequest request, String correlationId) {
+        QueueEntry snapshot = entries.findById(entryId)
+                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "id", entryId));
+        QueueConfig config = requireLockedConfig(snapshot.getDepartmentId());
         QueueEntry entry = requireEntryForUpdate(entryId);
         if (entry.getStatus() != QueueStatus.MISSED) throw invalidTransition(entry, QueueStatus.CHECKED_IN);
-        QueueConfig config = requireConfig(entry.getDepartmentId());
         boolean back;
         if (config.getMissedPolicy() == MissedPolicy.REQUIRE_MANUAL) {
             if (request == null || request.position() == null) {
@@ -202,8 +292,18 @@ public class QueueManagementService {
         } else {
             back = config.getMissedPolicy() == MissedPolicy.REQUEUE_BACK;
         }
-        if (back) entry.setEligibleSinceAt(Instant.now());
+        if (back) {
+            entry.setEligibleSinceAt(Instant.now());
+        } else {
+            QueueEntry first = firstCandidate(config, entry.getQueueDate(), entry.getPriorityLevel());
+            entry.setEligibleSinceAt(first == null
+                    ? Instant.now()
+                    : first.getEligibleSinceAt().minusSeconds(1));
+        }
         entry.setStatus(QueueStatus.CHECKED_IN);
+        entry.setCalledAt(null);
+        entry.setCallAttempts(0);
+        entry.setNearTurnNotifiedAt(null);
         entries.saveAndFlush(entry);
         events.append(entry, config, "QUEUE_CHECKED_IN", AppConstants.RK_QUEUE_CHECKED_IN, correlationId,
                 Map.of("requeued", true, "position", back ? "BACK" : "FRONT"));
@@ -240,6 +340,10 @@ public class QueueManagementService {
 
     private QueueEntry newEntry(QueueConfig config, LocalDate date, UUID patientId, UUID userId,
                                 UUID appointmentId, PriorityLevel priority, QueueStatus status) {
+        if (entries.existsByPatientIdAndDepartmentIdAndQueueDateAndStatusIn(
+                patientId, config.getDepartmentId(), date, ACTIVE_PATIENT_STATUSES)) {
+            throw new BusinessException(409, "Bệnh nhân đã có một lượt khám đang hoạt động tại khoa trong ngày");
+        }
         QueueNumberSequence sequence = sequences.findByQueueConfigIdAndQueueDate(config.getId(), date).orElseGet(() -> {
             QueueNumberSequence created = new QueueNumberSequence();
             created.setQueueConfigId(config.getId());
@@ -313,16 +417,19 @@ public class QueueManagementService {
             int index = order.indexOf(entry.getId());
             if (index >= 0) {
                 position = index + 1;
-                int currentConsultation = entries.existsByQueueConfigIdAndQueueDateAndStatus(
-                        config.getId(), entry.getQueueDate(), QueueStatus.IN_PROGRESS)
+                int currentConsultation = entries.existsByQueueConfigIdAndQueueDateAndStatusIn(
+                        config.getId(), entry.getQueueDate(), SERVING_STATUSES)
                         ? config.getAvgConsultationMinutes() : 0;
                 wait = currentConsultation + Math.max(position - 1, 0) * config.getAvgConsultationMinutes();
-                entry.setEstimatedWaitMinutes(wait);
             }
         } else if (entry.getStatus() == QueueStatus.CALLED || entry.getStatus() == QueueStatus.IN_PROGRESS) {
             position = 0;
             wait = 0;
         }
+        return QueueEntryResponse.from(entry, QueueConfigResponse.from(config), position, wait);
+    }
+
+    private QueueEntryResponse response(QueueEntry entry, QueueConfig config, Integer position, Integer wait) {
         return QueueEntryResponse.from(entry, QueueConfigResponse.from(config), position, wait);
     }
 
@@ -333,12 +440,87 @@ public class QueueManagementService {
         Map<UUID, QueueEntry> byId = new HashMap<>();
         waiting.forEach(entry -> byId.put(entry.getId(), entry));
         int limit = Math.min(config.getNearTurnThreshold(), order.size());
+        int currentWorkload = entries.existsByQueueConfigIdAndQueueDateAndStatusIn(
+                config.getId(), date, SERVING_STATUSES)
+                ? config.getAvgConsultationMinutes() : 0;
         for (int index = 0; index < limit; index++) {
             QueueEntry entry = byId.get(order.get(index));
+            if (entry.getNearTurnNotifiedAt() != null) continue;
             int position = index + 1;
-            int wait = Math.max(position - 1, 0) * config.getAvgConsultationMinutes();
+            int wait = currentWorkload + Math.max(position - 1, 0) * config.getAvgConsultationMinutes();
             events.append(entry, config, "QUEUE_NEAR_TURN", AppConstants.RK_QUEUE_NEAR_TURN, correlationId,
                     Map.of("effectivePosition", position, "estimatedWaitMinutes", wait));
+            entry.setNearTurnNotifiedAt(Instant.now());
+        }
+    }
+
+    private String requireIdempotencyKey(String idempotencyKey) {
+        if (idempotencyKey == null || idempotencyKey.isBlank()) {
+            throw new BusinessException(400, "Thiếu header " + AppConstants.HEADER_IDEMPOTENCY_KEY);
+        }
+        String normalized = idempotencyKey.trim();
+        if (normalized.length() > 100) {
+            throw new BusinessException(400, AppConstants.HEADER_IDEMPOTENCY_KEY + " tối đa 100 ký tự");
+        }
+        return normalized;
+    }
+
+    private Optional<QueueEntryResponse> replay(
+            String command, UUID scopeId, String idempotencyKey, String requestFingerprint) {
+        return idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(command, scopeId, idempotencyKey)
+                .map(record -> {
+                    requireSameFingerprint(record, requestFingerprint);
+                    if (record.isEmptyResult()) {
+                        throw new IllegalStateException("Command unexpectedly contains an empty result");
+                    }
+                    QueueEntry entry = entries.findById(record.getResultEntryId())
+                            .orElseThrow(() -> new IllegalStateException("Idempotency result entry is missing"));
+                    QueueConfig config = configs.findById(entry.getQueueConfigId())
+                            .orElseThrow(() -> new IllegalStateException("Idempotency result config is missing"));
+                    return response(entry, config);
+                });
+    }
+
+    private void recordCommand(String command, UUID scopeId, String idempotencyKey,
+                               String requestFingerprint, QueueEntry entry) {
+        IdempotencyRecord record = new IdempotencyRecord();
+        record.setCommandName(command);
+        record.setScopeId(scopeId);
+        record.setIdempotencyKey(idempotencyKey);
+        record.setRequestFingerprint(requestFingerprint);
+        record.setResultEntryId(entry.getId());
+        idempotencyRecords.save(record);
+    }
+
+    private void recordEmptyCommand(
+            String command, UUID scopeId, String idempotencyKey, String requestFingerprint) {
+        IdempotencyRecord record = new IdempotencyRecord();
+        record.setCommandName(command);
+        record.setScopeId(scopeId);
+        record.setIdempotencyKey(idempotencyKey);
+        record.setRequestFingerprint(requestFingerprint);
+        record.setEmptyResult(true);
+        idempotencyRecords.save(record);
+    }
+
+    private void requireSameFingerprint(IdempotencyRecord record, String requestFingerprint) {
+        if (!MessageDigest.isEqual(
+                record.getRequestFingerprint().getBytes(StandardCharsets.UTF_8),
+                requestFingerprint.getBytes(StandardCharsets.UTF_8))) {
+            throw new BusinessException(409, "Idempotency-Key đã được dùng cho request có nội dung khác");
+        }
+    }
+
+    private String fingerprint(Object... values) {
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            for (Object value : values) {
+                digest.update(String.valueOf(value).getBytes(StandardCharsets.UTF_8));
+                digest.update((byte) 0);
+            }
+            return HexFormat.of().formatHex(digest.digest());
+        } catch (NoSuchAlgorithmException exception) {
+            throw new IllegalStateException("SHA-256 is unavailable", exception);
         }
     }
 

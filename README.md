@@ -27,6 +27,7 @@ Branch: `feature/dangkhoii/queue-algorithm` · Port: `8084` · Database: `carefl
 | `POST` | `/api/queues/check-in` | PATIENT |
 | `GET` | `/api/queues/departments/{id}/dashboard` | DOCTOR, ADMIN |
 | `POST` | `/api/queues/departments/{id}/next` | DOCTOR, ADMIN |
+| `POST` | `/api/queues/entries/{id}/recall` | DOCTOR, ADMIN |
 | `POST` | `/api/queues/entries/{id}/miss` | DOCTOR, ADMIN |
 | `POST` | `/api/queues/entries/{id}/requeue` | DOCTOR, ADMIN |
 | `POST` | `/api/queues/entries/{id}/start` | DOCTOR, ADMIN |
@@ -65,6 +66,7 @@ database thành công. Các biến cấu hình chính:
 | `EUREKA_URL` | `http://localhost:8761/eureka/` | Eureka Server |
 | `QUEUE_BUSINESS_ZONE` | `Asia/Ho_Chi_Minh` | Múi giờ cấp số theo ngày |
 | `QR_EXPIRATION_MINUTES` | `30` | Thời hạn QR check-in |
+| `OUTBOX_MAX_ATTEMPTS` | `12` | Số lần publish trước khi chuyển event sang `DEAD` |
 
 ### Hướng dẫn sử dụng
 
@@ -96,6 +98,7 @@ curl -X PUT http://localhost:8080/api/queues/configs/<DEPARTMENT_ID> \
 ```bash
 curl -X POST http://localhost:8080/api/queues/entries \
   -H 'Authorization: Bearer <ADMIN_JWT>' \
+  -H 'Idempotency-Key: <UUID_MOI_REQUEST>' \
   -H 'Content-Type: application/json' \
   -d '{
     "patientId": "<PATIENT_ID>",
@@ -112,8 +115,12 @@ curl http://localhost:8080/api/queues/departments/<DEPARTMENT_ID>/dashboard \
   -H 'Authorization: Bearer <DOCTOR_OR_ADMIN_JWT>'
 
 curl -X POST http://localhost:8080/api/queues/departments/<DEPARTMENT_ID>/next \
-  -H 'Authorization: Bearer <DOCTOR_OR_ADMIN_JWT>'
+  -H 'Authorization: Bearer <DOCTOR_OR_ADMIN_JWT>' \
+  -H 'Idempotency-Key: <UUID_MOI_REQUEST>'
 ```
+
+Chỉ có tối đa một lượt `CALLED` hoặc `IN_PROGRESS` trong một khoa/ngày. Khi bệnh
+nhân chưa xuất hiện, gọi `/recall` cho đến lần thứ ba rồi mới dùng `/miss`.
 
 4. Bệnh nhân xem trạng thái của chính mình:
 

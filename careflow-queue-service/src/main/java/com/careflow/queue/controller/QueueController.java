@@ -35,9 +35,10 @@ public class QueueController {
     public ResponseEntity<ApiResponse<QueueEntryResponse>> manualIntake(
             @Valid @RequestBody ManualIntakeRequest request,
             @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
+            @RequestHeader(value = AppConstants.HEADER_IDEMPOTENCY_KEY, required = false) String idempotencyKey,
             @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
         requireRole(role, AppConstants.ROLE_ADMIN);
-        QueueEntryResponse entry = queueService.manualIntake(request, correlationId);
+        QueueEntryResponse entry = queueService.manualIntake(request, idempotencyKey, correlationId);
         return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.<QueueEntryResponse>builder()
                 .status(201).message("Tiếp nhận thành công").data(entry).build());
     }
@@ -69,11 +70,20 @@ public class QueueController {
     @PostMapping("/departments/{departmentId}/next")
     public ResponseEntity<ApiResponse<QueueEntryResponse>> next(@PathVariable UUID departmentId,
                                                                 @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
+                                                                @RequestHeader(value = AppConstants.HEADER_IDEMPOTENCY_KEY, required = false) String idempotencyKey,
                                                                 @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
         requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
-        Optional<QueueEntryResponse> result = queueService.callNext(departmentId, correlationId);
+        Optional<QueueEntryResponse> result = queueService.callNext(departmentId, idempotencyKey, correlationId);
         return result.map(entry -> ResponseEntity.ok(ApiResponse.success("Đã gọi bệnh nhân tiếp theo", entry)))
                 .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    @PostMapping("/entries/{entryId}/recall")
+    public ApiResponse<QueueEntryResponse> recall(@PathVariable UUID entryId,
+                                                  @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
+                                                  @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
+        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success(queueService.recall(entryId, correlationId));
     }
 
     @PostMapping("/entries/{entryId}/miss")

@@ -12,13 +12,15 @@ public record QueueEntryResponse(
         UUID entryId, UUID appointmentId, UUID patientId, UUID userId, UUID departmentId,
         String departmentName, String roomCode, LocalDate queueDate, String queueNumber,
         PriorityLevel priorityLevel, QueueStatus queueStatus, Integer effectivePosition,
-        Integer estimatedWaitMinutes, Instant checkedInAt, Instant calledAt,
-        Instant startedAt, Instant completedAt) {
+        Integer estimatedWaitMinutes, int callAttempts, int missedCount,
+        Instant checkedInAt, Instant calledAt, Instant startedAt, Instant completedAt,
+        Instant missedAt) {
     public static QueueEntryResponse from(QueueEntry entry, QueueConfigResponse config,
                                           Integer position, Integer wait) {
         return new QueueEntryResponse(entry.getId(), entry.getAppointmentId(), entry.getPatientId(), entry.getUserId(),
                 entry.getDepartmentId(), config.departmentName(), config.roomCode(), entry.getQueueDate(),
                 entry.getQueueNumber(), entry.getPriorityLevel(), entry.getStatus(), position, wait,
-                entry.getCheckedInAt(), entry.getCalledAt(), entry.getStartedAt(), entry.getCompletedAt());
+                entry.getCallAttempts(), entry.getMissedCount(), entry.getCheckedInAt(), entry.getCalledAt(),
+                entry.getStartedAt(), entry.getCompletedAt(), entry.getMissedAt());
     }
 }

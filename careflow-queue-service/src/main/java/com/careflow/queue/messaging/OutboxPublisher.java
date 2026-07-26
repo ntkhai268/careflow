@@ -6,6 +6,7 @@ import com.careflow.queue.repository.OutboxEventRepository;
 import org.springframework.amqp.rabbit.connection.CorrelationData;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,10 +21,14 @@ import java.util.concurrent.TimeUnit;
 public class OutboxPublisher {
     private final OutboxEventRepository outbox;
     private final RabbitTemplate rabbitTemplate;
+    private final int maxAttempts;
 
-    public OutboxPublisher(OutboxEventRepository outbox, RabbitTemplate rabbitTemplate) {
+    public OutboxPublisher(OutboxEventRepository outbox, RabbitTemplate rabbitTemplate,
+                           @Value("${queue.outbox-max-attempts:12}") int maxAttempts) {
         this.outbox = outbox;
         this.rabbitTemplate = rabbitTemplate;
+        if (maxAttempts < 1) throw new IllegalArgumentException("queue.outbox-max-attempts must be positive");
+        this.maxAttempts = maxAttempts;
     }
 
     @Scheduled(fixedDelayString = "${queue.outbox-poll-ms:1000}")
@@ -46,7 +51,7 @@ public class OutboxPublisher {
         } catch (Exception exception) {
             int attempts = event.getAttempts() + 1;
             event.setAttempts(attempts);
-            event.setStatus(DeliveryStatus.FAILED);
+            event.setStatus(attempts >= maxAttempts ? DeliveryStatus.DEAD : DeliveryStatus.FAILED);
             long delay = Math.min(300, 1L << Math.min(attempts, 8));
             event.setNextAttemptAt(Instant.now().plus(delay, ChronoUnit.SECONDS));
             event.setLastError(exception.getMessage() == null ? exception.getClass().getSimpleName() : exception.getMessage());
