@@ -3,17 +3,9 @@ package com.careflow.appointment.mapper;
 import com.careflow.appointment.dto.response.AppointmentResponse;
 import com.careflow.appointment.model.Appointment;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-
 public class AppointmentMapper {
 
     private AppointmentMapper() {}
-
-    private static LocalDateTime toLocalDateTime(Instant instant) {
-        return instant != null ? LocalDateTime.ofInstant(instant, ZoneId.systemDefault()) : null;
-    }
 
     public static AppointmentResponse toResponse(Appointment appointment) {
         return AppointmentResponse.builder()
@@ -31,8 +23,8 @@ public class AppointmentMapper {
                 .reason(appointment.getReason())
                 .notes(appointment.getNotes())
                 .queueNumber(appointment.getQueueNumber())
-                .createdAt(toLocalDateTime(appointment.getCreatedAt()))
-                .updatedAt(toLocalDateTime(appointment.getUpdatedAt()))
+                .createdAt(appointment.getCreatedAt())
+                .updatedAt(appointment.getUpdatedAt())
                 .build();
     }
 }
