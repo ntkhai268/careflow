@@ -1,0 +1,17 @@
+.git
+**/.git
+**/target
+**/node_modules
+**/.idea
+**/.vscode
+**/.mvn
+**/mvnw
+**/mvnw.cmd
+docs
+*.docx
+*.md
+!**/pom.xml
+!**/src/**
+.env
+.env.*
+!.env.example
