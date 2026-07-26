@@ -6,6 +6,9 @@ spring:
     name: api-gateway
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 5s
       discovery:
         locator:
           enabled: true
@@ -55,7 +58,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
 
@@ -64,3 +67,7 @@ management:
     web:
       exposure:
         include: health,info,gateway
+
+jwt:
+  secret: ${JWT_SECRET}
+  issuer: careflow-identity
