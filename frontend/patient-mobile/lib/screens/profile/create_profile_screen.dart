@@ -299,13 +299,14 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
       children: [
         // ID type selector
         SizedBox(
-          width: 120,
+          width: 140,
           child: DropdownButtonFormField<String>(
             initialValue: _idCardType,
             decoration: const InputDecoration(
               contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                  EdgeInsets.symmetric(horizontal: 8, vertical: 16),
             ),
+            isExpanded: true,
             items: const [
               DropdownMenuItem(value: 'CCCD', child: Text('CCCD')),
               DropdownMenuItem(value: 'PASSPORT', child: Text('Hộ chiếu')),
