@@ -204,7 +204,7 @@ public class AppointmentService {
                     "department", appointment.getDepartment().name(),
                     "appointmentDate", appointment.getAppointmentDate().toString(),
                     "timeSlot", appointment.getTimeSlot(),
-                    "createdAt", java.time.LocalDateTime.now().toString()
+                    "createdAt", java.time.Instant.now().toString()
             );
 
             rabbitTemplate.convertAndSend(
