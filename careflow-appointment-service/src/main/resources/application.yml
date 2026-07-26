@@ -1,25 +1,28 @@
 server:
   port: 8083
+  shutdown: graceful
 
 spring:
   application:
     name: appointment-service
   datasource:
-    url: jdbc:postgresql://100.116.233.60:5432/careflow_appointment
-    username: careflow
-    password: careflow
+    url: ${APPOINTMENT_DB_URL:jdbc:postgresql://localhost:5432/careflow_appointment}
+    username: ${APPOINTMENT_DB_USERNAME:careflow}
+    password: ${APPOINTMENT_DB_PASSWORD:careflow}
   jpa:
+    open-in-view: false
     hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+      ddl-auto: validate
+    show-sql: ${JPA_SHOW_SQL:false}
+  flyway:
+    schemas: public
   rabbitmq:
-    host: 100.116.233.60
-    port: 5672
-    username: admin
-    password: admin123
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:admin123}
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   threads:
     virtual:
       enabled: true
@@ -33,7 +36,16 @@ eureka:
     prefer-ip-address: true
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:
         include: health,info
+
+springdoc:
+  swagger-ui:
+    operations-sorter: method
+    tags-sorter: alpha
