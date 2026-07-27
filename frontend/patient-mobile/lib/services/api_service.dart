@@ -6,23 +6,24 @@ import '../config/api_config.dart';
 /// Core API service using Dio with JWT interceptor.
 class ApiService {
   late final Dio _dio;
+  late final Dio _refreshDio;
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   static const String _tokenKey = 'jwt_token';
   static const String _refreshTokenKey = 'refresh_token';
 
   ApiService() {
-    _dio = Dio(
-      BaseOptions(
-        baseUrl: ApiConfig.baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ),
+    final options = BaseOptions(
+      baseUrl: ApiConfig.baseUrl,
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
     );
+    _dio = Dio(options);
+    _refreshDio = Dio(options);
 
     _dio.interceptors.add(
       InterceptorsWrapper(
@@ -34,9 +35,36 @@ class ApiService {
           handler.next(options);
         },
         onError: (error, handler) async {
-          if (error.response?.statusCode == 401) {
-            // Token expired — could implement refresh logic here
-            await clearTokens();
+          final request = error.requestOptions;
+          final isAuthEndpoint =
+              request.path == ApiConfig.authLogin ||
+              request.path == ApiConfig.authRefresh;
+          final alreadyRetried = request.extra['authRetried'] == true;
+          if (error.response?.statusCode == 401 &&
+              !isAuthEndpoint &&
+              !alreadyRetried) {
+            final refreshToken = await getRefreshToken();
+            if (refreshToken != null && refreshToken.isNotEmpty) {
+              try {
+                final refreshResponse = await _refreshDio.post(
+                  ApiConfig.authRefresh,
+                  data: {'refreshToken': refreshToken},
+                );
+                final data = refreshResponse.data['data'];
+                final accessToken = data['accessToken'] as String;
+                final rotatedRefreshToken = data['refreshToken'] as String;
+                await saveToken(accessToken);
+                await saveRefreshToken(rotatedRefreshToken);
+                request.headers['Authorization'] = 'Bearer $accessToken';
+                request.extra['authRetried'] = true;
+                handler.resolve(await _dio.fetch(request));
+                return;
+              } catch (_) {
+                await clearTokens();
+              }
+            } else {
+              await clearTokens();
+            }
           }
           handler.next(error);
         },
@@ -79,17 +107,11 @@ class ApiService {
     return await _dio.get(endpoint, queryParameters: queryParams);
   }
 
-  Future<Response> post(
-    String endpoint, {
-    dynamic data,
-  }) async {
+  Future<Response> post(String endpoint, {dynamic data}) async {
     return await _dio.post(endpoint, data: data);
   }
 
-  Future<Response> put(
-    String endpoint, {
-    dynamic data,
-  }) async {
+  Future<Response> put(String endpoint, {dynamic data}) async {
     return await _dio.put(endpoint, data: data);
   }
 
