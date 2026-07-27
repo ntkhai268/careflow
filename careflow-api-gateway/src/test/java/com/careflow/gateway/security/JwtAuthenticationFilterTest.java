@@ -13,6 +13,7 @@ import org.springframework.web.server.ServerWebExchange;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -55,20 +56,25 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
-    void refreshEndpointIsPublicAndSpoofedHeadersAreRemoved() {
+    void publicSessionAndPasswordEndpointsRemoveSpoofedHeaders() {
         JwtAuthenticationFilter filter = filter();
-        MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest
-                .post("/api/auth/refresh")
-                .header("X-User-Role", "ADMIN").build());
-        AtomicReference<ServerWebExchange> forwarded = new AtomicReference<>();
+        for (String path : List.of(
+                "/api/auth/refresh",
+                "/api/auth/forgot-password",
+                "/api/auth/reset-password")) {
+            MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest
+                    .post(path)
+                    .header("X-User-Role", "ADMIN").build());
+            AtomicReference<ServerWebExchange> forwarded = new AtomicReference<>();
 
-        filter.filter(exchange, forwardedExchange -> {
-            forwarded.set(forwardedExchange);
-            return forwardedExchange.getResponse().setComplete();
-        }).block();
+            filter.filter(exchange, forwardedExchange -> {
+                forwarded.set(forwardedExchange);
+                return forwardedExchange.getResponse().setComplete();
+            }).block();
 
-        assertThat(forwarded.get()).isNotNull();
-        assertThat(forwarded.get().getRequest().getHeaders()).doesNotContainKey("X-User-Role");
+            assertThat(forwarded.get()).isNotNull();
+            assertThat(forwarded.get().getRequest().getHeaders()).doesNotContainKey("X-User-Role");
+        }
     }
 
     private JwtAuthenticationFilter filter() {

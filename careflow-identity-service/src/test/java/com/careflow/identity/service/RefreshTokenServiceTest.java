@@ -28,14 +28,14 @@ class RefreshTokenServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new RefreshTokenService(tokens, 2_592_000_000L);
+        service = new RefreshTokenService(tokens, 86_400_000L, 2_592_000_000L);
     }
 
     @Test
     void issueReturnsOpaqueTokenAndStoresOnlyItsHash() {
         User user = activeUser();
 
-        RefreshTokenService.IssuedRefreshToken issued = service.issue(user);
+        RefreshTokenService.IssuedRefreshToken issued = service.issue(user, false);
 
         ArgumentCaptor<RefreshToken> tokenCaptor = ArgumentCaptor.forClass(RefreshToken.class);
         verify(tokens).save(tokenCaptor.capture());
@@ -43,13 +43,28 @@ class RefreshTokenServiceTest {
         assertThat(issued.value()).hasSize(43);
         assertThat(stored.getTokenHash()).hasSize(64).doesNotContain(issued.value());
         assertThat(stored.getUser()).isSameAs(user);
+        assertThat(issued.expiresInSeconds()).isEqualTo(86_400L);
+        assertThat(stored.isPersistentSession()).isFalse();
+    }
+
+    @Test
+    void rememberMeCreatesThirtyDayPersistentSession() {
+        User user = activeUser();
+
+        RefreshTokenService.IssuedRefreshToken issued = service.issue(user, true);
+
+        ArgumentCaptor<RefreshToken> tokenCaptor = ArgumentCaptor.forClass(RefreshToken.class);
+        verify(tokens).save(tokenCaptor.capture());
         assertThat(issued.expiresInSeconds()).isEqualTo(2_592_000L);
+        assertThat(issued.persistentSession()).isTrue();
+        assertThat(tokenCaptor.getValue().isPersistentSession()).isTrue();
     }
 
     @Test
     void rotateRevokesCurrentTokenAndIssuesAReplacement() {
         User user = activeUser();
         RefreshToken current = activeToken(user);
+        current.setPersistentSession(true);
         when(tokens.findByTokenHash(any())).thenReturn(Optional.of(current));
 
         RefreshTokenService.RotatedRefreshToken rotated = service.rotate("old-refresh-token");
@@ -57,6 +72,8 @@ class RefreshTokenServiceTest {
         assertThat(rotated.value()).isNotBlank().isNotEqualTo("old-refresh-token");
         assertThat(current.isRevoked()).isTrue();
         assertThat(current.getReplacedByTokenHash()).hasSize(64);
+        assertThat(rotated.persistentSession()).isTrue();
+        assertThat(rotated.expiresInSeconds()).isEqualTo(2_592_000L);
         verify(tokens, times(2)).save(any(RefreshToken.class));
     }
 

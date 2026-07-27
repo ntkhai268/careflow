@@ -65,7 +65,7 @@ class AuthServiceTest {
         when(users.findByUsernameIgnoreCaseOrEmailIgnoreCase("patient", "patient")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong", "hash")).thenReturn(false);
 
-        assertThatThrownBy(() -> service.login(new LoginRequest("patient", "wrong")))
+        assertThatThrownBy(() -> service.login(new LoginRequest("patient", "wrong", false)))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(401);
         assertThat(user.getStatus()).isEqualTo(UserStatus.LOCKED);
@@ -81,23 +81,26 @@ class AuthServiceTest {
         when(passwordEncoder.matches("correct", "hash")).thenReturn(true);
         when(jwtService.issue(user)).thenReturn("jwt");
         when(jwtService.expirationSeconds()).thenReturn(86400L);
-        when(refreshTokens.issue(user))
-                .thenReturn(new RefreshTokenService.IssuedRefreshToken("refresh", 2592000L));
+        when(refreshTokens.issue(user, true))
+                .thenReturn(new RefreshTokenService.IssuedRefreshToken("refresh", 2592000L, true));
 
-        LoginResponse response = service.login(new LoginRequest("patient", "correct"));
+        LoginResponse response = service.login(new LoginRequest("patient", "correct", true));
 
         assertThat(response.accessToken()).isEqualTo("jwt");
         assertThat(response.refreshToken()).isEqualTo("refresh");
         assertThat(response.refreshTokenExpiresInSeconds()).isEqualTo(2592000L);
+        assertThat(response.rememberMe()).isTrue();
         assertThat(user.getFailedLoginAttempts()).isZero();
         assertThat(user.getLastLoginAt()).isNotNull();
+        verify(refreshTokens).issue(user, true);
     }
 
     @Test
     void refreshRotatesTokenAndReturnsNewTokenPair() {
         User user = activeUser();
         when(refreshTokens.rotate("old-refresh"))
-                .thenReturn(new RefreshTokenService.RotatedRefreshToken(user, "new-refresh", 2592000L));
+                .thenReturn(new RefreshTokenService.RotatedRefreshToken(
+                        user, "new-refresh", 2592000L, true));
         when(jwtService.issue(user)).thenReturn("new-jwt");
         when(jwtService.expirationSeconds()).thenReturn(86400L);
 
@@ -105,6 +108,7 @@ class AuthServiceTest {
 
         assertThat(response.accessToken()).isEqualTo("new-jwt");
         assertThat(response.refreshToken()).isEqualTo("new-refresh");
+        assertThat(response.rememberMe()).isTrue();
         verify(refreshTokens).rotate("old-refresh");
     }
 

@@ -6,5 +6,6 @@ public record LoginResponse(
         String tokenType,
         long expiresInSeconds,
         long refreshTokenExpiresInSeconds,
+        boolean rememberMe,
         UserResponse user) {
 }

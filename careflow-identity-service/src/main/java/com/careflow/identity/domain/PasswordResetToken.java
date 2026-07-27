@@ -10,11 +10,11 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "refresh_tokens", schema = "identity")
+@Table(name = "password_reset_tokens", schema = "identity")
 @Getter
 @Setter
 @NoArgsConstructor
-public class RefreshToken {
+public class PasswordResetToken {
     @Id
     private UUID id;
 
@@ -28,14 +28,8 @@ public class RefreshToken {
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
 
-    @Column(name = "revoked_at")
-    private Instant revokedAt;
-
-    @Column(name = "replaced_by_token_hash", length = 64)
-    private String replacedByTokenHash;
-
-    @Column(name = "persistent_session", nullable = false)
-    private boolean persistentSession;
+    @Column(name = "used_at")
+    private Instant usedAt;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -45,13 +39,8 @@ public class RefreshToken {
         return !expiresAt.isAfter(now);
     }
 
-    public boolean isRevoked() {
-        return revokedAt != null;
-    }
-
-    public void revoke(Instant now, String replacementHash) {
-        revokedAt = now;
-        replacedByTokenHash = replacementHash;
+    public boolean isUsed() {
+        return usedAt != null;
     }
 
     @PrePersist

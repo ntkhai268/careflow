@@ -49,6 +49,10 @@ services:
       SPRING_RABBITMQ_HOST: careflow-rabbitmq
       EUREKA_URL: http://careflow-eureka-server:8761/eureka/
       JWT_SECRET: ${JWT_SECRET:-careflow-demo-jwt-secret-key-2026-must-be-at-least-256-bits-long}
+      JWT_REFRESH_SESSION_EXPIRATION_MS: ${JWT_REFRESH_SESSION_EXPIRATION_MS:-86400000}
+      JWT_REFRESH_REMEMBER_EXPIRATION_MS: ${JWT_REFRESH_REMEMBER_EXPIRATION_MS:-2592000000}
+      PASSWORD_RESET_EXPIRATION_MS: ${PASSWORD_RESET_EXPIRATION_MS:-900000}
+      PASSWORD_RESET_EXPOSE_TOKEN: ${PASSWORD_RESET_EXPOSE_TOKEN:-false}
     depends_on:
       careflow-eureka-server:
         condition: service_healthy

@@ -1,6 +1,6 @@
-# CareFlow — Identity & eKYC Service
+# CareFlow — API Gateway & Identity Service
 
-Nhánh triển khai: `feature/dangkhoii/identity-service`
+Nhánh triển khai: `feature/dangkhoii/api-gateway`
 
 Identity Service chịu trách nhiệm đăng ký, đăng nhập, quản lý phiên JWT, khóa tài
 khoản, phân quyền quản trị và eKYC giả lập cho CareFlow. API Gateway và Identity
@@ -13,7 +13,7 @@ Service đều xác thực JWT, vì vậy việc gọi thẳng service không th
 | Identity Service | Hoạt động, port `8081` |
 | API Gateway | Hoạt động, port `8080` |
 | Eureka Server | Hoạt động, port `8761` |
-| PostgreSQL | Flyway schema version `2` |
+| PostgreSQL | Flyway schema version `3` |
 | Swagger/OpenAPI | `/swagger-ui/index.html`, `/v3/api-docs` |
 | eKYC | Mock có kiểm tra ảnh thật, luôn trả `mock=true` |
 
@@ -23,8 +23,10 @@ Các chức năng đã có:
 - BCrypt password và policy mật khẩu mạnh.
 - Đăng nhập bằng username hoặc email.
 - Access token JWT và opaque refresh token được lưu dưới dạng SHA-256 hash.
+- Tùy chọn `rememberMe`: phiên thường 1 ngày, phiên ghi nhớ 30 ngày.
 - Refresh-token rotation, phát hiện reuse và thu hồi toàn bộ phiên còn hoạt động.
 - Logout thu hồi refresh token hiện tại.
+- Đặt lại mật khẩu bằng token một lần, mặc định hết hạn sau 15 phút.
 - Khóa tài khoản 15 phút sau 5 lần đăng nhập sai.
 - Phân quyền `ADMIN` cho API cập nhật trạng thái tài khoản.
 - Mock eKYC chỉ nhận JPEG/PNG hợp lệ, tối đa 5 MB.
@@ -65,9 +67,11 @@ Tất cả JSON response dùng envelope:
 | Method | Endpoint | Input | Output chính | Auth |
 |---|---|---|---|---|
 | `POST` | `/api/auth/register` | `username`, `email`, `password` | `201`, `UserResponse` | Public |
-| `POST` | `/api/auth/login` | `usernameOrEmail`, `password` | `200`, cặp token và user | Public |
+| `POST` | `/api/auth/login` | `usernameOrEmail`, `password`, `rememberMe` | `200`, cặp token và user | Public |
 | `POST` | `/api/auth/refresh` | `refreshToken` | `200`, cặp token mới | Public |
 | `POST` | `/api/auth/logout` | `refreshToken` | `200` | Public |
+| `POST` | `/api/auth/forgot-password` | `email` | `202`, phản hồi chung | Public |
+| `POST` | `/api/auth/reset-password` | `token`, `newPassword` | `200` | Public |
 | `GET` | `/api/auth/me` | Bearer access token | `200`, `UserResponse` | Authenticated |
 | `POST` | `/api/auth/ekyc` | multipart field `image` | `200`, `EkycResponse` | Authenticated |
 | `PATCH` | `/api/users/{id}/status` | `ACTIVE`, `LOCKED` hoặc `DISABLED` | `200`, `UserResponse` | ADMIN |
@@ -90,6 +94,7 @@ Payload trong `data`:
   "tokenType": "Bearer",
   "expiresInSeconds": 86400,
   "refreshTokenExpiresInSeconds": 2592000,
+  "rememberMe": true,
   "user": {
     "id": "<uuid>",
     "username": "patient01",
@@ -114,6 +119,21 @@ Refresh token đã được triển khai theo cơ chế rotation:
    của user để giới hạn token theft/replay.
 6. `/logout` thu hồi refresh token được gửi lên. Access token đã cấp vẫn hợp lệ đến
    khi hết hạn; client phải xóa cả hai token sau logout.
+
+`rememberMe=false` cấp refresh token 1 ngày; `rememberMe=true` cấp refresh token
+30 ngày. Khi refresh rotation, lựa chọn này được giữ nguyên.
+
+## Cơ chế quên mật khẩu
+
+1. `/forgot-password` luôn trả `202` với cùng một thông báo, kể cả email không tồn
+   tại, để ngăn dò tài khoản.
+2. Nếu email tồn tại, token ngẫu nhiên 256-bit được tạo; database chỉ lưu SHA-256
+   hash và token cũ chưa dùng bị vô hiệu hóa.
+3. `/reset-password` chỉ chấp nhận token chưa dùng và chưa hết hạn, sau đó đổi mật
+   khẩu, mở khóa tài khoản bị khóa do đăng nhập sai và thu hồi mọi refresh token.
+4. Production phải gửi raw reset token cho chủ email qua Notification/Email
+   Service. Khi phát triển cục bộ, có thể đặt `PASSWORD_RESET_EXPOSE_TOKEN=true`
+   để nhận token trong response; không bật tùy chọn này ở production.
 
 Mobile app tự thử refresh một lần khi API trả `401`, lưu cặp token mới rồi retry
 request ban đầu. Nếu refresh thất bại, app xóa phiên thay vì fallback sang mock.
@@ -170,7 +190,10 @@ khác của CareFlow.
 |---|---|---|
 | `JWT_SECRET` | Bắt buộc | Secret ký và kiểm tra JWT |
 | `JWT_EXPIRATION_MS` | `86400000` | Thời hạn access token |
-| `JWT_REFRESH_EXPIRATION_MS` | `2592000000` | Thời hạn refresh token |
+| `JWT_REFRESH_SESSION_EXPIRATION_MS` | `86400000` | Refresh token khi không ghi nhớ |
+| `JWT_REFRESH_REMEMBER_EXPIRATION_MS` | `2592000000` | Refresh token khi `rememberMe=true` |
+| `PASSWORD_RESET_EXPIRATION_MS` | `900000` | Thời hạn reset token |
+| `PASSWORD_RESET_EXPOSE_TOKEN` | `false` | Chỉ bật để test cục bộ |
 | `IDENTITY_DB_URL` | `jdbc:postgresql://localhost:5432/careflow_identity` | JDBC URL |
 | `IDENTITY_DB_USERNAME` | `careflow` | Database user |
 | `IDENTITY_DB_PASSWORD` | `careflow` | Database password |
@@ -195,7 +218,7 @@ curl -X POST http://localhost:8081/api/auth/register \
 
 curl -X POST http://localhost:8081/api/auth/login \
   -H 'Content-Type: application/json' \
-  -d '{"usernameOrEmail":"patient01","password":"Patient@123"}'
+  -d '{"usernameOrEmail":"patient01","password":"Patient@123","rememberMe":true}'
 ```
 
 Gọi qua Gateway:
@@ -219,6 +242,18 @@ curl -X POST http://localhost:8081/api/auth/refresh \
 curl -X POST http://localhost:8081/api/auth/logout \
   -H 'Content-Type: application/json' \
   -d '{"refreshToken":"<CURRENT_REFRESH_TOKEN>"}'
+```
+
+Quên và đặt lại mật khẩu:
+
+```bash
+curl -X POST http://localhost:8080/api/auth/forgot-password \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"patient01@example.com"}'
+
+curl -X POST http://localhost:8080/api/auth/reset-password \
+  -H 'Content-Type: application/json' \
+  -d '{"token":"<RESET_TOKEN>","newPassword":"NewPassword@123"}'
 ```
 
 ## Kiểm thử

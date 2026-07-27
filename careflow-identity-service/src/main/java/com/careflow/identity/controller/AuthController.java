@@ -4,6 +4,7 @@ import com.careflow.common.dto.ApiResponse;
 import com.careflow.identity.dto.*;
 import com.careflow.identity.service.AuthService;
 import com.careflow.identity.service.EkycService;
+import com.careflow.identity.service.PasswordResetService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -25,10 +26,13 @@ import java.util.UUID;
 public class AuthController {
     private final AuthService authService;
     private final EkycService ekycService;
+    private final PasswordResetService passwordResetService;
 
-    public AuthController(AuthService authService, EkycService ekycService) {
+    public AuthController(AuthService authService, EkycService ekycService,
+                          PasswordResetService passwordResetService) {
         this.authService = authService;
         this.ekycService = ekycService;
+        this.passwordResetService = passwordResetService;
     }
 
     @PostMapping("/register")
@@ -66,6 +70,27 @@ public class AuthController {
     public ApiResponse<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
         authService.logout(request);
         return ApiResponse.<Void>success("Đăng xuất thành công", null);
+    }
+
+    @PostMapping("/forgot-password")
+    @Operation(summary = "Yêu cầu đặt lại mật khẩu",
+            description = "Luôn trả phản hồi giống nhau để không làm lộ email có tồn tại hay không")
+    public ResponseEntity<ApiResponse<ForgotPasswordResponse>> forgotPassword(
+            @Valid @RequestBody ForgotPasswordRequest request) {
+        ForgotPasswordResponse result = passwordResetService.request(request.email());
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+                .body(ApiResponse.<ForgotPasswordResponse>builder()
+                        .status(HttpStatus.ACCEPTED.value())
+                        .message("Nếu email tồn tại, yêu cầu đặt lại mật khẩu đã được tạo")
+                        .data(result)
+                        .build());
+    }
+
+    @PostMapping("/reset-password")
+    @Operation(summary = "Đặt mật khẩu mới bằng token dùng một lần")
+    public ApiResponse<Void> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.reset(request.token(), request.newPassword());
+        return ApiResponse.<Void>success("Đặt lại mật khẩu thành công", null);
     }
 
     @GetMapping("/me")

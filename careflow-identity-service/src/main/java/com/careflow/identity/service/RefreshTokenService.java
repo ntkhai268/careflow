@@ -22,21 +22,25 @@ public class RefreshTokenService {
     private static final int TOKEN_BYTES = 32;
 
     private final RefreshTokenRepository tokens;
-    private final long expirationMs;
+    private final long sessionExpirationMs;
+    private final long rememberExpirationMs;
     private final SecureRandom secureRandom = new SecureRandom();
 
     public RefreshTokenService(RefreshTokenRepository tokens,
-                               @Value("${jwt.refresh-expiration:2592000000}") long expirationMs) {
-        if (expirationMs <= 0) {
-            throw new IllegalArgumentException("JWT refresh expiration must be positive");
+                               @Value("${jwt.refresh-session-expiration:86400000}") long sessionExpirationMs,
+                               @Value("${jwt.refresh-remember-expiration:2592000000}") long rememberExpirationMs) {
+        if (sessionExpirationMs <= 0 || rememberExpirationMs < sessionExpirationMs) {
+            throw new IllegalArgumentException(
+                    "Refresh expirations must be positive and remember expiration cannot be shorter");
         }
         this.tokens = tokens;
-        this.expirationMs = expirationMs;
+        this.sessionExpirationMs = sessionExpirationMs;
+        this.rememberExpirationMs = rememberExpirationMs;
     }
 
     @Transactional
-    public IssuedRefreshToken issue(User user) {
-        return create(user, Instant.now());
+    public IssuedRefreshToken issue(User user, boolean persistentSession) {
+        return create(user, persistentSession, Instant.now());
     }
 
     @Transactional(noRollbackFor = BusinessException.class)
@@ -59,11 +63,13 @@ public class RefreshTokenService {
             throw new BusinessException(403, "Tài khoản không ở trạng thái hoạt động");
         }
 
-        IssuedRefreshToken replacement = create(current.getUser(), now);
+        IssuedRefreshToken replacement = create(
+                current.getUser(), current.isPersistentSession(), now);
         current.revoke(now, hash(replacement.value()));
         tokens.save(current);
         return new RotatedRefreshToken(
-                current.getUser(), replacement.value(), replacement.expiresInSeconds());
+                current.getUser(), replacement.value(), replacement.expiresInSeconds(),
+                replacement.persistentSession());
     }
 
     @Transactional
@@ -77,17 +83,24 @@ public class RefreshTokenService {
         });
     }
 
-    private IssuedRefreshToken create(User user, Instant now) {
+    @Transactional
+    public void revokeAll(User user) {
+        revokeActiveTokens(user, Instant.now());
+    }
+
+    private IssuedRefreshToken create(User user, boolean persistentSession, Instant now) {
         byte[] bytes = new byte[TOKEN_BYTES];
         secureRandom.nextBytes(bytes);
         String rawToken = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        long expirationMs = persistentSession ? rememberExpirationMs : sessionExpirationMs;
 
         RefreshToken token = new RefreshToken();
         token.setUser(user);
         token.setTokenHash(hash(rawToken));
         token.setExpiresAt(now.plusMillis(expirationMs));
+        token.setPersistentSession(persistentSession);
         tokens.save(token);
-        return new IssuedRefreshToken(rawToken, expirationMs / 1000);
+        return new IssuedRefreshToken(rawToken, expirationMs / 1000, persistentSession);
     }
 
     private void revokeActiveTokens(User user, Instant now) {
@@ -110,9 +123,10 @@ public class RefreshTokenService {
         return new BusinessException(401, message);
     }
 
-    public record IssuedRefreshToken(String value, long expiresInSeconds) {
+    public record IssuedRefreshToken(String value, long expiresInSeconds, boolean persistentSession) {
     }
 
-    public record RotatedRefreshToken(User user, String value, long expiresInSeconds) {
+    public record RotatedRefreshToken(
+            User user, String value, long expiresInSeconds, boolean persistentSession) {
     }
 }

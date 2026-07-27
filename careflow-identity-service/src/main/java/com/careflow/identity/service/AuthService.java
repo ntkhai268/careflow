@@ -89,13 +89,15 @@ public class AuthService {
         user.setLockedUntil(null);
         user.setLastLoginAt(now);
         users.save(user);
-        RefreshTokenService.IssuedRefreshToken refreshToken = refreshTokens.issue(user);
-        return tokenResponse(user, refreshToken.value(), refreshToken.expiresInSeconds());
+        RefreshTokenService.IssuedRefreshToken refreshToken = refreshTokens.issue(user, request.rememberMe());
+        return tokenResponse(user, refreshToken.value(), refreshToken.expiresInSeconds(),
+                refreshToken.persistentSession());
     }
 
     public LoginResponse refresh(RefreshTokenRequest request) {
         RefreshTokenService.RotatedRefreshToken refreshToken = refreshTokens.rotate(request.refreshToken());
-        return tokenResponse(refreshToken.user(), refreshToken.value(), refreshToken.expiresInSeconds());
+        return tokenResponse(refreshToken.user(), refreshToken.value(), refreshToken.expiresInSeconds(),
+                refreshToken.persistentSession());
     }
 
     public void logout(RefreshTokenRequest request) {
@@ -120,13 +122,15 @@ public class AuthService {
         return users.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
     }
 
-    private LoginResponse tokenResponse(User user, String refreshToken, long refreshExpiresInSeconds) {
+    private LoginResponse tokenResponse(
+            User user, String refreshToken, long refreshExpiresInSeconds, boolean rememberMe) {
         return new LoginResponse(
                 jwtService.issue(user),
                 refreshToken,
                 "Bearer",
                 jwtService.expirationSeconds(),
                 refreshExpiresInSeconds,
+                rememberMe,
                 UserResponse.from(user));
     }
 }

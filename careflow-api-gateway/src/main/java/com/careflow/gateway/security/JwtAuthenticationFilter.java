@@ -88,7 +88,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         return HttpMethod.OPTIONS.equals(method)
                 || (HttpMethod.POST.equals(method) && Set.of(
                         "/api/auth/register", "/api/auth/login",
-                        "/api/auth/refresh", "/api/auth/logout").contains(path))
+                        "/api/auth/refresh", "/api/auth/logout",
+                        "/api/auth/forgot-password", "/api/auth/reset-password").contains(path))
                 || path.startsWith("/actuator/health")
                 || path.startsWith("/swagger-ui/")
                 || path.startsWith("/v3/api-docs/")
