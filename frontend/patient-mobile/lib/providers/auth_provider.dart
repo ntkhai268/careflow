@@ -81,17 +81,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Register
   Future<void> register({
-    required String fullName,
+    required String username,
     required String email,
-    required String phone,
     required String password,
   }) async {
     state = state.copyWith(status: AuthStatus.loading);
     try {
       final response = await _authService.register(
-        fullName: fullName,
+        username: username,
         email: email,
-        phone: phone,
         password: password,
       );
       state = state.copyWith(

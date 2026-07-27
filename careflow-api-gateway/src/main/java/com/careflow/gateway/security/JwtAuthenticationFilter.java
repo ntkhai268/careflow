@@ -51,7 +51,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
-        String correlationId = validCorrelationId(exchange.getRequest().getHeaders().getFirst(CORRELATION_ID));
+        String correlationId = normalizedCorrelationId(
+                exchange.getRequest().getHeaders().getFirst(CORRELATION_ID));
         ServerHttpRequest.Builder request = exchange.getRequest().mutate().headers(headers -> {
             headers.remove(USER_ID);
             headers.remove(USER_ROLE);
@@ -64,7 +65,7 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         String authorization = exchange.getRequest().getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (authorization == null || !authorization.startsWith("Bearer ")) {
+        if (authorization == null || !authorization.startsWith("Bearer ") || authorization.length() == 7) {
             return unauthorized(exchange, correlationId, "Thiếu Bearer token");
         }
         try {
@@ -85,12 +86,17 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private boolean isPublic(HttpMethod method, String path) {
         return HttpMethod.OPTIONS.equals(method)
-                || (HttpMethod.POST.equals(method) && (path.equals("/api/auth/register") || path.equals("/api/auth/login")))
+                || (HttpMethod.POST.equals(method) && Set.of(
+                        "/api/auth/register", "/api/auth/login",
+                        "/api/auth/refresh", "/api/auth/logout").contains(path))
                 || path.startsWith("/actuator/health")
+                || path.startsWith("/swagger-ui/")
+                || path.startsWith("/v3/api-docs/")
+                || path.equals("/v3/api-docs")
                 || path.equals("/ws") || path.startsWith("/ws/");
     }
 
-    private String validCorrelationId(String value) {
+    private String normalizedCorrelationId(String value) {
         try {
             return value == null ? UUID.randomUUID().toString() : UUID.fromString(value).toString();
         } catch (IllegalArgumentException ignored) {

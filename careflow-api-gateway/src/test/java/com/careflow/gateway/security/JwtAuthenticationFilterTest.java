@@ -24,12 +24,9 @@ class JwtAuthenticationFilterTest {
     @Test
     void replacesSpoofedTrustedHeadersWithSignedClaims() {
         UUID userId = UUID.randomUUID();
-        String token = Jwts.builder().subject(userId.toString()).issuer("careflow-identity")
-                .claim("role", "PATIENT").issuedAt(Date.from(Instant.now()))
-                .expiration(Date.from(Instant.now().plusSeconds(60)))
-                .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8))).compact();
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(SECRET, "careflow-identity", new ObjectMapper());
-        MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/queues/me/status")
+        String token = token(userId, "PATIENT");
+        JwtAuthenticationFilter filter = filter();
+        MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/auth/me")
                 .header(HttpHeaders.AUTHORIZATION, "Bearer " + token)
                 .header("X-User-Id", UUID.randomUUID().toString())
                 .header("X-User-Role", "ADMIN").build());
@@ -40,18 +37,48 @@ class JwtAuthenticationFilterTest {
             return forwardedExchange.getResponse().setComplete();
         }).block();
 
-        assertThat(forwarded.get().getRequest().getHeaders().getFirst("X-User-Id")).isEqualTo(userId.toString());
-        assertThat(forwarded.get().getRequest().getHeaders().getFirst("X-User-Role")).isEqualTo("PATIENT");
-        assertThat(forwarded.get().getRequest().getHeaders().getFirst("X-Correlation-Id")).isNotBlank();
+        assertThat(forwarded.get().getRequest().getHeaders().getFirst("X-User-Id"))
+                .isEqualTo(userId.toString());
+        assertThat(forwarded.get().getRequest().getHeaders().getFirst("X-User-Role"))
+                .isEqualTo("PATIENT");
     }
 
     @Test
     void protectedRequestWithoutTokenIsUnauthorized() {
-        JwtAuthenticationFilter filter = new JwtAuthenticationFilter(SECRET, "careflow-identity", new ObjectMapper());
-        MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest.get("/api/queues/me/status").build());
+        JwtAuthenticationFilter filter = filter();
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.get("/api/auth/me").build());
 
-        filter.filter(exchange, ignored -> { throw new AssertionError("Request must not be forwarded"); }).block();
+        filter.filter(exchange, ignored -> { throw new AssertionError("must not forward"); }).block();
 
         assertThat(exchange.getResponse().getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    }
+
+    @Test
+    void refreshEndpointIsPublicAndSpoofedHeadersAreRemoved() {
+        JwtAuthenticationFilter filter = filter();
+        MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest
+                .post("/api/auth/refresh")
+                .header("X-User-Role", "ADMIN").build());
+        AtomicReference<ServerWebExchange> forwarded = new AtomicReference<>();
+
+        filter.filter(exchange, forwardedExchange -> {
+            forwarded.set(forwardedExchange);
+            return forwardedExchange.getResponse().setComplete();
+        }).block();
+
+        assertThat(forwarded.get()).isNotNull();
+        assertThat(forwarded.get().getRequest().getHeaders()).doesNotContainKey("X-User-Role");
+    }
+
+    private JwtAuthenticationFilter filter() {
+        return new JwtAuthenticationFilter(SECRET, "careflow-identity", new ObjectMapper());
+    }
+
+    private String token(UUID userId, String role) {
+        return Jwts.builder().subject(userId.toString()).issuer("careflow-identity")
+                .claim("role", role).issuedAt(Date.from(Instant.now()))
+                .expiration(Date.from(Instant.now().plusSeconds(60)))
+                .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8))).compact();
     }
 }

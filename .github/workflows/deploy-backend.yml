@@ -1,0 +1,78 @@
+name: Deploy Backend Services
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'careflow-*/src/**'
+      - 'careflow-common/**'
+      - 'pom.xml'
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Detect changed services
+        id: changes
+        run: |
+          # Lấy danh sách file thay đổi so với commit trước
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || echo "")
+          echo "Changed files: $CHANGED_FILES"
+
+          # Danh sách tất cả service
+          SERVICES=(
+            "careflow-eureka-server"
+            "careflow-api-gateway"
+            "careflow-identity-service"
+            "careflow-patient-service"
+            "careflow-appointment-service"
+            "careflow-queue-service"
+            "careflow-notification-service"
+            "careflow-consultation-service"
+            "careflow-prescription-service"
+            "careflow-emr-service"
+            "careflow-lab-service"
+            "careflow-ai-service"
+          )
+
+          # Tìm service nào có file thay đổi
+          CHANGED_SERVICES=""
+          REBUILD_ALL=false
+
+          # Nếu pom.xml gốc hoặc careflow-common thay đổi → build lại tất cả
+          if echo "$CHANGED_FILES" | grep -qE "^pom.xml$|^careflow-common/"; then
+            REBUILD_ALL=true
+            echo "Common dependency changed, rebuilding ALL services"
+          fi
+
+          if [ "$REBUILD_ALL" = true ]; then
+            CHANGED_SERVICES=$(IFS=' '; echo "${SERVICES[*]}")
+          else
+            for SERVICE in "${SERVICES[@]}"; do
+              if echo "$CHANGED_FILES" | grep -q "^${SERVICE}/"; then
+                CHANGED_SERVICES="$CHANGED_SERVICES $SERVICE"
+              fi
+            done
+          fi
+
+          CHANGED_SERVICES=$(echo "$CHANGED_SERVICES" | xargs)
+          echo "services=$CHANGED_SERVICES" >> $GITHUB_OUTPUT
+          echo "Services to rebuild: $CHANGED_SERVICES"
+
+      - name: Build and deploy changed services
+        if: steps.changes.outputs.services != ''
+        run: |
+          SERVICES="${{ steps.changes.outputs.services }}"
+          echo "🔨 Building: $SERVICES"
+
+          # Build và deploy từng service
+          docker-compose up --build -d $SERVICES
+
+          echo "✅ Deployed: $SERVICES"
+
+      - name: No changes detected
+        if: steps.changes.outputs.services == ''
+        run: echo "ℹ️ No backend services changed, skipping build."

@@ -1,148 +1,275 @@
-# CareFlow 🏥
+# CareFlow — Identity & eKYC Service
 
-> Hệ thống phần mềm trợ giúp khám chữa bệnh tại bệnh viện công theo kiến trúc Microservices
+Nhánh triển khai: `feature/dangkhoii/identity-service`
 
-## Branch hiện tại: API Gateway
+Identity Service chịu trách nhiệm đăng ký, đăng nhập, quản lý phiên JWT, khóa tài
+khoản, phân quyền quản trị và eKYC giả lập cho CareFlow. API Gateway và Identity
+Service đều xác thực JWT, vì vậy việc gọi thẳng service không thể bỏ qua lớp bảo mật.
 
-Branch: `feature/dangkhoii/api-gateway` · Port: `8080`
+## Trạng thái hiện tại
 
-### Chức năng
-
-- Định tuyến request tới các microservice thông qua Eureka service discovery.
-- Cho phép public path đăng ký, đăng nhập, health check và WebSocket handshake.
-- Xác minh chữ ký, issuer, thời hạn và role trong JWT cho protected request.
-- Xóa `X-User-Id`, `X-User-Role`, `X-Correlation-Id` do client tự gửi.
-- Gắn trusted identity headers và correlation ID trước khi chuyển tiếp request.
-- Route WebSocket riêng bằng `lb:ws://notification-service`.
-
-### Route chính
-
-| Path | Service đích |
+| Thành phần | Trạng thái |
 |---|---|
-| `/api/auth/**`, `/api/users/**` | Identity |
-| `/api/patients/**` | Patient |
-| `/api/appointments/**` | Appointment |
-| `/api/queues/**` | Queue |
-| `/api/notifications/**`, `/ws/**` | Notification |
+| Identity Service | Hoạt động, port `8081` |
+| API Gateway | Hoạt động, port `8080` |
+| Eureka Server | Hoạt động, port `8761` |
+| PostgreSQL | Flyway schema version `2` |
+| Swagger/OpenAPI | `/swagger-ui/index.html`, `/v3/api-docs` |
+| eKYC | Mock có kiểm tra ảnh thật, luôn trả `mock=true` |
 
-### Yêu cầu môi trường
+Các chức năng đã có:
 
-- JDK 21 và Maven 3.9+.
-- Eureka Server và service đích đang chạy.
-- `JWT_SECRET` phải giống chính xác secret của Identity và Notification Service.
+- Đăng ký tài khoản `PATIENT`; chuẩn hóa username/email về chữ thường.
+- BCrypt password và policy mật khẩu mạnh.
+- Đăng nhập bằng username hoặc email.
+- Access token JWT và opaque refresh token được lưu dưới dạng SHA-256 hash.
+- Refresh-token rotation, phát hiện reuse và thu hồi toàn bộ phiên còn hoạt động.
+- Logout thu hồi refresh token hiện tại.
+- Khóa tài khoản 15 phút sau 5 lần đăng nhập sai.
+- Phân quyền `ADMIN` cho API cập nhật trạng thái tài khoản.
+- Mock eKYC chỉ nhận JPEG/PNG hợp lệ, tối đa 5 MB.
+- Health probe, graceful shutdown, Docker non-root và Compose healthcheck.
 
-### Cài đặt và khởi chạy
+## Kiến trúc và trust boundary
 
-```bash
-git clone <repository-url>
-cd careflow
-git switch feature/dangkhoii/api-gateway
-export JWT_SECRET='<same-secret-as-identity-service>'
-
-mvn -pl careflow-api-gateway -am clean package
-java -jar careflow-api-gateway/target/careflow-api-gateway-*.jar
+```text
+Flutter / Web
+      │  Authorization: Bearer <access-token>
+      ▼
+API Gateway :8080 ── Eureka ── Identity Service :8081 ── PostgreSQL
+      │                            │
+      ├─ kiểm tra chữ ký/issuer    └─ kiểm tra lại JWT và phân quyền
+      └─ xóa header giả mạo
 ```
 
-Gateway chạy tại `http://localhost:8080` và mặc định tìm Eureka tại
-`http://localhost:8761/eureka/`. Có thể đổi địa chỉ bằng `EUREKA_URL`.
+Client không được tự gửi `X-User-Id` hoặc `X-User-Role`. Gateway luôn xóa các
+header này trước khi tạo lại từ JWT cho downstream. Identity Service không dùng
+header làm danh tính mà lấy principal trực tiếp từ Bearer token.
 
-Nếu chưa có Eureka Server, build và chạy ở một terminal khác:
+`JWT_SECRET` và issuer phải đồng nhất giữa Gateway và Identity Service. Secret phải
+có ít nhất 32 byte và không được commit vào repository.
 
-```bash
-mvn -pl careflow-eureka-server -am package
-java -jar careflow-eureka-server/target/careflow-eureka-server-*.jar
+## API contract
+
+Tất cả JSON response dùng envelope:
+
+```json
+{
+  "status": 200,
+  "message": "Mô tả kết quả",
+  "data": {},
+  "timestamp": "2026-07-20T16:00:00Z"
+}
 ```
 
-### Hướng dẫn sử dụng
+| Method | Endpoint | Input | Output chính | Auth |
+|---|---|---|---|---|
+| `POST` | `/api/auth/register` | `username`, `email`, `password` | `201`, `UserResponse` | Public |
+| `POST` | `/api/auth/login` | `usernameOrEmail`, `password` | `200`, cặp token và user | Public |
+| `POST` | `/api/auth/refresh` | `refreshToken` | `200`, cặp token mới | Public |
+| `POST` | `/api/auth/logout` | `refreshToken` | `200` | Public |
+| `GET` | `/api/auth/me` | Bearer access token | `200`, `UserResponse` | Authenticated |
+| `POST` | `/api/auth/ekyc` | multipart field `image` | `200`, `EkycResponse` | Authenticated |
+| `PATCH` | `/api/users/{id}/status` | `ACTIVE`, `LOCKED` hoặc `DISABLED` | `200`, `UserResponse` | ADMIN |
 
-Kiểm tra Gateway đã sẵn sàng:
+### Quy tắc input
+
+- `username`: 3–50 ký tự; chỉ chữ, số, `.`, `_`, `-`.
+- `email`: email hợp lệ, tối đa 255 ký tự.
+- `password`: 8–72 ký tự, có chữ hoa, chữ thường, số và ký tự đặc biệt.
+- `image`: JPEG hoặc PNG khớp cả MIME type và magic bytes, tối đa 5 MB.
+
+### Login output
+
+Payload trong `data`:
+
+```json
+{
+  "accessToken": "<jwt>",
+  "refreshToken": "<opaque-token>",
+  "tokenType": "Bearer",
+  "expiresInSeconds": 86400,
+  "refreshTokenExpiresInSeconds": 2592000,
+  "user": {
+    "id": "<uuid>",
+    "username": "patient01",
+    "email": "patient01@example.com",
+    "role": "PATIENT",
+    "status": "ACTIVE"
+  }
+}
+```
+
+## Cơ chế refresh token
+
+Refresh token đã được triển khai theo cơ chế rotation:
+
+1. `/login` cấp một access token và một refresh token ngẫu nhiên 256-bit.
+2. Database chỉ lưu SHA-256 hash, không lưu raw refresh token.
+3. `/refresh` kiểm tra token tồn tại, chưa hết hạn, chưa bị thu hồi và user còn
+   `ACTIVE`.
+4. Token cũ bị revoke và được liên kết với token thay thế; response trả một access
+   token và refresh token hoàn toàn mới.
+5. Dùng lại refresh token cũ trả `401` và thu hồi các refresh token còn hoạt động
+   của user để giới hạn token theft/replay.
+6. `/logout` thu hồi refresh token được gửi lên. Access token đã cấp vẫn hợp lệ đến
+   khi hết hạn; client phải xóa cả hai token sau logout.
+
+Mobile app tự thử refresh một lần khi API trả `401`, lưu cặp token mới rồi retry
+request ban đầu. Nếu refresh thất bại, app xóa phiên thay vì fallback sang mock.
+Mock auth chỉ bật chủ động bằng `--dart-define=USE_MOCK_AUTH=true`.
+
+## Khởi chạy bằng Docker Compose
+
+Yêu cầu: Docker Engine có Compose v2.
 
 ```bash
+git switch feature/dangkhoii/identity-service
+cp .env.example .env
+```
+
+Đổi `JWT_SECRET` trong `.env` thành secret ngẫu nhiên tối thiểu 32 byte, sau đó:
+
+```bash
+docker compose up --build
+```
+
+Compose khởi chạy PostgreSQL → Eureka → Identity → Gateway theo healthcheck. Kiểm
+tra trạng thái:
+
+```bash
+curl http://localhost:8081/actuator/health
 curl http://localhost:8080/actuator/health
 ```
 
-Hai API đăng ký/đăng nhập là public và được chuyển tới Identity Service:
+Dừng stack mà vẫn giữ volume database:
 
 ```bash
-curl -X POST http://localhost:8080/api/auth/login \
-  -H 'Content-Type: application/json' \
-  -d '{
-    "usernameOrEmail": "patient01",
-    "password": "Patient@123"
-  }'
+docker compose down
 ```
 
-Với endpoint protected, gửi JWT nhận từ API đăng nhập:
+## Khởi chạy Identity Service trực tiếp
+
+Yêu cầu: JDK 21, Maven 3.9+, PostgreSQL 16.
+
+```bash
+docker compose -f docker-compose.infra.yml up -d postgres
+
+export JWT_SECRET="$(openssl rand -base64 48)"
+mvn -pl careflow-identity-service -am clean package
+java -jar careflow-identity-service/target/careflow-identity-service-1.0.0-SNAPSHOT.jar
+```
+
+Flyway tự tạo/validate schema `identity` khi service khởi động. Identity Service
+không phụ thuộc RabbitMQ; broker trong file infra phục vụ các service event-driven
+khác của CareFlow.
+
+### Biến môi trường
+
+| Biến | Mặc định | Ý nghĩa |
+|---|---|---|
+| `JWT_SECRET` | Bắt buộc | Secret ký và kiểm tra JWT |
+| `JWT_EXPIRATION_MS` | `86400000` | Thời hạn access token |
+| `JWT_REFRESH_EXPIRATION_MS` | `2592000000` | Thời hạn refresh token |
+| `IDENTITY_DB_URL` | `jdbc:postgresql://localhost:5432/careflow_identity` | JDBC URL |
+| `IDENTITY_DB_USERNAME` | `careflow` | Database user |
+| `IDENTITY_DB_PASSWORD` | `careflow` | Database password |
+| `EUREKA_URL` | `http://localhost:8761/eureka/` | Eureka endpoint |
+| `JPA_SHOW_SQL` | `false` | In câu SQL để debug |
+
+## Swagger và ví dụ sử dụng
+
+Mở `http://localhost:8081/swagger-ui/index.html`. Với API bảo vệ, chọn
+**Authorize** và nhập access token vào Bearer scheme.
+
+Đăng ký và đăng nhập:
+
+```bash
+curl -X POST http://localhost:8081/api/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "username":"patient01",
+    "email":"patient01@example.com",
+    "password":"Patient@123"
+  }'
+
+curl -X POST http://localhost:8081/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"usernameOrEmail":"patient01","password":"Patient@123"}'
+```
+
+Gọi qua Gateway:
 
 ```bash
 curl http://localhost:8080/api/auth/me \
   -H 'Authorization: Bearer <ACCESS_TOKEN>'
+
+curl -X POST http://localhost:8080/api/auth/ekyc \
+  -H 'Authorization: Bearer <ACCESS_TOKEN>' \
+  -F 'image=@/absolute/path/to/cccd.png;type=image/png'
 ```
 
-Kết quả mong đợi khi không có token là HTTP `401`. Gateway luôn xóa
-`X-User-Id`, `X-User-Role`, `X-Correlation-Id` do client tự gửi rồi tạo lại trusted
-headers từ JWT. Vì vậy client không được dùng các header này để tự khai báo danh tính.
-
-### Chạy kiểm thử
+Refresh và logout:
 
 ```bash
-export JWT_SECRET="replace-with-at-least-32-random-bytes"
-mvn -pl careflow-api-gateway -am test
+curl -X POST http://localhost:8081/api/auth/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"<CURRENT_REFRESH_TOKEN>"}'
+
+curl -X POST http://localhost:8081/api/auth/logout \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"<CURRENT_REFRESH_TOKEN>"}'
 ```
 
-Gateway chỉ là lớp kiểm tra đầu tiên; service đích vẫn phải kiểm tra role và ownership.
+## Kiểm thử
 
-## Tổng quan
+Backend:
 
-CareFlow là hệ thống quản lý quy trình khám bệnh tại bệnh viện công, xây dựng theo kiến trúc Microservices. Hệ thống hỗ trợ:
-
-- **Bệnh nhân** (Mobile App): Đăng ký khám, theo dõi hàng đợi, nhận thông báo, xem toa thuốc
-- **Bác sỹ** (Web App): Tra cứu hồ sơ, chẩn bệnh, kê toa, ChatBot AI gợi ý phác đồ
-- **Hệ thống** (Core): Quản lý hàng đợi đa độ ưu tiên, xác thực, thông báo real-time
-
-## Kiến trúc
-
-```
-Mobile App (Flutter)  ──┐
-                        ├──▶ API Gateway ──▶ Microservices ──▶ PostgreSQL
-Web App (React)       ──┘         │                │
-                            Eureka Server     RabbitMQ
+```bash
+mvn -pl careflow-api-gateway,careflow-identity-service -am clean test package
 ```
 
-## Tech Stack
+Mobile:
 
-| Layer | Công nghệ |
-|-------|-----------|
-| Backend | Spring Boot 3, Java 21 |
-| Mobile | Flutter |
-| Web | React + Vite |
-| Database | PostgreSQL |
-| Message Broker | RabbitMQ |
-| Service Discovery | Spring Cloud Eureka |
-| API Gateway | Spring Cloud Gateway |
-| Container | Docker + Docker Compose |
+```bash
+cd frontend/patient-mobile
+flutter analyze
+flutter test --no-test-assets
+```
 
-## Services
+Docker Compose syntax:
 
-| Service | Trạng thái |
-|---------|------------|
-| API Gateway | ✅ Implemented on this branch |
-| Identity & Auth | 🔧 Planned |
-| Patient Service | 🔧 Planned |
-| Appointment Service | 🔧 Planned |
-| Queue Management ⭐ | 🔧 Planned |
-| Notification Service | 🔧 Planned |
-| Doctor Consultation | 🔧 Planned |
-| Prescription Service | 🔧 Planned |
-| EMR Service | 🔧 Planned |
-| Laboratory Order | 🔧 Mock |
-| Analytics Service | 🔧 Mock |
-| AI Clinical Assistant | 🔧 Mock |
+```bash
+JWT_SECRET=replace-with-at-least-32-random-bytes docker compose config --quiet
+```
 
-## Tài liệu
+Bộ regression hiện kiểm tra JWT round-trip, refresh rotation/reuse, logout,
+account lock, Gateway header spoofing, phân quyền admin, magic bytes của ảnh và
+contract login trên Flutter.
 
-- [Implementation Plan](docs/implementation_plan.md)
+## HTTP status chính
 
-## Team
+| Status | Trường hợp |
+|---|---|
+| `200` | Login, refresh, logout, `/me`, eKYC hoặc update status thành công |
+| `201` | Đăng ký thành công |
+| `400` | Body/field/multipart không hợp lệ |
+| `401` | Sai đăng nhập, thiếu/sai JWT, refresh token hết hạn/reuse |
+| `403` | Sai quyền hoặc tài khoản bị khóa/vô hiệu hóa |
+| `409` | Username/email đã tồn tại |
+| `413` | File vượt giới hạn upload |
+| `415` | File không phải JPEG/PNG hợp lệ |
+| `500` | Lỗi nội bộ đã được che thông tin triển khai |
 
-Đề tài thực tập tốt nghiệp — PTIT
+## Giới hạn trước production
+
+- eKYC là deterministic mock phục vụ tích hợp; chưa có OCR, face matching hoặc
+  liveness provider thật và không persist hồ sơ xác minh.
+- Logout thu hồi refresh token, không blacklist access token đã phát hành.
+- Chưa có distributed rate limiting, audit/security event pipeline và SIEM.
+- Production cần TLS, Secret Manager/KMS, backup database và monitoring tập trung.
+
+## Tài liệu liên quan
+
+- [Implementation plan](docs/implementation_plan.md)
+- [Tài liệu trong thư mục docs](docs/)
