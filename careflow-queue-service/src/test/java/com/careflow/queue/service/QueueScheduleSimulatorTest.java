@@ -61,6 +61,59 @@ class QueueScheduleSimulatorTest {
                 .containsExactly(p1.getId(), p2.getId(), p3.getId());
     }
 
+    @Test
+    void dueAppointmentIsProtectedFromPriorityCycle() {
+        QueueConfig config = config(2, 1);
+        config.setAvgConsultationMinutes(15);
+        Instant now = Instant.parse("2026-07-20T01:00:00Z");
+        QueueEntry appointment = scheduledAppointment(1, now);
+        QueueEntry p1 = entry(PriorityLevel.PRIORITY, 2);
+        QueueEntry p2 = entry(PriorityLevel.PRIORITY, 3);
+
+        assertThat(QueueScheduleSimulator.schedule(config, date, List.of(p1, p2, appointment), now))
+                .extracting(QueueScheduleSimulator.ScheduledEntry::entryId)
+                .containsExactly(appointment.getId(), p1.getId(), p2.getId());
+    }
+
+    @Test
+    void fillsOnlyCapacityThatFinishesBeforeAppointment() {
+        QueueConfig config = config(2, 1);
+        config.setAvgConsultationMinutes(15);
+        Instant now = Instant.parse("2026-07-20T00:30:00Z");
+        QueueEntry appointment = scheduledAppointment(1, Instant.parse("2026-07-20T01:00:00Z"));
+        QueueEntry p1 = entry(PriorityLevel.PRIORITY, 2);
+        QueueEntry p2 = entry(PriorityLevel.PRIORITY, 3);
+        QueueEntry p3 = entry(PriorityLevel.PRIORITY, 4);
+
+        List<QueueScheduleSimulator.ScheduledEntry> schedule = QueueScheduleSimulator.schedule(
+                config, date, List.of(p1, p2, p3, appointment), now);
+
+        assertThat(schedule).extracting(QueueScheduleSimulator.ScheduledEntry::entryId)
+                .containsExactly(p1.getId(), p2.getId(), appointment.getId(), p3.getId());
+        assertThat(schedule.get(2).projectedStartAt()).isEqualTo(appointment.getScheduledStartAt());
+    }
+
+    @Test
+    void emergencyCanDelayAppointmentButDoesNotAdvanceCycle() {
+        QueueConfig config = config(2, 1);
+        config.setAvgConsultationMinutes(15);
+        config.setSchedulerDate(date);
+        config.setServedInPhase(1);
+        Instant now = Instant.parse("2026-07-20T01:00:00Z");
+        QueueEntry emergency = entry(PriorityLevel.EMERGENCY, 1);
+        QueueEntry appointment = scheduledAppointment(2, now);
+        QueueEntry priority = entry(PriorityLevel.PRIORITY, 3);
+
+        List<QueueScheduleSimulator.ScheduledEntry> schedule = QueueScheduleSimulator.schedule(
+                config, date, List.of(priority, appointment, emergency), now);
+
+        assertThat(schedule).extracting(QueueScheduleSimulator.ScheduledEntry::entryId)
+                .containsExactly(emergency.getId(), appointment.getId(), priority.getId());
+        assertThat(schedule.get(1).projectedStartAt()).isEqualTo(now.plusSeconds(15 * 60));
+        assertThat(schedule.get(2).mode())
+                .isEqualTo(QueueScheduleSimulator.SelectionMode.PRIORITY_CYCLE);
+    }
+
     private QueueConfig config(int n, int m) {
         QueueConfig config = new QueueConfig();
         config.setPriorityRatioN(n);
@@ -77,6 +130,12 @@ class QueueScheduleSimulatorTest {
         entry.setStatus(QueueStatus.CHECKED_IN);
         entry.setSequenceNumber(sequence);
         entry.setEligibleSinceAt(Instant.parse("2026-07-20T00:00:00Z").plusSeconds(sequence));
+        return entry;
+    }
+
+    private QueueEntry scheduledAppointment(int sequence, Instant scheduledStartAt) {
+        QueueEntry entry = entry(PriorityLevel.APPOINTMENT, sequence);
+        entry.setScheduledStartAt(scheduledStartAt);
         return entry;
     }
 }

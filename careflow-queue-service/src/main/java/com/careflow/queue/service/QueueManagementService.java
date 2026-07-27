@@ -165,14 +165,17 @@ public class QueueManagementService {
                 .toList();
         Map<UUID, QueueEntry> waitingById = new HashMap<>();
         waiting.forEach(entry -> waitingById.put(entry.getId(), entry));
-        List<UUID> scheduledOrder = QueueScheduleSimulator.order(config, date, waiting);
+        Instant now = Instant.now();
         int currentWorkload = serving.isEmpty() ? 0 : config.getAvgConsultationMinutes();
+        List<QueueScheduleSimulator.ScheduledEntry> schedule = QueueScheduleSimulator.schedule(
+                config, date, waiting, now.plus(Duration.ofMinutes(currentWorkload)));
         List<QueueEntryResponse> response = new ArrayList<>();
         serving.forEach(entry -> response.add(response(entry, config, 0, 0)));
-        for (int index = 0; index < scheduledOrder.size(); index++) {
-            QueueEntry entry = waitingById.get(scheduledOrder.get(index));
+        for (int index = 0; index < schedule.size(); index++) {
+            QueueScheduleSimulator.ScheduledEntry scheduled = schedule.get(index);
+            QueueEntry entry = waitingById.get(scheduled.entryId());
             int position = index + 1;
-            int wait = currentWorkload + index * config.getAvgConsultationMinutes();
+            int wait = projectedWaitMinutes(now, scheduled.projectedStartAt());
             response.add(response(entry, config, position, wait));
         }
         return new QueueDashboardResponse(departmentId, config.getDepartmentNameSnapshot(),
@@ -203,35 +206,29 @@ public class QueueManagementService {
                     "Khoa đang có bệnh nhân ở trạng thái CALLED hoặc IN_PROGRESS; hãy hoàn tất hoặc đánh dấu lỡ lượt trước");
         }
 
-        QueueEntry candidate = firstCandidate(config, date, PriorityLevel.EMERGENCY);
-        if (candidate == null && config.getCyclePhase() == CyclePhase.PRIORITY) {
-            candidate = firstCandidate(config, date, PriorityLevel.PRIORITY);
-            if (candidate != null) advancePriority(config);
-            else { config.setCyclePhase(CyclePhase.NORMAL); config.setServedInPhase(0); }
-        }
-        if (candidate == null && config.getCyclePhase() == CyclePhase.NORMAL) {
-            PriorityLevel preferred = config.getNormalCursor() == NormalCursor.APPOINTMENT
-                    ? PriorityLevel.APPOINTMENT : PriorityLevel.WALK_IN;
-            candidate = firstCandidate(config, date, preferred);
-            if (candidate == null) candidate = firstCandidate(config, date,
-                    preferred == PriorityLevel.APPOINTMENT ? PriorityLevel.WALK_IN : PriorityLevel.APPOINTMENT);
-            if (candidate != null) advanceNormal(config, candidate.getPriorityLevel());
-        }
-        if (candidate == null) {
-            candidate = firstCandidate(config, date, PriorityLevel.PRIORITY);
-            if (candidate != null) {
-                config.setCyclePhase(CyclePhase.PRIORITY);
-                config.setServedInPhase(0);
-                advancePriority(config);
-            }
-        }
-        if (candidate == null) {
+        List<QueueEntry> waiting = entries
+                .findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+                        config.getId(), date, Set.of(QueueStatus.CHECKED_IN));
+        Map<UUID, QueueEntry> waitingById = new HashMap<>();
+        waiting.forEach(entry -> waitingById.put(entry.getId(), entry));
+        Instant now = Instant.now();
+        QueueScheduleSimulator.ScheduledEntry next = QueueScheduleSimulator
+                .schedule(config, date, waiting, now)
+                .stream().findFirst().orElse(null);
+        if (next == null || next.projectedStartAt().isAfter(now)) {
             recordEmptyCommand(COMMAND_CALL_NEXT, departmentId, normalizedKey, requestFingerprint);
             return Optional.empty();
         }
+        QueueEntry candidate = waitingById.get(next.entryId());
+        if (candidate == null) throw new IllegalStateException("Scheduled queue entry is missing");
+        if (next.mode() == QueueScheduleSimulator.SelectionMode.PRIORITY_CYCLE) {
+            advancePriority(config);
+        } else if (next.mode() == QueueScheduleSimulator.SelectionMode.NORMAL_CYCLE) {
+            advanceNormal(config, candidate.getPriorityLevel());
+        }
 
         candidate.setStatus(QueueStatus.CALLED);
-        candidate.setCalledAt(Instant.now());
+        candidate.setCalledAt(now);
         candidate.setCallAttempts(1);
         entries.saveAndFlush(candidate);
         configs.save(config);
@@ -366,9 +363,12 @@ public class QueueManagementService {
         return entry;
     }
 
-    public QueueEntry createAppointmentEntry(QueueConfig config, LocalDate date, UUID appointmentId,
-                                             UUID patientId, UUID userId) {
-        return newEntry(config, date, patientId, userId, appointmentId, PriorityLevel.APPOINTMENT, QueueStatus.WAITING);
+    public QueueEntry createAppointmentEntry(QueueConfig config, LocalDate date, LocalTime scheduledStart,
+                                             UUID appointmentId, UUID patientId, UUID userId) {
+        QueueEntry entry = newEntry(
+                config, date, patientId, userId, appointmentId, PriorityLevel.APPOINTMENT, QueueStatus.WAITING);
+        entry.setScheduledStartAt(ZonedDateTime.of(date, scheduledStart, businessZone).toInstant());
+        return entry;
     }
 
     public QueueConfig requireLockedConfig(UUID departmentId) {
@@ -413,14 +413,23 @@ public class QueueManagementService {
         if (entry.getStatus() == QueueStatus.CHECKED_IN) {
             List<QueueEntry> active = entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                     config.getId(), entry.getQueueDate(), Set.of(QueueStatus.CHECKED_IN));
-            List<UUID> order = QueueScheduleSimulator.order(config, entry.getQueueDate(), active);
-            int index = order.indexOf(entry.getId());
+            Instant now = Instant.now();
+            int currentConsultation = entries.existsByQueueConfigIdAndQueueDateAndStatusIn(
+                    config.getId(), entry.getQueueDate(), SERVING_STATUSES)
+                    ? config.getAvgConsultationMinutes() : 0;
+            List<QueueScheduleSimulator.ScheduledEntry> schedule = QueueScheduleSimulator.schedule(
+                    config, entry.getQueueDate(), active,
+                    now.plus(Duration.ofMinutes(currentConsultation)));
+            int index = -1;
+            for (int candidateIndex = 0; candidateIndex < schedule.size(); candidateIndex++) {
+                if (schedule.get(candidateIndex).entryId().equals(entry.getId())) {
+                    index = candidateIndex;
+                    break;
+                }
+            }
             if (index >= 0) {
                 position = index + 1;
-                int currentConsultation = entries.existsByQueueConfigIdAndQueueDateAndStatusIn(
-                        config.getId(), entry.getQueueDate(), SERVING_STATUSES)
-                        ? config.getAvgConsultationMinutes() : 0;
-                wait = currentConsultation + Math.max(position - 1, 0) * config.getAvgConsultationMinutes();
+                wait = projectedWaitMinutes(now, schedule.get(index).projectedStartAt());
             }
         } else if (entry.getStatus() == QueueStatus.CALLED || entry.getStatus() == QueueStatus.IN_PROGRESS) {
             position = 0;
@@ -436,22 +445,30 @@ public class QueueManagementService {
     private void appendNearTurnEvents(QueueConfig config, LocalDate date, String correlationId) {
         List<QueueEntry> waiting = entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                 config.getId(), date, Set.of(QueueStatus.CHECKED_IN));
-        List<UUID> order = QueueScheduleSimulator.order(config, date, waiting);
         Map<UUID, QueueEntry> byId = new HashMap<>();
         waiting.forEach(entry -> byId.put(entry.getId(), entry));
-        int limit = Math.min(config.getNearTurnThreshold(), order.size());
+        Instant now = Instant.now();
         int currentWorkload = entries.existsByQueueConfigIdAndQueueDateAndStatusIn(
                 config.getId(), date, SERVING_STATUSES)
                 ? config.getAvgConsultationMinutes() : 0;
+        List<QueueScheduleSimulator.ScheduledEntry> schedule = QueueScheduleSimulator.schedule(
+                config, date, waiting, now.plus(Duration.ofMinutes(currentWorkload)));
+        int limit = Math.min(config.getNearTurnThreshold(), schedule.size());
         for (int index = 0; index < limit; index++) {
-            QueueEntry entry = byId.get(order.get(index));
+            QueueScheduleSimulator.ScheduledEntry scheduled = schedule.get(index);
+            QueueEntry entry = byId.get(scheduled.entryId());
             if (entry.getNearTurnNotifiedAt() != null) continue;
             int position = index + 1;
-            int wait = currentWorkload + Math.max(position - 1, 0) * config.getAvgConsultationMinutes();
+            int wait = projectedWaitMinutes(now, scheduled.projectedStartAt());
             events.append(entry, config, "QUEUE_NEAR_TURN", AppConstants.RK_QUEUE_NEAR_TURN, correlationId,
                     Map.of("effectivePosition", position, "estimatedWaitMinutes", wait));
             entry.setNearTurnNotifiedAt(Instant.now());
         }
+    }
+
+    private int projectedWaitMinutes(Instant now, Instant projectedStartAt) {
+        long seconds = Math.max(0, Duration.between(now, projectedStartAt).getSeconds());
+        return Math.toIntExact((seconds + 59) / 60);
     }
 
     private String requireIdempotencyKey(String idempotencyKey) {

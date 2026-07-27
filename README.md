@@ -89,6 +89,11 @@ Tất cả JSON response dùng envelope:
 | `POST` | `/api/queues/entries/{id}/complete` | DOCTOR, ADMIN |
 | `GET`, `PUT` | `/api/queues/configs/{departmentId}` | ADMIN |
 
+Sự kiện `APPOINTMENT_CREATED` bắt buộc có `appointmentDate` và `timeSlot`
+(`HH:mm-HH:mm`, ví dụ `08:00-08:30`). Queue Service bảo vệ giờ bắt đầu đã hẹn:
+bệnh nhân ưu tiên thông thường và walk-in chỉ được gọi nếu không làm lịch hẹn kế
+tiếp bị trễ; ca `EMERGENCY` vẫn luôn được gọi trước.
+
 ## Cơ chế refresh token
 
 Refresh token đã được triển khai theo cơ chế rotation:

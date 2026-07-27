@@ -26,6 +26,7 @@ public class QueueEntry {
     @Column(name = "queue_number", nullable = false, length = 20) private String queueNumber;
     @Enumerated(EnumType.STRING) @Column(name = "priority_level", nullable = false) private PriorityLevel priorityLevel;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private QueueStatus status = QueueStatus.WAITING;
+    @Column(name = "scheduled_start_at") private Instant scheduledStartAt;
     @Column(name = "checked_in_at") private Instant checkedInAt;
     @Column(name = "eligible_since_at") private Instant eligibleSinceAt;
     @Column(name = "called_at") private Instant calledAt;

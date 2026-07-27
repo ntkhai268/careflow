@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -79,6 +80,22 @@ class QueueManagementServiceTest {
     }
 
     @Test
+    void appointmentEntryStoresSlotStartInBusinessTimezone() {
+        UUID appointmentId = UUID.randomUUID();
+        UUID patientId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        when(sequences.findByQueueConfigIdAndQueueDate(config.getId(), today)).thenReturn(Optional.empty());
+        when(sequences.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        QueueEntry appointment = service.createAppointmentEntry(
+                config, today, LocalTime.of(8, 0), appointmentId, patientId, userId);
+
+        assertThat(appointment.getScheduledStartAt())
+                .isEqualTo(today.atTime(8, 0).atZone(serviceZone()).toInstant());
+        assertThat(appointment.getPriorityLevel()).isEqualTo(PriorityLevel.APPOINTMENT);
+    }
+
+    @Test
     void callNextCallsPriorityPatientAndPersistsIdempotentOutcome() {
         QueueEntry priority = entry(PriorityLevel.PRIORITY, QueueStatus.CHECKED_IN, 1);
         when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
@@ -86,12 +103,8 @@ class QueueManagementServiceTest {
                 "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.empty());
         when(entries.findFirstByQueueConfigIdAndQueueDateAndStatusInOrderByCalledAtAsc(
                 eq(config.getId()), eq(today), anyCollection())).thenReturn(Optional.empty());
-        when(entries.findByQueueConfigIdAndQueueDateAndStatusAndPriorityLevelOrderByEligibleSinceAtAscSequenceNumberAsc(
-                eq(config.getId()), eq(today), eq(QueueStatus.CHECKED_IN),
-                eq(PriorityLevel.EMERGENCY), any())).thenReturn(List.of());
-        when(entries.findByQueueConfigIdAndQueueDateAndStatusAndPriorityLevelOrderByEligibleSinceAtAscSequenceNumberAsc(
-                eq(config.getId()), eq(today), eq(QueueStatus.CHECKED_IN),
-                eq(PriorityLevel.PRIORITY), any())).thenReturn(List.of(priority));
+        when(entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+                eq(config.getId()), eq(today), anyCollection())).thenReturn(List.of(priority));
 
         assertThat(service.callNext(departmentId, "request-1", "trace-1"))
                 .get().extracting(response -> response.entryId()).isEqualTo(priority.getId());
@@ -101,6 +114,26 @@ class QueueManagementServiceTest {
         verify(idempotencyRecords).save(captor.capture());
         assertThat(captor.getValue().getResultEntryId()).isEqualTo(priority.getId());
         assertThat(captor.getValue().getRequestFingerprint()).hasSize(64);
+    }
+
+    @Test
+    void callNextProtectsDueAppointmentWithoutAdvancingPriorityCycle() {
+        QueueEntry appointment = entry(PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, 1);
+        appointment.setScheduledStartAt(Instant.now().minusSeconds(60));
+        QueueEntry priority = entry(PriorityLevel.PRIORITY, QueueStatus.CHECKED_IN, 2);
+        when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
+        when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
+                "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.empty());
+        when(entries.findFirstByQueueConfigIdAndQueueDateAndStatusInOrderByCalledAtAsc(
+                eq(config.getId()), eq(today), anyCollection())).thenReturn(Optional.empty());
+        when(entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+                eq(config.getId()), eq(today), anyCollection())).thenReturn(List.of(priority, appointment));
+
+        assertThat(service.callNext(departmentId, "request-1", "trace-1"))
+                .get().extracting(response -> response.entryId()).isEqualTo(appointment.getId());
+        assertThat(config.getCyclePhase()).isEqualTo(CyclePhase.PRIORITY);
+        assertThat(config.getServedInPhase()).isZero();
+        assertThat(priority.getStatus()).isEqualTo(QueueStatus.CHECKED_IN);
     }
 
     @Test
@@ -254,5 +287,9 @@ class QueueManagementServiceTest {
         } catch (NoSuchAlgorithmException exception) {
             throw new IllegalStateException(exception);
         }
+    }
+
+    private java.time.ZoneId serviceZone() {
+        return java.time.ZoneId.of("Asia/Ho_Chi_Minh");
     }
 }

@@ -16,12 +16,16 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Map;
 import java.util.UUID;
 
 @Component
 public class AppointmentEventConsumer {
     private static final String CONSUMER = "queue-service.appointment-events";
+    private static final DateTimeFormatter APPOINTMENT_TIME = DateTimeFormatter.ofPattern("H:mm");
     private final ProcessedEventRepository processedEvents;
     private final QueueEntryRepository entries;
     private final QueueManagementService queueService;
@@ -60,15 +64,19 @@ public class AppointmentEventConsumer {
         LocalDate date;
         try { date = LocalDate.parse(requiredText(payload, "appointmentDate")); }
         catch (RuntimeException exception) { throw new BusinessException(422, "appointmentDate không hợp lệ"); }
+        LocalTime scheduledStart = parseTimeSlotStart(requiredText(payload, "timeSlot"));
         if (payload.hasNonNull("priorityLevel") && !"APPOINTMENT".equals(payload.get("priorityLevel").asText())) {
             throw new BusinessException(422, "AppointmentCreated phải có priorityLevel APPOINTMENT");
         }
         QueueConfig config = queueService.requireLockedConfig(departmentId);
         if (entries.findByAppointmentId(appointmentId).isPresent()) return;
-        QueueEntry entry = queueService.createAppointmentEntry(config, date, appointmentId, patientId, userId);
+        QueueEntry entry = queueService.createAppointmentEntry(
+                config, date, scheduledStart, appointmentId, patientId, userId);
         entries.saveAndFlush(entry);
         events.append(entry, config, "QUEUE_NUMBER_ASSIGNED", AppConstants.RK_QUEUE_NUMBER_ASSIGNED,
-                envelope.correlationId(), Map.of("appointmentDate", date.toString()));
+                envelope.correlationId(), Map.of(
+                        "appointmentDate", date.toString(),
+                        "scheduledStartAt", entry.getScheduledStartAt().toString()));
     }
 
     private void cancel(EventEnvelope envelope) {
@@ -100,5 +108,18 @@ public class AppointmentEventConsumer {
         if (!payload.hasNonNull(field) || payload.get(field).asText().isBlank())
             throw new BusinessException(422, "Thiếu field bắt buộc: " + field);
         return payload.get(field).asText();
+    }
+
+    private LocalTime parseTimeSlotStart(String timeSlot) {
+        String[] bounds = timeSlot.trim().split("\\s*-\\s*", -1);
+        if (bounds.length != 2) throw new BusinessException(422, "timeSlot phải có dạng HH:mm-HH:mm");
+        try {
+            LocalTime start = LocalTime.parse(bounds[0], APPOINTMENT_TIME);
+            LocalTime end = LocalTime.parse(bounds[1], APPOINTMENT_TIME);
+            if (!end.isAfter(start)) throw new BusinessException(422, "Giờ kết thúc timeSlot phải sau giờ bắt đầu");
+            return start;
+        } catch (DateTimeParseException exception) {
+            throw new BusinessException(422, "timeSlot phải có dạng HH:mm-HH:mm");
+        }
     }
 }
