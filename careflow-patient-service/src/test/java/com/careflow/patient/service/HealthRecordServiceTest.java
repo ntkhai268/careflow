@@ -2,6 +2,7 @@ package com.careflow.patient.service;
 
 import com.careflow.common.exception.ResourceNotFoundException;
 import com.careflow.patient.dto.request.CreateHealthRecordRequest;
+import com.careflow.patient.dto.request.UpdateHealthRecordRequest;
 import com.careflow.patient.dto.response.HealthRecordResponse;
 import com.careflow.patient.model.AllergyStatus;
 import com.careflow.patient.model.HealthRecord;
@@ -46,6 +47,8 @@ class HealthRecordServiceTest {
     @InjectMocks
     private HealthRecordService healthRecordService;
 
+    private static final String BASE_URL = "http://localhost:8082";
+
     private UUID patientId;
     private UUID recordId;
     private CreateHealthRecordRequest request;
@@ -82,13 +85,15 @@ class HealthRecordServiceTest {
         savedRecord.setUpdatedAt(Instant.now());
     }
 
+    // ========== CREATE ==========
+
     @Test
     @DisplayName("Create health record without files")
     void create_withoutFiles_success() {
         when(patientRepository.existsById(patientId)).thenReturn(true);
         when(healthRecordRepository.save(any(HealthRecord.class))).thenReturn(savedRecord);
 
-        HealthRecordResponse response = healthRecordService.create(patientId, request, null);
+        HealthRecordResponse response = healthRecordService.create(patientId, request, null, BASE_URL);
 
         assertThat(response).isNotNull();
         assertThat(response.title()).isEqualTo("Khám mắt");
@@ -119,7 +124,7 @@ class HealthRecordServiceTest {
         MockMultipartFile mockFile = new MockMultipartFile(
                 "files", "xetnghiem.jpg", "image/jpeg", "fake image data".getBytes());
 
-        HealthRecordResponse response = healthRecordService.create(patientId, request, List.of(mockFile));
+        HealthRecordResponse response = healthRecordService.create(patientId, request, List.of(mockFile), BASE_URL);
 
         assertThat(response).isNotNull();
         assertThat(response.files()).hasSize(1);
@@ -131,13 +136,13 @@ class HealthRecordServiceTest {
     void create_patientNotFound_throwsException() {
         when(patientRepository.existsById(patientId)).thenReturn(false);
 
-        assertThatThrownBy(() -> healthRecordService.create(patientId, request, null))
+        assertThatThrownBy(() -> healthRecordService.create(patientId, request, null, BASE_URL))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
     @Test
     @DisplayName("Auto-calculate BMI when height and weight provided")
-    void create_calculatessBmi() {
+    void create_calculatesBmi() {
         when(patientRepository.existsById(patientId)).thenReturn(true);
         when(healthRecordRepository.save(any(HealthRecord.class))).thenAnswer(invocation -> {
             HealthRecord arg = invocation.getArgument(0);
@@ -148,13 +153,14 @@ class HealthRecordServiceTest {
             return arg;
         });
 
-        HealthRecordResponse response = healthRecordService.create(patientId, request, null);
+        HealthRecordResponse response = healthRecordService.create(patientId, request, null, BASE_URL);
 
         assertThat(response).isNotNull();
-        // BMI = 65 / (1.70 * 1.70) = 22.49
         assertThat(response.bmi()).isNotNull();
         assertThat(response.bmi().doubleValue()).isBetween(22.0, 23.0);
     }
+
+    // ========== GET ALL ==========
 
     @Test
     @DisplayName("Get all health records for a patient")
@@ -163,7 +169,7 @@ class HealthRecordServiceTest {
         when(healthRecordRepository.findByPatientIdOrderByRecordDateDesc(patientId))
                 .thenReturn(List.of(savedRecord));
 
-        List<HealthRecordResponse> responses = healthRecordService.getAll(patientId);
+        List<HealthRecordResponse> responses = healthRecordService.getAll(patientId, BASE_URL);
 
         assertThat(responses).hasSize(1);
         assertThat(responses.get(0).title()).isEqualTo("Khám mắt");
@@ -174,9 +180,11 @@ class HealthRecordServiceTest {
     void getAll_patientNotFound_throwsException() {
         when(patientRepository.existsById(patientId)).thenReturn(false);
 
-        assertThatThrownBy(() -> healthRecordService.getAll(patientId))
+        assertThatThrownBy(() -> healthRecordService.getAll(patientId, BASE_URL))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
+
+    // ========== GET BY ID ==========
 
     @Test
     @DisplayName("Get health record by ID")
@@ -184,7 +192,7 @@ class HealthRecordServiceTest {
         when(healthRecordRepository.findByIdAndPatientId(recordId, patientId))
                 .thenReturn(Optional.of(savedRecord));
 
-        HealthRecordResponse response = healthRecordService.getById(patientId, recordId);
+        HealthRecordResponse response = healthRecordService.getById(patientId, recordId, BASE_URL);
 
         assertThat(response).isNotNull();
         assertThat(response.id()).isEqualTo(recordId);
@@ -196,9 +204,80 @@ class HealthRecordServiceTest {
         when(healthRecordRepository.findByIdAndPatientId(recordId, patientId))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> healthRecordService.getById(patientId, recordId))
+        assertThatThrownBy(() -> healthRecordService.getById(patientId, recordId, BASE_URL))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
+
+    // ========== UPDATE ==========
+
+    @Test
+    @DisplayName("Update health record - basic fields")
+    void update_success() {
+        when(healthRecordRepository.findByIdAndPatientId(recordId, patientId))
+                .thenReturn(Optional.of(savedRecord));
+        when(healthRecordRepository.save(any(HealthRecord.class))).thenAnswer(i -> i.getArgument(0));
+
+        UpdateHealthRecordRequest updateReq = new UpdateHealthRecordRequest();
+        updateReq.setTitle("Khám tai mũi họng");
+        updateReq.setFacilityName("BV Chợ Rẫy");
+        updateReq.setHeightCm(new BigDecimal("175"));
+        updateReq.setWeightKg(new BigDecimal("70"));
+
+        HealthRecordResponse response = healthRecordService.update(patientId, recordId, updateReq, BASE_URL);
+
+        assertThat(response).isNotNull();
+        assertThat(response.title()).isEqualTo("Khám tai mũi họng");
+        assertThat(response.facilityName()).isEqualTo("BV Chợ Rẫy");
+    }
+
+    @Test
+    @DisplayName("Update recalculates BMI")
+    void update_recalculatesBmi() {
+        when(healthRecordRepository.findByIdAndPatientId(recordId, patientId))
+                .thenReturn(Optional.of(savedRecord));
+        when(healthRecordRepository.save(any(HealthRecord.class))).thenAnswer(i -> i.getArgument(0));
+
+        UpdateHealthRecordRequest updateReq = new UpdateHealthRecordRequest();
+        updateReq.setHeightCm(new BigDecimal("180"));
+        updateReq.setWeightKg(new BigDecimal("80"));
+
+        HealthRecordResponse response = healthRecordService.update(patientId, recordId, updateReq, BASE_URL);
+
+        // BMI = 80 / (1.80 * 1.80) = 24.69
+        assertThat(response.bmi()).isNotNull();
+        assertThat(response.bmi().doubleValue()).isBetween(24.0, 25.0);
+    }
+
+    @Test
+    @DisplayName("Update clears BMI when height/weight removed")
+    void update_clearsBmi_whenHeightWeightNull() {
+        when(healthRecordRepository.findByIdAndPatientId(recordId, patientId))
+                .thenReturn(Optional.of(savedRecord));
+        when(healthRecordRepository.save(any(HealthRecord.class))).thenAnswer(i -> i.getArgument(0));
+
+        UpdateHealthRecordRequest updateReq = new UpdateHealthRecordRequest();
+        updateReq.setHeightCm(null);
+        updateReq.setWeightKg(null);
+
+        HealthRecordResponse response = healthRecordService.update(patientId, recordId, updateReq, BASE_URL);
+
+        assertThat(response.bmi()).isNull();
+    }
+
+    @Test
+    @DisplayName("Update - not found")
+    void update_notFound_throwsException() {
+        when(healthRecordRepository.findByIdAndPatientId(recordId, patientId))
+                .thenReturn(Optional.empty());
+
+        UpdateHealthRecordRequest updateReq = new UpdateHealthRecordRequest();
+        updateReq.setTitle("Anything");
+
+        assertThatThrownBy(() -> healthRecordService.update(patientId, recordId, updateReq, BASE_URL))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // ========== DELETE ==========
 
     @Test
     @DisplayName("Delete health record + files from disk")

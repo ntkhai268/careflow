@@ -168,7 +168,9 @@ class HealthRecordListScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                context.push('/health-records/$patientId/add');
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
                 shadowColor: Colors.transparent,
@@ -181,7 +183,7 @@ class HealthRecordListScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.push('/patient/$patientId/health-records/new');
+          context.push('/health-records/$patientId/add');
         },
         backgroundColor: const Color(0xFF26C6DA),
         child: const Icon(Icons.medical_information, color: Colors.white),

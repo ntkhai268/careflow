@@ -63,8 +63,8 @@ class HealthRecordService {
     await _apiService.delete('${ApiConfig.patients}/$patientId/health-records/$recordId');
   }
 
-  String getFileUrl(String fileId) {
-    return '${ApiConfig.baseUrl}/health-records/files/$fileId';
+  String getFileUrl(String patientId, String fileId) {
+    return '${ApiConfig.baseUrl}${ApiConfig.patients}/$patientId/health-records/files/$fileId';
   }
 }
 

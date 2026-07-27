@@ -249,9 +249,17 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: record.files!.map((file) => Chip(
+                      children: record.files!.map((file) => ActionChip(
                         label: Text(file.fileName),
                         avatar: const Icon(Icons.attach_file, size: 18),
+                        onPressed: () {
+                          final service = ref.read(healthRecordServiceProvider);
+                          final url = service.getFileUrl(widget.patientId, file.id);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Tải file: ${file.fileName}')),
+                          );
+                          // TODO: Use url_launcher to open URL
+                        },
                       )).toList(),
                     ),
                   ],

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../services/health_record_service.dart';
 import '../../providers/health_record_provider.dart';
 import '../../config/theme.dart';
@@ -66,11 +66,16 @@ class _HealthRecordFormScreenState extends ConsumerState<HealthRecordFormScreen>
   }
 
   Future<void> _pickFiles() async {
-    final picker = ImagePicker();
-    final images = await picker.pickMultiImage();
-    if (images.isNotEmpty) {
+    final result = await FilePicker.platform.pickFiles(
+      allowMultiple: true,
+      type: FileType.custom,
+      allowedExtensions: ['png', 'jpg', 'jpeg', 'doc', 'docx', 'pdf'],
+    );
+    if (result != null && result.files.isNotEmpty) {
       setState(() {
-        _selectedFiles.addAll(images.map((img) => File(img.path)));
+        _selectedFiles.addAll(
+          result.paths.where((p) => p != null).map((p) => File(p!)),
+        );
       });
     }
   }
