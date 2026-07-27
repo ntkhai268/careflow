@@ -17,4 +17,5 @@ class ApiConfig {
   static const String queues = '/queues';
   static const String emrRecords = '/emr/records';
   static const String prescriptions = '/prescriptions';
+  static const String healthRecordFiles = '/health-records/files';
 }

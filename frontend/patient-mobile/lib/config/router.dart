@@ -5,6 +5,9 @@ import '../screens/auth/onboarding_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/main_shell.dart';
+import '../screens/health_record/health_record_list_screen.dart';
+import '../screens/health_record/health_record_form_screen.dart';
+import '../screens/health_record/health_record_detail_screen.dart';
 
 /// GoRouter configuration for CareFlow app.
 final GoRouter appRouter = GoRouter(
@@ -30,6 +33,37 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/',
       builder: (context, state) => const MainShell(),
+    ),
+    GoRoute(
+      path: '/health-records/:patientId',
+      builder: (context, state) {
+        final patientId = state.pathParameters['patientId']!;
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+        return HealthRecordListScreen(
+          patientId: patientId,
+          patientName: extra['patientName'] ?? '',
+          patientGender: extra['patientGender'] ?? '',
+          patientBirthYear: extra['patientBirthYear'] ?? '',
+        );
+      },
+    ),
+    GoRoute(
+      path: '/health-records/:patientId/add',
+      builder: (context, state) {
+        final patientId = state.pathParameters['patientId']!;
+        return HealthRecordFormScreen(patientId: patientId);
+      },
+    ),
+    GoRoute(
+      path: '/health-records/:patientId/detail/:recordId',
+      builder: (context, state) {
+        final patientId = state.pathParameters['patientId']!;
+        final recordId = state.pathParameters['recordId']!;
+        return HealthRecordDetailScreen(
+          patientId: patientId,
+          recordId: recordId,
+        );
+      },
     ),
   ],
   errorBuilder: (context, state) => Scaffold(
