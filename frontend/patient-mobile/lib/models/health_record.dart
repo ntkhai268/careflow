@@ -15,10 +15,12 @@ class HealthRecordFileInfo {
 
   factory HealthRecordFileInfo.fromJson(Map<String, dynamic> json) {
     return HealthRecordFileInfo(
-      id: json['id'] ?? '',
+      id: json['id']?.toString() ?? '',
       fileName: json['fileName'] ?? '',
       fileUrl: json['fileUrl'] ?? '',
-      fileSize: json['fileSize'],
+      fileSize: json['fileSize'] is int
+          ? json['fileSize']
+          : (json['fileSize'] is String ? int.tryParse(json['fileSize']) : json['fileSize']?.toInt()),
       contentType: json['contentType'],
     );
   }
@@ -100,24 +102,40 @@ class HealthRecord {
     this.files,
   });
 
+  static int? _toInt(dynamic v) {
+    if (v == null) return null;
+    if (v is int) return v;
+    if (v is num) return v.toInt();
+    if (v is String) return int.tryParse(v);
+    return null;
+  }
+
+  static double? _toDouble(dynamic v) {
+    if (v == null) return null;
+    if (v is double) return v;
+    if (v is num) return v.toDouble();
+    if (v is String) return double.tryParse(v);
+    return null;
+  }
+
   factory HealthRecord.fromJson(Map<String, dynamic> json) {
     return HealthRecord(
-      id: json['id'] ?? '',
-      patientId: json['patientId'] ?? '',
+      id: json['id']?.toString() ?? '',
+      patientId: json['patientId']?.toString() ?? '',
       title: json['title'] ?? '',
       recordDate: json['recordDate'] != null ? DateTime.parse(json['recordDate']) : DateTime.now(),
       facilityName: json['facilityName'] ?? '',
       notes: json['notes'],
-      bloodSugar: json['bloodSugar']?.toDouble(),
+      bloodSugar: _toDouble(json['bloodSugar']),
       bloodPressure: json['bloodPressure'],
-      heightCm: json['heightCm']?.toDouble(),
-      weightKg: json['weightKg']?.toDouble(),
-      bmi: json['bmi']?.toDouble(),
-      waistCm: json['waistCm']?.toDouble(),
+      heightCm: _toDouble(json['heightCm']),
+      weightKg: _toDouble(json['weightKg']),
+      bmi: _toDouble(json['bmi']),
+      waistCm: _toDouble(json['waistCm']),
       bloodType: json['bloodType'],
-      pulse: json['pulse']?.toInt(),
-      temperature: json['temperature']?.toDouble(),
-      respiratoryRate: json['respiratoryRate']?.toInt(),
+      pulse: _toInt(json['pulse']),
+      temperature: _toDouble(json['temperature']),
+      respiratoryRate: _toInt(json['respiratoryRate']),
       drugAllergy: json['drugAllergy'],
       chemicalAllergy: json['chemicalAllergy'],
       foodAllergy: json['foodAllergy'],

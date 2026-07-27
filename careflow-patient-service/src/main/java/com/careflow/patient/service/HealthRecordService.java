@@ -105,6 +105,47 @@ public class HealthRecordService {
     }
 
     @Transactional
+    public HealthRecordResponse update(UUID patientId, UUID recordId, com.careflow.patient.dto.request.UpdateHealthRecordRequest request) {
+        HealthRecord record = healthRecordRepository.findByIdAndPatientId(recordId, patientId)
+                .orElseThrow(() -> new ResourceNotFoundException("HealthRecord", "id", recordId));
+
+        if (request.getTitle() != null) record.setTitle(request.getTitle());
+        if (request.getRecordDate() != null) record.setRecordDate(request.getRecordDate());
+        if (request.getFacilityName() != null) record.setFacilityName(request.getFacilityName());
+        record.setNotes(request.getNotes());
+        record.setBloodSugar(request.getBloodSugar());
+        record.setBloodPressure(request.getBloodPressure());
+        record.setHeightCm(request.getHeightCm());
+        record.setWeightKg(request.getWeightKg());
+        record.setWaistCm(request.getWaistCm());
+        record.setBloodType(request.getBloodType());
+        record.setPulse(request.getPulse());
+        record.setTemperature(request.getTemperature());
+        record.setRespiratoryRate(request.getRespiratoryRate());
+        record.setDrugAllergy(request.getDrugAllergy());
+        record.setChemicalAllergy(request.getChemicalAllergy());
+        record.setFoodAllergy(request.getFoodAllergy());
+        record.setHeartDisease(request.getHeartDisease());
+        record.setHypertension(request.getHypertension());
+        record.setMentalIllness(request.getMentalIllness());
+        record.setCancer(request.getCancer());
+        record.setAsthma(request.getAsthma());
+        record.setEpilepsy(request.getEpilepsy());
+        record.setTuberculosis(request.getTuberculosis());
+
+        // Recalculate BMI
+        if (record.getHeightCm() != null && record.getWeightKg() != null && record.getHeightCm().compareTo(BigDecimal.ZERO) > 0) {
+            BigDecimal heightInMeters = record.getHeightCm().divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+            record.setBmi(record.getWeightKg().divide(heightInMeters.multiply(heightInMeters), 2, RoundingMode.HALF_UP));
+        } else {
+            record.setBmi(null);
+        }
+
+        HealthRecord saved = healthRecordRepository.save(record);
+        return HealthRecordResponse.from(saved, getBaseUrl());
+    }
+
+    @Transactional
     public void delete(UUID patientId, UUID recordId) {
         HealthRecord record = healthRecordRepository.findByIdAndPatientId(recordId, patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("HealthRecord", "id", recordId));

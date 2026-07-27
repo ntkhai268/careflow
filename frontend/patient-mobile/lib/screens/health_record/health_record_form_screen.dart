@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../services/health_record_service.dart';
+import '../../providers/health_record_provider.dart';
 import '../../config/theme.dart';
 
 class HealthRecordFormScreen extends ConsumerStatefulWidget {
@@ -129,7 +130,13 @@ class _HealthRecordFormScreenState extends ConsumerState<HealthRecordFormScreen>
       final service = ref.read(healthRecordServiceProvider);
       await service.create(widget.patientId, data, _selectedFiles.isEmpty ? null : _selectedFiles);
       
+      // Invalidate provider so list screen refreshes
+      ref.invalidate(healthRecordsProvider(widget.patientId));
+      
       if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tạo hồ sơ sức khỏe thành công!')),
+        );
         context.pop();
       }
     } catch (e) {

@@ -50,6 +50,15 @@ class HealthRecordService {
     return HealthRecord.fromJson(apiResponse['data'] as Map<String, dynamic>);
   }
 
+  Future<HealthRecord> update(String patientId, String recordId, Map<String, dynamic> data) async {
+    final response = await _apiService.put(
+      '${ApiConfig.patients}/$patientId/health-records/$recordId',
+      data: data,
+    );
+    final apiResponse = response.data as Map<String, dynamic>;
+    return HealthRecord.fromJson(apiResponse['data'] as Map<String, dynamic>);
+  }
+
   Future<void> delete(String patientId, String recordId) async {
     await _apiService.delete('${ApiConfig.patients}/$patientId/health-records/$recordId');
   }

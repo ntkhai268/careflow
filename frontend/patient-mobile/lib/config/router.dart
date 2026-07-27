@@ -5,9 +5,19 @@ import '../screens/auth/onboarding_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/main_shell.dart';
+import '../screens/profile/create_profile_screen.dart';
+import '../screens/profile/profile_detail_screen.dart';
+import '../screens/profile/edit_profile_screen.dart';
 import '../screens/health_record/health_record_list_screen.dart';
 import '../screens/health_record/health_record_form_screen.dart';
 import '../screens/health_record/health_record_detail_screen.dart';
+import '../screens/appointment/booking_step1_screen.dart';
+import '../screens/appointment/booking_step2_screen.dart';
+import '../screens/appointment/booking_step3_screen.dart';
+import '../screens/appointment/booking_step4_screen.dart';
+import '../screens/appointment/appointment_detail_screen.dart';
+import '../models/patient.dart';
+import '../models/appointment.dart';
 
 /// GoRouter configuration for CareFlow app.
 final GoRouter appRouter = GoRouter(
@@ -34,28 +44,46 @@ final GoRouter appRouter = GoRouter(
       path: '/',
       builder: (context, state) => const MainShell(),
     ),
+    // Profile routes
     GoRoute(
-      path: '/health-records/:patientId',
+      path: '/profile/create',
+      builder: (context, state) => const CreateProfileScreen(),
+    ),
+    GoRoute(
+      path: '/profile/:id',
+      builder: (context, state) => const ProfileDetailScreen(),
+    ),
+    GoRoute(
+      path: '/profile/:id/edit',
+      builder: (context, state) => const EditProfileScreen(),
+    ),
+    // Health record routes
+    GoRoute(
+      path: '/patient/:patientId/health-records',
       builder: (context, state) {
         final patientId = state.pathParameters['patientId']!;
         final extra = state.extra as Map<String, dynamic>? ?? {};
+        final birthYearRaw = extra['patientBirthYear'];
+        final birthYear = birthYearRaw is int
+            ? birthYearRaw
+            : int.tryParse(birthYearRaw?.toString() ?? '') ?? 0;
         return HealthRecordListScreen(
           patientId: patientId,
-          patientName: extra['patientName'] ?? '',
-          patientGender: extra['patientGender'] ?? '',
-          patientBirthYear: extra['patientBirthYear'] ?? '',
+          patientName: extra['patientName']?.toString() ?? '',
+          patientGender: extra['patientGender']?.toString() ?? '',
+          patientBirthYear: birthYear,
         );
       },
     ),
     GoRoute(
-      path: '/health-records/:patientId/add',
+      path: '/patient/:patientId/health-records/new',
       builder: (context, state) {
         final patientId = state.pathParameters['patientId']!;
         return HealthRecordFormScreen(patientId: patientId);
       },
     ),
     GoRoute(
-      path: '/health-records/:patientId/detail/:recordId',
+      path: '/patient/:patientId/health-records/:recordId',
       builder: (context, state) {
         final patientId = state.pathParameters['patientId']!;
         final recordId = state.pathParameters['recordId']!;
@@ -63,6 +91,48 @@ final GoRouter appRouter = GoRouter(
           patientId: patientId,
           recordId: recordId,
         );
+      },
+    ),
+    // Booking flow routes
+    GoRoute(
+      path: '/booking/step1',
+      builder: (context, state) => const BookingStep1Screen(),
+    ),
+    GoRoute(
+      path: '/booking/step2',
+      builder: (context, state) {
+        final patient = state.extra as Patient;
+        return BookingStep2Screen(patient: patient);
+      },
+    ),
+    GoRoute(
+      path: '/booking/step3',
+      builder: (context, state) {
+        final data = state.extra as Map<String, dynamic>;
+        return BookingStep3Screen(
+          patient: data['patient'] as Patient,
+          department: data['department'] as Department,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/booking/step4',
+      builder: (context, state) {
+        final data = state.extra as Map<String, dynamic>;
+        return BookingStep4Screen(
+          patient: data['patient'] as Patient,
+          department: data['department'] as Department,
+          date: data['date'] as DateTime,
+          timeSlot: data['timeSlot'] as String,
+        );
+      },
+    ),
+    // Appointment detail
+    GoRoute(
+      path: '/appointment/:id',
+      builder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return AppointmentDetailScreen(appointmentId: id);
       },
     ),
   ],
@@ -89,3 +159,4 @@ final GoRouter appRouter = GoRouter(
     ),
   ),
 );
+

@@ -55,6 +55,16 @@ public class HealthRecordController {
         return ApiResponse.success(response);
     }
 
+    @PutMapping("/api/patients/{patientId}/health-records/{id}")
+    @Operation(summary = "Update a health record")
+    public ApiResponse<HealthRecordResponse> update(
+            @PathVariable UUID patientId,
+            @PathVariable UUID id,
+            @RequestBody com.careflow.patient.dto.request.UpdateHealthRecordRequest request) {
+        HealthRecordResponse response = healthRecordService.update(patientId, id, request);
+        return ApiResponse.success("Cập nhật hồ sơ thành công", response);
+    }
+
     @DeleteMapping("/api/patients/{patientId}/health-records/{id}")
     @Operation(summary = "Delete a health record")
     public ApiResponse<Void> delete(@PathVariable UUID patientId, @PathVariable UUID id) {
