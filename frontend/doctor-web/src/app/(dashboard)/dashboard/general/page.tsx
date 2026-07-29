@@ -42,8 +42,9 @@ export default function DashboardGeneralPage() {
   const router = useRouter();
   const [isCalling, setIsCalling] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
-  const [queuePatients, setQueuePatients] = useState<DisplayQueuePatient[]>([]);
-  const [recentCompleted, setRecentCompleted] = useState<ConsultationResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [queuePatients, setQueuePatients] = useState<DisplayQueuePatient[] | null>(null);
+  const [recentCompleted, setRecentCompleted] = useState<ConsultationResponse[] | null>(null);
   const [patientNames, setPatientNames] = useState<Record<string, string>>({});
   const [waitingCount, setWaitingCount] = useState<number>(0);
   const [activeNotice, setActiveNotice] = useState<{
@@ -55,6 +56,7 @@ export default function DashboardGeneralPage() {
   useEffect(() => {
     async function loadDashboardData() {
       if (!user?.id) return;
+      setIsLoading(true);
       try {
         const consRes = await consultationApi.getTodayByDoctor(user.id);
         const todayCons = consRes.data || [];
@@ -80,6 +82,7 @@ export default function DashboardGeneralPage() {
           })));
         } catch {
           setWaitingCount(todayCons.filter(c => c.status === "IN_PROGRESS").length);
+          setQueuePatients([]);
         }
 
         const pNames: Record<string, string> = {};
@@ -92,7 +95,9 @@ export default function DashboardGeneralPage() {
           }
         }
         setPatientNames(pNames);
-      } catch (err) { /* silent catch */ }
+      } catch { /* outer silent */ } finally {
+        setIsLoading(false);
+      }
     }
     loadDashboardData();
   }, [user]);
@@ -221,7 +226,7 @@ export default function DashboardGeneralPage() {
           </div>
           <div>
             <p className="text-[10px] text-gray-400 font-medium">Hoàn tất</p>
-            <p className="text-lg font-bold text-gray-900">{recentCompleted.length}</p>
+            <p className="text-lg font-bold text-gray-900">{(recentCompleted ?? []).length}</p>
           </div>
         </div>
 
@@ -277,14 +282,24 @@ export default function DashboardGeneralPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
-                {queuePatients.length === 0 ? (
+                {isLoading ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <tr key={i} className="border-b border-gray-50">
+                      {["w-10", "w-36", "w-10", "w-16", "w-20"].map((w, j) => (
+                        <td key={j} className="px-5 py-3.5">
+                          <div className={`h-3 ${w} rounded bg-gray-100 animate-pulse`} />
+                        </td>
+                      ))}
+                    </tr>
+                  ))
+                ) : (queuePatients ?? []).length === 0 ? (
                   <tr>
                     <td colSpan={5} className="px-5 py-10 text-center text-gray-400 text-xs italic">
                       Hiện chưa có bệnh nhân nào trong hàng đợi khám
                     </td>
                   </tr>
                 ) : (
-                  queuePatients.map((patient) => (
+                  (queuePatients ?? []).map((patient) => (
                     <tr key={patient.queueNo}
                       className="hover:bg-indigo-50 cursor-pointer transition-colors"
                       onClick={() => handleCallPatient(patient.patientId, patient.appointmentId)}>
@@ -311,10 +326,10 @@ export default function DashboardGeneralPage() {
           <div className="px-5 py-3 border-t border-gray-100 bg-gray-50 rounded-b-xl flex justify-end">
             <button
               onClick={() => {
-                if (queuePatients.length > 0) handleCallPatient(queuePatients[0].patientId, queuePatients[0].appointmentId);
+                if ((queuePatients ?? []).length > 0) handleCallPatient(queuePatients![0].patientId, queuePatients![0].appointmentId);
                 else setErrorMessage("Hàng đợi khám hiện tại rỗng.");
               }}
-              disabled={isCalling}
+              disabled={isCalling || isLoading || (queuePatients ?? []).length === 0}
               className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-xs font-semibold transition-all disabled:opacity-50 shadow-sm hover:shadow-md"
               style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}
             >
@@ -333,7 +348,14 @@ export default function DashboardGeneralPage() {
             <p className="text-[10px] text-gray-400 mt-0.5">Ca khám hoàn thành hôm nay</p>
           </div>
           <div className="p-4 space-y-2">
-            {recentCompleted.length === 0 ? (
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-3 rounded-xl border border-gray-100 bg-gray-50 space-y-2">
+                  <div className="h-3 w-28 rounded bg-gray-200 animate-pulse" />
+                  <div className="h-2.5 w-40 rounded bg-gray-100 animate-pulse" />
+                </div>
+              ))
+            ) : (recentCompleted ?? []).length === 0 ? (
               <div className="text-center py-8">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 mx-auto mb-2">
                   <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -343,7 +365,7 @@ export default function DashboardGeneralPage() {
                 <p className="text-[11px] text-gray-400 italic">Chưa có ca khám nào hoàn tất hôm nay</p>
               </div>
             ) : (
-              recentCompleted.map((c) => (
+              (recentCompleted ?? []).map((c) => (
                 <div key={c.id}
                   className="p-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 transition-colors">
                   <div className="flex items-start justify-between gap-2">

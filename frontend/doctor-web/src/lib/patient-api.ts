@@ -1,5 +1,15 @@
 import { api } from "./api";
 
+export interface PatientAllergyResponse {
+  id: string;
+  patientId?: string;
+  allergyName: string;
+  allergyGroup?: string;
+  severity: "CRITICAL" | "WARNING" | "INFO";
+  reaction?: string;
+  confirmedBy?: string;
+}
+
 export interface PatientResponse {
   id: string;
   userId?: string;
@@ -11,6 +21,9 @@ export interface PatientResponse {
   insuranceNumber?: string;
   address?: string;
   avatarUrl?: string;
+  allergyNotes?: string | null;
+  medicalHistory?: string | null;
+  allergies?: PatientAllergyResponse[];
 }
 
 export const patientApi = {

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { consultationApi, ConsultationResponse, UpdateConsultationRequest } from "@/lib/consultation-api";
 import { prescriptionApi, PrescriptionResponse, PrescriptionItemRequest, MedicineCatalogItem } from "@/lib/prescription-api";
-import { patientApi } from "@/lib/patient-api";
+import { patientApi, PatientAllergyResponse } from "@/lib/patient-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmModal from "@/components/ConfirmModal";
 
@@ -26,7 +26,19 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const { user } = useAuth();
 
   // Active tab for clinical details
-  const [activeTab, setActiveTab] = useState<"vitals" | "clinical" | "diagnosis">("vitals");
+  const [activeTab, setActiveTab] = useState<"vitals" | "clinical" | "diagnosis" | "summary">("vitals");
+
+  // Allergy banner eager-load state
+  const [allergyNotes, setAllergyNotes] = useState<string | null>(null);
+  const [patientAllergies, setPatientAllergies] = useState<PatientAllergyResponse[]>([]);
+  const [allergyLoaded, setAllergyLoaded] = useState(false);
+
+  // Clinical Summary lazy-load state
+  const [summaryLoaded, setSummaryLoaded] = useState(false);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  const [consultationHistory, setConsultationHistory] = useState<ConsultationResponse[] | null>(null);
+  const [prescriptionHistory, setPrescriptionHistory] = useState<PrescriptionResponse[] | null>(null);
+  const [patientMedicalHistory, setPatientMedicalHistory] = useState<string | null>(null);
 
   // Custom Modal confirm state
   const [confirmModalConfig, setConfirmModalConfig] = useState<{
@@ -163,9 +175,20 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             if (pRes.data.gender) {
               setPatientGender(pRes.data.gender === "FEMALE" ? "Nữ" : "Nam");
             }
+            if (pRes.data.allergyNotes) {
+              setAllergyNotes(pRes.data.allergyNotes);
+            }
+            if (pRes.data.allergies) {
+              setPatientAllergies(pRes.data.allergies);
+            }
+            if (pRes.data.medicalHistory) {
+              setPatientMedicalHistory(pRes.data.medicalHistory);
+            }
           }
         } catch {
           setPatientName(`Bệnh nhân (ID: ${consData.patientId.slice(0, 8)})`);
+        } finally {
+          setAllergyLoaded(true);
         }
 
         // Prepopulate inputs
@@ -215,6 +238,29 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     }
     loadData();
   }, [consultationId]);
+
+  // Lazy load Clinical Summary data when tab "summary" is active
+  useEffect(() => {
+    if (activeTab !== "summary" || summaryLoaded || !consultation?.patientId) return;
+    async function loadSummary() {
+      setSummaryLoading(true);
+      try {
+        const [consRes, prescRes] = await Promise.all([
+          consultationApi.getByPatient(consultation!.patientId),
+          prescriptionApi.getByPatient(consultation!.patientId),
+        ]);
+        setConsultationHistory((consRes.data ?? []).filter(c => c.id !== consultationId).slice(0, 5));
+        setPrescriptionHistory((prescRes.data ?? []).slice(0, 3));
+      } catch {
+        setConsultationHistory([]);
+        setPrescriptionHistory([]);
+      } finally {
+        setSummaryLoading(false);
+        setSummaryLoaded(true);
+      }
+    }
+    loadSummary();
+  }, [activeTab, summaryLoaded, consultation?.patientId, consultationId]);
 
   // Handle ICD-10 Search
   const filteredIcd10 = ICD10_CATALOG.filter(item => 
@@ -270,6 +316,23 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     setIsMedicineDrawerOpen(true);
   };
 
+  const executeSaveMedicine = (newItem: PrescriptionItemRequest) => {
+    if (editingMedicineCode) {
+      setPrescriptionItems(prescriptionItems.map(item => item.medicineCode === editingMedicineCode ? newItem : item));
+      showToast(`Đã cập nhật thuốc ${newItem.medicineName}`);
+    } else {
+      if (prescriptionItems.some(item => item.medicineCode === newItem.medicineCode)) {
+        setPrescriptionItems(prescriptionItems.map(item => item.medicineCode === newItem.medicineCode ? newItem : item));
+        showToast(`Thuốc ${newItem.medicineName} đã có trong đơn. Hệ thống đã cập nhật lại số lượng và liều dùng mới.`, "warning");
+        setIsMedicineDrawerOpen(false);
+        return;
+      }
+      setPrescriptionItems([...prescriptionItems, newItem]);
+      showToast(`Đã thêm ${newItem.medicineName} vào đơn thuốc`);
+    }
+    setIsMedicineDrawerOpen(false);
+  };
+
   const saveMedicineToPrescription = () => {
     if (!selectedMedicine) {
       showToast("Vui lòng chọn thuốc từ danh sách", "warning");
@@ -288,21 +351,30 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       notes: medNotes
     };
 
-    if (editingMedicineCode) {
-      setPrescriptionItems(prescriptionItems.map(item => item.medicineCode === editingMedicineCode ? newItem : item));
-      showToast(`Đã cập nhật thuốc ${selectedMedicine.name}`);
-    } else {
-      if (prescriptionItems.some(item => item.medicineCode === selectedMedicine.code)) {
-        setPrescriptionItems(prescriptionItems.map(item => item.medicineCode === selectedMedicine.code ? newItem : item));
-        showToast(`Thuốc ${selectedMedicine.name} đã có trong đơn. Hệ thống đã cập nhật lại số lượng và liều dùng mới.`, "warning");
-        setIsMedicineDrawerOpen(false);
-        return;
-      }
-      setPrescriptionItems([...prescriptionItems, newItem]);
-      showToast(`Đã thêm ${selectedMedicine.name} vào đơn thuốc`);
+    // Check CRITICAL (Level 1) allergy conflict
+    const criticalConflict = patientAllergies.find(a => 
+      a.severity === "CRITICAL" && (
+        selectedMedicine.name.toLowerCase().includes(a.allergyName.toLowerCase()) ||
+        (a.allergyGroup && a.allergyGroup.toLowerCase() === "beta-lactam" && ["MED002", "MED014"].includes(selectedMedicine.code)) ||
+        (a.allergyName.toLowerCase().includes("penicillin") && ["MED002", "MED014"].includes(selectedMedicine.code))
+      )
+    );
+
+    if (criticalConflict) {
+      setConfirmModalConfig({
+        isOpen: true,
+        title: "🚨 CẢNH BÁO NGUY HIỂM CAO - PHẢN VỆ Y KHOA",
+        message: `Thuốc "${selectedMedicine.name}" chứa thành phần thuộc nhóm [${criticalConflict.allergyGroup || criticalConflict.allergyName}]. Bệnh nhân có tiền sử DỊ ỨNG NẶNG (${criticalConflict.reaction || 'Nguy cơ sốc phản vệ'}). Bác sĩ có chắc chắn muốn tiếp tục kê đơn thuốc này không?`,
+        variant: "danger",
+        onConfirm: () => {
+          executeSaveMedicine(newItem);
+          setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
+        }
+      });
+      return;
     }
 
-    setIsMedicineDrawerOpen(false);
+    executeSaveMedicine(newItem);
   };
 
   const removeMedicine = (code: string, name: string) => {
@@ -467,7 +539,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const spo2Warn = getSpo2Warning(spo2);
 
   return (
-    <div className="space-y-6 pb-24 relative">
+    <div className="space-y-6 pb-24 relative bg-[linear-gradient(to_right,rgba(43,29,48,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(43,29,48,0.015)_1px,transparent_1px)] bg-[size:24px_24px]">
       
       {/* Toast Notification Container */}
       {toast && (
@@ -519,6 +591,78 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           )}
         </div>
       </div>
+
+      {/* Structured 3-Level Allergy Banners */}
+      {allergyLoaded && (
+        patientAllergies.length > 0 ? (
+          <div className="space-y-2">
+            {/* Level 1 — CRITICAL (Clean Clinical Red Notice) */}
+            {patientAllergies.filter(a => a.severity === "CRITICAL").length > 0 && (
+              <div className="border border-red-200 border-l-4 border-l-red-600 bg-red-50/90 p-3.5 flex items-center justify-between rounded-none shadow-xs">
+                <div className="flex items-center gap-3">
+                  <svg className="w-4 h-4 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-red-700 bg-red-100 border border-red-300 px-1.5 py-0.5 uppercase tracking-wider">
+                        Mức 1 — Nguy hiểm cao
+                      </span>
+                      <span className="text-xs font-bold text-red-900">
+                        Cảnh báo Dị ứng Thuốc & Nguy cơ Phản vệ
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 mt-1">
+                      {patientAllergies.filter(a => a.severity === "CRITICAL").map((a, idx) => (
+                        <span key={idx} className="text-xs font-bold text-red-800">
+                          {a.allergyName} <span className="font-normal text-red-700">({a.reaction || 'Phản ứng nặng'})</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <span className="text-[10px] bg-red-100 text-red-800 px-2 py-1 uppercase font-bold tracking-wider border border-red-300">
+                  Tự động chặn kê đơn trùng nhóm
+                </span>
+              </div>
+            )}
+
+            {/* Level 2 — WARNING (Clean Clinical Amber Notice) */}
+            {patientAllergies.filter(a => a.severity === "WARNING").length > 0 && (
+              <div className="border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50/90 p-3 flex items-center gap-3 rounded-none shadow-xs text-amber-900">
+                <svg className="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 uppercase tracking-wider">
+                      Mức 2 — Cần lưu ý
+                    </span>
+                    <span className="text-xs font-semibold text-amber-900">
+                      {patientAllergies.filter(a => a.severity === "WARNING").map(a => `${a.allergyName} (${a.reaction || 'Lưu ý'})`).join(' • ')}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : allergyNotes ? (
+          <div className="border border-rose-200 bg-rose-50 p-3.5 flex items-center gap-3 rounded-none shadow-xs">
+            <svg className="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <span className="text-[11px] font-bold text-rose-800 uppercase tracking-wider block">Cảnh báo Dị ứng Thuốc (Tóm tắt)</span>
+              <span className="text-xs font-semibold text-rose-700">{allergyNotes}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="border border-slate-200 bg-slate-50 px-3.5 py-2 flex items-center gap-2 rounded-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block flex-shrink-0" />
+            <span className="text-[11px] text-slate-500 font-medium">Không ghi nhận tiền sử dị ứng thuốc</span>
+          </div>
+        )
+      )}
 
       {/* Locked Consultation Banner */}
       {isConsultationLocked && (
@@ -577,6 +721,17 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
               }`}
             >
               3. Chẩn đoán ICD-10
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("summary")}
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-none ${
+                activeTab === "summary"
+                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+              }`}
+            >
+              4. Tóm tắt lâm sàng
             </button>
           </div>
 
@@ -818,11 +973,133 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   disabled={isConsultationLocked}
                   value={diagnosis}
                   onChange={(e) => setDiagnosis(e.target.value)}
-                  rows={3}
+                    rows={3}
                   placeholder="Nhập chẩn đoán lâm sàng chi tiết..."
                   className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-none"
                 />
               </div>
+            </div>
+          )}
+
+          {/* TAB 4: Clinical Summary */}
+          {activeTab === "summary" && (
+            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-none space-y-5">
+              <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
+                Tóm tắt Lâm sàng & Lịch sử Y tế Bệnh nhân
+              </h2>
+
+              {summaryLoading ? (
+                <div className="space-y-4 py-2">
+                  <div className="h-16 bg-gray-100 animate-pulse rounded-none" />
+                  <div className="h-28 bg-gray-100 animate-pulse rounded-none" />
+                  <div className="h-24 bg-gray-100 animate-pulse rounded-none" />
+                </div>
+              ) : (
+                <div className="space-y-5">
+                  {/* Section A: Medical History / Chronic Conditions */}
+                  <div className="border border-slate-200 p-4 bg-slate-50/50 space-y-1.5 rounded-none">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
+                      Bệnh nền & Tiền sử y tế
+                    </span>
+                    <p className="text-xs font-semibold text-slate-800">
+                      {patientMedicalHistory || "Chưa ghi nhận thông tin bệnh nền mạn tính"}
+                    </p>
+                  </div>
+
+                  {/* Section B: Consultation History (Past 5 visits) */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Lịch sử khám bệnh gần đây
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {(consultationHistory ?? []).length} ca khám trước
+                      </span>
+                    </div>
+
+                    {(consultationHistory ?? []).length === 0 ? (
+                      <div className="py-6 text-center text-xs text-slate-400 italic bg-slate-50 border border-dashed border-slate-200">
+                        Đây là lần khám đầu tiên của bệnh nhân trong hệ thống CareFlow
+                      </div>
+                    ) : (
+                      <div className="divide-y divide-slate-100 border border-slate-200">
+                        {(consultationHistory ?? []).map((c) => (
+                          <div key={c.id} className="p-3.5 hover:bg-slate-50/80 transition-colors space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                <span className="text-xs font-semibold text-slate-800">
+                                  {c.icd10Name ? `${c.icd10Code ? `${c.icd10Code} - ` : ""}${c.icd10Name}` : c.diagnosis || "Chẩn đoán chưa cập nhật"}
+                                </span>
+                              </div>
+                              <span className="text-[11px] font-mono text-slate-400">
+                                {c.startedAt ? new Date(c.startedAt).toLocaleDateString("vi-VN") : "N/A"}
+                              </span>
+                            </div>
+
+                            {/* Vitals summary line */}
+                            <div className="text-[11px] text-slate-500 flex flex-wrap gap-x-3 gap-y-0.5">
+                              {c.bloodPressure && <span>Huyết áp: <strong className="font-mono text-slate-700">{c.bloodPressure}</strong></span>}
+                              {c.temperature && <span>Thân nhiệt: <strong className="font-mono text-slate-700">{c.temperature}°C</strong></span>}
+                              {c.spo2 && <span>SpO2: <strong className="font-mono text-slate-700">{c.spo2}%</strong></span>}
+                              {c.heartRate && <span>Mạch: <strong className="font-mono text-slate-700">{c.heartRate} bpm</strong></span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Section C: Prescription History (Past 3 prescriptions) */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                        Đơn thuốc đã dùng gần đây
+                      </span>
+                      <span className="text-[10px] text-slate-400 font-mono">
+                        {(prescriptionHistory ?? []).length} đơn
+                      </span>
+                    </div>
+
+                    {(prescriptionHistory ?? []).length === 0 ? (
+                      <div className="py-6 text-center text-xs text-slate-400 italic bg-slate-50 border border-dashed border-slate-200">
+                        Chưa ghi nhận lịch sử đơn thuốc cũ
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5">
+                        {(prescriptionHistory ?? []).map((p) => (
+                          <div key={p.id} className="border border-slate-200 p-3 bg-white space-y-2">
+                            <div className="flex items-center justify-between text-[11px] border-b border-slate-100 pb-1.5">
+                              <span className="font-semibold text-slate-700">
+                                Đơn thuốc · {new Date(p.createdAt).toLocaleDateString("vi-VN")}
+                              </span>
+                              <span className={`px-1.5 py-0.5 font-bold uppercase text-[9px] ${
+                                p.status === "CONFIRMED" || p.status === "DISPENSED"
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                  : "bg-amber-50 text-amber-700 border border-amber-200"
+                              }`}>
+                                {p.status === "CONFIRMED" ? "Đã ký" : p.status === "DISPENSED" ? "Đã cấp phát" : "Nháp"}
+                              </span>
+                            </div>
+                            <ul className="space-y-1">
+                              {(p.items || []).map((item, idx) => (
+                                <li key={item.id || idx} className="text-xs text-slate-600 flex justify-between">
+                                  <span>
+                                    <strong className="text-slate-800">{idx + 1}. {item.medicineName}</strong>
+                                    {item.dosage && <span className="text-slate-500 font-normal"> · {item.dosage}</span>}
+                                    {item.frequency && <span className="text-slate-500 font-normal"> · {item.frequency}</span>}
+                                  </span>
+                                  <span className="font-mono text-slate-500 text-[11px]">x{item.quantity} {item.unit}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

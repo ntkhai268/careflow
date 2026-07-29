@@ -26,6 +26,9 @@ public class PatientResponse {
     private String occupation;
     private String address;
     private String avatarUrl;
+    private String allergyNotes;
+    private String medicalHistory;
+    private java.util.List<PatientAllergyResponse> allergies;
     private Instant createdAt;
     private Instant updatedAt;
 }

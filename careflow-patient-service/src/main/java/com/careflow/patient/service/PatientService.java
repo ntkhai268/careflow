@@ -103,6 +103,8 @@ public class PatientService {
         if (request.getOccupation() != null) patient.setOccupation(request.getOccupation());
         if (request.getAddress() != null) patient.setAddress(request.getAddress());
         if (request.getAvatarUrl() != null) patient.setAvatarUrl(request.getAvatarUrl());
+        if (request.getAllergyNotes() != null) patient.setAllergyNotes(request.getAllergyNotes());
+        if (request.getMedicalHistory() != null) patient.setMedicalHistory(request.getMedicalHistory());
 
         Patient updated = patientRepository.save(patient);
         log.info("Updated patient {}", updated.getId());

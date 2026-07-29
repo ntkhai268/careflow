@@ -27,10 +27,25 @@ function StatusDot({ status }: { status: string }) {
   );
 }
 
+// Skeleton row for loading state
+function SkeletonRow() {
+  return (
+    <tr className="border-b border-gray-50">
+      {["w-10", "w-36", "w-24", "w-32", "w-16", "w-20", "w-16"].map((w, i) => (
+        <td key={i} className="px-5 py-3.5">
+          <div className={`h-3.5 ${w} rounded bg-gray-100 animate-pulse`} />
+        </td>
+      ))}
+    </tr>
+  );
+}
+
 export default function DashboardQueuePage() {
   const { user } = useAuth();
   const router = useRouter();
-  const [appointments, setAppointments] = useState<AppointmentResponse[]>([]);
+  const [appointments, setAppointments] = useState<AppointmentResponse[] | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [isCalling, setIsCalling] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [activeTab, setActiveTab] = useState<TabFilter>("all");
@@ -42,12 +57,19 @@ export default function DashboardQueuePage() {
 
   useEffect(() => {
     async function fetchQueue() {
+      setIsLoading(true);
+      setFetchError(null);
       const now = new Date();
       const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
       try {
         const res = await appointmentApi.getAppointmentsByDepartment("NOI_TONG_QUAT", todayStr);
-        setAppointments(res.data || []);
-      } catch (err) { /* silent catch */ }
+        setAppointments(res.data ?? []);
+      } catch {
+        setFetchError("Không thể tải danh sách hàng đợi. Vui lòng thử lại.");
+        setAppointments([]);
+      } finally {
+        setIsLoading(false);
+      }
     }
     fetchQueue();
   }, []);
@@ -93,13 +115,15 @@ export default function DashboardQueuePage() {
     } finally { setIsCalling(false); }
   };
 
-  const filtered = appointments.filter(a => {
+  const safeAppointments = appointments ?? [];
+
+  const filtered = safeAppointments.filter(a => {
     if (activeTab === "waiting") return ["WAITING","PENDING","CONFIRMED"].includes(a.status);
     if (activeTab === "completed") return a.status === "COMPLETED";
     return true;
   });
 
-  const waitingCount = appointments.filter(a => ["WAITING","PENDING","CONFIRMED"].includes(a.status)).length;
+  const waitingCount = safeAppointments.filter(a => ["WAITING","PENDING","CONFIRMED"].includes(a.status)).length;
 
   return (
     <div className="space-y-5">
@@ -146,6 +170,11 @@ export default function DashboardQueuePage() {
       )}
 
       {errorMessage && <p className="text-xs font-semibold text-red-500">{errorMessage}</p>}
+      {fetchError && (
+        <div className="bg-red-50 border border-red-200 text-red-700 text-xs font-medium px-4 py-3 rounded-lg">
+          {fetchError}
+        </div>
+      )}
 
       {/* Queue Card */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
@@ -154,9 +183,9 @@ export default function DashboardQueuePage() {
           {/* Segmented pill tab bar */}
           <div className="flex bg-indigo-50 rounded-xl p-1 gap-0.5">
             {[
-              { key: "all" as TabFilter,       label: "Tất cả",   count: appointments.length },
+              { key: "all" as TabFilter,       label: "Tất cả",   count: safeAppointments.length },
               { key: "waiting" as TabFilter,   label: "Chờ khám", count: waitingCount },
-              { key: "completed" as TabFilter, label: "Hoàn tất", count: appointments.filter(a => a.status === "COMPLETED").length },
+              { key: "completed" as TabFilter, label: "Hoàn tất", count: safeAppointments.filter(a => a.status === "COMPLETED").length },
             ].map(tab => (
               <button key={tab.key} onClick={() => setActiveTab(tab.key)}
                 className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-[11px] font-semibold transition-all duration-150"
@@ -202,7 +231,9 @@ export default function DashboardQueuePage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filtered.length === 0 ? (
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-12 text-center">
                     <div className="flex flex-col items-center gap-2">

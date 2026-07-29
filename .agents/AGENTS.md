@@ -28,3 +28,87 @@
    - Risk level (LOW / MEDIUM / HIGH / CRITICAL)
    - Upstream callers và execution flows bị tác động
 5. **Chặn nếu rủi ro cao**: Nếu bất kỳ symbol nào trả về risk = HIGH hoặc CRITICAL, **phải cảnh báo rõ người dùng** và chờ xác nhận trước khi tiếp tục lên plan.
+
+---
+
+## Frontend — Data Fetching & Loading State Rules
+
+**Áp dụng cho mọi trang/component có `useEffect` fetch data trong `frontend/doctor-web`.**
+
+### 3-State Pattern (BẮT BUỘC)
+
+Mọi trang có danh sách (list/table) PHẢI tách rõ 3 trạng thái, KHÔNG được dùng `useState<T[]>([])` làm giá trị khởi tạo:
+
+```tsx
+// ✅ ĐÚNG
+const [data, setData] = useState<T[] | null>(null);   // null = chưa fetch
+const [isLoading, setIsLoading] = useState(true);
+const [error, setError] = useState<string | null>(null);
+
+// ❌ SAI — dễ gây flash "Chưa có bản ghi" trước khi fetch xong
+const [data, setData] = useState<T[]>([]);
+```
+
+### Thứ tự Render (BẮT BUỘC)
+
+```tsx
+{isLoading ? (
+  <SkeletonRows />          // Skeleton loading — giữ layout ổn định
+) : error ? (
+  <ErrorBanner />           // Banner lỗi rõ ràng
+) : (data ?? []).length === 0 ? (
+  <EmptyState />            // "Chưa có bản ghi" — CHỈ sau khi fetch xong
+) : (
+  (data ?? []).map(...)     // Dữ liệu thực
+)}
+```
+
+### Skeleton Loading (ƯU TIÊN)
+
+- Dùng **Skeleton rows/cards** (`animate-pulse`) thay vì full-page spinner, trừ khi layout quá phức tạp.
+- Số skeleton rows nên bằng số rows dự kiến (3-5 rows là hợp lý).
+- Chiều rộng mỗi skeleton column nên khớp với nội dung thực tế (`w-10`, `w-36`, v.v.).
+
+### useEffect Template
+
+```tsx
+useEffect(() => {
+  async function fetchData() {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await someApi.getList();
+      setData(res.data ?? []);
+    } catch {
+      setError("Không thể tải dữ liệu. Vui lòng thử lại.");
+      setData([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+  fetchData();
+}, [deps]);
+```
+
+### Null Guard trên mọi .length access
+
+Mọi truy cập `.length`, `.map()`, `.filter()` trên state có thể `null` phải dùng `?? []`:
+
+```tsx
+// ✅ ĐÚNG
+(data ?? []).length
+(data ?? []).map(...)
+
+// ❌ SAI — crash khi state = null
+data.length
+data.map(...)
+```
+
+### Nút Action phụ thuộc vào data
+
+Nút action như "Gọi bệnh nhân tiếp theo" phải disabled khi đang loading:
+
+```tsx
+disabled={isCalling || isLoading || (data ?? []).length === 0}
+```
+

@@ -14,11 +14,14 @@ import java.util.List;
 import java.util.UUID;
 
 @Component
-@RequiredArgsConstructor
 @Slf4j
 public class DataInitializer implements CommandLineRunner {
 
     private final AppointmentRepository appointmentRepository;
+
+    public DataInitializer(AppointmentRepository appointmentRepository) {
+        this.appointmentRepository = appointmentRepository;
+    }
 
     @Override
     public void run(String... args) {
@@ -91,8 +94,21 @@ public class DataInitializer implements CommandLineRunner {
                     .queueNumber("005")
                     .build();
 
-            appointmentRepository.saveAll(List.of(a1, a2, a3, a4, a5));
-            log.info("Successfully seeded 5 confirmed patients waiting for examination.");
+            Appointment a6 = Appointment.builder()
+                    .patientId(UUID.fromString("f0000001-0000-0000-0000-000000000006"))
+                    .patientName("Đặng Hoàng Long")
+                    .department(Department.NOI_TONG_QUAT)
+                    .doctorId(UUID.fromString("d0000001-0000-0000-0000-000000000001"))
+                    .doctorName("BS. Nguyễn Văn An")
+                    .appointmentDate(today)
+                    .timeSlot("10:30-11:00")
+                    .status(AppointmentStatus.CONFIRMED)
+                    .reason("Khám sưng đau cổ chân do đá bóng (Đã thanh toán tạm ứng khám)")
+                    .queueNumber("006")
+                    .build();
+
+            appointmentRepository.saveAll(List.of(a1, a2, a3, a4, a5, a6));
+            log.info("Successfully seeded 6 confirmed patients waiting for examination.");
         }
     }
 }
