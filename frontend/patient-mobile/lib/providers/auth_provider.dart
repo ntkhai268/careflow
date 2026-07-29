@@ -9,6 +9,8 @@ class AuthState {
   final String? userId;
   final String? email;
   final String? fullName;
+  final String? username;
+  final String? role;
   final String? errorMessage;
 
   const AuthState({
@@ -16,6 +18,8 @@ class AuthState {
     this.userId,
     this.email,
     this.fullName,
+    this.username,
+    this.role,
     this.errorMessage,
   });
 
@@ -24,6 +28,8 @@ class AuthState {
     String? userId,
     String? email,
     String? fullName,
+    String? username,
+    String? role,
     String? errorMessage,
   }) {
     return AuthState(
@@ -31,6 +37,8 @@ class AuthState {
       userId: userId ?? this.userId,
       email: email ?? this.email,
       fullName: fullName ?? this.fullName,
+      username: username ?? this.username,
+      role: role ?? this.role,
       errorMessage: errorMessage,
     );
   }
@@ -42,17 +50,31 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   AuthNotifier(this._authService) : super(const AuthState());
 
-  /// Check if user is already logged in (app startup)
+  /// Check if user is already logged in (app startup).
+  /// Verifies the stored JWT against the Identity Service /auth/me endpoint
+  /// and loads real user information.
   Future<void> checkAuthStatus() async {
     state = state.copyWith(status: AuthStatus.loading);
     try {
-      final isAuth = await _authService.isAuthenticated();
-      if (isAuth) {
+      final hasToken = await _authService.isAuthenticated();
+      if (!hasToken) {
+        state = state.copyWith(status: AuthStatus.unauthenticated);
+        return;
+      }
+
+      // Verify token with server and fetch user info
+      final userInfo = await _authService.fetchCurrentUser();
+      if (userInfo != null) {
         state = state.copyWith(
           status: AuthStatus.authenticated,
-          fullName: 'Người dùng', // Will be fetched from API later
+          userId: userInfo.id,
+          email: userInfo.email,
+          fullName: userInfo.username,
+          username: userInfo.username,
+          role: userInfo.role,
         );
       } else {
+        // Token invalid or expired — user must re-login
         state = state.copyWith(status: AuthStatus.unauthenticated);
       }
     } catch (e) {
@@ -70,6 +92,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         userId: response.userId,
         email: response.email,
         fullName: response.fullName,
+        username: response.fullName, // fullName is mapped to username
       );
     } catch (e) {
       state = state.copyWith(
@@ -97,6 +120,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         userId: response.userId,
         email: response.email,
         fullName: response.fullName,
+        username: response.fullName,
       );
     } catch (e) {
       state = state.copyWith(
