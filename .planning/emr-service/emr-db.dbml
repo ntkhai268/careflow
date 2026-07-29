@@ -11,8 +11,7 @@ Table medical_records {
   patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bệnh nhân (Patient Service)']
   record_number varchar(50) [not null, unique, note: 'Mã số hồ sơ bệnh án']
   blood_type varchar(10) [note: 'Nhóm máu (A, B, AB, O, Rh+, Rh-)']
-  allergies text [note: 'Tiền sử dị ứng (thuốc, thức ăn,...)']
-  medical_history text [note: 'Tiền sử bệnh bản thân & gia đình']
+  medical_history text [note: 'Tiền sử bệnh bản thân & gia đình (Ghi chú: Dị ứng đã được cấu trúc hóa tại Patient Service)']
   created_at timestamptz [not null, note: 'Thời điểm tạo hồ sơ bệnh án']
   updated_at timestamptz [not null, note: 'Thời điểm cập nhật gần nhất']
 

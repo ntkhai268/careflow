@@ -26,6 +26,19 @@ export interface PatientResponse {
   allergies?: PatientAllergyResponse[];
 }
 
+export interface EmrSummaryResponse {
+  patient: PatientResponse;
+  medicalRecord: {
+    id: string;
+    recordNumber: string;
+    bloodType: string;
+    medicalHistory: string;
+  };
+  allergies: PatientAllergyResponse[];
+  recentConsultations: any[];
+  recentPrescriptions: any[];
+}
+
 export const patientApi = {
   getPatientById: (id: string) => 
     api.get<PatientResponse>(`/api/patients/${id}`),
@@ -33,3 +46,9 @@ export const patientApi = {
   getPatientByUserId: (userId: string) => 
     api.get<PatientResponse>(`/api/patients/user/${userId}`),
 };
+
+export const emrApi = {
+  getPatientSummary: (patientId: string) =>
+    api.get<EmrSummaryResponse>(`/api/emr/patients/${patientId}/summary`),
+};
+

@@ -6,7 +6,7 @@
 - **Commit discipline:** Ensure focused commits so that changes can be easily cherry-picked or reverted without affecting other services.
 
 ## UI/UX & Design System Constraints
-- **Absolute Rounding Rule:** All components must use `border-radius: 0px` (flat/square design system). No exceptions for buttons, cards, inputs, badges, or avatars.
+- **Subtle Rounding Rule:** Components use modern subtle rounded corners (`rounded-md` / `rounded-lg` / `rounded-xl` for cards, buttons, inputs, badges, and modals). Maintain visual harmony across all pages.
 - **No Decorative Icons:** Strictly follow the design system in `docs/design.md`. Do not add icons to stat cards or decorative elements.
 - **No Emojis:** Do not use emojis in UI titles (e.g. no waving hands, warning icons unless strictly warning badge style).
 - **Background Grid:** Apply decorative grid backgrounds (`bg-[linear-gradient(...)]`) to the main workspace and dark sidebar using SJD colors and correct grid size (`24px x 24px`).

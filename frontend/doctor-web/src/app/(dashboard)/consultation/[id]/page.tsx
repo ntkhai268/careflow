@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { consultationApi, ConsultationResponse, UpdateConsultationRequest } from "@/lib/consultation-api";
 import { prescriptionApi, PrescriptionResponse, PrescriptionItemRequest, MedicineCatalogItem } from "@/lib/prescription-api";
-import { patientApi, PatientAllergyResponse } from "@/lib/patient-api";
+import { patientApi, emrApi, PatientAllergyResponse } from "@/lib/patient-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmModal from "@/components/ConfirmModal";
 
@@ -39,6 +39,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [consultationHistory, setConsultationHistory] = useState<ConsultationResponse[] | null>(null);
   const [prescriptionHistory, setPrescriptionHistory] = useState<PrescriptionResponse[] | null>(null);
   const [patientMedicalHistory, setPatientMedicalHistory] = useState<string | null>(null);
+  const [emrRecord, setEmrRecord] = useState<{ recordNumber: string; bloodType: string; medicalHistory: string } | null>(null);
+
+  // Detail Modal view states
+  const [selectedHistoryConsultation, setSelectedHistoryConsultation] = useState<ConsultationResponse | null>(null);
+  const [selectedHistoryPrescription, setSelectedHistoryPrescription] = useState<PrescriptionResponse | null>(null);
 
   // Custom Modal confirm state
   const [confirmModalConfig, setConfirmModalConfig] = useState<{
@@ -245,12 +250,16 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     async function loadSummary() {
       setSummaryLoading(true);
       try {
-        const [consRes, prescRes] = await Promise.all([
+        const [consRes, prescRes, emrRes] = await Promise.all([
           consultationApi.getByPatient(consultation!.patientId),
           prescriptionApi.getByPatient(consultation!.patientId),
+          emrApi.getPatientSummary(consultation!.patientId).catch(() => null),
         ]);
-        setConsultationHistory((consRes.data ?? []).filter(c => c.id !== consultationId).slice(0, 5));
-        setPrescriptionHistory((prescRes.data ?? []).slice(0, 3));
+        setConsultationHistory((consRes.data ?? []).filter(c => c.id !== consultationId));
+        setPrescriptionHistory(prescRes.data ?? []);
+        if (emrRes?.data?.medicalRecord) {
+          setEmrRecord(emrRes.data.medicalRecord);
+        }
       } catch {
         setConsultationHistory([]);
         setPrescriptionHistory([]);
@@ -556,7 +565,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       )}
 
       {/* Patient header info */}
-      <div className="border border-card-border bg-card-bg p-4 shadow-[0_1px_3px_rgba(110,37,130,0.06)] flex flex-wrap justify-between items-center rounded-none">
+      <div className="border border-card-border bg-card-bg p-4 shadow-[0_1px_3px_rgba(110,37,130,0.06)] flex flex-wrap justify-between items-center rounded-lg">
         <div>
           <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Phiên khám hiện hành</span>
           <h1 className="text-xl font-bold text-[#2B1D30]">{patientName}</h1>
@@ -566,7 +575,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           <div className="text-right">
             <span className="text-[10px] uppercase font-bold text-gray-400">Trạng thái khám</span>
             <div className="mt-1">
-              <span className={`px-2 py-0.5 text-xs font-semibold rounded-none ${
+              <span className={`px-2 py-0.5 text-xs font-semibold rounded-md ${
                 consultation?.status === "IN_PROGRESS" 
                   ? "bg-[#E8F1FD] text-[#2F80ED] border border-[#2F80ED]/20" 
                   : "bg-success-light text-success border border-success/20"
@@ -579,7 +588,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <div className="text-right">
               <span className="text-[10px] uppercase font-bold text-gray-400">Trạng thái đơn</span>
               <div className="mt-1">
-                <span className={`px-2 py-0.5 text-xs font-semibold rounded-none ${
+                <span className={`px-2 py-0.5 text-xs font-semibold rounded-md ${
                   prescriptionStatus === "DRAFT"
                     ? "bg-warning-light text-warning border border-warning/20"
                     : "bg-success-light text-success border border-success/20"
@@ -598,14 +607,14 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           <div className="space-y-2">
             {/* Level 1 — CRITICAL (Clean Clinical Red Notice) */}
             {patientAllergies.filter(a => a.severity === "CRITICAL").length > 0 && (
-              <div className="border border-red-200 border-l-4 border-l-red-600 bg-red-50/90 p-3.5 flex items-center justify-between rounded-none shadow-xs">
+              <div className="border border-red-200 border-l-4 border-l-red-600 bg-red-50/90 p-3.5 flex items-center justify-between rounded-md shadow-xs">
                 <div className="flex items-center gap-3">
                   <svg className="w-4 h-4 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                   <div>
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-red-700 bg-red-100 border border-red-300 px-1.5 py-0.5 uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-red-700 bg-red-100 border border-red-300 px-1.5 py-0.5 uppercase tracking-wider rounded-sm">
                         Mức 1 — Nguy hiểm cao
                       </span>
                       <span className="text-xs font-bold text-red-900">
@@ -621,7 +630,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     </div>
                   </div>
                 </div>
-                <span className="text-[10px] bg-red-100 text-red-800 px-2 py-1 uppercase font-bold tracking-wider border border-red-300">
+                <span className="text-[10px] bg-red-100 text-red-800 px-2 py-1 uppercase font-bold tracking-wider border border-red-300 rounded-sm">
                   Tự động chặn kê đơn trùng nhóm
                 </span>
               </div>
@@ -629,7 +638,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
             {/* Level 2 — WARNING (Clean Clinical Amber Notice) */}
             {patientAllergies.filter(a => a.severity === "WARNING").length > 0 && (
-              <div className="border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50/90 p-3 flex items-center gap-3 rounded-none shadow-xs text-amber-900">
+              <div className="border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50/90 p-3 flex items-center gap-3 rounded-md shadow-xs text-amber-900">
                 <svg className="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
@@ -688,11 +697,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         <div className="lg:col-span-3 space-y-4">
           
           {/* Navigation Tabs */}
-          <div className="border-b border-card-border flex bg-card-bg rounded-none">
+          <div className="border-b border-card-border flex bg-card-bg rounded-t-lg">
             <button
               type="button"
               onClick={() => setActiveTab("vitals")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-none ${
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-tl-lg ${
                 activeTab === "vitals"
                   ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
                   : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
@@ -703,7 +712,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <button
               type="button"
               onClick={() => setActiveTab("clinical")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-none ${
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
                 activeTab === "clinical"
                   ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
                   : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
@@ -714,7 +723,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <button
               type="button"
               onClick={() => setActiveTab("diagnosis")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-none ${
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
                 activeTab === "diagnosis"
                   ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
                   : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
@@ -725,7 +734,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <button
               type="button"
               onClick={() => setActiveTab("summary")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-none ${
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-tr-lg ${
                 activeTab === "summary"
                   ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
                   : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
@@ -737,7 +746,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
           {/* TAB 1: Vital Signs with Real-time threshold validation */}
           {activeTab === "vitals" && (
-            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-none space-y-4">
+            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-4">
               <div className="flex justify-between items-center border-b border-card-border pb-2">
                 <h2 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide">
                   Chỉ số sinh hiệu bệnh nhân
@@ -866,7 +875,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
           {/* TAB 2: Clinical Details */}
           {activeTab === "clinical" && (
-            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-none space-y-4">
+            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-4">
               <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
                 Ghi nhận bệnh sử & Thăm khám
               </h2>
@@ -878,7 +887,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   onChange={(e) => setSymptoms(e.target.value)}
                   rows={4}
                   placeholder="Ghi nhận triệu chứng cơ năng, thời gian khởi phát..."
-                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-none"
+                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
                 />
               </div>
               <div>
@@ -889,7 +898,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   onChange={(e) => setClinicalNotes(e.target.value)}
                   rows={4}
                   placeholder="Nhận định của bác sĩ qua thăm khám thể chất..."
-                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-none"
+                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
                 />
               </div>
             </div>
@@ -897,7 +906,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
           {/* TAB 3: Diagnosis & ICD-10 */}
           {activeTab === "diagnosis" && (
-            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-none space-y-4">
+            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-4">
               <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
                 Chẩn đoán bệnh theo chuẩn y tế
               </h2>
@@ -915,12 +924,12 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                       }}
                       onFocus={() => setShowIcdDropdown(true)}
                       placeholder="Nhập mã hoặc tên bệnh (ví dụ: K21, Tăng huyết áp...)"
-                      className="flex-1 border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-none"
+                      className="flex-1 border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
                     />
                     {icdSearchQuery && (
                       <button 
                         onClick={() => { setIcdSearchQuery(""); setShowIcdDropdown(false); }}
-                        className="border border-card-border px-3 text-xs hover:bg-[#F8F6F9] rounded-none"
+                        className="border border-card-border px-3 text-xs hover:bg-[#F8F6F9] rounded-md"
                       >
                         Xóa
                       </button>
@@ -928,7 +937,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   </div>
 
                   {showIcdDropdown && filteredIcd10.length > 0 && (
-                    <div className="absolute left-0 right-0 z-20 mt-1 border border-card-border bg-card-bg shadow-md max-h-48 overflow-y-auto rounded-none">
+                    <div className="absolute left-0 right-0 z-20 mt-1 border border-card-border bg-card-bg shadow-md max-h-48 overflow-y-auto rounded-md">
                       {filteredIcd10.map((item) => (
                         <div
                           key={item.code}
@@ -952,7 +961,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     readOnly
                     value={icd10Code}
                     placeholder="Chưa chọn"
-                    className="w-full border border-card-border bg-gray-50 px-3 py-2 text-sm text-[#2B1D30] font-mono font-bold focus:outline-none rounded-none"
+                    className="w-full border border-card-border bg-gray-50 px-3 py-2 text-sm text-[#2B1D30] font-mono font-bold focus:outline-none rounded-md"
                   />
                 </div>
                 <div className="col-span-2">
@@ -962,7 +971,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     readOnly
                     value={icd10Name}
                     placeholder="Chưa chọn"
-                    className="w-full border border-card-border bg-gray-50 px-3 py-2 text-sm text-[#6A5C70] focus:outline-none rounded-none"
+                    className="w-full border border-card-border bg-gray-50 px-3 py-2 text-sm text-[#6A5C70] focus:outline-none rounded-md"
                   />
                 </div>
               </div>
@@ -975,7 +984,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   onChange={(e) => setDiagnosis(e.target.value)}
                     rows={3}
                   placeholder="Nhập chẩn đoán lâm sàng chi tiết..."
-                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-none"
+                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
                 />
               </div>
             </div>
@@ -983,118 +992,184 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
           {/* TAB 4: Clinical Summary */}
           {activeTab === "summary" && (
-            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-none space-y-5">
+            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-5">
               <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
                 Tóm tắt Lâm sàng & Lịch sử Y tế Bệnh nhân
               </h2>
 
               {summaryLoading ? (
                 <div className="space-y-4 py-2">
-                  <div className="h-16 bg-gray-100 animate-pulse rounded-none" />
-                  <div className="h-28 bg-gray-100 animate-pulse rounded-none" />
-                  <div className="h-24 bg-gray-100 animate-pulse rounded-none" />
+                  <div className="h-16 bg-gray-100 animate-pulse rounded-md" />
+                  <div className="h-28 bg-gray-100 animate-pulse rounded-md" />
+                  <div className="h-24 bg-gray-100 animate-pulse rounded-md" />
                 </div>
               ) : (
                 <div className="space-y-5">
-                  {/* Section A: Medical History / Chronic Conditions */}
-                  <div className="border border-slate-200 p-4 bg-slate-50/50 space-y-1.5 rounded-none">
-                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
-                      Bệnh nền & Tiền sử y tế
-                    </span>
-                    <p className="text-xs font-semibold text-slate-800">
-                      {patientMedicalHistory || "Chưa ghi nhận thông tin bệnh nền mạn tính"}
-                    </p>
+                  {/* Section A: EMR Master Record Card (Hồ sơ Bệnh án Điện tử) */}
+                  <div className="border border-purple-200 bg-purple-50/40 p-4 space-y-3 rounded-md">
+                    <div className="flex items-center justify-between border-b border-purple-200/60 pb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-purple-700 uppercase tracking-widest bg-purple-100 px-2 py-0.5 border border-purple-200 rounded-sm">
+                          Hồ sơ EMR Master
+                        </span>
+                        <span className="text-xs font-mono font-bold text-purple-900">
+                          {emrRecord?.recordNumber || "EMR-2026-PENDING"}
+                        </span>
+                      </div>
+                      {emrRecord?.bloodType && (
+                        <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 border border-rose-200 flex items-center gap-1 rounded-sm">
+                          <span>🩸 Nhóm máu:</span>
+                          <span>{emrRecord.bloodType}</span>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                        Bệnh nền & Tiền sử y tế
+                      </span>
+                      <p className="text-xs font-medium text-slate-800">
+                        {emrRecord?.medicalHistory || patientMedicalHistory || "Chưa ghi nhận thông tin bệnh nền mạn tính"}
+                      </p>
+                    </div>
                   </div>
 
-                  {/* Section B: Consultation History (Past 5 visits) */}
+                  {/* Section B: Consultation History (Past visits) */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
                       <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                         Lịch sử khám bệnh gần đây
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">
-                        {(consultationHistory ?? []).length} ca khám trước
+                        {(consultationHistory ?? []).length} ca khám trước (Cuộn để xem thêm)
                       </span>
                     </div>
 
                     {(consultationHistory ?? []).length === 0 ? (
-                      <div className="py-6 text-center text-xs text-slate-400 italic bg-slate-50 border border-dashed border-slate-200">
+                      <div className="py-6 text-center text-xs text-slate-400 italic bg-slate-50 border border-dashed border-slate-200 rounded-md">
                         Đây là lần khám đầu tiên của bệnh nhân trong hệ thống CareFlow
                       </div>
                     ) : (
-                      <div className="divide-y divide-slate-100 border border-slate-200">
-                        {(consultationHistory ?? []).map((c) => (
-                          <div key={c.id} className="p-3.5 hover:bg-slate-50/80 transition-colors space-y-1.5">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                                <span className="text-xs font-semibold text-slate-800">
-                                  {c.icd10Name ? `${c.icd10Code ? `${c.icd10Code} - ` : ""}${c.icd10Name}` : c.diagnosis || "Chẩn đoán chưa cập nhật"}
-                                </span>
+                      <div className="divide-y divide-slate-100 border border-slate-200 rounded-md max-h-[260px] overflow-y-auto pr-1">
+                        {(consultationHistory ?? []).map((c) => {
+                          const linkedPrescription = (prescriptionHistory ?? []).find(p => p.consultationId === c.id);
+                          return (
+                            <div 
+                              key={c.id} 
+                              onClick={() => setSelectedHistoryConsultation(c)}
+                              className="p-3 hover:bg-purple-50/50 transition-colors space-y-1.5 cursor-pointer group"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                                  <span className="text-xs font-bold text-slate-800 group-hover:text-primary-700">
+                                    {c.icd10Name ? `${c.icd10Code ? `${c.icd10Code} - ` : ""}${c.icd10Name}` : c.diagnosis || "Chẩn đoán chưa cập nhật"}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] font-mono text-slate-400">
+                                    {c.startedAt ? new Date(c.startedAt).toLocaleDateString("vi-VN") : "N/A"}
+                                  </span>
+                                  <span className="text-[10px] text-primary-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Xem chi tiết →
+                                  </span>
+                                </div>
                               </div>
-                              <span className="text-[11px] font-mono text-slate-400">
-                                {c.startedAt ? new Date(c.startedAt).toLocaleDateString("vi-VN") : "N/A"}
-                              </span>
-                            </div>
 
-                            {/* Vitals summary line */}
-                            <div className="text-[11px] text-slate-500 flex flex-wrap gap-x-3 gap-y-0.5">
-                              {c.bloodPressure && <span>Huyết áp: <strong className="font-mono text-slate-700">{c.bloodPressure}</strong></span>}
-                              {c.temperature && <span>Thân nhiệt: <strong className="font-mono text-slate-700">{c.temperature}°C</strong></span>}
-                              {c.spo2 && <span>SpO2: <strong className="font-mono text-slate-700">{c.spo2}%</strong></span>}
-                              {c.heartRate && <span>Mạch: <strong className="font-mono text-slate-700">{c.heartRate} bpm</strong></span>}
+                              {/* Vitals summary line */}
+                              <div className="text-[11px] text-slate-500 flex flex-wrap gap-x-3 gap-y-0.5 items-center justify-between">
+                                <div className="flex flex-wrap gap-x-3 gap-y-0.5">
+                                  {c.bloodPressure && <span>Huyết áp: <strong className="font-mono text-slate-700">{c.bloodPressure}</strong></span>}
+                                  {c.temperature && <span>Thân nhiệt: <strong className="font-mono text-slate-700">{c.temperature}°C</strong></span>}
+                                  {c.spo2 && <span>SpO2: <strong className="font-mono text-slate-700">{c.spo2}%</strong></span>}
+                                  {c.heartRate && <span>Mạch: <strong className="font-mono text-slate-700">{c.heartRate} bpm</strong></span>}
+                                </div>
+                                {linkedPrescription ? (
+                                  <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 border border-purple-200 rounded-sm">
+                                    Đã kê đơn thuốc
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-slate-400 italic">
+                                    Chưa kê đơn
+                                  </span>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
 
-                  {/* Section C: Prescription History (Past 3 prescriptions) */}
+                  {/* Section C: Prescription History (Past prescriptions) */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
                       <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                         Đơn thuốc đã dùng gần đây
                       </span>
                       <span className="text-[10px] text-slate-400 font-mono">
-                        {(prescriptionHistory ?? []).length} đơn
+                        {(prescriptionHistory ?? []).length} đơn (Cuộn để xem thêm)
                       </span>
                     </div>
 
                     {(prescriptionHistory ?? []).length === 0 ? (
-                      <div className="py-6 text-center text-xs text-slate-400 italic bg-slate-50 border border-dashed border-slate-200">
+                      <div className="py-6 text-center text-xs text-slate-400 italic bg-slate-50 border border-dashed border-slate-200 rounded-md">
                         Chưa ghi nhận lịch sử đơn thuốc cũ
                       </div>
                     ) : (
-                      <div className="space-y-2.5">
-                        {(prescriptionHistory ?? []).map((p) => (
-                          <div key={p.id} className="border border-slate-200 p-3 bg-white space-y-2">
-                            <div className="flex items-center justify-between text-[11px] border-b border-slate-100 pb-1.5">
-                              <span className="font-semibold text-slate-700">
-                                Đơn thuốc · {new Date(p.createdAt).toLocaleDateString("vi-VN")}
-                              </span>
-                              <span className={`px-1.5 py-0.5 font-bold uppercase text-[9px] ${
-                                p.status === "CONFIRMED" || p.status === "DISPENSED"
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                  : "bg-amber-50 text-amber-700 border border-amber-200"
-                              }`}>
-                                {p.status === "CONFIRMED" ? "Đã ký" : p.status === "DISPENSED" ? "Đã cấp phát" : "Nháp"}
-                              </span>
-                            </div>
-                            <ul className="space-y-1">
-                              {(p.items || []).map((item, idx) => (
-                                <li key={item.id || idx} className="text-xs text-slate-600 flex justify-between">
-                                  <span>
-                                    <strong className="text-slate-800">{idx + 1}. {item.medicineName}</strong>
-                                    {item.dosage && <span className="text-slate-500 font-normal"> · {item.dosage}</span>}
-                                    {item.frequency && <span className="text-slate-500 font-normal"> · {item.frequency}</span>}
+                      <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
+                        {(prescriptionHistory ?? []).map((p) => {
+                          const linkedConsultation = (consultationHistory ?? []).find(c => c.id === p.consultationId);
+                          return (
+                            <div 
+                              key={p.id} 
+                              onClick={() => setSelectedHistoryPrescription(p)}
+                              className="border border-slate-200 p-3 bg-white space-y-2 rounded-md hover:border-primary-400 transition-colors cursor-pointer group"
+                            >
+                              <div className="flex items-center justify-between text-[11px] border-b border-slate-100 pb-1.5">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-slate-800 group-hover:text-primary-700">
+                                    Đơn thuốc · {new Date(p.createdAt).toLocaleDateString("vi-VN")}
                                   </span>
-                                  <span className="font-mono text-slate-500 text-[11px]">x{item.quantity} {item.unit}</span>
-                                </li>
-                              ))}
-                            </ul>
-                          </div>
-                        ))}
+                                  {linkedConsultation && (
+                                    <span className="text-[10px] font-mono text-slate-500 truncate max-w-[200px]">
+                                      ({linkedConsultation.icd10Code || linkedConsultation.diagnosis || "Lần khám"})
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className={`px-1.5 py-0.5 font-bold uppercase text-[9px] rounded-sm ${
+                                    p.status === "CONFIRMED" || p.status === "DISPENSED"
+                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                                      : "bg-amber-50 text-amber-700 border border-amber-200"
+                                  }`}>
+                                    {p.status === "CONFIRMED" ? "Đã ký" : p.status === "DISPENSED" ? "Đã cấp phát" : "Nháp"}
+                                  </span>
+                                  <span className="text-[10px] text-primary-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+                                    Chi tiết →
+                                  </span>
+                                </div>
+                              </div>
+                              <ul className="space-y-1">
+                                {(p.items || []).slice(0, 3).map((item, idx) => (
+                                  <li key={item.id || idx} className="text-xs text-slate-600 flex justify-between">
+                                    <span>
+                                      <strong className="text-slate-800">{idx + 1}. {item.medicineName}</strong>
+                                      {item.dosage && <span className="text-slate-500 font-normal"> · {item.dosage}</span>}
+                                      {item.frequency && <span className="text-slate-500 font-normal"> · {item.frequency}</span>}
+                                    </span>
+                                    <span className="font-mono text-slate-500 text-[11px]">x{item.quantity} {item.unit}</span>
+                                  </li>
+                                ))}
+                                {(p.items || []).length > 3 && (
+                                  <li className="text-[11px] text-primary-600 font-semibold italic">
+                                    + {p.items.length - 3} loại thuốc khác... (Bấm để xem đầy đủ)
+                                  </li>
+                                )}
+                              </ul>
+                            </div>
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -1109,7 +1184,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         <div className="lg:col-span-2 space-y-6">
           
           {/* Main Prescription Container */}
-          <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-none flex flex-col justify-between min-h-[420px]">
+          <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-lg flex flex-col justify-between min-h-[420px]">
             <div>
               <div className="flex justify-between items-center border-b border-card-border pb-3 mb-4">
                 <div>
@@ -1135,7 +1210,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     <button
                       type="button"
                       onClick={openAddMedicineDrawer}
-                      className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-3 py-1.5 text-xs transition-all flex items-center gap-1.5 rounded-none shadow-sm"
+                      className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-3 py-1.5 text-xs transition-all flex items-center gap-1.5 rounded-md shadow-sm"
                     >
                       + THÊM THUỐC
                     </button>
@@ -1145,8 +1220,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
               {/* Prescription Items List or Empty State */}
               {prescriptionItems.length === 0 ? (
-                <div className="border-2 border-dashed border-card-border p-8 text-center bg-[#FAF8FA] space-y-3 rounded-none my-4">
-                  <div className="w-10 h-10 border border-primary-300 bg-white flex items-center justify-center mx-auto text-primary-600 font-bold text-lg rounded-none">
+                <div className="border-2 border-dashed border-card-border p-8 text-center bg-[#FAF8FA] space-y-3 rounded-lg my-4">
+                  <div className="w-10 h-10 border border-primary-300 bg-white flex items-center justify-center mx-auto text-primary-600 font-bold text-lg rounded-md">
                     Rx
                   </div>
                   <div>
@@ -1157,7 +1232,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     <button
                       type="button"
                       onClick={openAddMedicineDrawer}
-                      className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2 text-xs transition-all rounded-none inline-block mt-2"
+                      className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2 text-xs transition-all rounded-md inline-block mt-2"
                     >
                       + THÊM THUỐC ĐẦU TIÊN
                     </button>
@@ -1166,7 +1241,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
               ) : (
                 <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
                   {prescriptionItems.map((item, index) => (
-                    <div key={item.medicineCode} className="border border-card-border p-3 bg-white flex justify-between items-start hover:border-primary-400 transition-all rounded-none">
+                    <div key={item.medicineCode} className="border border-card-border p-3 bg-white flex justify-between items-start hover:border-primary-400 transition-all rounded-md">
                       <div className="space-y-1">
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-bold text-primary-600">{index + 1}.</span>
@@ -1178,7 +1253,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                         <p className="text-xs text-[#6A5C70] font-medium">
                           Liều: {item.dosage} · {item.frequency} · {item.timing}
                         </p>
-                        {item.notes && <p className="text-xs text-amber-700 bg-amber-50 p-1 border border-amber-200 mt-1 rounded-none">Ghi chú: {item.notes}</p>}
+                        {item.notes && <p className="text-xs text-amber-700 bg-amber-50 p-1 border border-amber-200 mt-1 rounded-sm">Ghi chú: {item.notes}</p>}
                       </div>
 
                       {!isPrescriptionLocked && (
@@ -1242,7 +1317,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     onChange={(e) => setPrescriptionNotes(e.target.value)}
                     rows={2}
                     placeholder="Ghi chú về chế độ ăn kiêng, dị ứng hoặc lời dặn của bác sĩ..."
-                    className="w-full border border-input-border bg-input-bg px-3 py-1.5 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-none"
+                    className="w-full border border-input-border bg-input-bg px-3 py-1.5 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
                   />
                 </div>
               )}
@@ -1250,7 +1325,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           </div>
 
           {/* Follow-up Date Panel */}
-          <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] space-y-3 rounded-none">
+          <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] space-y-3 rounded-lg">
             <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
               Lịch Hẹn Tái khám
             </h2>
@@ -1261,7 +1336,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 disabled={isPrescriptionLocked}
                 value={followUpDate}
                 onChange={(e) => setFollowUpDate(e.target.value)}
-                className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-none"
+                className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
               />
             </div>
             <p className="text-[10px] text-[#6A5C70]">
@@ -1276,7 +1351,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       {/* SLIDE-OVER DRAWER MODAL FOR MEDICINE ENTRY */}
       {isMedicineDrawerOpen && (
         <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-card-bg border-l border-card-border shadow-2xl h-full flex flex-col justify-between p-6 animate-in slide-in-from-right duration-200 rounded-none">
+          <div className="w-full max-w-lg bg-card-bg border-l border-card-border shadow-2xl h-full flex flex-col justify-between p-6 animate-in slide-in-from-right duration-200 rounded-l-xl">
             
             <div className="space-y-5 overflow-y-auto pr-1">
               <div className="flex justify-between items-center border-b border-card-border pb-3">
@@ -1304,11 +1379,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   }}
                   onFocus={() => setShowMedDropdown(true)}
                   placeholder="Nhập tên thuốc hoặc mã thuốc..."
-                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-none"
+                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
                 />
 
                 {showMedDropdown && filteredMedicines.length > 0 && (
-                  <div className="absolute left-0 right-0 z-30 mt-1 border border-card-border bg-white shadow-xl max-h-56 overflow-y-auto rounded-none">
+                  <div className="absolute left-0 right-0 z-30 mt-1 border border-card-border bg-white shadow-xl max-h-56 overflow-y-auto rounded-md">
                     {filteredMedicines.map((m) => (
                       <div
                         key={m.code}
@@ -1323,7 +1398,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                           <p className="font-bold text-[#2B1D30]">{m.name}</p>
                           <p className="text-xs text-[#6A5C70]">Mã: <span className="font-mono">{m.code}</span> | Đơn vị: {m.unit}</p>
                         </div>
-                        <span className="text-[10px] bg-primary-100 text-primary-700 px-2 py-0.5 font-semibold rounded-none">
+                        <span className="text-[10px] bg-primary-100 text-primary-700 px-2 py-0.5 font-semibold rounded-sm">
                           Khả dụng
                         </span>
                       </div>
@@ -1334,7 +1409,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
               {/* Selected Medicine Info Card */}
               {selectedMedicine && (
-                <div className="border border-primary-200 bg-[#F8F6F9] p-3 text-xs space-y-1 rounded-none">
+                <div className="border border-primary-200 bg-[#F8F6F9] p-3 text-xs space-y-1 rounded-md">
                   <p className="font-bold text-primary-700">{selectedMedicine.name}</p>
                   <p className="text-[#6A5C70]">Mã thuốc chuẩn: <span className="font-mono font-bold">{selectedMedicine.code}</span> | Đơn vị tính: <strong>{selectedMedicine.unit}</strong></p>
                 </div>
@@ -1349,7 +1424,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     value={medDosage}
                     onChange={(e) => setMedDosage(e.target.value)}
                     placeholder="1 viên / lần"
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-none"
+                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
                   />
                 </div>
                 <div>
@@ -1359,7 +1434,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     value={medFrequency}
                     onChange={(e) => setMedFrequency(e.target.value)}
                     placeholder="2 lần / ngày"
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-none"
+                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
                   />
                 </div>
               </div>
@@ -1373,7 +1448,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     value={medTiming}
                     onChange={(e) => setMedTiming(e.target.value)}
                     placeholder="Sau khi ăn"
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-none"
+                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
                   />
                 </div>
                 <div>
@@ -1382,7 +1457,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     type="number"
                     value={medDuration}
                     onChange={(e) => setMedDuration(e.target.value)}
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-none"
+                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
                   />
                 </div>
                 <div>
@@ -1391,7 +1466,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     type="number"
                     value={medQuantity}
                     onChange={(e) => setMedQuantity(e.target.value)}
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-none"
+                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
                   />
                 </div>
               </div>
@@ -1414,7 +1489,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                       value={medNotes}
                       onChange={(e) => setMedNotes(e.target.value)}
                       placeholder="Ví dụ: Uống với nhiều nước, tránh uống cùng sữa..."
-                      className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-none"
+                      className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
                     />
                   </div>
                 )}
@@ -1427,14 +1502,14 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
               <button
                 type="button"
                 onClick={() => setIsMedicineDrawerOpen(false)}
-                className="flex-1 border border-card-border hover:bg-gray-100 text-[#2B1D30] font-bold py-2.5 text-xs transition-all rounded-none"
+                className="flex-1 border border-card-border hover:bg-gray-100 text-[#2B1D30] font-bold py-2.5 text-xs transition-all rounded-md"
               >
                 HỦY BỎ
               </button>
               <button
                 type="button"
                 onClick={saveMedicineToPrescription}
-                className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 text-xs transition-all rounded-none shadow-sm"
+                className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 text-xs transition-all rounded-md shadow-sm"
               >
                 {editingMedicineCode ? "LƯU CẬP NHẬT" : "XÁC NHẬN THÊM"}
               </button>
@@ -1445,9 +1520,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       )}
 
       {/* Sticky Bottom Action Bar */}
-      <div className="fixed bottom-0 left-64 right-0 bg-[#2B1D30] border-t border-white/10 h-[64px] px-6 flex justify-between items-center z-30 rounded-none shadow-2xl">
+      <div className="fixed bottom-0 left-64 right-0 bg-[#2B1D30] border-t border-white/10 h-[64px] px-6 flex justify-between items-center z-30 shadow-2xl">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 bg-emerald-400 rounded-none inline-block"></span>
+          <span className="w-2 h-2 bg-emerald-400 rounded-full inline-block"></span>
           <span className="text-xs text-white/70 font-medium">Bác sĩ phụ trách: <strong className="text-white">{user?.fullName}</strong></span>
         </div>
         
@@ -1456,7 +1531,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <button
               onClick={saveDraft}
               disabled={isSaving}
-              className="border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-none"
+              className="border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md"
             >
               {isSaving ? "ĐANG LƯU..." : "LƯU NHÁP ĐƠN"}
             </button>
@@ -1466,7 +1541,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <button
               onClick={confirmPrescription}
               disabled={isSaving}
-              className="border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-none"
+              className="border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md"
             >
               {isSaving ? "ĐANG KÝ..." : "KÝ & XÁC NHẬN ĐƠN"}
             </button>
@@ -1476,14 +1551,14 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <button
               onClick={completeConsultation}
               disabled={isSaving}
-              className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-none shadow-sm"
+              className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md shadow-sm"
             >
               {isSaving ? "ĐANG XỬ LÝ..." : "HOÀN TẤT PHIÊN KHÁM"}
             </button>
           ) : (
             <button
               onClick={() => router.replace("/dashboard")}
-              className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-6 py-2 text-xs transition-all rounded-none"
+              className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-6 py-2 text-xs transition-all rounded-md"
             >
               QUAY LẠI TRANG CHỦ
             </button>
@@ -1522,7 +1597,217 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         )}
       </ConfirmModal>
 
+      {/* DETAIL MODAL: Selected History Consultation */}
+      {selectedHistoryConsultation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white border border-card-border shadow-2xl rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col justify-between p-6">
+            <div className="space-y-4 overflow-y-auto pr-1">
+              <div className="flex justify-between items-center border-b border-card-border pb-3">
+                <div>
+                  <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Chi tiết phiên khám cũ</span>
+                  <h3 className="text-base font-bold text-[#2B1D30]">
+                    {selectedHistoryConsultation.icd10Name ? `${selectedHistoryConsultation.icd10Code ? `${selectedHistoryConsultation.icd10Code} - ` : ""}${selectedHistoryConsultation.icd10Name}` : selectedHistoryConsultation.diagnosis || "Ca khám trước"}
+                  </h3>
+                  <p className="text-xs text-[#6A5C70]">
+                    Thời gian khám: <strong className="font-mono text-[#2B1D30]">{selectedHistoryConsultation.startedAt ? new Date(selectedHistoryConsultation.startedAt).toLocaleString("vi-VN") : "N/A"}</strong>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedHistoryConsultation(null)}
+                  className="text-gray-400 hover:text-black font-bold text-sm px-2 py-1 rounded-md"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Vitals Grid */}
+              <div className="border border-slate-200 bg-slate-50/50 p-3.5 rounded-lg space-y-2">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Chỉ số sinh hiệu</span>
+                <div className="grid grid-cols-4 gap-3 text-xs">
+                  <div className="bg-white p-2 border border-slate-200 rounded-md">
+                    <span className="text-[10px] text-slate-400 block">Huyết áp</span>
+                    <strong className="font-mono text-slate-800">{selectedHistoryConsultation.bloodPressure || "N/A"}</strong>
+                  </div>
+                  <div className="bg-white p-2 border border-slate-200 rounded-md">
+                    <span className="text-[10px] text-slate-400 block">Thân nhiệt</span>
+                    <strong className="font-mono text-slate-800">{selectedHistoryConsultation.temperature ? `${selectedHistoryConsultation.temperature}°C` : "N/A"}</strong>
+                  </div>
+                  <div className="bg-white p-2 border border-slate-200 rounded-md">
+                    <span className="text-[10px] text-slate-400 block">SpO2</span>
+                    <strong className="font-mono text-slate-800">{selectedHistoryConsultation.spo2 ? `${selectedHistoryConsultation.spo2}%` : "N/A"}</strong>
+                  </div>
+                  <div className="bg-white p-2 border border-slate-200 rounded-md">
+                    <span className="text-[10px] text-slate-400 block">Nhịp tim</span>
+                    <strong className="font-mono text-slate-800">{selectedHistoryConsultation.heartRate ? `${selectedHistoryConsultation.heartRate} bpm` : "N/A"}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Clinical Symptoms & Notes */}
+              <div className="space-y-3">
+                <div className="border border-slate-200 p-3.5 bg-white rounded-lg space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Triệu chứng cơ năng</span>
+                  <p className="text-xs text-slate-800 font-medium whitespace-pre-wrap">{selectedHistoryConsultation.symptoms || "Không ghi nhận"}</p>
+                </div>
+                <div className="border border-slate-200 p-3.5 bg-white rounded-lg space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Nhận định & Tóm tắt khám lâm sàng</span>
+                  <p className="text-xs text-slate-800 font-medium whitespace-pre-wrap">{selectedHistoryConsultation.clinicalNotes || "Không ghi nhận"}</p>
+                </div>
+                <div className="border border-slate-200 p-3.5 bg-white rounded-lg space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chẩn đoán lâm sàng</span>
+                  <p className="text-xs text-primary-700 font-bold">{selectedHistoryConsultation.diagnosis || "Chẩn đoán chưa cập nhật"}</p>
+                </div>
+              </div>
+
+              {/* Linked Prescription Section */}
+              {(() => {
+                const linkedP = (prescriptionHistory ?? []).find(p => p.consultationId === selectedHistoryConsultation.id);
+                return linkedP ? (
+                  <div className="border border-purple-200 bg-purple-50/40 p-4 rounded-lg space-y-2.5">
+                    <div className="flex items-center justify-between border-b border-purple-200/60 pb-1.5">
+                      <span className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
+                        <span>Đơn thuốc đính kèm ca khám này</span>
+                      </span>
+                      <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 font-bold uppercase rounded-sm border border-purple-200">
+                        {linkedP.status === "CONFIRMED" ? "Đã ký" : linkedP.status === "DISPENSED" ? "Đã cấp phát" : "Nháp"}
+                      </span>
+                    </div>
+                    <ul className="space-y-1.5">
+                      {(linkedP.items || []).map((item, idx) => (
+                        <li key={item.id || idx} className="text-xs text-slate-700 bg-white p-2 border border-purple-100 rounded-md flex justify-between items-center">
+                          <div>
+                            <strong className="text-slate-900">{idx + 1}. {item.medicineName}</strong>
+                            <p className="text-[11px] text-slate-500 font-medium">{item.dosage} · {item.frequency} · {item.timing}</p>
+                          </div>
+                          <span className="font-mono text-xs font-bold text-purple-800">x{item.quantity} {item.unit}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-slate-50 border border-slate-200 text-center text-xs text-slate-400 italic rounded-lg">
+                    Phiên khám này không có đơn thuốc đính kèm
+                  </div>
+                );
+              })()}
+            </div>
+
+            <div className="pt-4 border-t border-card-border flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedHistoryConsultation(null)}
+                className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2 text-xs transition-all rounded-md"
+              >
+                ĐÓNG CỬA SỔ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* DETAIL MODAL: Selected History Prescription */}
+      {selectedHistoryPrescription && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
+          <div className="bg-white border border-card-border shadow-2xl rounded-xl w-full max-w-xl max-h-[85vh] flex flex-col justify-between p-6">
+            <div className="space-y-4 overflow-y-auto pr-1">
+              <div className="flex justify-between items-center border-b border-card-border pb-3">
+                <div>
+                  <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Chi tiết đơn thuốc cũ</span>
+                  <h3 className="text-base font-bold text-[#2B1D30]">
+                    Đơn thuốc · {new Date(selectedHistoryPrescription.createdAt).toLocaleDateString("vi-VN")}
+                  </h3>
+                  <p className="text-xs text-[#6A5C70]">
+                    Mã đơn: <span className="font-mono font-bold text-[#2B1D30]">{selectedHistoryPrescription.id}</span>
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedHistoryPrescription(null)}
+                  className="text-gray-400 hover:text-black font-bold text-sm px-2 py-1 rounded-md"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Linked Consultation Banner */}
+              {(() => {
+                const linkedC = (consultationHistory ?? []).find(c => c.id === selectedHistoryPrescription.consultationId);
+                return linkedC ? (
+                  <div className="border border-emerald-200 bg-emerald-50/50 p-3 rounded-lg flex items-center justify-between text-xs">
+                    <div>
+                      <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Kê cho phiên khám</span>
+                      <strong className="text-emerald-950 font-bold">{linkedC.icd10Name ? `${linkedC.icd10Code} - ${linkedC.icd10Name}` : linkedC.diagnosis || "Lần khám trước"}</strong>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const targetC = linkedC;
+                        setSelectedHistoryPrescription(null);
+                        setSelectedHistoryConsultation(targetC);
+                      }}
+                      className="text-[11px] font-bold text-emerald-700 hover:underline bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-md"
+                    >
+                      Xem phiên khám này →
+                    </button>
+                  </div>
+                ) : null;
+              })()}
+
+              {/* Medicine List Detail */}
+              <div className="space-y-2">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
+                  Danh sách thuốc trong đơn ({(selectedHistoryPrescription.items || []).length} loại)
+                </span>
+                <div className="divide-y divide-slate-100 border border-slate-200 rounded-lg">
+                  {(selectedHistoryPrescription.items || []).map((item, idx) => (
+                    <div key={item.id || idx} className="p-3 bg-white space-y-1">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <span className="text-xs font-bold text-slate-900">{idx + 1}. {item.medicineName}</span>
+                          <span className="text-[10px] font-mono text-slate-400 block">Mã: {item.medicineCode}</span>
+                        </div>
+                        <span className="text-xs font-bold text-primary-700 font-mono bg-primary-50 px-2 py-0.5 border border-primary-200 rounded-sm">
+                          x{item.quantity} {item.unit} ({item.duration || "N/A"} ngày)
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600">
+                        <strong className="text-slate-700">Liều dùng:</strong> {item.dosage} · {item.frequency} · {item.timing}
+                      </p>
+                      {item.notes && (
+                        <p className="text-[11px] text-amber-800 bg-amber-50 p-1.5 border border-amber-200 rounded-md">
+                          Ghi chú: {item.notes}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* General Prescription Notes */}
+              {selectedHistoryPrescription.notes && (
+                <div className="border border-slate-200 bg-slate-50 p-3 rounded-lg space-y-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lời dặn chung của bác sĩ</span>
+                  <p className="text-xs text-slate-800 italic">{selectedHistoryPrescription.notes}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-4 border-t border-card-border flex justify-end">
+              <button
+                type="button"
+                onClick={() => setSelectedHistoryPrescription(null)}
+                className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2 text-xs transition-all rounded-md"
+              >
+                ĐÓNG CỬA SỔ
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
+
   );
 }
 
