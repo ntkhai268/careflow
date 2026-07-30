@@ -8,6 +8,9 @@ import '../screens/main_shell.dart';
 import '../screens/profile/create_profile_screen.dart';
 import '../screens/profile/profile_detail_screen.dart';
 import '../screens/profile/edit_profile_screen.dart';
+import '../screens/health_record/health_record_list_screen.dart';
+import '../screens/health_record/health_record_form_screen.dart';
+import '../screens/health_record/health_record_detail_screen.dart';
 import '../screens/appointment/booking_step1_screen.dart';
 import '../screens/appointment/booking_step2_screen.dart';
 import '../screens/appointment/booking_step3_screen.dart';
@@ -53,6 +56,42 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/profile/:id/edit',
       builder: (context, state) => const EditProfileScreen(),
+    ),
+    // Health record routes
+    GoRoute(
+      path: '/patient/:patientId/health-records',
+      builder: (context, state) {
+        final patientId = state.pathParameters['patientId']!;
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+        final birthYearRaw = extra['patientBirthYear'];
+        final birthYear = birthYearRaw is int
+            ? birthYearRaw
+            : int.tryParse(birthYearRaw?.toString() ?? '') ?? 0;
+        return HealthRecordListScreen(
+          patientId: patientId,
+          patientName: extra['patientName']?.toString() ?? '',
+          patientGender: extra['patientGender']?.toString() ?? '',
+          patientBirthYear: birthYear,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/patient/:patientId/health-records/new',
+      builder: (context, state) {
+        final patientId = state.pathParameters['patientId']!;
+        return HealthRecordFormScreen(patientId: patientId);
+      },
+    ),
+    GoRoute(
+      path: '/patient/:patientId/health-records/:recordId',
+      builder: (context, state) {
+        final patientId = state.pathParameters['patientId']!;
+        final recordId = state.pathParameters['recordId']!;
+        return HealthRecordDetailScreen(
+          patientId: patientId,
+          recordId: recordId,
+        );
+      },
     ),
     // Booking flow routes
     GoRoute(

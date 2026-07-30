@@ -265,11 +265,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text(
-                                    'Thông tin sức khỏe sẽ được cập nhật sau'),
-                              ),
+                            context.push(
+                              '/patient/${patient.id}/health-records',
+                              extra: {
+                                'patientName': patient.fullName,
+                                'patientGender': patient.genderDisplay,
+                                'patientBirthYear': patient.dateOfBirth?.year ?? 0,
+                              },
                             );
                           },
                           child: const Text('Thông tin sức khỏe'),

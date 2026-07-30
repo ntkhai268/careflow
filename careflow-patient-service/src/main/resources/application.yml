@@ -1,26 +1,36 @@
 server:
   port: 8082
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 50MB
 
 spring:
   application:
     name: patient-service
   datasource:
-    url: jdbc:postgresql://100.116.233.60:5432/careflow_patient
-    username: careflow
-    password: careflow
+    url: ${PATIENT_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_patient}
+    username: ${PATIENT_DB_USERNAME:careflow}
+    password: ${PATIENT_DB_PASSWORD:careflow}
   jpa:
     hibernate:
-      ddl-auto: update
-    show-sql: true
+      ddl-auto: validate
+    show-sql: ${JPA_SHOW_SQL:false}
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${RABBITMQ_HOST:100.116.233.60}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:careflow}
+    password: ${RABBITMQ_PASSWORD:careflow}
   threads:
     virtual:
       enabled: true
@@ -38,3 +48,6 @@ management:
     web:
       exposure:
         include: health,info
+
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:uploads/health-records}
