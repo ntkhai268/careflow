@@ -1,7 +1,10 @@
+import 'dart:async';
+
 import 'package:careflow_patient/features/journey/application/journey_controller.dart';
 import 'package:careflow_patient/features/journey/application/journey_providers.dart';
 import 'package:careflow_patient/features/journey/data/demo_journey_repository.dart';
 import 'package:careflow_patient/features/journey/data/journey_repository.dart';
+import 'package:careflow_patient/features/journey/data/journey_store.dart';
 import 'package:careflow_patient/features/journey/data/shared_preferences_journey_store.dart';
 import 'package:careflow_patient/features/journey/domain/journey_models.dart';
 import 'package:careflow_patient/features/journey/domain/journey_transition.dart';
@@ -10,36 +13,58 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class ResetFailureRepository implements JourneyRepository {
-  ResetFailureRepository(this._delegate);
-
-  final JourneyRepository _delegate;
-
-  @override
-  Future<PatientJourney> acknowledgePayment(
-    PatientJourney journey,
-    PaymentMethod method,
-  ) => _delegate.acknowledgePayment(journey, method);
-
-  @override
-  Future<PatientJourney> advance(PatientJourney journey, JourneyEvent event) =>
-      _delegate.advance(journey, event);
+class ControlledBootstrapRepository implements JourneyRepository {
+  final patientAStarted = Completer<void>();
+  final patientBStarted = Completer<void>();
+  final patientAResult = Completer<PatientJourney>();
+  final patientBResult = Completer<PatientJourney>();
 
   @override
   Future<PatientJourney> bootstrap({
     required Appointment appointment,
     required String patientId,
-  }) => _delegate.bootstrap(appointment: appointment, patientId: patientId);
+  }) {
+    if (patientId == 'patient-a') {
+      patientAStarted.complete();
+      return patientAResult.future;
+    }
+    patientBStarted.complete();
+    return patientBResult.future;
+  }
+
+  @override
+  Future<PatientJourney> acknowledgePayment(
+    PatientJourney journey,
+    PaymentMethod method,
+  ) => Future<PatientJourney>.error(UnimplementedError());
+
+  @override
+  Future<PatientJourney> advance(PatientJourney journey, JourneyEvent event) =>
+      Future<PatientJourney>.error(UnimplementedError());
 
   @override
   Future<PatientJourney> markNotificationRead(
     PatientJourney journey,
     String notificationId,
-  ) => _delegate.markNotificationRead(journey, notificationId);
+  ) => Future<PatientJourney>.error(UnimplementedError());
 
   @override
   Future<void> reset(PatientJourney journey) =>
-      Future<void>.error(StateError('storage unavailable'));
+      Future<void>.error(UnimplementedError());
+}
+
+class ConfigurablePersistence implements JourneyPersistenceAdapter {
+  bool setSucceeds = true;
+  bool removeSucceeds = true;
+
+  @override
+  String? getString(String key) => null;
+
+  @override
+  Future<bool> remove(String key) async => removeSucceeds;
+
+  @override
+  Future<bool> setString(String key, String value) async => setSucceeds;
 }
 
 void main() {
@@ -101,34 +126,122 @@ void main() {
         demoMode: false,
         onActionError: (value) => actionError = value,
       );
-      final initial = await controller.bootstrap(
-        appointment: appointmentFor('apt-1'),
-        patientId: 'patient-a',
-      );
-
       await controller.advance(JourneyEvent.staffScannedQr);
 
-      expect(controller.state.value, initial);
+      expect(controller.state.valueOrNull, isNull);
       expect(actionError, 'Tính năng đang chờ backend triển khai');
       controller.dispose();
     },
   );
 
-  test('converts reset persistence failures into AsyncError', () async {
-    final controller = JourneyController(
-      repository: ResetFailureRepository(buildRepository()),
+  test('converts failed store saves and deletes into AsyncError', () async {
+    final persistence = ConfigurablePersistence()..setSucceeds = false;
+    final repository = DemoJourneyRepository(
+      store: SharedPreferencesJourneyStore(
+        persistence: Future.value(persistence),
+      ),
+      now: () => DateTime.utc(2026, 8, 18, 3, 30),
+    );
+    final saveController = JourneyController(
+      repository: repository,
       demoMode: true,
     );
-    await controller.bootstrap(
+
+    await expectLater(
+      saveController.bootstrap(
+        appointment: appointmentFor('apt-1'),
+        patientId: 'patient-a',
+      ),
+      throwsA(isA<StateError>()),
+    );
+    expect(saveController.state.hasError, isTrue);
+
+    persistence.setSucceeds = true;
+    final deleteController = JourneyController(
+      repository: repository,
+      demoMode: true,
+    );
+    await deleteController.bootstrap(
       appointment: appointmentFor('apt-1'),
       patientId: 'patient-a',
     );
+    persistence.removeSucceeds = false;
 
-    await controller.resetCurrentJourney();
+    await deleteController.resetCurrentJourney();
+
+    expect(deleteController.state.hasError, isTrue);
+    expect(deleteController.state.error, isA<StateError>());
+    saveController.dispose();
+    deleteController.dispose();
+  });
+
+  test('does not bootstrap or persist demo data in production mode', () async {
+    final controller = JourneyController(
+      repository: buildRepository(),
+      demoMode: false,
+    );
+    final preferences = await SharedPreferences.getInstance();
+
+    await expectLater(
+      controller.bootstrap(
+        appointment: appointmentFor('apt-1'),
+        patientId: 'patient-a',
+      ),
+      throwsA(anything),
+    );
 
     expect(controller.state.hasError, isTrue);
-    expect(controller.state.error, isA<StateError>());
+    expect(
+      preferences.containsKey(journeyStorageKey('patient-a', 'apt-1')),
+      isFalse,
+    );
     controller.dispose();
+  });
+
+  test(
+    'keeps the most recent patient active when an earlier bootstrap finishes late',
+    () async {
+      final repository = ControlledBootstrapRepository();
+      final controller = JourneyController(
+        repository: repository,
+        demoMode: true,
+      );
+
+      final first = controller.bootstrap(
+        appointment: appointmentFor('apt-1'),
+        patientId: 'patient-a',
+      );
+      await repository.patientAStarted.future;
+      final second = controller.bootstrap(
+        appointment: appointmentFor('apt-2'),
+        patientId: 'patient-b',
+      );
+      await repository.patientBStarted.future;
+      repository.patientBResult.complete(
+        journeyForPatient('patient-b', 'apt-2'),
+      );
+      await second;
+      repository.patientAResult.complete(
+        journeyForPatient('patient-a', 'apt-1'),
+      );
+      await first;
+
+      expect(controller.state.value!.patientId, 'patient-b');
+      expect(controller.state.value!.appointmentId, 'apt-2');
+      controller.dispose();
+    },
+  );
+
+  test('uses an unavailable repository when demo mode is disabled', () {
+    final container = ProviderContainer(
+      overrides: [demoModeProvider.overrideWithValue(false)],
+    );
+
+    expect(
+      container.read(journeyRepositoryProvider),
+      isNot(isA<DemoJourneyRepository>()),
+    );
+    container.dispose();
   });
 
   test('demo mode provider defaults to the compile-time environment flag', () {
@@ -154,3 +267,14 @@ Appointment appointmentFor(String id) => Appointment(
   status: 'CONFIRMED',
   statusDisplayName: 'Đã xác nhận',
 );
+
+PatientJourney journeyForPatient(String patientId, String appointmentId) =>
+    PatientJourney(
+      appointmentId: appointmentId,
+      patientId: patientId,
+      status: JourneyStatus.ticketIssued,
+      laboratoryOrders: const [],
+      timeline: const [],
+      notifications: const [],
+      updatedAt: DateTime.utc(2026, 8, 18, 3, 30),
+    );

@@ -15,9 +15,12 @@ final journeyStoreProvider = Provider<JourneyStore>(
   (ref) => SharedPreferencesJourneyStore(),
 );
 
-final journeyRepositoryProvider = Provider<JourneyRepository>(
-  (ref) => DemoJourneyRepository(store: ref.watch(journeyStoreProvider)),
-);
+final journeyRepositoryProvider = Provider<JourneyRepository>((ref) {
+  if (!ref.watch(demoModeProvider)) {
+    return const UnavailableJourneyRepository();
+  }
+  return DemoJourneyRepository(store: ref.watch(journeyStoreProvider));
+});
 
 final journeyActionErrorProvider = StateProvider<String?>((ref) => null);
 

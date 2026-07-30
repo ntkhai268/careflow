@@ -4,6 +4,22 @@ import 'package:careflow_patient/features/journey/domain/journey_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+class FailingPersistence implements JourneyPersistenceAdapter {
+  FailingPersistence({this.setSucceeds = true, this.removeSucceeds = true});
+
+  final bool setSucceeds;
+  final bool removeSucceeds;
+
+  @override
+  String? getString(String key) => null;
+
+  @override
+  Future<bool> remove(String key) async => removeSucceeds;
+
+  @override
+  Future<bool> setString(String key, String value) async => setSucceeds;
+}
+
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -42,6 +58,28 @@ void main() {
     );
     expect((await store.load('patient-b', 'apt-1')).journey, intact);
   });
+
+  test(
+    'reports failed save and delete calls from the persistence adapter',
+    () async {
+      final journey = journeyFor(
+        patientId: 'patient-a',
+        appointmentId: 'apt-1',
+      );
+      final saveStore = SharedPreferencesJourneyStore(
+        persistence: Future.value(FailingPersistence(setSucceeds: false)),
+      );
+      final deleteStore = SharedPreferencesJourneyStore(
+        persistence: Future.value(FailingPersistence(removeSucceeds: false)),
+      );
+
+      await expectLater(saveStore.save(journey), throwsA(isA<StateError>()));
+      await expectLater(
+        deleteStore.delete('patient-a', 'apt-1'),
+        throwsA(isA<StateError>()),
+      );
+    },
+  );
 }
 
 PatientJourney journeyFor({

@@ -22,3 +22,39 @@ abstract interface class JourneyRepository {
 
   Future<void> reset(PatientJourney journey);
 }
+
+class JourneyBackendUnavailable implements Exception {
+  const JourneyBackendUnavailable();
+}
+
+class UnavailableJourneyRepository implements JourneyRepository {
+  const UnavailableJourneyRepository();
+
+  @override
+  Future<PatientJourney> acknowledgePayment(
+    PatientJourney journey,
+    PaymentMethod method,
+  ) => _unavailable();
+
+  @override
+  Future<PatientJourney> advance(PatientJourney journey, JourneyEvent event) =>
+      _unavailable();
+
+  @override
+  Future<PatientJourney> bootstrap({
+    required Appointment appointment,
+    required String patientId,
+  }) => _unavailable();
+
+  @override
+  Future<PatientJourney> markNotificationRead(
+    PatientJourney journey,
+    String notificationId,
+  ) => _unavailable();
+
+  @override
+  Future<void> reset(PatientJourney journey) => _unavailable();
+
+  Future<T> _unavailable<T>() =>
+      Future<T>.error(const JourneyBackendUnavailable());
+}

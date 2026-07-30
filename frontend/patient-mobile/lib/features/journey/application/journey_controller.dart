@@ -19,11 +19,19 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
   final bool _demoMode;
   final void Function(String? error) _onActionError;
   String? _activePatientId;
+  int _bootstrapGeneration = 0;
 
   Future<PatientJourney> bootstrap({
     required Appointment appointment,
     required String patientId,
   }) async {
+    final generation = ++_bootstrapGeneration;
+    if (!_demoMode) {
+      final error = const JourneyBackendUnavailable();
+      _onActionError(null);
+      state = AsyncError(error, StackTrace.current);
+      throw error;
+    }
     if (_activePatientId != null && _activePatientId != patientId) {
       state = const AsyncData(null);
     }
@@ -34,11 +42,14 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
         appointment: appointment,
         patientId: patientId,
       );
+      if (generation != _bootstrapGeneration) return journey;
       _activePatientId = patientId;
       state = AsyncData(journey);
       return journey;
     } catch (error, stackTrace) {
-      state = AsyncError(error, stackTrace);
+      if (generation == _bootstrapGeneration) {
+        state = AsyncError(error, stackTrace);
+      }
       rethrow;
     }
   }
@@ -60,6 +71,7 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
   }
 
   Future<void> resetCurrentJourney() async {
+    ++_bootstrapGeneration;
     final journey = state.valueOrNull;
     try {
       if (journey != null) await _repository.reset(journey);
