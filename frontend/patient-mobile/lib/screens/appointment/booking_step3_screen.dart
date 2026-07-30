@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
+import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
 import '../../models/patient.dart';
 import '../../services/appointment_service.dart';
@@ -27,6 +28,8 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
   String? _selectedSlot;
   List<String> _timeSlots = [];
   bool _isLoading = true;
+  bool _usingDemoData = false;
+  String? _error;
 
   @override
   void initState() {
@@ -39,32 +42,32 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
   }
 
   Future<void> _loadTimeSlots() async {
+    setState(() {
+      _isLoading = true;
+      _usingDemoData = false;
+      _error = null;
+    });
     try {
       final service = ref.read(appointmentServiceProvider);
       final slots = await service.getTimeSlots();
+      if (!mounted) return;
       setState(() {
         _timeSlots = slots;
         _isLoading = false;
       });
-    } catch (e) {
-      // Fallback
+    } catch (_) {
+      if (!mounted) return;
+      if (!ref.read(demoModeProvider)) {
+        setState(() {
+          _timeSlots = [];
+          _error = 'Không thể tải danh sách ca khám. Vui lòng thử lại.';
+          _isLoading = false;
+        });
+        return;
+      }
       setState(() {
-        _timeSlots = [
-          '07:30-08:00',
-          '08:00-08:30',
-          '08:30-09:00',
-          '09:00-09:30',
-          '09:30-10:00',
-          '10:00-10:30',
-          '10:30-11:00',
-          '11:00-11:30',
-          '13:30-14:00',
-          '14:00-14:30',
-          '14:30-15:00',
-          '15:00-15:30',
-          '15:30-16:00',
-          '16:00-16:30',
-        ];
+        _timeSlots = _demoTimeSlots;
+        _usingDemoData = true;
         _isLoading = false;
       });
     }
@@ -116,9 +119,16 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? _TimeSlotLoadError(message: _error!, onRetry: _loadTimeSlots)
           : Column(
               children: [
                 _buildStepIndicator(),
+                if (_usingDemoData)
+                  const Padding(
+                    padding: EdgeInsets.only(top: AppSpacing.md),
+                    child: Text('Dữ liệu ca khám mô phỏng'),
+                  ),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(AppSpacing.base),
@@ -432,4 +442,45 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
       ),
     );
   }
+}
+
+const _demoTimeSlots = [
+  '07:30-08:00',
+  '08:00-08:30',
+  '08:30-09:00',
+  '09:00-09:30',
+  '09:30-10:00',
+  '10:00-10:30',
+  '10:30-11:00',
+  '11:00-11:30',
+  '13:30-14:00',
+  '14:00-14:30',
+  '14:30-15:00',
+  '15:00-15:30',
+  '15:30-16:00',
+  '16:00-16:30',
+];
+
+class _TimeSlotLoadError extends StatelessWidget {
+  const _TimeSlotLoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off_rounded, color: AppColors.error, size: 48),
+          const SizedBox(height: AppSpacing.md),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: AppSpacing.md),
+          OutlinedButton(onPressed: onRetry, child: const Text('Thử lại')),
+        ],
+      ),
+    ),
+  );
 }

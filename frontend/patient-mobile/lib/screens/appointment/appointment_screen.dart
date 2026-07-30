@@ -63,7 +63,9 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
       final appointments = await service.getAppointmentsByPatientId(patientId);
       if (!mounted || patientId != _patientId) return;
       setState(() {
-        _appointments = appointments;
+        _appointments = appointments
+            .where((appointment) => appointment.patientId == patientId)
+            .toList();
         _isLoading = false;
       });
     } catch (e) {
@@ -76,6 +78,12 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
   }
 
   Future<void> _openJourney(Appointment appointment) async {
+    final patientId = _patientId;
+    if (!appointment.allowsActiveJourney ||
+        patientId == null ||
+        appointment.patientId != patientId) {
+      return;
+    }
     final activeJourney = ref.read(activeJourneyProvider);
     if (activeJourney?.appointmentId != appointment.id ||
         activeJourney?.patientId != appointment.patientId) {
@@ -250,7 +258,9 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
         return _AppointmentCard(
           appointment: appt,
           onTap: () => context.push('/appointment/${appt.id}'),
-          onJourneyTap: () => _openJourney(appt),
+          onJourneyTap: appt.allowsActiveJourney
+              ? () => _openJourney(appt)
+              : null,
         );
       },
     );
@@ -260,7 +270,7 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
 class _AppointmentCard extends StatelessWidget {
   final Appointment appointment;
   final VoidCallback onTap;
-  final VoidCallback onJourneyTap;
+  final VoidCallback? onJourneyTap;
 
   const _AppointmentCard({
     required this.appointment,

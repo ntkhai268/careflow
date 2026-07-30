@@ -23,6 +23,12 @@ abstract interface class JourneyRepository {
   Future<void> reset(PatientJourney journey);
 }
 
+abstract interface class JourneySnapshotRepository {
+  Future<void> restoreSnapshot(PatientJourney journey);
+
+  Future<void> retireJourney(String patientId, String appointmentId);
+}
+
 class JourneyBackendUnavailable implements Exception {
   const JourneyBackendUnavailable();
 }

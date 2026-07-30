@@ -4,13 +4,15 @@ import '../domain/journey_transition.dart';
 import 'journey_repository.dart';
 import 'journey_store.dart';
 
-class DemoJourneyRepository implements JourneyRepository {
+class DemoJourneyRepository
+    implements JourneyRepository, JourneySnapshotRepository {
   DemoJourneyRepository({required JourneyStore store, DateTime Function()? now})
     : _store = store,
       _now = now ?? DateTime.now;
 
   final JourneyStore _store;
   final DateTime Function() _now;
+  DateTime? _lastTimestamp;
   static const _demoDoctorName = 'BS. Nguyễn Minh Anh (dữ liệu mô phỏng)';
 
   @override
@@ -38,14 +40,23 @@ class DemoJourneyRepository implements JourneyRepository {
         expectedWindow: appointment.timeSlot,
       ),
       laboratoryOrders: const [],
-      timeline: const [],
+      timeline: cached.wasCorrupted
+          ? [
+              JourneyTimelineEvent(
+                id: 'timeline-recovered-${createdAt.microsecondsSinceEpoch}',
+                title: 'Đã khôi phục hành trình',
+                detail: 'Dữ liệu hành trình lỗi đã được tạo lại an toàn.',
+                occurredAt: createdAt,
+              ),
+            ]
+          : const [],
       notifications: const [],
       updatedAt: createdAt,
     );
     final journey = JourneyTransition.apply(
       initial,
       JourneyEvent.issueTicket,
-      now: createdAt,
+      now: _timestamp(),
     );
     await _store.save(journey);
     return journey;
@@ -57,20 +68,55 @@ class DemoJourneyRepository implements JourneyRepository {
     JourneyEvent event,
   ) async {
     var next = JourneyTransition.apply(journey, event, now: _timestamp());
+    if (event == JourneyEvent.staffScannedQr) {
+      next = JourneyTransition.apply(
+        next,
+        JourneyEvent.admittedToClinicQueue,
+        now: _timestamp(),
+      ).copyWith(clinicQueue: _clinicQueue(next));
+      next = _appendNotification(
+        next,
+        id: 'clinic-turn-soon',
+        title: 'Sắp đến lượt khám',
+        body: 'Còn 3 người phía trước. Vui lòng theo dõi hàng đợi.',
+      );
+      await _store.save(next);
+      return next;
+    }
+    if (event == JourneyEvent.laboratoryResultsPublished) {
+      next = next.copyWith(
+        laboratoryOrders: next.laboratoryOrders.map(_withDemoResult).toList(),
+      );
+      next = JourneyTransition.apply(
+        next,
+        JourneyEvent.admittedToResultReviewQueue,
+        now: _timestamp(),
+      ).copyWith(resultReviewQueue: _resultReviewQueue(next));
+      await _store.save(next);
+      return next;
+    }
     switch (event) {
       case JourneyEvent.admittedToClinicQueue:
         next = next.copyWith(clinicQueue: _clinicQueue(next));
+        next = _appendNotification(
+          next,
+          id: 'clinic-turn-soon',
+          title: 'Sắp đến lượt khám',
+          body: 'Còn 3 người phía trước. Vui lòng theo dõi hàng đợi.',
+        );
       case JourneyEvent.laboratoryOrdered:
         next = next.copyWith(laboratoryOrders: _laboratoryOrders(next));
-      case JourneyEvent.laboratoryResultsPublished:
-        next = next.copyWith(
-          laboratoryOrders: next.laboratoryOrders.map(_withDemoResult).toList(),
-        );
       case JourneyEvent.admittedToResultReviewQueue:
         next = next.copyWith(resultReviewQueue: _resultReviewQueue(next));
       case JourneyEvent.directPrescriptionIssued:
       case JourneyEvent.finalPrescriptionIssued:
         next = _withDemoOutcome(next);
+        next = _appendNotification(
+          next,
+          id: 'follow-up-scheduled',
+          title: 'Tái khám đã lên lịch',
+          body: 'Lịch tái khám của bạn đã được đặt sau 7 ngày.',
+        );
       default:
         break;
     }
@@ -125,7 +171,22 @@ class DemoJourneyRepository implements JourneyRepository {
   Future<void> reset(PatientJourney journey) =>
       _store.delete(journey.patientId, journey.appointmentId);
 
-  DateTime _timestamp() => _now().toUtc();
+  @override
+  Future<void> restoreSnapshot(PatientJourney journey) => _store.save(journey);
+
+  @override
+  Future<void> retireJourney(String patientId, String appointmentId) =>
+      _store.delete(patientId, appointmentId);
+
+  DateTime _timestamp() {
+    var timestamp = _now().toUtc();
+    final last = _lastTimestamp;
+    if (last != null && !timestamp.isAfter(last)) {
+      timestamp = last.add(const Duration(microseconds: 1));
+    }
+    _lastTimestamp = timestamp;
+    return timestamp;
+  }
 
   String _roomFor(Appointment appointment) =>
       '${appointment.departmentDisplayName} - Phòng 21';
@@ -213,4 +274,26 @@ class DemoJourneyRepository implements JourneyRepository {
       note: 'Tái khám nếu triệu chứng không cải thiện.',
     ),
   );
+
+  PatientJourney _appendNotification(
+    PatientJourney journey, {
+    required String id,
+    required String title,
+    required String body,
+  }) {
+    final timestamp = _timestamp();
+    return journey.copyWith(
+      notifications: [
+        ...journey.notifications,
+        PatientNotification(
+          id: 'notification-$id-${timestamp.microsecondsSinceEpoch}',
+          title: title,
+          body: body,
+          createdAt: timestamp,
+          isRead: false,
+        ),
+      ],
+      updatedAt: timestamp,
+    );
+  }
 }

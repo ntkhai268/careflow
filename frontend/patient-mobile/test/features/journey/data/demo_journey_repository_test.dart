@@ -1,4 +1,5 @@
 import 'package:careflow_patient/features/journey/data/demo_journey_repository.dart';
+import 'package:careflow_patient/features/journey/data/journey_store.dart';
 import 'package:careflow_patient/features/journey/data/shared_preferences_journey_store.dart';
 import 'package:careflow_patient/features/journey/domain/journey_models.dart';
 import 'package:careflow_patient/features/journey/domain/journey_transition.dart';
@@ -45,13 +46,17 @@ void main() {
     );
 
     journey = await repository.advance(journey, JourneyEvent.staffScannedQr);
-    journey = await repository.advance(
-      journey,
-      JourneyEvent.admittedToClinicQueue,
-    );
 
     expect(journey.status, JourneyStatus.waiting);
     expect(journey.clinicQueue!.peopleAhead, 3);
+    expect(
+      journey.notifications.map((item) => item.title),
+      containsAllInOrder([
+        'Đã xác nhận check-in',
+        'Đã vào hàng đợi khám',
+        'Sắp đến lượt khám',
+      ]),
+    );
   });
 
   test(
@@ -110,7 +115,6 @@ void main() {
       for (final event in [
         JourneyEvent.laboratoryStarted,
         JourneyEvent.laboratoryResultsPublished,
-        JourneyEvent.admittedToResultReviewQueue,
       ]) {
         journey = await repository.advance(journey, event);
       }
@@ -121,8 +125,79 @@ void main() {
         journey.laboratoryOrders.first.result!.source,
         contains('Dữ liệu mô phỏng'),
       );
+      expect(
+        journey.notifications.map((item) => item.title),
+        containsAllInOrder([
+          'Kết quả xét nghiệm đã sẵn sàng',
+          'Chờ bác sĩ đọc kết quả',
+        ]),
+      );
     },
   );
+
+  test(
+    'adds a scheduled follow-up notification with deterministic order',
+    () async {
+      final repository = buildRepository();
+      var journey = await journeyInConsultation(repository);
+      for (final event in [
+        JourneyEvent.laboratoryOrdered,
+        JourneyEvent.paymentRequested,
+      ]) {
+        journey = await repository.advance(journey, event);
+      }
+      journey = await repository.acknowledgePayment(
+        journey,
+        PaymentMethod.online,
+      );
+      for (final event in [
+        JourneyEvent.laboratoryStarted,
+        JourneyEvent.laboratoryResultsPublished,
+        JourneyEvent.resultReviewCalled,
+        JourneyEvent.finalPrescriptionIssued,
+      ]) {
+        journey = await repository.advance(journey, event);
+      }
+
+      expect(
+        journey.notifications
+            .skip(journey.notifications.length - 2)
+            .map((item) => (item.title, item.body))
+            .toList(),
+        [
+          (
+            'Đơn thuốc đã sẵn sàng',
+            'Bác sĩ đã phát hành đơn thuốc sau khi đọc kết quả.',
+          ),
+          (
+            'Tái khám đã lên lịch',
+            'Lịch tái khám của bạn đã được đặt sau 7 ngày.',
+          ),
+        ],
+      );
+    },
+  );
+
+  test('records recovery when corrupted storage is rebuilt', () async {
+    final store = CorruptedJourneyStore();
+    final journey =
+        await DemoJourneyRepository(
+          store: store,
+          now: () => DateTime.utc(2026, 8, 18, 3, 30),
+        ).bootstrap(
+          appointment: appointmentFor('apt-corrupted'),
+          patientId: 'patient-1',
+        );
+
+    expect(journey.timeline.map((item) => (item.title, item.detail)).toList(), [
+      (
+        'Đã khôi phục hành trình',
+        'Dữ liệu hành trình lỗi đã được tạo lại an toàn.',
+      ),
+      ('Đã phát hành phiếu khám', 'Phiếu khám điện tử của bạn đã sẵn sàng.'),
+    ]);
+    expect(store.saved, same(journey));
+  });
 }
 
 DemoJourneyRepository buildRepository() => DemoJourneyRepository(
@@ -139,7 +214,6 @@ Future<PatientJourney> journeyInConsultation(
   );
   for (final event in [
     JourneyEvent.staffScannedQr,
-    JourneyEvent.admittedToClinicQueue,
     JourneyEvent.doctorCalled,
     JourneyEvent.consultationStarted,
   ]) {
@@ -160,3 +234,20 @@ Appointment appointmentFor(String id, {String? doctorName = 'BS. An'}) =>
       status: 'CONFIRMED',
       statusDisplayName: 'Đã xác nhận',
     );
+
+class CorruptedJourneyStore implements JourneyStore {
+  PatientJourney? saved;
+
+  @override
+  Future<void> delete(String patientId, String appointmentId) async {}
+
+  @override
+  Future<JourneyLoadResult> load(
+    String patientId,
+    String appointmentId,
+  ) async =>
+      const JourneyLoadResult(wasCorrupted: true, errorMessage: 'bad json');
+
+  @override
+  Future<void> save(PatientJourney journey) async => saved = journey;
+}

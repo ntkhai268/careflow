@@ -55,17 +55,22 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
             : null,
       });
 
-      try {
-        await ref
-            .read(journeyControllerProvider.notifier)
-            .bootstrap(appointment: appointment, patientId: widget.patient.id);
-      } catch (_) {
-        // The real booking remains successful when the journey backend is
-        // unavailable. The ticket screen renders the controller's real error.
+      if (appointment.allowsActiveJourney) {
+        try {
+          await ref
+              .read(journeyControllerProvider.notifier)
+              .bootstrap(
+                appointment: appointment,
+                patientId: widget.patient.id,
+              );
+        } catch (_) {
+          // The real booking remains successful when the journey backend is
+          // unavailable. The ticket screen renders the controller's real error.
+        }
       }
 
       if (mounted) {
-        _showSuccessDialog(appointment.id);
+        _showSuccessDialog(appointment);
       }
     } catch (e) {
       if (mounted) {
@@ -80,7 +85,8 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
     }
   }
 
-  void _showSuccessDialog(String appointmentId) {
+  void _showSuccessDialog(Appointment appointment) {
+    final canOpenJourney = appointment.allowsActiveJourney;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -116,8 +122,10 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Lịch khám của bạn đã được ghi nhận.\n'
-                'Phiếu khám đã sẵn sàng để theo dõi.',
+                canOpenJourney
+                    ? 'Lịch khám của bạn đã được ghi nhận.\n'
+                          'Phiếu khám đã sẵn sàng để theo dõi.'
+                    : 'Lịch khám đang chờ xác nhận.',
                 textAlign: TextAlign.center,
                 style: Theme.of(ctx).textTheme.bodyMedium,
               ),
@@ -127,9 +135,11 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                 child: ElevatedButton(
                   onPressed: () {
                     Navigator.of(ctx).pop();
-                    context.go('/journey/$appointmentId/ticket');
+                    if (canOpenJourney) {
+                      context.go('/journey/${appointment.id}/ticket');
+                    }
                   },
-                  child: const Text('Xem phiếu khám'),
+                  child: Text(canOpenJourney ? 'Xem phiếu khám' : 'Hoàn tất'),
                 ),
               ),
             ],

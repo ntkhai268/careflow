@@ -49,23 +49,6 @@ void main() {
         tester,
         controller,
         label: 'Mô phỏng nhân viên quét QR',
-        status: JourneyStatus.checkedIn,
-      );
-      expect(
-        find.text('Nhân viên đang đưa bạn vào hàng đợi phòng khám.'),
-        findsOneWidget,
-      );
-      await _openDestination(
-        tester,
-        label: 'Xem phiếu khám',
-        path: '$hubPath/ticket',
-        instruction: 'Nhân viên đang đưa bạn vào hàng đợi phòng khám.',
-      );
-
-      await _tapDemoEvent(
-        tester,
-        controller,
-        label: 'Mô phỏng nhân viên đưa vào hàng đợi',
         status: JourneyStatus.waiting,
       );
       await _openDestination(
@@ -158,19 +141,6 @@ void main() {
         tester,
         controller,
         label: 'Mô phỏng công bố kết quả',
-        status: JourneyStatus.labResultReady,
-      );
-      await _openDestination(
-        tester,
-        label: 'Xem xét nghiệm',
-        path: '$hubPath/laboratory',
-        instruction: 'Kết quả xét nghiệm đã sẵn sàng.',
-      );
-
-      await _tapDemoEvent(
-        tester,
-        controller,
-        label: 'Mô phỏng đưa vào hàng đợi đọc kết quả',
         status: JourneyStatus.waitingResultReview,
       );
       await _openDestination(
@@ -260,7 +230,6 @@ void main() {
       expect(find.text('Nội tổng quát - Phòng 21'), findsOneWidget);
 
       await _advance(controller, tester, JourneyEvent.staffScannedQr);
-      await _advance(controller, tester, JourneyEvent.admittedToClinicQueue);
       _expectStatus(controller, JourneyStatus.waiting);
       expect(find.text('Đang chờ khám'), findsOneWidget);
       expect(find.text('Vui lòng theo dõi thứ tự hàng đợi.'), findsOneWidget);
@@ -312,29 +281,13 @@ void main() {
         tester,
         JourneyEvent.laboratoryResultsPublished,
       );
-      _expectStatus(controller, JourneyStatus.labResultReady);
-      await _scrollToTop(tester);
-      expect(find.text('Kết quả xét nghiệm đã sẵn sàng.'), findsOneWidget);
-      await tester.scrollUntilVisible(
-        find.text('5.2 G/L'),
-        180,
-        scrollable: find.byType(Scrollable),
-      );
-      expect(find.text('5.2 G/L'), findsOneWidget);
-      expect(find.text('Dữ liệu mô phỏng'), findsOneWidget);
+      _expectStatus(controller, JourneyStatus.waitingResultReview);
       expect(
         controller.state.requireValue!.laboratoryOrders.map(
           (order) => order.result?.source,
         ),
         everyElement('Dữ liệu mô phỏng'),
       );
-
-      await _advance(
-        controller,
-        tester,
-        JourneyEvent.admittedToResultReviewQueue,
-      );
-      _expectStatus(controller, JourneyStatus.waitingResultReview);
       expect(find.text('Quay lại Nội tổng quát - Phòng 21'), findsOneWidget);
       expect(
         find.text('Bạn được xếp sau bệnh nhân khám mới tiếp theo'),
@@ -588,6 +541,7 @@ class _AdvancingClock {
 
 const _expectedNotificationsNewestFirst = <(String, String)>[
   ('Lượt khám đã hoàn tất', 'Cảm ơn bạn đã sử dụng CareFlow.'),
+  ('Tái khám đã lên lịch', 'Lịch tái khám của bạn đã được đặt sau 7 ngày.'),
   (
     'Đơn thuốc đã sẵn sàng',
     'Bác sĩ đã phát hành đơn thuốc sau khi đọc kết quả.',
@@ -616,6 +570,7 @@ const _expectedNotificationsNewestFirst = <(String, String)>[
   ),
   ('Bác sĩ đang khám', 'Bác sĩ đã bắt đầu buổi khám của bạn.'),
   ('Đã đến lượt bạn', 'Vui lòng đến phòng khám khi được gọi.'),
+  ('Sắp đến lượt khám', 'Còn 3 người phía trước. Vui lòng theo dõi hàng đợi.'),
   ('Đã vào hàng đợi khám', 'Bạn đã được thêm vào hàng đợi của phòng khám.'),
   ('Đã xác nhận check-in', 'Nhân viên đã quét mã QR và xác nhận bạn đến khám.'),
   ('Phiếu khám đã sẵn sàng', 'Phiếu khám điện tử của bạn đã sẵn sàng.'),

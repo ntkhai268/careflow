@@ -20,6 +20,8 @@ class AppointmentDetailScreen extends ConsumerStatefulWidget {
 
 class _AppointmentDetailScreenState
     extends ConsumerState<AppointmentDetailScreen> {
+  static const _unauthorizedMessage = 'Bạn không có quyền xem phiếu khám này.';
+
   Appointment? _appointment;
   bool _isLoading = true;
   bool _isCancelling = false;
@@ -36,16 +38,35 @@ class _AppointmentDetailScreenState
       _isLoading = true;
       _error = null;
     });
+    final scope = ref.read(journeyAccountScopeProvider);
+    if (scope == null) {
+      setState(() {
+        _error = _unauthorizedMessage;
+        _isLoading = false;
+      });
+      return;
+    }
     try {
       final service = ref.read(appointmentServiceProvider);
       final appointment = await service.getAppointmentById(
         widget.appointmentId,
       );
+      if (!mounted) return;
+      final currentScope = ref.read(journeyAccountScopeProvider);
+      if (currentScope != scope || appointment.patientId != scope.patientId) {
+        setState(() {
+          _appointment = null;
+          _error = _unauthorizedMessage;
+          _isLoading = false;
+        });
+        return;
+      }
       setState(() {
         _appointment = appointment;
         _isLoading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _isLoading = false;
@@ -80,8 +101,26 @@ class _AppointmentDetailScreenState
 
     setState(() => _isCancelling = true);
     try {
+      final appointment = _appointment;
+      final scope = ref.read(journeyAccountScopeProvider);
+      if (appointment == null ||
+          scope == null ||
+          appointment.patientId != scope.patientId) {
+        throw StateError(_unauthorizedMessage);
+      }
       final service = ref.read(appointmentServiceProvider);
       final updated = await service.cancelAppointment(widget.appointmentId);
+      if (updated.patientId != scope.patientId ||
+          updated.id != appointment.id) {
+        throw StateError(_unauthorizedMessage);
+      }
+      await ref
+          .read(journeyControllerProvider.notifier)
+          .retireAppointment(
+            patientId: appointment.patientId,
+            appointmentId: appointment.id,
+          );
+      if (!mounted) return;
       setState(() {
         _appointment = updated;
         _isCancelling = false;
@@ -109,7 +148,13 @@ class _AppointmentDetailScreenState
 
   Future<void> _openJourney() async {
     final appointment = _appointment;
-    if (appointment == null) return;
+    final scope = ref.read(journeyAccountScopeProvider);
+    if (appointment == null ||
+        scope == null ||
+        appointment.patientId != scope.patientId ||
+        !appointment.allowsActiveJourney) {
+      return;
+    }
     final activeJourney = ref.read(activeJourneyProvider);
     if (activeJourney?.appointmentId != appointment.id ||
         activeJourney?.patientId != appointment.patientId) {
@@ -155,7 +200,12 @@ class _AppointmentDetailScreenState
         children: [
           Icon(Icons.error_outline, size: 64, color: AppColors.error),
           const SizedBox(height: 16),
-          Text('Không tìm thấy phiếu khám'),
+          Text(
+            _error == _unauthorizedMessage
+                ? _unauthorizedMessage
+                : 'Không tìm thấy phiếu khám',
+            textAlign: TextAlign.center,
+          ),
           const SizedBox(height: 8),
           TextButton(onPressed: _loadAppointment, child: const Text('Thử lại')),
         ],
@@ -264,7 +314,10 @@ class _AppointmentDetailScreenState
             ),
           ),
         ),
-        _buildActionBar(canCancel: canCancel),
+        _buildActionBar(
+          canCancel: canCancel,
+          canOpenJourney: appt.allowsActiveJourney,
+        ),
       ],
     );
   }
@@ -445,7 +498,10 @@ class _AppointmentDetailScreenState
     );
   }
 
-  Widget _buildActionBar({required bool canCancel}) {
+  Widget _buildActionBar({
+    required bool canCancel,
+    required bool canOpenJourney,
+  }) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.base),
       decoration: BoxDecoration(
@@ -485,7 +541,7 @@ class _AppointmentDetailScreenState
                 height: 52,
                 child: ElevatedButton.icon(
                   key: const Key('open-journey-detail'),
-                  onPressed: _openJourney,
+                  onPressed: canOpenJourney ? _openJourney : null,
                   icon: const Icon(Icons.route_rounded),
                   label: const Text('Hành trình khám'),
                 ),

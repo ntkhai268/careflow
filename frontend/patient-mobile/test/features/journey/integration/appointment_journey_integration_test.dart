@@ -209,6 +209,180 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'pending booking never bootstraps or offers an active visit ticket',
+    (tester) async {
+      final service = FakeAppointmentService(
+        createdAppointment: appointmentWith(status: 'PENDING'),
+      );
+      final repository = RecordingJourneyRepository();
+      final router = testRouter(
+        BookingStep4Screen(
+          patient: patient,
+          department: Department(code: 'NOI_TONG_QUAT', name: 'Nội tổng quát'),
+          date: appointment.appointmentDate,
+          timeSlot: appointment.timeSlot,
+        ),
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        integrationApp(
+          router: router,
+          service: service,
+          repository: repository,
+        ),
+      );
+      await tester.tap(
+        find.widgetWithText(ElevatedButton, 'Xác nhận đặt khám'),
+      );
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+
+      expect(repository.bootstrapAppointments, isEmpty);
+      expect(find.text('Lịch khám đang chờ xác nhận.'), findsOneWidget);
+      expect(find.text('Xem phiếu khám'), findsNothing);
+    },
+  );
+
+  for (final status in ['PENDING', 'CANCELLED', 'COMPLETED']) {
+    testWidgets('$status appointment detail cannot create or open a journey', (
+      tester,
+    ) async {
+      final service = FakeAppointmentService(
+        detailAppointment: appointmentWith(status: status),
+      );
+      final repository = RecordingJourneyRepository();
+      final router = testRouter(
+        const AppointmentDetailScreen(appointmentId: 'apt-1'),
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        integrationApp(
+          router: router,
+          service: service,
+          repository: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widget<ElevatedButton>(
+              find.byKey(const Key('open-journey-detail')),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(repository.bootstrapAppointments, isEmpty);
+    });
+  }
+
+  testWidgets(
+    'appointment list disables journeys for backend-closed statuses',
+    (tester) async {
+      final appointments = [
+        appointmentWith(status: 'PENDING', id: 'apt-pending'),
+        appointmentWith(status: 'CANCELLED', id: 'apt-cancelled'),
+        appointmentWith(status: 'COMPLETED', id: 'apt-completed'),
+      ];
+      final service = FakeAppointmentService(appointments: appointments);
+      final repository = RecordingJourneyRepository();
+      final router = testRouter(const AppointmentScreen());
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        integrationApp(
+          router: router,
+          service: service,
+          repository: repository,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      for (final appointment in appointments) {
+        expect(
+          tester
+              .widget<IconButton>(
+                find.byKey(Key('open-journey-${appointment.id}')),
+              )
+              .onPressed,
+          isNull,
+        );
+      }
+      expect(repository.bootstrapAppointments, isEmpty);
+    },
+  );
+
+  testWidgets('appointment detail fails closed for another patient', (
+    tester,
+  ) async {
+    final service = FakeAppointmentService(
+      detailAppointment: appointmentForPatient('patient-2'),
+    );
+    final repository = RecordingJourneyRepository();
+    final router = testRouter(
+      const AppointmentDetailScreen(appointmentId: 'apt-1'),
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      integrationApp(router: router, service: service, repository: repository),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Bạn không có quyền xem phiếu khám này.'), findsOneWidget);
+    expect(find.text('Nội tổng quát'), findsNothing);
+    expect(find.byKey(const Key('open-journey-detail')), findsNothing);
+    expect(repository.bootstrapAppointments, isEmpty);
+  });
+
+  testWidgets('cancelling an appointment retires its active journey', (
+    tester,
+  ) async {
+    final service = FakeAppointmentService(
+      detailAppointment: appointment,
+      cancelledAppointment: appointmentWith(status: 'CANCELLED'),
+    );
+    final repository = RecordingJourneyRepository();
+    final controller = JourneyController(
+      repository: repository,
+      demoMode: true,
+    );
+    await controller.bootstrap(
+      appointment: appointment,
+      patientId: appointment.patientId,
+    );
+    final router = testRouter(
+      const AppointmentDetailScreen(appointmentId: 'apt-1'),
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      integrationApp(
+        router: router,
+        service: service,
+        repository: repository,
+        controller: controller,
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Hủy lịch khám'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Hủy lịch'));
+    await tester.pumpAndSettle();
+
+    expect(repository.resetJourneys, hasLength(1));
+    expect(controller.state.valueOrNull, isNull);
+    expect(
+      tester
+          .widget<ElevatedButton>(find.byKey(const Key('open-journey-detail')))
+          .onPressed,
+      isNull,
+    );
+  });
 }
 
 Widget integrationApp({
@@ -277,17 +451,45 @@ final appointment = Appointment(
   statusDisplayName: 'Đã xác nhận',
 );
 
+Appointment appointmentWith({required String status, String? id}) =>
+    Appointment(
+      id: id ?? appointment.id,
+      patientId: appointment.patientId,
+      patientName: appointment.patientName,
+      department: appointment.department,
+      departmentDisplayName: appointment.departmentDisplayName,
+      appointmentDate: appointment.appointmentDate,
+      timeSlot: appointment.timeSlot,
+      status: status,
+      statusDisplayName: status,
+    );
+
+Appointment appointmentForPatient(String patientId) => Appointment(
+  id: appointment.id,
+  patientId: patientId,
+  patientName: 'Dữ liệu bệnh nhân khác',
+  department: appointment.department,
+  departmentDisplayName: appointment.departmentDisplayName,
+  doctorName: 'BS. Không được phép xem',
+  appointmentDate: appointment.appointmentDate,
+  timeSlot: appointment.timeSlot,
+  status: 'CONFIRMED',
+  statusDisplayName: 'Đã xác nhận',
+);
+
 class FakeAppointmentService extends AppointmentService {
   FakeAppointmentService({
     this.createdAppointment,
     this.appointments = const [],
     this.detailAppointment,
+    this.cancelledAppointment,
     this.createError,
   }) : super(ApiService());
 
   final Appointment? createdAppointment;
   final List<Appointment> appointments;
   final Appointment? detailAppointment;
+  final Appointment? cancelledAppointment;
   final String? createError;
   int createCalls = 0;
 
@@ -307,11 +509,17 @@ class FakeAppointmentService extends AppointmentService {
   Future<Appointment> getAppointmentById(String id) async {
     return detailAppointment!;
   }
+
+  @override
+  Future<Appointment> cancelAppointment(String id) async {
+    return cancelledAppointment!;
+  }
 }
 
 class RecordingJourneyRepository implements JourneyRepository {
   final List<Appointment> bootstrapAppointments = [];
   final List<String> bootstrapPatientIds = [];
+  final List<PatientJourney> resetJourneys = [];
 
   @override
   Future<PatientJourney> bootstrap({
@@ -348,7 +556,9 @@ class RecordingJourneyRepository implements JourneyRepository {
   ) => throw UnimplementedError();
 
   @override
-  Future<void> reset(PatientJourney journey) => throw UnimplementedError();
+  Future<void> reset(PatientJourney journey) async {
+    resetJourneys.add(journey);
+  }
 }
 
 class SeededPatientNotifier extends PatientNotifier {
