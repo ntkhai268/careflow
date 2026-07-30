@@ -28,7 +28,7 @@ void main() {
     expect(find.text('Nội tổng quát'), findsNothing);
   });
 
-  testWidgets('demo department failure uses explicit demo reference data', (
+  testWidgets('demo department failure also shows the mapped API error', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -36,8 +36,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Nội tổng quát'), findsOneWidget);
-    expect(find.text('Dữ liệu chuyên khoa mô phỏng'), findsOneWidget);
+    expect(
+      find.text('Không thể tải danh sách chuyên khoa. Vui lòng thử lại.'),
+      findsOneWidget,
+    );
+    expect(find.text('Nội tổng quát'), findsNothing);
+    expect(find.widgetWithText(OutlinedButton, 'Thử lại'), findsOneWidget);
   });
 
   testWidgets('production time-slot failure is visible and fails closed', (
@@ -58,7 +62,7 @@ void main() {
     expect(find.text('07:30-08:00'), findsNothing);
   });
 
-  testWidgets('demo time-slot failure uses explicit demo reference data', (
+  testWidgets('demo time-slot failure also shows the mapped API error', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -69,8 +73,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('07:30-08:00'), findsOneWidget);
-    expect(find.text('Dữ liệu ca khám mô phỏng'), findsOneWidget);
+    expect(
+      find.text('Không thể tải danh sách ca khám. Vui lòng thử lại.'),
+      findsOneWidget,
+    );
+    expect(find.text('07:30-08:00'), findsNothing);
+    expect(find.widgetWithText(OutlinedButton, 'Thử lại'), findsOneWidget);
   });
 }
 

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
-import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
 import '../../models/patient.dart';
 import '../../services/appointment_service.dart';
@@ -20,7 +19,6 @@ class BookingStep2Screen extends ConsumerStatefulWidget {
 class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
   List<Department> _departments = [];
   bool _isLoading = true;
-  bool _usingDemoData = false;
   String? _error;
 
   @override
@@ -32,7 +30,6 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
   Future<void> _loadDepartments() async {
     setState(() {
       _isLoading = true;
-      _usingDemoData = false;
       _error = null;
     });
     try {
@@ -45,17 +42,9 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
       });
     } catch (_) {
       if (!mounted) return;
-      if (!ref.read(demoModeProvider)) {
-        setState(() {
-          _departments = [];
-          _error = 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.';
-          _isLoading = false;
-        });
-        return;
-      }
       setState(() {
-        _departments = _demoDepartments;
-        _usingDemoData = true;
+        _departments = [];
+        _error = 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.';
         _isLoading = false;
       });
     }
@@ -79,11 +68,6 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
           : Column(
               children: [
                 _buildStepIndicator(),
-                if (_usingDemoData)
-                  const Padding(
-                    padding: EdgeInsets.only(top: AppSpacing.md),
-                    child: Text('Dữ liệu chuyên khoa mô phỏng'),
-                  ),
                 // Selected patient info
                 _buildPatientInfo(),
                 // Department grid
@@ -225,20 +209,6 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
     );
   }
 }
-
-final _demoDepartments = [
-  Department(code: 'NOI_TONG_QUAT', name: 'Nội tổng quát'),
-  Department(code: 'NHI', name: 'Nhi'),
-  Department(code: 'NGOAI', name: 'Ngoại'),
-  Department(code: 'SAN', name: 'Sản'),
-  Department(code: 'MAT', name: 'Mắt'),
-  Department(code: 'TAI_MUI_HONG', name: 'Tai mũi họng'),
-  Department(code: 'RANG_HAM_MAT', name: 'Răng hàm mặt'),
-  Department(code: 'DA_LIEU', name: 'Da liễu'),
-  Department(code: 'THAN_KINH', name: 'Thần kinh'),
-  Department(code: 'TIM_MACH', name: 'Tim mạch'),
-  Department(code: 'CO_XUONG_KHOP', name: 'Cơ xương khớp'),
-];
 
 class _ReferenceDataError extends StatelessWidget {
   const _ReferenceDataError({required this.message, required this.onRetry});

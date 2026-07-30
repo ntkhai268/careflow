@@ -114,36 +114,62 @@ class _AppointmentDetailScreenState
           updated.id != appointment.id) {
         throw StateError(_unauthorizedMessage);
       }
-      await ref
+      if (!mounted) return;
+      setState(() {
+        _appointment = updated;
+        _isCancelling = false;
+      });
+      final retired = await ref
           .read(journeyControllerProvider.notifier)
           .retireAppointment(
             patientId: appointment.patientId,
             appointmentId: appointment.id,
           );
       if (!mounted) return;
-      setState(() {
-        _appointment = updated;
-        _isCancelling = false;
-      });
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã hủy lịch khám'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
+      _showCancellationResult(updated, retired: retired);
     } catch (e) {
+      if (!mounted) return;
       setState(() => _isCancelling = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Lỗi: ${e.toString()}'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi: ${e.toString()}'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
+  }
+
+  void _showCancellationResult(
+    Appointment appointment, {
+    required bool retired,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          retired
+              ? 'Đã hủy lịch khám'
+              : 'Đã hủy lịch khám, nhưng chưa thể dọn dữ liệu cục bộ.',
+        ),
+        backgroundColor: retired ? AppColors.success : AppColors.warning,
+        action: retired
+            ? null
+            : SnackBarAction(
+                label: 'Thử lại',
+                onPressed: () => _retryJourneyCleanup(appointment),
+              ),
+      ),
+    );
+  }
+
+  Future<void> _retryJourneyCleanup(Appointment appointment) async {
+    final retired = await ref
+        .read(journeyControllerProvider.notifier)
+        .retireAppointment(
+          patientId: appointment.patientId,
+          appointmentId: appointment.id,
+        );
+    if (!mounted) return;
+    _showCancellationResult(appointment, retired: retired);
   }
 
   Future<void> _openJourney() async {

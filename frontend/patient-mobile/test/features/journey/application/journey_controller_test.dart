@@ -209,6 +209,55 @@ void main() {
     },
   );
 
+  test(
+    'failed cancellation cleanup keeps the journey retired and can retry',
+    () async {
+      String? actionError;
+      final persistence = ConfigurablePersistence();
+      final controller = JourneyController(
+        repository: DemoJourneyRepository(
+          store: SharedPreferencesJourneyStore(
+            persistence: Future.value(persistence),
+          ),
+          now: () => DateTime.utc(2026, 8, 18, 3, 30),
+        ),
+        demoMode: true,
+        onActionError: (value) => actionError = value,
+      );
+      await controller.bootstrap(
+        appointment: appointmentFor('apt-cancelled'),
+        patientId: 'patient-a',
+      );
+      persistence.removeSucceeds = false;
+
+      expect(
+        await controller.retireAppointment(
+          patientId: 'patient-a',
+          appointmentId: 'apt-cancelled',
+        ),
+        isFalse,
+      );
+
+      expect(controller.state.valueOrNull, isNull);
+      expect(
+        actionError,
+        'Không thể dọn dữ liệu hành trình đã hủy. Vui lòng thử lại.',
+      );
+
+      persistence.removeSucceeds = true;
+      expect(
+        await controller.retireAppointment(
+          patientId: 'patient-a',
+          appointmentId: 'apt-cancelled',
+        ),
+        isTrue,
+      );
+      expect(controller.state.valueOrNull, isNull);
+      expect(actionError, isNull);
+      controller.dispose();
+    },
+  );
+
   test('does not bootstrap or persist demo data in production mode', () async {
     final controller = JourneyController(
       repository: buildRepository(),

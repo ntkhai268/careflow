@@ -21,6 +21,7 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
   String? _activePatientId;
   int _generation = 0;
   final Set<String> _retiredJourneyKeys = {};
+  final Map<String, PatientJourney> _retiredJourneySnapshots = {};
 
   Future<PatientJourney> bootstrap({
     required Appointment appointment,
@@ -110,9 +111,12 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
     final generation = ++_generation;
     final previous = state.valueOrNull;
     final key = _journeyKey(patientId, appointmentId);
+    final wasActive =
+        previous?.patientId == patientId &&
+        previous?.appointmentId == appointmentId;
     _retiredJourneyKeys.add(key);
-    if (previous?.patientId == patientId &&
-        previous?.appointmentId == appointmentId) {
+    if (wasActive) {
+      _retiredJourneySnapshots[key] = previous!;
       state = const AsyncData(null);
       _activePatientId = null;
     }
@@ -124,16 +128,19 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
           patientId,
           appointmentId,
         );
-      } else if (previous != null) {
-        await repository.reset(previous);
+      } else {
+        final snapshot = _retiredJourneySnapshots[key];
+        if (snapshot != null) await repository.reset(snapshot);
       }
+      _retiredJourneySnapshots.remove(key);
       return generation == _generation;
     } catch (_) {
-      _retiredJourneyKeys.remove(key);
-      if (generation == _generation && previous != null) {
-        _activePatientId = previous.patientId;
-        state = AsyncData(previous);
-        _onActionError('Không thể xóa hành trình đã hủy. Vui lòng thử lại.');
+      if (generation == _generation) {
+        state = AsyncData(wasActive ? null : previous);
+        _activePatientId = wasActive ? null : previous?.patientId;
+        _onActionError(
+          'Không thể dọn dữ liệu hành trình đã hủy. Vui lòng thử lại.',
+        );
       }
       return false;
     }

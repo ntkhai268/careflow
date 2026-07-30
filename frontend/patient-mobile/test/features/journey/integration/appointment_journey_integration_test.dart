@@ -383,6 +383,65 @@ void main() {
       isNull,
     );
   });
+
+  testWidgets(
+    'successful backend cancellation stays cancelled when local cleanup fails',
+    (tester) async {
+      final service = FakeAppointmentService(
+        detailAppointment: appointment,
+        cancelledAppointment: appointmentWith(status: 'CANCELLED'),
+      );
+      final repository = RecordingJourneyRepository()..resetFails = true;
+      String? actionError;
+      final controller = JourneyController(
+        repository: repository,
+        demoMode: true,
+        onActionError: (value) => actionError = value,
+      );
+      await controller.bootstrap(
+        appointment: appointment,
+        patientId: appointment.patientId,
+      );
+      final router = testRouter(
+        const AppointmentDetailScreen(appointmentId: 'apt-1'),
+      );
+      addTearDown(router.dispose);
+
+      await tester.pumpWidget(
+        integrationApp(
+          router: router,
+          service: service,
+          repository: repository,
+          controller: controller,
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hủy lịch khám'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(ElevatedButton, 'Hủy lịch'));
+      await tester.pumpAndSettle();
+
+      expect(controller.state.valueOrNull, isNull);
+      expect(
+        actionError,
+        'Không thể dọn dữ liệu hành trình đã hủy. Vui lòng thử lại.',
+      );
+      expect(find.text('CANCELLED'), findsOneWidget);
+      expect(
+        tester
+            .widget<ElevatedButton>(
+              find.byKey(const Key('open-journey-detail')),
+            )
+            .onPressed,
+        isNull,
+      );
+      expect(
+        find.text('Đã hủy lịch khám, nhưng chưa thể dọn dữ liệu cục bộ.'),
+        findsOneWidget,
+      );
+      expect(find.text('Thử lại'), findsOneWidget);
+    },
+  );
 }
 
 Widget integrationApp({
@@ -520,6 +579,7 @@ class RecordingJourneyRepository implements JourneyRepository {
   final List<Appointment> bootstrapAppointments = [];
   final List<String> bootstrapPatientIds = [];
   final List<PatientJourney> resetJourneys = [];
+  bool resetFails = false;
 
   @override
   Future<PatientJourney> bootstrap({
@@ -558,6 +618,7 @@ class RecordingJourneyRepository implements JourneyRepository {
   @override
   Future<void> reset(PatientJourney journey) async {
     resetJourneys.add(journey);
+    if (resetFails) throw StateError('local cleanup unavailable');
   }
 }
 
