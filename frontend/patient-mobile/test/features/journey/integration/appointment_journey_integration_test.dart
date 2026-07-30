@@ -6,12 +6,14 @@ import 'package:careflow_patient/features/journey/domain/journey_transition.dart
 import 'package:careflow_patient/features/journey/presentation/visit_ticket_screen.dart';
 import 'package:careflow_patient/models/appointment.dart';
 import 'package:careflow_patient/models/patient.dart';
+import 'package:careflow_patient/providers/auth_provider.dart';
 import 'package:careflow_patient/providers/patient_provider.dart';
 import 'package:careflow_patient/screens/appointment/appointment_detail_screen.dart';
 import 'package:careflow_patient/screens/appointment/appointment_screen.dart';
 import 'package:careflow_patient/screens/appointment/booking_step4_screen.dart';
 import 'package:careflow_patient/services/api_service.dart';
 import 'package:careflow_patient/services/appointment_service.dart';
+import 'package:careflow_patient/services/auth_service.dart';
 import 'package:careflow_patient/services/patient_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -218,14 +220,17 @@ Widget integrationApp({
 }) {
   final journeyController =
       controller ?? JourneyController(repository: repository, demoMode: true);
+  final scopedPatient = patientOverride ?? patient;
   return ProviderScope(
     overrides: [
+      authProvider.overrideWith(
+        (ref) => SeededAuthNotifier(scopedPatient.userId),
+      ),
       appointmentServiceProvider.overrideWithValue(service),
       journeyControllerProvider.overrideWith((ref) => journeyController),
-      if (patientOverride != null)
-        patientProvider.overrideWith(
-          (ref) => SeededPatientNotifier(patientOverride, ref),
-        ),
+      patientProvider.overrideWith(
+        (ref) => SeededPatientNotifier(scopedPatient, ref),
+      ),
     ],
     child: MaterialApp.router(routerConfig: router),
   );
@@ -350,5 +355,12 @@ class SeededPatientNotifier extends PatientNotifier {
   SeededPatientNotifier(Patient patient, Ref ref)
     : super(PatientService(ApiService()), ref) {
     state = PatientState(patient: patient);
+  }
+}
+
+class SeededAuthNotifier extends AuthNotifier {
+  SeededAuthNotifier(String userId)
+    : super(AuthService(ApiService(), useMock: true)) {
+    state = AuthState(status: AuthStatus.authenticated, userId: userId);
   }
 }

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
 import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/patient_provider.dart';
 import '../../services/appointment_service.dart';
 import 'package:intl/intl.dart';
@@ -31,7 +32,16 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
   }
 
   /// Get the current patient ID from patientProvider.
-  String? get _patientId => ref.read(patientProvider).patient?.id;
+  String? get _patientId {
+    final auth = ref.read(authProvider);
+    final patient = ref.read(patientProvider).patient;
+    if (auth.status != AuthStatus.authenticated ||
+        patient == null ||
+        patient.userId != auth.userId) {
+      return null;
+    }
+    return patient.id;
+  }
 
   /// Try loading appointments if patient profile is available.
   void _tryLoadAppointments() {
@@ -87,8 +97,25 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
   @override
   Widget build(BuildContext context) {
     // Watch patient state to re-load appointments when patient changes
+    final authState = ref.watch(authProvider);
     final patientState = ref.watch(patientProvider);
-    final currentPatientId = patientState.patient?.id;
+    final patient = patientState.patient;
+    final currentPatientId =
+        authState.status == AuthStatus.authenticated &&
+            patient?.userId == authState.userId
+        ? patient?.id
+        : null;
+    ref.listen(authProvider.select((auth) => (auth.status, auth.userId)), (
+      previous,
+      next,
+    ) {
+      if (previous == next) return;
+      setState(() {
+        _appointments = [];
+        _error = null;
+        _isLoading = false;
+      });
+    });
     ref.listen<String?>(patientProvider.select((state) => state.patient?.id), (
       previous,
       next,
@@ -97,8 +124,11 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
       setState(() {
         _appointments = [];
         _error = null;
+        _isLoading = false;
       });
-      if (next != null && next.isNotEmpty) _loadAppointments(next);
+      if (next != null && next == _patientId && next.isNotEmpty) {
+        _loadAppointments(next);
+      }
     });
 
     return Scaffold(

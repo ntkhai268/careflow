@@ -2,7 +2,13 @@ import 'package:careflow_patient/features/journey/application/journey_controller
 import 'package:careflow_patient/features/journey/application/journey_providers.dart';
 import 'package:careflow_patient/features/journey/data/journey_repository.dart';
 import 'package:careflow_patient/features/journey/domain/journey_models.dart';
+import 'package:careflow_patient/models/patient.dart';
+import 'package:careflow_patient/providers/auth_provider.dart';
+import 'package:careflow_patient/providers/patient_provider.dart';
 import 'package:careflow_patient/screens/home/home_screen.dart';
+import 'package:careflow_patient/services/api_service.dart';
+import 'package:careflow_patient/services/auth_service.dart';
+import 'package:careflow_patient/services/patient_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -32,6 +38,8 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            authProvider.overrideWith((ref) => HomeAuthNotifier()),
+            patientProvider.overrideWith((ref) => HomePatientNotifier(ref)),
             journeyControllerProvider.overrideWith((ref) => controller),
           ],
           child: MaterialApp.router(routerConfig: router),
@@ -68,3 +76,21 @@ final activeJourney = PatientJourney(
   notifications: const [],
   updatedAt: DateTime.utc(2026, 7, 30),
 );
+
+class HomeAuthNotifier extends AuthNotifier {
+  HomeAuthNotifier() : super(AuthService(ApiService(), useMock: true)) {
+    state = const AuthState(status: AuthStatus.authenticated, userId: 'user-a');
+  }
+}
+
+class HomePatientNotifier extends PatientNotifier {
+  HomePatientNotifier(Ref ref) : super(PatientService(ApiService()), ref) {
+    state = PatientState(
+      patient: Patient(
+        id: 'patient-a',
+        userId: 'user-a',
+        fullName: 'Nguyễn An',
+      ),
+    );
+  }
+}

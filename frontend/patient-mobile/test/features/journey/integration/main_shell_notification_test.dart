@@ -3,11 +3,13 @@ import 'package:careflow_patient/features/journey/application/journey_providers.
 import 'package:careflow_patient/features/journey/data/journey_repository.dart';
 import 'package:careflow_patient/features/journey/domain/journey_models.dart';
 import 'package:careflow_patient/features/journey/presentation/journey_notification_screen.dart';
+import 'package:careflow_patient/models/appointment.dart';
 import 'package:careflow_patient/models/patient.dart';
 import 'package:careflow_patient/providers/auth_provider.dart';
 import 'package:careflow_patient/providers/patient_provider.dart';
 import 'package:careflow_patient/screens/main_shell.dart';
 import 'package:careflow_patient/services/api_service.dart';
+import 'package:careflow_patient/services/appointment_service.dart';
 import 'package:careflow_patient/services/auth_service.dart';
 import 'package:careflow_patient/services/patient_service.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +20,7 @@ void main() {
   testWidgets(
     'shell badge uses provider count, hides at zero, and opens alerts',
     (tester) async {
+      final auth = SeededAuthNotifier()..authenticate('user-a');
       final controller = JourneyController(
         repository: const UnavailableJourneyRepository(),
         demoMode: true,
@@ -26,6 +29,13 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            authProvider.overrideWith((ref) => auth),
+            patientProvider.overrideWith(
+              (ref) => SwitchablePatientNotifier(patientA, ref),
+            ),
+            appointmentServiceProvider.overrideWithValue(
+              EmptyAppointmentService(),
+            ),
             journeyControllerProvider.overrideWith((ref) => controller),
           ],
           child: const MaterialApp(home: MainShell()),
@@ -58,7 +68,7 @@ void main() {
     'logout and patient switch hide the previous account journey and count',
     () {
       final auth = SeededAuthNotifier()..authenticate('user-a');
-      final patient = SwitchablePatientNotifier(patientA);
+      late SwitchablePatientNotifier patient;
       final controller = JourneyController(
         repository: const UnavailableJourneyRepository(),
         demoMode: true,
@@ -66,7 +76,9 @@ void main() {
       final container = ProviderContainer(
         overrides: [
           authProvider.overrideWith((ref) => auth),
-          patientProvider.overrideWith((ref) => patient.attach(ref)),
+          patientProvider.overrideWith(
+            (ref) => patient = SwitchablePatientNotifier(patientA, ref),
+          ),
           journeyControllerProvider.overrideWith((ref) => controller),
         ],
       );
@@ -81,6 +93,9 @@ void main() {
       expect(container.read(unreadJourneyNotificationCountProvider), 0);
 
       auth.authenticate('user-b');
+      expect(container.read(activeJourneyProvider), isNull);
+      expect(container.read(unreadJourneyNotificationCountProvider), 0);
+
       patient.switchTo(patientB);
 
       expect(container.read(activeJourneyProvider), isNull);
@@ -133,22 +148,26 @@ class SeededAuthNotifier extends AuthNotifier {
 }
 
 class SwitchablePatientNotifier extends PatientNotifier {
-  SwitchablePatientNotifier(this.initialPatient)
-    : super(PatientService(ApiService()), _DetachedRef());
+  SwitchablePatientNotifier(this.initialPatient, Ref ref)
+    : super(PatientService(ApiService()), ref) {
+    state = PatientState(patient: initialPatient);
+  }
 
   final Patient initialPatient;
 
-  SwitchablePatientNotifier attach(Ref ref) {
-    state = PatientState(patient: initialPatient);
-    return this;
-  }
+  @override
+  Future<void> loadPatient() async {}
 
   void switchTo(Patient patient) {
     state = PatientState(patient: patient);
   }
 }
 
-class _DetachedRef implements Ref {
+class EmptyAppointmentService extends AppointmentService {
+  EmptyAppointmentService() : super(ApiService());
+
   @override
-  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+  Future<List<Appointment>> getAppointmentsByPatientId(String patientId) async {
+    return const [];
+  }
 }

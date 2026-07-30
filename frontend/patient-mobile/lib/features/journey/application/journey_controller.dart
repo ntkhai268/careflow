@@ -84,6 +84,17 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
     }
   }
 
+  /// Drops in-memory journey state without deleting persisted patient data.
+  ///
+  /// Auth identity changes call this synchronously so an old account's pending
+  /// bootstrap cannot publish after logout or account switch.
+  void invalidateAccountScope() {
+    ++_bootstrapGeneration;
+    _activePatientId = null;
+    _onActionError(null);
+    state = const AsyncData(null);
+  }
+
   Future<bool> _runDemoAction(
     Future<PatientJourney> Function(PatientJourney journey) action,
   ) async {

@@ -5,6 +5,12 @@ import 'package:careflow_patient/features/journey/domain/journey_models.dart';
 import 'package:careflow_patient/features/journey/domain/journey_transition.dart';
 import 'package:careflow_patient/features/journey/presentation/journey_notification_screen.dart';
 import 'package:careflow_patient/models/appointment.dart';
+import 'package:careflow_patient/models/patient.dart';
+import 'package:careflow_patient/providers/auth_provider.dart';
+import 'package:careflow_patient/providers/patient_provider.dart';
+import 'package:careflow_patient/services/api_service.dart';
+import 'package:careflow_patient/services/auth_service.dart';
+import 'package:careflow_patient/services/patient_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -17,7 +23,7 @@ void main() {
     final controller = JourneyController(repository: repository, demoMode: true)
       ..state = AsyncData(notificationJourney());
     final container = ProviderContainer(
-      overrides: [journeyControllerProvider.overrideWith((ref) => controller)],
+      overrides: authenticatedJourneyOverrides(controller),
     );
     addTearDown(container.dispose);
 
@@ -56,7 +62,7 @@ void main() {
             notificationJourney().copyWith(notifications: const []),
           );
     final container = ProviderContainer(
-      overrides: [journeyControllerProvider.overrideWith((ref) => controller)],
+      overrides: authenticatedJourneyOverrides(controller),
     );
     addTearDown(container.dispose);
 
@@ -71,6 +77,31 @@ void main() {
 
     expect(find.text('Bạn chưa có thông báo nào.'), findsOneWidget);
   });
+}
+
+List<Override> authenticatedJourneyOverrides(JourneyController controller) => [
+  authProvider.overrideWith((ref) => NotificationAuthNotifier()),
+  patientProvider.overrideWith((ref) => NotificationPatientNotifier(ref)),
+  journeyControllerProvider.overrideWith((ref) => controller),
+];
+
+class NotificationAuthNotifier extends AuthNotifier {
+  NotificationAuthNotifier() : super(AuthService(ApiService(), useMock: true)) {
+    state = const AuthState(status: AuthStatus.authenticated, userId: 'user-1');
+  }
+}
+
+class NotificationPatientNotifier extends PatientNotifier {
+  NotificationPatientNotifier(Ref ref)
+    : super(PatientService(ApiService()), ref) {
+    state = PatientState(
+      patient: Patient(
+        id: 'patient-1',
+        userId: 'user-1',
+        fullName: 'Nguyễn An',
+      ),
+    );
+  }
 }
 
 PatientJourney notificationJourney() => PatientJourney(

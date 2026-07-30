@@ -9,11 +9,7 @@ class PatientState {
   final bool isLoading;
   final String? errorMessage;
 
-  const PatientState({
-    this.patient,
-    this.isLoading = false,
-    this.errorMessage,
-  });
+  const PatientState({this.patient, this.isLoading = false, this.errorMessage});
 
   PatientState copyWith({
     Patient? patient,
@@ -38,26 +34,39 @@ class PatientNotifier extends StateNotifier<PatientState> {
 
   PatientNotifier(this._service, this._ref) : super(const PatientState());
 
+  int _operationGeneration = 0;
+
   /// Get the authenticated user's userId from AuthProvider.
-  String? get _userId => _ref.read(authProvider).userId;
+  String? get _userId {
+    final auth = _ref.read(authProvider);
+    return auth.status == AuthStatus.authenticated ? auth.userId : null;
+  }
+
+  void invalidateAccountScope() {
+    ++_operationGeneration;
+    state = const PatientState();
+  }
 
   /// Load patient profile for the currently authenticated user.
   Future<void> loadPatient() async {
     final userId = _userId;
     if (userId == null || userId.isEmpty) {
-      state = state.copyWith(
-        isLoading: false,
+      invalidateAccountScope();
+      state = const PatientState(
         errorMessage: 'Chưa đăng nhập. Vui lòng đăng nhập lại.',
       );
       return;
     }
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    final generation = ++_operationGeneration;
+    state = const PatientState(isLoading: true);
     try {
       final patient = await _service.getPatientByUserId(userId);
+      if (generation != _operationGeneration || _userId != userId) return;
       state = PatientState(patient: patient, isLoading: false);
     } catch (e) {
-      state = state.copyWith(
+      if (generation != _operationGeneration || _userId != userId) return;
+      state = PatientState(
         isLoading: false,
         errorMessage: 'Không thể tải hồ sơ: ${_parseError(e)}',
       );
@@ -69,14 +78,21 @@ class PatientNotifier extends StateNotifier<PatientState> {
     final userId = _userId;
     if (userId == null || userId.isEmpty) return false;
 
-    state = state.copyWith(isLoading: true, clearError: true);
+    final generation = ++_operationGeneration;
+    state = const PatientState(isLoading: true);
     try {
       data['userId'] = userId;
       final patient = await _service.createPatient(data);
+      if (generation != _operationGeneration || _userId != userId) {
+        return false;
+      }
       state = PatientState(patient: patient, isLoading: false);
       return true;
     } catch (e) {
-      state = state.copyWith(
+      if (generation != _operationGeneration || _userId != userId) {
+        return false;
+      }
+      state = PatientState(
         isLoading: false,
         errorMessage: 'Không thể tạo hồ sơ: ${_parseError(e)}',
       );
@@ -86,13 +102,22 @@ class PatientNotifier extends StateNotifier<PatientState> {
 
   /// Update patient profile
   Future<bool> updatePatient(String id, Map<String, dynamic> data) async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    final userId = _userId;
+    if (userId == null || userId.isEmpty) return false;
+    final generation = ++_operationGeneration;
+    state = const PatientState(isLoading: true);
     try {
       final patient = await _service.updatePatient(id, data);
+      if (generation != _operationGeneration || _userId != userId) {
+        return false;
+      }
       state = PatientState(patient: patient, isLoading: false);
       return true;
     } catch (e) {
-      state = state.copyWith(
+      if (generation != _operationGeneration || _userId != userId) {
+        return false;
+      }
+      state = PatientState(
         isLoading: false,
         errorMessage: 'Không thể cập nhật hồ sơ: ${_parseError(e)}',
       );
@@ -102,13 +127,22 @@ class PatientNotifier extends StateNotifier<PatientState> {
 
   /// Delete patient profile
   Future<bool> deletePatient(String id) async {
-    state = state.copyWith(isLoading: true, clearError: true);
+    final userId = _userId;
+    if (userId == null || userId.isEmpty) return false;
+    final generation = ++_operationGeneration;
+    state = const PatientState(isLoading: true);
     try {
       await _service.deletePatient(id);
+      if (generation != _operationGeneration || _userId != userId) {
+        return false;
+      }
       state = const PatientState(isLoading: false);
       return true;
     } catch (e) {
-      state = state.copyWith(
+      if (generation != _operationGeneration || _userId != userId) {
+        return false;
+      }
+      state = PatientState(
         isLoading: false,
         errorMessage: 'Không thể xóa hồ sơ: ${_parseError(e)}',
       );
@@ -126,8 +160,16 @@ class PatientNotifier extends StateNotifier<PatientState> {
 }
 
 /// Main provider for patient state
-final patientProvider =
-    StateNotifierProvider<PatientNotifier, PatientState>((ref) {
+final patientProvider = StateNotifierProvider<PatientNotifier, PatientState>((
+  ref,
+) {
   final service = ref.watch(patientServiceProvider);
-  return PatientNotifier(service, ref);
+  final notifier = PatientNotifier(service, ref);
+  ref.listen(authProvider.select((auth) => (auth.status, auth.userId)), (
+    previous,
+    next,
+  ) {
+    if (previous != next) notifier.invalidateAccountScope();
+  });
+  return notifier;
 });

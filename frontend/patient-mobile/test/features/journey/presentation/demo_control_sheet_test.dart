@@ -5,6 +5,12 @@ import 'package:careflow_patient/features/journey/domain/journey_models.dart';
 import 'package:careflow_patient/features/journey/domain/journey_transition.dart';
 import 'package:careflow_patient/features/journey/presentation/journey_hub_screen.dart';
 import 'package:careflow_patient/features/journey/presentation/widgets/demo_control_sheet.dart';
+import 'package:careflow_patient/models/patient.dart';
+import 'package:careflow_patient/providers/auth_provider.dart';
+import 'package:careflow_patient/providers/patient_provider.dart';
+import 'package:careflow_patient/services/api_service.dart';
+import 'package:careflow_patient/services/auth_service.dart';
+import 'package:careflow_patient/services/patient_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -101,6 +107,8 @@ void main() {
 Widget hubApp({bool demoMode = true, JourneyController? controller}) =>
     ProviderScope(
       overrides: [
+        authProvider.overrideWith((ref) => PresentationAuthNotifier()),
+        patientProvider.overrideWith((ref) => PresentationPatientNotifier(ref)),
         demoModeProvider.overrideWithValue(demoMode),
         journeyControllerProvider.overrideWith(
           (ref) => controller ?? RecordingJourneyController(),
@@ -147,3 +155,22 @@ final ticketJourney = PatientJourney(
   notifications: const [],
   updatedAt: DateTime.utc(2026, 7, 30),
 );
+
+class PresentationAuthNotifier extends AuthNotifier {
+  PresentationAuthNotifier() : super(AuthService(ApiService(), useMock: true)) {
+    state = const AuthState(status: AuthStatus.authenticated, userId: 'user-1');
+  }
+}
+
+class PresentationPatientNotifier extends PatientNotifier {
+  PresentationPatientNotifier(Ref ref)
+    : super(PatientService(ApiService()), ref) {
+    state = PatientState(
+      patient: Patient(
+        id: 'patient-1',
+        userId: 'user-1',
+        fullName: 'Nguyễn An',
+      ),
+    );
+  }
+}
