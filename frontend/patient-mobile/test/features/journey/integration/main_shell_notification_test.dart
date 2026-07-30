@@ -1,0 +1,154 @@
+import 'package:careflow_patient/features/journey/application/journey_controller.dart';
+import 'package:careflow_patient/features/journey/application/journey_providers.dart';
+import 'package:careflow_patient/features/journey/data/journey_repository.dart';
+import 'package:careflow_patient/features/journey/domain/journey_models.dart';
+import 'package:careflow_patient/features/journey/presentation/journey_notification_screen.dart';
+import 'package:careflow_patient/models/patient.dart';
+import 'package:careflow_patient/providers/auth_provider.dart';
+import 'package:careflow_patient/providers/patient_provider.dart';
+import 'package:careflow_patient/screens/main_shell.dart';
+import 'package:careflow_patient/services/api_service.dart';
+import 'package:careflow_patient/services/auth_service.dart';
+import 'package:careflow_patient/services/patient_service.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+void main() {
+  testWidgets(
+    'shell badge uses provider count, hides at zero, and opens alerts',
+    (tester) async {
+      final controller = JourneyController(
+        repository: const UnavailableJourneyRepository(),
+        demoMode: true,
+      )..state = AsyncData(journeyFor('patient-a', unreadCount: 2));
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            journeyControllerProvider.overrideWith((ref) => controller),
+          ],
+          child: const MaterialApp(home: MainShell()),
+        ),
+      );
+
+      expect(
+        find.descendant(of: find.byType(Badge), matching: find.text('2')),
+        findsOneWidget,
+      );
+      expect(find.text('330'), findsNothing);
+
+      await tester.tap(find.text('Thông báo'));
+      await tester.pumpAndSettle();
+      expect(find.byType(JourneyNotificationScreen), findsOneWidget);
+
+      controller.state = AsyncData(journeyFor('patient-a', unreadCount: 0));
+      await tester.pump();
+      expect(find.byType(Badge), findsNothing);
+
+      await tester.tap(find.text('Trang chủ'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('home-notification-button')));
+      await tester.pumpAndSettle();
+      expect(find.byType(JourneyNotificationScreen), findsOneWidget);
+    },
+  );
+
+  test(
+    'logout and patient switch hide the previous account journey and count',
+    () {
+      final auth = SeededAuthNotifier()..authenticate('user-a');
+      final patient = SwitchablePatientNotifier(patientA);
+      final controller = JourneyController(
+        repository: const UnavailableJourneyRepository(),
+        demoMode: true,
+      )..state = AsyncData(journeyFor('patient-a', unreadCount: 2));
+      final container = ProviderContainer(
+        overrides: [
+          authProvider.overrideWith((ref) => auth),
+          patientProvider.overrideWith((ref) => patient.attach(ref)),
+          journeyControllerProvider.overrideWith((ref) => controller),
+        ],
+      );
+      addTearDown(container.dispose);
+
+      expect(container.read(activeJourneyProvider)?.patientId, 'patient-a');
+      expect(container.read(unreadJourneyNotificationCountProvider), 2);
+
+      auth.logOutLocally();
+
+      expect(container.read(activeJourneyProvider), isNull);
+      expect(container.read(unreadJourneyNotificationCountProvider), 0);
+
+      auth.authenticate('user-b');
+      patient.switchTo(patientB);
+
+      expect(container.read(activeJourneyProvider), isNull);
+      expect(container.read(unreadJourneyNotificationCountProvider), 0);
+    },
+  );
+}
+
+PatientJourney journeyFor(String patientId, {required int unreadCount}) =>
+    PatientJourney(
+      appointmentId: 'apt-$patientId',
+      patientId: patientId,
+      status: JourneyStatus.waiting,
+      laboratoryOrders: const [],
+      timeline: const [],
+      notifications: [
+        for (var index = 0; index < unreadCount; index++)
+          PatientNotification(
+            id: 'notification-$index',
+            title: 'Thông báo $index',
+            body: 'Nội dung',
+            createdAt: DateTime.utc(2026, 7, 30, 8, index),
+            isRead: false,
+          ),
+      ],
+      updatedAt: DateTime.utc(2026, 7, 30),
+    );
+
+final patientA = Patient(
+  id: 'patient-a',
+  userId: 'user-a',
+  fullName: 'Nguyễn An',
+);
+final patientB = Patient(
+  id: 'patient-b',
+  userId: 'user-b',
+  fullName: 'Trần Bình',
+);
+
+class SeededAuthNotifier extends AuthNotifier {
+  SeededAuthNotifier() : super(AuthService(ApiService(), useMock: true));
+
+  void authenticate(String userId) {
+    state = AuthState(status: AuthStatus.authenticated, userId: userId);
+  }
+
+  void logOutLocally() {
+    state = const AuthState(status: AuthStatus.unauthenticated);
+  }
+}
+
+class SwitchablePatientNotifier extends PatientNotifier {
+  SwitchablePatientNotifier(this.initialPatient)
+    : super(PatientService(ApiService()), _DetachedRef());
+
+  final Patient initialPatient;
+
+  SwitchablePatientNotifier attach(Ref ref) {
+    state = PatientState(patient: initialPatient);
+    return this;
+  }
+
+  void switchTo(Patient patient) {
+    state = PatientState(patient: patient);
+  }
+}
+
+class _DetachedRef implements Ref {
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}

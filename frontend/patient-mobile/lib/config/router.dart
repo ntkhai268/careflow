@@ -16,6 +16,14 @@ import '../screens/appointment/booking_step2_screen.dart';
 import '../screens/appointment/booking_step3_screen.dart';
 import '../screens/appointment/booking_step4_screen.dart';
 import '../screens/appointment/appointment_detail_screen.dart';
+import '../features/journey/presentation/clinic_queue_screen.dart';
+import '../features/journey/presentation/consultation_screen.dart';
+import '../features/journey/presentation/journey_hub_screen.dart';
+import '../features/journey/presentation/journey_timeline_screen.dart';
+import '../features/journey/presentation/laboratory_screen.dart';
+import '../features/journey/presentation/result_review_screen.dart';
+import '../features/journey/presentation/visit_outcome_screen.dart';
+import '../features/journey/presentation/visit_ticket_screen.dart';
 import '../models/patient.dart';
 import '../models/appointment.dart';
 
@@ -24,26 +32,17 @@ final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
   debugLogDiagnostics: true,
   routes: [
-    GoRoute(
-      path: '/splash',
-      builder: (context, state) => const SplashScreen(),
-    ),
+    GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(
       path: '/onboarding',
       builder: (context, state) => const OnboardingScreen(),
     ),
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
-    ),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
     ),
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const MainShell(),
-    ),
+    GoRoute(path: '/', builder: (context, state) => const MainShell()),
     // Profile routes
     GoRoute(
       path: '/profile/create',
@@ -135,6 +134,56 @@ final GoRouter appRouter = GoRouter(
         return AppointmentDetailScreen(appointmentId: id);
       },
     ),
+    GoRoute(
+      path: '/journey/:appointmentId',
+      builder: (context, state) => JourneyHubScreen(
+        appointmentId: state.pathParameters['appointmentId']!,
+      ),
+      routes: [
+        GoRoute(
+          path: 'ticket',
+          builder: (context, state) => VisitTicketScreen(
+            appointmentId: state.pathParameters['appointmentId']!,
+          ),
+        ),
+        GoRoute(
+          path: 'queue',
+          builder: (context, state) => ClinicQueueScreen(
+            appointmentId: state.pathParameters['appointmentId']!,
+          ),
+        ),
+        GoRoute(
+          path: 'consultation',
+          builder: (context, state) => ConsultationScreen(
+            appointmentId: state.pathParameters['appointmentId']!,
+          ),
+        ),
+        GoRoute(
+          path: 'laboratory',
+          builder: (context, state) => LaboratoryScreen(
+            appointmentId: state.pathParameters['appointmentId']!,
+          ),
+        ),
+        GoRoute(
+          path: 'result-review',
+          builder: (context, state) => ResultReviewScreen(
+            appointmentId: state.pathParameters['appointmentId']!,
+          ),
+        ),
+        GoRoute(
+          path: 'outcome',
+          builder: (context, state) => VisitOutcomeScreen(
+            appointmentId: state.pathParameters['appointmentId']!,
+          ),
+        ),
+        GoRoute(
+          path: 'timeline',
+          builder: (context, state) => JourneyTimelineScreen(
+            appointmentId: state.pathParameters['appointmentId']!,
+          ),
+        ),
+      ],
+    ),
   ],
   errorBuilder: (context, state) => Scaffold(
     body: Center(
@@ -159,4 +208,3 @@ final GoRouter appRouter = GoRouter(
     ),
   ),
 );
-

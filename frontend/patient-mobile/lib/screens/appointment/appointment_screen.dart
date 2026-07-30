@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
+import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
 import '../../providers/patient_provider.dart';
 import '../../services/appointment_service.dart';
@@ -42,14 +43,45 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
 
   Future<void> _loadAppointments(String patientId) async {
     if (patientId.isEmpty) return;
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+      _appointments = [];
+    });
     try {
       final service = ref.read(appointmentServiceProvider);
       final appointments = await service.getAppointmentsByPatientId(patientId);
-      setState(() { _appointments = appointments; _isLoading = false; });
+      if (!mounted || patientId != _patientId) return;
+      setState(() {
+        _appointments = appointments;
+        _isLoading = false;
+      });
     } catch (e) {
-      setState(() { _error = e.toString(); _isLoading = false; });
+      if (!mounted || patientId != _patientId) return;
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
+  }
+
+  Future<void> _openJourney(Appointment appointment) async {
+    final activeJourney = ref.read(activeJourneyProvider);
+    if (activeJourney?.appointmentId != appointment.id ||
+        activeJourney?.patientId != appointment.patientId) {
+      try {
+        await ref
+            .read(journeyControllerProvider.notifier)
+            .bootstrap(
+              appointment: appointment,
+              patientId: appointment.patientId,
+            );
+      } catch (_) {
+        // Navigate with the controller error intact so production displays
+        // backend-unavailable instead of manufacturing demo data.
+      }
+    }
+    if (mounted) context.push('/journey/${appointment.id}');
   }
 
   @override
@@ -57,6 +89,17 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
     // Watch patient state to re-load appointments when patient changes
     final patientState = ref.watch(patientProvider);
     final currentPatientId = patientState.patient?.id;
+    ref.listen<String?>(patientProvider.select((state) => state.patient?.id), (
+      previous,
+      next,
+    ) {
+      if (previous == next) return;
+      setState(() {
+        _appointments = [];
+        _error = null;
+      });
+      if (next != null && next.isNotEmpty) _loadAppointments(next);
+    });
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -64,16 +107,16 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
         title: const Text('Phiếu khám'),
         automaticallyImplyLeading: false,
       ),
-      body: _appointments.isEmpty && !_isLoading
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? _buildErrorState(currentPatientId)
+          : _appointments.isEmpty
           ? _buildEmptyState()
-          : _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-                  ? _buildErrorState(currentPatientId)
-                  : RefreshIndicator(
-                      onRefresh: () => _loadAppointments(currentPatientId ?? ''),
-                      child: _buildAppointmentList(),
-                    ),
+          : RefreshIndicator(
+              onRefresh: () => _loadAppointments(currentPatientId ?? ''),
+              child: _buildAppointmentList(),
+            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () async {
           final result = await context.push('/booking/step1');
@@ -150,6 +193,15 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
           const SizedBox(height: 16),
           Text('Đã xảy ra lỗi', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
+            child: Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          const SizedBox(height: 8),
           TextButton(
             onPressed: () => _loadAppointments(patientId ?? ''),
             child: const Text('Thử lại'),
@@ -168,6 +220,7 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
         return _AppointmentCard(
           appointment: appt,
           onTap: () => context.push('/appointment/${appt.id}'),
+          onJourneyTap: () => _openJourney(appt),
         );
       },
     );
@@ -177,12 +230,19 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
 class _AppointmentCard extends StatelessWidget {
   final Appointment appointment;
   final VoidCallback onTap;
+  final VoidCallback onJourneyTap;
 
-  const _AppointmentCard({required this.appointment, required this.onTap});
+  const _AppointmentCard({
+    required this.appointment,
+    required this.onTap,
+    required this.onJourneyTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final dateStr = DateFormat('dd/MM/yyyy').format(appointment.appointmentDate);
+    final dateStr = DateFormat(
+      'dd/MM/yyyy',
+    ).format(appointment.appointmentDate);
 
     return Container(
       margin: const EdgeInsets.only(bottom: AppSpacing.md),
@@ -225,9 +285,8 @@ class _AppointmentCard extends StatelessWidget {
                         children: [
                           Text(
                             appointment.departmentDisplayName,
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.w600),
                           ),
                           if (appointment.patientName != null)
                             Text(
@@ -274,8 +333,11 @@ class _AppointmentCard extends StatelessWidget {
                 // Date + time
                 Row(
                   children: [
-                    Icon(Icons.calendar_today_rounded,
-                        size: 16, color: AppColors.textSecondary),
+                    Icon(
+                      Icons.calendar_today_rounded,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       dateStr,
@@ -285,8 +347,11 @@ class _AppointmentCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: AppSpacing.base),
-                    Icon(Icons.access_time_rounded,
-                        size: 16, color: AppColors.textSecondary),
+                    Icon(
+                      Icons.access_time_rounded,
+                      size: 16,
+                      color: AppColors.textSecondary,
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       appointment.timeSlot,
@@ -296,8 +361,13 @@ class _AppointmentCard extends StatelessWidget {
                       ),
                     ),
                     const Spacer(),
-                    Icon(Icons.chevron_right_rounded,
-                        color: AppColors.textHint),
+                    IconButton(
+                      key: Key('open-journey-${appointment.id}'),
+                      tooltip: 'Xem hành trình khám',
+                      onPressed: onJourneyTap,
+                      icon: const Icon(Icons.route_rounded),
+                      color: AppColors.primary,
+                    ),
                   ],
                 ),
               ],

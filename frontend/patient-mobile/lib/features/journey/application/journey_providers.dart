@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../providers/auth_provider.dart';
+import '../../../providers/patient_provider.dart';
 import '../data/demo_journey_repository.dart';
 import '../data/journey_repository.dart';
 import '../data/journey_store.dart';
@@ -42,9 +44,26 @@ final journeyForAppointmentProvider =
       );
     });
 
-final activeJourneyProvider = Provider<PatientJourney?>(
-  (ref) => ref.watch(journeyControllerProvider).valueOrNull,
-);
+final activeJourneyProvider = Provider<PatientJourney?>((ref) {
+  final journey = ref.watch(journeyControllerProvider).valueOrNull;
+  if (journey == null) return null;
+
+  final auth = ref.watch(authProvider);
+  if (auth.status == AuthStatus.unauthenticated ||
+      auth.status == AuthStatus.loading ||
+      auth.status == AuthStatus.error) {
+    return null;
+  }
+  if (auth.status == AuthStatus.authenticated) {
+    final patient = ref.watch(patientProvider).patient;
+    if (patient == null ||
+        patient.userId != auth.userId ||
+        patient.id != journey.patientId) {
+      return null;
+    }
+  }
+  return journey;
+});
 
 final unreadJourneyNotificationCountProvider = Provider<int>(
   (ref) =>

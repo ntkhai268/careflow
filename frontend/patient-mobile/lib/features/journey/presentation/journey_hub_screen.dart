@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../config/theme.dart';
 import '../application/journey_providers.dart';
+import '../data/journey_repository.dart';
 import '../domain/journey_models.dart';
 import 'clinic_queue_screen.dart';
 import 'visit_ticket_screen.dart';
@@ -22,8 +23,13 @@ class JourneyHubScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Hành trình khám')),
       body: journey.when(
         loading: () => const Center(child: Text('Đang tải hành trình khám...')),
-        error: (_, _) =>
-            const Center(child: Text('Không thể tải hành trình khám.')),
+        error: (error, _) => Center(
+          child: Text(
+            error is JourneyBackendUnavailable
+                ? 'Hành trình khám đang chờ backend triển khai.'
+                : 'Không thể tải hành trình khám.',
+          ),
+        ),
         data: (value) {
           if (value == null) {
             return const Center(child: Text('Chưa có hành trình khám.'));

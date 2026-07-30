@@ -30,7 +30,10 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
     try {
       final service = ref.read(appointmentServiceProvider);
       final departments = await service.getDepartments();
-      setState(() { _departments = departments; _isLoading = false; });
+      setState(() {
+        _departments = departments;
+        _isLoading = false;
+      });
     } catch (e) {
       // Fallback to hardcoded departments
       setState(() {
@@ -109,8 +112,8 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
               color: completed
                   ? AppColors.success
                   : active
-                      ? AppColors.primary
-                      : AppColors.cardBorder,
+                  ? AppColors.primary
+                  : AppColors.cardBorder,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -153,7 +156,10 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
   Widget _buildPatientInfo() {
     return Container(
       margin: const EdgeInsets.fromLTRB(
-        AppSpacing.base, AppSpacing.md, AppSpacing.base, 0,
+        AppSpacing.base,
+        AppSpacing.md,
+        AppSpacing.base,
+        0,
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -166,10 +172,7 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
           const SizedBox(width: AppSpacing.sm),
           Text(
             'Đặt cho: ',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
           Text(
             widget.patient.fullName,
@@ -199,10 +202,10 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
         return _DepartmentCard(
           department: dept,
           onTap: () {
-            context.push('/booking/step3', extra: {
-              'patient': widget.patient,
-              'department': dept,
-            });
+            context.push(
+              '/booking/step3',
+              extra: {'patient': widget.patient, 'department': dept},
+            );
           },
         );
       },

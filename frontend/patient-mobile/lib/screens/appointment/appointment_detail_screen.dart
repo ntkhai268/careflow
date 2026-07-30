@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
+import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
 import '../../services/appointment_service.dart';
 
@@ -31,13 +32,24 @@ class _AppointmentDetailScreenState
   }
 
   Future<void> _loadAppointment() async {
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final service = ref.read(appointmentServiceProvider);
-      final appointment = await service.getAppointmentById(widget.appointmentId);
-      setState(() { _appointment = appointment; _isLoading = false; });
+      final appointment = await service.getAppointmentById(
+        widget.appointmentId,
+      );
+      setState(() {
+        _appointment = appointment;
+        _isLoading = false;
+      });
     } catch (e) {
-      setState(() { _error = e.toString(); _isLoading = false; });
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
   }
 
@@ -70,7 +82,10 @@ class _AppointmentDetailScreenState
     try {
       final service = ref.read(appointmentServiceProvider);
       final updated = await service.cancelAppointment(widget.appointmentId);
-      setState(() { _appointment = updated; _isCancelling = false; });
+      setState(() {
+        _appointment = updated;
+        _isCancelling = false;
+      });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -92,6 +107,26 @@ class _AppointmentDetailScreenState
     }
   }
 
+  Future<void> _openJourney() async {
+    final appointment = _appointment;
+    if (appointment == null) return;
+    final activeJourney = ref.read(activeJourneyProvider);
+    if (activeJourney?.appointmentId != appointment.id ||
+        activeJourney?.patientId != appointment.patientId) {
+      try {
+        await ref
+            .read(journeyControllerProvider.notifier)
+            .bootstrap(
+              appointment: appointment,
+              patientId: appointment.patientId,
+            );
+      } catch (_) {
+        // Preserve the real controller error for the journey screen.
+      }
+    }
+    if (mounted) context.push('/journey/${appointment.id}');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -106,10 +141,10 @@ class _AppointmentDetailScreenState
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _buildError()
-              : _appointment != null
-                  ? _buildContent()
-                  : const SizedBox.shrink(),
+          ? _buildError()
+          : _appointment != null
+          ? _buildContent()
+          : const SizedBox.shrink(),
     );
   }
 
@@ -130,7 +165,10 @@ class _AppointmentDetailScreenState
 
   Widget _buildContent() {
     final appt = _appointment!;
-    final dateStr = DateFormat('EEEE, dd/MM/yyyy', 'vi').format(appt.appointmentDate);
+    final dateStr = DateFormat(
+      'EEEE, dd/MM/yyyy',
+      'vi',
+    ).format(appt.appointmentDate);
     final canCancel = appt.status != 'COMPLETED' && appt.status != 'CANCELLED';
 
     return Column(
@@ -177,22 +215,45 @@ class _AppointmentDetailScreenState
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Thông tin lịch khám',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                      Text(
+                        'Thông tin lịch khám',
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
                       const SizedBox(height: AppSpacing.base),
                       if (appt.patientName != null)
-                        _buildDetailRow(Icons.person_rounded, 'Bệnh nhân', appt.patientName!),
+                        _buildDetailRow(
+                          Icons.person_rounded,
+                          'Bệnh nhân',
+                          appt.patientName!,
+                        ),
                       _buildDetailRow(
                         Appointment.departmentIcon(appt.department),
                         'Chuyên khoa',
                         appt.departmentDisplayName,
                       ),
-                      _buildDetailRow(Icons.calendar_today_rounded, 'Ngày khám', dateStr),
-                      _buildDetailRow(Icons.access_time_rounded, 'Ca khám', appt.timeSlot),
+                      _buildDetailRow(
+                        Icons.calendar_today_rounded,
+                        'Ngày khám',
+                        dateStr,
+                      ),
+                      _buildDetailRow(
+                        Icons.access_time_rounded,
+                        'Ca khám',
+                        appt.timeSlot,
+                      ),
                       if (appt.queueNumber != null)
-                        _buildDetailRow(Icons.confirmation_number_rounded, 'Số thứ tự', appt.queueNumber!),
+                        _buildDetailRow(
+                          Icons.confirmation_number_rounded,
+                          'Số thứ tự',
+                          appt.queueNumber!,
+                        ),
                       if (appt.reason != null && appt.reason!.isNotEmpty)
-                        _buildDetailRow(Icons.note_rounded, 'Lý do khám', appt.reason!),
+                        _buildDetailRow(
+                          Icons.note_rounded,
+                          'Lý do khám',
+                          appt.reason!,
+                        ),
                     ],
                   ),
                 ),
@@ -203,7 +264,7 @@ class _AppointmentDetailScreenState
             ),
           ),
         ),
-        if (canCancel) _buildCancelBar(),
+        _buildActionBar(canCancel: canCancel),
       ],
     );
   }
@@ -220,9 +281,22 @@ class _AppointmentDetailScreenState
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
                 const SizedBox(height: 2),
-                Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+                Text(
+                  value,
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
               ],
             ),
           ),
@@ -234,9 +308,17 @@ class _AppointmentDetailScreenState
   Widget _buildTimeline(Appointment appt) {
     final statuses = [
       {'key': 'PENDING', 'label': 'Đặt khám', 'icon': Icons.schedule_rounded},
-      {'key': 'CONFIRMED', 'label': 'Xác nhận', 'icon': Icons.check_circle_outline_rounded},
+      {
+        'key': 'CONFIRMED',
+        'label': 'Xác nhận',
+        'icon': Icons.check_circle_outline_rounded,
+      },
       {'key': 'CHECKED_IN', 'label': 'Check-in', 'icon': Icons.login_rounded},
-      {'key': 'IN_PROGRESS', 'label': 'Đang khám', 'icon': Icons.medical_services_rounded},
+      {
+        'key': 'IN_PROGRESS',
+        'label': 'Đang khám',
+        'icon': Icons.medical_services_rounded,
+      },
       {'key': 'COMPLETED', 'label': 'Hoàn tất', 'icon': Icons.task_alt_rounded},
     ];
 
@@ -252,14 +334,26 @@ class _AppointmentDetailScreenState
           children: [
             Icon(Icons.cancel_outlined, color: AppColors.error, size: 24),
             const SizedBox(width: AppSpacing.md),
-            Text('Lịch khám đã bị hủy',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.error)),
+            Text(
+              'Lịch khám đã bị hủy',
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.error,
+              ),
+            ),
           ],
         ),
       );
     }
 
-    final statusOrder = ['PENDING', 'CONFIRMED', 'CHECKED_IN', 'IN_PROGRESS', 'COMPLETED'];
+    final statusOrder = [
+      'PENDING',
+      'CONFIRMED',
+      'CHECKED_IN',
+      'IN_PROGRESS',
+      'COMPLETED',
+    ];
     final currentIndex = statusOrder.indexOf(appt.status);
 
     return Container(
@@ -274,8 +368,12 @@ class _AppointmentDetailScreenState
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('Tiến trình',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+          Text(
+            'Tiến trình',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: AppSpacing.base),
           ...statuses.asMap().entries.map((entry) {
             final i = entry.key;
@@ -293,7 +391,9 @@ class _AppointmentDetailScreenState
                       width: 28,
                       height: 28,
                       decoration: BoxDecoration(
-                        color: isDone ? AppColors.success : AppColors.cardBorder,
+                        color: isDone
+                            ? AppColors.success
+                            : AppColors.cardBorder,
                         shape: BoxShape.circle,
                         border: isCurrent
                             ? Border.all(color: AppColors.primary, width: 2)
@@ -301,15 +401,25 @@ class _AppointmentDetailScreenState
                       ),
                       child: Center(
                         child: isDone
-                            ? const Icon(Icons.check, size: 16, color: Colors.white)
-                            : Icon(s['icon'] as IconData, size: 14, color: AppColors.textHint),
+                            ? const Icon(
+                                Icons.check,
+                                size: 16,
+                                color: Colors.white,
+                              )
+                            : Icon(
+                                s['icon'] as IconData,
+                                size: 14,
+                                color: AppColors.textHint,
+                              ),
                       ),
                     ),
                     if (!isLast)
                       Container(
                         width: 2,
                         height: 28,
-                        color: isDone ? AppColors.success : AppColors.cardBorder,
+                        color: isDone
+                            ? AppColors.success
+                            : AppColors.cardBorder,
                       ),
                   ],
                 ),
@@ -321,7 +431,9 @@ class _AppointmentDetailScreenState
                     style: TextStyle(
                       fontSize: 14,
                       fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w400,
-                      color: isDone ? AppColors.textPrimary : AppColors.textHint,
+                      color: isDone
+                          ? AppColors.textPrimary
+                          : AppColors.textHint,
                     ),
                   ),
                 ),
@@ -333,24 +445,53 @@ class _AppointmentDetailScreenState
     );
   }
 
-  Widget _buildCancelBar() {
+  Widget _buildActionBar({required bool canCancel}) {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.base),
-      decoration: BoxDecoration(color: AppColors.surface, boxShadow: AppShadows.bottomNav),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        boxShadow: AppShadows.bottomNav,
+      ),
       child: SafeArea(
-        child: SizedBox(
-          width: double.infinity,
-          height: 52,
-          child: OutlinedButton(
-            onPressed: _isCancelling ? null : _cancelAppointment,
-            style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.error,
-              side: const BorderSide(color: AppColors.error, width: 1.5),
+        child: Row(
+          children: [
+            if (canCancel) ...[
+              Expanded(
+                child: SizedBox(
+                  height: 52,
+                  child: OutlinedButton(
+                    onPressed: _isCancelling ? null : _cancelAppointment,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(
+                        color: AppColors.error,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: _isCancelling
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Hủy lịch khám'),
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppSpacing.sm),
+            ],
+            Expanded(
+              child: SizedBox(
+                height: 52,
+                child: ElevatedButton.icon(
+                  key: const Key('open-journey-detail'),
+                  onPressed: _openJourney,
+                  icon: const Icon(Icons.route_rounded),
+                  label: const Text('Hành trình khám'),
+                ),
+              ),
             ),
-            child: _isCancelling
-                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))
-                : const Text('Hủy lịch khám'),
-          ),
+          ],
         ),
       ),
     );
