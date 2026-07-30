@@ -1,3 +1,4 @@
+import 'package:careflow_patient/config/router.dart';
 import 'package:careflow_patient/features/journey/application/journey_controller.dart';
 import 'package:careflow_patient/features/journey/application/journey_providers.dart';
 import 'package:careflow_patient/features/journey/data/demo_journey_repository.dart';
@@ -23,20 +24,207 @@ void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
   testWidgets(
+    'production router and journey controls complete the laboratory demo',
+    (tester) async {
+      final controller = await _buildController();
+      final hubPath = '/journey/${appointment.id}';
+      appRouter.go(hubPath);
+
+      await tester.pumpWidget(_productionJourneyApp(controller));
+      await tester.pumpAndSettle();
+
+      _expectStatus(controller, JourneyStatus.ticketIssued);
+      expect(
+        find.text('Vui lòng đưa mã QR cho nhân viên để xác nhận đến khám.'),
+        findsOneWidget,
+      );
+      await _openDestination(
+        tester,
+        label: 'Xem phiếu khám',
+        path: '$hubPath/ticket',
+        instruction: 'Vui lòng đưa mã QR cho nhân viên để xác nhận đến khám.',
+      );
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng nhân viên quét QR',
+        status: JourneyStatus.checkedIn,
+      );
+      expect(
+        find.text('Nhân viên đang đưa bạn vào hàng đợi phòng khám.'),
+        findsOneWidget,
+      );
+      await _openDestination(
+        tester,
+        label: 'Xem phiếu khám',
+        path: '$hubPath/ticket',
+        instruction: 'Nhân viên đang đưa bạn vào hàng đợi phòng khám.',
+      );
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng nhân viên đưa vào hàng đợi',
+        status: JourneyStatus.waiting,
+      );
+      await _openDestination(
+        tester,
+        label: 'Theo dõi hàng đợi',
+        path: '$hubPath/queue',
+        instruction: 'Còn 3 người phía trước',
+      );
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng bác sĩ gọi',
+        status: JourneyStatus.called,
+      );
+      await _openDestination(
+        tester,
+        label: 'Theo dõi hàng đợi',
+        path: '$hubPath/queue',
+        instruction: 'Vui lòng đến phòng khám ngay.',
+      );
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng bác sĩ bắt đầu khám',
+        status: JourneyStatus.inConsultation,
+      );
+      await _openDestination(
+        tester,
+        label: 'Xem trạng thái khám',
+        path: '$hubPath/consultation',
+        instruction:
+            'Vui lòng chờ bác sĩ hoàn tất đánh giá và thông báo bước tiếp theo.',
+      );
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng bác sĩ chỉ định xét nghiệm',
+        status: JourneyStatus.labOrdered,
+      );
+      await _openDestination(
+        tester,
+        label: 'Xem xét nghiệm',
+        path: '$hubPath/laboratory',
+        instruction: 'Bác sĩ đã chỉ định xét nghiệm cho bạn.',
+      );
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng yêu cầu thanh toán',
+        status: JourneyStatus.paymentPending,
+      );
+      await _openDestination(
+        tester,
+        label: 'Xem xét nghiệm',
+        path: '$hubPath/laboratory',
+        instruction: 'Vui lòng chọn phương thức thanh toán.',
+        returnToHub: false,
+      );
+      await tester.ensureVisible(find.text('Thanh toán trực tuyến'));
+      await tester.tap(find.text('Thanh toán trực tuyến'));
+      await tester.pumpAndSettle();
+      _expectStatus(controller, JourneyStatus.waitingLab);
+      await _scrollToTop(tester);
+      expect(
+        find.text(
+          'Chỉ định đã được tiếp nhận. Vui lòng đến đúng nơi thực hiện.',
+        ),
+        findsOneWidget,
+      );
+      await _returnToHub(tester, hubPath);
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng bắt đầu xét nghiệm',
+        status: JourneyStatus.labInProgress,
+      );
+      await _openDestination(
+        tester,
+        label: 'Xem xét nghiệm',
+        path: '$hubPath/laboratory',
+        instruction: 'Xét nghiệm đang được thực hiện.',
+      );
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng công bố kết quả',
+        status: JourneyStatus.labResultReady,
+      );
+      await _openDestination(
+        tester,
+        label: 'Xem xét nghiệm',
+        path: '$hubPath/laboratory',
+        instruction: 'Kết quả xét nghiệm đã sẵn sàng.',
+      );
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng đưa vào hàng đợi đọc kết quả',
+        status: JourneyStatus.waitingResultReview,
+      );
+      await _openDestination(
+        tester,
+        label: 'Xem đọc kết quả',
+        path: '$hubPath/result-review',
+        instruction: 'Bạn được xếp sau bệnh nhân khám mới tiếp theo',
+      );
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng bác sĩ đọc kết quả',
+        status: JourneyStatus.resultReview,
+      );
+      await _openDestination(
+        tester,
+        label: 'Xem đọc kết quả',
+        path: '$hubPath/result-review',
+        instruction: 'Bác sĩ đang đọc kết quả',
+      );
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng bác sĩ kê đơn sau đọc kết quả',
+        status: JourneyStatus.prescribed,
+      );
+      await _openDestination(
+        tester,
+        label: 'Xem kết quả lượt khám',
+        path: '$hubPath/outcome',
+        instruction: 'Paracetamol 500 mg',
+      );
+
+      await _tapDemoEvent(
+        tester,
+        controller,
+        label: 'Mô phỏng hoàn tất lượt khám',
+        status: JourneyStatus.completed,
+      );
+      await _openDestination(
+        tester,
+        label: 'Xem kết quả lượt khám',
+        path: '$hubPath/outcome',
+        instruction: 'Lượt khám đã hoàn tất',
+      );
+    },
+  );
+
+  testWidgets(
     'real appointment completes the laboratory journey with outcome and inbox',
     (tester) async {
-      final clock = _AdvancingClock(DateTime.utc(2026, 8, 18, 3, 30));
-      final controller = JourneyController(
-        repository: DemoJourneyRepository(
-          store: SharedPreferencesJourneyStore(),
-          now: clock.call,
-        ),
-        demoMode: true,
-      );
-      await controller.bootstrap(
-        appointment: appointment,
-        patientId: appointment.patientId,
-      );
+      final controller = await _buildController();
       final harnessKey = GlobalKey<_JourneyHarnessState>();
 
       await tester.pumpWidget(
@@ -189,25 +377,117 @@ void main() {
       expect(find.text('Nội tổng quát - Phòng 21'), findsOneWidget);
 
       final completed = controller.state.requireValue!;
-      expect(completed.notifications, hasLength(14));
+      expect(
+        completed.notifications.reversed
+            .map((item) => (item.title, item.body))
+            .toList(),
+        _expectedNotificationsNewestFirst,
+      );
       harnessKey.currentState!.showNotifications();
       await tester.pumpAndSettle();
 
-      for (final notification in completed.notifications.reversed) {
-        final tile = find.byKey(Key('notification-${notification.id}'));
+      for (final expected in _expectedNotificationsNewestFirst) {
+        final body = find.text(expected.$2);
         await tester.scrollUntilVisible(
-          tile,
+          body,
           180,
           scrollable: find.byType(Scrollable),
         );
+        final tile = find.ancestor(of: body, matching: find.byType(Card));
         expect(tile, findsOneWidget);
         expect(
-          find.descendant(of: tile, matching: find.text(notification.body)),
+          find.descendant(of: tile, matching: find.text(expected.$1)),
           findsOneWidget,
         );
       }
     },
   );
+}
+
+Future<JourneyController> _buildController() async {
+  final clock = _AdvancingClock(DateTime.utc(2026, 8, 18, 3, 30));
+  final controller = JourneyController(
+    repository: DemoJourneyRepository(
+      store: SharedPreferencesJourneyStore(),
+      now: clock.call,
+    ),
+    demoMode: true,
+  );
+  await controller.bootstrap(
+    appointment: appointment,
+    patientId: appointment.patientId,
+  );
+  return controller;
+}
+
+Widget _productionJourneyApp(JourneyController controller) => ProviderScope(
+  overrides: [
+    demoModeProvider.overrideWithValue(true),
+    journeyAccountScopeProvider.overrideWithValue((
+      userId: 'user-1',
+      patientId: appointment.patientId,
+    )),
+    journeyControllerProvider.overrideWith((ref) => controller),
+  ],
+  child: MaterialApp.router(routerConfig: appRouter),
+);
+
+Future<void> _tapDemoEvent(
+  WidgetTester tester,
+  JourneyController controller, {
+  required String label,
+  required JourneyStatus status,
+}) async {
+  await tester.ensureVisible(find.text(label));
+  await tester.tap(find.text(label));
+  await tester.pumpAndSettle();
+  _expectStatus(controller, status);
+}
+
+Future<void> _openDestination(
+  WidgetTester tester, {
+  required String label,
+  required String path,
+  required String instruction,
+  bool returnToHub = true,
+}) async {
+  await tester.ensureVisible(find.text(label));
+  await tester.tap(find.text(label));
+  await tester.pumpAndSettle();
+
+  expect(find.text(instruction), findsWidgets);
+  expect(_screenForPath(path), findsOneWidget);
+  expect(
+    appRouter.routerDelegate.currentConfiguration.matches.last.matchedLocation,
+    path,
+  );
+
+  if (returnToHub) {
+    await _returnToHub(tester, path.substring(0, path.lastIndexOf('/')));
+  }
+}
+
+Finder _screenForPath(String path) {
+  if (path.endsWith('/ticket')) return find.byType(VisitTicketScreen);
+  if (path.endsWith('/queue')) return find.byType(ClinicQueueScreen);
+  if (path.endsWith('/consultation')) {
+    return find.byType(ConsultationScreen);
+  }
+  if (path.endsWith('/laboratory')) return find.byType(LaboratoryScreen);
+  if (path.endsWith('/result-review')) {
+    return find.byType(ResultReviewScreen);
+  }
+  return find.byType(VisitOutcomeScreen);
+}
+
+Future<void> _returnToHub(WidgetTester tester, String hubPath) async {
+  await tester.pageBack();
+  await tester.pumpAndSettle();
+  expect(
+    appRouter.routerDelegate.currentConfiguration.matches.last.matchedLocation,
+    hubPath,
+  );
+  expect(find.text('Điều khiển mô phỏng'), findsOneWidget);
 }
 
 Future<void> _advance(
@@ -305,3 +585,38 @@ class _AdvancingClock {
     return value;
   }
 }
+
+const _expectedNotificationsNewestFirst = <(String, String)>[
+  ('Lượt khám đã hoàn tất', 'Cảm ơn bạn đã sử dụng CareFlow.'),
+  (
+    'Đơn thuốc đã sẵn sàng',
+    'Bác sĩ đã phát hành đơn thuốc sau khi đọc kết quả.',
+  ),
+  (
+    'Đã đến lượt đọc kết quả',
+    'Bác sĩ đã bắt đầu đọc kết quả xét nghiệm của bạn.',
+  ),
+  (
+    'Chờ bác sĩ đọc kết quả',
+    'Vui lòng quay lại phòng khám để chờ bác sĩ đọc kết quả.',
+  ),
+  ('Kết quả xét nghiệm đã sẵn sàng', 'Kết quả xét nghiệm đã được công bố.'),
+  (
+    'Xét nghiệm đang được thực hiện',
+    'Phòng xét nghiệm đã bắt đầu thực hiện chỉ định của bạn.',
+  ),
+  ('Đã xác nhận thanh toán', 'Thanh toán xét nghiệm đã được ghi nhận.'),
+  (
+    'Cần xác nhận thanh toán',
+    'Vui lòng chọn phương thức thanh toán cho xét nghiệm.',
+  ),
+  (
+    'Có chỉ định xét nghiệm',
+    'Bác sĩ đã chỉ định các xét nghiệm cần thực hiện.',
+  ),
+  ('Bác sĩ đang khám', 'Bác sĩ đã bắt đầu buổi khám của bạn.'),
+  ('Đã đến lượt bạn', 'Vui lòng đến phòng khám khi được gọi.'),
+  ('Đã vào hàng đợi khám', 'Bạn đã được thêm vào hàng đợi của phòng khám.'),
+  ('Đã xác nhận check-in', 'Nhân viên đã quét mã QR và xác nhận bạn đến khám.'),
+  ('Phiếu khám đã sẵn sàng', 'Phiếu khám điện tử của bạn đã sẵn sàng.'),
+];

@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../config/theme.dart';
 import '../application/journey_providers.dart';
 import '../data/journey_repository.dart';
 import '../domain/journey_models.dart';
-import 'clinic_queue_screen.dart';
-import 'consultation_screen.dart';
-import 'laboratory_screen.dart';
-import 'result_review_screen.dart';
-import 'visit_outcome_screen.dart';
-import 'visit_ticket_screen.dart';
 import 'widgets/demo_control_sheet.dart';
 import 'widgets/journey_status_card.dart';
 
@@ -48,11 +43,8 @@ class JourneyHubScreen extends ConsumerWidget {
                 SizedBox(
                   width: double.infinity,
                   child: ElevatedButton.icon(
-                    onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => _screenFor(destination, appointmentId),
-                      ),
-                    ),
+                    onPressed: () =>
+                        context.push(_pathFor(destination, appointmentId)),
                     icon: Icon(_iconFor(destination)),
                     label: Text(_labelFor(destination)),
                   ),
@@ -86,25 +78,17 @@ _PrimaryDestination? _destinationFor(JourneyStatus status) => switch (status) {
   JourneyStatus.booked => null,
 };
 
-Widget _screenFor(
-  _PrimaryDestination destination,
-  String appointmentId,
-) => switch (destination) {
-  _PrimaryDestination.ticket => VisitTicketScreen(appointmentId: appointmentId),
-  _PrimaryDestination.queue => ClinicQueueScreen(appointmentId: appointmentId),
-  _PrimaryDestination.consultation => ConsultationScreen(
-    appointmentId: appointmentId,
-  ),
-  _PrimaryDestination.laboratory => LaboratoryScreen(
-    appointmentId: appointmentId,
-  ),
-  _PrimaryDestination.resultReview => ResultReviewScreen(
-    appointmentId: appointmentId,
-  ),
-  _PrimaryDestination.outcome => VisitOutcomeScreen(
-    appointmentId: appointmentId,
-  ),
-};
+String _pathFor(_PrimaryDestination destination, String appointmentId) {
+  final base = '/journey/$appointmentId';
+  return switch (destination) {
+    _PrimaryDestination.ticket => '$base/ticket',
+    _PrimaryDestination.queue => '$base/queue',
+    _PrimaryDestination.consultation => '$base/consultation',
+    _PrimaryDestination.laboratory => '$base/laboratory',
+    _PrimaryDestination.resultReview => '$base/result-review',
+    _PrimaryDestination.outcome => '$base/outcome',
+  };
+}
 
 IconData _iconFor(_PrimaryDestination destination) => switch (destination) {
   _PrimaryDestination.ticket => Icons.confirmation_number_rounded,
