@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../config/theme.dart';
 import '../application/journey_providers.dart';
 import '../domain/journey_models.dart';
+import 'journey_date_formatter.dart';
 
 class VisitOutcomeScreen extends ConsumerWidget {
   const VisitOutcomeScreen({super.key, required this.appointmentId});
@@ -115,9 +115,9 @@ class _PrescriptionCard extends StatelessWidget {
     title: 'Đơn thuốc',
     child: Column(
       children: [
-        for (final item in prescription.items) ...[
-          _PrescriptionItem(item: item),
-          if (item != prescription.items.last) const Divider(height: 24),
+        for (var index = 0; index < prescription.items.length; index++) ...[
+          _PrescriptionItem(item: prescription.items[index]),
+          if (index < prescription.items.length - 1) const Divider(height: 24),
         ],
       ],
     ),
@@ -157,13 +157,19 @@ class _LaboratorySummaryCard extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        for (final order in orders) ...[
-          Text(order.name, style: Theme.of(context).textTheme.titleMedium),
-          if (order.result != null) ...[
+        for (var index = 0; index < orders.length; index++) ...[
+          Text(
+            orders[index].name,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          if (orders[index].result != null) ...[
             const SizedBox(height: AppSpacing.xs),
-            Text('${order.result!.value} ${order.result!.unit}'.trim()),
+            Text(
+              '${orders[index].result!.value} ${orders[index].result!.unit}'
+                  .trim(),
+            ),
           ],
-          if (order != orders.last) const Divider(height: 24),
+          if (index < orders.length - 1) const Divider(height: 24),
         ],
       ],
     ),
@@ -183,7 +189,7 @@ class _FollowUpCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Ngày tái khám: ${DateFormat("dd/MM/yyyy 'lúc' HH:mm").format(followUp.scheduledAt.toLocal())}',
+          'Ngày tái khám: ${formatJourneyDateTime(followUp.scheduledAt, "dd/MM/yyyy 'lúc' HH:mm")}',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: AppSpacing.sm),

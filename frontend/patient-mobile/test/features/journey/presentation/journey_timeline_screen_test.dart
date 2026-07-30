@@ -4,7 +4,6 @@ import 'package:careflow_patient/features/journey/presentation/journey_timeline_
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:intl/intl.dart';
 
 void main() {
   testWidgets('shows Vietnamese timeline events in chronological order', (
@@ -18,14 +17,7 @@ void main() {
     expect(checkIn.dy, lessThan(consultation.dy));
     expect(find.text('Nhân viên đã quét mã QR.'), findsOneWidget);
     expect(find.text('Bác sĩ đã bắt đầu buổi khám của bạn.'), findsOneWidget);
-    expect(
-      find.text(
-        DateFormat(
-          'HH:mm • dd/MM/yyyy',
-        ).format(DateTime.utc(2026, 7, 30, 8).toLocal()),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('15:00 • 30/07/2026'), findsOneWidget);
   });
 }
 

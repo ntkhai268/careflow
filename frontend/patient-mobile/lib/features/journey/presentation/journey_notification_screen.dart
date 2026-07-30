@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../config/theme.dart';
 import '../application/journey_providers.dart';
 import '../domain/journey_models.dart';
+import 'journey_date_formatter.dart';
 
 class JourneyNotificationScreen extends ConsumerWidget {
   const JourneyNotificationScreen({super.key, required this.appointmentId});
@@ -91,9 +91,10 @@ class _NotificationTile extends StatelessWidget {
             Text(notification.body),
             const SizedBox(height: AppSpacing.xs),
             Text(
-              DateFormat(
+              formatJourneyDateTime(
+                notification.createdAt,
                 'HH:mm • dd/MM/yyyy',
-              ).format(notification.createdAt.toLocal()),
+              ),
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ],

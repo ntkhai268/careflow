@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 
 import '../../../config/theme.dart';
 import '../application/journey_providers.dart';
 import '../domain/journey_models.dart';
+import 'journey_date_formatter.dart';
 
 class JourneyTimelineScreen extends ConsumerWidget {
   const JourneyTimelineScreen({super.key, required this.appointmentId});
@@ -96,9 +96,7 @@ class _TimelineEventCard extends StatelessWidget {
                 Text(event.detail),
                 const SizedBox(height: AppSpacing.sm),
                 Text(
-                  DateFormat(
-                    'HH:mm • dd/MM/yyyy',
-                  ).format(event.occurredAt.toLocal()),
+                  formatJourneyDateTime(event.occurredAt, 'HH:mm • dd/MM/yyyy'),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],

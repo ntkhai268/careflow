@@ -8,7 +8,6 @@ import 'package:careflow_patient/models/appointment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:intl/intl.dart';
 
 void main() {
   testWidgets('shows notifications newest first and marks an unread one read', (
@@ -37,14 +36,7 @@ void main() {
     );
     expect(find.byKey(const Key('unread-marker-result')), findsOneWidget);
     expect(find.byKey(const Key('unread-marker-checkin')), findsOneWidget);
-    expect(
-      find.text(
-        DateFormat(
-          'HH:mm • dd/MM/yyyy',
-        ).format(DateTime.utc(2026, 7, 30, 9).toLocal()),
-      ),
-      findsOneWidget,
-    );
+    expect(find.text('16:00 • 30/07/2026'), findsOneWidget);
     expect(container.read(unreadJourneyNotificationCountProvider), 2);
 
     await tester.tap(find.text('Kết quả xét nghiệm đã sẵn sàng'));

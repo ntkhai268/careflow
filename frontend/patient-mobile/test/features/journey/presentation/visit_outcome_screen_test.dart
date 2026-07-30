@@ -4,7 +4,6 @@ import 'package:careflow_patient/features/journey/presentation/visit_outcome_scr
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:intl/intl.dart';
 
 void main() {
   testWidgets('shows the complete outcome, prescription, and follow-up', (
@@ -26,9 +25,7 @@ void main() {
     expect(find.text('Amoxicillin 500 mg'), findsOneWidget);
     expect(find.text('1 viên • Uống • 2 lần/ngày • 7 ngày'), findsOneWidget);
     expect(find.text('Uống đủ liệu trình theo chỉ định.'), findsOneWidget);
-    final followUpDate = find.text(
-      'Ngày tái khám: ${DateFormat("dd/MM/yyyy 'lúc' HH:mm").format(DateTime.utc(2026, 8, 6, 9).toLocal())}',
-    );
+    final followUpDate = find.text('Ngày tái khám: 06/08/2026 lúc 16:00');
     await tester.scrollUntilVisible(followUpDate, 200);
     expect(followUpDate, findsOneWidget);
     expect(find.text('Phòng khám Nội tổng quát 21'), findsOneWidget);
@@ -53,6 +50,43 @@ void main() {
       expect(find.text('Tái khám'), findsNothing);
       expect(find.text('Xét nghiệm đã thực hiện'), findsNothing);
       expect(find.text('null'), findsNothing);
+    },
+  );
+
+  testWidgets(
+    'keeps separators between value-equal prescription and lab items',
+    (tester) async {
+      const duplicateItem = PrescriptionItem(
+        medicationName: 'Vitamin C 500 mg',
+        dosage: '1 viên',
+        route: 'Uống',
+        frequency: '1 lần/ngày',
+        duration: '7 ngày',
+        caution: 'Uống sau ăn.',
+      );
+      final duplicateOrder = LaboratoryOrder(
+        id: 'duplicate-order',
+        name: 'Xét nghiệm đường huyết',
+        department: 'Khoa Xét nghiệm',
+        destination: 'Phòng xét nghiệm',
+        preparationNote: 'Nhịn ăn',
+        price: 100000,
+      );
+      await tester.pumpWidget(
+        outcomeApp(
+          completedJourney().copyWith(
+            prescription: Prescription(
+              id: 'duplicate-prescription',
+              issuedAt: DateTime.utc(2026, 7, 30),
+              items: const [duplicateItem, duplicateItem],
+            ),
+            laboratoryOrders: [duplicateOrder, duplicateOrder],
+            followUp: null,
+          ),
+        ),
+      );
+
+      expect(find.byType(Divider, skipOffstage: false), findsNWidgets(2));
     },
   );
 }
