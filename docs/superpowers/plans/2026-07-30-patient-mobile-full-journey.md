@@ -184,6 +184,7 @@ enum JourneyEvent {
   doctorCalled,
   consultationStarted,
   laboratoryOrdered,
+  paymentRequested,
   directPrescriptionIssued,
   paymentAcknowledged,
   laboratoryStarted,
