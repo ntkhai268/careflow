@@ -9,7 +9,7 @@ void main() {
   testWidgets('explains the result-review queue placement', (tester) async {
     await tester.pumpWidget(resultReviewApp(JourneyStatus.waitingResultReview));
 
-    expect(find.text('Quay lại Phòng 21'), findsOneWidget);
+    expect(find.text('Quay lại Nội tổng quát - Phòng 21'), findsOneWidget);
     expect(
       find.text('Bạn được xếp sau bệnh nhân khám mới tiếp theo'),
       findsOneWidget,
@@ -44,11 +44,11 @@ PatientJourney resultReviewJourney(JourneyStatus status) => PatientJourney(
     queueNumber: '42',
     hospitalName: 'Bệnh viện CareFlow',
     specialtyName: 'Nội tổng quát',
-    room: 'Phòng 21',
+    room: 'Nội tổng quát - Phòng 21',
     expectedWindow: '10:30 - 11:30',
   ),
   resultReviewQueue: const QueueSnapshot(
-    room: 'Phòng 21',
+    room: 'Nội tổng quát - Phòng 21',
     peopleAhead: 1,
     expectedWait: 'Sau bệnh nhân khám mới tiếp theo',
   ),

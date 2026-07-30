@@ -54,10 +54,11 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
     }
   }
 
-  Future<void> advance(JourneyEvent event) =>
-      _runDemoAction((journey) => _repository.advance(journey, event));
+  Future<void> advance(JourneyEvent event) async {
+    await _runDemoAction((journey) => _repository.advance(journey, event));
+  }
 
-  Future<void> acknowledgePayment(PaymentMethod method) => _runDemoAction(
+  Future<bool> acknowledgePayment(PaymentMethod method) => _runDemoAction(
     (journey) => _repository.acknowledgePayment(journey, method),
   );
 
@@ -83,29 +84,32 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
     }
   }
 
-  Future<void> _runDemoAction(
+  Future<bool> _runDemoAction(
     Future<PatientJourney> Function(PatientJourney journey) action,
   ) async {
     if (!_demoMode) {
       _onActionError('Tính năng đang chờ backend triển khai');
-      return;
+      return false;
     }
     final journey = state.valueOrNull;
-    if (journey == null) return;
-    await _run(() => action(journey), retainOnInvalidTransition: true);
+    if (journey == null) return false;
+    return _run(() => action(journey), retainOnInvalidTransition: true);
   }
 
-  Future<void> _run(
+  Future<bool> _run(
     Future<PatientJourney> Function() action, {
     required bool retainOnInvalidTransition,
   }) async {
     _onActionError(null);
     try {
       state = AsyncData(await action());
+      return true;
     } on InvalidJourneyTransition catch (error) {
       if (retainOnInvalidTransition) _onActionError(error.toString());
+      return false;
     } catch (error, stackTrace) {
       state = AsyncError(error, stackTrace);
+      return false;
     }
   }
 

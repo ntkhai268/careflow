@@ -25,6 +25,7 @@ void main() {
         appointmentId: 'apt-47',
         patientId: 'patient-1',
         status: JourneyStatus.waitingLab,
+        doctorName: 'BS. Nguyễn Minh Anh (dữ liệu mô phỏng)',
         ticket: const VisitTicket(
           code: 'CF-APT-47',
           qrPayload: 'careflow://visit/apt-47',

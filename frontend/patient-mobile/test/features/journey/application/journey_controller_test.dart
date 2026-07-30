@@ -244,6 +244,29 @@ void main() {
     container.dispose();
   });
 
+  test(
+    'reports an unsuccessful payment acknowledgement when persistence fails',
+    () async {
+      final controller = JourneyController(
+        repository: const UnavailableJourneyRepository(),
+        demoMode: true,
+      );
+      controller.state = AsyncData(
+        journeyForPatient(
+          'patient-a',
+          'apt-1',
+        ).copyWith(status: JourneyStatus.paymentPending),
+      );
+
+      expect(
+        await controller.acknowledgePayment(PaymentMethod.online),
+        isFalse,
+      );
+      expect(controller.state.hasError, isTrue);
+      controller.dispose();
+    },
+  );
+
   test('demo mode provider defaults to the compile-time environment flag', () {
     final container = ProviderContainer();
 

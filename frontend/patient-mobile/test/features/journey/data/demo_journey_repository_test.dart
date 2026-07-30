@@ -54,6 +54,18 @@ void main() {
     expect(journey.clinicQueue!.peopleAhead, 3);
   });
 
+  test(
+    'seeds an explicit demo doctor when an appointment has no doctor',
+    () async {
+      final journey = await buildRepository().bootstrap(
+        appointment: appointmentFor('apt-no-doctor', doctorName: null),
+        patientId: 'patient-1',
+      );
+
+      expect(journey.doctorName, 'BS. Nguyễn Minh Anh (dữ liệu mô phỏng)');
+    },
+  );
+
   for (final method in PaymentMethod.values) {
     test('acknowledges ${method.name} payment for laboratory orders', () async {
       final repository = buildRepository();
@@ -136,14 +148,15 @@ Future<PatientJourney> journeyInConsultation(
   return journey;
 }
 
-Appointment appointmentFor(String id) => Appointment(
-  id: id,
-  patientId: 'patient-1',
-  department: 'NOI_TONG_QUAT',
-  departmentDisplayName: 'Nội tổng quát',
-  doctorName: 'BS. An',
-  appointmentDate: DateTime.utc(2026, 8, 18, 3),
-  timeSlot: '10:30 - 11:30',
-  status: 'CONFIRMED',
-  statusDisplayName: 'Đã xác nhận',
-);
+Appointment appointmentFor(String id, {String? doctorName = 'BS. An'}) =>
+    Appointment(
+      id: id,
+      patientId: 'patient-1',
+      department: 'NOI_TONG_QUAT',
+      departmentDisplayName: 'Nội tổng quát',
+      doctorName: doctorName,
+      appointmentDate: DateTime.utc(2026, 8, 18, 3),
+      timeSlot: '10:30 - 11:30',
+      status: 'CONFIRMED',
+      statusDisplayName: 'Đã xác nhận',
+    );

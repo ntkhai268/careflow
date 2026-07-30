@@ -540,6 +540,7 @@ class PatientJourney {
     required this.appointmentId,
     required this.patientId,
     required this.status,
+    this.doctorName,
     this.ticket,
     this.clinicQueue,
     required List<LaboratoryOrder> laboratoryOrders,
@@ -559,6 +560,7 @@ class PatientJourney {
   final String appointmentId;
   final String patientId;
   final JourneyStatus status;
+  final String? doctorName;
   final VisitTicket? ticket;
   final QueueSnapshot? clinicQueue;
   final List<LaboratoryOrder> laboratoryOrders;
@@ -575,6 +577,7 @@ class PatientJourney {
     String? appointmentId,
     String? patientId,
     JourneyStatus? status,
+    Object? doctorName = _unset,
     Object? ticket = _unset,
     Object? clinicQueue = _unset,
     List<LaboratoryOrder>? laboratoryOrders,
@@ -590,6 +593,9 @@ class PatientJourney {
     appointmentId: appointmentId ?? this.appointmentId,
     patientId: patientId ?? this.patientId,
     status: status ?? this.status,
+    doctorName: identical(doctorName, _unset)
+        ? this.doctorName
+        : doctorName as String?,
     ticket: identical(ticket, _unset) ? this.ticket : ticket as VisitTicket?,
     clinicQueue: identical(clinicQueue, _unset)
         ? this.clinicQueue
@@ -619,6 +625,7 @@ class PatientJourney {
     'appointmentId': appointmentId,
     'patientId': patientId,
     'status': status.name,
+    if (doctorName != null) 'doctorName': doctorName,
     if (ticket != null) 'ticket': ticket!.toJson(),
     if (clinicQueue != null) 'clinicQueue': clinicQueue!.toJson(),
     'laboratoryOrders': laboratoryOrders
@@ -639,6 +646,7 @@ class PatientJourney {
     appointmentId: json['appointmentId'] as String,
     patientId: json['patientId'] as String,
     status: JourneyStatus.values.byName(json['status'] as String),
+    doctorName: json['doctorName'] as String?,
     ticket: json['ticket'] == null
         ? null
         : VisitTicket.fromJson(_map(json['ticket'])),
@@ -678,6 +686,7 @@ class PatientJourney {
       appointmentId == other.appointmentId &&
       patientId == other.patientId &&
       status == other.status &&
+      doctorName == other.doctorName &&
       ticket == other.ticket &&
       clinicQueue == other.clinicQueue &&
       _sameList(laboratoryOrders, other.laboratoryOrders) &&
@@ -695,6 +704,7 @@ class PatientJourney {
     appointmentId,
     patientId,
     status,
+    doctorName,
     ticket,
     clinicQueue,
     Object.hashAll(laboratoryOrders),

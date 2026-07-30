@@ -11,6 +11,7 @@ class DemoJourneyRepository implements JourneyRepository {
 
   final JourneyStore _store;
   final DateTime Function() _now;
+  static const _demoDoctorName = 'BS. Nguyễn Minh Anh (dữ liệu mô phỏng)';
 
   @override
   Future<PatientJourney> bootstrap({
@@ -26,6 +27,7 @@ class DemoJourneyRepository implements JourneyRepository {
       appointmentId: appointment.id,
       patientId: patientId,
       status: JourneyStatus.booked,
+      doctorName: appointment.doctorName ?? _demoDoctorName,
       ticket: VisitTicket(
         code: 'CF-${appointment.id.toUpperCase()}',
         qrPayload: 'careflow://visit/${appointment.id}',

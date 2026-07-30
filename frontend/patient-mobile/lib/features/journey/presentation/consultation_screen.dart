@@ -70,10 +70,13 @@ class _ConsultationStatusCard extends StatelessWidget {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: AppSpacing.lg),
-            const _ConsultationDetail(
-              label: 'Bác sĩ phụ trách',
-              value: 'Đang khám',
-            ),
+            if (journey.doctorName != null)
+              _ConsultationDetail(
+                label: 'Bác sĩ phụ trách',
+                value: journey.doctorName!,
+              )
+            else
+              const Text('Thông tin bác sĩ đang cập nhật.'),
             const SizedBox(height: AppSpacing.md),
             _ConsultationDetail(label: 'Phòng khám', value: room),
           ],

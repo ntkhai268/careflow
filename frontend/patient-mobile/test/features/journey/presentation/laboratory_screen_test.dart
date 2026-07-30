@@ -1,8 +1,12 @@
 import 'package:careflow_patient/features/journey/application/journey_controller.dart';
 import 'package:careflow_patient/features/journey/application/journey_providers.dart';
+import 'dart:async';
+
 import 'package:careflow_patient/features/journey/data/journey_repository.dart';
+import 'package:careflow_patient/features/journey/domain/journey_transition.dart';
 import 'package:careflow_patient/features/journey/domain/journey_models.dart';
 import 'package:careflow_patient/features/journey/presentation/laboratory_screen.dart';
+import 'package:careflow_patient/models/appointment.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -35,7 +39,8 @@ void main() {
   });
 
   testWidgets('acknowledges the selected payment method', (tester) async {
-    final controller = RecordingJourneyController();
+    final repository = PaymentJourneyRepository();
+    final controller = paymentController(repository);
     await tester.pumpWidget(
       laboratoryApp(
         labJourney(JourneyStatus.paymentPending),
@@ -47,13 +52,40 @@ void main() {
     await tester.tap(find.text('Tiền mặt'));
     await tester.pumpAndSettle();
 
-    expect(controller.paymentMethods, [PaymentMethod.cash]);
+    expect(repository.paymentMethods, [PaymentMethod.cash]);
+    expect(
+      find.text('Đã ghi nhận lựa chọn tiền mặt. Thanh toán tại bệnh viện.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('shows insurance acknowledgement only after payment succeeds', (
+    tester,
+  ) async {
+    final repository = PaymentJourneyRepository();
+    await tester.pumpWidget(
+      laboratoryApp(
+        labJourney(JourneyStatus.paymentPending),
+        controller: paymentController(repository),
+      ),
+    );
+
+    await tester.ensureVisible(find.text('Bảo hiểm y tế'));
+    await tester.tap(find.text('Bảo hiểm y tế'));
+    await tester.pumpAndSettle();
+
+    expect(repository.paymentMethods, [PaymentMethod.insurance]);
+    expect(
+      find.text('Đã ghi nhận thông tin bảo hiểm để bệnh viện xác nhận.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('shows simulated online receipt only in demo mode', (
     tester,
   ) async {
-    final controller = RecordingJourneyController();
+    final repository = PaymentJourneyRepository();
+    final controller = paymentController(repository);
     await tester.pumpWidget(
       laboratoryApp(
         labJourney(JourneyStatus.paymentPending),
@@ -65,7 +97,7 @@ void main() {
     await tester.tap(find.text('Thanh toán trực tuyến'));
     await tester.pumpAndSettle();
 
-    expect(controller.paymentMethods, [PaymentMethod.online]);
+    expect(repository.paymentMethods, [PaymentMethod.online]);
     expect(
       find.text('Thanh toán trực tuyến mô phỏng thành công'),
       findsOneWidget,
@@ -96,6 +128,78 @@ void main() {
       );
     },
   );
+
+  testWidgets(
+    'does not claim payment acknowledgement after persistence fails',
+    (tester) async {
+      final repository = PaymentJourneyRepository(shouldFail: true);
+      await tester.pumpWidget(
+        laboratoryApp(
+          labJourney(JourneyStatus.paymentPending),
+          controller: paymentController(repository),
+        ),
+      );
+
+      await tester.ensureVisible(find.text('Thanh toán trực tuyến'));
+      await tester.tap(find.text('Thanh toán trực tuyến'));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('Không thể ghi nhận thanh toán. Vui lòng thử lại.'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Thanh toán trực tuyến mô phỏng thành công'),
+        findsNothing,
+      );
+    },
+  );
+
+  testWidgets('locks every payment method while acknowledgement is pending', (
+    tester,
+  ) async {
+    final repository = PaymentJourneyRepository(
+      pending: Completer<PatientJourney>(),
+    );
+    await tester.pumpWidget(
+      laboratoryApp(
+        labJourney(JourneyStatus.paymentPending),
+        controller: paymentController(repository),
+      ),
+    );
+
+    await tester.tap(find.text('Thanh toán trực tuyến'));
+    await tester.pump();
+
+    expect(
+      tester
+          .widget<ElevatedButton>(
+            find.widgetWithText(ElevatedButton, 'Thanh toán trực tuyến'),
+          )
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<OutlinedButton>(
+            find.widgetWithText(OutlinedButton, 'Tiền mặt'),
+          )
+          .onPressed,
+      isNull,
+    );
+
+    await tester.tap(find.text('Tiền mặt'), warnIfMissed: false);
+    await tester.pump();
+
+    expect(repository.paymentMethods, [PaymentMethod.online]);
+    repository.pending!.complete(
+      paidJourney(
+        labJourney(JourneyStatus.paymentPending),
+        PaymentMethod.online,
+      ),
+    );
+    await tester.pumpAndSettle();
+  });
 
   for (final status in [
     JourneyStatus.waitingLab,
@@ -139,17 +243,61 @@ Widget laboratoryApp(
   child: const MaterialApp(home: LaboratoryScreen(appointmentId: 'apt-1')),
 );
 
-class RecordingJourneyController extends JourneyController {
-  RecordingJourneyController()
-    : super(repository: const UnavailableJourneyRepository(), demoMode: true);
+JourneyController paymentController(PaymentJourneyRepository repository) {
+  final controller = JourneyController(repository: repository, demoMode: true);
+  controller.state = AsyncData(labJourney(JourneyStatus.paymentPending));
+  return controller;
+}
 
+class PaymentJourneyRepository implements JourneyRepository {
+  PaymentJourneyRepository({this.shouldFail = false, this.pending});
+
+  final bool shouldFail;
+  final Completer<PatientJourney>? pending;
   final List<PaymentMethod> paymentMethods = [];
 
   @override
-  Future<void> acknowledgePayment(PaymentMethod method) async {
+  Future<PatientJourney> acknowledgePayment(
+    PatientJourney journey,
+    PaymentMethod method,
+  ) {
     paymentMethods.add(method);
+    if (shouldFail) {
+      return Future<PatientJourney>.error(StateError('save failed'));
+    }
+    return pending?.future ?? Future.value(paidJourney(journey, method));
   }
+
+  @override
+  Future<PatientJourney> advance(PatientJourney journey, JourneyEvent event) =>
+      Future<PatientJourney>.error(UnimplementedError());
+
+  @override
+  Future<PatientJourney> bootstrap({
+    required Appointment appointment,
+    required String patientId,
+  }) => Future<PatientJourney>.error(UnimplementedError());
+
+  @override
+  Future<PatientJourney> markNotificationRead(
+    PatientJourney journey,
+    String notificationId,
+  ) => Future<PatientJourney>.error(UnimplementedError());
+
+  @override
+  Future<void> reset(PatientJourney journey) =>
+      Future<void>.error(UnimplementedError());
 }
+
+PatientJourney paidJourney(PatientJourney journey, PaymentMethod method) =>
+    journey.copyWith(
+      status: JourneyStatus.waitingLab,
+      payment: VisitPayment(
+        method: method,
+        amount: 120000,
+        acknowledgedAt: DateTime.utc(2026, 7, 30),
+      ),
+    );
 
 PatientJourney labJourney(JourneyStatus status, {bool withResult = false}) =>
     PatientJourney(

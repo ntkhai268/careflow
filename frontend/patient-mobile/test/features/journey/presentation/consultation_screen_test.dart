@@ -12,6 +12,7 @@ void main() {
 
     expect(find.text('Bác sĩ đang khám'), findsOneWidget);
     expect(find.text('Bác sĩ phụ trách'), findsOneWidget);
+    expect(find.text('BS. Nguyễn Minh Anh (dữ liệu mô phỏng)'), findsOneWidget);
     expect(find.text('Phòng 21'), findsOneWidget);
   });
 
@@ -51,6 +52,7 @@ final consultationJourney = PatientJourney(
   appointmentId: 'apt-1',
   patientId: 'patient-1',
   status: JourneyStatus.inConsultation,
+  doctorName: 'BS. Nguyễn Minh Anh (dữ liệu mô phỏng)',
   ticket: const VisitTicket(
     code: 'CF-APT-1',
     qrPayload: 'careflow://visit/apt-1',

@@ -17,26 +17,29 @@ class LaboratoryScreen extends ConsumerStatefulWidget {
 
 class _LaboratoryScreenState extends ConsumerState<LaboratoryScreen> {
   String? _paymentMessage;
+  bool _isSubmitting = false;
 
   Future<void> _acknowledgePayment(PaymentMethod method, bool demoMode) async {
-    final message = switch ((method, demoMode)) {
-      (PaymentMethod.online, true) =>
-        'Thanh toán trực tuyến mô phỏng thành công',
-      (PaymentMethod.cash, true) =>
-        'Đã ghi nhận lựa chọn tiền mặt. Thanh toán tại bệnh viện.',
-      (PaymentMethod.insurance, true) =>
-        'Đã ghi nhận thông tin bảo hiểm để bệnh viện xác nhận.',
-      _ => 'Tính năng đang chờ backend triển khai',
-    };
+    if (_isSubmitting) return;
     setState(() {
+      _isSubmitting = true;
+      _paymentMessage = null;
+    });
+    final controller = ref.read(journeyControllerProvider.notifier);
+    final acknowledged = await controller.acknowledgePayment(method);
+    if (!mounted) return;
+    final message = !demoMode
+        ? 'Tính năng đang chờ backend triển khai'
+        : !acknowledged
+        ? 'Không thể ghi nhận thanh toán. Vui lòng thử lại.'
+        : _successMessage(method);
+    setState(() {
+      _isSubmitting = false;
       _paymentMessage = message;
     });
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
-    await ref
-        .read(journeyControllerProvider.notifier)
-        .acknowledgePayment(method);
   }
 
   @override
@@ -67,6 +70,7 @@ class _LaboratoryScreenState extends ConsumerState<LaboratoryScreen> {
                   const SizedBox(height: AppSpacing.base),
                   if (value.status == JourneyStatus.paymentPending) ...[
                     _PaymentMethods(
+                      isSubmitting: _isSubmitting,
                       onSelected: (method) =>
                           _acknowledgePayment(method, demoMode),
                     ),
@@ -167,8 +171,9 @@ class _OrderDetail extends StatelessWidget {
 }
 
 class _PaymentMethods extends StatelessWidget {
-  const _PaymentMethods({required this.onSelected});
+  const _PaymentMethods({required this.isSubmitting, required this.onSelected});
 
+  final bool isSubmitting;
   final ValueChanged<PaymentMethod> onSelected;
 
   @override
@@ -186,7 +191,9 @@ class _PaymentMethods extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () => onSelected(PaymentMethod.online),
+              onPressed: isSubmitting
+                  ? null
+                  : () => onSelected(PaymentMethod.online),
               child: const Text('Thanh toán trực tuyến'),
             ),
           ),
@@ -194,7 +201,9 @@ class _PaymentMethods extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: () => onSelected(PaymentMethod.cash),
+              onPressed: isSubmitting
+                  ? null
+                  : () => onSelected(PaymentMethod.cash),
               child: const Text('Tiền mặt'),
             ),
           ),
@@ -206,7 +215,9 @@ class _PaymentMethods extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
-              onPressed: () => onSelected(PaymentMethod.insurance),
+              onPressed: isSubmitting
+                  ? null
+                  : () => onSelected(PaymentMethod.insurance),
               child: const Text('Bảo hiểm y tế'),
             ),
           ),
@@ -219,6 +230,14 @@ class _PaymentMethods extends StatelessWidget {
     ),
   );
 }
+
+String _successMessage(PaymentMethod method) => switch (method) {
+  PaymentMethod.online => 'Thanh toán trực tuyến mô phỏng thành công',
+  PaymentMethod.cash =>
+    'Đã ghi nhận lựa chọn tiền mặt. Thanh toán tại bệnh viện.',
+  PaymentMethod.insurance =>
+    'Đã ghi nhận thông tin bảo hiểm để bệnh viện xác nhận.',
+};
 
 class _PaymentMessage extends StatelessWidget {
   const _PaymentMessage({required this.message});
