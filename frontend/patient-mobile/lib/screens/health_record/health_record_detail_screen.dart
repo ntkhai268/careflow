@@ -11,10 +11,10 @@ class HealthRecordDetailScreen extends ConsumerStatefulWidget {
   final String recordId;
 
   const HealthRecordDetailScreen({
-    Key? key,
+    super.key,
     required this.patientId,
     required this.recordId,
-  }) : super(key: key);
+  });
 
   @override
   ConsumerState<HealthRecordDetailScreen> createState() =>
@@ -143,12 +143,15 @@ class _HealthRecordDetailScreenState
             .read(healthRecordServiceProvider)
             .delete(widget.patientId, widget.recordId);
         ref.invalidate(healthRecordsProvider(widget.patientId));
-        if (mounted) context.pop();
+        if (mounted) {
+          context.pop();
+        }
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        }
       }
     }
   }
@@ -290,13 +293,6 @@ class _HealthRecordDetailScreenState
                               label: Text(file.fileName),
                               avatar: const Icon(Icons.attach_file, size: 18),
                               onPressed: () {
-                                final service = ref.read(
-                                  healthRecordServiceProvider,
-                                );
-                                final url = service.getFileUrl(
-                                  widget.patientId,
-                                  file.id,
-                                );
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text('Tải file: ${file.fileName}'),
@@ -362,7 +358,7 @@ class _HealthRecordDetailScreenState
                             labelText: 'Nhóm máu',
                             border: OutlineInputBorder(),
                           ),
-                          value: _bloodType,
+                          initialValue: _bloodType,
                           items: ['A', 'B', 'AB', 'O']
                               .map(
                                 (e) =>
@@ -483,8 +479,9 @@ class _HealthRecordDetailScreenState
                             ? null
                             : () {
                                 setState(() => _isEditing = false);
-                                if (_record != null)
+                                if (_record != null) {
                                   _populateControllers(_record!);
+                                }
                               },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),

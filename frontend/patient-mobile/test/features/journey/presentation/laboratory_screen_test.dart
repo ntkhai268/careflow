@@ -2,6 +2,7 @@ import 'package:careflow_patient/features/journey/application/journey_controller
 import 'package:careflow_patient/features/journey/application/journey_providers.dart';
 import 'dart:async';
 
+import 'package:careflow_patient/config/theme.dart';
 import 'package:careflow_patient/features/journey/data/journey_repository.dart';
 import 'package:careflow_patient/features/journey/domain/journey_transition.dart';
 import 'package:careflow_patient/features/journey/domain/journey_models.dart';
@@ -147,6 +148,10 @@ void main() {
       expect(
         find.text('Không thể ghi nhận thanh toán. Vui lòng thử lại.'),
         findsOneWidget,
+      );
+      expect(
+        tester.widget<SnackBar>(find.byType(SnackBar)).backgroundColor,
+        AppColors.error,
       );
       expect(
         find.text('Thanh toán trực tuyến mô phỏng thành công'),

@@ -68,6 +68,9 @@ class DemoJourneyRepository implements JourneyRepository {
         );
       case JourneyEvent.admittedToResultReviewQueue:
         next = next.copyWith(resultReviewQueue: _resultReviewQueue(next));
+      case JourneyEvent.directPrescriptionIssued:
+      case JourneyEvent.finalPrescriptionIssued:
+        next = _withDemoOutcome(next);
       default:
         break;
     }
@@ -175,5 +178,39 @@ class DemoJourneyRepository implements JourneyRepository {
     room: journey.ticket!.room,
     peopleAhead: 1,
     expectedWait: 'Sau bệnh nhân khám mới tiếp theo',
+  );
+
+  PatientJourney _withDemoOutcome(PatientJourney journey) => journey.copyWith(
+    diagnosis: const DiagnosisSummary(
+      title: 'Viêm họng cấp',
+      detail: 'Niêm mạc họng sung huyết, chưa ghi nhận biến chứng.',
+    ),
+    prescription: Prescription(
+      id: '${journey.appointmentId}-prescription',
+      issuedAt: journey.updatedAt,
+      items: const [
+        PrescriptionItem(
+          medicationName: 'Paracetamol 500 mg',
+          dosage: '1 viên',
+          route: 'Uống',
+          frequency: '3 lần/ngày',
+          duration: '5 ngày',
+          caution: 'Uống sau ăn; không dùng quá liều khuyến cáo.',
+        ),
+        PrescriptionItem(
+          medicationName: 'Amoxicillin 500 mg',
+          dosage: '1 viên',
+          route: 'Uống',
+          frequency: '2 lần/ngày',
+          duration: '7 ngày',
+          caution: 'Uống đủ liệu trình theo chỉ định.',
+        ),
+      ],
+    ),
+    followUp: FollowUpAppointment(
+      scheduledAt: journey.updatedAt.add(const Duration(days: 7)),
+      room: journey.ticket!.room,
+      note: 'Tái khám nếu triệu chứng không cải thiện.',
+    ),
   );
 }

@@ -10,12 +10,12 @@ class HealthRecordListScreen extends ConsumerWidget {
   final int patientBirthYear;
 
   const HealthRecordListScreen({
-    Key? key,
+    super.key,
     required this.patientId,
     required this.patientName,
     required this.patientGender,
     required this.patientBirthYear,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

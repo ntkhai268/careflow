@@ -10,8 +10,7 @@ import '../../config/theme.dart';
 class HealthRecordFormScreen extends ConsumerStatefulWidget {
   final String patientId;
 
-  const HealthRecordFormScreen({Key? key, required this.patientId})
-    : super(key: key);
+  const HealthRecordFormScreen({super.key, required this.patientId});
 
   @override
   ConsumerState<HealthRecordFormScreen> createState() =>

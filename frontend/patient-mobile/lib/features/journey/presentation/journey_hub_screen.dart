@@ -6,6 +6,10 @@ import '../application/journey_providers.dart';
 import '../data/journey_repository.dart';
 import '../domain/journey_models.dart';
 import 'clinic_queue_screen.dart';
+import 'consultation_screen.dart';
+import 'laboratory_screen.dart';
+import 'result_review_screen.dart';
+import 'visit_outcome_screen.dart';
 import 'visit_ticket_screen.dart';
 import 'widgets/demo_control_sheet.dart';
 import 'widgets/journey_status_card.dart';
@@ -46,22 +50,11 @@ class JourneyHubScreen extends ConsumerWidget {
                   child: ElevatedButton.icon(
                     onPressed: () => Navigator.of(context).push(
                       MaterialPageRoute<void>(
-                        builder: (_) =>
-                            destination == _PrimaryDestination.ticket
-                            ? VisitTicketScreen(appointmentId: appointmentId)
-                            : ClinicQueueScreen(appointmentId: appointmentId),
+                        builder: (_) => _screenFor(destination, appointmentId),
                       ),
                     ),
-                    icon: Icon(
-                      destination == _PrimaryDestination.ticket
-                          ? Icons.confirmation_number_rounded
-                          : Icons.people_alt_rounded,
-                    ),
-                    label: Text(
-                      destination == _PrimaryDestination.ticket
-                          ? 'Xem phiếu khám'
-                          : 'Theo dõi hàng đợi',
-                    ),
+                    icon: Icon(_iconFor(destination)),
+                    label: Text(_labelFor(destination)),
                   ),
                 ),
               if (demoMode) ...[
@@ -79,10 +72,63 @@ class JourneyHubScreen extends ConsumerWidget {
 _PrimaryDestination? _destinationFor(JourneyStatus status) => switch (status) {
   JourneyStatus.ticketIssued ||
   JourneyStatus.checkedIn => _PrimaryDestination.ticket,
-  JourneyStatus.waiting ||
-  JourneyStatus.called ||
-  JourneyStatus.inConsultation => _PrimaryDestination.queue,
-  _ => null,
+  JourneyStatus.waiting || JourneyStatus.called => _PrimaryDestination.queue,
+  JourneyStatus.inConsultation => _PrimaryDestination.consultation,
+  JourneyStatus.labOrdered ||
+  JourneyStatus.paymentPending ||
+  JourneyStatus.waitingLab ||
+  JourneyStatus.labInProgress ||
+  JourneyStatus.labResultReady => _PrimaryDestination.laboratory,
+  JourneyStatus.waitingResultReview ||
+  JourneyStatus.resultReview => _PrimaryDestination.resultReview,
+  JourneyStatus.prescribed ||
+  JourneyStatus.completed => _PrimaryDestination.outcome,
+  JourneyStatus.booked => null,
 };
 
-enum _PrimaryDestination { ticket, queue }
+Widget _screenFor(
+  _PrimaryDestination destination,
+  String appointmentId,
+) => switch (destination) {
+  _PrimaryDestination.ticket => VisitTicketScreen(appointmentId: appointmentId),
+  _PrimaryDestination.queue => ClinicQueueScreen(appointmentId: appointmentId),
+  _PrimaryDestination.consultation => ConsultationScreen(
+    appointmentId: appointmentId,
+  ),
+  _PrimaryDestination.laboratory => LaboratoryScreen(
+    appointmentId: appointmentId,
+  ),
+  _PrimaryDestination.resultReview => ResultReviewScreen(
+    appointmentId: appointmentId,
+  ),
+  _PrimaryDestination.outcome => VisitOutcomeScreen(
+    appointmentId: appointmentId,
+  ),
+};
+
+IconData _iconFor(_PrimaryDestination destination) => switch (destination) {
+  _PrimaryDestination.ticket => Icons.confirmation_number_rounded,
+  _PrimaryDestination.queue => Icons.people_alt_rounded,
+  _PrimaryDestination.consultation => Icons.medical_services_rounded,
+  _PrimaryDestination.laboratory => Icons.science_rounded,
+  _PrimaryDestination.resultReview => Icons.manage_search_rounded,
+  _PrimaryDestination.outcome => Icons.task_alt_rounded,
+};
+
+String _labelFor(_PrimaryDestination destination) => switch (destination) {
+  _PrimaryDestination.ticket => 'Xem phiếu khám',
+  _PrimaryDestination.queue => 'Theo dõi hàng đợi',
+  _PrimaryDestination.consultation => 'Xem trạng thái khám',
+  _PrimaryDestination.laboratory => 'Xem xét nghiệm',
+  _PrimaryDestination.resultReview => 'Xem đọc kết quả',
+  _PrimaryDestination.outcome => 'Xem kết quả lượt khám',
+};
+
+enum _PrimaryDestination {
+  ticket,
+  queue,
+  consultation,
+  laboratory,
+  resultReview,
+  outcome,
+}

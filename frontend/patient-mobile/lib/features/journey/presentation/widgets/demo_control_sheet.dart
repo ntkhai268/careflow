@@ -108,6 +108,36 @@ List<_DemoEvent> _eventsFor(JourneyStatus status) => switch (status) {
       'Mô phỏng bác sĩ kê đơn trực tiếp',
     ),
   ],
+  JourneyStatus.labOrdered => const [
+    _DemoEvent(JourneyEvent.paymentRequested, 'Mô phỏng yêu cầu thanh toán'),
+  ],
+  JourneyStatus.waitingLab => const [
+    _DemoEvent(JourneyEvent.laboratoryStarted, 'Mô phỏng bắt đầu xét nghiệm'),
+  ],
+  JourneyStatus.labInProgress => const [
+    _DemoEvent(
+      JourneyEvent.laboratoryResultsPublished,
+      'Mô phỏng công bố kết quả',
+    ),
+  ],
+  JourneyStatus.labResultReady => const [
+    _DemoEvent(
+      JourneyEvent.admittedToResultReviewQueue,
+      'Mô phỏng đưa vào hàng đợi đọc kết quả',
+    ),
+  ],
+  JourneyStatus.waitingResultReview => const [
+    _DemoEvent(JourneyEvent.resultReviewCalled, 'Mô phỏng bác sĩ đọc kết quả'),
+  ],
+  JourneyStatus.resultReview => const [
+    _DemoEvent(
+      JourneyEvent.finalPrescriptionIssued,
+      'Mô phỏng bác sĩ kê đơn sau đọc kết quả',
+    ),
+  ],
+  JourneyStatus.prescribed => const [
+    _DemoEvent(JourneyEvent.visitCompleted, 'Mô phỏng hoàn tất lượt khám'),
+  ],
   _ => const [],
 };
 

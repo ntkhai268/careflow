@@ -35,7 +35,7 @@ void main() {
     expect(find.text('Mô phỏng nhân viên đưa vào hàng đợi'), findsNothing);
   });
 
-  testWidgets('maps every early journey state to its legal demo events', (
+  testWidgets('maps every journey state to its legal demo events', (
     tester,
   ) async {
     const cases = [
@@ -50,6 +50,15 @@ void main() {
           'Mô phỏng bác sĩ kê đơn trực tiếp',
         ],
       ),
+      (JourneyStatus.labOrdered, ['Mô phỏng yêu cầu thanh toán']),
+      (JourneyStatus.paymentPending, <String>[]),
+      (JourneyStatus.waitingLab, ['Mô phỏng bắt đầu xét nghiệm']),
+      (JourneyStatus.labInProgress, ['Mô phỏng công bố kết quả']),
+      (JourneyStatus.labResultReady, ['Mô phỏng đưa vào hàng đợi đọc kết quả']),
+      (JourneyStatus.waitingResultReview, ['Mô phỏng bác sĩ đọc kết quả']),
+      (JourneyStatus.resultReview, ['Mô phỏng bác sĩ kê đơn sau đọc kết quả']),
+      (JourneyStatus.prescribed, ['Mô phỏng hoàn tất lượt khám']),
+      (JourneyStatus.completed, <String>[]),
     ];
 
     for (final testCase in cases) {
@@ -71,6 +80,39 @@ void main() {
       for (final label in testCase.$2) {
         expect(find.text(label), findsOneWidget);
       }
+    }
+  });
+
+  testWidgets('offers the contextual patient destination through completion', (
+    tester,
+  ) async {
+    const cases = [
+      (JourneyStatus.ticketIssued, 'Xem phiếu khám'),
+      (JourneyStatus.waiting, 'Theo dõi hàng đợi'),
+      (JourneyStatus.inConsultation, 'Xem trạng thái khám'),
+      (JourneyStatus.labOrdered, 'Xem xét nghiệm'),
+      (JourneyStatus.paymentPending, 'Xem xét nghiệm'),
+      (JourneyStatus.waitingLab, 'Xem xét nghiệm'),
+      (JourneyStatus.labInProgress, 'Xem xét nghiệm'),
+      (JourneyStatus.labResultReady, 'Xem xét nghiệm'),
+      (JourneyStatus.waitingResultReview, 'Xem đọc kết quả'),
+      (JourneyStatus.resultReview, 'Xem đọc kết quả'),
+      (JourneyStatus.prescribed, 'Xem kết quả lượt khám'),
+      (JourneyStatus.completed, 'Xem kết quả lượt khám'),
+    ];
+
+    for (final testCase in cases) {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(
+        hubApp(
+          demoMode: true,
+          controller: RecordingJourneyController(
+            journey: ticketJourney.copyWith(status: testCase.$1),
+          ),
+        ),
+      );
+
+      expect(find.text(testCase.$2), findsOneWidget);
     }
   });
 

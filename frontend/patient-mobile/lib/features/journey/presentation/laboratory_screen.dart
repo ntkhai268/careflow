@@ -17,6 +17,7 @@ class LaboratoryScreen extends ConsumerStatefulWidget {
 
 class _LaboratoryScreenState extends ConsumerState<LaboratoryScreen> {
   String? _paymentMessage;
+  bool _paymentFailed = false;
   bool _isSubmitting = false;
 
   Future<void> _acknowledgePayment(PaymentMethod method, bool demoMode) async {
@@ -24,6 +25,7 @@ class _LaboratoryScreenState extends ConsumerState<LaboratoryScreen> {
     setState(() {
       _isSubmitting = true;
       _paymentMessage = null;
+      _paymentFailed = false;
     });
     final controller = ref.read(journeyControllerProvider.notifier);
     final acknowledged = await controller.acknowledgePayment(method);
@@ -36,10 +38,14 @@ class _LaboratoryScreenState extends ConsumerState<LaboratoryScreen> {
     setState(() {
       _isSubmitting = false;
       _paymentMessage = message;
+      _paymentFailed = !acknowledged;
     });
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: acknowledged ? null : AppColors.error,
+        content: Text(message),
+      ),
+    );
   }
 
   @override
@@ -63,7 +69,10 @@ class _LaboratoryScreenState extends ConsumerState<LaboratoryScreen> {
                   JourneyStatusCard(journey: value),
                   if (_paymentMessage != null) ...[
                     const SizedBox(height: AppSpacing.base),
-                    _PaymentMessage(message: _paymentMessage!),
+                    _PaymentMessage(
+                      message: _paymentMessage!,
+                      isError: _paymentFailed,
+                    ),
                   ],
                   const SizedBox(height: AppSpacing.base),
                   _LaboratoryInstruction(journey: value),
@@ -240,13 +249,14 @@ String _successMessage(PaymentMethod method) => switch (method) {
 };
 
 class _PaymentMessage extends StatelessWidget {
-  const _PaymentMessage({required this.message});
+  const _PaymentMessage({required this.message, required this.isError});
 
   final String message;
+  final bool isError;
 
   @override
   Widget build(BuildContext context) => Card(
-    color: AppColors.successLight,
+    color: isError ? AppColors.errorLight : AppColors.successLight,
     child: Padding(
       padding: const EdgeInsets.all(AppSpacing.base),
       child: Text(message, style: Theme.of(context).textTheme.titleMedium),

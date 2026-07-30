@@ -64,6 +64,15 @@ class _ResultReviewCard extends StatelessWidget {
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.headlineSmall,
             ),
+            if (isReviewing) ...[
+              const SizedBox(height: AppSpacing.md),
+              const Text('Phòng khám'),
+              Text(
+                room,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
             if (!isReviewing) ...[
               const SizedBox(height: AppSpacing.md),
               const Text(
