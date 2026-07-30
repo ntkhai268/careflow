@@ -195,22 +195,29 @@ Không mock bằng một object tự nghĩ ra trong test nếu contract đã có
 
 ## 9. Baseline quan sát từ repository
 
-Đây là điểm xuất phát ngày `2026-07-30`, không phải tuyên bố chất lượng cuối cùng:
+Đây là điểm xuất phát sau khi audit cả `develop` và toàn bộ remote branch ngày `2026-07-30`.
+Chi tiết evidence, commit và kết quả build nằm tại
+[`REMOTE-BRANCH-AUDIT-2026-07-30.md`](REMOTE-BRANCH-AUDIT-2026-07-30.md).
 
-| Service | Baseline | Khoảng cách chính tới contract |
+Hai cột dưới đây cố ý tách biệt:
+
+- **Code đã có**: ghi nhận khối lượng implementation trên bất kỳ remote branch nào.
+- **Gate theo contract 1.0**: mức có thể tích hợp vào hành trình nghiệp vụ vừa chốt.
+
+| Service | Code đã có trên develop/remote | Gate theo contract 1.0 và khoảng cách chính |
 |---|---|---|
-| API Gateway | Có route, JWT filter và test | Thiếu Analytics route và role nhân viên/kỹ thuật viên |
-| Identity & eKYC | Có auth, refresh token và eKYC mock | Thiếu role mục tiêu và contract tích hợp đầy đủ |
-| Patient | Có profile và patient-uploaded health record | Cần ownership/auth test và event chuẩn |
-| Appointment | Có CRUD/query và event sơ bộ | Đang tạo `PENDING`, event raw map, chưa quản lý capacity/follow-up |
-| Queue Management | Skeleton | Chưa có domain, API, thuật toán và consumer |
-| Consultation | Skeleton | Chưa có domain/API/event |
-| Prescription | Skeleton | Chưa có domain/API/event |
-| Laboratory Order | Skeleton | Chưa có domain/API/event |
-| EMR | Skeleton | Chưa có projection/API/audit |
-| Notification | Skeleton | Chưa có consumer/WebSocket/inbox |
-| AI Clinical Assistant | Skeleton | Chưa có guardrail/API/audit |
-| Analytics | Chưa có module | Cần tạo module, route, projection và dashboard API |
+| API Gateway | Có route, JWT filter và test trên `develop` | Chưa đánh giá lại đầy đủ; thiếu Analytics route và role nhân viên/kỹ thuật viên |
+| Identity & eKYC | Có auth, refresh token và eKYC mock trên `develop` | Chưa đánh giá lại đầy đủ; thiếu role mục tiêu và contract tích hợp |
+| Patient | Có profile và patient-uploaded health record trên `develop` | Chưa đánh giá lại đầy đủ; cần ownership/auth test và event chuẩn |
+| Appointment | Có CRUD/query và event sơ bộ trên `develop` | Chưa đạt contract: đang tạo `PENDING`, event raw map, chưa quản lý capacity/follow-up |
+| Queue Management | Implementation lớn tại `838f08f`: domain, 3 migration, API, QR, locking, idempotency, outbox/consumer và 24 test pass | `BELOW_CONTRACT`: scheduler priority/N:M cũ trái FIFO mới; thiếu ba queue type, Lab và result-review flow |
+| Consultation | Prototype lớn tại `aaf0716`: domain, API, state, RabbitMQ và Doctor Web; module build thành công | `BELOW_CONTRACT`: thiếu queue assignment/ownership, transition guard, Lab flow, envelope/outbox và test |
+| Prescription | Prototype lớn tại `e1381f5`: domain thuốc/toa, API, RabbitMQ và Doctor Web; module build thành công | `BELOW_CONTRACT`: thiếu ownership, cancel/dispense/amendment, event chuẩn, migration và test |
+| Laboratory Order | Chỉ có module skeleton trên mọi remote ref | `BELOW_CONTRACT`: chưa có domain/API/state/event/test |
+| EMR | Prototype aggregation tại `7af5811`: domain, CRUD/summary API, Feign clients và Doctor Web; module build thành công | `BELOW_CONTRACT`: đang fan-out đồng bộ và ghi trực tiếp, thiếu projection/event/audit/ownership/test |
+| Notification | WebSocket bridge tại `b7485c8`: JWT STOMP, Queue consumer, retry/DLQ; module build thành công | `BELOW_CONTRACT`: chưa có inbox persistence/API/template/dedup/test; offline sẽ mất thông báo |
+| AI Clinical Assistant | Backend vẫn skeleton; nhánh Consultation có `AiAssistantWidget` giả lập bằng `setTimeout` | `BELOW_CONTRACT`: chưa có AI API/context/guardrail/evidence/audit/test |
+| Analytics | Không có module hoặc implementation trên remote | `BELOW_CONTRACT`: cần tạo module, route, projection và dashboard API |
 
 ## 10. Definition of Done toàn cục
 
