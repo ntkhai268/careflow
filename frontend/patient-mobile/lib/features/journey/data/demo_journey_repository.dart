@@ -30,6 +30,8 @@ class DemoJourneyRepository implements JourneyRepository {
         code: 'CF-${appointment.id.toUpperCase()}',
         qrPayload: 'careflow://visit/${appointment.id}',
         queueNumber: '${40 + (suffix % 20)}',
+        hospitalName: 'Bệnh viện CareFlow (dữ liệu mô phỏng)',
+        specialtyName: appointment.departmentDisplayName,
         room: _roomFor(appointment),
         expectedWindow: appointment.timeSlot,
       ),

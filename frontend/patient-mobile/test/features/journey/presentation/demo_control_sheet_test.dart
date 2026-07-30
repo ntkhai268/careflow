@@ -137,6 +137,8 @@ final ticketJourney = PatientJourney(
     code: 'CF-APT-1',
     qrPayload: 'careflow://visit/apt-1',
     queueNumber: '42',
+    hospitalName: 'Bệnh viện Minh Khai',
+    specialtyName: 'Nội thần kinh',
     room: 'Phòng 21',
     expectedWindow: '10:30 - 11:30',
   ),

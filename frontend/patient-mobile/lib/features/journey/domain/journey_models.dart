@@ -43,6 +43,8 @@ class VisitTicket {
     required this.code,
     required this.qrPayload,
     required this.queueNumber,
+    required this.hospitalName,
+    required this.specialtyName,
     required this.room,
     required this.expectedWindow,
   });
@@ -50,6 +52,8 @@ class VisitTicket {
   final String code;
   final String qrPayload;
   final String queueNumber;
+  final String hospitalName;
+  final String specialtyName;
   final String room;
   final String expectedWindow;
 
@@ -57,17 +61,27 @@ class VisitTicket {
     'code': code,
     'qrPayload': qrPayload,
     'queueNumber': queueNumber,
+    'hospitalName': hospitalName,
+    'specialtyName': specialtyName,
     'room': room,
     'expectedWindow': expectedWindow,
   };
 
-  factory VisitTicket.fromJson(Map<String, dynamic> json) => VisitTicket(
-    code: json['code'] as String,
-    qrPayload: json['qrPayload'] as String,
-    queueNumber: json['queueNumber'] as String,
-    room: json['room'] as String,
-    expectedWindow: json['expectedWindow'] as String,
-  );
+  factory VisitTicket.fromJson(Map<String, dynamic> json) {
+    final room = json['room'] as String;
+    return VisitTicket(
+      code: json['code'] as String,
+      qrPayload: json['qrPayload'] as String,
+      queueNumber: json['queueNumber'] as String,
+      hospitalName:
+          json['hospitalName'] as String? ??
+          'Bệnh viện CareFlow (dữ liệu mô phỏng)',
+      specialtyName:
+          json['specialtyName'] as String? ?? _legacySpecialtyName(room),
+      room: room,
+      expectedWindow: json['expectedWindow'] as String,
+    );
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -75,12 +89,28 @@ class VisitTicket {
       code == other.code &&
       qrPayload == other.qrPayload &&
       queueNumber == other.queueNumber &&
+      hospitalName == other.hospitalName &&
+      specialtyName == other.specialtyName &&
       room == other.room &&
       expectedWindow == other.expectedWindow;
 
   @override
-  int get hashCode =>
-      Object.hash(code, qrPayload, queueNumber, room, expectedWindow);
+  int get hashCode => Object.hash(
+    code,
+    qrPayload,
+    queueNumber,
+    hospitalName,
+    specialtyName,
+    room,
+    expectedWindow,
+  );
+}
+
+String _legacySpecialtyName(String room) {
+  const roomMarker = ' - Phòng';
+  final roomMarkerIndex = room.indexOf(roomMarker);
+  if (roomMarkerIndex > 0) return room.substring(0, roomMarkerIndex);
+  return 'Chuyên khoa chưa xác định (dữ liệu mô phỏng)';
 }
 
 class QueueSnapshot {

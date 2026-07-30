@@ -2,6 +2,22 @@ import 'package:careflow_patient/features/journey/domain/journey_models.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  test('round-trips explicit hospital and specialty ticket metadata', () {
+    const ticket = VisitTicket(
+      code: 'CF-APT-1',
+      qrPayload: 'careflow://visit/apt-1',
+      queueNumber: '42',
+      hospitalName: 'Bệnh viện Minh Khai',
+      specialtyName: 'Nội thần kinh',
+      room: 'Phòng khám 21',
+      expectedWindow: '10:30 - 11:30',
+    );
+
+    expect(ticket.toJson()['hospitalName'], 'Bệnh viện Minh Khai');
+    expect(ticket.toJson()['specialtyName'], 'Nội thần kinh');
+    expect(VisitTicket.fromJson(ticket.toJson()), ticket);
+  });
+
   test(
     'round-trips a laboratory patient journey without losing UTC instants',
     () {
@@ -13,6 +29,8 @@ void main() {
           code: 'CF-APT-47',
           qrPayload: 'careflow://visit/apt-47',
           queueNumber: '47',
+          hospitalName: 'Bệnh viện CareFlow (dữ liệu mô phỏng)',
+          specialtyName: 'Nội tổng quát',
           room: 'Phòng 21 - Lầu 1 khu A',
           expectedWindow: '10:30 - 11:30',
         ),

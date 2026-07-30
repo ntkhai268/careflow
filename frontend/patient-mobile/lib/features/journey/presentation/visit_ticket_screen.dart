@@ -9,16 +9,9 @@ import '../domain/journey_models.dart';
 import 'widgets/journey_status_card.dart';
 
 class VisitTicketScreen extends ConsumerWidget {
-  const VisitTicketScreen({
-    super.key,
-    required this.appointmentId,
-    this.hospitalName = 'Bệnh viện CareFlow',
-    this.specialty = 'Nội tổng quát',
-  });
+  const VisitTicketScreen({super.key, required this.appointmentId});
 
   final String appointmentId;
-  final String hospitalName;
-  final String specialty;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -36,26 +29,16 @@ class VisitTicketScreen extends ConsumerWidget {
               ? 'Hành trình khám đang chờ backend triển khai.'
               : 'Không thể tải phiếu khám.',
         ),
-        data: (value) => _TicketBody(
-          journey: value,
-          hospitalName: hospitalName,
-          specialty: specialty,
-        ),
+        data: (value) => _TicketBody(journey: value),
       ),
     );
   }
 }
 
 class _TicketBody extends StatelessWidget {
-  const _TicketBody({
-    required this.journey,
-    required this.hospitalName,
-    required this.specialty,
-  });
+  const _TicketBody({required this.journey});
 
   final PatientJourney? journey;
-  final String hospitalName;
-  final String specialty;
 
   @override
   Widget build(BuildContext context) {
@@ -78,11 +61,11 @@ class _TicketBody extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  hospitalName,
+                  ticket.hospitalName,
                   style: Theme.of(context).textTheme.titleLarge,
                 ),
                 const SizedBox(height: AppSpacing.sm),
-                Text(specialty),
+                Text(ticket.specialtyName),
                 const Divider(height: AppSpacing.xl),
                 _DetailRow(label: 'Phòng khám', value: ticket.room),
                 _DetailRow(
@@ -118,10 +101,20 @@ class _DetailRow extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.only(bottom: AppSpacing.sm),
     child: Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label),
-        Text(value, style: Theme.of(context).textTheme.titleMedium),
+        Expanded(child: Text(label)),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          flex: 2,
+          child: Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
       ],
     ),
   );

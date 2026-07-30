@@ -16,8 +16,8 @@ void main() {
       ),
     );
 
-    expect(find.text('Bệnh viện CareFlow'), findsOneWidget);
-    expect(find.text('Nội tổng quát'), findsOneWidget);
+    expect(find.text('Bệnh viện Minh Khai'), findsOneWidget);
+    expect(find.text('Nội thần kinh'), findsOneWidget);
     expect(find.text('Phòng 21'), findsOneWidget);
     expect(find.text('10:30 - 11:30'), findsOneWidget);
     expect(find.text('42'), findsOneWidget);
@@ -72,6 +72,37 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('wraps long ticket metadata without a narrow-screen overflow', (
+    tester,
+  ) async {
+    await tester.binding.setSurfaceSize(const Size(320, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    final longJourney = ticketJourney.copyWith(
+      ticket: const VisitTicket(
+        code: 'CF-APT-1',
+        qrPayload: 'careflow://visit/apt-1',
+        queueNumber: '42',
+        hospitalName: 'Bệnh viện Minh Khai',
+        specialtyName: 'Chuyên khoa Nội thần kinh và phục hồi chức năng',
+        room: 'Chuyên khoa Nội thần kinh và phục hồi chức năng - Phòng 21',
+        expectedWindow: '10:30 - 11:30',
+      ),
+    );
+
+    await tester.pumpWidget(
+      journeyApp(
+        AsyncData(longJourney),
+        const VisitTicketScreen(appointmentId: 'apt-1'),
+      ),
+    );
+
+    expect(
+      find.text('Chuyên khoa Nội thần kinh và phục hồi chức năng'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
 }
 
 Widget journeyApp(AsyncValue<PatientJourney?> journey, Widget child) =>
@@ -90,6 +121,8 @@ final ticketJourney = PatientJourney(
     code: 'CF-APT-1',
     qrPayload: 'careflow://visit/apt-1',
     queueNumber: '42',
+    hospitalName: 'Bệnh viện Minh Khai',
+    specialtyName: 'Nội thần kinh',
     room: 'Phòng 21',
     expectedWindow: '10:30 - 11:30',
   ),

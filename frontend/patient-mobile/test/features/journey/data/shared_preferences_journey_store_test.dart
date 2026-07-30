@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:careflow_patient/features/journey/data/journey_store.dart';
 import 'package:careflow_patient/features/journey/data/shared_preferences_journey_store.dart';
 import 'package:careflow_patient/features/journey/domain/journey_models.dart';
@@ -58,6 +60,47 @@ void main() {
     );
     expect((await store.load('patient-b', 'apt-1')).journey, intact);
   });
+
+  test(
+    'backfills legacy ticket metadata without discarding the journey',
+    () async {
+      const patientId = 'patient-a';
+      const appointmentId = 'apt-1';
+      final key = journeyStorageKey(patientId, appointmentId);
+      SharedPreferences.setMockInitialValues({
+        key: jsonEncode({
+          'appointmentId': appointmentId,
+          'patientId': patientId,
+          'status': JourneyStatus.ticketIssued.name,
+          'ticket': {
+            'code': 'CF-APT-1',
+            'qrPayload': 'careflow://visit/apt-1',
+            'queueNumber': '42',
+            'room': 'Nội tổng quát - Phòng 21',
+            'expectedWindow': '10:30 - 11:30',
+          },
+          'laboratoryOrders': [],
+          'timeline': [],
+          'notifications': [],
+          'updatedAt': '2026-08-18T03:30:00.000Z',
+        }),
+      });
+
+      final loaded = await SharedPreferencesJourneyStore().load(
+        patientId,
+        appointmentId,
+      );
+      final preferences = await SharedPreferences.getInstance();
+
+      expect(loaded.wasCorrupted, isFalse);
+      expect(
+        loaded.journey!.ticket!.hospitalName,
+        'Bệnh viện CareFlow (dữ liệu mô phỏng)',
+      );
+      expect(loaded.journey!.ticket!.specialtyName, 'Nội tổng quát');
+      expect(preferences.containsKey(key), isTrue);
+    },
+  );
 
   test(
     'reports failed save and delete calls from the persistence adapter',

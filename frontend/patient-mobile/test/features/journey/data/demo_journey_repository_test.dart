@@ -28,6 +28,11 @@ void main() {
       expect(first.ticket!.code, 'CF-APT-47');
       expect(first.ticket!.qrPayload, 'careflow://visit/apt-47');
       expect(first.ticket!.queueNumber, '57');
+      expect(
+        first.ticket!.hospitalName,
+        'Bệnh viện CareFlow (dữ liệu mô phỏng)',
+      );
+      expect(first.ticket!.specialtyName, 'Nội tổng quát');
       expect(second.ticket, first.ticket);
     },
   );
