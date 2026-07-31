@@ -15,6 +15,51 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 
 void main() {
+  testWidgets('home booking quick actions open the real booking flow', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1080, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    final controller = JourneyController(
+      repository: const UnavailableJourneyRepository(),
+      demoMode: true,
+    );
+    final router = GoRouter(
+      initialLocation: '/',
+      routes: [
+        GoRoute(path: '/', builder: (_, _) => const HomeScreen()),
+        GoRoute(
+          path: '/booking/step1',
+          builder: (_, _) => const Scaffold(body: Text('booking step 1')),
+        ),
+      ],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authProvider.overrideWith((ref) => HomeAuthNotifier()),
+          patientProvider.overrideWith((ref) => HomePatientNotifier(ref)),
+          journeyControllerProvider.overrideWith((ref) => controller),
+        ],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+
+    final bookingAction = find.descendant(
+      of: find.byKey(const Key('home-quick-action-0')),
+      matching: find.byType(GestureDetector),
+    );
+    tester.widget<GestureDetector>(bookingAction).onTap!();
+    await tester.pumpAndSettle();
+
+    expect(find.text('booking step 1'), findsOneWidget);
+  });
+
   testWidgets(
     'home replaces the mock appointment with the active contextual journey',
     (tester) async {

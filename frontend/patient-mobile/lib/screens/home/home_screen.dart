@@ -222,13 +222,20 @@ class _QuickActions extends StatelessWidget {
         childAspectRatio: 0.72,
       ),
       itemCount: _actions.length,
-      itemBuilder: (context, index) => QuickActionCard(
-        icon: _actions[index].$1,
-        label: _actions[index].$2,
-        showBadge: _actions[index].$3 != null,
-        badgeText: _actions[index].$3,
-        onTap: () {},
-      ),
+      itemBuilder: (context, index) {
+        final action = _actions[index];
+        final opensBooking = index < 3;
+        return QuickActionCard(
+          key: Key('home-quick-action-$index'),
+          icon: action.$1,
+          label: action.$2,
+          showBadge: action.$3 != null,
+          badgeText: action.$3,
+          onTap: opensBooking
+              ? () => context.push('/booking/step1')
+              : null,
+        );
+      },
     ),
   );
 }
