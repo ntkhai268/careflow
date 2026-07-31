@@ -60,7 +60,10 @@ public class AppointmentService {
                 .appointmentDate(request.getAppointmentDate())
                 .timeSlot(request.getTimeSlot())
                 .reason(request.getReason())
-                .status(AppointmentStatus.PENDING)
+                // Online bookings are accepted immediately. The patient app
+                // can issue the visit ticket without waiting for a manual
+                // confirmation step that does not exist in the agreed flow.
+                .status(AppointmentStatus.CONFIRMED)
                 .build();
 
         Appointment saved = appointmentRepository.save(appointment);
