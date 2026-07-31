@@ -23,8 +23,8 @@ CONFIRMED → CANCELLED
 CONFIRMED → NO_SHOW
 ```
 
-MVP tự động xác nhận khi slot còn capacity; không có bước duyệt thủ công. `PENDING` trong code hiện
-tại là khoảng cách cần sửa, không phải trạng thái business mục tiêu.
+MVP tự động xác nhận khi slot còn capacity; không có bước duyệt thủ công. Dữ liệu
+`PENDING` cũ chỉ là dữ liệu legacy, không phải trạng thái business mục tiêu.
 
 ## 3. HTTP API
 
@@ -91,6 +91,21 @@ Follow-up request:
 - Một patient không có hai appointment chưa hủy cùng slot.
 - `Idempotency-Key` bắt buộc với create từ Mobile.
 - Hết capacity trả `409`, không âm thầm chuyển slot.
+- Nếu ngày là hôm nay, `timeSlot` phải có giờ bắt đầu lớn hơn thời điểm server
+  nhận request. Ca đã bắt đầu hoặc đã qua trả `400` với thông báo tiếng Việt.
+
+### Error contract cho `POST /api/appointments`
+
+| HTTP | Trường hợp | `message` tối thiểu |
+|---|---|---|
+| `400` | Ngày/ca đã qua hoặc payload sai | `Ca khám đã qua. Vui lòng chọn ca khác` |
+| `401` | JWT thiếu/hết hạn | Không trả stack trace |
+| `403` | Patient không sở hữu hồ sơ | Không tiết lộ dữ liệu hồ sơ |
+| `409` | Cùng patient đã có appointment chưa hủy trong cùng ngày/ca | `Bệnh nhân đã có lịch khám vào ca này` |
+| `409` | Slot hết capacity | `Ca khám đã hết chỗ` |
+
+Mobile hiển thị `message` đã kiểm soát từ envelope; không hiển thị
+`DioException`, stack trace hoặc nội dung lỗi transport.
 
 ## 5. Event
 
@@ -119,6 +134,17 @@ Exchange: `appointment.exchange`.
 
 Code hiện tại publish raw `AppointmentCreated` map. Để đạt contract phải chuyển sang
 `AppointmentConfirmed` trong `EventEnvelope`.
+
+Canonical fixtures:
+
+- [`fixtures/appointment/create-confirmed.json`](fixtures/appointment/create-confirmed.json)
+- [`fixtures/appointment/create-conflict.json`](fixtures/appointment/create-conflict.json)
+- [`fixtures/appointment/appointment-confirmed-v1.json`](fixtures/appointment/appointment-confirmed-v1.json)
+- [`fixtures/appointment/appointment-cancelled-v1.json`](fixtures/appointment/appointment-cancelled-v1.json)
+
+Tại mốc 2026-07-31, create đã trả `CONFIRMED` và chặn ca đã qua. Event runtime
+vẫn là raw `AppointmentCreated`; đây là gap phải đóng trước
+`INTEGRATION_READY`, không được để Queue consumer coi raw map là contract 1.0.
 
 ## 6. Mock cho consumer
 

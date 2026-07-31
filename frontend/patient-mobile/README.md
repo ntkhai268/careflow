@@ -46,3 +46,21 @@ flutter build apk --debug --dart-define=DEMO_MODE=true
 ```
 
 APK debug được tạo tại `build/app/outputs/flutter-apk/app-debug.apk`.
+
+## Chạy hybrid demo với Gateway local và điện thoại Android thật
+
+Hướng dẫn đầy đủ nằm tại
+[`../../docs/local-patient-mobile-demo.md`](../../docs/local-patient-mobile-demo.md).
+
+Lệnh chạy nhanh sau khi năm container core đã `UP`:
+
+```text
+adb reverse tcp:8080 tcp:8080
+flutter run \
+  --dart-define=DEMO_MODE=true \
+  --dart-define=API_BASE_URL=http://127.0.0.1:8080/api \
+  --dart-define=WS_BASE_URL=ws://127.0.0.1:8080/ws
+```
+
+`DEMO_MODE=true` không mock Auth, Patient, khoa, ca khám hoặc Appointment. Không
+truyền `API_BASE_URL` sẽ dùng Gateway public mặc định, không phải Gateway local.
