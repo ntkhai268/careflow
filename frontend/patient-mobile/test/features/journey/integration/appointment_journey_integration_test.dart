@@ -166,6 +166,34 @@ void main() {
     },
   );
 
+  testWidgets('duplicate-slot 409 shows a concise Vietnamese message', (
+    tester,
+  ) async {
+    const conflictMessage = 'Bệnh nhân đã có lịch khám vào ca này';
+    final service = FakeAppointmentService(createError: conflictMessage);
+    final repository = RecordingJourneyRepository();
+    final router = testRouter(
+      BookingStep4Screen(
+        patient: patient,
+        department: Department(code: 'NHI', name: 'Nhi'),
+        date: appointment.appointmentDate,
+        timeSlot: appointment.timeSlot,
+      ),
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      integrationApp(router: router, service: service, repository: repository),
+    );
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Xác nhận đặt khám'));
+    await tester.pump();
+
+    expect(find.text(conflictMessage), findsOneWidget);
+    expect(find.textContaining('DioException'), findsNothing);
+    expect(repository.bootstrapAppointments, isEmpty);
+  });
+
   testWidgets(
     'production booking opens backend-unavailable without creating demo data',
     (tester) async {
@@ -555,7 +583,9 @@ class FakeAppointmentService extends AppointmentService {
   @override
   Future<Appointment> createAppointment(Map<String, dynamic> data) async {
     createCalls++;
-    if (createError case final error?) throw Exception(error);
+    if (createError case final error?) {
+      throw AppointmentBookingException(error);
+    }
     return createdAppointment!;
   }
 

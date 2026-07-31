@@ -14,10 +14,14 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,5 +74,23 @@ class AppointmentServiceTest {
         assertThat(response.getStatus()).isEqualTo("CONFIRMED");
         assertThat(response.getStatusDisplayName())
                 .isEqualTo(AppointmentStatus.CONFIRMED.getDisplayName());
+    }
+
+    @Test
+    void bookingRejectsASlotWhoseStartTimeHasPassedToday() {
+        Clock clock = Clock.fixed(
+                Instant.parse("2026-07-31T07:56:00Z"),
+                ZoneId.of("Asia/Bangkok"));
+        CreateAppointmentRequest request = CreateAppointmentRequest.builder()
+                .patientId(UUID.randomUUID())
+                .patientName("Nguyen Thanh Khai")
+                .department(Department.NHI.name())
+                .appointmentDate(LocalDate.of(2026, 7, 31))
+                .timeSlot("07:30-08:00")
+                .build();
+
+        assertThatThrownBy(() ->
+                AppointmentService.validateAppointmentTime(request, clock))
+                .hasMessage("Ca khám đã qua. Vui lòng chọn ca khác");
     }
 }

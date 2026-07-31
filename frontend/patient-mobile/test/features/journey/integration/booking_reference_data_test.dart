@@ -80,12 +80,40 @@ void main() {
     expect(find.text('07:30-08:00'), findsNothing);
     expect(find.widgetWithText(OutlinedButton, 'Thử lại'), findsOneWidget);
   });
+
+  testWidgets('today hides slots whose start time has already passed', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      bookingApp(
+        BookingStep3Screen(
+          patient: patient,
+          department: department,
+          currentTimeOverride: DateTime(2026, 7, 31, 14, 56),
+        ),
+        demoMode: true,
+        service: AvailableReferenceDataService(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('07:30-08:00'), findsNothing);
+    expect(find.text('14:30-15:00'), findsNothing);
+    expect(find.text('15:00-15:30'), findsOneWidget);
+    expect(find.text('Không còn ca phù hợp trong buổi này.'), findsOneWidget);
+  });
 }
 
-Widget bookingApp(Widget home, {required bool demoMode}) => ProviderScope(
+Widget bookingApp(
+  Widget home, {
+  required bool demoMode,
+  AppointmentService? service,
+}) => ProviderScope(
   overrides: [
     demoModeProvider.overrideWithValue(demoMode),
-    appointmentServiceProvider.overrideWithValue(FailingReferenceDataService()),
+    appointmentServiceProvider.overrideWithValue(
+      service ?? FailingReferenceDataService(),
+    ),
   ],
   child: MaterialApp(home: home),
 );
@@ -108,4 +136,15 @@ class FailingReferenceDataService extends AppointmentService {
   @override
   Future<List<String>> getTimeSlots() =>
       Future.error(StateError('gateway unavailable'));
+}
+
+class AvailableReferenceDataService extends AppointmentService {
+  AvailableReferenceDataService() : super(ApiService());
+
+  @override
+  Future<List<String>> getTimeSlots() async => const [
+    '07:30-08:00',
+    '14:30-15:00',
+    '15:00-15:30',
+  ];
 }

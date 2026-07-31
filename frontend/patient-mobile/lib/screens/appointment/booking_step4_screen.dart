@@ -77,7 +77,7 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Đặt khám thất bại: ${e.toString()}'),
+            content: Text(appointmentBookingErrorMessage(e)),
             backgroundColor: AppColors.error,
           ),
         );

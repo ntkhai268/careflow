@@ -18,7 +18,11 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Clock;
 import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -27,6 +31,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class AppointmentService {
+    private static final ZoneId HOSPITAL_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+
 
     private final AppointmentRepository appointmentRepository;
     private final RabbitTemplate rabbitTemplate;
@@ -36,6 +42,8 @@ public class AppointmentService {
      */
     @Transactional
     public AppointmentResponse createAppointment(CreateAppointmentRequest request) {
+        validateAppointmentTime(request, Clock.system(HOSPITAL_ZONE));
+
         // Parse department
         Department department;
         try {
@@ -177,6 +185,26 @@ public class AppointmentService {
     private Appointment findAppointmentOrThrow(UUID id) {
         return appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment", "id", id));
+    }
+
+    static void validateAppointmentTime(CreateAppointmentRequest request, Clock clock) {
+        LocalDate today = LocalDate.now(clock);
+        if (request.getAppointmentDate().isBefore(today)) {
+            throw new BusinessException(400, "Ngày khám đã qua");
+        }
+        if (!request.getAppointmentDate().isEqual(today)) {
+            return;
+        }
+
+        try {
+            String startValue = request.getTimeSlot().split("-", 2)[0].trim();
+            LocalTime slotStart = LocalTime.parse(startValue);
+            if (!LocalTime.now(clock).isBefore(slotStart)) {
+                throw new BusinessException(400, "Ca khám đã qua. Vui lòng chọn ca khác");
+            }
+        } catch (DateTimeParseException e) {
+            throw new BusinessException(400, "Định dạng ca khám không hợp lệ");
+        }
     }
 
     private void validateStatusTransition(AppointmentStatus current, AppointmentStatus next) {
