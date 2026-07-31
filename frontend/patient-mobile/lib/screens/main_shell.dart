@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/theme.dart';
+import '../features/journey/application/journey_providers.dart';
 import 'home/home_screen.dart';
 import 'profile/profile_screen.dart';
 import 'appointment/appointment_screen.dart';
@@ -8,31 +10,28 @@ import 'profile/account_screen.dart';
 
 /// Main shell with 5-tab Bottom Navigation Bar.
 /// Tabs: Trang chủ, Hồ sơ, Phiếu khám, Thông báo, Tài khoản
-class MainShell extends StatefulWidget {
+class MainShell extends ConsumerStatefulWidget {
   const MainShell({super.key});
 
   @override
-  State<MainShell> createState() => _MainShellState();
+  ConsumerState<MainShell> createState() => _MainShellState();
 }
 
-class _MainShellState extends State<MainShell> {
+class _MainShellState extends ConsumerState<MainShell> {
   int _currentIndex = 0;
-
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    ProfileScreen(),
-    AppointmentScreen(),
-    NotificationScreen(),
-    AccountScreen(),
-  ];
 
   @override
   Widget build(BuildContext context) {
+    final unreadCount = ref.watch(unreadJourneyNotificationCountProvider);
+    final screens = [
+      HomeScreen(onNotificationTap: () => _selectTab(3)),
+      const ProfileScreen(),
+      const AppointmentScreen(),
+      const NotificationScreen(),
+      const AccountScreen(),
+    ];
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: screens),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: AppColors.surface,
@@ -43,9 +42,7 @@ class _MainShellState extends State<MainShell> {
             padding: const EdgeInsets.symmetric(vertical: 4),
             child: BottomNavigationBar(
               currentIndex: _currentIndex,
-              onTap: (index) {
-                setState(() => _currentIndex = index);
-              },
+              onTap: _selectTab,
               items: [
                 _buildNavItem(
                   icon: Icons.home_outlined,
@@ -62,12 +59,18 @@ class _MainShellState extends State<MainShell> {
                   activeIcon: Icons.receipt_long_rounded,
                   label: 'Phiếu khám',
                 ),
-                _buildNavItemWithBadge(
-                  icon: Icons.notifications_outlined,
-                  activeIcon: Icons.notifications_rounded,
-                  label: 'Thông báo',
-                  badgeCount: 330,
-                ),
+                unreadCount == 0
+                    ? _buildNavItem(
+                        icon: Icons.notifications_outlined,
+                        activeIcon: Icons.notifications_rounded,
+                        label: 'Thông báo',
+                      )
+                    : _buildNavItemWithBadge(
+                        icon: Icons.notifications_outlined,
+                        activeIcon: Icons.notifications_rounded,
+                        label: 'Thông báo',
+                        badgeCount: unreadCount,
+                      ),
                 _buildNavItem(
                   icon: Icons.person_outline_rounded,
                   activeIcon: Icons.person_rounded,
@@ -79,6 +82,10 @@ class _MainShellState extends State<MainShell> {
         ),
       ),
     );
+  }
+
+  void _selectTab(int index) {
+    setState(() => _currentIndex = index);
   }
 
   BottomNavigationBarItem _buildNavItem({

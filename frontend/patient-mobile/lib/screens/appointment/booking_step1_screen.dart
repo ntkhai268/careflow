@@ -25,22 +25,36 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
   }
 
   Future<void> _loadPatients() async {
-    setState(() { _isLoading = true; });
+    setState(() {
+      _isLoading = true;
+    });
     try {
       final service = ref.read(patientServiceProvider);
       final userId = ref.read(authProvider).userId;
       if (userId == null || userId.isEmpty) {
-        setState(() { _patients = []; _isLoading = false; });
+        setState(() {
+          _patients = [];
+          _isLoading = false;
+        });
         return;
       }
       final patient = await service.getPatientByUserId(userId);
       if (patient != null) {
-        setState(() { _patients = [patient]; _isLoading = false; });
+        setState(() {
+          _patients = [patient];
+          _isLoading = false;
+        });
       } else {
-        setState(() { _patients = []; _isLoading = false; });
+        setState(() {
+          _patients = [];
+          _isLoading = false;
+        });
       }
     } catch (e) {
-      setState(() { _patients = []; _isLoading = false; });
+      setState(() {
+        _patients = [];
+        _isLoading = false;
+      });
     }
   }
 
@@ -146,8 +160,11 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.person_add_rounded,
-                size: 64, color: AppColors.primaryLight),
+            Icon(
+              Icons.person_add_rounded,
+              size: 64,
+              color: AppColors.primaryLight,
+            ),
             const SizedBox(height: AppSpacing.base),
             Text(
               'Chưa có hồ sơ bệnh nhân',
@@ -177,9 +194,9 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
       children: [
         Text(
           'Chọn người khám bệnh',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: AppSpacing.sm),
         Text(
@@ -187,13 +204,15 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         const SizedBox(height: AppSpacing.base),
-        ..._patients.map((patient) => _PatientSelectCard(
-              patient: patient,
-              onTap: () {
-                // Navigate to step 2 with selected patient
-                context.push('/booking/step2', extra: patient);
-              },
-            )),
+        ..._patients.map(
+          (patient) => _PatientSelectCard(
+            patient: patient,
+            onTap: () {
+              // Navigate to step 2 with selected patient
+              context.push('/booking/step2', extra: patient);
+            },
+          ),
+        ),
         const SizedBox(height: AppSpacing.md),
         OutlinedButton.icon(
           onPressed: () => context.push('/profile/create'),
@@ -252,9 +271,8 @@ class _PatientSelectCard extends StatelessWidget {
                     children: [
                       Text(
                         patient.fullName,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(fontWeight: FontWeight.w600),
                       ),
                       const SizedBox(height: 2),
                       if (patient.dateOfBirth != null)

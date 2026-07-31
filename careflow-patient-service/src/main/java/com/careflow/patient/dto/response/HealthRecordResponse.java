@@ -73,10 +73,10 @@ public record HealthRecordResponse(
                 .tuberculosis(record.getTuberculosis())
                 .createdAt(record.getCreatedAt())
                 .updatedAt(record.getUpdatedAt())
-                .files(record.getFiles() != null ? 
+                .files(record.getFiles() != null ?
                        record.getFiles().stream()
                              .map(f -> HealthRecordFileResponse.from(f, baseUrl))
-                             .collect(Collectors.toList()) : 
+                             .collect(Collectors.toList()) :
                        List.of())
                 .build();
     }

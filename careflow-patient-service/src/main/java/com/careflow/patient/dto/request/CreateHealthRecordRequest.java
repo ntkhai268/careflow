@@ -29,7 +29,7 @@ public class CreateHealthRecordRequest {
     private Integer pulse;
     private BigDecimal temperature;
     private Integer respiratoryRate;
-    
+
     private AllergyStatus drugAllergy;
     private AllergyStatus chemicalAllergy;
     private AllergyStatus foodAllergy;

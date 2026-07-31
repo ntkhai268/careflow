@@ -1,0 +1,16 @@
+{
+  "eventId": "86c86061-41f5-4e88-8b9d-e64bdc4416e6",
+  "eventType": "AppointmentCancelled",
+  "eventVersion": 1,
+  "aggregateId": "cf367b19-b946-41dc-969b-0d7958075b22",
+  "aggregateVersion": 2,
+  "occurredAt": "2026-07-31T05:00:00Z",
+  "producer": "appointment-service",
+  "correlationId": "916b5544-3084-4ae8-8249-fcbdc0f0dc9f",
+  "payload": {
+    "appointmentId": "cf367b19-b946-41dc-969b-0d7958075b22",
+    "patientId": "9c613831-90c2-48f6-81c5-0105c20502a1",
+    "department": "THAN_KINH",
+    "reason": "PATIENT_REQUEST"
+  }
+}

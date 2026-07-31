@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../config/theme.dart';
+import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
 import '../../models/patient.dart';
 import '../../services/appointment_service.dart';
@@ -43,7 +44,7 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
       final service = ref.read(appointmentServiceProvider);
       final dateStr = DateFormat('yyyy-MM-dd').format(widget.date);
 
-      await service.createAppointment({
+      final appointment = await service.createAppointment({
         'patientId': widget.patient.id,
         'patientName': widget.patient.fullName,
         'department': widget.department.code,
@@ -54,15 +55,29 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
             : null,
       });
 
+      if (appointment.allowsActiveJourney) {
+        try {
+          await ref
+              .read(journeyControllerProvider.notifier)
+              .bootstrap(
+                appointment: appointment,
+                patientId: widget.patient.id,
+              );
+        } catch (_) {
+          // The real booking remains successful when the journey backend is
+          // unavailable. The ticket screen renders the controller's real error.
+        }
+      }
+
       if (mounted) {
-        _showSuccessDialog();
+        _showSuccessDialog(appointment);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Đặt khám thất bại: ${e.toString()}'),
+            content: Text(appointmentBookingErrorMessage(e)),
             backgroundColor: AppColors.error,
           ),
         );
@@ -70,7 +85,8 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
     }
   }
 
-  void _showSuccessDialog() {
+  void _showSuccessDialog(Appointment appointment) {
+    final canOpenJourney = appointment.allowsActiveJourney;
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -106,7 +122,10 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
               ),
               const SizedBox(height: AppSpacing.sm),
               Text(
-                'Lịch khám của bạn đã được ghi nhận.\nVui lòng chờ xác nhận.',
+                canOpenJourney
+                    ? 'Lịch khám của bạn đã được ghi nhận.\n'
+                          'Phiếu khám đã sẵn sàng để theo dõi.'
+                    : 'Lịch khám đang chờ xác nhận.',
                 textAlign: TextAlign.center,
                 style: Theme.of(ctx).textTheme.bodyMedium,
               ),
@@ -115,12 +134,12 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(ctx).pop(); // close dialog
-                    // Pop all booking screens back to appointment list
-                    // Return patientId so appointment list can reload
-                    context.go('/');
+                    Navigator.of(ctx).pop();
+                    if (canOpenJourney) {
+                      context.go('/journey/${appointment.id}/ticket');
+                    }
                   },
-                  child: const Text('Về trang chủ'),
+                  child: Text(canOpenJourney ? 'Xem phiếu khám' : 'Hoàn tất'),
                 ),
               ),
             ],
@@ -160,16 +179,18 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                       color: AppColors.surface,
                       borderRadius: BorderRadius.circular(AppRadius.lg),
                       boxShadow: AppShadows.card,
-                      border: Border.all(color: AppColors.cardBorder, width: 0.5),
+                      border: Border.all(
+                        color: AppColors.cardBorder,
+                        width: 0.5,
+                      ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           'Thông tin đặt khám',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w700,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
                         ),
                         const SizedBox(height: AppSpacing.base),
                         _buildInfoRow(
@@ -224,12 +245,19 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.info_outline_rounded, color: AppColors.warning, size: 20),
+                        Icon(
+                          Icons.info_outline_rounded,
+                          color: AppColors.warning,
+                          size: 20,
+                        ),
                         const SizedBox(width: AppSpacing.sm),
                         Expanded(
                           child: Text(
                             'Vui lòng đến trước giờ hẹn 15 phút để làm thủ tục check-in.',
-                            style: TextStyle(fontSize: 13, color: AppColors.textPrimary),
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: AppColors.textPrimary,
+                            ),
                           ),
                         ),
                       ],
@@ -247,7 +275,10 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
 
   Widget _buildStepIndicator() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base, vertical: AppSpacing.md),
+      padding: const EdgeInsets.symmetric(
+        horizontal: AppSpacing.base,
+        vertical: AppSpacing.md,
+      ),
       color: AppColors.surface,
       child: Row(
         children: [
@@ -267,10 +298,27 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
     return Expanded(
       child: Column(
         children: [
-          Container(width: 28, height: 28, decoration: const BoxDecoration(color: AppColors.success, shape: BoxShape.circle),
-            child: const Center(child: Icon(Icons.check, size: 16, color: Colors.white))),
+          Container(
+            width: 28,
+            height: 28,
+            decoration: const BoxDecoration(
+              color: AppColors.success,
+              shape: BoxShape.circle,
+            ),
+            child: const Center(
+              child: Icon(Icons.check, size: 16, color: Colors.white),
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.success, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.success,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -280,17 +328,46 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
     return Expanded(
       child: Column(
         children: [
-          Container(width: 28, height: 28, decoration: const BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-            child: Center(child: Text('$number', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)))),
+          Container(
+            width: 28,
+            height: 28,
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '$number',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
   }
 
   Widget _buildStepLineDone() {
-    return Container(width: 20, height: 2, color: AppColors.success, margin: const EdgeInsets.only(bottom: 16));
+    return Container(
+      width: 20,
+      height: 2,
+      color: AppColors.success,
+      margin: const EdgeInsets.only(bottom: 16),
+    );
   }
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
@@ -301,9 +378,19 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            Text(
+              label,
+              style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            ),
             const SizedBox(height: 2),
-            Text(value, style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
           ],
         ),
       ],
@@ -313,7 +400,10 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
   Widget _buildBottomBar() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.base),
-      decoration: BoxDecoration(color: AppColors.surface, boxShadow: AppShadows.bottomNav),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        boxShadow: AppShadows.bottomNav,
+      ),
       child: SafeArea(
         child: SizedBox(
           width: double.infinity,
@@ -321,7 +411,14 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
           child: ElevatedButton(
             onPressed: _isSubmitting ? null : _submitAppointment,
             child: _isSubmitting
-                ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : const Text('Xác nhận đặt khám'),
           ),
         ),

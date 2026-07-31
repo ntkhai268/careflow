@@ -7,7 +7,7 @@ spring:
   application:
     name: identity-service
   datasource:
-    url: ${IDENTITY_DB_URL:jdbc:postgresql://localhost:5432/careflow_identity}
+    url: ${IDENTITY_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_identity}
     username: ${IDENTITY_DB_USERNAME:careflow}
     password: ${IDENTITY_DB_PASSWORD:careflow}
   jpa:

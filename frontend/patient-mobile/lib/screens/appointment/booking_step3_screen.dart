@@ -6,16 +6,19 @@ import '../../config/theme.dart';
 import '../../models/appointment.dart';
 import '../../models/patient.dart';
 import '../../services/appointment_service.dart';
+import '../../utils/appointment_slot.dart';
 
 /// Booking Step 3: Choose date and time slot
 class BookingStep3Screen extends ConsumerStatefulWidget {
   final Patient patient;
   final Department department;
+  final DateTime? currentTimeOverride;
 
   const BookingStep3Screen({
     super.key,
     required this.patient,
     required this.department,
+    this.currentTimeOverride,
   });
 
   @override
@@ -23,14 +26,16 @@ class BookingStep3Screen extends ConsumerStatefulWidget {
 }
 
 class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   String? _selectedSlot;
   List<String> _timeSlots = [];
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
+    _selectedDate = _now;
     // If selected date is today but past working hours, default to tomorrow
     if (_selectedDate.hour >= 17) {
       _selectedDate = _selectedDate.add(const Duration(days: 1));
@@ -39,32 +44,63 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
   }
 
   Future<void> _loadTimeSlots() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final service = ref.read(appointmentServiceProvider);
       final slots = await service.getTimeSlots();
-      setState(() { _timeSlots = slots; _isLoading = false; });
-    } catch (e) {
-      // Fallback
+      if (!mounted) return;
       setState(() {
-        _timeSlots = [
-          '07:30-08:00', '08:00-08:30', '08:30-09:00', '09:00-09:30',
-          '09:30-10:00', '10:00-10:30', '10:30-11:00', '11:00-11:30',
-          '13:30-14:00', '14:00-14:30', '14:30-15:00', '15:00-15:30',
-          '15:30-16:00', '16:00-16:30',
-        ];
+        _timeSlots = slots;
+        if (_availableSlotsFor(_selectedDate).isEmpty &&
+            _isSameDay(_selectedDate, _now)) {
+          _selectedDate = DateTime(
+            _selectedDate.year,
+            _selectedDate.month,
+            _selectedDate.day + 1,
+          );
+        }
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _timeSlots = [];
+        _error = 'Không thể tải danh sách ca khám. Vui lòng thử lại.';
         _isLoading = false;
       });
     }
   }
 
-  List<String> get _morningSlots =>
-      _timeSlots.where((s) => s.compareTo('12:00') < 0).toList();
+  DateTime get _now => widget.currentTimeOverride ?? DateTime.now();
 
-  List<String> get _afternoonSlots =>
-      _timeSlots.where((s) => s.compareTo('12:00') >= 0).toList();
+  List<String> _availableSlotsFor(DateTime date) => _timeSlots
+      .where(
+        (slot) => isAppointmentSlotAvailable(
+          selectedDate: date,
+          slot: slot,
+          now: _now,
+        ),
+      )
+      .toList();
+
+  List<String> get _morningSlots => _availableSlotsFor(
+    _selectedDate,
+  ).where((s) => s.compareTo('12:00') < 0).toList();
+
+  List<String> get _afternoonSlots => _availableSlotsFor(
+    _selectedDate,
+  ).where((s) => s.compareTo('12:00') >= 0).toList();
+
+  bool _isSameDay(DateTime left, DateTime right) =>
+      left.year == right.year &&
+      left.month == right.month &&
+      left.day == right.day;
 
   Future<void> _pickDate() async {
-    final now = DateTime.now();
+    final now = _now;
     final picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
@@ -74,9 +110,9 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-              primary: AppColors.primary,
-            ),
+            colorScheme: Theme.of(
+              context,
+            ).colorScheme.copyWith(primary: AppColors.primary),
           ),
           child: child!,
         );
@@ -103,6 +139,8 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? _TimeSlotLoadError(message: _error!, onRetry: _loadTimeSlots)
           : Column(
               children: [
                 _buildStepIndicator(),
@@ -116,9 +154,17 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
                         const SizedBox(height: AppSpacing.lg),
                         _buildDatePicker(),
                         const SizedBox(height: AppSpacing.xl),
-                        _buildTimeSlotsSection('Buổi sáng', _morningSlots, Icons.wb_sunny_rounded),
+                        _buildTimeSlotsSection(
+                          'Buổi sáng',
+                          _morningSlots,
+                          Icons.wb_sunny_rounded,
+                        ),
                         const SizedBox(height: AppSpacing.lg),
-                        _buildTimeSlotsSection('Buổi chiều', _afternoonSlots, Icons.wb_twilight_rounded),
+                        _buildTimeSlotsSection(
+                          'Buổi chiều',
+                          _afternoonSlots,
+                          Icons.wb_twilight_rounded,
+                        ),
                       ],
                     ),
                   ),
@@ -155,7 +201,8 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
       child: Column(
         children: [
           Container(
-            width: 28, height: 28,
+            width: 28,
+            height: 28,
             decoration: BoxDecoration(
               color: completed ? AppColors.success : AppColors.cardBorder,
               shape: BoxShape.circle,
@@ -163,11 +210,26 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
             child: Center(
               child: completed
                   ? const Icon(Icons.check, size: 16, color: Colors.white)
-                  : Text('$number', style: TextStyle(color: AppColors.textHint, fontSize: 13, fontWeight: FontWeight.w600)),
+                  : Text(
+                      '$number',
+                      style: TextStyle(
+                        color: AppColors.textHint,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
             ),
           ),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 11, color: completed ? AppColors.success : AppColors.textHint, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: completed ? AppColors.success : AppColors.textHint,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -178,19 +240,45 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
       child: Column(
         children: [
           Container(
-            width: 28, height: 28,
-            decoration: BoxDecoration(color: AppColors.primary, shape: BoxShape.circle),
-            child: Center(child: Text('$number', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600))),
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text(
+                '$number',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
           ),
           const SizedBox(height: 4),
-          Text(label, style: TextStyle(fontSize: 11, color: AppColors.primary, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
   }
 
   Widget _buildStepLine(bool completed) {
-    return Container(width: 20, height: 2, color: completed ? AppColors.success : AppColors.cardBorder, margin: const EdgeInsets.only(bottom: 16));
+    return Container(
+      width: 20,
+      height: 2,
+      color: completed ? AppColors.success : AppColors.cardBorder,
+      margin: const EdgeInsets.only(bottom: 16),
+    );
   }
 
   Widget _buildInfoBar() {
@@ -202,16 +290,31 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
       ),
       child: Row(
         children: [
-          Icon(Appointment.departmentIcon(widget.department.code), color: AppColors.primary, size: 20),
+          Icon(
+            Appointment.departmentIcon(widget.department.code),
+            color: AppColors.primary,
+            size: 20,
+          ),
           const SizedBox(width: AppSpacing.sm),
-          Text(widget.department.name, style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.w600, fontSize: 13)),
+          Text(
+            widget.department.name,
+            style: TextStyle(
+              color: AppColors.primary,
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(width: AppSpacing.sm),
           Text('•', style: TextStyle(color: AppColors.textHint)),
           const SizedBox(width: AppSpacing.sm),
           Icon(Icons.person_rounded, color: AppColors.primary, size: 16),
           const SizedBox(width: 4),
           Expanded(
-            child: Text(widget.patient.fullName, style: TextStyle(color: AppColors.primary, fontSize: 13), overflow: TextOverflow.ellipsis),
+            child: Text(
+              widget.patient.fullName,
+              style: TextStyle(color: AppColors.primary, fontSize: 13),
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -223,7 +326,12 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Ngày khám', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+        Text(
+          'Ngày khám',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+        ),
         const SizedBox(height: AppSpacing.sm),
         InkWell(
           onTap: _pickDate,
@@ -237,15 +345,25 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.calendar_today_rounded, color: AppColors.primary, size: 22),
+                Icon(
+                  Icons.calendar_today_rounded,
+                  color: AppColors.primary,
+                  size: 22,
+                ),
                 const SizedBox(width: AppSpacing.md),
                 Expanded(
                   child: Text(
                     dateStr,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-                Icon(Icons.edit_calendar_rounded, color: AppColors.primary, size: 20),
+                Icon(
+                  Icons.edit_calendar_rounded,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
               ],
             ),
           ),
@@ -254,7 +372,11 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
     );
   }
 
-  Widget _buildTimeSlotsSection(String title, List<String> slots, IconData icon) {
+  Widget _buildTimeSlotsSection(
+    String title,
+    List<String> slots,
+    IconData icon,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -262,38 +384,55 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
           children: [
             Icon(icon, color: AppColors.warning, size: 20),
             const SizedBox(width: AppSpacing.sm),
-            Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              title,
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+            ),
           ],
         ),
         const SizedBox(height: AppSpacing.md),
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: slots.map((slot) {
-            final isSelected = _selectedSlot == slot;
-            return ChoiceChip(
-              label: Text(slot),
-              selected: isSelected,
-              onSelected: (selected) {
-                setState(() { _selectedSlot = selected ? slot : null; });
-              },
-              selectedColor: AppColors.primary,
-              backgroundColor: AppColors.surface,
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : AppColors.textPrimary,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                fontSize: 13,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(AppRadius.sm),
-                side: BorderSide(
-                  color: isSelected ? AppColors.primary : AppColors.cardBorder,
+        if (slots.isEmpty)
+          Text(
+            'Không còn ca phù hợp trong buổi này.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
+          )
+        else
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: slots.map((slot) {
+              final isSelected = _selectedSlot == slot;
+              return ChoiceChip(
+                label: Text(slot),
+                selected: isSelected,
+                onSelected: (selected) {
+                  setState(() {
+                    _selectedSlot = selected ? slot : null;
+                  });
+                },
+                selectedColor: AppColors.primary,
+                backgroundColor: AppColors.surface,
+                labelStyle: TextStyle(
+                  color: isSelected ? Colors.white : AppColors.textPrimary,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                  fontSize: 13,
                 ),
-              ),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            );
-          }).toList(),
-        ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.sm),
+                  side: BorderSide(
+                    color: isSelected
+                        ? AppColors.primary
+                        : AppColors.cardBorder,
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              );
+            }).toList(),
+          ),
       ],
     );
   }
@@ -311,12 +450,30 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
           child: ElevatedButton(
             onPressed: _selectedSlot != null
                 ? () {
-                    context.push('/booking/step4', extra: {
-                      'patient': widget.patient,
-                      'department': widget.department,
-                      'date': _selectedDate,
-                      'timeSlot': _selectedSlot,
-                    });
+                    if (!isAppointmentSlotAvailable(
+                      selectedDate: _selectedDate,
+                      slot: _selectedSlot!,
+                      now: _now,
+                    )) {
+                      setState(() => _selectedSlot = null);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            'Ca khám này đã qua. Vui lòng chọn ca khác.',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    context.push(
+                      '/booking/step4',
+                      extra: {
+                        'patient': widget.patient,
+                        'department': widget.department,
+                        'date': _selectedDate,
+                        'timeSlot': _selectedSlot,
+                      },
+                    );
                   }
                 : null,
             child: const Text('Tiếp tục'),
@@ -325,4 +482,28 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
       ),
     );
   }
+}
+
+class _TimeSlotLoadError extends StatelessWidget {
+  const _TimeSlotLoadError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off_rounded, color: AppColors.error, size: 48),
+          const SizedBox(height: AppSpacing.md),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: AppSpacing.md),
+          OutlinedButton(onPressed: onRetry, child: const Text('Thử lại')),
+        ],
+      ),
+    ),
+  );
 }

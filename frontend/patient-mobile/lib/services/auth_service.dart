@@ -79,9 +79,6 @@ class AuthService {
     }
 
     try {
-      print('🔐 [AUTH] baseUrl: ${ApiConfig.baseUrl}');
-      print('🔐 [AUTH] login endpoint: ${ApiConfig.authLogin}');
-      print('🔐 [AUTH] full URL: ${ApiConfig.baseUrl}${ApiConfig.authLogin}');
       final response = await _apiService.post(
         ApiConfig.authLogin,
         data: {'usernameOrEmail': usernameOrEmail, 'password': password},
@@ -94,7 +91,6 @@ class AuthService {
       }
       return authResponse;
     } catch (e) {
-      print('❌ [AUTH] login error: $e');
       throw Exception(_messageFrom(e));
     }
   }
@@ -110,25 +106,12 @@ class AuthService {
     }
 
     try {
-      print('📝 [AUTH] register URL: ${ApiConfig.baseUrl}${ApiConfig.authRegister}');
-      print('📝 [AUTH] register data: username=$username, email=$email');
-      final regResponse = await _apiService.post(
+      await _apiService.post(
         ApiConfig.authRegister,
         data: {'username': username, 'email': email, 'password': password},
       );
-      print('✅ [AUTH] register success: ${regResponse.statusCode}');
       return await login(username, password);
     } catch (e) {
-      if (e is DioException) {
-        print('❌ [AUTH] register status: ${e.response?.statusCode}');
-        print('❌ [AUTH] register headers: ${e.response?.headers.map}');
-        print('❌ [AUTH] register body type: ${e.response?.data?.runtimeType}');
-        print('❌ [AUTH] register body: ${e.response?.data}');
-        print('❌ [AUTH] request headers: ${e.requestOptions.headers}');
-        print('❌ [AUTH] request URL: ${e.requestOptions.uri}');
-      } else {
-        print('❌ [AUTH] register error: $e');
-      }
       throw Exception(_messageFrom(e));
     }
   }
