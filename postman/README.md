@@ -26,7 +26,8 @@ Nếu gọi từ thiết bị khác, đổi `baseUrl` thành IP máy chạy Dock
 5. Chờ 1–2 giây cho RabbitMQ.
 6. **Queue / Lấy Visit Ticket** — tự lưu `ticketId`, `qrToken`.
 7. Điền `staffToken`, chạy **Staff check-in QR**.
-8. Điền `doctorToken`, chạy dashboard hoặc call-next.
+8. Điền `doctorToken`, chạy dashboard; dùng **Doctor gọi một bệnh nhân được
+   chọn** với `queueEntryId`, hoặc dùng **Doctor gọi nhanh lượt được gợi ý**.
 
 ## Token clinical staff
 
@@ -42,5 +43,7 @@ Admin có thể dùng request **Admin gán role user**, sau đó đăng nhập l
 
 - Visit Ticket được tạo bất đồng bộ, vì vậy GET ngay sau đặt lịch có thể trả 404 trong khoảng ngắn.
 - `call-next` có thể trả 204 nếu chưa đến giờ hẹn.
+- `recommendedNext` chỉ là gợi ý; API `/entries/{entryId}/call` gọi đúng hàng
+  bác sĩ chọn và không chặn vì phòng đã có lượt `CALLED`/`IN_PROGRESS`.
 - Các request hủy lịch, xóa hồ sơ và cập nhật config có thay đổi dữ liệu thật.
 - Collection chỉ chứa API có controller trong code hiện tại. Consultation, Prescription, Laboratory, EMR, Notification và AI chưa có HTTP controller.

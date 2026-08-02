@@ -35,6 +35,7 @@ public class QueueEntry {
     @Column(name = "priority_reason_code", length = 50) private String priorityReasonCode;
     @Column(name = "eligible_since_at") private Instant eligibleSinceAt;
     @Column(name = "called_at") private Instant calledAt;
+    @Column(name = "called_by_user_id") private UUID calledByUserId;
     @Column(name = "call_attempts", nullable = false, columnDefinition = "smallint") private int callAttempts;
     @Column(name = "started_at") private Instant startedAt;
     @Column(name = "completed_at") private Instant completedAt;

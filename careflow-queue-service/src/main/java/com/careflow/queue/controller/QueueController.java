@@ -93,13 +93,27 @@ public class QueueController {
     @PostMapping("/rooms/{roomId}/call-next")
     public ResponseEntity<ApiResponse<QueueEntryResponse>> callNextInRoom(
             @PathVariable String roomId,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
             @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
             @RequestHeader(value = AppConstants.HEADER_IDEMPOTENCY_KEY, required = false) String idempotencyKey,
             @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
         requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
-        Optional<QueueEntryResponse> result = queueService.callNextInRoom(roomId, idempotencyKey, correlationId);
+        Optional<QueueEntryResponse> result = queueService.callNextInRoom(
+                roomId, userId, idempotencyKey, correlationId);
         return result.map(entry -> ResponseEntity.ok(ApiResponse.success("Đã gọi bệnh nhân tiếp theo", entry)))
                 .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    @PostMapping("/entries/{entryId}/call")
+    public ApiResponse<QueueEntryResponse> call(
+            @PathVariable UUID entryId,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
+            @RequestHeader(value = AppConstants.HEADER_IDEMPOTENCY_KEY, required = false) String idempotencyKey,
+            @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
+        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success("Đã gọi bệnh nhân", queueService.call(
+                entryId, userId, idempotencyKey, correlationId));
     }
 
     @GetMapping("/departments/{departmentId}/dashboard")
@@ -111,11 +125,13 @@ public class QueueController {
 
     @PostMapping("/departments/{departmentId}/next")
     public ResponseEntity<ApiResponse<QueueEntryResponse>> next(@PathVariable UUID departmentId,
+                                                                @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
                                                                 @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                                 @RequestHeader(value = AppConstants.HEADER_IDEMPOTENCY_KEY, required = false) String idempotencyKey,
                                                                 @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
         requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
-        Optional<QueueEntryResponse> result = queueService.callNext(departmentId, idempotencyKey, correlationId);
+        Optional<QueueEntryResponse> result = queueService.callNext(
+                departmentId, userId, idempotencyKey, correlationId);
         return result.map(entry -> ResponseEntity.ok(ApiResponse.success("Đã gọi bệnh nhân tiếp theo", entry)))
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }

@@ -1024,7 +1024,45 @@
           }
         },
         {
-          "name": "07 - Doctor gọi lượt tiếp theo",
+          "name": "07 - Doctor gọi một bệnh nhân được chọn",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/entries/{{queueEntryId}}/call",
+            "description": "Nút Gọi trên từng hàng của Doctor Web. Có thể gọi bất kỳ entry đang CHECKED_IN; recommendedNext chỉ là gợi ý."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Gọi bệnh nhân thành công', () => pm.expect(pm.response.code).to.eql(200));",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.queueStatus).to.eql('CALLED');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 - Doctor gọi nhanh lượt được gợi ý",
           "request": {
             "method": "POST",
             "header": [
@@ -1045,7 +1083,7 @@
               ]
             },
             "url": "{{baseUrl}}/api/queues/rooms/{{roomId}}/call-next",
-            "description": "Trả 204 nếu chưa đến giờ lịch hẹn hoặc không có bệnh nhân đủ điều kiện."
+            "description": "Nút gọi nhanh recommendedNext. Trả 204 nếu chưa đến giờ lịch hẹn hoặc không có bệnh nhân đủ điều kiện."
           },
           "event": [
             {
@@ -1064,7 +1102,7 @@
           ]
         },
         {
-          "name": "08 - Dashboard theo department",
+          "name": "09 - Dashboard theo department",
           "request": {
             "method": "GET",
             "header": [],
@@ -1083,7 +1121,7 @@
           }
         },
         {
-          "name": "09 - Gọi tiếp theo theo department (legacy)",
+          "name": "10 - Gọi tiếp theo theo department (legacy)",
           "request": {
             "method": "POST",
             "header": [
@@ -1108,7 +1146,7 @@
           }
         },
         {
-          "name": "10 - Recall bệnh nhân",
+          "name": "11 - Recall bệnh nhân",
           "request": {
             "method": "POST",
             "header": [],
@@ -1127,7 +1165,7 @@
           }
         },
         {
-          "name": "11 - Đánh dấu lỡ lượt",
+          "name": "12 - Đánh dấu lỡ lượt",
           "request": {
             "method": "POST",
             "header": [],
@@ -1146,7 +1184,7 @@
           }
         },
         {
-          "name": "12 - Xếp lại hàng đợi",
+          "name": "13 - Xếp lại hàng đợi",
           "request": {
             "method": "POST",
             "header": [
@@ -1179,7 +1217,7 @@
           }
         },
         {
-          "name": "13 - Bắt đầu khám",
+          "name": "14 - Bắt đầu khám",
           "request": {
             "method": "POST",
             "header": [],
@@ -1198,7 +1236,7 @@
           }
         },
         {
-          "name": "14 - Hoàn tất khám",
+          "name": "15 - Hoàn tất khám",
           "request": {
             "method": "POST",
             "header": [],
@@ -1217,7 +1255,7 @@
           }
         },
         {
-          "name": "15 - Manual intake",
+          "name": "16 - Manual intake",
           "request": {
             "method": "POST",
             "header": [
@@ -1270,7 +1308,7 @@
           ]
         },
         {
-          "name": "16 - Lấy cấu hình Queue",
+          "name": "17 - Lấy cấu hình Queue",
           "request": {
             "method": "GET",
             "header": [],
@@ -1289,7 +1327,7 @@
           }
         },
         {
-          "name": "17 - Cập nhật cấu hình Queue",
+          "name": "18 - Cập nhật cấu hình Queue",
           "request": {
             "method": "PUT",
             "header": [

@@ -216,8 +216,8 @@ Bệnh nhân chỉ xem toa `CONFIRMED` hoặc `DISPENSED`.
 10. Order đủ điều kiện tự tạo lượt cận lâm sàng; bệnh nhân không check-in lại.
 11. Khi đủ kết quả, lượt `RESULT_REVIEW` vẫn thuộc consultation cũ, không tạo
    Appointment mới và chỉ vào active queue sau khi bệnh nhân xác nhận đã quay lại.
-12. Hệ thống chỉ đề xuất; bác sĩ chủ động bấm gọi. Queue Service tính lại và claim
-   lượt nguyên tử trước khi cập nhật `lastServedLane` và phát `PatientCalled`.
+12. Hệ thống chỉ đề xuất; bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ lượt
+   `CHECKED_IN` nào. Queue Service ghi người gọi và phát `PatientCalled`.
 13. Doctor Web có thể suy ra `roomId` từ khoa của bác sĩ, nhưng Queue Service vẫn
     phải xác minh bác sĩ có quyền truy cập phòng trên URL.
 14. Chỉ bác sĩ được phân công mới cập nhật consultation và xác nhận toa.

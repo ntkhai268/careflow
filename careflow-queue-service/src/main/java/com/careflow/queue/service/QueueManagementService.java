@@ -21,6 +21,7 @@ import java.util.*;
 public class QueueManagementService {
     private static final String COMMAND_MANUAL_INTAKE = "MANUAL_INTAKE";
     private static final String COMMAND_CALL_NEXT = "CALL_NEXT";
+    private static final String COMMAND_CALL_ENTRY = "CALL_ENTRY";
     private static final int MAX_CALL_ATTEMPTS = 3;
     private static final Set<PriorityLevel> MANUAL_LEVELS = EnumSet.of(
             PriorityLevel.EMERGENCY, PriorityLevel.PRIORITY, PriorityLevel.WALK_IN);
@@ -211,8 +212,9 @@ public class QueueManagementService {
 
     @Transactional
     public Optional<QueueEntryResponse> callNextInRoom(
-            String roomId, String idempotencyKey, String correlationId) {
-        return callNext(requireRoomConfig(roomId).getDepartmentId(), idempotencyKey, correlationId);
+            String roomId, UUID calledByUserId, String idempotencyKey, String correlationId) {
+        return callNext(requireRoomConfig(roomId).getDepartmentId(), calledByUserId,
+                idempotencyKey, correlationId);
     }
 
     @Transactional(readOnly = true)
@@ -244,14 +246,26 @@ public class QueueManagementService {
             int wait = projectedWaitMinutes(now, scheduled.projectedStartAt());
             response.add(response(entry, config, position, wait));
         }
+        QueueEntryResponse recommendedNext = null;
+        List<QueueScheduleSimulator.ScheduledEntry> recommendationSchedule =
+                QueueScheduleSimulator.schedule(config, date, waiting, now);
+        if (!recommendationSchedule.isEmpty()) {
+            QueueScheduleSimulator.ScheduledEntry recommended = recommendationSchedule.getFirst();
+            if (!recommended.projectedStartAt().isAfter(now)) {
+                QueueEntry entry = waitingById.get(recommended.entryId());
+                recommendedNext = response(entry, config, 1,
+                        projectedWaitMinutes(now, recommended.projectedStartAt()));
+            }
+        }
         return new QueueDashboardResponse(departmentId, config.getDepartmentNameSnapshot(),
-                config.getRoomCode(), date, response);
+                config.getRoomCode(), date, response, recommendedNext);
     }
 
     @Transactional
-    public Optional<QueueEntryResponse> callNext(UUID departmentId, String idempotencyKey, String correlationId) {
+    public Optional<QueueEntryResponse> callNext(UUID departmentId, UUID calledByUserId,
+                                                  String idempotencyKey, String correlationId) {
         String normalizedKey = requireIdempotencyKey(idempotencyKey);
-        String requestFingerprint = fingerprint(departmentId);
+        String requestFingerprint = fingerprint(departmentId, calledByUserId);
         QueueConfig config = requireLockedConfig(departmentId);
         LocalDate date = businessDate();
         if (!date.equals(config.getSchedulerDate())) config.resetScheduler(date);
@@ -266,12 +280,6 @@ public class QueueManagementService {
                     .orElseThrow(() -> new IllegalStateException("Idempotency result entry is missing"));
             return Optional.of(response(replayed, config));
         }
-        if (entries.findFirstByQueueConfigIdAndQueueDateAndStatusInOrderByCalledAtAsc(
-                config.getId(), date, SERVING_STATUSES).isPresent()) {
-            throw new BusinessException(409,
-                    "Khoa đang có bệnh nhân ở trạng thái CALLED hoặc IN_PROGRESS; hãy hoàn tất hoặc đánh dấu lỡ lượt trước");
-        }
-
         List<QueueEntry> waiting = entries
                 .findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                         config.getId(), date, Set.of(QueueStatus.CHECKED_IN));
@@ -295,14 +303,47 @@ public class QueueManagementService {
 
         candidate.setStatus(QueueStatus.CALLED);
         candidate.setCalledAt(now);
+        candidate.setCalledByUserId(calledByUserId);
         candidate.setCallAttempts(1);
         entries.saveAndFlush(candidate);
         configs.save(config);
         events.append(candidate, config, "PatientCalled", AppConstants.RK_QUEUE_CALLED,
-                correlationId, Map.of("callAttempt", candidate.getCallAttempts()));
+                correlationId, Map.of(
+                        "callAttempt", candidate.getCallAttempts(),
+                        "calledByUserId", calledByUserId));
         recordCommand(COMMAND_CALL_NEXT, departmentId, normalizedKey, requestFingerprint, candidate);
         appendNearTurnEvents(config, date, correlationId);
         return Optional.of(response(candidate, config));
+    }
+
+    @Transactional
+    public QueueEntryResponse call(UUID entryId, UUID calledByUserId,
+                                   String idempotencyKey, String correlationId) {
+        String normalizedKey = requireIdempotencyKey(idempotencyKey);
+        String requestFingerprint = fingerprint(entryId, calledByUserId);
+        Optional<QueueEntryResponse> replay = replay(
+                COMMAND_CALL_ENTRY, entryId, normalizedKey, requestFingerprint);
+        if (replay.isPresent()) return replay.get();
+
+        QueueEntry entry = requireEntryForUpdate(entryId);
+        if (entry.getStatus() != QueueStatus.CHECKED_IN) {
+            throw invalidTransition(entry, QueueStatus.CALLED);
+        }
+        QueueConfig config = requireConfig(entry.getDepartmentId());
+        Instant now = Instant.now();
+        entry.setStatus(QueueStatus.CALLED);
+        entry.setCalledAt(now);
+        entry.setCalledByUserId(calledByUserId);
+        entry.setCallAttempts(1);
+        entries.saveAndFlush(entry);
+        events.append(entry, config, "PatientCalled", AppConstants.RK_QUEUE_CALLED,
+                correlationId, Map.of(
+                        "callAttempt", entry.getCallAttempts(),
+                        "calledByUserId", calledByUserId,
+                        "selectedByDoctor", true));
+        recordCommand(COMMAND_CALL_ENTRY, entryId, normalizedKey, requestFingerprint, entry);
+        appendNearTurnEvents(config, entry.getQueueDate(), correlationId);
+        return response(entry, config);
     }
 
     @Transactional
@@ -365,6 +406,7 @@ public class QueueManagementService {
         }
         entry.setStatus(QueueStatus.CHECKED_IN);
         entry.setCalledAt(null);
+        entry.setCalledByUserId(null);
         entry.setCallAttempts(0);
         entry.setNearTurnNotifiedAt(null);
         entries.saveAndFlush(entry);

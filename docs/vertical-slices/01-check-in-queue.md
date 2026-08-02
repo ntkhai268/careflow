@@ -12,7 +12,7 @@ Patient đặt lịch
   → Mobile hiển thị phiếu thật
   → STAFF/ADMIN quét QR tại đúng phòng
   → Queue Entry chuyển CHECKED_IN và vào active queue
-  → Doctor đọc active queue và bấm call-next
+  → Doctor đọc active queue, xem recommendedNext và bấm Gọi tại một phần tử
   → Mobile tải lại và thấy CALLED
 ```
 
@@ -40,7 +40,8 @@ RabbitMQ redelivery không tạo phiếu trùng.
 | `POST /api/queues/check-in` | `STAFF`, `ADMIN` |
 | `GET /api/queues/patients/{patientId}/current` | Chính chủ, clinical staff |
 | `GET /api/queues/rooms/{roomId}/active` | `DOCTOR`, `STAFF`, `ADMIN` |
-| `POST /api/queues/rooms/{roomId}/call-next` | `DOCTOR`, `ADMIN` |
+| `POST /api/queues/entries/{entryId}/call` | `DOCTOR`, `ADMIN` |
+| `POST /api/queues/rooms/{roomId}/call-next` | `DOCTOR`, `ADMIN` — gọi nhanh lượt gợi ý |
 | `POST /api/queues/entries/{entryId}/start` | `DOCTOR`, `ADMIN` trong MVP |
 | `POST /api/queues/entries/{entryId}/complete` | `DOCTOR`, `ADMIN` trong MVP |
 
@@ -112,5 +113,8 @@ nhưng Consultation/Lab/Prescription vẫn mô phỏng — truyền thêm:
 - QR dùng được từ lúc cấp phiếu đến hết ngày khám, không chứa PII/bệnh án.
 - QR sai ngày, sai chữ ký, sai ticket hoặc sai phòng bị từ chối.
 - Chỉ staff/admin check-in; active queue không chứa ticket chưa check-in.
-- `call-next` yêu cầu idempotency key và claim một lượt trong transaction.
+- Doctor Web hiển thị `recommendedNext`, nhưng bác sĩ có thể gọi bất kỳ lượt
+  `CHECKED_IN` nào bằng nút **Gọi** trên từng hàng.
+- `call` và `call-next` yêu cầu idempotency key; không chặn gọi thêm khi phòng đã
+  có lượt `CALLED` hoặc `IN_PROGRESS`.
 - Mobile production hiển thị ticket/QR và trạng thái Queue thật.

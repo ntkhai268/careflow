@@ -34,7 +34,7 @@ package "Các dịch vụ nghiệp vụ" {
 
 note right of Queue
   Quản lý ba làn PRIORITY, NORMAL, RESULT_REVIEW
-  Đề xuất Round Robin 1:1:1 và claim lượt nguyên tử
+  Đề xuất Round Robin 1:1:1 và gọi lượt bác sĩ chọn
 end note
 
 note left of Appointment

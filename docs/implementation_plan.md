@@ -133,7 +133,7 @@ Luồng đề xuất: PRIORITY → NORMAL → RESULT_REVIEW → PRIORITY → ...
 Nếu một làn rỗng → bỏ qua và tiếp tục chu kỳ với làn có dữ liệu
 Trong từng làn → FIFO theo queuedAt
 Nếu bệnh nhân lỡ lượt → đưa cuối làn tương ứng theo chính sách
-Hệ thống chỉ đề xuất; bác sĩ bấm gọi và server claim lượt nguyên tử
+Hệ thống chỉ đề xuất; bác sĩ có thể gọi lượt gợi ý hoặc bất kỳ lượt CHECKED_IN
 ```
 
 ### 4.3. Ước tính thời gian chờ
@@ -291,9 +291,9 @@ Người B (Bệnh nhân)          Người A (Hệ thống)          Người C
 | 1 | **Queue Management Service** - DB schema + data model | Queue DB | 🔴 P0 |
 | 2 | Implement ba làn `PRIORITY`, `NORMAL`, `RESULT_REVIEW` và FIFO trong từng làn | Core algorithm | 🔴 P0 |
 | 3 | Implement Round Robin `1:1:1`, bỏ qua làn rỗng và `lastServedLane` | Interleaving logic | 🔴 P0 |
-| 4 | API: tạo số thứ tự, xem đề xuất, bác sĩ gọi lượt, skip và xử lý lỡ lượt | Queue REST endpoints | 🔴 P0 |
+| 4 | API: tạo số thứ tự, xem đề xuất, gọi theo entry/gọi nhanh, skip và xử lý lỡ lượt | Queue REST endpoints | 🔴 P0 |
 | 5 | Lắng nghe event `AppointmentCreated` từ RabbitMQ → tự tạo queue entry | Event-driven flow | 🔴 P0 |
-| 6 | **Unit test** queue (làn rỗng, lỡ lượt, nhiều bác sĩ gọi đồng thời) | Test coverage | 🟡 P1 |
+| 6 | **Unit test** queue (làn rỗng, gọi khác gợi ý, nhiều lượt CALLED, lỡ lượt) | Test coverage | 🟡 P1 |
 | 7 | API kích hoạt `RESULT_REVIEW` khi bệnh nhân xác nhận quay lại | Result-review flow | 🟡 P1 |
 
 #### Người B — Bệnh nhân (Appointment + Mobile booking)
@@ -314,7 +314,7 @@ Người B (Bệnh nhân)          Người A (Hệ thống)          Người C
 |---|------|--------|---------|
 | 1 | API tra cứu hồ sơ bệnh nhân (gọi sang Patient Service + EMR Service qua Gateway) | Cross-service query | 🔴 P0 |
 | 2 | Web: Màn hình **Danh sách bệnh nhân chờ khám** (gọi Queue API của A) | Queue dashboard | 🔴 P0 |
-| 3 | Web: Nút **"Gọi bệnh nhân được đề xuất"** (gọi Queue API của A) | Atomic call-next | 🔴 P0 |
+| 3 | Web: Nút **Gọi** trên từng hàng và nút gọi nhanh `recommendedNext` | Queue call commands | 🔴 P0 |
 | 4 | Web: Màn hình **Xem hồ sơ bệnh nhân** (lịch sử khám, kết quả XN) | Patient detail view | 🟡 P1 |
 | 5 | Setup **Prescription Service** skeleton + DB | Prescription API skeleton | 🟡 P1 |
 

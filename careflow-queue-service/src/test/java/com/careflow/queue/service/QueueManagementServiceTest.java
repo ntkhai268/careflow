@@ -41,6 +41,7 @@ class QueueManagementServiceTest {
     private QueueManagementService service;
     private QueueConfig config;
     private UUID departmentId;
+    private UUID doctorUserId;
     private LocalDate today;
 
     @BeforeEach
@@ -49,6 +50,7 @@ class QueueManagementServiceTest {
                 events, qrTokens, "Asia/Ho_Chi_Minh");
         today = service.businessDate();
         departmentId = UUID.randomUUID();
+        doctorUserId = UUID.randomUUID();
         config = new QueueConfig();
         config.setId(UUID.randomUUID());
         config.setDepartmentId(departmentId);
@@ -66,18 +68,19 @@ class QueueManagementServiceTest {
     }
 
     @Test
-    void callNextRejectsNewCommandWhileAnotherPatientIsBeingServed() {
+    void callNextAllowsAnotherPatientWhilePatientsAreAlreadyCalledOrInProgress() {
+        QueueEntry inProgress = entry(PriorityLevel.APPOINTMENT, QueueStatus.IN_PROGRESS, 1);
+        QueueEntry next = entry(PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, 2);
         when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
         when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
                 "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.empty());
-        when(entries.findFirstByQueueConfigIdAndQueueDateAndStatusInOrderByCalledAtAsc(
-                eq(config.getId()), eq(today), anyCollection())).thenReturn(Optional.of(entry(
-                        PriorityLevel.APPOINTMENT, QueueStatus.IN_PROGRESS, 1)));
+        when(entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+                eq(config.getId()), eq(today), anyCollection())).thenReturn(List.of(inProgress, next));
 
-        assertThatThrownBy(() -> service.callNext(departmentId, "request-1", "trace-1"))
-                .isInstanceOf(BusinessException.class)
-                .extracting("status").isEqualTo(409);
-        verify(entries, never()).saveAndFlush(any());
+        assertThat(service.callNext(departmentId, doctorUserId, "request-1", "trace-1"))
+                .get().extracting(response -> response.entryId()).isEqualTo(next.getId());
+        assertThat(next.getStatus()).isEqualTo(QueueStatus.CALLED);
+        assertThat(next.getCalledByUserId()).isEqualTo(doctorUserId);
     }
 
     @Test
@@ -154,15 +157,14 @@ class QueueManagementServiceTest {
         when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
         when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
                 "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.empty());
-        when(entries.findFirstByQueueConfigIdAndQueueDateAndStatusInOrderByCalledAtAsc(
-                eq(config.getId()), eq(today), anyCollection())).thenReturn(Optional.empty());
         when(entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                 eq(config.getId()), eq(today), anyCollection())).thenReturn(List.of(priority));
 
-        assertThat(service.callNext(departmentId, "request-1", "trace-1"))
+        assertThat(service.callNext(departmentId, doctorUserId, "request-1", "trace-1"))
                 .get().extracting(response -> response.entryId()).isEqualTo(priority.getId());
         assertThat(priority.getStatus()).isEqualTo(QueueStatus.CALLED);
         assertThat(priority.getCallAttempts()).isEqualTo(1);
+        assertThat(priority.getCalledByUserId()).isEqualTo(doctorUserId);
         ArgumentCaptor<IdempotencyRecord> captor = ArgumentCaptor.forClass(IdempotencyRecord.class);
         verify(idempotencyRecords).save(captor.capture());
         assertThat(captor.getValue().getResultEntryId()).isEqualTo(priority.getId());
@@ -177,12 +179,10 @@ class QueueManagementServiceTest {
         when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
         when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
                 "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.empty());
-        when(entries.findFirstByQueueConfigIdAndQueueDateAndStatusInOrderByCalledAtAsc(
-                eq(config.getId()), eq(today), anyCollection())).thenReturn(Optional.empty());
         when(entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                 eq(config.getId()), eq(today), anyCollection())).thenReturn(List.of(priority, appointment));
 
-        assertThat(service.callNext(departmentId, "request-1", "trace-1"))
+        assertThat(service.callNext(departmentId, doctorUserId, "request-1", "trace-1"))
                 .get().extracting(response -> response.entryId()).isEqualTo(appointment.getId());
         assertThat(config.getCyclePhase()).isEqualTo(CyclePhase.PRIORITY);
         assertThat(config.getServedInPhase()).isZero();
@@ -194,13 +194,13 @@ class QueueManagementServiceTest {
         QueueEntry called = entry(PriorityLevel.PRIORITY, QueueStatus.CALLED, 1);
         IdempotencyRecord record = new IdempotencyRecord();
         record.setResultEntryId(called.getId());
-        record.setRequestFingerprint(fingerprint(departmentId));
+        record.setRequestFingerprint(fingerprint(departmentId, doctorUserId));
         when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
         when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
                 "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.of(record));
         when(entries.findById(called.getId())).thenReturn(Optional.of(called));
 
-        assertThat(service.callNext(departmentId, "request-1", "trace-1"))
+        assertThat(service.callNext(departmentId, doctorUserId, "request-1", "trace-1"))
                 .get().extracting(response -> response.entryId()).isEqualTo(called.getId());
         verify(entries, never()).saveAndFlush(any());
         verifyNoInteractions(events);
@@ -214,7 +214,8 @@ class QueueManagementServiceTest {
         when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
                 "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.of(record));
 
-        assertThatThrownBy(() -> service.callNext(departmentId, "request-1", "trace-1"))
+        assertThatThrownBy(() -> service.callNext(
+                departmentId, doctorUserId, "request-1", "trace-1"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(409);
     }
@@ -233,6 +234,41 @@ class QueueManagementServiceTest {
                 .containsExactly(priority.getId(), appointment.getId());
         assertThat(dashboard.entries()).extracting(response -> response.effectivePosition())
                 .containsExactly(1, 2);
+        assertThat(dashboard.recommendedNext().entryId()).isEqualTo(priority.getId());
+    }
+
+    @Test
+    void doctorCanCallAnyCheckedInEntryInsteadOfTheRecommendation() {
+        QueueEntry selected = entry(PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, 9);
+        when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
+                "CALL_ENTRY", selected.getId(), "call-entry-1")).thenReturn(Optional.empty());
+        when(entries.findFirstById(selected.getId())).thenReturn(Optional.of(selected));
+        when(configs.findByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
+
+        var response = service.call(
+                selected.getId(), doctorUserId, "call-entry-1", "trace-1");
+
+        assertThat(response.entryId()).isEqualTo(selected.getId());
+        assertThat(selected.getStatus()).isEqualTo(QueueStatus.CALLED);
+        assertThat(selected.getCalledByUserId()).isEqualTo(doctorUserId);
+        assertThat(selected.getCallAttempts()).isEqualTo(1);
+        verify(events).append(eq(selected), eq(config), eq("PatientCalled"),
+                eq("queue.called"), eq("trace-1"),
+                argThat(extra -> Boolean.TRUE.equals(extra.get("selectedByDoctor"))));
+    }
+
+    @Test
+    void doctorCannotCallEntryThatIsNotWaitingInTheActiveQueue() {
+        QueueEntry selected = entry(PriorityLevel.APPOINTMENT, QueueStatus.CALLED, 9);
+        when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
+                "CALL_ENTRY", selected.getId(), "call-entry-1")).thenReturn(Optional.empty());
+        when(entries.findFirstById(selected.getId())).thenReturn(Optional.of(selected));
+
+        assertThatThrownBy(() -> service.call(
+                selected.getId(), doctorUserId, "call-entry-1", "trace-1"))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status").isEqualTo(409);
+        verify(entries, never()).saveAndFlush(any());
     }
 
     @Test

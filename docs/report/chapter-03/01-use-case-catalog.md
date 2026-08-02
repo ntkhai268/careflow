@@ -83,12 +83,13 @@ hiện trong luồng khác.
   API Queue theo `roomId`; Queue Service kiểm tra lại quyền truy cập phòng.
 - Doctor Web hiển thị ba làn `PRIORITY`, `NORMAL`, `RESULT_REVIEW` và lượt được
   Queue Service đề xuất theo Round Robin `1:1:1`.
-- Bác sĩ chủ động bấm gọi lượt được đề xuất; server tính lại và claim một Queue
-  Entry nguyên tử, không tự động gọi từ client hoặc scheduler nền.
+- Bác sĩ chủ động bấm gọi tại bất kỳ lượt `CHECKED_IN` nào; server gọi đúng entry
+  được chọn. `call-next` là lệnh gọi nhanh và phải tính lại gợi ý tại thời điểm xử lý.
+  Scheduler không tự động gọi bệnh nhân.
 - Chỉ lượt khám ban đầu `CHECKED_IN` và lượt đọc kết quả đã xác nhận quay lại mới
   xuất hiện trong active queue phòng khám.
 - Bao gồm gọi lại và đánh dấu `MISSED`; nhân viên có quyền chỉ hỗ trợ requeue
-  theo chính sách, không thực hiện `call-next` của phòng khám.
+  theo chính sách, không thực hiện command gọi của phòng khám.
 - Bệnh nhân nhận cập nhật trạng thái và thông báo gọi lượt.
 
 ### `UC-CON-01` — Bắt đầu và thực hiện phiên khám

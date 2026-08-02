@@ -34,10 +34,6 @@ public interface QueueEntryRepository extends JpaRepository<QueueEntry, UUID> {
     Optional<QueueEntry> findFirstByAppointmentId(UUID appointmentId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    Optional<QueueEntry> findFirstByQueueConfigIdAndQueueDateAndStatusInOrderByCalledAtAsc(
-            UUID configId, LocalDate date, Collection<QueueStatus> statuses);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     List<QueueEntry> findByQueueConfigIdAndQueueDateAndStatusAndPriorityLevelOrderByEligibleSinceAtAscSequenceNumberAsc(
             UUID configId, LocalDate date, QueueStatus status, PriorityLevel priority, Pageable pageable);
 

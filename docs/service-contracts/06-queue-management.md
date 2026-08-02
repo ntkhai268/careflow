@@ -10,7 +10,8 @@ Sở hữu:
 - check-in và active queue theo phòng/phiên;
 - phân ba làn logic `PRIORITY`, `NORMAL`, `RESULT_REVIEW`, đề xuất theo Round
   Robin `1:1:1` và giữ FIFO trong từng làn;
-- gọi theo thao tác chủ động của bác sĩ, recall, missed, bắt đầu và hoàn tất lượt;
+- đề xuất lượt tiếp theo; bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ lượt
+  `CHECKED_IN` nào trong phòng, sau đó recall, missed, bắt đầu và hoàn tất lượt;
 - queue cận lâm sàng tự tạo từ order;
 - kích hoạt lượt `RESULT_REVIEW` khi đủ kết quả và bệnh nhân xác nhận đã quay lại.
 
@@ -71,16 +72,19 @@ thái vòng đời và không yêu cầu ba bảng dữ liệu riêng.
   không nhận diện ưu tiên do bệnh nhân tự khai trực tiếp trong command.
 - Số chưa check-in không chặn số sau đã check-in.
 - Bệnh nhân đến trễ được đưa cuối làn tương ứng hoặc staff xử lý thủ công có audit.
-- Doctor Web nhận ba làn và `recommendedNext`; việc đọc active queue không làm
-  thay đổi scheduler.
+- Doctor Web nhận ba làn và `recommendedNext`; mỗi phần tử `CHECKED_IN` đều có
+  thao tác **Gọi**. Việc đọc active queue không làm thay đổi scheduler.
 - Khi cả ba làn có dữ liệu, đề xuất tuần tự
   `PRIORITY → NORMAL → RESULT_REVIEW → PRIORITY`. Làn rỗng được bỏ qua.
 - Nếu chưa có `lastServedLane`, bắt đầu quét từ `PRIORITY`; các lần sau quét từ
   làn đứng ngay sau `lastServedLane` và chọn làn không rỗng đầu tiên.
 - Queue Service lưu `lastServedLane` theo `roomId + sessionDate + sessionCode` và
   chỉ cập nhật nó sau một lần gọi thành công.
-- Hệ thống không tự gọi bệnh nhân. Bác sĩ phải gửi command `call-next`; server
-  khóa scheduler, tính lại đề xuất, claim đúng một entry rồi mới phát event.
+- Hệ thống không tự gọi bệnh nhân. Bác sĩ có thể gọi trực tiếp một entry bằng
+  `call`, hoặc dùng `call-next` như lệnh gọi nhanh lượt đang được đề xuất.
+- Một phòng MVP có một bác sĩ và một máy Doctor Web. Queue Service không chặn
+  gọi chỉ vì phòng đã có lượt `CALLED` hoặc `IN_PROGRESS`; bác sĩ có quyền gọi
+  thêm bệnh nhân vào chờ.
 
 ### Queue cận lâm sàng
 
@@ -108,7 +112,8 @@ thái vòng đời và không yêu cầu ba bảng dữ liệu riêng.
 | `GET /api/queues/patients/{patientId}/current` | Chính chủ/clinical staff | Lượt hiện tại của bệnh nhân |
 | `GET /api/queues/rooms/{roomId}/active?date=&session=` | `DOCTOR`, `STAFF`, `ADMIN` | Active queue phòng; backend kiểm tra phạm vi phòng của actor |
 | `POST /api/queues/consultations/{consultationId}/review-arrival` | Chính chủ, `DOCTOR`, `STAFF` | Xác nhận bệnh nhân đã quay lại và kích hoạt `RESULT_REVIEW` |
-| `POST /api/queues/rooms/{roomId}/call-next` | `DOCTOR` | Gọi lượt được server đề xuất tại phòng khám |
+| `POST /api/queues/entries/{entryId}/call` | `DOCTOR` | Gọi một lượt `CHECKED_IN` do bác sĩ chọn trên Doctor Web |
+| `POST /api/queues/rooms/{roomId}/call-next` | `DOCTOR` | Lệnh gọi nhanh lượt được server đề xuất tại phòng khám |
 | `POST /api/queues/entries/{entryId}/recall` | `DOCTOR`, `STAFF` | Gọi lại lượt đang CALLED |
 | `POST /api/queues/entries/{entryId}/miss` | `DOCTOR`, `STAFF`, `LAB_TECHNICIAN` | Đánh dấu vắng |
 | `POST /api/queues/entries/{entryId}/requeue` | Staff phù hợp | Đưa lại hàng |
@@ -185,9 +190,10 @@ Active queue response `data`:
 }
 ```
 
-`recommendedNext` chỉ là snapshot để hiển thị. `call-next` không nhận `entryId`;
-server phải tính lại trong transaction và trả về Queue Entry thực tế đã được
-chuyển sang `CALLED`.
+`recommendedNext` chỉ là snapshot để hiển thị và không giới hạn quyền chọn của
+bác sĩ. `call-next` không nhận `entryId`; server tính lại gợi ý và chuyển lượt đó
+sang `CALLED`. Khi bác sĩ bấm nút **Gọi** tại một hàng, Doctor Web dùng
+`POST /entries/{entryId}/call` và chính entry được chọn được chuyển sang `CALLED`.
 
 `RESULT_REVIEW` luôn được điều phối trong làn cùng tên; `QueueClass` trước đó của
 bệnh nhân không tạo thêm làn thứ tư.
@@ -235,14 +241,16 @@ Publish:
 
 ## 6. Concurrency, idempotency và lỗi
 
-- `call-next` phải lock/claim nguyên tử; hai bác sĩ không gọi cùng entry.
+- `call` khóa đúng Queue Entry được chọn; request lặp cùng `Idempotency-Key` trả
+  kết quả cũ để chống double-click hoặc retry từ Doctor Web.
+- `call-next` vẫn phải tính lại gợi ý trong transaction. Đây là tính nhất quán
+  của command, không phải giả định nhiều bác sĩ cùng vận hành một phòng MVP.
 - Với `DOCTOR`, Queue Service phải đối chiếu trusted user ID với clinical context
   do Appointment Service cung cấp hoặc projection phân công tương đương, rồi xác
   minh phòng trên URL thuộc phạm vi bác sĩ. Không chỉ tin `roomId` do Doctor Web
   truyền lên.
-- Lock bao phủ scheduler của `roomId + sessionDate + sessionCode`, việc tính lại
-  `recommendedNext`, transition sang `CALLED`, `calledByDoctorId`,
-  `lastServedLane` và `schedulerVersion`.
+- Mọi lệnh gọi ghi `calledByUserId`, `calledAt`, tăng `callAttempts` và phát
+  `PatientCalled`. Phòng có thể đồng thời có nhiều lượt `CALLED`/`IN_PROGRESS`.
 - Một appointment chỉ có một initial ticket; một lab order chỉ có một lab entry.
 - Một consultation chỉ có tối đa một `RESULT_REVIEW` đang hoạt động; xác nhận
   quay lại lặp không tạo entry trùng.
@@ -263,15 +271,16 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 - Test Round Robin: ba làn có P1, N1, R1 và `lastServedLane=RESULT_REVIEW` → ba
   lần gọi thành công tiếp theo là P1, N1, R1.
 - Test bỏ qua làn rỗng: `NORMAL` rỗng → luân phiên `PRIORITY`, `RESULT_REVIEW`.
-- Test concurrency: hai bác sĩ cùng bấm gọi chỉ một người claim entry đầu tiên;
-  request còn lại tính lại và nhận entry hợp lệ kế tiếp.
+- Test bác sĩ gọi một entry không phải `recommendedNext`.
+- Test gọi thêm khi phòng đã có lượt `CALLED` hoặc `IN_PROGRESS`.
+- Test double-click cùng `Idempotency-Key` không phát `PatientCalled` hai lần.
 
 ## 8. Definition of Done
 
 ### Trạng thái triển khai 2026-08-02
 
 - `INITIAL_CONSULTATION` đã nối thật từ `AppointmentConfirmed` đến Visit Ticket,
-  QR, staff check-in, active queue, call/start/complete và Mobile production.
+  QR, staff check-in, active queue, gọi theo entry/gợi ý, start/complete và Mobile production.
 - Appointment producer và Queue producer đều dùng outbox; consumer Appointment
   của Queue có idempotency bằng `processed_events`.
 - MVP hiện cấu hình tĩnh một phòng cho mỗi khoa. Quản trị `ClinicRoom`, xác minh

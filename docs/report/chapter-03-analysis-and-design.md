@@ -79,11 +79,11 @@ migration tương ứng sẽ được đánh giá riêng ở Chương 4.
 | `FR-QUE-02` | Nhân viên tiếp nhận có thể quét QR để xác nhận bệnh nhân đã đến. |
 | `FR-QUE-03` | Active queue phòng khám chỉ hiển thị lượt khám ban đầu đã `CHECKED_IN` và lượt đọc kết quả đã xác nhận bệnh nhân quay lại. |
 | `FR-QUE-04` | Doctor Web xác định phòng từ khoa của bác sĩ, sau đó hiển thị riêng ba làn `PRIORITY`, `NORMAL`, `RESULT_REVIEW` và lượt được Queue Service đề xuất tiếp theo. |
-| `FR-QUE-05` | Bác sĩ có thể chủ động gọi lượt được đề xuất; hệ thống không tự động gọi bệnh nhân. |
+| `FR-QUE-05` | Hệ thống không tự động gọi. Bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ lượt `CHECKED_IN` nào trong queue của phòng. |
 | `FR-QUE-06` | Người có quyền có thể gọi lại, đánh dấu lỡ lượt và xếp lại lượt theo chính sách. |
 | `FR-QUE-07` | Bệnh nhân có thể theo dõi trạng thái và vị trí tương đối của lượt hiện tại. |
 | `FR-QUE-08` | Hệ thống tự tạo lượt cận lâm sàng và kích hoạt lượt `RESULT_REVIEW` khi đủ điều kiện. |
-| `FR-QUE-09` | Khi gọi lượt, Queue Service phải tính lại đề xuất và claim đúng một Queue Entry trước khi chuyển sang `CALLED`. |
+| `FR-QUE-09` | Gọi nhanh phải tính lại đề xuất; gọi theo hàng phải chuyển đúng Queue Entry được bác sĩ chọn sang `CALLED`. |
 
 #### e. Phiên khám
 
@@ -141,7 +141,7 @@ và đánh giá riêng, không mặc nhiên được coi là đã hoàn thành.
 | `NFR-PERF-02` | Thời gian thực | Thay đổi gọi lượt nên được chuyển đến client đang kết nối trong vòng 5 giây. |
 | `NFR-REL-01` | Tin cậy | Với sự kiện có thể được gửi lại, consumer phải nhận biết sự kiện đã xử lý để không tạo dữ liệu nghiệp vụ trùng. |
 | `NFR-REL-02` | Tin cậy | Lỗi Notification không được rollback giao dịch Appointment, Queue, Lab hoặc Prescription đã thành công. |
-| `NFR-REL-03` | Đồng thời | Hai bác sĩ gọi đồng thời không được chuyển cùng một Queue Entry sang `CALLED`; mỗi command phải nhận kết quả thực tế sau khi server claim lượt. |
+| `NFR-REL-03` | Tin cậy | Double-click hoặc retry cùng `Idempotency-Key` không được phát lệnh gọi một Queue Entry hai lần. |
 | `NFR-DATA-01` | Toàn vẹn dữ liệu | Mỗi service chỉ sửa dữ liệu thuộc quyền sở hữu của mình; không dùng khóa ngoại vật lý xuyên service. |
 | `NFR-DATA-02` | Kiểm toán | Thao tác truy cập hồ sơ, nhập kết quả, xác nhận toa và sửa dữ liệu đã phát hành phải truy vết được actor và thời điểm. |
 | `NFR-USE-01` | Khả dụng | Giao diện bệnh nhân phải hiển thị rõ bước hiện tại, địa điểm và hành động tiếp theo. |
@@ -163,8 +163,8 @@ và đánh giá riêng, không mặc nhiên được coi là đã hoàn thành.
 | `BR-QUE-02` | Mỗi phòng và phiên có ba làn logic `PRIORITY`, `NORMAL`, `RESULT_REVIEW`; FIFO theo `queuedAt` trong từng làn và đề xuất Round Robin `1:1:1`, bỏ qua làn rỗng. Khi chưa có lịch sử gọi, chu kỳ bắt đầu từ `PRIORITY`. |
 | `BR-QUE-03` | Lượt `MISSED` không được giữ ở đầu queue và chỉ được xếp lại theo chính sách. |
 | `BR-QUE-04` | QR chỉ chứa token tham chiếu hoặc token đã ký và phải được kiểm tra hiệu lực khi quét. |
-| `BR-QUE-05` | Xem đề xuất không thay đổi trạng thái; chỉ thao tác bấm gọi của bác sĩ mới có thể chuyển một lượt hợp lệ sang `CALLED`. |
-| `BR-QUE-06` | Lệnh gọi phải khóa scheduler theo phòng/phiên, tính lại đề xuất, claim một lượt nguyên tử rồi mới cập nhật `lastServedLane` và phát `PatientCalled`. |
+| `BR-QUE-05` | Xem đề xuất không thay đổi trạng thái; bác sĩ được gọi lượt đề xuất hoặc một lượt `CHECKED_IN` khác bằng nút trên từng hàng. |
+| `BR-QUE-06` | Lệnh gọi khóa Queue Entry được chọn, ghi người gọi và phát `PatientCalled`; không chặn gọi thêm khi đã có lượt `CALLED`/`IN_PROGRESS`. |
 | `BR-QUE-07` | Lượt khám ban đầu mặc định thuộc `NORMAL`; chỉ nhân viên có quyền được xác nhận `PRIORITY` theo diện đã kiểm tra và phải lưu lý do/audit. |
 | `BR-LAB-01` | Order đủ điều kiện tự tạo lượt cận lâm sàng; bệnh nhân không check-in lại tại mỗi khu. |
 | `BR-LAB-02` | Kết quả đã phát hành chỉ được sửa bằng phiên bản correction có lý do và audit. |
@@ -277,7 +277,7 @@ Analytics không được đưa vào luồng cốt lõi.
 | Nghiệp vụ | Identity & eKYC Service | Tài khoản, vai trò, access/refresh token và eKYC mock |
 | Nghiệp vụ | Patient Service | Hồ sơ hành chính, tiền sử khai báo và hồ sơ cũ do bệnh nhân upload |
 | Nghiệp vụ | Appointment Service | Khoa, `ClinicRoom`, slot, capacity, phân phòng, lịch khám, hủy, no-show và tái khám |
-| Nghiệp vụ | Queue Management Service | Visit Ticket, QR, số thứ tự, Queue Entry, ba làn điều phối, đề xuất Round Robin và claim lượt |
+| Nghiệp vụ | Queue Management Service | Visit Ticket, QR, số thứ tự, Queue Entry, ba làn điều phối, đề xuất và gọi entry do bác sĩ chọn |
 | Nghiệp vụ | Doctor Consultation Service | Phiên khám, sinh hiệu, triệu chứng, chẩn đoán và trạng thái chờ kết quả |
 | Nghiệp vụ | Laboratory Order Service | Chỉ định, hạng mục, quá trình thực hiện và kết quả cận lâm sàng |
 | Nghiệp vụ | Prescription Service | Toa thuốc, dòng thuốc, xác nhận, amendment và trạng thái phát thuốc demo |
