@@ -89,6 +89,7 @@ services:
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-careflow}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
       SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_ENABLED: "true"
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
     depends_on:
       careflow-eureka-server:
