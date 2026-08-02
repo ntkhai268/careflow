@@ -11,16 +11,18 @@ class HealthRecordDetailScreen extends ConsumerStatefulWidget {
   final String recordId;
 
   const HealthRecordDetailScreen({
-    Key? key,
+    super.key,
     required this.patientId,
     required this.recordId,
-  }) : super(key: key);
+  });
 
   @override
-  ConsumerState<HealthRecordDetailScreen> createState() => _HealthRecordDetailScreenState();
+  ConsumerState<HealthRecordDetailScreen> createState() =>
+      _HealthRecordDetailScreenState();
 }
 
-class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScreen> {
+class _HealthRecordDetailScreenState
+    extends ConsumerState<HealthRecordDetailScreen> {
   late Future<HealthRecord> _recordFuture;
   bool _isEditing = false;
   bool _isSaving = false;
@@ -59,7 +61,9 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
   }
 
   void _loadRecord() {
-    _recordFuture = ref.read(healthRecordServiceProvider).getById(widget.patientId, widget.recordId);
+    _recordFuture = ref
+        .read(healthRecordServiceProvider)
+        .getById(widget.patientId, widget.recordId);
     _recordFuture.then((record) {
       _record = record;
       _populateControllers(record);
@@ -121,19 +125,33 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
         title: const Text('Xóa hồ sơ?'),
         content: const Text('Bạn có chắc chắn muốn xóa hồ sơ này?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Hủy')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Xóa', style: TextStyle(color: Colors.red))),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Hủy'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Xóa', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
 
     if (confirm == true) {
       try {
-        await ref.read(healthRecordServiceProvider).delete(widget.patientId, widget.recordId);
+        await ref
+            .read(healthRecordServiceProvider)
+            .delete(widget.patientId, widget.recordId);
         ref.invalidate(healthRecordsProvider(widget.patientId));
-        if (mounted) context.pop();
+        if (mounted) {
+          context.pop();
+        }
       } catch (e) {
-        if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        }
       }
     }
   }
@@ -146,7 +164,9 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
         'facilityName': _facilityController.text,
         'notes': _notesController.text,
         'bloodSugar': double.tryParse(_bloodSugarController.text),
-        'bloodPressure': _bloodPressureController.text.isEmpty ? null : _bloodPressureController.text,
+        'bloodPressure': _bloodPressureController.text.isEmpty
+            ? null
+            : _bloodPressureController.text,
         'heightCm': double.tryParse(_heightController.text),
         'weightKg': double.tryParse(_weightController.text),
         'waistCm': double.tryParse(_waistController.text),
@@ -167,7 +187,11 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
       };
 
       final service = ref.read(healthRecordServiceProvider);
-      final updated = await service.update(widget.patientId, widget.recordId, data);
+      final updated = await service.update(
+        widget.patientId,
+        widget.recordId,
+        data,
+      );
       _record = updated;
       _populateControllers(updated);
       ref.invalidate(healthRecordsProvider(widget.patientId));
@@ -178,14 +202,16 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
           _isSaving = false;
           _recordFuture = Future.value(updated);
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cập nhật thành công!')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Cập nhật thành công!')));
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
       }
     }
   }
@@ -195,7 +221,10 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: Text(_isEditing ? 'Chỉnh sửa hồ sơ' : 'Chi tiết hồ sơ', style: const TextStyle(color: Colors.white)),
+        title: Text(
+          _isEditing ? 'Chỉnh sửa hồ sơ' : 'Chi tiết hồ sơ',
+          style: const TextStyle(color: Colors.white),
+        ),
         backgroundColor: const Color(0xFF29B6F6),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
@@ -231,36 +260,49 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
             children: [
               // Thông tin chung
               ExpansionTile(
-                title: const Text('Thông tin chung', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                title: const Text(
+                  'Thông tin chung',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 initiallyExpanded: true,
                 childrenPadding: const EdgeInsets.all(16),
                 children: [
                   _buildTextField('Tiêu đề', _titleController),
                   const SizedBox(height: 16),
-                  _buildReadOnlyField('Ngày', '${record.recordDate.day.toString().padLeft(2, '0')}/${record.recordDate.month.toString().padLeft(2, '0')}/${record.recordDate.year}'),
+                  _buildReadOnlyField(
+                    'Ngày',
+                    '${record.recordDate.day.toString().padLeft(2, '0')}/${record.recordDate.month.toString().padLeft(2, '0')}/${record.recordDate.year}',
+                  ),
                   const SizedBox(height: 16),
                   _buildTextField('Tên cơ sở y tế', _facilityController),
                   const SizedBox(height: 16),
                   _buildTextField('Ghi chú', _notesController, maxLines: 3),
                   if (record.files != null && record.files!.isNotEmpty) ...[
                     const SizedBox(height: 16),
-                    const Text('Hình ảnh/Tệp', style: TextStyle(fontWeight: FontWeight.w500)),
+                    const Text(
+                      'Hình ảnh/Tệp',
+                      style: TextStyle(fontWeight: FontWeight.w500),
+                    ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children: record.files!.map((file) => ActionChip(
-                        label: Text(file.fileName),
-                        avatar: const Icon(Icons.attach_file, size: 18),
-                        onPressed: () {
-                          final service = ref.read(healthRecordServiceProvider);
-                          final url = service.getFileUrl(widget.patientId, file.id);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Tải file: ${file.fileName}')),
-                          );
-                          // TODO: Use url_launcher to open URL
-                        },
-                      )).toList(),
+                      children: record.files!
+                          .map(
+                            (file) => ActionChip(
+                              label: Text(file.fileName),
+                              avatar: const Icon(Icons.attach_file, size: 18),
+                              onPressed: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Tải file: ${file.fileName}'),
+                                  ),
+                                );
+                                // TODO: Use url_launcher to open URL
+                              },
+                            ),
+                          )
+                          .toList(),
                     ),
                   ],
                 ],
@@ -268,65 +310,157 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
 
               // Chỉ số sức khỏe
               ExpansionTile(
-                title: const Text('Chỉ số sức khỏe', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                title: const Text(
+                  'Chỉ số sức khỏe',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 childrenPadding: const EdgeInsets.all(16),
                 children: [
-                  _buildTextField('Đường huyết (mmol/L)', _bloodSugarController, keyboardType: TextInputType.number),
+                  _buildTextField(
+                    'Đường huyết (mmol/L)',
+                    _bloodSugarController,
+                    keyboardType: TextInputType.number,
+                  ),
                   const SizedBox(height: 16),
                   _buildTextField('Huyết áp (mmHg)', _bloodPressureController),
                   const SizedBox(height: 16),
                   Row(
                     children: [
-                      Expanded(child: _buildTextField('Chiều cao (cm)', _heightController, keyboardType: TextInputType.number)),
+                      Expanded(
+                        child: _buildTextField(
+                          'Chiều cao (cm)',
+                          _heightController,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
                       const SizedBox(width: 16),
-                      Expanded(child: _buildTextField('Cân nặng (kg)', _weightController, keyboardType: TextInputType.number)),
+                      Expanded(
+                        child: _buildTextField(
+                          'Cân nặng (kg)',
+                          _weightController,
+                          keyboardType: TextInputType.number,
+                        ),
+                      ),
                     ],
                   ),
                   const SizedBox(height: 16),
                   _buildReadOnlyField('BMI', _getBmiText()),
                   const SizedBox(height: 16),
-                  _buildTextField('Vòng bụng (cm)', _waistController, keyboardType: TextInputType.number),
+                  _buildTextField(
+                    'Vòng bụng (cm)',
+                    _waistController,
+                    keyboardType: TextInputType.number,
+                  ),
                   const SizedBox(height: 16),
                   _isEditing
                       ? DropdownButtonFormField<String>(
-                          decoration: const InputDecoration(labelText: 'Nhóm máu', border: OutlineInputBorder()),
-                          value: _bloodType,
-                          items: ['A', 'B', 'AB', 'O'].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+                          decoration: const InputDecoration(
+                            labelText: 'Nhóm máu',
+                            border: OutlineInputBorder(),
+                          ),
+                          initialValue: _bloodType,
+                          items: ['A', 'B', 'AB', 'O']
+                              .map(
+                                (e) =>
+                                    DropdownMenuItem(value: e, child: Text(e)),
+                              )
+                              .toList(),
                           onChanged: (v) => setState(() => _bloodType = v),
                         )
-                      : _buildReadOnlyField('Nhóm máu', _bloodType ?? 'Chưa chọn'),
+                      : _buildReadOnlyField(
+                          'Nhóm máu',
+                          _bloodType ?? 'Chưa chọn',
+                        ),
                   const SizedBox(height: 16),
-                  _buildTextField('Mạch (lần/phút)', _pulseController, keyboardType: TextInputType.number),
+                  _buildTextField(
+                    'Mạch (lần/phút)',
+                    _pulseController,
+                    keyboardType: TextInputType.number,
+                  ),
                   const SizedBox(height: 16),
-                  _buildTextField('Nhiệt độ (°C)', _temperatureController, keyboardType: TextInputType.number),
+                  _buildTextField(
+                    'Nhiệt độ (°C)',
+                    _temperatureController,
+                    keyboardType: TextInputType.number,
+                  ),
                   const SizedBox(height: 16),
-                  _buildTextField('Nhịp thở (lần/phút)', _respiratoryRateController, keyboardType: TextInputType.number),
+                  _buildTextField(
+                    'Nhịp thở (lần/phút)',
+                    _respiratoryRateController,
+                    keyboardType: TextInputType.number,
+                  ),
                 ],
               ),
 
               // Tiền sử gia đình
               ExpansionTile(
-                title: const Text('Tiền sử gia đình', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                title: const Text(
+                  'Tiền sử gia đình',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 childrenPadding: const EdgeInsets.all(16),
                 children: [
-                  _buildAllergyRow('Dị ứng thuốc', _drugAllergy, (v) => setState(() => _drugAllergy = v)),
-                  _buildAllergyRow('Dị ứng hóa chất', _chemicalAllergy, (v) => setState(() => _chemicalAllergy = v)),
-                  _buildAllergyRow('Dị ứng thực phẩm', _foodAllergy, (v) => setState(() => _foodAllergy = v)),
+                  _buildAllergyRow(
+                    'Dị ứng thuốc',
+                    _drugAllergy,
+                    (v) => setState(() => _drugAllergy = v),
+                  ),
+                  _buildAllergyRow(
+                    'Dị ứng hóa chất',
+                    _chemicalAllergy,
+                    (v) => setState(() => _chemicalAllergy = v),
+                  ),
+                  _buildAllergyRow(
+                    'Dị ứng thực phẩm',
+                    _foodAllergy,
+                    (v) => setState(() => _foodAllergy = v),
+                  ),
                 ],
               ),
 
               // Tiền sử bệnh tật gia đình
               ExpansionTile(
-                title: const Text('Tiền sử Bệnh tật gia đình', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                title: const Text(
+                  'Tiền sử Bệnh tật gia đình',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
                 childrenPadding: const EdgeInsets.all(16),
                 children: [
-                  _buildAllergyRow('Tim mạch', _heartDisease, (v) => setState(() => _heartDisease = v)),
-                  _buildAllergyRow('Tăng huyết áp', _hypertension, (v) => setState(() => _hypertension = v)),
-                  _buildAllergyRow('Tâm thần', _mentalIllness, (v) => setState(() => _mentalIllness = v)),
-                  _buildAllergyRow('Ung thư', _cancer, (v) => setState(() => _cancer = v)),
-                  _buildAllergyRow('Hen suyễn', _asthma, (v) => setState(() => _asthma = v)),
-                  _buildAllergyRow('Động kinh', _epilepsy, (v) => setState(() => _epilepsy = v)),
-                  _buildAllergyRow('Lao', _tuberculosis, (v) => setState(() => _tuberculosis = v)),
+                  _buildAllergyRow(
+                    'Tim mạch',
+                    _heartDisease,
+                    (v) => setState(() => _heartDisease = v),
+                  ),
+                  _buildAllergyRow(
+                    'Tăng huyết áp',
+                    _hypertension,
+                    (v) => setState(() => _hypertension = v),
+                  ),
+                  _buildAllergyRow(
+                    'Tâm thần',
+                    _mentalIllness,
+                    (v) => setState(() => _mentalIllness = v),
+                  ),
+                  _buildAllergyRow(
+                    'Ung thư',
+                    _cancer,
+                    (v) => setState(() => _cancer = v),
+                  ),
+                  _buildAllergyRow(
+                    'Hen suyễn',
+                    _asthma,
+                    (v) => setState(() => _asthma = v),
+                  ),
+                  _buildAllergyRow(
+                    'Động kinh',
+                    _epilepsy,
+                    (v) => setState(() => _epilepsy = v),
+                  ),
+                  _buildAllergyRow(
+                    'Lao',
+                    _tuberculosis,
+                    (v) => setState(() => _tuberculosis = v),
+                  ),
                 ],
               ),
             ],
@@ -345,13 +479,18 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
                             ? null
                             : () {
                                 setState(() => _isEditing = false);
-                                if (_record != null) _populateControllers(_record!);
+                                if (_record != null) {
+                                  _populateControllers(_record!);
+                                }
                               },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
                           side: const BorderSide(color: Colors.grey),
                         ),
-                        child: const Text('Hủy', style: TextStyle(color: Colors.grey)),
+                        child: const Text(
+                          'Hủy',
+                          style: TextStyle(color: Colors.grey),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -363,8 +502,21 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         child: _isSaving
-                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : const Text('Lưu thay đổi', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Lưu thay đổi',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                       ),
                     ),
                   ],
@@ -375,7 +527,12 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
     );
   }
 
-  Widget _buildTextField(String label, TextEditingController controller, {int maxLines = 1, TextInputType? keyboardType}) {
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller, {
+    int maxLines = 1,
+    TextInputType? keyboardType,
+  }) {
     return TextFormField(
       controller: controller,
       readOnly: !_isEditing,
@@ -403,20 +560,34 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
     );
   }
 
-  Widget _buildAllergyRow(String title, String? groupValue, ValueChanged<String?> onChanged) {
+  Widget _buildAllergyRow(
+    String title,
+    String? groupValue,
+    ValueChanged<String?> onChanged,
+  ) {
     if (!_isEditing) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: Row(
           children: [
-            Expanded(flex: 2, child: Text(title, style: const TextStyle(fontWeight: FontWeight.w500))),
+            Expanded(
+              flex: 2,
+              child: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
             Expanded(
               flex: 1,
               child: Text(
                 _getAllergyDisplay(groupValue),
                 style: TextStyle(
-                  color: groupValue == 'YES' ? Colors.red : AppColors.textPrimary,
-                  fontWeight: groupValue == 'YES' ? FontWeight.bold : FontWeight.normal,
+                  color: groupValue == 'YES'
+                      ? Colors.red
+                      : AppColors.textPrimary,
+                  fontWeight: groupValue == 'YES'
+                      ? FontWeight.bold
+                      : FontWeight.normal,
                 ),
               ),
             ),
@@ -438,7 +609,8 @@ class _HealthRecordDetailScreenState extends ConsumerState<HealthRecordDetailScr
           ],
           selected: groupValue != null ? {groupValue} : {},
           emptySelectionAllowed: true,
-          onSelectionChanged: (values) => onChanged(values.isEmpty ? null : values.first),
+          onSelectionChanged: (values) =>
+              onChanged(values.isEmpty ? null : values.first),
           style: SegmentedButton.styleFrom(
             selectedBackgroundColor: AppColors.primarySurface,
             selectedForegroundColor: AppColors.primaryDark,

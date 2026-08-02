@@ -19,6 +19,7 @@ class BookingStep2Screen extends ConsumerStatefulWidget {
 class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
   List<Department> _departments = [];
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -27,26 +28,23 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
   }
 
   Future<void> _loadDepartments() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final service = ref.read(appointmentServiceProvider);
       final departments = await service.getDepartments();
-      setState(() { _departments = departments; _isLoading = false; });
-    } catch (e) {
-      // Fallback to hardcoded departments
+      if (!mounted) return;
       setState(() {
-        _departments = [
-          Department(code: 'NOI_TONG_QUAT', name: 'Nội tổng quát'),
-          Department(code: 'NHI', name: 'Nhi'),
-          Department(code: 'NGOAI', name: 'Ngoại'),
-          Department(code: 'SAN', name: 'Sản'),
-          Department(code: 'MAT', name: 'Mắt'),
-          Department(code: 'TAI_MUI_HONG', name: 'Tai mũi họng'),
-          Department(code: 'RANG_HAM_MAT', name: 'Răng hàm mặt'),
-          Department(code: 'DA_LIEU', name: 'Da liễu'),
-          Department(code: 'THAN_KINH', name: 'Thần kinh'),
-          Department(code: 'TIM_MACH', name: 'Tim mạch'),
-          Department(code: 'CO_XUONG_KHOP', name: 'Cơ xương khớp'),
-        ];
+        _departments = departments;
+        _isLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _departments = [];
+        _error = 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.';
         _isLoading = false;
       });
     }
@@ -65,6 +63,8 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? _ReferenceDataError(message: _error!, onRetry: _loadDepartments)
           : Column(
               children: [
                 _buildStepIndicator(),
@@ -109,8 +109,8 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
               color: completed
                   ? AppColors.success
                   : active
-                      ? AppColors.primary
-                      : AppColors.cardBorder,
+                  ? AppColors.primary
+                  : AppColors.cardBorder,
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -153,7 +153,10 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
   Widget _buildPatientInfo() {
     return Container(
       margin: const EdgeInsets.fromLTRB(
-        AppSpacing.base, AppSpacing.md, AppSpacing.base, 0,
+        AppSpacing.base,
+        AppSpacing.md,
+        AppSpacing.base,
+        0,
       ),
       padding: const EdgeInsets.all(AppSpacing.md),
       decoration: BoxDecoration(
@@ -166,10 +169,7 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
           const SizedBox(width: AppSpacing.sm),
           Text(
             'Đặt cho: ',
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-            ),
+            style: TextStyle(color: AppColors.textSecondary, fontSize: 13),
           ),
           Text(
             widget.patient.fullName,
@@ -199,15 +199,39 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
         return _DepartmentCard(
           department: dept,
           onTap: () {
-            context.push('/booking/step3', extra: {
-              'patient': widget.patient,
-              'department': dept,
-            });
+            context.push(
+              '/booking/step3',
+              extra: {'patient': widget.patient, 'department': dept},
+            );
           },
         );
       },
     );
   }
+}
+
+class _ReferenceDataError extends StatelessWidget {
+  const _ReferenceDataError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Padding(
+      padding: const EdgeInsets.all(AppSpacing.xl),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.cloud_off_rounded, color: AppColors.error, size: 48),
+          const SizedBox(height: AppSpacing.md),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: AppSpacing.md),
+          OutlinedButton(onPressed: onRetry, child: const Text('Thử lại')),
+        ],
+      ),
+    ),
+  );
 }
 
 class _DepartmentCard extends StatelessWidget {

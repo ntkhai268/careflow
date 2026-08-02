@@ -20,7 +20,9 @@ class HealthRecordFileInfo {
       fileUrl: json['fileUrl'] ?? '',
       fileSize: json['fileSize'] is int
           ? json['fileSize']
-          : (json['fileSize'] is String ? int.tryParse(json['fileSize']) : json['fileSize']?.toInt()),
+          : (json['fileSize'] is String
+                ? int.tryParse(json['fileSize'])
+                : json['fileSize']?.toInt()),
       contentType: json['contentType'],
     );
   }
@@ -53,11 +55,11 @@ class HealthRecord {
   final int? pulse;
   final double? temperature;
   final int? respiratoryRate;
-  
+
   final String? drugAllergy;
   final String? chemicalAllergy;
   final String? foodAllergy;
-  
+
   final String? heartDisease;
   final String? hypertension;
   final String? mentalIllness;
@@ -123,7 +125,9 @@ class HealthRecord {
       id: json['id']?.toString() ?? '',
       patientId: json['patientId']?.toString() ?? '',
       title: json['title'] ?? '',
-      recordDate: json['recordDate'] != null ? DateTime.parse(json['recordDate']) : DateTime.now(),
+      recordDate: json['recordDate'] != null
+          ? DateTime.parse(json['recordDate'])
+          : DateTime.now(),
       facilityName: json['facilityName'] ?? '',
       notes: json['notes'],
       bloodSugar: _toDouble(json['bloodSugar']),
@@ -146,9 +150,17 @@ class HealthRecord {
       asthma: json['asthma'],
       epilepsy: json['epilepsy'],
       tuberculosis: json['tuberculosis'],
-      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt']) : null,
-      updatedAt: json['updatedAt'] != null ? DateTime.parse(json['updatedAt']) : null,
-      files: json['files'] != null ? (json['files'] as List).map((i) => HealthRecordFileInfo.fromJson(i)).toList() : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'])
+          : null,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'])
+          : null,
+      files: json['files'] != null
+          ? (json['files'] as List)
+                .map((i) => HealthRecordFileInfo.fromJson(i))
+                .toList()
+          : null,
     );
   }
 

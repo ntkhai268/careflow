@@ -12,19 +12,29 @@ class HealthRecordService {
   HealthRecordService(this._apiService);
 
   Future<List<HealthRecord>> getAll(String patientId) async {
-    final response = await _apiService.get('${ApiConfig.patients}/$patientId/health-records');
+    final response = await _apiService.get(
+      '${ApiConfig.patients}/$patientId/health-records',
+    );
     final apiResponse = response.data as Map<String, dynamic>;
     final List<dynamic> data = apiResponse['data'];
-    return data.map((json) => HealthRecord.fromJson(json as Map<String, dynamic>)).toList();
+    return data
+        .map((json) => HealthRecord.fromJson(json as Map<String, dynamic>))
+        .toList();
   }
 
   Future<HealthRecord> getById(String patientId, String recordId) async {
-    final response = await _apiService.get('${ApiConfig.patients}/$patientId/health-records/$recordId');
+    final response = await _apiService.get(
+      '${ApiConfig.patients}/$patientId/health-records/$recordId',
+    );
     final apiResponse = response.data as Map<String, dynamic>;
     return HealthRecord.fromJson(apiResponse['data'] as Map<String, dynamic>);
   }
 
-  Future<HealthRecord> create(String patientId, Map<String, dynamic> data, List<File>? files) async {
+  Future<HealthRecord> create(
+    String patientId,
+    Map<String, dynamic> data,
+    List<File>? files,
+  ) async {
     final formData = FormData.fromMap({
       'request': MultipartFile.fromString(
         jsonEncode(data),
@@ -35,10 +45,9 @@ class HealthRecordService {
 
     if (files != null) {
       for (var file in files) {
-        formData.files.add(MapEntry(
-          'files',
-          await MultipartFile.fromFile(file.path),
-        ));
+        formData.files.add(
+          MapEntry('files', await MultipartFile.fromFile(file.path)),
+        );
       }
     }
 
@@ -50,7 +59,11 @@ class HealthRecordService {
     return HealthRecord.fromJson(apiResponse['data'] as Map<String, dynamic>);
   }
 
-  Future<HealthRecord> update(String patientId, String recordId, Map<String, dynamic> data) async {
+  Future<HealthRecord> update(
+    String patientId,
+    String recordId,
+    Map<String, dynamic> data,
+  ) async {
     final response = await _apiService.put(
       '${ApiConfig.patients}/$patientId/health-records/$recordId',
       data: data,
@@ -60,7 +73,9 @@ class HealthRecordService {
   }
 
   Future<void> delete(String patientId, String recordId) async {
-    await _apiService.delete('${ApiConfig.patients}/$patientId/health-records/$recordId');
+    await _apiService.delete(
+      '${ApiConfig.patients}/$patientId/health-records/$recordId',
+    );
   }
 
   String getFileUrl(String patientId, String fileId) {

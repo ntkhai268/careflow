@@ -6,8 +6,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDate;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Data
@@ -32,3 +32,4 @@ public class PatientResponse {
     private Instant createdAt;
     private Instant updatedAt;
 }
+

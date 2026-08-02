@@ -209,7 +209,7 @@ Hai cột dưới đây cố ý tách biệt:
 | API Gateway | Có route, JWT filter và test trên `develop` | Chưa đánh giá lại đầy đủ; thiếu Analytics route và role nhân viên/kỹ thuật viên |
 | Identity & eKYC | Có auth, refresh token và eKYC mock trên `develop` | Chưa đánh giá lại đầy đủ; thiếu role mục tiêu và contract tích hợp |
 | Patient | Có profile và patient-uploaded health record trên `develop` | Chưa đánh giá lại đầy đủ; cần ownership/auth test và event chuẩn |
-| Appointment | Có CRUD/query và event sơ bộ trên `develop` | Chưa đạt contract: đang tạo `PENDING`, event raw map, chưa quản lý capacity/follow-up |
+| Appointment | Có CRUD/query; create tự trả `CONFIRMED`, chặn ca đã qua và có test | Chưa đạt integration contract: event còn raw `AppointmentCreated`, chưa có capacity concurrency-safe/idempotency/follow-up |
 | Queue Management | Implementation lớn tại `838f08f`: domain, 3 migration, API, QR, locking, idempotency, outbox/consumer và 24 test pass | `BELOW_CONTRACT`: scheduler priority/N:M cũ trái FIFO mới; thiếu ba queue type, Lab và result-review flow |
 | Consultation | Prototype lớn tại `aaf0716`: domain, API, state, RabbitMQ và Doctor Web; module build thành công | `BELOW_CONTRACT`: thiếu queue assignment/ownership, transition guard, Lab flow, envelope/outbox và test |
 | Prescription | Prototype lớn tại `e1381f5`: domain thuốc/toa, API, RabbitMQ và Doctor Web; module build thành công | `BELOW_CONTRACT`: thiếu ownership, cancel/dispense/amendment, event chuẩn, migration và test |

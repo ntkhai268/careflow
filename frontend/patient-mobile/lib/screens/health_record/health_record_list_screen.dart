@@ -10,12 +10,12 @@ class HealthRecordListScreen extends ConsumerWidget {
   final int patientBirthYear;
 
   const HealthRecordListScreen({
-    Key? key,
+    super.key,
     required this.patientId,
     required this.patientName,
     required this.patientGender,
     required this.patientBirthYear,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -24,7 +24,10 @@ class HealthRecordListScreen extends ConsumerWidget {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
-        title: const Text('Hồ sơ sức khỏe', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Hồ sơ sức khỏe',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: const Color(0xFF29B6F6),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
@@ -48,12 +51,18 @@ class HealthRecordListScreen extends ConsumerWidget {
                     children: [
                       Text(
                         patientName,
-                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '$patientGender - $patientBirthYear',
-                        style: const TextStyle(color: Colors.grey, fontSize: 14),
+                        style: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -66,7 +75,11 @@ class HealthRecordListScreen extends ConsumerWidget {
             padding: EdgeInsets.all(16.0),
             child: Text(
               'Quản lý thông tin sức khỏe',
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.black87),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.black87,
+              ),
             ),
           ),
           Expanded(
@@ -79,7 +92,10 @@ class HealthRecordListScreen extends ConsumerWidget {
                       children: const [
                         Icon(Icons.monitor_heart, size: 80, color: Colors.grey),
                         SizedBox(height: 16),
-                        Text('Chưa có thông tin sức khỏe', style: TextStyle(color: Colors.grey, fontSize: 16)),
+                        Text(
+                          'Chưa có thông tin sức khỏe',
+                          style: TextStyle(color: Colors.grey, fontSize: 16),
+                        ),
                       ],
                     ),
                   );
@@ -95,14 +111,17 @@ class HealthRecordListScreen extends ConsumerWidget {
                       final record = records[index];
                       return Card(
                         margin: const EdgeInsets.only(bottom: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Expanded(
                                     child: Text(
@@ -116,26 +135,43 @@ class HealthRecordListScreen extends ConsumerWidget {
                                   ),
                                   TextButton(
                                     onPressed: () {
-                                      context.push('/patient/$patientId/health-records/${record.id}');
+                                      context.push(
+                                        '/patient/$patientId/health-records/${record.id}',
+                                      );
                                     },
-                                    child: const Text('Chi tiết', style: TextStyle(color: Color(0xFF29B6F6))),
+                                    child: const Text(
+                                      'Chi tiết',
+                                      style: TextStyle(
+                                        color: Color(0xFF29B6F6),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 8),
-                              Text('Ngày: ${record.recordDate.day}/${record.recordDate.month}/${record.recordDate.year}'),
+                              Text(
+                                'Ngày: ${record.recordDate.day}/${record.recordDate.month}/${record.recordDate.year}',
+                              ),
                               const SizedBox(height: 4),
                               Text('Tên cơ sở y tế: ${record.facilityName}'),
-                              if (record.files != null && record.files!.isNotEmpty) ...[
+                              if (record.files != null &&
+                                  record.files!.isNotEmpty) ...[
                                 const SizedBox(height: 12),
                                 Row(
                                   children: [
-                                    const Icon(Icons.attach_file, size: 16, color: Colors.grey),
+                                    const Icon(
+                                      Icons.attach_file,
+                                      size: 16,
+                                      color: Colors.grey,
+                                    ),
                                     const SizedBox(width: 4),
                                     Expanded(
                                       child: Text(
                                         record.files!.first.fileName,
-                                        style: const TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+                                        style: const TextStyle(
+                                          color: Colors.blue,
+                                          decoration: TextDecoration.underline,
+                                        ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
                                       ),
@@ -176,7 +212,14 @@ class HealthRecordListScreen extends ConsumerWidget {
                 shadowColor: Colors.transparent,
                 padding: const EdgeInsets.symmetric(vertical: 16),
               ),
-              child: const Text('Tải lên', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white)),
+              child: const Text(
+                'Tải lên',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ),
