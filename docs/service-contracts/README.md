@@ -209,8 +209,8 @@ Hai cột dưới đây cố ý tách biệt:
 | API Gateway | Có route, JWT filter và test trên `develop` | Chưa đánh giá lại đầy đủ; thiếu Analytics route và role nhân viên/kỹ thuật viên |
 | Identity & eKYC | Có auth, refresh token và eKYC mock trên `develop` | Chưa đánh giá lại đầy đủ; thiếu role mục tiêu và contract tích hợp |
 | Patient | Có profile và patient-uploaded health record trên `develop` | Chưa đánh giá lại đầy đủ; cần ownership/auth test và event chuẩn |
-| Appointment | Có CRUD/query; create tự trả `CONFIRMED`, chặn ca đã qua và có test | Chưa đạt integration contract: event còn raw `AppointmentCreated`; chưa có `ClinicRoom`, `Appointment.roomId`, phân phòng, capacity concurrency-safe/idempotency/follow-up |
-| Queue Management | Implementation lớn tại `838f08f`: domain, 3 migration, API, QR, locking, idempotency, outbox/consumer và 24 test pass | `BELOW_CONTRACT`: scheduler priority/N:M cũ chưa khớp ba làn `PRIORITY`/`NORMAL`/`RESULT_REVIEW`, Round Robin `1:1:1`, Lab và result-review flow |
+| Appointment | Có CRUD/query; create tự trả `CONFIRMED`, lưu owner/phòng và phát `AppointmentConfirmed` v1 qua outbox | Chưa có bảng quản trị `ClinicRoom`, capacity concurrency-safe/idempotency/follow-up |
+| Queue Management | Initial consultation vertical slice có ticket/QR, staff check-in đúng phòng, active queue, call/start/complete, outbox và consumer idempotent | Chưa có Lab, result-review và authorization theo doctor-room assignment |
 | Consultation | Prototype lớn tại `aaf0716`: domain, API, state, RabbitMQ và Doctor Web; module build thành công | `BELOW_CONTRACT`: thiếu queue assignment/ownership, transition guard, Lab flow, envelope/outbox và test |
 | Prescription | Prototype lớn tại `e1381f5`: domain thuốc/toa, API, RabbitMQ và Doctor Web; module build thành công | `BELOW_CONTRACT`: thiếu ownership, cancel/dispense/amendment, event chuẩn, migration và test |
 | Laboratory Order | Chỉ có module skeleton trên mọi remote ref | `BELOW_CONTRACT`: chưa có domain/API/state/event/test |

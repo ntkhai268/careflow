@@ -16,9 +16,13 @@ import java.util.UUID;
 public class AppointmentResponse {
     private UUID id;
     private UUID patientId;
+    private UUID ownerUserId;
     private String patientName;
     private String department;
     private String departmentDisplayName;
+    private UUID departmentId;
+    private String roomId;
+    private String roomDisplayName;
     private UUID doctorId;
     private String doctorName;
     private LocalDate appointmentDate;

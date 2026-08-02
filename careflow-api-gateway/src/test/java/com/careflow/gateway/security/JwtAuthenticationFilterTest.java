@@ -55,6 +55,25 @@ class JwtAuthenticationFilterTest {
     }
 
     @Test
+    void staffRoleIsForwardedForQueueCheckIn() {
+        UUID userId = UUID.randomUUID();
+        JwtAuthenticationFilter filter = filter();
+        MockServerWebExchange exchange = MockServerWebExchange.from(
+                MockServerHttpRequest.post("/api/queues/check-in")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + token(userId, "STAFF"))
+                        .build());
+        AtomicReference<ServerWebExchange> forwarded = new AtomicReference<>();
+
+        filter.filter(exchange, forwardedExchange -> {
+            forwarded.set(forwardedExchange);
+            return forwardedExchange.getResponse().setComplete();
+        }).block();
+
+        assertThat(forwarded.get().getRequest().getHeaders().getFirst("X-User-Role"))
+                .isEqualTo("STAFF");
+    }
+
+    @Test
     void refreshEndpointIsPublicAndSpoofedHeadersAreRemoved() {
         JwtAuthenticationFilter filter = filter();
         MockServerWebExchange exchange = MockServerWebExchange.from(MockServerHttpRequest

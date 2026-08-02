@@ -9,6 +9,8 @@ class Appointment {
   final String? patientName;
   final String department;
   final String departmentDisplayName;
+  final String? roomId;
+  final String? roomDisplayName;
   final String? doctorId;
   final String? doctorName;
   final DateTime appointmentDate;
@@ -27,6 +29,8 @@ class Appointment {
     this.patientName,
     required this.department,
     required this.departmentDisplayName,
+    this.roomId,
+    this.roomDisplayName,
     this.doctorId,
     this.doctorName,
     required this.appointmentDate,
@@ -52,6 +56,8 @@ class Appointment {
       patientName: json['patientName'] as String?,
       department: json['department'] as String,
       departmentDisplayName: json['departmentDisplayName'] as String? ?? '',
+      roomId: json['roomId'] as String?,
+      roomDisplayName: json['roomDisplayName'] as String?,
       doctorId: json['doctorId'] as String?,
       doctorName: json['doctorName'] as String?,
       appointmentDate: DateTime.parse(json['appointmentDate'] as String),

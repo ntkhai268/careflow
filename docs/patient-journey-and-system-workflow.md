@@ -360,18 +360,20 @@ cho phép mà chưa check-in, Appointment có thể chuyển sang `NO_SHOW`.
 
 ### 10.3. Gọi bệnh nhân
 
-Doctor Web hiển thị đồng thời ba làn và một ô `recommendedNext`. Khi bác sĩ sẵn
-sàng, bác sĩ bấm **Gọi bệnh nhân được đề xuất**:
+Doctor Web hiển thị đồng thời ba làn, một ô `recommendedNext` và nút **Gọi** tại
+mỗi lượt `CHECKED_IN`. Khi sẵn sàng, bác sĩ có thể gọi lượt được đề xuất hoặc
+chủ động gọi một lượt khác:
 
 ```text
 CHECKED_IN
 → CALLED
 ```
 
-Queue Service phải tính lại đề xuất và claim Queue Entry một cách nguyên tử tại
-thời điểm xử lý lệnh. Nếu nhiều bác sĩ cùng bấm gọi, một Queue Entry chỉ được
-gọi một lần. Chỉ sau khi gọi thành công, hệ thống mới cập nhật
-`lastServedLane`, ghi `calledByDoctorId` và phát `PatientCalled`.
+Nếu bác sĩ dùng nút gọi nhanh, Queue Service tính lại đề xuất tại thời điểm xử lý.
+Nếu bác sĩ bấm nút trên một hàng, Queue Service gọi đúng Queue Entry được chọn.
+Sau khi gọi thành công, hệ thống ghi `calledByUserId`, `calledAt` và phát
+`PatientCalled`. Phòng MVP có một bác sĩ và một máy; hệ thống không chặn bác sĩ
+gọi thêm chỉ vì đã có bệnh nhân `CALLED` hoặc `IN_PROGRESS`.
 
 Mobile nhận:
 
@@ -990,8 +992,9 @@ payload
 - Số chưa check-in không xuất hiện.
 - Lượt đến trễ được đưa xuống cuối hoặc xử lý thủ công.
 - `MISSED` không được giữ đầu queue.
-- Hệ thống không tự gọi; bác sĩ bấm gọi lượt được đề xuất.
-- Lệnh gọi tính lại và claim lượt nguyên tử để tránh hai bác sĩ gọi trùng.
+- Hệ thống không tự gọi; bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ lượt
+  `CHECKED_IN` nào trên Doctor Web.
+- Mỗi hàng có nút **Gọi**; `call-next` chỉ là thao tác gọi nhanh theo gợi ý.
 
 ### 22.2. Queue cận lâm sàng
 

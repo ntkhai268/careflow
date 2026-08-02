@@ -12,7 +12,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.time.Clock;
 import java.time.Instant;
@@ -33,7 +32,7 @@ class AppointmentServiceTest {
     private AppointmentRepository appointmentRepository;
 
     @Mock
-    private RabbitTemplate rabbitTemplate;
+    private AppointmentEventService appointmentEvents;
 
     @InjectMocks
     private AppointmentService appointmentService;
@@ -56,7 +55,7 @@ class AppointmentServiceTest {
                         request.getTimeSlot(),
                         AppointmentStatus.CANCELLED))
                 .thenReturn(false);
-        when(appointmentRepository.save(any(Appointment.class)))
+        when(appointmentRepository.saveAndFlush(any(Appointment.class)))
                 .thenAnswer(invocation -> {
                     Appointment saved = invocation.getArgument(0);
                     saved.setId(UUID.randomUUID());
@@ -64,16 +63,18 @@ class AppointmentServiceTest {
                 });
 
         AppointmentResponse response =
-                appointmentService.createAppointment(request);
+                appointmentService.createAppointment(request, UUID.randomUUID(), "trace-1");
 
         ArgumentCaptor<Appointment> appointmentCaptor =
                 ArgumentCaptor.forClass(Appointment.class);
-        verify(appointmentRepository).save(appointmentCaptor.capture());
+        verify(appointmentRepository).saveAndFlush(appointmentCaptor.capture());
         assertThat(appointmentCaptor.getValue().getStatus())
                 .isEqualTo(AppointmentStatus.CONFIRMED);
         assertThat(response.getStatus()).isEqualTo("CONFIRMED");
         assertThat(response.getStatusDisplayName())
                 .isEqualTo(AppointmentStatus.CONFIRMED.getDisplayName());
+        assertThat(response.getRoomId()).isEqualTo(Department.NOI_TONG_QUAT.getRoomId());
+        verify(appointmentEvents).confirmed(any(Appointment.class), org.mockito.ArgumentMatchers.eq("trace-1"));
     }
 
     @Test
@@ -92,5 +93,28 @@ class AppointmentServiceTest {
         assertThatThrownBy(() ->
                 AppointmentService.validateAppointmentTime(request, clock))
                 .hasMessage("Ca khám đã qua. Vui lòng chọn ca khác");
+    }
+
+    @Test
+    void patientCannotReadAnotherAccountsAppointment() {
+        Appointment appointment = Appointment.builder()
+                .patientId(UUID.randomUUID())
+                .ownerUserId(UUID.randomUUID())
+                .department(Department.NHI)
+                .departmentId(Department.NHI.getId())
+                .roomId(Department.NHI.getRoomId())
+                .roomDisplayName(Department.NHI.getRoomDisplayName())
+                .appointmentDate(LocalDate.now().plusDays(1))
+                .timeSlot("10:00-10:30")
+                .status(AppointmentStatus.CONFIRMED)
+                .build();
+        UUID appointmentId = UUID.randomUUID();
+        appointment.setId(appointmentId);
+        when(appointmentRepository.findById(appointmentId)).thenReturn(java.util.Optional.of(appointment));
+
+        assertThatThrownBy(() -> appointmentService.getAppointmentById(
+                appointmentId, UUID.randomUUID(), "PATIENT"))
+                .isInstanceOf(com.careflow.common.exception.BusinessException.class)
+                .extracting("status").isEqualTo(403);
     }
 }

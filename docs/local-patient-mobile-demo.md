@@ -119,6 +119,7 @@ cd D:\PTIT\CareFlow\.worktrees\patient-mobile\frontend\patient-mobile
 
 flutter run `
   --dart-define=DEMO_MODE=true `
+  --dart-define=REAL_QUEUE=true `
   --dart-define=API_BASE_URL=http://127.0.0.1:8080/api `
   --dart-define=WS_BASE_URL=ws://127.0.0.1:8080/ws
 ```
