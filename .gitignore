@@ -12,9 +12,12 @@ target/
 *.jar
 *.war
 *.log
+logs/
 application-local.yml
+application-local.yaml
 application-local.properties
 application-remote.yml
+application-remote.yaml
 application-remote.properties
 
 # Node / React

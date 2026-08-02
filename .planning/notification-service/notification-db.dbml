@@ -1,0 +1,33 @@
+// CareFlow - Notification Service Database Design (DBML)
+// Schema: careflow_notification
+
+Project CareFlow_Notification_Service {
+  database_type: 'PostgreSQL'
+  note: 'Database Schema cho dịch vụ Thông báo Realtime (CareFlow Notification Service)'
+}
+
+Enum NotificationStatus {
+  PENDING [note: 'Đang chờ gửi']
+  DELIVERED [note: 'Đã gửi thành công qua WebSocket / Push']
+  READ [note: 'Bệnh nhân / Người dùng đã xem']
+  FAILED [note: 'Gửi thất bại']
+}
+
+Table notifications {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  recipient_user_id uuid [not null, note: 'Tài khoản người nhận (Identity Service)']
+  notification_type varchar(50) [not null, note: 'Loại thông báo (APPOINTMENT_CONFIRMED, QUEUE_CALLED, LAB_READY, v.v.)']
+  title varchar(255) [not null, note: 'Tiêu đề thông báo']
+  body text [not null, note: 'Nội dung hiển thị']
+  action_type varchar(50) [note: 'Hành động khi nhấn (OPEN_QUEUE, OPEN_LAB_RESULT, OPEN_PRESCRIPTION)']
+  resource_id varchar(100) [note: 'ID tài nguyên liên quan']
+  status NotificationStatus [not null, default: 'DELIVERED', note: 'Trạng thái thông báo']
+  
+  created_at timestamptz [not null]
+  read_at timestamptz [note: 'Thời điểm người dùng đọc thông báo']
+
+  indexes {
+    (recipient_user_id, status) [name: 'idx_notification_user_status']
+    created_at [name: 'idx_notification_created']
+  }
+}

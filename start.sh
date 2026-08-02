@@ -14,11 +14,14 @@ echo "--> Infrastructure checks: assuming Postgres & RabbitMQ are running..."
 declare -a SERVICE_PIDS
 
 # 2. Helper to run mvn commands in background
+LOG_DIR="$SCRIPT_DIR/logs"
+mkdir -p "$LOG_DIR"
+
 run_service() {
     local service_name=$1
     local cmd=$2
     echo "--> Launching $service_name..."
-    eval "$cmd" > "logs_${service_name}.log" 2>&1 &
+    eval "$cmd" > "$LOG_DIR/logs_${service_name}.log" 2>&1 &
     SERVICE_PIDS+=($!)
 }
 
@@ -48,7 +51,7 @@ run_service "prescription-service" "mvn -pl careflow-prescription-service spring
 # 10. Start Frontend Web (Port 3000)
 echo "--> Launching Doctor Web Frontend..."
 if [ -d "frontend/doctor-web" ]; then
-    (cd frontend/doctor-web && npm run dev > "../../logs_frontend.log" 2>&1) &
+    (cd frontend/doctor-web && npm run dev > "$LOG_DIR/logs_frontend.log" 2>&1) &
     SERVICE_PIDS+=($!)
 fi
 
@@ -85,7 +88,7 @@ echo " Tailing logs in real-time. Press [Ctrl + C] to STOP all services. "
 echo "================================================================="
 
 # Create empty log files if they don't exist yet to avoid tail errors
-touch logs_eureka-server.log logs_api-gateway.log logs_identity-service.log logs_patient-service.log logs_appointment-service.log logs_consultation-service.log logs_prescription-service.log logs_frontend.log
+touch "$LOG_DIR/logs_eureka-server.log" "$LOG_DIR/logs_api-gateway.log" "$LOG_DIR/logs_identity-service.log" "$LOG_DIR/logs_patient-service.log" "$LOG_DIR/logs_appointment-service.log" "$LOG_DIR/logs_consultation-service.log" "$LOG_DIR/logs_prescription-service.log" "$LOG_DIR/logs_frontend.log"
 
 # Tail all logs
-tail -f logs_eureka-server.log -f logs_api-gateway.log -f logs_identity-service.log -f logs_patient-service.log -f logs_appointment-service.log -f logs_consultation-service.log -f logs_prescription-service.log -f logs_frontend.log
+tail -f "$LOG_DIR/logs_eureka-server.log" -f "$LOG_DIR/logs_api-gateway.log" -f "$LOG_DIR/logs_identity-service.log" -f "$LOG_DIR/logs_patient-service.log" -f "$LOG_DIR/logs_appointment-service.log" -f "$LOG_DIR/logs_consultation-service.log" -f "$LOG_DIR/logs_prescription-service.log" -f "$LOG_DIR/logs_frontend.log"

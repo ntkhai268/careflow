@@ -19,7 +19,7 @@ spring:
   rabbitmq:
     host: ${RABBITMQ_HOST:100.116.233.60}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:careflow}
+    username: ${RABBITMQ_USERNAME:${RABBITMQ_USER:careflow}}
     password: ${RABBITMQ_PASSWORD:careflow}
   lifecycle:
     timeout-per-shutdown-phase: 20s

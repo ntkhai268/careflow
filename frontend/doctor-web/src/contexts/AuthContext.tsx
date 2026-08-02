@@ -29,23 +29,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // Purge legacy mock token if present
-    const savedToken = localStorage.getItem("careflow_token");
-    if (savedToken && savedToken.startsWith("mock_jwt_")) {
-      localStorage.removeItem("careflow_user");
-      localStorage.removeItem("careflow_token");
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
-
     const savedUser = localStorage.getItem("careflow_user");
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
       } catch {
-        localStorage.removeItem("careflow_user");
-        localStorage.removeItem("careflow_token");
+        setUser(null);
       }
     }
     setIsLoading(false);
@@ -98,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(() => {
     localStorage.removeItem("careflow_token");
     localStorage.removeItem("careflow_user");
+    localStorage.clear(); // Clear all remaining session tokens/keys
     setUser(null);
     router.push("/login");
   }, [router]);

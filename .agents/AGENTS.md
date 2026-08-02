@@ -16,6 +16,23 @@
 - Run `gitnexus analyze` whenever a new feature is completed or significant structural changes are made to keep repository index updated.
 - Use `gitnexus context` and `gitnexus impact` to analyze blast radius and affected execution flows before writing new features.
 
+## Business Domain — Mandatory Reading Before Any Design
+
+**TRƯỚC KHI thiết kế hoặc tái thiết kế bất kỳ function, class, API endpoint, state machine, hoặc event nào**, bắt buộc phải:
+
+1. **Đọc `docs/patient-journey-and-system-workflow.md`** — Tài liệu nghiệp vụ nguồn đã được thống nhất. Hiểu rõ:
+   - Giai đoạn nào trong hành trình bệnh nhân mà feature liên quan?
+   - Trạng thái (state) nào hợp lệ và transition nào được phép?
+   - Service nào chịu trách nhiệm gì (xem mục 19)?
+   - Luồng đồng bộ vs. bất đồng bộ (xem mục 21)?
+   - Quy tắc Queue FIFO, Lab và Result Review (xem mục 22)?
+2. **Đọc `docs/service-contracts/README.md`** — Để nắm các quy ước HTTP, response envelope, idempotency và event chung.
+3. **Đọc contract cụ thể của service** (ví dụ `docs/service-contracts/08-doctor-consultation.md`) nếu liên quan.
+
+Nếu code và tài liệu mâu thuẫn: tạo issue, không tự ý chọn theo code cũ.
+
+---
+
 ## GitNexus — Mandatory Pre-Planning Step
 
 **TRƯỚC KHI tạo bất kỳ Implementation Plan nào**, bắt buộc phải thực hiện các bước sau theo thứ tự:

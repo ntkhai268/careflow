@@ -39,6 +39,12 @@ public class DataInitializer implements CommandLineRunner {
         seedUser(UUID.fromString("22222222-2222-2222-2222-222222222222"), "patient", "patient@careflow.com",
                 "Nguyễn Văn Bệnh", UserRole.PATIENT);
 
+        seedUser(UUID.fromString("44444444-4444-4444-4444-444444444444"), "lab", "lab@careflow.com",
+                "KTV. Trần Văn Lab - Khu Xét nghiệm", UserRole.LAB_TECHNICIAN);
+
+        seedUser(UUID.fromString("55555555-5555-5555-5555-555555555555"), "staff", "staff@careflow.com",
+                "NV. Lê Thị Staff - Tiếp nhận & Dược", UserRole.STAFF);
+
         seedUser(UUID.fromString("33333333-3333-3333-3333-333333333333"), "admin", "admin@careflow.com",
                 "Quản trị hệ thống", UserRole.ADMIN);
     }

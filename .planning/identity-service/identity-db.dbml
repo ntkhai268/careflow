@@ -9,6 +9,8 @@ Project CareFlow_Identity_Service {
 Enum UserRole {
   PATIENT [note: 'Bệnh nhân']
   DOCTOR [note: 'Bác sĩ']
+  STAFF [note: 'Nhân viên tiếp nhận / Dược']
+  LAB_TECHNICIAN [note: 'Kỹ thuật viên cận lâm sàng']
   ADMIN [note: 'Quản trị viên']
 }
 
@@ -23,7 +25,7 @@ Table identity.users {
   username varchar(50) [not null, unique, note: 'Tên đăng nhập']
   email varchar(255) [not null, unique, note: 'Địa chỉ Email']
   password_hash varchar(255) [not null, note: 'Mật khẩu đã được mã hóa BCrypt']
-  role UserRole [not null, default: 'PATIENT', note: 'Vai trò trong hệ thống (PATIENT, DOCTOR, ADMIN)']
+  role UserRole [not null, default: 'PATIENT', note: 'Vai trò trong hệ thống (PATIENT, DOCTOR, STAFF, LAB_TECHNICIAN, ADMIN)']
   title varchar(100) [note: 'Chức danh / Học hàm (ví dụ: Bác sĩ Chuyên khoa I)']
   status UserStatus [not null, default: 'ACTIVE', note: 'Trạng thái tài khoản (ACTIVE, LOCKED, DISABLED)']
   failed_login_attempts int [not null, default: 0, note: 'Số lần đăng nhập sai liên tiếp']
