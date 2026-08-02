@@ -63,7 +63,7 @@ class AppointmentServiceTest {
                 });
 
         AppointmentResponse response =
-                appointmentService.createAppointment(request, UUID.randomUUID(), "trace-1");
+                appointmentService.createAppointment(request, UUID.randomUUID(), "trace-1", null);
 
         ArgumentCaptor<Appointment> appointmentCaptor =
                 ArgumentCaptor.forClass(Appointment.class);
@@ -75,6 +75,33 @@ class AppointmentServiceTest {
                 .isEqualTo(AppointmentStatus.CONFIRMED.getDisplayName());
         assertThat(response.getRoomId()).isEqualTo(Department.NOI_TONG_QUAT.getRoomId());
         verify(appointmentEvents).confirmed(any(Appointment.class), org.mockito.ArgumentMatchers.eq("trace-1"));
+    }
+
+    @Test
+    void createAppointmentWithIdempotencyKeyReturnsCachedResponse() {
+        UUID patientId = UUID.randomUUID();
+        String idempotencyKey = "key-abc-123";
+        CreateAppointmentRequest request = CreateAppointmentRequest.builder()
+                .patientId(patientId)
+                .patientName("Nguyen Thanh Khai")
+                .department(Department.NOI_TONG_QUAT.name())
+                .appointmentDate(LocalDate.now().plusDays(1))
+                .timeSlot("10:00-10:30")
+                .build();
+
+        when(appointmentRepository.saveAndFlush(any(Appointment.class)))
+                .thenAnswer(invocation -> {
+                    Appointment saved = invocation.getArgument(0);
+                    saved.setId(UUID.randomUUID());
+                    return saved;
+                });
+
+        UUID ownerId = UUID.randomUUID();
+        AppointmentResponse res1 = appointmentService.createAppointment(request, ownerId, "trace-1", idempotencyKey);
+        AppointmentResponse res2 = appointmentService.createAppointment(request, ownerId, "trace-1", idempotencyKey);
+
+        assertThat(res1.getId()).isEqualTo(res2.getId());
+        verify(appointmentRepository, org.mockito.Mockito.times(1)).saveAndFlush(any(Appointment.class));
     }
 
     @Test

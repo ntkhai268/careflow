@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { appointmentApi, AppointmentResponse } from "@/lib/appointment-api";
 import { consultationApi } from "@/lib/consultation-api";
+import { doctorApi } from "@/lib/doctor-api";
 
 type TabFilter = "all" | "waiting" | "completed";
 
@@ -57,12 +58,17 @@ export default function DashboardQueuePage() {
 
   useEffect(() => {
     async function fetchQueue() {
+      if (!user) return;
       setIsLoading(true);
       setFetchError(null);
       const now = new Date();
       const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
       try {
-        const res = await appointmentApi.getAppointmentsByDepartment("NOI_TONG_QUAT", todayStr);
+        // Look up doctor profile to get assigned department & room dynamically
+        const doctorProfile = await doctorApi.getDoctorProfile(user.id);
+        const deptCode = doctorProfile.departmentCode || "NOI_TONG_QUAT";
+
+        const res = await appointmentApi.getAppointmentsByDepartment(deptCode, todayStr);
         setAppointments(res.data ?? []);
       } catch {
         setFetchError("Không thể tải danh sách hàng đợi. Vui lòng thử lại.");
@@ -72,7 +78,7 @@ export default function DashboardQueuePage() {
       }
     }
     fetchQueue();
-  }, []);
+  }, [user]);
 
   const handleCallPatient = async (patientId: string, appointmentId: string) => {
     if (!user) return;
@@ -118,12 +124,12 @@ export default function DashboardQueuePage() {
   const safeAppointments = appointments ?? [];
 
   const filtered = safeAppointments.filter(a => {
-    if (activeTab === "waiting") return ["WAITING","PENDING","CONFIRMED"].includes(a.status);
+    if (activeTab === "waiting") return ["WAITING","PENDING","CONFIRMED","CHECKED_IN"].includes(a.status);
     if (activeTab === "completed") return a.status === "COMPLETED";
     return true;
   });
 
-  const waitingCount = safeAppointments.filter(a => ["WAITING","PENDING","CONFIRMED"].includes(a.status)).length;
+  const waitingCount = safeAppointments.filter(a => ["WAITING","PENDING","CONFIRMED","CHECKED_IN"].includes(a.status)).length;
 
   return (
     <div className="space-y-5">

@@ -170,9 +170,10 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
         {/* Help */}
         <div className="px-2.5 pt-2 pb-0.5">
           <button
+            onClick={() => window.dispatchEvent(new CustomEvent("careflow:open-help"))}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors ${isCollapsed ? "justify-center" : ""}`}
             style={{ color: "#475569" }}
-            title="Trợ giúp"
+            title="Trợ giúp & Phím tắt"
             onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "#161930"; (e.currentTarget as HTMLButtonElement).style.color = "#94A3B8"; }}
             onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.backgroundColor = "transparent"; (e.currentTarget as HTMLButtonElement).style.color = "#475569"; }}
           >
@@ -186,6 +187,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
         {/* Settings */}
         <div className="px-2.5 pb-2">
           <button
+            onClick={() => window.dispatchEvent(new CustomEvent("careflow:open-settings"))}
             className={`w-full flex items-center gap-3 px-3 py-2 rounded-xl transition-colors ${isCollapsed ? "justify-center" : ""}`}
             style={{ color: "#475569" }}
             title="Cài đặt"

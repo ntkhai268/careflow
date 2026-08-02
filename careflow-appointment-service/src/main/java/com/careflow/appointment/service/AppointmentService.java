@@ -22,6 +22,7 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -34,13 +35,24 @@ public class AppointmentService {
     private final AppointmentRepository appointmentRepository;
     private final AppointmentEventService appointmentEvents;
 
+    private final Map<String, AppointmentResponse> idempotencyStore = new java.util.concurrent.ConcurrentHashMap<>();
+
     /**
-     * Đặt lịch khám mới
+     * Đặt lịch khám mới (hỗ trợ Idempotency-Key)
      */
     @Transactional
     public AppointmentResponse createAppointment(CreateAppointmentRequest request,
                                                  UUID ownerUserId,
-                                                 String correlationId) {
+                                                 String correlationId,
+                                                 String idempotencyKey) {
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            AppointmentResponse cached = idempotencyStore.get(idempotencyKey);
+            if (cached != null) {
+                log.info("Returning cached appointment response for Idempotency-Key: {}", idempotencyKey);
+                return cached;
+            }
+        }
+
         validateAppointmentTime(request, Clock.system(HOSPITAL_ZONE));
 
         // Parse department
@@ -71,9 +83,6 @@ public class AppointmentService {
                 .appointmentDate(request.getAppointmentDate())
                 .timeSlot(request.getTimeSlot())
                 .reason(request.getReason())
-                // Online bookings are accepted immediately. The patient app
-                // can issue the visit ticket without waiting for a manual
-                // confirmation step that does not exist in the agreed flow.
                 .status(AppointmentStatus.CONFIRMED)
                 .build();
 
@@ -84,7 +93,13 @@ public class AppointmentService {
 
         appointmentEvents.confirmed(saved, correlationId);
 
-        return AppointmentMapper.toResponse(saved);
+        AppointmentResponse response = AppointmentMapper.toResponse(saved);
+
+        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
+            idempotencyStore.put(idempotencyKey, response);
+        }
+
+        return response;
     }
 
     /**
@@ -247,5 +262,4 @@ public class AppointmentService {
                             current.getDisplayName(), next.getDisplayName()));
         }
     }
-
 }

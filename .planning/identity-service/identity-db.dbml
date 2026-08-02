@@ -56,3 +56,22 @@ Table identity.refresh_tokens {
     (expires_at) [name: 'idx_refresh_tokens_expires_at', note: 'Index phục vụ dọn dẹp token hết hạn']
   }
 }
+
+Table identity.doctor_profiles {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  user_id uuid [not null, unique, ref: - identity.users.id, note: 'Khóa ngoại 1:1 tham chiếu tới identity.users(id)']
+  full_name varchar(200) [not null, note: 'Họ và tên bác sĩ']
+  license_number varchar(50) [unique, note: 'Số giấy phép hành nghề']
+  specialization varchar(100) [note: 'Chuyên khoa']
+  department varchar(100) [note: 'Khoa làm việc (ví dụ: NOI_TONG_QUAT, NHI)']
+  phone_number varchar(20) [note: 'Số điện thoại liên hệ']
+  bio text [note: 'Tiểu sử / Giới thiệu bác sĩ']
+  avatar_url varchar(500) [note: 'Đường dẫn ảnh đại diện']
+  years_of_experience int [note: 'Số năm kinh nghiệm']
+  created_at timestamptz [not null, note: 'Thời gian tạo hồ sơ']
+  updated_at timestamptz [not null, note: 'Thời gian cập nhật hồ sơ gần nhất']
+
+  Indexes {
+    (user_id) [name: 'idx_doctor_profiles_user_id', note: 'Index hỗ trợ tra cứu hồ sơ bác sĩ theo user_id']
+  }
+}

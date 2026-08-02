@@ -37,11 +37,12 @@ public class AppointmentController {
             @Valid @RequestBody CreateAppointmentRequest request,
             @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
             @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
-            @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
+            @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId,
+            @RequestHeader(value = "Idempotency-Key", required = false) String idempotencyKey) {
         if (!List.of(AppConstants.ROLE_PATIENT, AppConstants.ROLE_ADMIN).contains(role)) {
             throw new BusinessException(403, "Không có quyền đặt lịch khám");
         }
-        AppointmentResponse response = appointmentService.createAppointment(request, userId, correlationId);
+        AppointmentResponse response = appointmentService.createAppointment(request, userId, correlationId, idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Đặt lịch khám thành công", response));
     }

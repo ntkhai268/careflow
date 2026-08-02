@@ -23,6 +23,26 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, isLoading, router]);
 
+  // Global Keyboard Shortcuts for Tab Switching
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.altKey || e.ctrlKey) {
+        if (e.key === "1") {
+          e.preventDefault();
+          router.push("/dashboard/general");
+        } else if (e.key === "2") {
+          e.preventDefault();
+          router.push("/dashboard/queue");
+        } else if (e.key === "3") {
+          e.preventDefault();
+          router.push("/dashboard/prescriptions");
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [router]);
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center bg-[#F1F5F9]">

@@ -29,6 +29,8 @@ spring:
   threads:
     virtual:
       enabled: true
+  flyway:
+    out-of-order: true
 
 eureka:
   client:
