@@ -1,0 +1,105 @@
+@startuml
+title DGM-ARC-01 — Kiến trúc logic tổng thể của CareFlow
+
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+skinparam componentStyle rectangle
+
+actor "Bệnh nhân" as Patient
+actor "Bác sĩ/Nhân viên" as Staff
+
+package "Lớp trình bày" {
+  [Patient Mobile\nFlutter] as Mobile
+  [Hospital Web\nNext.js/React] as Web
+}
+
+package "Lớp truy cập" {
+  [API Gateway] as Gateway
+  [Eureka Server] as Eureka
+}
+
+package "Các dịch vụ nghiệp vụ" {
+  [Identity & eKYC\nService] as Identity
+  [Patient Service] as PatientSvc
+  [Appointment Service] as Appointment
+  [Queue Management\nService] as Queue
+  [Doctor Consultation\nService] as Consultation
+  [Laboratory Order\nService] as Lab
+  [Prescription Service] as Prescription
+  [EMR Service] as EMR
+  [Notification Service] as Notification
+}
+
+note right of Queue
+  Quản lý ba làn PRIORITY, NORMAL, RESULT_REVIEW
+  Đề xuất Round Robin 1:1:1 và claim lượt nguyên tử
+end note
+
+note left of Appointment
+  Sở hữu Department 1:N ClinicRoom
+  MVP seed một phòng active cho mỗi khoa
+  và lưu roomId khi xác nhận Appointment
+end note
+
+database "PostgreSQL\nDatabase per Service" as DB
+queue "RabbitMQ" as Rabbit
+cloud "WebSocket" as WS
+
+Patient --> Mobile
+Staff --> Web
+Mobile --> Gateway : HTTPS/REST
+Web --> Gateway : HTTPS/REST
+Gateway --> Identity
+Gateway --> PatientSvc
+Gateway --> Appointment
+Gateway --> Queue
+Gateway --> Consultation
+Gateway --> Lab
+Gateway --> Prescription
+Gateway --> EMR
+Gateway --> Notification
+
+Gateway ..> Eureka : tra cứu service
+Identity ..> Eureka : đăng ký
+PatientSvc ..> Eureka : đăng ký
+Appointment ..> Eureka : đăng ký
+Queue ..> Eureka : đăng ký
+Consultation ..> Eureka : đăng ký
+Lab ..> Eureka : đăng ký
+Prescription ..> Eureka : đăng ký
+EMR ..> Eureka : đăng ký
+Notification ..> Eureka : đăng ký
+
+Identity --> DB
+PatientSvc --> DB
+Appointment --> DB
+Queue --> DB
+Consultation --> DB
+Lab --> DB
+Prescription --> DB
+EMR --> DB
+Notification --> DB
+
+Appointment --> Rabbit : event
+Queue --> Rabbit : event
+Consultation --> Rabbit : event
+Lab --> Rabbit : event
+Prescription --> Rabbit : event
+Notification --> Rabbit : consume/publish
+Notification --> WS
+WS --> Mobile : cập nhật realtime
+WS --> Web : cập nhật realtime
+
+note bottom of DB
+  Biểu tượng chung thể hiện nguyên tắc
+  mỗi service sở hữu database/schema riêng.
+end note
+
+legend bottom
+  Đường liền: giao tiếp đồng bộ hoặc kết nối trực tiếp.
+  Đường nét đứt: đăng ký/tra cứu hạ tầng.
+  Nguồn: Nhóm tác giả đề xuất dựa trên đặc tả CareFlow.
+endlegend
+@enduml

@@ -25,7 +25,7 @@
 | 2 | **Identity & Auth Service** | Xác thực/phân quyền là nền tảng, dùng JWT |
 | 3 | **Patient Service** | Core nghiệp vụ - quản lý hồ sơ bệnh nhân |
 | 4 | **Appointment Service** | Core nghiệp vụ - đăng ký khám bệnh |
-| 5 | **Queue Management Service** | **Điểm nhấn đề tài** - hàng đợi đa độ ưu tiên, thuật toán xen kẽ N:M |
+| 5 | **Queue Management Service** | **Điểm nhấn đề tài** - ba làn điều phối và Round Robin `1:1:1` |
 | 6 | **Notification Service** | Gửi thông báo đến lượt khám (WebSocket/SSE) |
 
 ### 🟡 BUILD đơn giản (CRUD cơ bản + kết nối) — 3 services
@@ -114,27 +114,26 @@
 
 Đây là service **quan trọng nhất** vì nó là trọng tâm nghiên cứu của đề tài.
 
-### 4.1. Thuật toán hàng đợi đa độ ưu tiên
+### 4.1. Ba làn hàng đợi tại phòng khám
 
 ```
-Priority Levels:
-┌─────────────────────────────────────────┐
-│ P0 - Cấp cứu (Emergency)               │  ← Luôn được gọi trước
-│ P1 - Ưu tiên (Người già, trẻ em, ...)  │  ← Xen kẽ theo tỉ lệ N:M
-│ P2 - Có hẹn trước (Appointment)        │  ← Xen kẽ theo tỉ lệ N:M
-│ P3 - Walk-in (Đến trực tiếp)           │  ← Còn lại
-└─────────────────────────────────────────┘
+Scheduling Lanes theo từng phòng/phiên:
+┌─────────────────────────────────────────────┐
+│ PRIORITY      - Khám ban đầu diện ưu tiên  │
+│ NORMAL        - Khám ban đầu thông thường │
+│ RESULT_REVIEW - Quay lại đọc kết quả      │
+└─────────────────────────────────────────────┘
 ```
 
-### 4.2. Thuật toán xen kẽ động N:M
+### 4.2. Round Robin `1:1:1`
 
 ```
-Cấu hình mẫu: N:M = 2:1 (2 bệnh nhân ưu tiên : 1 bệnh nhân thường)
+Luồng đề xuất: PRIORITY → NORMAL → RESULT_REVIEW → PRIORITY → ...
 
-Luồng gọi: P1, P1, P2, P1, P1, P3, P1, P1, P2, ...
-
-Nếu hàng đợi ưu tiên trống → tự động chuyển sang hàng thường
-Nếu bệnh nhân lỡ lượt → đưa vào đầu hàng đợi tương ứng (configurable)
+Nếu một làn rỗng → bỏ qua và tiếp tục chu kỳ với làn có dữ liệu
+Trong từng làn → FIFO theo queuedAt
+Nếu bệnh nhân lỡ lượt → đưa cuối làn tương ứng theo chính sách
+Hệ thống chỉ đề xuất; bác sĩ bấm gọi và server claim lượt nguyên tử
 ```
 
 ### 4.3. Ước tính thời gian chờ
@@ -143,7 +142,7 @@ Nếu bệnh nhân lỡ lượt → đưa vào đầu hàng đợi tương ứng
 estimated_wait_time = position_in_queue × avg_consultation_time
 
 Trong đó:
-- position_in_queue: tính dựa trên thuật toán N:M
+- position_in_queue: ước tính từ Round Robin `1:1:1` và số lượt trước trong mỗi làn
 - avg_consultation_time: trung bình động (moving average)
   của thời gian khám thực tế các bệnh nhân trước đó
 ```
@@ -290,12 +289,12 @@ Người B (Bệnh nhân)          Người A (Hệ thống)          Người C
 | # | Task | Output | Ưu tiên |
 |---|------|--------|---------|
 | 1 | **Queue Management Service** - DB schema + data model | Queue DB | 🔴 P0 |
-| 2 | Implement **thuật toán hàng đợi đa độ ưu tiên** (P0-P3) | Core algorithm | 🔴 P0 |
-| 3 | Implement **thuật toán xen kẽ động N:M** | Interleaving logic | 🔴 P0 |
-| 4 | API: tạo số thứ tự, gọi bệnh nhân tiếp, skip, xử lý lỡ lượt | Queue REST endpoints | 🔴 P0 |
+| 2 | Implement ba làn `PRIORITY`, `NORMAL`, `RESULT_REVIEW` và FIFO trong từng làn | Core algorithm | 🔴 P0 |
+| 3 | Implement Round Robin `1:1:1`, bỏ qua làn rỗng và `lastServedLane` | Interleaving logic | 🔴 P0 |
+| 4 | API: tạo số thứ tự, xem đề xuất, bác sĩ gọi lượt, skip và xử lý lỡ lượt | Queue REST endpoints | 🔴 P0 |
 | 5 | Lắng nghe event `AppointmentCreated` từ RabbitMQ → tự tạo queue entry | Event-driven flow | 🔴 P0 |
-| 6 | **Unit test** kỹ cho thuật toán queue (edge cases: hàng trống, lỡ lượt, thay đổi cấu hình) | Test coverage | 🟡 P1 |
-| 7 | API cấu hình queue: thay đổi tỉ lệ N:M, avg time theo chuyên khoa | Config API | 🟡 P1 |
+| 6 | **Unit test** queue (làn rỗng, lỡ lượt, nhiều bác sĩ gọi đồng thời) | Test coverage | 🟡 P1 |
+| 7 | API kích hoạt `RESULT_REVIEW` khi bệnh nhân xác nhận quay lại | Result-review flow | 🟡 P1 |
 
 #### Người B — Bệnh nhân (Appointment + Mobile booking)
 
@@ -315,14 +314,14 @@ Người B (Bệnh nhân)          Người A (Hệ thống)          Người C
 |---|------|--------|---------|
 | 1 | API tra cứu hồ sơ bệnh nhân (gọi sang Patient Service + EMR Service qua Gateway) | Cross-service query | 🔴 P0 |
 | 2 | Web: Màn hình **Danh sách bệnh nhân chờ khám** (gọi Queue API của A) | Queue dashboard | 🔴 P0 |
-| 3 | Web: Nút **"Gọi bệnh nhân tiếp theo"** (gọi Queue API của A) | Call next patient | 🔴 P0 |
+| 3 | Web: Nút **"Gọi bệnh nhân được đề xuất"** (gọi Queue API của A) | Atomic call-next | 🔴 P0 |
 | 4 | Web: Màn hình **Xem hồ sơ bệnh nhân** (lịch sử khám, kết quả XN) | Patient detail view | 🟡 P1 |
 | 5 | Setup **Prescription Service** skeleton + DB | Prescription API skeleton | 🟡 P1 |
 
 **🎯 Deliverable cuối tuần 2**:
 - ✅ Bệnh nhân đăng ký khám trên Mobile → event → tự tạo số thứ tự
-- ✅ Hàng đợi hoạt động đúng thuật toán N:M
-- ✅ Bác sỹ xem danh sách chờ + gọi bệnh nhân tiếp theo trên Web
+- ✅ Ba làn hoạt động đúng FIFO và Round Robin `1:1:1`
+- ✅ Bác sỹ xem ba danh sách + gọi bệnh nhân được đề xuất trên Web
 
 **🤝 Điểm phối hợp tuần 2**:
 - Ngày 6: A, B, C thống nhất API contract cho Queue + Appointment
@@ -602,22 +601,33 @@ patients (id, user_id, full_name, date_of_birth, gender, phone,
 
 ### Appointment Service DB
 ```sql
-appointments (id, patient_id, department, doctor_id, 
+departments (id, code, display_name, active)
+
+clinic_rooms (id, room_code, display_name, department_id, active)
+-- Department 1:N ClinicRoom; dữ liệu MVP seed đúng một phòng active mỗi khoa
+
+appointments (id, patient_id, department, room_id, doctor_id,
               appointment_date, time_slot, status, created_at)
 -- status: PENDING, CONFIRMED, CHECKED_IN, IN_PROGRESS, COMPLETED, CANCELLED
 ```
 
+Create Appointment không nhận `room_id` từ Mobile. Backend truy vấn phòng active
+theo khoa; MVP yêu cầu đúng một kết quả và không dùng random/find-first.
+
 ### Queue Management Service DB
 ```sql
-queue_configs (id, department, priority_ratio_n, priority_ratio_m, 
-               avg_consultation_minutes)
+queue_schedulers (id, room_id, session_date, session_code,
+                  last_served_lane, version)
 
-queue_entries (id, appointment_id, patient_id, department, 
-              queue_number, priority_level, status, 
-              check_in_time, called_time, completed_time,
+queue_entries (id, appointment_id, consultation_id, patient_id, room_id,
+              queue_number, queue_type, queue_class, status,
+              queued_at, called_at, called_by_doctor_id, completed_at,
               estimated_wait_minutes)
--- priority_level: EMERGENCY(0), PRIORITY(1), APPOINTMENT(2), WALKIN(3)
--- status: WAITING, CHECKED_IN, CALLED, IN_PROGRESS, COMPLETED, MISSED
+-- queue_type: INITIAL_CONSULTATION, LAB_EXECUTION, RESULT_REVIEW
+-- queue_class: PRIORITY, NORMAL (áp dụng cho INITIAL_CONSULTATION)
+-- scheduling lane được suy ra, không lưu thành ba bảng riêng
+-- status: TICKET_ISSUED/QUEUED, CHECKED_IN, CALLED, IN_PROGRESS,
+--         COMPLETED, MISSED, CANCELLED, NO_SHOW
 ```
 
 ### Consultation Service DB
@@ -708,7 +718,7 @@ medici/
 ## Verification Plan
 
 ### Automated Tests
-- Unit tests cho Queue Management algorithm (thuật toán N:M, ưu tiên)
+- Unit tests cho FIFO từng làn, Round Robin `1:1:1`, bỏ qua làn rỗng và gọi đồng thời
 - Integration tests cho luồng Appointment → Queue → Notification
 - API tests cho tất cả endpoints chính (Postman collection)
 

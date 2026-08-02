@@ -6,7 +6,7 @@ spring:
   application:
     name: appointment-service
   datasource:
-    url: ${APPOINTMENT_DB_URL:jdbc:postgresql://localhost:5432/careflow_appointment}
+    url: ${APPOINTMENT_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_appointment}
     username: ${APPOINTMENT_DB_USERNAME:careflow}
     password: ${APPOINTMENT_DB_PASSWORD:careflow}
   jpa:
@@ -17,10 +17,10 @@ spring:
   flyway:
     schemas: public
   rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
+    host: ${RABBITMQ_HOST:100.116.233.60}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:admin}
-    password: ${RABBITMQ_PASSWORD:admin123}
+    username: ${RABBITMQ_USERNAME:careflow}
+    password: ${RABBITMQ_PASSWORD:careflow}
   lifecycle:
     timeout-per-shutdown-phase: 20s
   threads:

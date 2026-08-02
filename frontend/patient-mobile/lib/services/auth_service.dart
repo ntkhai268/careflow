@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/api_config.dart';
 import 'api_service.dart';
 
-/// Auth response model
+/// Auth response model — maps to Identity Service's LoginResponse.
 class AuthResponse {
   final String token;
   final String? refreshToken;
@@ -34,7 +34,31 @@ class AuthResponse {
   }
 }
 
-/// Authentication service — handles login, register, logout.
+/// User info model — maps to Identity Service's UserResponse from /auth/me.
+class UserInfo {
+  final String id;
+  final String username;
+  final String email;
+  final String role;
+
+  UserInfo({
+    required this.id,
+    required this.username,
+    required this.email,
+    required this.role,
+  });
+
+  factory UserInfo.fromJson(Map<String, dynamic> json) {
+    return UserInfo(
+      id: json['id'] as String? ?? '',
+      username: json['username'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      role: json['role'] as String? ?? 'PATIENT',
+    );
+  }
+}
+
+/// Authentication service — handles login, register, logout, token verification.
 /// Mock mode is opt-in with --dart-define=USE_MOCK_AUTH=true.
 class AuthService {
   final ApiService _apiService;
@@ -92,7 +116,30 @@ class AuthService {
     }
   }
 
-  /// Logout
+  /// Fetch current user info by verifying the stored JWT via /auth/me.
+  /// Returns null if token is invalid or expired (after refresh attempt).
+  Future<UserInfo?> fetchCurrentUser() async {
+    if (_useMock) {
+      return UserInfo(
+        id: 'mock-user-001',
+        username: 'Người dùng',
+        email: 'mock@careflow.vn',
+        role: 'PATIENT',
+      );
+    }
+
+    try {
+      final response = await _apiService.get(ApiConfig.authMe);
+      final data = response.data['data'];
+      if (data == null) return null;
+      return UserInfo.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      // Token invalid or refresh failed — user must re-login
+      return null;
+    }
+  }
+
+  /// Logout — revoke refresh token on server then clear local storage.
   Future<void> logout() async {
     try {
       final refreshToken = await _apiService.getRefreshToken();
@@ -107,7 +154,7 @@ class AuthService {
     }
   }
 
-  /// Check if user is authenticated
+  /// Check if user is authenticated (local token check only).
   Future<bool> isAuthenticated() async {
     return await _apiService.hasToken();
   }
@@ -118,7 +165,6 @@ class AuthService {
     String usernameOrEmail,
     String password,
   ) async {
-    // Simulate network delay
     await Future.delayed(const Duration(milliseconds: 800));
 
     if (usernameOrEmail.isEmpty || password.isEmpty) {
@@ -157,10 +203,25 @@ class AuthService {
   String _messageFrom(Object error) {
     if (error is DioException) {
       final data = error.response?.data;
-      if (data is Map<String, dynamic> && data['message'] is String) {
-        return data['message'] as String;
+      final statusCode = error.response?.statusCode;
+
+      // Try to extract server error message
+      if (data is Map<String, dynamic>) {
+        if (data['message'] is String) return data['message'] as String;
+        if (data['error'] is String) return data['error'] as String;
+        // Nested in 'data' field
+        if (data['data'] is Map && data['data']['message'] is String) {
+          return data['data']['message'] as String;
+        }
       }
-      return 'Không thể kết nối Identity Service';
+
+      // Fallback by status code
+      if (statusCode == 401) return 'Sai tên đăng nhập hoặc mật khẩu';
+      if (statusCode == 400) return 'Thông tin không hợp lệ';
+      if (statusCode == 409) return 'Tài khoản đã tồn tại';
+      if (statusCode == 403) return 'Tài khoản bị khóa';
+
+      return 'Không thể kết nối server (${statusCode ?? 'timeout'})';
     }
     return error.toString();
   }

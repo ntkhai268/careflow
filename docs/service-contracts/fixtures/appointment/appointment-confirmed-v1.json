@@ -1,0 +1,19 @@
+{
+  "eventId": "5ba2b6eb-6cd1-4b36-8f43-6cf2cb9ab56d",
+  "eventType": "AppointmentConfirmed",
+  "eventVersion": 1,
+  "aggregateId": "cf367b19-b946-41dc-969b-0d7958075b22",
+  "aggregateVersion": 1,
+  "occurredAt": "2026-07-31T04:00:00Z",
+  "producer": "appointment-service",
+  "correlationId": "916b5544-3084-4ae8-8249-fcbdc0f0dc9f",
+  "payload": {
+    "appointmentId": "cf367b19-b946-41dc-969b-0d7958075b22",
+    "patientId": "9c613831-90c2-48f6-81c5-0105c20502a1",
+    "department": "THAN_KINH",
+    "roomId": "ROOM-21",
+    "roomDisplayName": "Phòng khám Thần kinh 21",
+    "appointmentDate": "2026-08-18",
+    "timeSlot": "10:30-11:00"
+  }
+}

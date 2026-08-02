@@ -38,6 +38,8 @@ class ApiService {
           final request = error.requestOptions;
           final isAuthEndpoint =
               request.path == ApiConfig.authLogin ||
+              request.path == ApiConfig.authRegister ||
+              request.path == ApiConfig.authLogout ||
               request.path == ApiConfig.authRefresh;
           final alreadyRetried = request.extra['authRetried'] == true;
           if (error.response?.statusCode == 401 &&
