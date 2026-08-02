@@ -1,0 +1,20 @@
+@startuml
+title DGM-STA-05 — Trạng thái Prescription
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+[*] --> DRAFT
+DRAFT --> CONFIRMED : Bác sĩ xác nhận
+DRAFT --> CANCELLED : Hủy draft
+CONFIRMED --> DISPENSED : Đánh dấu phát thuốc demo
+CONFIRMED --> CANCELLED_BY_AMENDMENT : Thay thế toa
+DISPENSED --> [*]
+CANCELLED --> [*]
+CANCELLED_BY_AMENDMENT --> [*]
+
+note right of CONFIRMED
+  Patient chỉ xem toa CONFIRMED
+  hoặc DISPENSED.
+end note
+@enduml

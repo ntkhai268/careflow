@@ -59,11 +59,12 @@ Branch `838f08f` có:
 
 ### Lệch contract
 
-- Scheduler chia `EMERGENCY`, `PRIORITY`, `APPOINTMENT`, `WALK_IN` và chạy tỷ lệ N:M.
-- Contract mới yêu cầu FIFO theo phòng/phiên, không trộn cấp cứu/priority.
+- Prototype cũ chia `EMERGENCY`, `PRIORITY`, `APPOINTMENT`, `WALK_IN` và chạy tỷ lệ N:M.
+- Contract mục tiêu hiện dùng ba làn `PRIORITY`, `NORMAL`, `RESULT_REVIEW`, FIFO
+  trong từng làn và Round Robin `1:1:1` theo phòng/phiên; cấp cứu không tham gia.
 - Chưa có `INITIAL_CONSULTATION`, `LAB_EXECUTION`, `RESULT_REVIEW`.
 - Chưa consume `LabOrderReadyForExecution` hoặc `AllRequiredResultsAvailable`.
-- Chưa có rule chèn result review sau một initial consultation kế tiếp.
+- Chưa có xác nhận bệnh nhân quay lại, làn `RESULT_REVIEW` và scheduler ba làn.
 - API và event name đang theo contract cũ.
 
 ### Hướng xử lý

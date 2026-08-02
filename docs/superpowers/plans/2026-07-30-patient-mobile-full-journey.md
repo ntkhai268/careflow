@@ -13,9 +13,13 @@
 - `DEMO_MODE` defaults to `false`; mock data and demo controls must be absent when false.
 - Identity, Patient, Health Record, and Appointment continue to use the API Gateway; a remote API failure must never silently fall back to demo data.
 - PostgreSQL and RabbitMQ development defaults remain `100.116.233.60` with `careflow` / `careflow`, while environment variables retain override precedence.
-- The active clinic queue contains only checked-in patients and is FIFO per clinic room/session.
+- The target model is `Department 1:N ClinicRoom`; MVP data has exactly one
+  active room per department and the server derives the room.
+- The clinic queue has `PRIORITY`, `NORMAL`, and `RESULT_REVIEW` lanes, FIFO
+  within each lane and Round Robin `1:1:1` across non-empty lanes.
 - Laboratory orders enter their queue without a second check-in.
-- Result review is inserted after the next initial-consultation patient.
+- Result review becomes active after the patient confirms return and participates
+  in the `RESULT_REVIEW` lane.
 - Patient-visible copy is Vietnamese; source files are UTF-8.
 - Demo state is namespaced by authenticated patient ID and appointment ID and survives app restart.
 - Every behavior change follows RED-GREEN-REFACTOR; no production function is added without a test that first fails for the expected missing behavior.
@@ -491,7 +495,7 @@ Assert `WAITING_RESULT_REVIEW` displays:
 
 ```text
 Quay lại Phòng 21
-Bạn được xếp sau bệnh nhân khám mới tiếp theo
+Hãy xác nhận khi bạn đã quay lại để vào hàng chờ đọc kết quả
 ```
 
 Assert `RESULT_REVIEW` displays that the doctor is reviewing results.

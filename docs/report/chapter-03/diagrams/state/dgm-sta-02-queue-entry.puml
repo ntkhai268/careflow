@@ -1,0 +1,46 @@
+@startuml
+title DGM-STA-02 — Trạng thái Queue Entry theo loại lượt
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+state "INITIAL_CONSULTATION" as Initial {
+  [*] --> TICKET_ISSUED
+  TICKET_ISSUED --> CHECKED_IN : Quét QR hợp lệ
+  CHECKED_IN --> CALLED : Gọi lượt
+  CALLED --> IN_PROGRESS : Bắt đầu khám
+  IN_PROGRESS --> COMPLETED : Hoàn tất
+  CALLED --> MISSED : Bệnh nhân vắng
+  MISSED --> CHECKED_IN : Xếp lại cuối hàng
+  TICKET_ISSUED --> CANCELLED
+  TICKET_ISSUED --> NO_SHOW
+}
+
+state "LAB_EXECUTION" as LabQueue {
+  [*] --> LAB_QUEUED
+  LAB_QUEUED --> LAB_CALLED
+  LAB_CALLED --> LAB_IN_PROGRESS
+  LAB_IN_PROGRESS --> LAB_COMPLETED
+  LAB_CALLED --> LAB_MISSED
+  LAB_MISSED --> LAB_QUEUED
+}
+
+state "RESULT_REVIEW" as ReviewQueue {
+  [*] --> REVIEW_QUEUED
+  REVIEW_QUEUED --> REVIEW_CALLED
+  REVIEW_CALLED --> REVIEW_IN_PROGRESS
+  REVIEW_IN_PROGRESS --> REVIEW_COMPLETED
+  REVIEW_CALLED --> REVIEW_MISSED
+  REVIEW_MISSED --> REVIEW_QUEUED : Xếp cuối làn RESULT_REVIEW
+}
+
+note bottom of Initial
+  INITIAL_CONSULTATION chỉ active sau CHECKED_IN.
+  QueueClass: PRIORITY hoặc NORMAL.
+end note
+
+note bottom of ReviewQueue
+  RESULT_REVIEW chỉ active sau khi bệnh nhân xác nhận quay lại.
+  SchedulingLane không phải trạng thái vòng đời.
+end note
+@enduml
