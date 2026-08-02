@@ -1,5 +1,9 @@
 # Kế hoạch chi tiết — Người B (Phân hệ Bệnh nhân)
 
+> **Tài liệu lịch sử:** contract Appointment/Queue hiện hành nằm trong
+> `docs/service-contracts/05-appointment.md`, `06-queue-management.md` và baseline
+> Chương 3. Các tên event cũ bên dưới chỉ phản ánh kế hoạch ban đầu.
+
 ## Tổng quan
 
 | Mục | Chi tiết |
@@ -384,6 +388,7 @@ CREATE TABLE appointments (
     id UUID PRIMARY KEY,
     patient_id UUID NOT NULL,
     department VARCHAR(50) NOT NULL,        -- Chuyên khoa
+    room_id UUID NOT NULL,                  -- Phòng do server phân, Mobile không gửi
     doctor_id UUID,                         -- nullable (nếu không chọn BS)
     appointment_date DATE NOT NULL,
     time_slot VARCHAR(20),                  -- "08:00-08:30"
@@ -401,7 +406,19 @@ CREATE TABLE departments (
     location VARCHAR(100),                  -- "Tầng 2, khu A"
     is_active BOOLEAN DEFAULT TRUE
 );
+
+CREATE TABLE clinic_rooms (
+    id UUID PRIMARY KEY,
+    department_id UUID NOT NULL REFERENCES departments(id),
+    room_code VARCHAR(50) NOT NULL UNIQUE,
+    display_name VARCHAR(100) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE
+);
 ```
+
+Mô hình là `Department 1:N ClinicRoom`; dữ liệu MVP seed đúng một phòng active
+mỗi khoa. Appointment Service truy vấn đúng một phòng và lưu `room_id`, không
+nhận phòng từ Mobile, không random hoặc âm thầm `findFirst()`.
 
 ### EMR Service DB (`careflow_emr`)
 
@@ -436,10 +453,12 @@ CREATE TABLE medical_records (
     "patientId": "uuid",
     "department": "Nội khoa",
     "appointmentDate": "2026-07-20",
-    "timeSlot": "08:00-08:30",
-    "priority": "APPOINTMENT"    // APPOINTMENT hoặc WALK_IN
+    "timeSlot": "08:00-08:30"
 }
 ```
+
+Appointment không gán độ ưu tiên. Khi check-in, Queue Service mặc định
+`queueClass=NORMAL`; nhân viên có quyền mới được xác nhận `PRIORITY` kèm lý do.
 
 ### Event bạn SUBSCRIBE (nhận về)
 

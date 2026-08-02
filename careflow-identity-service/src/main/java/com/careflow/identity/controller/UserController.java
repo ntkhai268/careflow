@@ -2,6 +2,7 @@ package com.careflow.identity.controller;
 
 import com.careflow.common.dto.ApiResponse;
 import com.careflow.identity.dto.UpdateUserStatusRequest;
+import com.careflow.identity.dto.UpdateUserRoleRequest;
 import com.careflow.identity.dto.UserResponse;
 import com.careflow.identity.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,5 +31,13 @@ public class UserController {
     public ApiResponse<UserResponse> updateStatus(@PathVariable UUID id,
                                                    @Valid @RequestBody UpdateUserStatusRequest request) {
         return ApiResponse.success(authService.updateStatus(id, request.status()));
+    }
+
+    @PatchMapping("/{id}/role")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Gán vai trò cho tài khoản")
+    public ApiResponse<UserResponse> updateRole(@PathVariable UUID id,
+                                                @Valid @RequestBody UpdateUserRoleRequest request) {
+        return ApiResponse.success(authService.updateRole(id, request.role()));
     }
 }

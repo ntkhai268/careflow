@@ -1,7 +1,5 @@
 package com.careflow.appointment.service;
 
-import com.careflow.appointment.config.RabbitMQConfig;
-import com.careflow.common.constants.AppConstants;
 import com.careflow.appointment.dto.request.CreateAppointmentRequest;
 import com.careflow.appointment.dto.request.UpdateAppointmentStatusRequest;
 import com.careflow.appointment.dto.response.AppointmentResponse;
@@ -12,9 +10,9 @@ import com.careflow.appointment.model.Department;
 import com.careflow.appointment.repository.AppointmentRepository;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.common.exception.ResourceNotFoundException;
+import com.careflow.common.constants.AppConstants;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +22,6 @@ import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -35,13 +32,15 @@ public class AppointmentService {
 
 
     private final AppointmentRepository appointmentRepository;
-    private final RabbitTemplate rabbitTemplate;
+    private final AppointmentEventService appointmentEvents;
 
     /**
      * Đặt lịch khám mới
      */
     @Transactional
-    public AppointmentResponse createAppointment(CreateAppointmentRequest request) {
+    public AppointmentResponse createAppointment(CreateAppointmentRequest request,
+                                                 UUID ownerUserId,
+                                                 String correlationId) {
         validateAppointmentTime(request, Clock.system(HOSPITAL_ZONE));
 
         // Parse department
@@ -63,8 +62,12 @@ public class AppointmentService {
 
         Appointment appointment = Appointment.builder()
                 .patientId(request.getPatientId())
+                .ownerUserId(ownerUserId)
                 .patientName(request.getPatientName())
                 .department(department)
+                .departmentId(department.getId())
+                .roomId(department.getRoomId())
+                .roomDisplayName(department.getRoomDisplayName())
                 .appointmentDate(request.getAppointmentDate())
                 .timeSlot(request.getTimeSlot())
                 .reason(request.getReason())
@@ -74,13 +77,12 @@ public class AppointmentService {
                 .status(AppointmentStatus.CONFIRMED)
                 .build();
 
-        Appointment saved = appointmentRepository.save(appointment);
+        Appointment saved = appointmentRepository.saveAndFlush(appointment);
         log.info("Created appointment {} for patient {} at {} {}",
                 saved.getId(), saved.getPatientId(),
                 saved.getAppointmentDate(), saved.getTimeSlot());
 
-        // Publish event to RabbitMQ
-        publishAppointmentCreatedEvent(saved);
+        appointmentEvents.confirmed(saved, correlationId);
 
         return AppointmentMapper.toResponse(saved);
     }
@@ -89,8 +91,9 @@ public class AppointmentService {
      * Xem chi tiết lịch khám
      */
     @Transactional(readOnly = true)
-    public AppointmentResponse getAppointmentById(UUID id) {
+    public AppointmentResponse getAppointmentById(UUID id, UUID requesterUserId, String role) {
         Appointment appointment = findAppointmentOrThrow(id);
+        requireOwnerOrClinical(appointment, requesterUserId, role);
         return AppointmentMapper.toResponse(appointment);
     }
 
@@ -98,8 +101,13 @@ public class AppointmentService {
      * Danh sách lịch khám của bệnh nhân
      */
     @Transactional(readOnly = true)
-    public List<AppointmentResponse> getAppointmentsByPatientId(UUID patientId) {
-        return appointmentRepository.findByPatientIdOrderByAppointmentDateDesc(patientId)
+    public List<AppointmentResponse> getAppointmentsByPatientId(
+            UUID patientId, UUID requesterUserId, String role) {
+        List<Appointment> appointments = AppConstants.ROLE_PATIENT.equals(role)
+                ? appointmentRepository.findByPatientIdAndOwnerUserIdOrderByAppointmentDateDesc(
+                        patientId, requesterUserId)
+                : appointmentRepository.findByPatientIdOrderByAppointmentDateDesc(patientId);
+        return appointments
                 .stream()
                 .map(AppointmentMapper::toResponse)
                 .toList();
@@ -160,8 +168,10 @@ public class AppointmentService {
      * Hủy lịch khám
      */
     @Transactional
-    public AppointmentResponse cancelAppointment(UUID id) {
+    public AppointmentResponse cancelAppointment(
+            UUID id, UUID requesterUserId, String role, String correlationId) {
         Appointment appointment = findAppointmentOrThrow(id);
+        requireOwnerOrClinical(appointment, requesterUserId, role);
 
         if (appointment.getStatus() == AppointmentStatus.COMPLETED) {
             throw new BusinessException(400, "Không thể hủy lịch khám đã hoàn thành");
@@ -175,7 +185,7 @@ public class AppointmentService {
         log.info("Cancelled appointment {}", id);
 
         // Publish cancel event
-        publishAppointmentCancelledEvent(updated);
+        appointmentEvents.cancelled(updated, correlationId);
 
         return AppointmentMapper.toResponse(updated);
     }
@@ -185,6 +195,16 @@ public class AppointmentService {
     private Appointment findAppointmentOrThrow(UUID id) {
         return appointmentRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment", "id", id));
+    }
+
+    private void requireOwnerOrClinical(Appointment appointment, UUID requesterUserId, String role) {
+        boolean clinical = AppConstants.ROLE_DOCTOR.equals(role)
+                || AppConstants.ROLE_STAFF.equals(role)
+                || AppConstants.ROLE_ADMIN.equals(role);
+        if (!clinical && (!AppConstants.ROLE_PATIENT.equals(role)
+                || !appointment.getOwnerUserId().equals(requesterUserId))) {
+            throw new BusinessException(403, "Không có quyền truy cập lịch khám này");
+        }
     }
 
     static void validateAppointmentTime(CreateAppointmentRequest request, Clock clock) {
@@ -228,46 +248,4 @@ public class AppointmentService {
         }
     }
 
-    private void publishAppointmentCreatedEvent(Appointment appointment) {
-        try {
-            Map<String, Object> event = Map.of(
-                    "appointmentId", appointment.getId().toString(),
-                    "patientId", appointment.getPatientId().toString(),
-                    "patientName", appointment.getPatientName() != null ? appointment.getPatientName() : "",
-                    "department", appointment.getDepartment().name(),
-                    "appointmentDate", appointment.getAppointmentDate().toString(),
-                    "timeSlot", appointment.getTimeSlot(),
-                    "createdAt", java.time.Instant.now().toString()
-            );
-
-            rabbitTemplate.convertAndSend(
-                    AppConstants.EXCHANGE_APPOINTMENT,
-                    AppConstants.RK_APPOINTMENT_CREATED,
-                    event);
-
-            log.info("Published AppointmentCreated event for {}", appointment.getId());
-        } catch (Exception e) {
-            // Don't fail the request if RabbitMQ is down
-            log.warn("Failed to publish AppointmentCreated event: {}", e.getMessage());
-        }
-    }
-
-    private void publishAppointmentCancelledEvent(Appointment appointment) {
-        try {
-            Map<String, Object> event = Map.of(
-                    "appointmentId", appointment.getId().toString(),
-                    "patientId", appointment.getPatientId().toString(),
-                    "department", appointment.getDepartment().name()
-            );
-
-            rabbitTemplate.convertAndSend(
-                    AppConstants.EXCHANGE_APPOINTMENT,
-                    AppConstants.RK_APPOINTMENT_CANCELLED,
-                    event);
-
-            log.info("Published AppointmentCancelled event for {}", appointment.getId());
-        } catch (Exception e) {
-            log.warn("Failed to publish AppointmentCancelled event: {}", e.getMessage());
-        }
-    }
 }

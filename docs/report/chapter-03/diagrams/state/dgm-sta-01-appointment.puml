@@ -1,0 +1,19 @@
+@startuml
+title DGM-STA-01 — Trạng thái Appointment
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+
+[*] --> CONFIRMED : Đặt lịch hợp lệ\nvà còn capacity
+CONFIRMED --> FULFILLED : Hoàn tất lượt khám
+CONFIRMED --> CANCELLED : Bệnh nhân/nhân viên hủy
+CONFIRMED --> NO_SHOW : Hết cửa sổ check-in
+FULFILLED --> [*]
+CANCELLED --> [*]
+NO_SHOW --> [*]
+
+note right of CONFIRMED
+  MVP tự động xác nhận.
+  PENDING là trạng thái legacy.
+end note
+@enduml

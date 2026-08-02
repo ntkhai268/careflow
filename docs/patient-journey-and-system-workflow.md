@@ -30,20 +30,29 @@ hóa như hệ thống ngoài và tích hợp sau.
    nhân viên duyệt thủ công.
 2. Khi đặt khám thành công, bệnh nhân nhận phiếu khám, số thứ tự, khung giờ,
    phòng khám và QR.
-3. QR thuộc phiếu khám của bệnh nhân. Nhân viên hoặc kiosk tại phòng khám quét
+3. Một khoa có thể có nhiều phòng khám (`Department 1:N ClinicRoom`). Trong MVP,
+   dữ liệu chỉ cấu hình đúng một phòng active cho mỗi khoa;
+   Appointment Service suy ra phòng từ khoa, không chọn ngẫu nhiên và bệnh nhân
+   không truyền `roomId` khi đặt lịch.
+4. QR thuộc phiếu khám của bệnh nhân. Nhân viên hoặc kiosk tại phòng khám quét
    QR để xác nhận tiếp nhận.
-4. Active queue của phòng khám chỉ chứa bệnh nhân đã `CHECKED_IN`.
-5. Queue mặc định là FIFO theo từng khoa, phòng và phiên khám; không dùng thuật
-   toán N:M.
-6. Bác sĩ nhập sinh hiệu trực tiếp trong màn hình khám. Role điều dưỡng có thể
+5. Active queue của phòng khám chỉ chứa bệnh nhân đã `CHECKED_IN` hoặc bệnh nhân
+   đã quay lại và xác nhận chờ đọc kết quả.
+6. Mỗi phòng và phiên khám có ba làn điều phối logic: `PRIORITY`, `NORMAL` và
+   `RESULT_REVIEW`. Queue Service đề xuất lượt theo Round Robin `1:1:1`, đồng
+   thời giữ FIFO riêng trong từng làn.
+7. Bác sĩ nhập sinh hiệu trực tiếp trong màn hình khám. Role điều dưỡng có thể
    được bổ sung sau nhưng không bắt buộc trong MVP.
-7. Thanh toán có thể online hoặc tại bệnh viện. Payment không phải trọng tâm và
+8. Thanh toán có thể online hoặc tại bệnh viện. Payment không phải trọng tâm và
    có thể được mock hoặc tích hợp như một hệ thống ngoài.
-8. Sau khi bác sĩ tạo chỉ định cận lâm sàng, hệ thống tự tạo lượt tại khu tương
+9. Sau khi bác sĩ tạo chỉ định cận lâm sàng, hệ thống tự tạo lượt tại khu tương
    ứng. Bệnh nhân tới ngồi chờ, không check-in thêm tại mỗi khu.
-9. Khi kết quả sẵn sàng, bệnh nhân được tự động đưa lại vào queue phòng bác sĩ,
-   sau bệnh nhân khám ban đầu tiếp theo.
-10. Lượt đọc kết quả vẫn thuộc cùng consultation, không tạo Appointment mới.
+10. Khi đủ kết quả bắt buộc, hệ thống thông báo bệnh nhân quay lại phòng bác sĩ.
+   Sau khi bệnh nhân xác nhận đã quay lại, lượt được đưa vào làn
+   `RESULT_REVIEW` của phòng khám.
+11. Lượt đọc kết quả vẫn thuộc cùng consultation, không tạo Appointment mới.
+12. Hệ thống chỉ đề xuất lượt tiếp theo; bác sĩ phải chủ động bấm gọi. Việc xem
+    đề xuất không làm thay đổi trạng thái Queue Entry.
 
 ## 3. Các vai trò và giao diện
 
@@ -63,10 +72,20 @@ riêng cho từng loại nhân viên.
 
 ### 4.1. Appointment
 
-Lịch đặt khám trong tương lai, gồm bệnh nhân, khoa, phòng, bác sĩ, ngày và khung
-giờ. Appointment giữ capacity nhưng không chứng minh bệnh nhân đã đến.
+Lịch đặt khám trong tương lai, gồm bệnh nhân, khoa, phòng đã được hệ thống phân,
+bác sĩ nếu có, ngày và khung giờ. Appointment giữ capacity nhưng không chứng
+minh bệnh nhân đã đến. Request từ bệnh nhân không chứa `roomId`; Appointment
+Service xác định và lưu `roomId` trước khi xác nhận lịch.
 
-### 4.2. Visit Ticket
+### 4.2. Department và ClinicRoom
+
+`Department` là khoa chuyên môn; `ClinicRoom` là phòng khám vật lý thuộc một
+khoa. Mô hình mục tiêu cho phép một khoa có nhiều phòng. Chính sách MVP yêu cầu
+truy vấn phòng active của khoa phải trả đúng một kết
+quả. Không có phòng hoặc có nhiều hơn một phòng đều là lỗi cấu hình, không được
+âm thầm chọn `findFirst()` hoặc random.
+
+### 4.3. Visit Ticket
 
 Phiếu khám điện tử do Queue Management Service cấp sau khi nhận sự kiện
 `AppointmentConfirmed`. Phiếu gồm:
@@ -78,7 +97,7 @@ Phiếu khám điện tử do Queue Management Service cấp sau khi nhận sự
 - QR tham chiếu phiếu.
 - Trạng thái thanh toán nếu có.
 
-### 4.3. Queue Entry
+### 4.4. Queue Entry
 
 Một lượt chờ tại một điểm phục vụ cụ thể, ví dụ:
 
@@ -89,22 +108,28 @@ Một lượt chờ tại một điểm phục vụ cụ thể, ví dụ:
 
 Không có một queue chung cho toàn bệnh viện.
 
-### 4.4. Consultation
+`QueueType` mô tả mục đích phục vụ (`INITIAL_CONSULTATION`, `LAB_EXECUTION`,
+`RESULT_REVIEW`), còn `QueueClass` mô tả diện bệnh nhân khám ban đầu
+(`PRIORITY`, `NORMAL`). Tại phòng khám, Queue Service ánh xạ chúng thành ba làn
+điều phối `PRIORITY`, `NORMAL` và `RESULT_REVIEW`; đây là ba tập logic trên cùng
+nguồn Queue Entry, không phải ba bảng dữ liệu độc lập.
+
+### 4.5. Consultation
 
 Phiên khám lâm sàng của bác sĩ. Consultation có thể tạm dừng để chờ cận lâm
 sàng, sau đó tiếp tục khi kết quả sẵn sàng.
 
-### 4.5. Clinical/Laboratory Order
+### 4.6. Clinical/Laboratory Order
 
 Chỉ định do bác sĩ tạo, gồm một hoặc nhiều hạng mục cần thực hiện. Các xét
 nghiệm sử dụng cùng một lần lấy mẫu nên được gom vào một lượt phục vụ.
 
-### 4.6. Result
+### 4.7. Result
 
 Kết quả cận lâm sàng gắn với order và consultation. Khi đủ kết quả, hệ thống đưa
 bệnh nhân trở lại danh sách chờ bác sĩ đọc kết quả.
 
-### 4.7. Prescription và Follow-up
+### 4.8. Prescription và Follow-up
 
 Toa thuốc và lịch tái khám được tạo sau khi bác sĩ hoàn thiện kết luận.
 
@@ -116,8 +141,8 @@ flowchart TD
     B --> C["Cấp phiếu, số thứ tự và QR"]
     C --> D["Bệnh nhân đến phòng khám"]
     D --> E["Nhân viên hoặc kiosk quét QR"]
-    E --> F["CHECKED_IN và vào active FIFO queue"]
-    F --> G["Bác sĩ gọi bệnh nhân"]
+    E --> F["CHECKED_IN và vào làn PRIORITY hoặc NORMAL"]
+    F --> G["Hệ thống đề xuất theo Round Robin; bác sĩ bấm gọi"]
     G --> H["Bác sĩ nhập sinh hiệu và khám"]
     H --> I{"Cần cận lâm sàng?"}
     I -- "Không" --> Q["Chẩn đoán, kê toa, hoàn tất"]
@@ -126,7 +151,7 @@ flowchart TD
     K --> L["Hệ thống tự tạo lượt cận lâm sàng"]
     L --> M["Bệnh nhân tới khu thực hiện và ngồi chờ"]
     M --> N["Kỹ thuật viên gọi, thực hiện và trả kết quả"]
-    N --> O["Hệ thống chèn lượt đọc kết quả sau bệnh nhân tiếp theo"]
+    N --> O["Bệnh nhân quay lại và vào làn RESULT_REVIEW"]
     O --> P["Bệnh nhân quay lại và bác sĩ đọc kết quả"]
     P --> Q
     Q --> R["Mobile nhận kết quả, toa và lịch tái khám"]
@@ -138,7 +163,7 @@ Trước khi mở lịch, quản trị viên cấu hình:
 
 - Cơ sở bệnh viện.
 - Khoa chuyên môn.
-- Phòng khám và các điểm phục vụ.
+- Các phòng khám thuộc từng khoa theo quan hệ `Department 1:N ClinicRoom`.
 - Danh sách bác sĩ.
 - Lịch làm việc của bác sĩ.
 - Khung giờ và capacity.
@@ -156,6 +181,10 @@ Ngày: 18/08/2026
 Khung giờ: 10:30-11:30
 Capacity: 10 bệnh nhân
 ```
+
+Trong dữ liệu MVP, khoa Thần kinh chỉ có một `ClinicRoom` active tại khung giờ
+trên. Ràng buộc này thuộc chính sách ứng dụng, không phải cardinality 1:1 của mô
+hình dữ liệu.
 
 Các service tham gia:
 
@@ -185,12 +214,13 @@ Appointment Service kiểm tra:
 - Slot còn capacity.
 - Ngày khám hợp lệ.
 - Bệnh nhân không đặt trùng cùng thời điểm.
-- Bác sĩ/phòng còn hoạt động.
+- Danh sách phòng active của khoa trả đúng một phòng trong MVP.
 
 Nếu hợp lệ:
 
 ```text
 POST /api/appointments
+→ suy ra và lưu roomId từ khoa
 → tạo Appointment CONFIRMED
 → giữ capacity
 → phát AppointmentConfirmed
@@ -215,7 +245,8 @@ Trạng thái: Đã xác nhận
 - API Gateway: xác thực và routing.
 - Identity Service: xác định tài khoản.
 - Patient Service: lấy hồ sơ bệnh nhân.
-- Appointment Service: kiểm tra và giữ slot.
+- Appointment Service: sở hữu `Department`, `ClinicRoom`, kiểm tra/phân phòng và
+  giữ slot theo chính sách MVP.
 - Notification Service: thông báo thành công.
 
 ## 8. Giai đoạn 2: Cấp phiếu khám điện tử
@@ -288,7 +319,7 @@ Trạng thái: Đang chờ
 Dự kiến gọi: 10:40
 ```
 
-## 10. Giai đoạn 4: Active FIFO queue và gọi bệnh nhân
+## 10. Giai đoạn 4: Active queue và gọi bệnh nhân
 
 ### 10.1. Hai danh sách khác nhau
 
@@ -300,7 +331,8 @@ Appointment Service cung cấp danh sách lịch dự kiến:
 | 48 | 10:40 | Chưa đến |
 | 49 | 10:50 | Đã check-in |
 
-Queue Service chỉ cung cấp active queue:
+Queue Service chỉ đưa các lượt đủ điều kiện vào active queue. Lượt khám ban đầu
+được phân vào làn `PRIORITY` hoặc `NORMAL`:
 
 | Vị trí | Số | Trạng thái |
 |---:|---:|---|
@@ -310,23 +342,38 @@ Queue Service chỉ cung cấp active queue:
 Số 48 không xuất hiện trong active queue cho tới khi check-in. Nếu quá thời gian
 cho phép mà chưa check-in, Appointment có thể chuyển sang `NO_SHOW`.
 
-### 10.2. Quy tắc FIFO
+### 10.2. Ba làn điều phối và quy tắc Round Robin
 
-- Mỗi khoa, phòng và phiên khám có queue riêng.
+- Mỗi phòng và phiên khám có ba làn logic: `PRIORITY`, `NORMAL` và
+  `RESULT_REVIEW`.
 - Chỉ `CHECKED_IN` mới đủ điều kiện gọi.
-- Trong cùng một phiên, gọi theo số/lịch đã cấp.
-- Bệnh nhân đến trễ quá thời gian cho phép được đưa xuống cuối queue hoặc nhân
-  viên xử lý thủ công.
-- Cấp cứu và quầy ưu tiên là luồng riêng, không trộn bằng N:M.
+- Trong mỗi làn, FIFO theo `queuedAt`; nếu bằng nhau thì dùng số thứ tự làm tiêu
+  chí phụ. Với lượt khám ban đầu, `queuedAt` được ghi khi check-in.
+- Mặc định lượt khám ban đầu thuộc `NORMAL`; nhân viên có quyền chỉ xác nhận
+  `PRIORITY` sau khi kiểm tra diện ưu tiên và phải lưu lý do để audit.
+- Queue Service đề xuất theo chu kỳ `PRIORITY → NORMAL → RESULT_REVIEW` và bỏ
+  qua làn rỗng, không để một làn rỗng làm gián đoạn việc gọi.
+- Nếu chưa có lịch sử gọi, chu kỳ bắt đầu từ `PRIORITY`; sau đó hệ thống quét từ
+  làn đứng sau `lastServedLane` để tìm làn không rỗng đầu tiên.
+- Bệnh nhân đến trễ chỉ vào cuối làn tương ứng tại thời điểm check-in.
+- Cấp cứu là luồng riêng, không trộn vào queue khám ngoại trú.
 
 ### 10.3. Gọi bệnh nhân
 
-Khi bác sĩ sẵn sàng:
+Doctor Web hiển thị đồng thời ba làn, một ô `recommendedNext` và nút **Gọi** tại
+mỗi lượt `CHECKED_IN`. Khi sẵn sàng, bác sĩ có thể gọi lượt được đề xuất hoặc
+chủ động gọi một lượt khác:
 
 ```text
 CHECKED_IN
 → CALLED
 ```
+
+Nếu bác sĩ dùng nút gọi nhanh, Queue Service tính lại đề xuất tại thời điểm xử lý.
+Nếu bác sĩ bấm nút trên một hàng, Queue Service gọi đúng Queue Entry được chọn.
+Sau khi gọi thành công, hệ thống ghi `calledByUserId`, `calledAt` và phát
+`PatientCalled`. Phòng MVP có một bác sĩ và một máy; hệ thống không chặn bác sĩ
+gọi thêm chỉ vì đã có bệnh nhân `CALLED` hoặc `IN_PROGRESS`.
 
 Mobile nhận:
 
@@ -568,15 +615,16 @@ SA-042 — Phòng siêu âm
 
 ## 15. Giai đoạn 8: Quay lại bác sĩ đọc kết quả
 
-### 15.1. Tự động tạo lượt đọc kết quả
+### 15.1. Kích hoạt lượt đọc kết quả
 
 Khi tất cả kết quả bắt buộc đã sẵn sàng:
 
 ```text
 LabResultAvailable
 → Consultation WAITING_FOR_REVIEW
-→ Queue Service kích hoạt lượt RESULT_REVIEW
 → Notification yêu cầu bệnh nhân quay lại Phòng 21
+→ Bệnh nhân hoặc nhân viên xác nhận đã quay lại
+→ Queue Service kích hoạt lượt RESULT_REVIEW
 ```
 
 Bệnh nhân không:
@@ -585,56 +633,30 @@ Bệnh nhân không:
 - Lấy Appointment mới.
 - Lấy lại queue khám ban đầu.
 
-### 15.2. Chính sách chèn queue
+### 15.2. Làn `RESULT_REVIEW` và Round Robin `1:1:1`
 
-Giả sử:
-
-```text
-Đang khám: A
-Queue: B → C → D
-```
-
-Khi kết quả của R sẵn sàng, không đưa R lên đầu. Hệ thống giữ B là bệnh nhân
-tiếp theo và chèn R sau B:
+Giả sử ba làn đều có bệnh nhân, thứ tự đề xuất là:
 
 ```text
-B → R → C → D
+PRIORITY → NORMAL → RESULT_REVIEW → PRIORITY → ...
 ```
 
-Trong thời gian bác sĩ khám B, R có thời gian quay lại phòng.
-
-Nếu có nhiều lượt review, phân bổ sau các lượt khám ban đầu:
+Nếu một làn rỗng, Queue Service bỏ qua làn đó. Ví dụ `NORMAL` đang rỗng:
 
 ```text
-Ban đầu:
-B → C → D → E
-
-Sau khi R1 có kết quả:
-B → R1 → C → D → E
-
-Sau khi R2 có kết quả:
-B → R1 → C → R2 → D → E
-
-Sau khi R3 có kết quả:
-B → R1 → C → R2 → D → R3 → E
+PRIORITY → RESULT_REVIEW → PRIORITY → RESULT_REVIEW → ...
 ```
 
-Quy tắc:
-
-> Mỗi `RESULT_REVIEW` được đặt vào vị trí sớm nhất sau một
-> `INITIAL_CONSULTATION` chưa có lượt review đi kèm.
-
-Đây là chính sách tái nhập queue của cùng một consultation, không phải thuật
-toán N:M tổng quát.
+FIFO vẫn được giữ trong từng làn. Lượt `RESULT_REVIEW` không bị chèn vào giữa
+làn khám ban đầu và cũng không tự động đứng đầu toàn bộ active queue.
 
 ### 15.3. Mobile hiển thị
 
 ```text
 KẾT QUẢ ĐÃ SẴN SÀNG
 
-Vui lòng quay lại Phòng 21.
-Bạn sẽ được gọi sau bệnh nhân tiếp theo.
-Trạng thái: Đang chờ bác sĩ đọc kết quả
+Vui lòng quay lại Phòng 21 và xác nhận đã quay lại.
+Sau khi xác nhận, bạn sẽ vào danh sách chờ bác sĩ đọc kết quả.
 ```
 
 ### 15.4. Doctor Web hiển thị
@@ -643,18 +665,18 @@ Trạng thái: Đang chờ bác sĩ đọc kết quả
 Đang khám
 • A
 
-Queue
-1. B — Khám ban đầu
-2. R — Đọc kết quả
-3. C — Khám ban đầu
-4. D — Khám ban đầu
+Ưu tiên: P1, P2
+Thông thường: N1, N2
+Đọc kết quả: R1, R2
+Đề xuất tiếp theo: N1
 ```
 
-Queue Entry có loại:
+Các Queue Entry được ánh xạ thành làn điều phối:
 
 ```text
-- INITIAL_CONSULTATION
-- RESULT_REVIEW
+- INITIAL_CONSULTATION + PRIORITY → PRIORITY
+- INITIAL_CONSULTATION + NORMAL → NORMAL
+- RESULT_REVIEW → RESULT_REVIEW
 ```
 
 ### 15.5. Nếu bệnh nhân chưa quay lại
@@ -664,11 +686,11 @@ Khi đến lượt R mà R chưa có mặt:
 ```text
 RESULT_REVIEW CALLED
 → MISSED
-→ chèn lại sau bệnh nhân khám ban đầu tiếp theo
+→ xếp lại cuối làn RESULT_REVIEW nếu đủ điều kiện
 ```
 
-Không để phòng khám chờ. Hệ thống gọi C và đưa R sau C. Có thể giới hạn số lần
-gọi lại trước khi yêu cầu nhân viên xử lý.
+Không để phòng khám chờ. Queue Service bỏ qua lượt vắng và đề xuất đầu làn hợp
+lệ kế tiếp. Có thể giới hạn số lần gọi lại trước khi yêu cầu nhân viên xử lý.
 
 ### 15.6. Bác sĩ tiếp tục consultation
 
@@ -855,7 +877,7 @@ Ngoại lệ:
 ```text
 CALLED
 → MISSED
-→ QUEUED lại sau INITIAL_CONSULTATION tiếp theo
+→ QUEUED lại cuối làn RESULT_REVIEW theo chính sách
 ```
 
 ### 18.6. Prescription
@@ -874,7 +896,7 @@ DRAFT
 | Identity & eKYC Service | Tài khoản, đăng nhập, role và định danh |
 | Patient Service | Hồ sơ bệnh nhân, dị ứng, tiền sử và hồ sơ bệnh nhân upload |
 | Appointment Service | Slot, capacity, đặt/hủy lịch và lịch tái khám |
-| Queue Management Service | Phiếu khám, QR, số thứ tự, active FIFO queue, check-in, gọi số, missed và result-review insertion |
+| Queue Management Service | Phiếu khám, QR, số thứ tự, ba làn active queue, Round Robin `1:1:1`, check-in, đề xuất, gọi số và missed/requeue |
 | Notification Service | Thông báo realtime cho Mobile và Web |
 | Doctor Consultation Service | Phiên khám, sinh hiệu, triệu chứng, chẩn đoán và trạng thái chờ kết quả |
 | Laboratory Order Service | Chỉ định, hạng mục, trạng thái thực hiện và kết quả |
@@ -895,7 +917,7 @@ DRAFT
 | Khám ban đầu | Không cần thao tác | Nhập sinh hiệu, triệu chứng và chẩn đoán | Không bắt buộc |
 | Chỉ định | Xem danh sách việc cần làm | Tạo order | Thu ngân/BHYT xác nhận nếu cần |
 | Cận lâm sàng | Xem số, địa điểm và tiến độ | Theo dõi kết quả | Kỹ thuật viên gọi, thực hiện và nhập kết quả |
-| Quay lại | Nhận thông báo quay lại phòng | Xem RESULT_REVIEW trong queue | Hỗ trợ missed nếu bệnh nhân chưa về |
+| Quay lại | Nhận thông báo và xác nhận đã quay lại phòng | Xem RESULT_REVIEW trong queue | Hỗ trợ missed nếu bệnh nhân chưa về |
 | Hoàn tất | Xem toa, kết quả và tái khám | Kê toa, kết luận và hoàn tất | Hỗ trợ thanh toán/phát thuốc nếu thuộc phạm vi |
 | Sau khám | Xem lịch sử và nhắc tái khám | Tra cứu hồ sơ | Xem báo cáo vận hành |
 
@@ -962,11 +984,17 @@ payload
 
 ### 22.1. Queue phòng khám
 
-- FIFO theo từng phòng và phiên khám.
-- Active queue chỉ chứa `CHECKED_IN`.
+- Ba làn logic `PRIORITY`, `NORMAL`, `RESULT_REVIEW` theo từng phòng và phiên.
+- Lượt khám ban đầu trong active queue chỉ chứa `CHECKED_IN`; lượt đọc kết quả
+  chỉ hoạt động sau khi bệnh nhân xác nhận đã quay lại.
+- Đề xuất theo Round Robin `1:1:1`, bỏ qua làn rỗng.
+- FIFO theo `queuedAt` trong từng làn.
 - Số chưa check-in không xuất hiện.
 - Lượt đến trễ được đưa xuống cuối hoặc xử lý thủ công.
 - `MISSED` không được giữ đầu queue.
+- Hệ thống không tự gọi; bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ lượt
+  `CHECKED_IN` nào trên Doctor Web.
+- Mỗi hàng có nút **Gọi**; `call-next` chỉ là thao tác gọi nhanh theo gợi ý.
 
 ### 22.2. Queue cận lâm sàng
 
@@ -978,19 +1006,18 @@ payload
 
 ### 22.3. Queue đọc kết quả
 
-- Tự tạo khi đủ kết quả.
-- Không check-in lại.
-- Không đưa thẳng lên đầu.
-- Giữ bệnh nhân khám ban đầu tiếp theo.
-- Chèn một `RESULT_REVIEW` sau một `INITIAL_CONSULTATION`.
-- Nếu bệnh nhân chưa quay lại khi được gọi, chèn lại sau bệnh nhân khám ban đầu
-  tiếp theo.
+- Consultation chuyển `WAITING_FOR_REVIEW` khi đủ kết quả bắt buộc.
+- Bệnh nhân không tạo Appointment mới và không check-in lại bằng Visit Ticket.
+- Queue Entry `RESULT_REVIEW` chỉ vào active queue sau khi xác nhận đã quay lại.
+- FIFO riêng trong làn `RESULT_REVIEW` và tham gia Round Robin `1:1:1`.
+- Nếu bị `MISSED`, lượt chỉ được xếp lại cuối làn theo chính sách.
 
 ### 22.4. Không áp dụng
 
-- Không có N:M toàn bệnh viện.
+- Không áp dụng một thuật toán ưu tiên chung cho toàn bệnh viện; quy tắc
+  `1:1:1` chỉ thuộc phạm vi từng phòng và phiên khám.
 - Không trộn cấp cứu vào queue khám ngoại trú.
-- Không dùng priority để tự động vượt hàng nếu bệnh viện đã có khu/quầy riêng.
+- Không tách `PRIORITY`, `NORMAL`, `RESULT_REVIEW` thành ba bảng dữ liệu độc lập.
 
 ## 23. Bảo mật và an toàn dữ liệu
 
@@ -1014,8 +1041,8 @@ payload
 → đặt lịch tự động xác nhận
 → nhận phiếu và số
 → quét QR tại phòng
-→ active FIFO queue
-→ bác sĩ gọi
+→ vào làn PRIORITY hoặc NORMAL
+→ bác sĩ gọi lượt được đề xuất
 → khám và nhập sinh hiệu
 → chẩn đoán
 → kê toa
@@ -1035,7 +1062,8 @@ payload
 → bệnh nhân tới ngồi chờ
 → kỹ thuật viên gọi và thực hiện
 → kết quả sẵn sàng
-→ tự chèn RESULT_REVIEW sau bệnh nhân tiếp theo
+→ bệnh nhân quay lại và xác nhận chờ đọc kết quả
+→ RESULT_REVIEW tham gia Round Robin 1:1:1
 → bác sĩ đọc kết quả
 → chẩn đoán và kê toa
 → Mobile nhận kết quả, toa và tái khám
@@ -1046,14 +1074,15 @@ payload
 Hệ thống được coi là hoàn thành luồng chính khi:
 
 1. Bệnh nhân đặt được lịch và nhận phiếu mà không cần duyệt thủ công.
-2. Quét QR đưa đúng bệnh nhân vào đúng active queue.
+2. Quét QR đưa đúng bệnh nhân vào đúng làn `PRIORITY` hoặc `NORMAL`.
 3. Bệnh nhân chưa check-in không xuất hiện trong active queue.
-4. Doctor Web gọi và bắt đầu đúng lượt.
+4. Doctor Web hiển thị ba làn, đề xuất đúng chu kỳ và chỉ gọi khi bác sĩ bấm nút.
 5. Bác sĩ nhập được sinh hiệu, chẩn đoán và chỉ định.
 6. Lab Order tự xuất hiện trên Lab Web.
 7. Bệnh nhân nhận được số cận lâm sàng mà không check-in lại.
 8. Kết quả tự động đưa consultation sang chờ review.
-9. Result review được chèn sau bệnh nhân khám ban đầu tiếp theo.
+9. Result review vào làn riêng và tham gia Round Robin `1:1:1` sau khi bệnh nhân
+   xác nhận đã quay lại.
 10. Bác sĩ hoàn thiện consultation, toa và lịch tái khám.
 11. Mobile hiển thị đầy đủ timeline, kết quả và tài liệu sau khám.
 12. Các API bảo vệ đúng role và ownership.
@@ -1068,4 +1097,4 @@ Hệ thống được coi là hoàn thành luồng chính khi:
 - Cấp cứu.
 - Ký số y tế production-grade.
 - AI tự chẩn đoán hoặc tự kê toa.
-- Thuật toán ưu tiên/N:M toàn bệnh viện.
+- Thuật toán điều phối ưu tiên ở quy mô toàn bệnh viện hoặc liên phòng.

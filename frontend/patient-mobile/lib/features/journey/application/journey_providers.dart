@@ -13,6 +13,14 @@ final demoModeProvider = Provider<bool>(
   (ref) => const bool.fromEnvironment('DEMO_MODE', defaultValue: false),
 );
 
+/// Queue can move to the real backend before the remaining demo journey.
+/// Production always uses Queue Service; hybrid demo opts in with REAL_QUEUE.
+final realQueueEnabledProvider = Provider<bool>(
+  (ref) =>
+      !ref.watch(demoModeProvider) ||
+      const bool.fromEnvironment('REAL_QUEUE', defaultValue: false),
+);
+
 final journeyStoreProvider = Provider<JourneyStore>(
   (ref) => SharedPreferencesJourneyStore(),
 );

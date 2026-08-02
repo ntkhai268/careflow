@@ -1,6 +1,10 @@
 # Phân tích & Thiết kế OOAD — Phân hệ Bệnh nhân (Người B)
 
 > Tài liệu phân tích và thiết kế hướng đối tượng (OOAD) cho 3 service thuộc phân hệ Bệnh nhân trong dự án CareFlow.
+>
+> **Tài liệu lịch sử:** với Appointment/phân phòng, nguồn hiện hành là
+> `docs/service-contracts/05-appointment.md` và baseline Chương 3. Event/trạng
+> thái cũ còn lại trong file chỉ phản ánh kế hoạch ban đầu.
 
 ## Phạm vi
 
@@ -284,13 +288,14 @@ graph LR
     "department": "Nội khoa",
     "appointmentDate": "2026-07-20",
     "timeSlot": "08:00-08:30",
-    "priority": "APPOINTMENT",
     "createdAt": "2026-07-15T10:30:00"
 }
 ```
 
 > [!IMPORTANT]
-> **Trường `priority`** rất quan trọng: `APPOINTMENT` (có hẹn trước) hoặc `WALK_IN` (đến trực tiếp). Queue Service của A sẽ dùng trường này để quyết định độ ưu tiên trong hàng đợi. Cần thống nhất giá trị này với Người A.
+> Appointment Service không tự quyết định diện ưu tiên. Queue Service mặc định
+> lượt khám ban đầu là `NORMAL`; nhân viên có quyền chỉ xác nhận `PRIORITY` khi
+> check-in sau khi kiểm tra diện ưu tiên và ghi nhận lý do/audit.
 
 ---
 
@@ -865,17 +870,19 @@ sequenceDiagram
     Note right of BN: {patientId, departmentId,<br/>appointmentDate, timeSlot, notes}
     GW->>AS: Forward request + JWT
     AS->>AS: Validate: trùng lịch? Ca còn trống?
-    AS->>DB_A: INSERT INTO appointments (...)
+    AS->>DB_A: SELECT active ClinicRoom theo khoa
+    DB_A-->>AS: Đúng một roomId trong MVP
+    AS->>DB_A: INSERT INTO appointments (..., room_id)
     DB_A-->>AS: Appointment created
 
-    AS->>MQ: Publish "AppointmentCreated"
-    Note right of MQ: Exchange: appointment.exchange<br/>Routing Key: appointment.created
+    AS->>MQ: Publish "AppointmentConfirmed" có roomId
+    Note right of MQ: Exchange: appointment.exchange<br/>Routing Key: appointment.confirmed
 
     AS-->>GW: 201 Created + appointment
     GW-->>BN: Hiển thị "Đặt lịch thành công"
 
     MQ->>QS: Consume event
-    QS->>QS: Tính toán số thứ tự (thuật toán ưu tiên)
+    QS->>QS: Tạo Visit Ticket cho đúng roomId
     QS->>MQ: Publish "QueueNumberAssigned"
     Note right of MQ: Exchange: queue.exchange<br/>Routing Key: queue.number.assigned
 
@@ -1045,10 +1052,19 @@ CREATE TABLE departments (
     is_active       BOOLEAN NOT NULL DEFAULT TRUE
 );
 
+CREATE TABLE clinic_rooms (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    department_id   UUID NOT NULL REFERENCES departments(id),
+    room_code       VARCHAR(50) NOT NULL UNIQUE,
+    display_name    VARCHAR(100) NOT NULL,
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE
+);
+
 CREATE TABLE appointments (
     id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     patient_id        UUID NOT NULL,                   -- Tham chiếu logic → Patient Service
     department_id     UUID NOT NULL REFERENCES departments(id),
+    room_id           UUID NOT NULL REFERENCES clinic_rooms(id),
     appointment_date  DATE NOT NULL,
     time_slot         VARCHAR(20) NOT NULL,            -- "08:00-08:30"
     status            appointment_status NOT NULL DEFAULT 'PENDING',
@@ -1064,6 +1080,10 @@ CREATE TABLE appointments (
 CREATE INDEX idx_appointments_patient_id ON appointments(patient_id);
 CREATE INDEX idx_appointments_date ON appointments(appointment_date);
 CREATE INDEX idx_appointments_status ON appointments(status);
+CREATE INDEX idx_clinic_rooms_department ON clinic_rooms(department_id);
+
+-- Mô hình cho phép Department 1:N ClinicRoom. Seed MVP chỉ tạo đúng một phòng
+-- active cho mỗi khoa; create appointment báo lỗi nếu truy vấn trả 0 hoặc >1.
 
 -- ============================================
 -- SEED DATA: Danh sách chuyên khoa mặc định

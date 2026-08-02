@@ -7,6 +7,7 @@ import 'package:careflow_patient/features/journey/presentation/laboratory_screen
 import 'package:careflow_patient/features/journey/presentation/result_review_screen.dart';
 import 'package:careflow_patient/features/journey/presentation/visit_outcome_screen.dart';
 import 'package:careflow_patient/features/journey/presentation/visit_ticket_screen.dart';
+import 'package:careflow_patient/features/journey/application/journey_providers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -27,7 +28,10 @@ void main() {
     testWidgets('${entry.key} constructs its journey screen', (tester) async {
       appRouter.go(entry.key);
       await tester.pumpWidget(
-        ProviderScope(child: MaterialApp.router(routerConfig: appRouter)),
+        ProviderScope(
+          overrides: [demoModeProvider.overrideWithValue(true)],
+          child: MaterialApp.router(routerConfig: appRouter),
+        ),
       );
       await tester.pump();
 

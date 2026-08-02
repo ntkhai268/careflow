@@ -181,6 +181,10 @@ class _AppointmentDetailScreenState
         !appointment.allowsActiveJourney) {
       return;
     }
+    if (ref.read(realQueueEnabledProvider)) {
+      context.push('/journey/${appointment.id}/ticket');
+      return;
+    }
     final activeJourney = ref.read(activeJourneyProvider);
     if (activeJourney?.appointmentId != appointment.id ||
         activeJourney?.patientId != appointment.patientId) {
@@ -308,6 +312,12 @@ class _AppointmentDetailScreenState
                         'Chuyên khoa',
                         appt.departmentDisplayName,
                       ),
+                      if (appt.roomDisplayName != null)
+                        _buildDetailRow(
+                          Icons.meeting_room_rounded,
+                          'Phòng khám',
+                          appt.roomDisplayName!,
+                        ),
                       _buildDetailRow(
                         Icons.calendar_today_rounded,
                         'Ngày khám',

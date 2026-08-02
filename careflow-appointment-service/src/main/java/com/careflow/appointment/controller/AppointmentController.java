@@ -6,6 +6,8 @@ import com.careflow.appointment.dto.response.AppointmentResponse;
 import com.careflow.appointment.model.Department;
 import com.careflow.appointment.service.AppointmentService;
 import com.careflow.common.dto.ApiResponse;
+import com.careflow.common.constants.AppConstants;
+import com.careflow.common.exception.BusinessException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -32,8 +34,14 @@ public class AppointmentController {
     @PostMapping
     @Operation(summary = "Đặt lịch khám", description = "Tạo lịch hẹn khám bệnh mới")
     public ResponseEntity<ApiResponse<AppointmentResponse>> createAppointment(
-            @Valid @RequestBody CreateAppointmentRequest request) {
-        AppointmentResponse response = appointmentService.createAppointment(request);
+            @Valid @RequestBody CreateAppointmentRequest request,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
+            @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
+        if (!List.of(AppConstants.ROLE_PATIENT, AppConstants.ROLE_ADMIN).contains(role)) {
+            throw new BusinessException(403, "Không có quyền đặt lịch khám");
+        }
+        AppointmentResponse response = appointmentService.createAppointment(request, userId, correlationId);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Đặt lịch khám thành công", response));
     }
@@ -41,16 +49,21 @@ public class AppointmentController {
     @GetMapping("/{id}")
     @Operation(summary = "Xem chi tiết lịch khám")
     public ResponseEntity<ApiResponse<AppointmentResponse>> getAppointmentById(
-            @PathVariable UUID id) {
-        AppointmentResponse response = appointmentService.getAppointmentById(id);
+            @PathVariable UUID id,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        AppointmentResponse response = appointmentService.getAppointmentById(id, userId, role);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/patient/{patientId}")
     @Operation(summary = "Danh sách lịch khám của bệnh nhân")
     public ResponseEntity<ApiResponse<List<AppointmentResponse>>> getAppointmentsByPatientId(
-            @PathVariable UUID patientId) {
-        List<AppointmentResponse> responses = appointmentService.getAppointmentsByPatientId(patientId);
+            @PathVariable UUID patientId,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        List<AppointmentResponse> responses =
+                appointmentService.getAppointmentsByPatientId(patientId, userId, role);
         return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
@@ -76,8 +89,11 @@ public class AppointmentController {
     @PutMapping("/{id}/cancel")
     @Operation(summary = "Hủy lịch khám")
     public ResponseEntity<ApiResponse<AppointmentResponse>> cancelAppointment(
-            @PathVariable UUID id) {
-        AppointmentResponse response = appointmentService.cancelAppointment(id);
+            @PathVariable UUID id,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
+            @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
+        AppointmentResponse response = appointmentService.cancelAppointment(id, userId, role, correlationId);
         return ResponseEntity.ok(ApiResponse.success("Đã hủy lịch khám", response));
     }
 
@@ -87,7 +103,9 @@ public class AppointmentController {
         List<Map<String, String>> departments = Arrays.stream(Department.values())
                 .map(d -> Map.of(
                         "code", d.name(),
-                        "name", d.getDisplayName()))
+                        "name", d.getDisplayName(),
+                        "roomId", d.getRoomId(),
+                        "roomName", d.getRoomDisplayName()))
                 .toList();
         return ResponseEntity.ok(ApiResponse.success(departments));
     }

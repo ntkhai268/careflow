@@ -1,5 +1,9 @@
 # Phân tích OOAD — Phân hệ Bệnh nhân (Người B)
 
+> **Tài liệu lịch sử:** với Appointment/phân phòng, nguồn hiện hành là
+> `docs/service-contracts/05-appointment.md` và baseline Chương 3. Event/trạng
+> thái cũ còn lại trong file chỉ phản ánh kế hoạch ban đầu.
+
 ## Phạm vi phân tích
 
 | Mục | Chi tiết |
@@ -280,13 +284,14 @@ graph LR
     "department": "Nội khoa",
     "appointmentDate": "2026-07-20",
     "timeSlot": "08:00-08:30",
-    "priority": "APPOINTMENT",
     "createdAt": "2026-07-15T10:30:00"
 }
 ```
 
 > [!IMPORTANT]
-> **Trường `priority`** rất quan trọng: `APPOINTMENT` (có hẹn trước) hoặc `WALK_IN` (đến trực tiếp). Queue Service của A sẽ dùng trường này để quyết định độ ưu tiên trong hàng đợi. Cần thống nhất giá trị này với Người A.
+> Appointment Service không tự quyết định diện ưu tiên. Queue Service mặc định
+> lượt khám ban đầu là `NORMAL`; nhân viên có quyền chỉ xác nhận `PRIORITY` khi
+> check-in sau khi kiểm tra diện ưu tiên và ghi nhận lý do/audit.
 
 ---
 

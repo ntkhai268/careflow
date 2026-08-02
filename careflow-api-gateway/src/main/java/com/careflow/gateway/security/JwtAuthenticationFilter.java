@@ -31,7 +31,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private static final String USER_ID = "X-User-Id";
     private static final String USER_ROLE = "X-User-Role";
     private static final String CORRELATION_ID = "X-Correlation-Id";
-    private static final Set<String> ROLES = Set.of("PATIENT", "DOCTOR", "STAFF", "LAB_TECHNICIAN", "ADMIN");
+    private static final Set<String> ROLES = Set.of(
+            "PATIENT", "DOCTOR", "STAFF", "LAB_TECHNICIAN", "ADMIN");
 
     private final SecretKey key;
     private final String issuer;

@@ -72,6 +72,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            demoModeProvider.overrideWithValue(true),
             authProvider.overrideWith((ref) => auth),
             patientProvider.overrideWith((ref) => patient),
             journeyControllerProvider.overrideWith((ref) => controller),

@@ -21,17 +21,20 @@ sources. Demo code must not leak into production behavior.
 2. A booked appointment is automatically confirmed and receives an electronic
    visit ticket.
 3. The electronic ticket contains a QR code, clinic room, expected time window,
-   and issued queue number.
-4. A queue number printed on a ticket is not an active queue entry. The patient
-   enters the active FIFO queue only after hospital staff or a kiosk scans the
-   ticket QR and the visit becomes `CHECKED_IN`.
+   and issued queue number. The target model is `Department 1:N ClinicRoom`;
+   MVP data provides exactly one active room per department, so the
+   server derives the room instead of accepting or randomizing it on Mobile.
+4. A queue number printed on a ticket is not an active queue entry. After the
+   ticket QR is scanned and the visit becomes `CHECKED_IN`, the patient enters
+   the `PRIORITY` or `NORMAL` lane; FIFO is preserved within that lane.
 5. Clinical and laboratory staff actions are never presented as patient
    actions. In demo builds, a separate control surface simulates those external
    actors.
 6. A laboratory order is automatically received by the laboratory workflow.
    The patient does not check in a second time.
-7. When all ordered results are available, the patient enters the result-review
-   queue immediately after the next initial-consultation patient.
+7. When all ordered results are available, the patient is asked to return to
+   the clinic. After confirming arrival, the patient enters `RESULT_REVIEW`,
+   which joins the clinic's Round Robin `1:1:1` scheduling cycle.
 8. Analytics and AI are outside the patient journey implementation. They may
    consume the resulting data later but must not block the core flow.
 
@@ -210,8 +213,11 @@ Vietnamese UI.
 
 ### 7.1 Initial clinic queue
 
-- One FIFO queue exists per clinic room and session.
-- Only `CHECKED_IN` patients are active.
+- Three logical lanes exist per clinic room and session: `PRIORITY`, `NORMAL`,
+  and `RESULT_REVIEW`.
+- FIFO applies inside each lane; the room scheduler suggests patients using
+  Round Robin `1:1:1` and skips empty lanes.
+- Only `CHECKED_IN` initial patients and confirmed-return review patients are active.
 - The electronic ticket's printed number remains stable.
 - `peopleAhead` and expected wait are derived demo values and never presented as
   guaranteed times.

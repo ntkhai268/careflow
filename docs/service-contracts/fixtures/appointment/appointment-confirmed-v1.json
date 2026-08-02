@@ -12,6 +12,7 @@
     "patientId": "9c613831-90c2-48f6-81c5-0105c20502a1",
     "department": "THAN_KINH",
     "roomId": "ROOM-21",
+    "roomDisplayName": "Phòng khám Thần kinh 21",
     "appointmentDate": "2026-08-18",
     "timeSlot": "10:30-11:00"
   }
