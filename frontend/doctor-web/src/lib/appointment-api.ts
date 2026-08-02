@@ -28,4 +28,7 @@ export const appointmentApi = {
 
   getAppointmentById: (id: string) => 
     api.get<AppointmentResponse>(`/api/appointments/${id}`),
+
+  updateStatus: (id: string, status: string, notes?: string) =>
+    api.put<AppointmentResponse>(`/api/appointments/${id}/status`, { status, notes }),
 };

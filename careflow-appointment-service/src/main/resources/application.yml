@@ -16,11 +16,12 @@ spring:
     show-sql: ${JPA_SHOW_SQL:false}
   flyway:
     schemas: public
+    out-of-order: true
   rabbitmq:
-    host: ${RABBITMQ_HOST:100.116.233.60}
+    host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:${RABBITMQ_USER:careflow}}
-    password: ${RABBITMQ_PASSWORD:careflow}
+    username: ${RABBITMQ_USERNAME:${RABBITMQ_USER:guest}}
+    password: ${RABBITMQ_PASSWORD:guest}
     publisher-confirm-type: correlated
     publisher-returns: true
   lifecycle:

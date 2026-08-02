@@ -52,6 +52,11 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Successfully seeded {} drugs into database.", defaultDrugs.size());
         }
 
+        if (prescriptionRepository.count() > 2) {
+            prescriptionRepository.deleteAll();
+            log.info("Cleared duplicate historical prescriptions.");
+        }
+
         UUID pr1Id = UUID.fromString("e0000001-0000-0000-0000-000000000001");
         if (!prescriptionRepository.existsById(pr1Id)) {
             Prescription pr1 = Prescription.builder()

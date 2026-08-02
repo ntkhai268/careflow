@@ -26,6 +26,11 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         log.info("Checking historical consultation records for test patients...");
 
+        if (consultationRepository.count() > 2) {
+            consultationRepository.deleteAll();
+            log.info("Cleared duplicate historical consultations.");
+        }
+
         UUID c1Id = UUID.fromString("c0000001-0000-0000-0000-000000000001");
         if (!consultationRepository.existsById(c1Id)) {
             Consultation c1 = Consultation.builder()
@@ -44,8 +49,8 @@ public class DataInitializer implements CommandLineRunner {
                     .icd10Name("Viêm mũi họng cấp (cảm thường)")
                     .diagnosis("Viêm mũi họng cấp / Sốt siêu vi")
                     .status(ConsultationStatus.COMPLETED)
-                    .startedAt(LocalDateTime.now().minusDays(30).minusHours(1))
-                    .completedAt(LocalDateTime.now().minusDays(30))
+                    .startedAt(LocalDateTime.now().minusHours(2))
+                    .completedAt(LocalDateTime.now().minusHours(1))
                     .build();
             c1.setId(c1Id);
             consultationRepository.save(c1);
@@ -70,8 +75,8 @@ public class DataInitializer implements CommandLineRunner {
                     .icd10Name("Bệnh trào ngược dạ dày - thực quản không có viêm thực quản")
                     .diagnosis("Trào ngược dạ dày thực quản (GERD) / Viêm dạ dày nhẹ")
                     .status(ConsultationStatus.COMPLETED)
-                    .startedAt(LocalDateTime.now().minusDays(60).minusHours(1))
-                    .completedAt(LocalDateTime.now().minusDays(60))
+                    .startedAt(LocalDateTime.now().minusHours(3))
+                    .completedAt(LocalDateTime.now().minusHours(2))
                     .build();
             c2.setId(c2Id);
             consultationRepository.save(c2);

@@ -47,7 +47,10 @@ run_service "consultation-service" "mvn -pl careflow-consultation-service spring
 # 7. Start Prescription Service (Port 8087)
 run_service "prescription-service" "mvn -pl careflow-prescription-service spring-boot:run -Dspring-boot.run.profiles=local"
 
-# 8. Start Frontend Web (Port 3000)
+# 8. Start Queue Service (Port 8084)
+run_service "queue-service" "mvn -pl careflow-queue-service spring-boot:run -Dspring-boot.run.profiles=local"
+
+# 9. Start Frontend Web (Port 3000)
 echo "--> Launching Doctor Web Frontend..."
 cd frontend/doctor-web
 npm run dev > ../../logs_frontend.log 2>&1 &

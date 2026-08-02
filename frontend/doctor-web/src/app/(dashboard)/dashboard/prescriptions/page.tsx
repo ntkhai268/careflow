@@ -25,18 +25,39 @@ export default function DashboardPrescriptionsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [selectedPrescription, setSelectedPrescription] = useState<PrescriptionResponse | null>(null);
+  const [expandedPatientId, setExpandedPatientId] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadPrescriptions() {
       try {
         setIsLoading(true);
-        const p1Res = await prescriptionApi.getByPatient("f0000001-0000-0000-0000-000000000001");
-        const p2Res = await prescriptionApi.getByPatient("f0000001-0000-0000-0000-000000000002");
-        const p5Res = await prescriptionApi.getByPatient("f0000001-0000-0000-0000-000000000005");
+        setError("");
+        
+        // Fetch prescriptions with individual try-catch to prevent uncaught promise rejection
+        const fetchPatientPrescriptions = async (patientId: string) => {
+          try {
+            const res = await prescriptionApi.getByPatient(patientId);
+            return res.data || [];
+          } catch (err: any) {
+            console.warn(`[Prescription API] Unable to fetch for patient ${patientId}:`, err?.message);
+            return [];
+          }
+        };
 
-        const combined = [...(p1Res.data || []), ...(p2Res.data || []), ...(p5Res.data || [])];
+        const [p1List, p2List, p5List] = await Promise.all([
+          fetchPatientPrescriptions("f0000001-0000-0000-0000-000000000001"),
+          fetchPatientPrescriptions("f0000001-0000-0000-0000-000000000002"),
+          fetchPatientPrescriptions("f0000001-0000-0000-0000-000000000005"),
+        ]);
+
+        const combined = [...p1List, ...p2List, ...p5List];
         combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setPrescriptions(combined);
+
+        if (combined.length === 0) {
+          // If no prescriptions returned or service is down
+          setError("Không thể tải danh sách đơn thuốc từ Prescription Service. Vui lòng kiểm tra lại dịch vụ.");
+        }
 
         const map: Record<string, { name: string; age: number }> = {};
         for (const presc of combined) {
@@ -56,10 +77,13 @@ export default function DashboardPrescriptionsPage() {
           }
         }
         setPatientMap(map);
-      } catch (err) {
-        console.error(err);
+      } catch (err: any) {
+        console.error("[Prescriptions Page] Error loading data:", err);
         setError("Không thể kết nối API đơn thuốc từ Prescription-Service.");
-      } finally { setIsLoading(false); }
+        setPrescriptions([]);
+      } finally {
+        setIsLoading(false);
+      }
     }
     loadPrescriptions();
   }, [user]);
@@ -82,93 +106,137 @@ export default function DashboardPrescriptionsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
 
-        {/* Left: Table */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100">
+        {/* Left: Patient Grouped Prescriptions List */}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-[560px]">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-gray-100 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-gray-800">Danh sách đơn thuốc</h2>
+              <h2 className="text-sm font-bold text-gray-800">Bệnh nhân & Đơn thuốc đã kê</h2>
               {prescriptions.length > 0 && (
                 <span className="inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-indigo-50 text-indigo-600 text-[10px] font-bold">
-                  {prescriptions.length}
+                  {prescriptions.length} đơn
                 </span>
               )}
             </div>
-            <div className="flex items-center gap-2 text-[10px] text-gray-400">
+            <div className="flex items-center gap-3 text-[10px] text-gray-400">
               <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" /> Đơn nháp</span>
               <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" /> Đã ký</span>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-gray-100 bg-indigo-50">
-                  <th className="px-5 py-3 font-semibold text-gray-600">Bệnh nhân</th>
-                  <th className="px-5 py-3 font-semibold text-gray-600">Chẩn đoán</th>
-                  <th className="px-5 py-3 font-semibold text-gray-600 w-20">Số thuốc</th>
-                  <th className="px-5 py-3 font-semibold text-gray-600 w-24">Trạng thái</th>
-                  <th className="px-5 py-3 w-12"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {prescriptions.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-5 py-12 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                        <svg className="w-8 h-8 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
-                        <p className="text-xs text-gray-400 italic">Chưa có đơn thuốc nào được kê gần đây</p>
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  prescriptions.map((presc) => {
-                    const pInfo = patientMap[presc.patientId] || { name: `Bệnh nhân (${presc.patientId.slice(0, 6)})`, age: 30 };
-                    const isSelected = selectedPrescription?.id === presc.id;
-                    return (
-                      <tr key={presc.id}
-                        className={`cursor-pointer transition-colors ${isSelected ? "bg-indigo-50" : "hover:bg-indigo-50"}`}
-                        style={isSelected ? { borderLeft: "2px solid #6366F1" } : {}}
-                        onClick={() => setSelectedPrescription(presc)}>
-                        <td className="px-5 py-3">
-                          <div className="flex items-center gap-2.5">
-                            <div className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white"
-                              style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}>
-                              {pInfo.name.charAt(0)}
-                            </div>
-                            <div>
-                              <div className="font-semibold text-gray-800">{pInfo.name}</div>
-                              <div className="text-[10px] text-gray-400">{pInfo.age} tuổi</div>
-                            </div>
+          {/* Scrollable Patient Groups List */}
+          <div className="overflow-y-auto flex-1 p-3 space-y-2.5 custom-scrollbar">
+            {prescriptions.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="flex flex-col items-center gap-2">
+                  <svg className="w-8 h-8 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <p className="text-xs text-gray-400 italic">Chưa có đơn thuốc nào được kê trên hệ thống</p>
+                </div>
+              </div>
+            ) : (
+              (() => {
+                // Group prescriptions by patientId
+                const grouped = prescriptions.reduce((acc, p) => {
+                  if (!acc[p.patientId]) acc[p.patientId] = [];
+                  acc[p.patientId].push(p);
+                  return acc;
+                }, {} as Record<string, PrescriptionResponse[]>);
+
+                return Object.entries(grouped).map(([pId, pList]) => {
+                  const pInfo = patientMap[pId] || { name: `Bệnh nhân (${pId.slice(0, 6)})`, age: 30 };
+                  const isExpanded = expandedPatientId === pId;
+
+                  return (
+                    <div key={pId} className="border border-gray-200/80 rounded-xl overflow-hidden bg-white shadow-xs transition-all">
+                      {/* Patient Group Header (Accordion Toggle) */}
+                      <div
+                        onClick={() => setExpandedPatientId(isExpanded ? null : pId)}
+                        className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${
+                          isExpanded ? "bg-indigo-50/70 border-b border-indigo-100" : "hover:bg-gray-50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full text-xs font-bold text-white flex-shrink-0"
+                            style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}>
+                            {pInfo.name.charAt(0)}
                           </div>
-                        </td>
-                        <td className="px-5 py-3 text-gray-500 max-w-xs truncate">{presc.diagnosis || "Chưa ghi nhận"}</td>
-                        <td className="px-5 py-3">
-                          <span className="font-semibold text-gray-700">{presc.items?.length || 0}</span>
-                          <span className="text-gray-400 ml-1">loại</span>
-                        </td>
-                        <td className="px-5 py-3"><PrescriptionStatusBadge status={presc.status} /></td>
-                        <td className="px-5 py-3 text-right">
-                          <span className="text-[10px] font-bold text-indigo-500">{isSelected ? "▼" : "→"}</span>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h3 className="font-bold text-gray-800 text-xs">{pInfo.name}</h3>
+                              <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full font-medium">
+                                {pInfo.age} tuổi
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-gray-400 mt-0.5">
+                              Tổng cộng <strong className="text-indigo-600 font-bold">{pList.length}</strong> đơn thuốc trong lịch sử
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-semibold text-indigo-500 bg-indigo-50 px-2 py-1 rounded-md">
+                            {isExpanded ? "Thu gọn ▲" : "Xem lịch sử đơn ▼"}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Nested Prescription History List */}
+                      {isExpanded && (
+                        <div className="bg-gray-50/50 p-2 space-y-2 max-h-64 overflow-y-auto custom-scrollbar border-t border-gray-100">
+                          {pList.map((presc) => {
+                            const isSelected = selectedPrescription?.id === presc.id;
+                            return (
+                              <div
+                                key={presc.id}
+                                onClick={() => setSelectedPrescription(presc)}
+                                className={`p-3 rounded-lg border transition-all cursor-pointer flex items-center justify-between gap-3 ${
+                                  isSelected
+                                    ? "bg-white border-indigo-400 shadow-sm ring-1 ring-indigo-300"
+                                    : "bg-white border-gray-200/80 hover:border-indigo-200 hover:bg-indigo-50/30"
+                                }`}
+                              >
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    <span className="font-mono text-[10px] font-bold text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded">
+                                      {presc.id.slice(0, 8)}...
+                                    </span>
+                                    <PrescriptionStatusBadge status={presc.status} />
+                                  </div>
+                                  <p className="text-xs font-semibold text-gray-800 truncate">
+                                    {presc.diagnosis || "Chẩn đoán chưa ghi nhận"}
+                                  </p>
+                                  <p className="text-[10px] text-gray-400 font-mono mt-0.5">
+                                    Ngày kê: {new Date(presc.createdAt).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" })} · {presc.items?.length || 0} thuốc
+                                  </p>
+                                </div>
+
+                                <div className="text-right flex-shrink-0">
+                                  <span className={`text-[11px] font-bold ${isSelected ? "text-indigo-600" : "text-gray-400"}`}>
+                                    {isSelected ? "Đang chọn ✓" : "Chi tiết →"}
+                                  </span>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                });
+              })()
+            )}
           </div>
         </div>
 
         {/* Right: Detail panel */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
-          <div className="px-5 py-3.5 border-b border-gray-100 rounded-t-xl" style={{ background: "linear-gradient(135deg, #EEF2FF, #E0E7FF)" }}>
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-[560px]">
+          <div className="px-5 py-3.5 border-b border-gray-100 rounded-t-xl flex-shrink-0" style={{ background: "linear-gradient(135deg, #EEF2FF, #E0E7FF)" }}>
             <h2 className="text-sm font-bold text-gray-800">Chi tiết đơn thuốc</h2>
-            <p className="text-[10px] text-indigo-400 mt-0.5">Chọn đơn thuốc ở bảng trái để xem</p>
+            <p className="text-[10px] text-indigo-500 mt-0.5">Chọn đơn thuốc ở bảng bên trái để xem</p>
           </div>
 
-          <div className="p-4">
+          <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
             {selectedPrescription ? (
               <div className="space-y-3.5 text-xs">
                 {/* Prescription ID */}
@@ -181,7 +249,7 @@ export default function DashboardPrescriptionsPage() {
                 <div>
                   <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide block mb-1">Bệnh nhân</span>
                   <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white"
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white flex-shrink-0"
                       style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}>
                       {(patientMap[selectedPrescription.patientId]?.name || "B").charAt(0)}
                     </div>
@@ -228,7 +296,7 @@ export default function DashboardPrescriptionsPage() {
                   <span className="text-[10px] text-gray-400 font-semibold uppercase tracking-wide block mb-2">
                     Danh sách thuốc ({selectedPrescription.items.length} loại)
                   </span>
-                  <div className="space-y-2 max-h-52 overflow-y-auto">
+                  <div className="space-y-2 max-h-52 overflow-y-auto custom-scrollbar">
                     {selectedPrescription.items.map((item, idx) => (
                       <div key={item.id} className="rounded-lg border border-gray-100 bg-gray-50 p-2.5">
                         <div className="flex items-start justify-between gap-2">
@@ -250,7 +318,7 @@ export default function DashboardPrescriptionsPage() {
                 )}
               </div>
             ) : (
-              <div className="text-center py-12 flex flex-col items-center gap-3">
+              <div className="text-center py-16 flex flex-col items-center gap-3">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50">
                   <svg className="w-6 h-6 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />

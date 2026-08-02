@@ -13,6 +13,7 @@ function StatusDot({ status }: { status: string }) {
   const config: Record<string, { color: string; label: string; bg: string; text: string }> = {
     WAITING:     { color: "#F59E0B", label: "Chờ khám",     bg: "#FEF3C7", text: "#92400E" },
     PENDING:     { color: "#F59E0B", label: "Chờ khám",     bg: "#FEF3C7", text: "#92400E" },
+    CHECKED_IN:  { color: "#3B82F6", label: "Đã tiếp nhận", bg: "#DBEAFE", text: "#1E40AF" },
     IN_PROGRESS: { color: "#8B5CF6", label: "Đang khám",    bg: "#EDE9FE", text: "#5B21B6" },
     CONFIRMED:   { color: "#3B82F6", label: "Đã tiếp nhận", bg: "#DBEAFE", text: "#1E40AF" },
     COMPLETED:   { color: "#10B981", label: "Hoàn tất",     bg: "#D1FAE5", text: "#065F46" },
@@ -110,6 +111,11 @@ export default function DashboardQueuePage() {
       }
 
       const res = await consultationApi.createConsultation({ appointmentId, patientId, doctorId: user.id });
+      try {
+        await appointmentApi.updateStatus(appointmentId, "IN_PROGRESS", "Đang khám bệnh");
+      } catch {
+        /* Ignore if appointment status update fails on secondary service */
+      }
       router.push(`/consultation/${res.data.id}`);
     } catch (err: any) {
       const msg = err?.message || "Bác sĩ hiện tại đang có một ca khám chưa hoàn tất.";
@@ -215,10 +221,12 @@ export default function DashboardQueuePage() {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-3 text-[10px] text-gray-400">
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400 inline-block" /> Hoàn tất</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-violet-400 inline-block" /> Đang khám</span>
-            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400 inline-block" /> Khẩn cấp</span>
+          <div className="flex items-center gap-3 text-[10px] text-gray-500 font-medium">
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block" /> Đã tiếp nhận</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-amber-500 inline-block" /> Chờ khám</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-purple-500 inline-block" /> Đang khám</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" /> Hoàn tất</span>
+            <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-rose-500 inline-block" /> Khẩn cấp</span>
           </div>
         </div>
 
@@ -270,14 +278,26 @@ export default function DashboardQueuePage() {
                     <td className="px-5 py-3 font-mono text-gray-500">{a.timeSlot}</td>
                     <td className="px-5 py-3"><StatusDot status={a.status} /></td>
                     <td className="px-5 py-3 text-right">
-                      <button
-                        onClick={() => handleCallPatient(a.patientId, a.id)}
-                        disabled={isCalling}
-                        className="text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-50 shadow-sm hover:shadow-md"
-                        style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}
-                      >
-                        Vào khám
-                      </button>
+                      {a.status === "COMPLETED" ? (
+                        <span className="text-gray-400 text-[11px] font-medium italic px-2 py-1">Đã hoàn thành</span>
+                      ) : ["CHECKED_IN", "IN_PROGRESS"].includes(a.status) ? (
+                        <button
+                          onClick={() => handleCallPatient(a.patientId, a.id)}
+                          disabled={isCalling}
+                          className="text-white px-3 py-1.5 rounded-lg text-[11px] font-semibold transition-all disabled:opacity-50 shadow-sm hover:shadow-md cursor-pointer"
+                          style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}
+                        >
+                          Vào khám
+                        </button>
+                      ) : (
+                        <button
+                          disabled
+                          title="Bệnh nhân chưa quét mã QR tiếp nhận tại quầy"
+                          className="bg-gray-100 text-gray-400 px-3 py-1.5 rounded-lg text-[11px] font-medium cursor-not-allowed border border-gray-200"
+                        >
+                          Chưa tiếp nhận
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))

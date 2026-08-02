@@ -4,6 +4,7 @@ import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { consultationApi, ConsultationResponse, UpdateConsultationRequest } from "@/lib/consultation-api";
+import { appointmentApi } from "@/lib/appointment-api";
 import { prescriptionApi, PrescriptionResponse, PrescriptionItemRequest, MedicineCatalogItem } from "@/lib/prescription-api";
 import { patientApi, emrApi, PatientAllergyResponse } from "@/lib/patient-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
@@ -495,6 +496,13 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     try {
       await saveDraft();
       await consultationApi.completeConsultation(consultationId);
+      if (consultation?.appointmentId) {
+        try {
+          await appointmentApi.updateStatus(consultation.appointmentId, "COMPLETED", "Hoàn tất khám bệnh");
+        } catch {
+          /* Ignore secondary sync failure */
+        }
+      }
       
       showToast("Hoàn tất lượt khám thành công. Đang chuyển về bảng điều khiển...");
       setTimeout(() => {
@@ -1353,7 +1361,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs">
           <div className="w-full max-w-lg bg-card-bg border-l border-card-border shadow-2xl h-full flex flex-col justify-between p-6 animate-in slide-in-from-right duration-200 rounded-l-xl">
             
-            <div className="space-y-5 overflow-y-auto pr-1">
+            <div className="flex-1 overflow-y-auto pr-1 space-y-5">
               <div className="flex justify-between items-center border-b border-card-border pb-3">
                 <h3 className="text-base font-bold text-[#2B1D30] uppercase tracking-wide">
                   {editingMedicineCode ? "Cập nhật thông tin thuốc" : "Thêm thuốc vào đơn kê"}
@@ -1368,7 +1376,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
               </div>
 
               {/* Search-as-you-type Autocomplete for Medicine Selection */}
-              <div className="relative">
+              <div className="relative z-40">
                 <label className="block text-xs font-bold text-[#2B1D30] mb-1">Tìm kiếm & Chọn thuốc (*)</label>
                 <input
                   type="text"
@@ -1383,7 +1391,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 />
 
                 {showMedDropdown && filteredMedicines.length > 0 && (
-                  <div className="absolute left-0 right-0 z-30 mt-1 border border-card-border bg-white shadow-xl max-h-56 overflow-y-auto rounded-md">
+                  <div className="absolute left-0 right-0 top-full z-50 mt-1 border border-card-border bg-white shadow-2xl max-h-60 overflow-y-auto rounded-md divide-y divide-gray-100">
                     {filteredMedicines.map((m) => (
                       <div
                         key={m.code}
@@ -1392,7 +1400,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                           setMedSearchQuery(m.name);
                           setShowMedDropdown(false);
                         }}
-                        className="px-4 py-2.5 hover:bg-[#F3E8F5] cursor-pointer border-b border-card-border/50 text-sm flex justify-between items-center"
+                        className="px-4 py-2.5 hover:bg-[#F3E8F5] cursor-pointer text-sm flex justify-between items-center transition-colors"
                       >
                         <div>
                           <p className="font-bold text-[#2B1D30]">{m.name}</p>
