@@ -169,8 +169,9 @@ Exchange: `appointment.exchange`.
 `roomId` là phòng đã được Appointment Service xác định và lưu trong Appointment,
 không phải giá trị do Queue Service hoặc client tự sinh.
 
-Code hiện tại publish raw `AppointmentCreated` map. Để đạt contract phải chuyển sang
-`AppointmentConfirmed` trong `EventEnvelope`.
+Runtime ghi `AppointmentConfirmed` trong `EventEnvelope` v1 vào transactional
+outbox cùng transaction tạo lịch. Publisher retry có giới hạn và Queue consumer
+xử lý redelivery idempotent.
 
 Canonical fixtures:
 
@@ -179,10 +180,10 @@ Canonical fixtures:
 - [`fixtures/appointment/appointment-confirmed-v1.json`](fixtures/appointment/appointment-confirmed-v1.json)
 - [`fixtures/appointment/appointment-cancelled-v1.json`](fixtures/appointment/appointment-cancelled-v1.json)
 
-Tại mốc 2026-07-31, create đã trả `CONFIRMED` và chặn ca đã qua nhưng code chưa
-có bảng/entity `ClinicRoom`, chưa có `Appointment.roomId` và chưa thực hiện phân
-phòng. Event runtime vẫn là raw `AppointmentCreated`; đây là các gap phải đóng trước
-`INTEGRATION_READY`, không được để Queue consumer coi raw map là contract 1.1.
+Tại mốc 2026-08-02, create trả `CONFIRMED`, chặn ca đã qua, lưu owner/phòng được
+phân và phát event contract qua outbox. MVP dùng một phòng cấu hình tĩnh cho mỗi
+khoa; bảng quản trị `ClinicRoom`, capacity concurrency-safe và `Idempotency-Key`
+của create vẫn là các gap riêng của Appointment Service.
 
 ## 6. Mock cho consumer
 

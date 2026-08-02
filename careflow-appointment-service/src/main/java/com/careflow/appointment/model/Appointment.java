@@ -23,12 +23,24 @@ public class Appointment extends BaseEntity {
     @Column(nullable = false)
     private UUID patientId;
 
+    @Column(nullable = false)
+    private UUID ownerUserId;
+
     @Column(length = 100)
     private String patientName;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
     private Department department;
+
+    @Column(nullable = false)
+    private UUID departmentId;
+
+    @Column(nullable = false, length = 50)
+    private String roomId;
+
+    @Column(nullable = false, length = 150)
+    private String roomDisplayName;
 
     private UUID doctorId;
 

@@ -268,6 +268,17 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 
 ## 8. Definition of Done
 
+### Trạng thái triển khai 2026-08-02
+
+- `INITIAL_CONSULTATION` đã nối thật từ `AppointmentConfirmed` đến Visit Ticket,
+  QR, staff check-in, active queue, call/start/complete và Mobile production.
+- Appointment producer và Queue producer đều dùng outbox; consumer Appointment
+  của Queue có idempotency bằng `processed_events`.
+- MVP hiện cấu hình tĩnh một phòng cho mỗi khoa. Quản trị `ClinicRoom`, xác minh
+  doctor-room assignment, `LAB_EXECUTION` và `RESULT_REVIEW` chưa thuộc slice này.
+- Scheduler cũ vẫn còn cấu trúc `PriorityLevel` nội bộ. Khi triển khai ba làn đầy
+  đủ phải tách rõ `QueueType`, `QueueClass`, `SchedulingLane` theo contract 1.1.
+
 ### `CONTRACT_READY`
 
 - Chốt ba loại queue, hai QueueClass, ba SchedulingLane, state machine, QR, API,

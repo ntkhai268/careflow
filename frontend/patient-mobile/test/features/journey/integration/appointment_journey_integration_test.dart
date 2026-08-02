@@ -484,6 +484,8 @@ Widget integrationApp({
   final scopedPatient = patientOverride ?? patient;
   return ProviderScope(
     overrides: [
+      demoModeProvider.overrideWithValue(true),
+      realQueueEnabledProvider.overrideWithValue(false),
       authProvider.overrideWith(
         (ref) => SeededAuthNotifier(scopedPatient.userId),
       ),

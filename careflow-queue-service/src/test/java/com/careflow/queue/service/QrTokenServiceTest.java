@@ -14,22 +14,24 @@ class QrTokenServiceTest {
 
     @Test
     void signedTokenRoundTripsRequiredClaims() {
-        QrTokenService service = new QrTokenService(SECRET, 30);
+        QrTokenService service = new QrTokenService(SECRET, "Asia/Ho_Chi_Minh");
         QueueEntry entry = new QueueEntry();
+        entry.setId(UUID.randomUUID());
         entry.setAppointmentId(UUID.randomUUID());
         entry.setUserId(UUID.randomUUID());
-        entry.setQueueDate(LocalDate.of(2026, 7, 20));
+        entry.setQueueDate(LocalDate.now().plusDays(1));
 
         QrTokenService.QrClaims claims = service.verify(service.issue(entry));
 
         assertThat(claims.appointmentId()).isEqualTo(entry.getAppointmentId());
+        assertThat(claims.ticketId()).isEqualTo(entry.getId());
         assertThat(claims.userId()).isEqualTo(entry.getUserId());
         assertThat(claims.queueDate()).isEqualTo(entry.getQueueDate());
     }
 
     @Test
     void rejectsTamperedToken() {
-        QrTokenService service = new QrTokenService(SECRET, 30);
+        QrTokenService service = new QrTokenService(SECRET, "Asia/Ho_Chi_Minh");
         assertThatThrownBy(() -> service.verify("not.a.valid-token"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(401);

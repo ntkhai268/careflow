@@ -1,5 +1,5 @@
 package com.careflow.identity.domain;
 
 public enum UserRole {
-    PATIENT, DOCTOR, ADMIN
+    PATIENT, DOCTOR, STAFF, LAB_TECHNICIAN, ADMIN
 }

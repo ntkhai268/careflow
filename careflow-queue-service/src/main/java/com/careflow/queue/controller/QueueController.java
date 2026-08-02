@@ -31,6 +31,28 @@ public class QueueController {
         return ApiResponse.success(queueService.myStatus(userId));
     }
 
+    @GetMapping("/patients/{patientId}/current")
+    public ApiResponse<QueueEntryResponse> patientCurrent(
+            @PathVariable UUID patientId,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        requireAnyRole(role, AppConstants.ROLE_PATIENT, AppConstants.ROLE_DOCTOR,
+                AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success(queueService.patientCurrent(
+                patientId, userId, !AppConstants.ROLE_PATIENT.equals(role)));
+    }
+
+    @GetMapping("/tickets/appointment/{appointmentId}")
+    public ApiResponse<VisitTicketResponse> ticket(
+            @PathVariable UUID appointmentId,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        requireAnyRole(role, AppConstants.ROLE_PATIENT, AppConstants.ROLE_DOCTOR,
+                AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
+        boolean clinicalStaff = !AppConstants.ROLE_PATIENT.equals(role);
+        return ApiResponse.success(queueService.ticket(appointmentId, userId, clinicalStaff));
+    }
+
     @PostMapping("/entries")
     public ResponseEntity<ApiResponse<QueueEntryResponse>> manualIntake(
             @Valid @RequestBody ManualIntakeRequest request,
@@ -56,8 +78,28 @@ public class QueueController {
                                                    @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
                                                    @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                    @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
-        requireRole(role, AppConstants.ROLE_PATIENT);
-        return ApiResponse.success("Check-in thành công", queueService.checkIn(request.qrToken(), userId, correlationId));
+        requireAnyRole(role, AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success("Check-in thành công", queueService.checkIn(request, userId, correlationId));
+    }
+
+    @GetMapping("/rooms/{roomId}/active")
+    public ApiResponse<QueueDashboardResponse> roomDashboard(
+            @PathVariable String roomId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success(queueService.roomDashboard(roomId));
+    }
+
+    @PostMapping("/rooms/{roomId}/call-next")
+    public ResponseEntity<ApiResponse<QueueEntryResponse>> callNextInRoom(
+            @PathVariable String roomId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
+            @RequestHeader(value = AppConstants.HEADER_IDEMPOTENCY_KEY, required = false) String idempotencyKey,
+            @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
+        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
+        Optional<QueueEntryResponse> result = queueService.callNextInRoom(roomId, idempotencyKey, correlationId);
+        return result.map(entry -> ResponseEntity.ok(ApiResponse.success("Đã gọi bệnh nhân tiếp theo", entry)))
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @GetMapping("/departments/{departmentId}/dashboard")

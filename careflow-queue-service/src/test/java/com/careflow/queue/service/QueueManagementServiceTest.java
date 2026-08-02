@@ -5,6 +5,7 @@ import com.careflow.queue.domain.*;
 import com.careflow.queue.dto.QueueConfigRequest;
 import com.careflow.queue.dto.QueueDashboardResponse;
 import com.careflow.queue.dto.RequeueRequest;
+import com.careflow.queue.dto.CheckInRequest;
 import com.careflow.queue.repository.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -88,11 +89,63 @@ class QueueManagementServiceTest {
         when(sequences.saveAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         QueueEntry appointment = service.createAppointmentEntry(
-                config, today, LocalTime.of(8, 0), appointmentId, patientId, userId);
+                config, today, LocalTime.of(8, 0), "08:00-08:30", "NOI_TONG_QUAT", "Phòng 101",
+                appointmentId, patientId, userId);
 
         assertThat(appointment.getScheduledStartAt())
                 .isEqualTo(today.atTime(8, 0).atZone(serviceZone()).toInstant());
         assertThat(appointment.getPriorityLevel()).isEqualTo(PriorityLevel.APPOINTMENT);
+    }
+
+    @Test
+    void staffCheckInActivatesTicketAtTheAssignedRoom() {
+        UUID staffId = UUID.randomUUID();
+        QueueEntry waiting = entry(PriorityLevel.APPOINTMENT, QueueStatus.WAITING, 7);
+        waiting.setAppointmentId(UUID.randomUUID());
+        QrTokenService.QrClaims claims = new QrTokenService.QrClaims(
+                waiting.getId(), waiting.getAppointmentId(), waiting.getUserId(), today);
+        when(qrTokens.verify("signed-qr")).thenReturn(claims);
+        when(entries.findFirstByAppointmentId(waiting.getAppointmentId())).thenReturn(Optional.of(waiting));
+        when(configs.findByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
+
+        service.checkIn(new CheckInRequest("signed-qr", "P101", QueueClass.NORMAL, null),
+                staffId, "trace-1");
+
+        assertThat(waiting.getStatus()).isEqualTo(QueueStatus.CHECKED_IN);
+        assertThat(waiting.getCheckedInByUserId()).isEqualTo(staffId);
+        assertThat(waiting.getEligibleSinceAt()).isNotNull();
+        verify(events).append(eq(waiting), eq(config), eq("PatientCheckedIn"),
+                eq("queue.checked-in"), eq("trace-1"), anyMap());
+    }
+
+    @Test
+    void staffCheckInRejectsQrAtAnotherRoom() {
+        QueueEntry waiting = entry(PriorityLevel.APPOINTMENT, QueueStatus.WAITING, 7);
+        waiting.setAppointmentId(UUID.randomUUID());
+        when(qrTokens.verify("signed-qr")).thenReturn(new QrTokenService.QrClaims(
+                waiting.getId(), waiting.getAppointmentId(), waiting.getUserId(), today));
+        when(entries.findFirstByAppointmentId(waiting.getAppointmentId())).thenReturn(Optional.of(waiting));
+        when(configs.findByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
+
+        assertThatThrownBy(() -> service.checkIn(
+                new CheckInRequest("signed-qr", "ROOM-OTHER", QueueClass.NORMAL, null),
+                UUID.randomUUID(), "trace-1"))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status").isEqualTo(409);
+        verify(entries, never()).saveAndFlush(waiting);
+    }
+
+    @Test
+    void patientCannotReadAnotherAccountsVisitTicket() {
+        QueueEntry ticket = entry(PriorityLevel.APPOINTMENT, QueueStatus.WAITING, 8);
+        ticket.setAppointmentId(UUID.randomUUID());
+        when(entries.findByAppointmentId(ticket.getAppointmentId())).thenReturn(Optional.of(ticket));
+
+        assertThatThrownBy(() -> service.ticket(
+                ticket.getAppointmentId(), UUID.randomUUID(), false))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status").isEqualTo(403);
+        verifyNoInteractions(qrTokens);
     }
 
     @Test
@@ -242,7 +295,7 @@ class QueueManagementServiceTest {
 
         assertThat(called.getStatus()).isEqualTo(QueueStatus.CALLED);
         assertThat(called.getCallAttempts()).isEqualTo(2);
-        verify(events).append(eq(called), eq(config), eq("QUEUE_CALLED"), anyString(),
+        verify(events).append(eq(called), eq(config), eq("PatientCalled"), anyString(),
                 eq("trace-1"), argThat(extra -> Integer.valueOf(2).equals(extra.get("callAttempt"))));
     }
 

@@ -101,7 +101,7 @@ public class QueueManagementService {
         entry.setCheckedInAt(now);
         entry.setEligibleSinceAt(now);
         entries.saveAndFlush(entry);
-        events.append(entry, config, "QUEUE_CHECKED_IN", AppConstants.RK_QUEUE_CHECKED_IN,
+        events.append(entry, config, "PatientCheckedIn", AppConstants.RK_QUEUE_CHECKED_IN,
                 correlationId, Map.of("priorityLevel", entry.getPriorityLevel().name()));
         recordCommand(COMMAND_MANUAL_INTAKE, request.departmentId(), normalizedKey, requestFingerprint, entry);
         return response(entry, config);
@@ -117,10 +117,47 @@ public class QueueManagementService {
     }
 
     @Transactional(readOnly = true)
+    public QueueEntryResponse patientCurrent(UUID patientId, UUID userId, boolean clinicalStaff) {
+        Optional<QueueEntry> current = clinicalStaff
+                ? entries.findFirstByPatientIdAndQueueDateAndStatusInOrderByCreatedAtDesc(
+                        patientId, businessDate(), ACTIVE_PATIENT_STATUSES)
+                : entries.findFirstByPatientIdAndUserIdAndQueueDateAndStatusInOrderByCreatedAtDesc(
+                        patientId, userId, businessDate(), ACTIVE_PATIENT_STATUSES);
+        QueueEntry entry = current
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "QueueEntry", "patientId/userId", patientId));
+        QueueConfig config = configs.findById(entry.getQueueConfigId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "QueueConfig", "id", entry.getQueueConfigId()));
+        return response(entry, config);
+    }
+
+    @Transactional(readOnly = true)
+    public VisitTicketResponse ticket(UUID appointmentId, UUID requesterUserId, boolean clinicalStaff) {
+        QueueEntry entry = entries.findByAppointmentId(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "VisitTicket", "appointmentId", appointmentId));
+        if (!clinicalStaff && !entry.getUserId().equals(requesterUserId)) {
+            throw new BusinessException(403, "Không có quyền xem phiếu khám này");
+        }
+        QueueConfig config = configs.findById(entry.getQueueConfigId())
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "QueueConfig", "id", entry.getQueueConfigId()));
+        return new VisitTicketResponse(
+                entry.getId(), entry.getQueueNumber(), entry.getAppointmentId(),
+                entry.getPatientId(), entry.getQueueNumber(),
+                entry.getDepartmentCode(), config.getDepartmentNameSnapshot(), config.getRoomCode(),
+                entry.getRoomDisplayNameSnapshot() == null
+                        ? config.getRoomCode() : entry.getRoomDisplayNameSnapshot(),
+                entry.getQueueDate(), entry.getTimeSlot(), qrTokens.issue(entry),
+                entry.getStatus() == QueueStatus.WAITING
+                        ? "TICKET_ISSUED" : entry.getStatus().name());
+    }
+
+    @Transactional(readOnly = true)
     public String issueQr(UUID appointmentId, UUID userId) {
         QueueEntry entry = entries.findByAppointmentIdAndUserId(appointmentId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "appointmentId", appointmentId));
-        if (!entry.getQueueDate().equals(businessDate())) throw new BusinessException(422, "Lịch hẹn không thuộc ngày hiện tại");
         if (entry.getStatus() != QueueStatus.WAITING && entry.getStatus() != QueueStatus.CHECKED_IN) {
             throw new BusinessException(409, "Trạng thái lượt khám không cho phép sinh QR");
         }
@@ -128,25 +165,54 @@ public class QueueManagementService {
     }
 
     @Transactional
-    public QueueEntryResponse checkIn(String token, UUID authenticatedUserId, String correlationId) {
-        QrTokenService.QrClaims claims = qrTokens.verify(token);
-        if (!claims.userId().equals(authenticatedUserId)) throw new BusinessException(403, "QR không thuộc tài khoản hiện tại");
+    public QueueEntryResponse checkIn(CheckInRequest request, UUID staffUserId, String correlationId) {
+        QrTokenService.QrClaims claims = qrTokens.verify(request.qrToken());
         if (!claims.queueDate().equals(businessDate())) throw new BusinessException(422, "QR không thuộc ngày hiện tại");
         QueueEntry entry = entries.findFirstByAppointmentId(claims.appointmentId())
                 .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "appointmentId", claims.appointmentId()));
-        if (!entry.getUserId().equals(authenticatedUserId)) throw new BusinessException(403, "Không có quyền check-in lượt này");
+        if (!entry.getId().equals(claims.ticketId()) || !entry.getUserId().equals(claims.userId())) {
+            throw new BusinessException(401, "QR không khớp phiếu khám");
+        }
         QueueConfig config = requireConfig(entry.getDepartmentId());
+        if (!config.getRoomCode().equals(request.roomId())) {
+            throw new BusinessException(409, "QR không thuộc phòng tiếp nhận này");
+        }
         if (entry.getStatus() == QueueStatus.CHECKED_IN) return response(entry, config);
         if (entry.getStatus() == QueueStatus.CANCELLED) throw new BusinessException(409, "Lịch hẹn đã bị hủy");
         if (entry.getStatus() != QueueStatus.WAITING) throw new BusinessException(409, "Trạng thái lượt khám không cho phép check-in");
         Instant now = Instant.now();
         entry.setStatus(QueueStatus.CHECKED_IN);
         entry.setCheckedInAt(now);
+        entry.setCheckedInByUserId(staffUserId);
+        QueueClass queueClass = request.queueClass() == null ? QueueClass.NORMAL : request.queueClass();
+        if (queueClass == QueueClass.PRIORITY) {
+            if (request.priorityReasonCode() == null || request.priorityReasonCode().isBlank()) {
+                throw new BusinessException(400, "Lượt ưu tiên phải có lý do đã được xác minh");
+            }
+            entry.setPriorityLevel(PriorityLevel.PRIORITY);
+            entry.setPriorityReasonCode(request.priorityReasonCode().trim());
+        } else {
+            entry.setPriorityLevel(PriorityLevel.APPOINTMENT);
+            entry.setPriorityReasonCode(null);
+        }
         entry.setEligibleSinceAt(now);
         entries.saveAndFlush(entry);
-        events.append(entry, config, "QUEUE_CHECKED_IN", AppConstants.RK_QUEUE_CHECKED_IN,
-                correlationId, Map.of("priorityLevel", entry.getPriorityLevel().name()));
+        events.append(entry, config, "PatientCheckedIn", AppConstants.RK_QUEUE_CHECKED_IN,
+                correlationId, Map.of(
+                        "queueClass", queueClass.name(),
+                        "checkedInByUserId", staffUserId));
         return response(entry, config);
+    }
+
+    @Transactional(readOnly = true)
+    public QueueDashboardResponse roomDashboard(String roomId) {
+        return dashboard(requireRoomConfig(roomId).getDepartmentId());
+    }
+
+    @Transactional
+    public Optional<QueueEntryResponse> callNextInRoom(
+            String roomId, String idempotencyKey, String correlationId) {
+        return callNext(requireRoomConfig(roomId).getDepartmentId(), idempotencyKey, correlationId);
     }
 
     @Transactional(readOnly = true)
@@ -232,7 +298,7 @@ public class QueueManagementService {
         candidate.setCallAttempts(1);
         entries.saveAndFlush(candidate);
         configs.save(config);
-        events.append(candidate, config, "QUEUE_CALLED", AppConstants.RK_QUEUE_CALLED,
+        events.append(candidate, config, "PatientCalled", AppConstants.RK_QUEUE_CALLED,
                 correlationId, Map.of("callAttempt", candidate.getCallAttempts()));
         recordCommand(COMMAND_CALL_NEXT, departmentId, normalizedKey, requestFingerprint, candidate);
         appendNearTurnEvents(config, date, correlationId);
@@ -250,7 +316,7 @@ public class QueueManagementService {
         entry.setCallAttempts(entry.getCallAttempts() + 1);
         entry.setCalledAt(Instant.now());
         entries.saveAndFlush(entry);
-        events.append(entry, config, "QUEUE_CALLED", AppConstants.RK_QUEUE_CALLED,
+        events.append(entry, config, "PatientCalled", AppConstants.RK_QUEUE_CALLED,
                 correlationId, Map.of("callAttempt", entry.getCallAttempts(), "recalled", true));
         return response(entry, config);
     }
@@ -268,7 +334,7 @@ public class QueueManagementService {
         entry.setMissedAt(Instant.now());
         entry.setMissedCount(entry.getMissedCount() + 1);
         entries.saveAndFlush(entry);
-        events.append(entry, config, "QUEUE_MISSED", AppConstants.RK_QUEUE_MISSED, correlationId,
+        events.append(entry, config, "QueueEntryMissed", AppConstants.RK_QUEUE_MISSED, correlationId,
                 Map.of("missedCount", entry.getMissedCount()));
         return response(entry, config);
     }
@@ -302,7 +368,7 @@ public class QueueManagementService {
         entry.setCallAttempts(0);
         entry.setNearTurnNotifiedAt(null);
         entries.saveAndFlush(entry);
-        events.append(entry, config, "QUEUE_CHECKED_IN", AppConstants.RK_QUEUE_CHECKED_IN, correlationId,
+        events.append(entry, config, "PatientCheckedIn", AppConstants.RK_QUEUE_CHECKED_IN, correlationId,
                 Map.of("requeued", true, "position", back ? "BACK" : "FRONT"));
         return response(entry, config);
     }
@@ -315,7 +381,7 @@ public class QueueManagementService {
         entry.setStatus(QueueStatus.IN_PROGRESS);
         entry.setStartedAt(Instant.now());
         entries.saveAndFlush(entry);
-        events.append(entry, config, "QUEUE_STARTED", "queue.started", correlationId, Map.of());
+        events.append(entry, config, "QueueEntryStarted", AppConstants.RK_QUEUE_STARTED, correlationId, Map.of());
         return response(entry, config);
     }
 
@@ -330,7 +396,7 @@ public class QueueManagementService {
         entry.setCompletedAt(Instant.now());
         entries.saveAndFlush(entry);
         updateAverage(config, entry.getQueueDate());
-        events.append(entry, config, "QUEUE_COMPLETED", AppConstants.RK_QUEUE_COMPLETED, correlationId,
+        events.append(entry, config, "QueueEntryCompleted", AppConstants.RK_QUEUE_COMPLETED, correlationId,
                 Map.of("consultationMinutes", consultationMinutes(entry)));
         return response(entry, config);
     }
@@ -364,10 +430,14 @@ public class QueueManagementService {
     }
 
     public QueueEntry createAppointmentEntry(QueueConfig config, LocalDate date, LocalTime scheduledStart,
+                                             String timeSlot, String departmentCode, String roomDisplayName,
                                              UUID appointmentId, UUID patientId, UUID userId) {
         QueueEntry entry = newEntry(
                 config, date, patientId, userId, appointmentId, PriorityLevel.APPOINTMENT, QueueStatus.WAITING);
         entry.setScheduledStartAt(ZonedDateTime.of(date, scheduledStart, businessZone).toInstant());
+        entry.setTimeSlot(timeSlot);
+        entry.setDepartmentCode(departmentCode);
+        entry.setRoomDisplayNameSnapshot(roomDisplayName);
         return entry;
     }
 
@@ -379,6 +449,12 @@ public class QueueManagementService {
     private QueueConfig requireConfig(UUID departmentId) {
         return configs.findByDepartmentIdAndActiveTrue(departmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Active QueueConfig", "departmentId", departmentId));
+    }
+
+    private QueueConfig requireRoomConfig(String roomId) {
+        return configs.findByRoomCodeAndActiveTrue(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Active QueueConfig", "roomId", roomId));
     }
 
     private QueueEntry requireEntryForUpdate(UUID id) {
@@ -460,7 +536,7 @@ public class QueueManagementService {
             if (entry.getNearTurnNotifiedAt() != null) continue;
             int position = index + 1;
             int wait = projectedWaitMinutes(now, scheduled.projectedStartAt());
-            events.append(entry, config, "QUEUE_NEAR_TURN", AppConstants.RK_QUEUE_NEAR_TURN, correlationId,
+            events.append(entry, config, "QueueNearTurn", AppConstants.RK_QUEUE_NEAR_TURN, correlationId,
                     Map.of("effectivePosition", position, "estimatedWaitMinutes", wait));
             entry.setNearTurnNotifiedAt(Instant.now());
         }

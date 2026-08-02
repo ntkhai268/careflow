@@ -28,13 +28,13 @@ public class QueueEventService {
         UUID eventId = UUID.randomUUID();
         Instant now = Instant.now();
         Map<String, Object> body = new LinkedHashMap<>();
-        body.put("queueEntryId", entry.getId());
+        body.put("entryId", entry.getId());
         body.put("appointmentId", entry.getAppointmentId());
         body.put("patientId", entry.getPatientId());
         body.put("recipientUserId", entry.getUserId());
         body.put("departmentId", entry.getDepartmentId());
         body.put("queueNumber", entry.getQueueNumber());
-        body.put("roomCode", config.getRoomCode());
+        body.put("roomId", config.getRoomCode());
         body.putAll(extra);
         EventEnvelope envelope = new EventEnvelope(eventId, eventType, 1, entry.getId(), entry.getVersion(),
                 now, "queue-service", correlationId == null ? eventId.toString() : correlationId,

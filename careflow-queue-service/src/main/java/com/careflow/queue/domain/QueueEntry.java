@@ -18,6 +18,7 @@ public class QueueEntry {
     @Id private UUID id;
     @Column(name = "queue_config_id", nullable = false) private UUID queueConfigId;
     @Column(name = "department_id", nullable = false) private UUID departmentId;
+    @Column(name = "department_code", length = 50) private String departmentCode;
     @Column(name = "appointment_id", unique = true) private UUID appointmentId;
     @Column(name = "patient_id", nullable = false) private UUID patientId;
     @Column(name = "user_id", nullable = false) private UUID userId;
@@ -27,7 +28,11 @@ public class QueueEntry {
     @Enumerated(EnumType.STRING) @Column(name = "priority_level", nullable = false) private PriorityLevel priorityLevel;
     @Enumerated(EnumType.STRING) @Column(nullable = false) private QueueStatus status = QueueStatus.WAITING;
     @Column(name = "scheduled_start_at") private Instant scheduledStartAt;
+    @Column(name = "time_slot", length = 20) private String timeSlot;
+    @Column(name = "room_display_name_snapshot", length = 150) private String roomDisplayNameSnapshot;
     @Column(name = "checked_in_at") private Instant checkedInAt;
+    @Column(name = "checked_in_by_user_id") private UUID checkedInByUserId;
+    @Column(name = "priority_reason_code", length = 50) private String priorityReasonCode;
     @Column(name = "eligible_since_at") private Instant eligibleSinceAt;
     @Column(name = "called_at") private Instant calledAt;
     @Column(name = "call_attempts", nullable = false, columnDefinition = "smallint") private int callAttempts;

@@ -50,6 +50,7 @@ void main() {
 Widget queueApp(AsyncValue<PatientJourney?> journey, Widget child) =>
     ProviderScope(
       overrides: [
+        demoModeProvider.overrideWithValue(true),
         journeyForAppointmentProvider('apt-1').overrideWithValue(journey),
       ],
       child: MaterialApp(home: child),

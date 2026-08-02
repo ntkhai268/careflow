@@ -45,8 +45,8 @@ public class AppointmentEventConsumer {
         validateEnvelope(envelope);
         ProcessedEventId eventId = new ProcessedEventId(envelope.eventId(), CONSUMER);
         if (processedEvents.existsById(eventId)) return;
-        if ("APPOINTMENT_CREATED".equals(envelope.eventType())) create(envelope);
-        else if ("APPOINTMENT_CANCELLED".equals(envelope.eventType())) cancel(envelope);
+        if ("AppointmentConfirmed".equals(envelope.eventType())) create(envelope);
+        else if ("AppointmentCancelled".equals(envelope.eventType())) cancel(envelope);
         else throw new BusinessException(422, "Event type không được hỗ trợ: " + envelope.eventType());
         ProcessedEvent processed = new ProcessedEvent();
         processed.setId(eventId);
@@ -61,21 +61,26 @@ public class AppointmentEventConsumer {
         UUID patientId = requiredUuid(payload, "patientId");
         UUID userId = requiredUuid(payload, "userId");
         UUID departmentId = requiredUuid(payload, "departmentId");
+        String roomId = requiredText(payload, "roomId");
+        String roomDisplayName = requiredText(payload, "roomDisplayName");
         LocalDate date;
         try { date = LocalDate.parse(requiredText(payload, "appointmentDate")); }
         catch (RuntimeException exception) { throw new BusinessException(422, "appointmentDate không hợp lệ"); }
         LocalTime scheduledStart = parseTimeSlotStart(requiredText(payload, "timeSlot"));
-        if (payload.hasNonNull("priorityLevel") && !"APPOINTMENT".equals(payload.get("priorityLevel").asText())) {
-            throw new BusinessException(422, "AppointmentCreated phải có priorityLevel APPOINTMENT");
-        }
         QueueConfig config = queueService.requireLockedConfig(departmentId);
+        if (!roomId.equals(config.getRoomCode())) {
+            throw new BusinessException(422, "roomId không khớp cấu hình Queue của khoa");
+        }
         if (entries.findByAppointmentId(appointmentId).isPresent()) return;
         QueueEntry entry = queueService.createAppointmentEntry(
-                config, date, scheduledStart, appointmentId, patientId, userId);
+                config, date, scheduledStart, requiredText(payload, "timeSlot"),
+                requiredText(payload, "department"), roomDisplayName,
+                appointmentId, patientId, userId);
         entries.saveAndFlush(entry);
-        events.append(entry, config, "QUEUE_NUMBER_ASSIGNED", AppConstants.RK_QUEUE_NUMBER_ASSIGNED,
+        events.append(entry, config, "VisitTicketIssued", AppConstants.RK_QUEUE_NUMBER_ASSIGNED,
                 envelope.correlationId(), Map.of(
                         "appointmentDate", date.toString(),
+                        "roomId", roomId,
                         "scheduledStartAt", entry.getScheduledStartAt().toString()));
     }
 

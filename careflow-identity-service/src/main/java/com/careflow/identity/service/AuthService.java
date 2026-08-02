@@ -116,6 +116,13 @@ public class AuthService {
         return UserResponse.from(users.save(user));
     }
 
+    @Transactional
+    public UserResponse updateRole(UUID userId, com.careflow.identity.domain.UserRole role) {
+        User user = requireUser(userId);
+        user.setRole(role);
+        return UserResponse.from(users.save(user));
+    }
+
     private User requireUser(UUID id) {
         return users.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
     }

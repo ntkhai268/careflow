@@ -42,7 +42,7 @@ class AppointmentEventConsumerTest {
     }
 
     @Test
-    void appointmentCreatedRequiresAndPropagatesTimeSlotStart() {
+    void appointmentConfirmedRequiresAndPropagatesTicketData() {
         UUID appointmentId = UUID.randomUUID();
         UUID patientId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
@@ -50,20 +50,23 @@ class AppointmentEventConsumerTest {
         LocalDate date = LocalDate.of(2026, 7, 28);
         ObjectNode payload = payload(appointmentId, patientId, userId, departmentId, date, "08:00-08:30");
         QueueConfig config = new QueueConfig();
+        config.setRoomCode("ROOM-21");
         QueueEntry entry = new QueueEntry();
         entry.setId(UUID.randomUUID());
         entry.setScheduledStartAt(Instant.parse("2026-07-28T01:00:00Z"));
         when(queueService.requireLockedConfig(departmentId)).thenReturn(config);
         when(entries.findByAppointmentId(appointmentId)).thenReturn(Optional.empty());
         when(queueService.createAppointmentEntry(
-                config, date, LocalTime.of(8, 0), appointmentId, patientId, userId)).thenReturn(entry);
+                config, date, LocalTime.of(8, 0), "08:00-08:30", "THAN_KINH", "Phòng 21",
+                appointmentId, patientId, userId)).thenReturn(entry);
 
         consumer.consume(envelope(appointmentId, payload));
 
         verify(queueService).createAppointmentEntry(
-                config, date, LocalTime.of(8, 0), appointmentId, patientId, userId);
+                config, date, LocalTime.of(8, 0), "08:00-08:30", "THAN_KINH", "Phòng 21",
+                appointmentId, patientId, userId);
         verify(entries).saveAndFlush(entry);
-        verify(events).append(eq(entry), eq(config), eq("QUEUE_NUMBER_ASSIGNED"), anyString(),
+        verify(events).append(eq(entry), eq(config), eq("VisitTicketIssued"), anyString(),
                 eq("trace-1"), argThat(extra ->
                         "2026-07-28T01:00:00Z".equals(extra.get("scheduledStartAt"))));
     }
@@ -88,15 +91,17 @@ class AppointmentEventConsumerTest {
         payload.put("patientId", patientId.toString());
         payload.put("userId", userId.toString());
         payload.put("departmentId", departmentId.toString());
+        payload.put("department", "THAN_KINH");
+        payload.put("roomId", "ROOM-21");
+        payload.put("roomDisplayName", "Phòng 21");
         payload.put("appointmentDate", date.toString());
         payload.put("timeSlot", timeSlot);
-        payload.put("priorityLevel", "APPOINTMENT");
         return payload;
     }
 
     private EventEnvelope envelope(UUID aggregateId, ObjectNode payload) {
         return new EventEnvelope(
-                UUID.randomUUID(), "APPOINTMENT_CREATED", 1, aggregateId, 1,
+                UUID.randomUUID(), "AppointmentConfirmed", 1, aggregateId, 1,
                 Instant.now(), "appointment-service", "trace-1", payload);
     }
 }

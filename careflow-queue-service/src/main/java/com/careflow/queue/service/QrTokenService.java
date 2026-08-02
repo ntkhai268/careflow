@@ -14,7 +14,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.UUID;
 
@@ -22,22 +22,24 @@ import java.util.UUID;
 public class QrTokenService {
     private static final String PURPOSE = "QUEUE_CHECK_IN";
     private final SecretKey key;
-    private final long expirationMinutes;
+    private final ZoneId businessZone;
 
     public QrTokenService(@Value("${queue.qr-secret:${jwt.secret}}") String secret,
-                          @Value("${queue.qr-expiration-minutes:30}") long expirationMinutes) {
+                          @Value("${queue.business-zone:Asia/Ho_Chi_Minh}") String businessZone) {
         if (secret.getBytes(StandardCharsets.UTF_8).length < 32) throw new IllegalArgumentException("QR secret too short");
         this.key = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.expirationMinutes = expirationMinutes;
+        this.businessZone = ZoneId.of(businessZone);
     }
 
     public String issue(QueueEntry entry) {
         Instant now = Instant.now();
+        Instant expiresAt = entry.getQueueDate().plusDays(1).atStartOfDay(businessZone).toInstant();
         return Jwts.builder().subject(entry.getAppointmentId().toString())
+                .claim("ticketId", entry.getId().toString())
                 .claim("userId", entry.getUserId().toString())
                 .claim("queueDate", entry.getQueueDate().toString())
                 .claim("purpose", PURPOSE).issuedAt(Date.from(now))
-                .expiration(Date.from(now.plus(expirationMinutes, ChronoUnit.MINUTES)))
+                .expiration(Date.from(expiresAt))
                 .signWith(key).compact();
     }
 
@@ -45,7 +47,8 @@ public class QrTokenService {
         try {
             Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
             if (!PURPOSE.equals(claims.get("purpose", String.class))) throw new JwtException("Wrong purpose");
-            return new QrClaims(UUID.fromString(claims.getSubject()),
+            return new QrClaims(UUID.fromString(claims.get("ticketId", String.class)),
+                    UUID.fromString(claims.getSubject()),
                     UUID.fromString(claims.get("userId", String.class)),
                     LocalDate.parse(claims.get("queueDate", String.class)));
         } catch (ExpiredJwtException exception) {
@@ -55,5 +58,5 @@ public class QrTokenService {
         }
     }
 
-    public record QrClaims(UUID appointmentId, UUID userId, LocalDate queueDate) {}
+    public record QrClaims(UUID ticketId, UUID appointmentId, UUID userId, LocalDate queueDate) {}
 }

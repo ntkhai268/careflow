@@ -16,6 +16,10 @@ public interface QueueEntryRepository extends JpaRepository<QueueEntry, UUID> {
     Optional<QueueEntry> findByAppointmentId(UUID appointmentId);
     Optional<QueueEntry> findByAppointmentIdAndUserId(UUID appointmentId, UUID userId);
     List<QueueEntry> findByUserIdAndQueueDateOrderByCreatedAtDesc(UUID userId, LocalDate date);
+    Optional<QueueEntry> findFirstByPatientIdAndUserIdAndQueueDateAndStatusInOrderByCreatedAtDesc(
+            UUID patientId, UUID userId, LocalDate queueDate, Collection<QueueStatus> statuses);
+    Optional<QueueEntry> findFirstByPatientIdAndQueueDateAndStatusInOrderByCreatedAtDesc(
+            UUID patientId, LocalDate queueDate, Collection<QueueStatus> statuses);
     boolean existsByQueueConfigIdAndQueueDateAndStatusIn(
             UUID configId, LocalDate date, Collection<QueueStatus> statuses);
     boolean existsByPatientIdAndDepartmentIdAndQueueDateAndStatusIn(
