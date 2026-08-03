@@ -15,6 +15,11 @@ import java.util.UUID;
 public interface QueueEntryRepository extends JpaRepository<QueueEntry, UUID> {
     Optional<QueueEntry> findByAppointmentId(UUID appointmentId);
     Optional<QueueEntry> findByPrescriptionId(UUID prescriptionId);
+    Optional<QueueEntry> findByConsultationIdAndQueueTypeAndConsultationPhase(
+            UUID consultationId, QueueType queueType, ConsultationPhase consultationPhase);
+    List<QueueEntry> findByPatientIdAndQueueTypeAndConsultationPhaseAndStatusInOrderByCreatedAtDesc(
+            UUID patientId, QueueType queueType, ConsultationPhase consultationPhase,
+            Collection<QueueStatus> statuses);
     Optional<QueueEntry> findByLabOrderIdAndServicePointId(UUID labOrderId, String servicePointId);
     Optional<QueueEntry> findByAppointmentIdAndUserId(UUID appointmentId, UUID userId);
     List<QueueEntry> findByUserIdAndQueueDateOrderByCreatedAtDesc(UUID userId, LocalDate date);

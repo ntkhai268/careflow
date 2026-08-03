@@ -145,6 +145,22 @@ Exchange: `lab.exchange`.
 `AllRequiredResultsAvailable` chỉ publish một lần khi tất cả item `required=true` có kết quả đã
 finalize.
 
+`AllRequiredResultsAvailable.payload`:
+
+```json
+{
+  "orderId": "62210a5c-3081-48a8-82d8-e783864aa2ec",
+  "consultationId": "35df361e-f4b3-4113-ad0d-0ed853fe61fc",
+  "patientId": "9c613831-90c2-48f6-81c5-0105c20502a1",
+  "sourceQueueEntryId": "6fb18911-a1e8-45d9-a53e-f5b207b8c588"
+}
+```
+
+`sourceQueueEntryId` là lượt `CONSULTATION + INITIAL` đã tạo consultation. Lab
+Service lấy giá trị này từ consultation context đã xác minh, không nhận tùy ý từ
+Mobile. Queue dùng field này để đưa lượt đọc kết quả về đúng phòng; trong giai
+đoạn chuyển đổi, Queue có thể đối chiếu projection theo `consultationId`.
+
 ## 6. Authorization, audit và chỉnh kết quả
 
 - Patient chỉ xem kết quả đã phát hành của mình.

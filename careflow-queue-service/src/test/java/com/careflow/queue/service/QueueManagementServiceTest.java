@@ -417,6 +417,67 @@ class QueueManagementServiceTest {
                 eq("queue.completed"), eq("trace-1"), anyMap());
     }
 
+    @Test
+    void allRequiredResultsCreatesQueuedResultReviewFromInitialConsultation() {
+        UUID consultationId = UUID.randomUUID();
+        UUID patientId = UUID.randomUUID();
+        Instant readyAt = Instant.parse("2026-08-18T05:00:00Z");
+        QueueEntry initial = entry(PriorityLevel.APPOINTMENT, QueueStatus.COMPLETED, 47);
+        initial.setPatientId(patientId);
+        initial.setQueueNumber("NOI-047");
+        initial.setRoomDisplayNameSnapshot("Phòng 101");
+        when(entries.findByConsultationIdAndQueueTypeAndConsultationPhase(
+                consultationId, QueueType.CONSULTATION, ConsultationPhase.RESULT_REVIEW))
+                .thenReturn(Optional.empty());
+        when(entries.findById(initial.getId())).thenReturn(Optional.of(initial));
+
+        QueueEntry review = service.createResultReviewEntry(
+                consultationId, patientId, initial.getId(), readyAt);
+
+        assertThat(review.getQueueType()).isEqualTo(QueueType.CONSULTATION);
+        assertThat(review.getConsultationPhase()).isEqualTo(ConsultationPhase.RESULT_REVIEW);
+        assertThat(review.getQueueClass()).isNull();
+        assertThat(review.getStatus()).isEqualTo(QueueStatus.QUEUED);
+        assertThat(review.getEligibleSinceAt()).isEqualTo(readyAt);
+        assertThat(review.getQueueNumber()).isEqualTo("NOI-047-R");
+        assertThat(review.getQueueConfigId()).isEqualTo(initial.getQueueConfigId());
+        assertThat(review.getUserId()).isEqualTo(initial.getUserId());
+        assertThat(initial.getConsultationId()).isEqualTo(consultationId);
+    }
+
+    @Test
+    void resultReviewCreationIsIdempotentByConsultation() {
+        UUID consultationId = UUID.randomUUID();
+        QueueEntry existing = entry(PriorityLevel.APPOINTMENT, QueueStatus.QUEUED, 47);
+        existing.setConsultationPhase(ConsultationPhase.RESULT_REVIEW);
+        existing.setQueueClass(null);
+        when(entries.findByConsultationIdAndQueueTypeAndConsultationPhase(
+                consultationId, QueueType.CONSULTATION, ConsultationPhase.RESULT_REVIEW))
+                .thenReturn(Optional.of(existing));
+
+        assertThat(service.createResultReviewEntry(
+                consultationId, existing.getPatientId(), null, Instant.now())).isSameAs(existing);
+        verify(entries, never()).findByPatientIdAndQueueTypeAndConsultationPhaseAndStatusInOrderByCreatedAtDesc(
+                any(), any(), any(), anyCollection());
+    }
+
+    @Test
+    void missedResultReviewAlwaysRequeuesAtBackOfItsLane() {
+        config.setMissedPolicy(MissedPolicy.REQUIRE_MANUAL);
+        QueueEntry review = entry(PriorityLevel.APPOINTMENT, QueueStatus.MISSED, 47);
+        review.setConsultationPhase(ConsultationPhase.RESULT_REVIEW);
+        review.setQueueClass(null);
+        review.setEligibleSinceAt(Instant.EPOCH);
+        when(entries.findById(review.getId())).thenReturn(Optional.of(review));
+        when(entries.findFirstById(review.getId())).thenReturn(Optional.of(review));
+        when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
+
+        service.requeue(review.getId(), new RequeueRequest(RequeueRequest.Position.FRONT), "trace-1");
+
+        assertThat(review.getStatus()).isEqualTo(QueueStatus.QUEUED);
+        assertThat(review.getEligibleSinceAt()).isAfter(Instant.EPOCH);
+    }
+
     private QueueEntry entry(PriorityLevel priority, QueueStatus status, int sequence) {
         QueueEntry entry = new QueueEntry();
         entry.setId(UUID.randomUUID());

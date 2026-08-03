@@ -452,7 +452,9 @@ public class QueueManagementService {
                 ? QueueStatus.CHECKED_IN : QueueStatus.QUEUED;
         if (entry.getStatus() != QueueStatus.MISSED) throw invalidTransition(entry, requeuedStatus);
         boolean back;
-        if (config == null) {
+        if (entry.getConsultationPhase() == ConsultationPhase.RESULT_REVIEW) {
+            back = true;
+        } else if (config == null) {
             back = true;
         } else if (config.getMissedPolicy() == MissedPolicy.REQUIRE_MANUAL) {
             if (request == null || request.position() == null) {
@@ -592,6 +594,73 @@ public class QueueManagementService {
         entry.setStatus(QueueStatus.QUEUED);
         entry.setEligibleSinceAt(queuedAt);
         return entry;
+    }
+
+    public QueueEntry createResultReviewEntry(UUID consultationId, UUID patientId,
+                                              UUID sourceQueueEntryId, Instant queuedAt) {
+        Optional<QueueEntry> existing = entries.findByConsultationIdAndQueueTypeAndConsultationPhase(
+                consultationId, QueueType.CONSULTATION, ConsultationPhase.RESULT_REVIEW);
+        if (existing.isPresent()) return existing.get();
+
+        QueueEntry source = resolveInitialConsultationEntry(consultationId, patientId, sourceQueueEntryId);
+        if (!source.getPatientId().equals(patientId)) {
+            throw new BusinessException(422, "patientId không khớp lượt khám ban đầu");
+        }
+        if (source.getConsultationId() != null && !source.getConsultationId().equals(consultationId)) {
+            throw new BusinessException(422, "consultationId không khớp lượt khám ban đầu");
+        }
+        if (source.getConsultationId() == null) {
+            source.setConsultationId(consultationId);
+            entries.save(source);
+        }
+
+        QueueEntry review = new QueueEntry();
+        review.setQueueConfigId(source.getQueueConfigId());
+        review.setDepartmentId(source.getDepartmentId());
+        review.setDepartmentCode(source.getDepartmentCode());
+        review.setConsultationId(consultationId);
+        review.setPatientId(patientId);
+        review.setUserId(source.getUserId());
+        review.setQueueType(QueueType.CONSULTATION);
+        review.setConsultationPhase(ConsultationPhase.RESULT_REVIEW);
+        review.setQueueClass(null);
+        review.setQueueDate(LocalDate.ofInstant(queuedAt, businessZone));
+        review.setSequenceNumber(source.getSequenceNumber());
+        review.setQueueNumber(source.getQueueNumber() + "-R");
+        review.setPriorityLevel(PriorityLevel.APPOINTMENT);
+        review.setStatus(QueueStatus.QUEUED);
+        review.setEligibleSinceAt(queuedAt);
+        review.setRoomDisplayNameSnapshot(source.getRoomDisplayNameSnapshot());
+        return review;
+    }
+
+    private QueueEntry resolveInitialConsultationEntry(UUID consultationId, UUID patientId,
+                                                       UUID sourceQueueEntryId) {
+        QueueEntry source = null;
+        if (sourceQueueEntryId != null) {
+            source = entries.findById(sourceQueueEntryId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Initial QueueEntry", "id", sourceQueueEntryId));
+        }
+        if (source == null) {
+            source = entries.findByConsultationIdAndQueueTypeAndConsultationPhase(
+                    consultationId, QueueType.CONSULTATION, ConsultationPhase.INITIAL).orElse(null);
+        }
+        if (source == null) {
+            source = entries.findByPatientIdAndQueueTypeAndConsultationPhaseAndStatusInOrderByCreatedAtDesc(
+                            patientId, QueueType.CONSULTATION, ConsultationPhase.INITIAL,
+                            EnumSet.of(QueueStatus.IN_PROGRESS, QueueStatus.COMPLETED))
+                    .stream().findFirst().orElse(null);
+        }
+        if (source == null) {
+            throw new BusinessException(422,
+                    "Không tìm thấy lượt khám ban đầu để tạo hàng chờ đọc kết quả");
+        }
+        if (source.getQueueType() != QueueType.CONSULTATION
+                || source.getConsultationPhase() != ConsultationPhase.INITIAL) {
+            throw new BusinessException(422, "sourceQueueEntryId không phải lượt khám ban đầu");
+        }
+        return source;
     }
 
     @Transactional

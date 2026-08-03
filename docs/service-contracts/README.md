@@ -210,7 +210,7 @@ Hai cột dưới đây cố ý tách biệt:
 | Identity & eKYC | Có auth, refresh token và eKYC mock trên `develop` | Chưa đánh giá lại đầy đủ; thiếu role mục tiêu và contract tích hợp |
 | Patient | Có profile và patient-uploaded health record trên `develop` | Chưa đánh giá lại đầy đủ; cần ownership/auth test và event chuẩn |
 | Appointment | Có CRUD/query; create tự trả `CONFIRMED`, lưu owner/phòng và phát `AppointmentConfirmed` v1 qua outbox | Chưa có bảng quản trị `ClinicRoom`, capacity concurrency-safe/idempotency/follow-up |
-| Queue Management | Initial consultation vertical slice có ticket/QR, staff check-in đúng phòng, active queue, call/start/complete, outbox và consumer idempotent | Chưa có Lab, result-review, pharmacy dispensing và authorization theo doctor-room assignment |
+| Queue Management | Initial consultation chạy thật; domain ba loại queue, Round Robin ba làn, result-review tự active và pharmacy dispensing FIFO đã có consumer idempotent/API | Chưa có producer thật từ Lab/Prescription, `LAB_EXECUTION`, quản trị service point và authorization theo assignment |
 | Consultation | Prototype lớn tại `aaf0716`: domain, API, state, RabbitMQ và Doctor Web; module build thành công | `BELOW_CONTRACT`: thiếu queue assignment/ownership, transition guard, Lab flow, envelope/outbox và test |
 | Prescription | Prototype lớn tại `e1381f5`: domain thuốc/toa, API, RabbitMQ và Doctor Web; module build thành công | `BELOW_CONTRACT`: thiếu ownership, cancel/dispense/amendment, event chuẩn, migration và test |
 | Laboratory Order | Chỉ có module skeleton trên mọi remote ref | `BELOW_CONTRACT`: chưa có domain/API/state/event/test |

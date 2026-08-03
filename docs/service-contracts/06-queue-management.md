@@ -242,7 +242,7 @@ Consume:
 | `AppointmentConfirmed` | Tạo ticket `TICKET_ISSUED` idempotent |
 | `AppointmentCancelled/NoShow` | Vô hiệu ticket chưa phục vụ |
 | `LabOrderReadyForExecution` | Tạo `LAB_EXECUTION` ở trạng thái `QUEUED` |
-| `AllRequiredResultsAvailable` | Tạo ngay entry `CONSULTATION + RESULT_REVIEW` ở trạng thái `QUEUED`, dùng `occurredAt` làm `queuedAt` và thông báo bệnh nhân quay lại |
+| `AllRequiredResultsAvailable` | Dùng `sourceQueueEntryId`/projection consultation để giữ đúng phòng, tạo ngay entry `CONSULTATION + RESULT_REVIEW` ở trạng thái `QUEUED`, dùng `occurredAt` làm `queuedAt` và thông báo bệnh nhân quay lại |
 | `PrescriptionIssued` | Tạo `PHARMACY_DISPENSING` ở trạng thái `QUEUED` tại `dispensingServicePointId` trong event |
 | `PrescriptionCancelled` | Hủy lượt phát thuốc chưa hoàn tất |
 | `PrescriptionDispensed` | Hoàn tất lượt phát thuốc tương ứng idempotent |
@@ -328,9 +328,12 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 - Queue đã consume idempotent các event Prescription, tự tạo
   `PHARMACY_DISPENSING`, cung cấp dashboard/call-next FIFO theo `servicePointId`,
   xử lý cancel và chỉ hoàn tất khi nhận `PrescriptionDispensed`.
-- Producer thật của Prescription Service, `LAB_EXECUTION`, luồng tạo
-  `CONSULTATION + RESULT_REVIEW`, quản trị `ClinicRoom` và xác minh assignment
-  theo Hospital Directory vẫn là các slice tiếp theo.
+- Queue đã consume idempotent `AllRequiredResultsAvailable`, tự tạo
+  `CONSULTATION + RESULT_REVIEW` active theo `occurredAt`, giữ đúng phòng khám và
+  chống trùng theo `consultationId`; lượt missed luôn xếp lại cuối làn.
+- Producer thật của Prescription/Lab Service, `LAB_EXECUTION`, quản trị
+  `ClinicRoom` và xác minh assignment theo Hospital Directory vẫn là các slice
+  tiếp theo.
 
 ### `CONTRACT_READY`
 
