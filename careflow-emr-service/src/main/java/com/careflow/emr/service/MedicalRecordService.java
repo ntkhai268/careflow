@@ -4,6 +4,7 @@ import com.careflow.common.dto.ApiResponse;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.common.exception.ResourceNotFoundException;
 import com.careflow.emr.client.ConsultationClient;
+import com.careflow.emr.client.LabClient;
 import com.careflow.emr.client.PatientClient;
 import com.careflow.emr.client.PrescriptionClient;
 import com.careflow.emr.dto.request.CreateMedicalRecordRequest;
@@ -31,6 +32,7 @@ public class MedicalRecordService {
     private final PatientClient patientClient;
     private final ConsultationClient consultationClient;
     private final PrescriptionClient prescriptionClient;
+    private final LabClient labClient;
 
     @Transactional
     public MedicalRecordResponse createMedicalRecord(CreateMedicalRecordRequest request) {
@@ -77,6 +79,7 @@ public class MedicalRecordService {
 
     @SuppressWarnings("unchecked")
     public PatientSummaryResponse getPatientSummary(UUID patientId) {
+        log.info("[AUDIT LOG] Tra cứu Hồ sơ Bệnh án Điện tử EMR 360° cho Bệnh nhân ID: {}", patientId);
         // 1. Lấy thông tin Master Medical Record từ EMR DB (nếu chưa có thì tự tạo mới)
         MedicalRecord record = medicalRecordRepository.findByPatientId(patientId)
                 .orElseGet(() -> {
@@ -158,12 +161,24 @@ public class MedicalRecordService {
             log.warn("Failed to fetch prescriptions for patient ID {}: {}", patientId, e.getMessage());
         }
 
+        // 5. Gọi Feign Client tới Lab Service
+        List<Object> labOrders = new ArrayList<>();
+        try {
+            ApiResponse<List<Map<String, Object>>> lRes = labClient.getLabOrdersByPatient(patientId);
+            if (lRes != null && lRes.getData() != null) {
+                labOrders.addAll(lRes.getData());
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch lab orders for patient ID {}: {}", patientId, e.getMessage());
+        }
+
         return PatientSummaryResponse.builder()
                 .patient(patientInfo)
                 .medicalRecord(recordInfo)
                 .allergies(allergyList)
                 .recentConsultations(consultations)
                 .recentPrescriptions(prescriptions)
+                .recentLabOrders(labOrders)
                 .build();
     }
 

@@ -37,6 +37,7 @@ export interface EmrSummaryResponse {
   allergies: PatientAllergyResponse[];
   recentConsultations: any[];
   recentPrescriptions: any[];
+  recentLabOrders: any[];
 }
 
 export const patientApi = {

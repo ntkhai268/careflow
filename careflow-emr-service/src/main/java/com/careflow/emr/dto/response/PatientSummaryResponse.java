@@ -19,6 +19,7 @@ public class PatientSummaryResponse {
     private List<AllergyInfo> allergies;
     private List<Object> recentConsultations;
     private List<Object> recentPrescriptions;
+    private List<Object> recentLabOrders;
 
     @Data
     @Builder
