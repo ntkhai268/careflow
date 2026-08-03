@@ -26,6 +26,7 @@ class NotificationServiceTest {
     private PatientRecipientRepository recipients;
     private SimpMessagingTemplate messaging;
     private NotificationEventService events;
+    private PushDeliveryService pushDeliveries;
     private NotificationService service;
     private ObjectMapper mapper;
 
@@ -35,7 +36,8 @@ class NotificationServiceTest {
         recipients = mock(PatientRecipientRepository.class);
         messaging = mock(SimpMessagingTemplate.class);
         events = mock(NotificationEventService.class);
-        service = new NotificationService(notifications, recipients, messaging, events);
+        pushDeliveries = mock(PushDeliveryService.class);
+        service = new NotificationService(notifications, recipients, messaging, events, pushDeliveries);
         mapper = new ObjectMapper();
         when(notifications.save(any(Notification.class))).thenAnswer(invocation -> invocation.getArgument(0));
     }
@@ -58,6 +60,7 @@ class NotificationServiceTest {
         assertThat(result.orElseThrow().action().resourceId()).isEqualTo(entryId.toString());
         verify(messaging).convertAndSendToUser(userId.toString(), "/queue/notifications", result.orElseThrow());
         verify(events).delivered(any(Notification.class));
+        verify(pushDeliveries).enqueue(any(Notification.class));
     }
 
     @Test

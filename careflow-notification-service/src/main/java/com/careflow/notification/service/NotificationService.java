@@ -27,13 +27,16 @@ public class NotificationService {
     private final PatientRecipientRepository recipients;
     private final SimpMessagingTemplate messaging;
     private final NotificationEventService events;
+    private final PushDeliveryService pushDeliveries;
 
     public NotificationService(NotificationRepository notifications, PatientRecipientRepository recipients,
-                               SimpMessagingTemplate messaging, NotificationEventService events) {
+                               SimpMessagingTemplate messaging, NotificationEventService events,
+                               PushDeliveryService pushDeliveries) {
         this.notifications = notifications;
         this.recipients = recipients;
         this.messaging = messaging;
         this.events = events;
+        this.pushDeliveries = pushDeliveries;
     }
 
     @Transactional
@@ -76,6 +79,7 @@ public class NotificationService {
         notification.setCreatedAt(envelope.occurredAt() == null ? Instant.now() : envelope.occurredAt());
         Notification saved = notifications.save(notification);
         events.delivered(saved);
+        pushDeliveries.enqueue(saved);
         NotificationResponse response = toResponse(saved);
         sendAfterCommit(recipientUserId, response);
         return Optional.of(response);

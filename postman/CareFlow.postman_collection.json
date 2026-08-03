@@ -1525,6 +1525,58 @@
             "url": "{{baseUrl}}/api/notifications/read-all",
             "description": "Trả số item vừa chuyển sang READ."
           }
+        },
+        {
+          "name": "05 - Đăng ký thiết bị nhận FCM",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"postman-test-device\",\n  \"registrationToken\": \"{{fcmToken}}\",\n  \"platform\": \"ANDROID\",\n  \"appVersion\": \"1.0.0+1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/notifications/devices",
+            "description": "Dùng FCM registration token thật lấy từ app; Gateway suy ra user từ JWT."
+          }
+        },
+        {
+          "name": "06 - Hủy thiết bị nhận FCM",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/notifications/devices/postman-test-device",
+            "description": "Mobile gọi tương đương trước khi logout."
+          }
         }
       ]
     },
