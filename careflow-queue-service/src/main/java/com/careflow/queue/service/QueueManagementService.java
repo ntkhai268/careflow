@@ -22,19 +22,19 @@ public class QueueManagementService {
     private static final String COMMAND_MANUAL_INTAKE = "MANUAL_INTAKE";
     private static final String COMMAND_CALL_NEXT = "CALL_NEXT";
     private static final String COMMAND_CALL_ENTRY = "CALL_ENTRY";
+    private static final String COMMAND_CALL_NEXT_SERVICE_POINT = "CALL_NEXT_SERVICE_POINT";
     private static final int MAX_CALL_ATTEMPTS = 3;
     private static final Set<PriorityLevel> MANUAL_LEVELS = EnumSet.of(
             PriorityLevel.EMERGENCY, PriorityLevel.PRIORITY, PriorityLevel.WALK_IN);
-    private static final Set<QueueStatus> DASHBOARD_STATUSES = EnumSet.of(
-            QueueStatus.CHECKED_IN, QueueStatus.CALLED, QueueStatus.IN_PROGRESS);
     private static final Set<QueueStatus> ACTIVE_PATIENT_STATUSES = EnumSet.of(
-            QueueStatus.WAITING, QueueStatus.CHECKED_IN, QueueStatus.CALLED,
+            QueueStatus.WAITING, QueueStatus.QUEUED, QueueStatus.CHECKED_IN, QueueStatus.CALLED,
             QueueStatus.IN_PROGRESS, QueueStatus.MISSED);
     private static final Set<QueueStatus> SERVING_STATUSES = EnumSet.of(
             QueueStatus.CALLED, QueueStatus.IN_PROGRESS);
 
     private final QueueConfigRepository configs;
     private final QueueNumberSequenceRepository sequences;
+    private final ServicePointSequenceRepository servicePointSequences;
     private final QueueEntryRepository entries;
     private final IdempotencyRecordRepository idempotencyRecords;
     private final QueueEventService events;
@@ -42,11 +42,13 @@ public class QueueManagementService {
     private final ZoneId businessZone;
 
     public QueueManagementService(QueueConfigRepository configs, QueueNumberSequenceRepository sequences,
+                                  ServicePointSequenceRepository servicePointSequences,
                                   QueueEntryRepository entries, IdempotencyRecordRepository idempotencyRecords,
                                   QueueEventService events, QrTokenService qrTokens,
                                   @Value("${queue.business-zone:Asia/Ho_Chi_Minh}") String businessZone) {
         this.configs = configs;
         this.sequences = sequences;
+        this.servicePointSequences = servicePointSequences;
         this.entries = entries;
         this.idempotencyRecords = idempotencyRecords;
         this.events = events;
@@ -127,9 +129,8 @@ public class QueueManagementService {
         QueueEntry entry = current
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "QueueEntry", "patientId/userId", patientId));
-        QueueConfig config = configs.findById(entry.getQueueConfigId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "QueueConfig", "id", entry.getQueueConfigId()));
+        QueueConfig config = entry.getQueueConfigId() == null ? null : configs.findById(entry.getQueueConfigId())
+                .orElseThrow(() -> new ResourceNotFoundException("QueueConfig", "id", entry.getQueueConfigId()));
         return response(entry, config);
     }
 
@@ -191,9 +192,11 @@ public class QueueManagementService {
                 throw new BusinessException(400, "Lượt ưu tiên phải có lý do đã được xác minh");
             }
             entry.setPriorityLevel(PriorityLevel.PRIORITY);
+            entry.setQueueClass(QueueClass.PRIORITY);
             entry.setPriorityReasonCode(request.priorityReasonCode().trim());
         } else {
             entry.setPriorityLevel(PriorityLevel.APPOINTMENT);
+            entry.setQueueClass(QueueClass.NORMAL);
             entry.setPriorityReasonCode(null);
         }
         entry.setEligibleSinceAt(now);
@@ -210,6 +213,67 @@ public class QueueManagementService {
         return dashboard(requireRoomConfig(roomId).getDepartmentId());
     }
 
+    @Transactional(readOnly = true)
+    public ServicePointQueueResponse servicePointDashboard(String servicePointId, LocalDate requestedDate) {
+        String normalized = normalizeServicePointId(servicePointId);
+        LocalDate date = requestedDate == null ? businessDate() : requestedDate;
+        List<QueueEntry> active = entries
+                .findByServicePointIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+                        normalized, date, EnumSet.of(QueueStatus.QUEUED, QueueStatus.CALLED, QueueStatus.IN_PROGRESS));
+        List<QueueEntryResponse> response = new ArrayList<>();
+        active.stream().filter(entry -> SERVING_STATUSES.contains(entry.getStatus()))
+                .sorted(Comparator.comparing(QueueEntry::getCalledAt, Comparator.nullsLast(Comparator.naturalOrder())))
+                .forEach(entry -> response.add(QueueEntryResponse.fromServicePoint(entry, 0, 0)));
+        int position = 1;
+        QueueEntryResponse recommended = null;
+        for (QueueEntry entry : active) {
+            if (entry.getStatus() != QueueStatus.QUEUED) continue;
+            QueueEntryResponse item = QueueEntryResponse.fromServicePoint(entry, position++, null);
+            if (recommended == null) recommended = item;
+            response.add(item);
+        }
+        return new ServicePointQueueResponse(normalized, date, response, recommended);
+    }
+
+    @Transactional
+    public Optional<QueueEntryResponse> callNextAtServicePoint(
+            String servicePointId, UUID calledByUserId, String idempotencyKey, String correlationId) {
+        String normalized = normalizeServicePointId(servicePointId);
+        String normalizedKey = requireIdempotencyKey(idempotencyKey);
+        UUID scopeId = UUID.nameUUIDFromBytes(normalized.getBytes(StandardCharsets.UTF_8));
+        String fingerprint = fingerprint(normalized, calledByUserId);
+        Optional<IdempotencyRecord> existing = idempotencyRecords
+                .findByCommandNameAndScopeIdAndIdempotencyKey(
+                        COMMAND_CALL_NEXT_SERVICE_POINT, scopeId, normalizedKey);
+        if (existing.isPresent()) {
+            requireSameFingerprint(existing.get(), fingerprint);
+            if (existing.get().isEmptyResult()) return Optional.empty();
+            QueueEntry replayed = entries.findById(existing.get().getResultEntryId())
+                    .orElseThrow(() -> new IllegalStateException("Idempotency result entry is missing"));
+            return Optional.of(QueueEntryResponse.fromServicePoint(replayed, 0, 0));
+        }
+        QueueEntry candidate = entries
+                .findByServicePointIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+                        normalized, businessDate(), Set.of(QueueStatus.QUEUED))
+                .stream().findFirst().orElse(null);
+        if (candidate == null) {
+            recordEmptyCommand(COMMAND_CALL_NEXT_SERVICE_POINT, scopeId, normalizedKey, fingerprint);
+            return Optional.empty();
+        }
+        QueueEntry locked = requireEntryForUpdate(candidate.getId());
+        if (!locked.isWaitingForCall()) throw invalidTransition(locked, QueueStatus.CALLED);
+        Instant now = Instant.now();
+        locked.setStatus(QueueStatus.CALLED);
+        locked.setCalledAt(now);
+        locked.setCalledByUserId(calledByUserId);
+        locked.setCallAttempts(1);
+        entries.saveAndFlush(locked);
+        events.append(locked, null, "PatientCalled", AppConstants.RK_QUEUE_CALLED,
+                correlationId, Map.of("callAttempt", 1, "calledByUserId", calledByUserId));
+        recordCommand(COMMAND_CALL_NEXT_SERVICE_POINT, scopeId, normalizedKey, fingerprint, locked);
+        return Optional.of(QueueEntryResponse.fromServicePoint(locked, 0, 0));
+    }
+
     @Transactional
     public Optional<QueueEntryResponse> callNextInRoom(
             String roomId, UUID calledByUserId, String idempotencyKey, String correlationId) {
@@ -222,43 +286,43 @@ public class QueueManagementService {
         QueueConfig config = requireConfig(departmentId);
         LocalDate date = businessDate();
         List<QueueEntry> active = entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
-                config.getId(), date, DASHBOARD_STATUSES);
+                config.getId(), date, EnumSet.of(QueueStatus.QUEUED, QueueStatus.CHECKED_IN,
+                        QueueStatus.CALLED, QueueStatus.IN_PROGRESS));
         List<QueueEntry> serving = active.stream()
                 .filter(entry -> SERVING_STATUSES.contains(entry.getStatus()))
                 .sorted(Comparator.comparing((QueueEntry entry) -> entry.getStatus() == QueueStatus.IN_PROGRESS ? 0 : 1)
                         .thenComparing(QueueEntry::getCalledAt, Comparator.nullsLast(Comparator.naturalOrder())))
                 .toList();
         List<QueueEntry> waiting = active.stream()
-                .filter(entry -> entry.getStatus() == QueueStatus.CHECKED_IN)
+                .filter(QueueEntry::isWaitingForCall)
                 .toList();
         Map<UUID, QueueEntry> waitingById = new HashMap<>();
         waiting.forEach(entry -> waitingById.put(entry.getId(), entry));
         Instant now = Instant.now();
         int currentWorkload = serving.isEmpty() ? 0 : config.getAvgConsultationMinutes();
-        List<QueueScheduleSimulator.ScheduledEntry> schedule = QueueScheduleSimulator.schedule(
-                config, date, waiting, now.plus(Duration.ofMinutes(currentWorkload)));
+        List<ConsultationQueueScheduler.ScheduledEntry> schedule = ConsultationQueueScheduler.schedule(
+                waiting, config.getLastServedLane(), now.plus(Duration.ofMinutes(currentWorkload)),
+                config.getAvgConsultationMinutes());
         List<QueueEntryResponse> response = new ArrayList<>();
         serving.forEach(entry -> response.add(response(entry, config, 0, 0)));
         for (int index = 0; index < schedule.size(); index++) {
-            QueueScheduleSimulator.ScheduledEntry scheduled = schedule.get(index);
+            ConsultationQueueScheduler.ScheduledEntry scheduled = schedule.get(index);
             QueueEntry entry = waitingById.get(scheduled.entryId());
             int position = index + 1;
             int wait = projectedWaitMinutes(now, scheduled.projectedStartAt());
             response.add(response(entry, config, position, wait));
         }
         QueueEntryResponse recommendedNext = null;
-        List<QueueScheduleSimulator.ScheduledEntry> recommendationSchedule =
-                QueueScheduleSimulator.schedule(config, date, waiting, now);
-        if (!recommendationSchedule.isEmpty()) {
-            QueueScheduleSimulator.ScheduledEntry recommended = recommendationSchedule.getFirst();
-            if (!recommended.projectedStartAt().isAfter(now)) {
-                QueueEntry entry = waitingById.get(recommended.entryId());
-                recommendedNext = response(entry, config, 1,
-                        projectedWaitMinutes(now, recommended.projectedStartAt()));
-            }
+        QueueEntry recommended = ConsultationQueueScheduler.next(waiting, config.getLastServedLane());
+        if (recommended != null) {
+            recommendedNext = response(recommended, config, 1, 0);
         }
+        List<QueueEntryResponse> priorityQueue = lane(response, SchedulingLane.PRIORITY);
+        List<QueueEntryResponse> normalQueue = lane(response, SchedulingLane.NORMAL);
+        List<QueueEntryResponse> resultReviewQueue = lane(response, SchedulingLane.RESULT_REVIEW);
         return new QueueDashboardResponse(departmentId, config.getDepartmentNameSnapshot(),
-                config.getRoomCode(), date, response, recommendedNext);
+                config.getRoomCode(), date, response, priorityQueue, normalQueue, resultReviewQueue,
+                recommendedNext, config.getLastServedLane(), config.getVersion());
     }
 
     @Transactional
@@ -282,25 +346,14 @@ public class QueueManagementService {
         }
         List<QueueEntry> waiting = entries
                 .findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
-                        config.getId(), date, Set.of(QueueStatus.CHECKED_IN));
-        Map<UUID, QueueEntry> waitingById = new HashMap<>();
-        waiting.forEach(entry -> waitingById.put(entry.getId(), entry));
+                        config.getId(), date, Set.of(QueueStatus.CHECKED_IN, QueueStatus.QUEUED));
         Instant now = Instant.now();
-        QueueScheduleSimulator.ScheduledEntry next = QueueScheduleSimulator
-                .schedule(config, date, waiting, now)
-                .stream().findFirst().orElse(null);
-        if (next == null || next.projectedStartAt().isAfter(now)) {
+        QueueEntry candidate = ConsultationQueueScheduler.next(waiting, config.getLastServedLane());
+        if (candidate == null) {
             recordEmptyCommand(COMMAND_CALL_NEXT, departmentId, normalizedKey, requestFingerprint);
             return Optional.empty();
         }
-        QueueEntry candidate = waitingById.get(next.entryId());
-        if (candidate == null) throw new IllegalStateException("Scheduled queue entry is missing");
-        if (next.mode() == QueueScheduleSimulator.SelectionMode.PRIORITY_CYCLE) {
-            advancePriority(config);
-        } else if (next.mode() == QueueScheduleSimulator.SelectionMode.NORMAL_CYCLE) {
-            advanceNormal(config, candidate.getPriorityLevel());
-        }
-
+        config.setLastServedLane(candidate.getSchedulingLane());
         candidate.setStatus(QueueStatus.CALLED);
         candidate.setCalledAt(now);
         candidate.setCalledByUserId(calledByUserId);
@@ -326,39 +379,47 @@ public class QueueManagementService {
         if (replay.isPresent()) return replay.get();
 
         QueueEntry entry = requireEntryForUpdate(entryId);
-        if (entry.getStatus() != QueueStatus.CHECKED_IN) {
+        if (!entry.isWaitingForCall()) {
             throw invalidTransition(entry, QueueStatus.CALLED);
         }
-        QueueConfig config = requireConfig(entry.getDepartmentId());
+        QueueConfig config = configFor(entry);
         Instant now = Instant.now();
         entry.setStatus(QueueStatus.CALLED);
         entry.setCalledAt(now);
         entry.setCalledByUserId(calledByUserId);
         entry.setCallAttempts(1);
         entries.saveAndFlush(entry);
+        if (config != null && entry.getSchedulingLane() != null) {
+            config.setLastServedLane(entry.getSchedulingLane());
+            configs.save(config);
+        }
         events.append(entry, config, "PatientCalled", AppConstants.RK_QUEUE_CALLED,
                 correlationId, Map.of(
                         "callAttempt", entry.getCallAttempts(),
                         "calledByUserId", calledByUserId,
-                        "selectedByDoctor", true));
+                        "selectedByActor", true));
         recordCommand(COMMAND_CALL_ENTRY, entryId, normalizedKey, requestFingerprint, entry);
-        appendNearTurnEvents(config, entry.getQueueDate(), correlationId);
+        if (config != null) appendNearTurnEvents(config, entry.getQueueDate(), correlationId);
         return response(entry, config);
     }
 
     @Transactional
-    public QueueEntryResponse recall(UUID entryId, String correlationId) {
+    public QueueEntryResponse recall(UUID entryId, UUID calledByUserId, String correlationId) {
         QueueEntry entry = requireEntryForUpdate(entryId);
         if (entry.getStatus() != QueueStatus.CALLED) throw invalidTransition(entry, QueueStatus.CALLED);
         if (entry.getCallAttempts() >= MAX_CALL_ATTEMPTS) {
             throw new BusinessException(409, "Đã gọi đủ " + MAX_CALL_ATTEMPTS + " lần; hãy đánh dấu lỡ lượt");
         }
-        QueueConfig config = requireConfig(entry.getDepartmentId());
+        QueueConfig config = configFor(entry);
         entry.setCallAttempts(entry.getCallAttempts() + 1);
         entry.setCalledAt(Instant.now());
+        entry.setCalledByUserId(calledByUserId);
         entries.saveAndFlush(entry);
         events.append(entry, config, "PatientCalled", AppConstants.RK_QUEUE_CALLED,
-                correlationId, Map.of("callAttempt", entry.getCallAttempts(), "recalled", true));
+                correlationId, Map.of(
+                        "callAttempt", entry.getCallAttempts(),
+                        "calledByUserId", calledByUserId,
+                        "recalled", true));
         return response(entry, config);
     }
 
@@ -370,7 +431,7 @@ public class QueueManagementService {
             throw new BusinessException(409,
                     "Phải gọi đủ " + MAX_CALL_ATTEMPTS + " lần trước khi đánh dấu lỡ lượt");
         }
-        QueueConfig config = requireConfig(entry.getDepartmentId());
+        QueueConfig config = configFor(entry);
         entry.setStatus(QueueStatus.MISSED);
         entry.setMissedAt(Instant.now());
         entry.setMissedCount(entry.getMissedCount() + 1);
@@ -384,11 +445,16 @@ public class QueueManagementService {
     public QueueEntryResponse requeue(UUID entryId, RequeueRequest request, String correlationId) {
         QueueEntry snapshot = entries.findById(entryId)
                 .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "id", entryId));
-        QueueConfig config = requireLockedConfig(snapshot.getDepartmentId());
+        QueueConfig config = snapshot.getDepartmentId() == null ? null : requireLockedConfig(snapshot.getDepartmentId());
         QueueEntry entry = requireEntryForUpdate(entryId);
-        if (entry.getStatus() != QueueStatus.MISSED) throw invalidTransition(entry, QueueStatus.CHECKED_IN);
+        QueueStatus requeuedStatus = entry.getQueueType() == QueueType.CONSULTATION
+                && entry.getConsultationPhase() == ConsultationPhase.INITIAL
+                ? QueueStatus.CHECKED_IN : QueueStatus.QUEUED;
+        if (entry.getStatus() != QueueStatus.MISSED) throw invalidTransition(entry, requeuedStatus);
         boolean back;
-        if (config.getMissedPolicy() == MissedPolicy.REQUIRE_MANUAL) {
+        if (config == null) {
+            back = true;
+        } else if (config.getMissedPolicy() == MissedPolicy.REQUIRE_MANUAL) {
             if (request == null || request.position() == null) {
                 throw new BusinessException(400, "Policy REQUIRE_MANUAL yêu cầu position FRONT hoặc BACK");
             }
@@ -399,18 +465,18 @@ public class QueueManagementService {
         if (back) {
             entry.setEligibleSinceAt(Instant.now());
         } else {
-            QueueEntry first = firstCandidate(config, entry.getQueueDate(), entry.getPriorityLevel());
+            QueueEntry first = firstCandidate(config, entry.getQueueDate(), entry.getSchedulingLane());
             entry.setEligibleSinceAt(first == null
                     ? Instant.now()
                     : first.getEligibleSinceAt().minusSeconds(1));
         }
-        entry.setStatus(QueueStatus.CHECKED_IN);
+        entry.setStatus(requeuedStatus);
         entry.setCalledAt(null);
         entry.setCalledByUserId(null);
         entry.setCallAttempts(0);
         entry.setNearTurnNotifiedAt(null);
         entries.saveAndFlush(entry);
-        events.append(entry, config, "PatientCheckedIn", AppConstants.RK_QUEUE_CHECKED_IN, correlationId,
+        events.append(entry, config, "QueueEntryRequeued", "queue.requeued", correlationId,
                 Map.of("requeued", true, "position", back ? "BACK" : "FRONT"));
         return response(entry, config);
     }
@@ -419,7 +485,7 @@ public class QueueManagementService {
     public QueueEntryResponse start(UUID entryId, String correlationId) {
         QueueEntry entry = requireEntryForUpdate(entryId);
         if (entry.getStatus() != QueueStatus.CALLED) throw invalidTransition(entry, QueueStatus.IN_PROGRESS);
-        QueueConfig config = requireConfig(entry.getDepartmentId());
+        QueueConfig config = configFor(entry);
         entry.setStatus(QueueStatus.IN_PROGRESS);
         entry.setStartedAt(Instant.now());
         entries.saveAndFlush(entry);
@@ -431,15 +497,18 @@ public class QueueManagementService {
     public QueueEntryResponse complete(UUID entryId, String correlationId) {
         QueueEntry snapshot = entries.findById(entryId)
                 .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "id", entryId));
-        QueueConfig config = requireLockedConfig(snapshot.getDepartmentId());
+        if (snapshot.getQueueType() == QueueType.PHARMACY_DISPENSING) {
+            throw new BusinessException(409, "Lượt phát thuốc chỉ hoàn tất khi nhận PrescriptionDispensed");
+        }
+        QueueConfig config = snapshot.getDepartmentId() == null ? null : requireLockedConfig(snapshot.getDepartmentId());
         QueueEntry entry = requireEntryForUpdate(entryId);
         if (entry.getStatus() != QueueStatus.IN_PROGRESS) throw invalidTransition(entry, QueueStatus.COMPLETED);
         entry.setStatus(QueueStatus.COMPLETED);
         entry.setCompletedAt(Instant.now());
         entries.saveAndFlush(entry);
-        updateAverage(config, entry.getQueueDate());
+        if (config != null && entry.getQueueType() == QueueType.CONSULTATION) updateAverage(config, entry.getQueueDate());
         events.append(entry, config, "QueueEntryCompleted", AppConstants.RK_QUEUE_COMPLETED, correlationId,
-                Map.of("consultationMinutes", consultationMinutes(entry)));
+                Map.of("serviceMinutes", consultationMinutes(entry)));
         return response(entry, config);
     }
 
@@ -467,6 +536,9 @@ public class QueueManagementService {
         entry.setSequenceNumber(sequence.getLastNumber());
         entry.setQueueNumber(config.getQueuePrefix() + "-" + String.format("%03d", sequence.getLastNumber()));
         entry.setPriorityLevel(priority);
+        entry.setQueueType(QueueType.CONSULTATION);
+        entry.setConsultationPhase(ConsultationPhase.INITIAL);
+        entry.setQueueClass(priority == PriorityLevel.PRIORITY ? QueueClass.PRIORITY : QueueClass.NORMAL);
         entry.setStatus(status);
         return entry;
     }
@@ -483,6 +555,76 @@ public class QueueManagementService {
         return entry;
     }
 
+    public QueueEntry createPharmacyEntry(UUID prescriptionId, UUID consultationId, UUID patientId,
+                                          String servicePointId, Instant queuedAt) {
+        Optional<QueueEntry> existing = entries.findByPrescriptionId(prescriptionId);
+        if (existing.isPresent()) return existing.get();
+        String normalizedServicePoint = normalizeServicePointId(servicePointId);
+        LocalDate date = LocalDate.ofInstant(queuedAt, businessZone);
+        ServicePointSequence sequence = servicePointSequences
+                .findByServicePointIdAndQueueDate(normalizedServicePoint, date)
+                .orElseGet(() -> {
+                    ServicePointSequence created = new ServicePointSequence();
+                    created.setServicePointId(normalizedServicePoint);
+                    created.setQueueDate(date);
+                    return servicePointSequences.saveAndFlush(created);
+                });
+        sequence.setLastNumber(sequence.getLastNumber() + 1);
+        servicePointSequences.save(sequence);
+
+        QueueEntry entry = new QueueEntry();
+        entry.setQueueConfigId(null);
+        entry.setDepartmentId(null);
+        entry.setDepartmentCode(null);
+        entry.setPrescriptionId(prescriptionId);
+        entry.setConsultationId(consultationId);
+        entry.setPatientId(patientId);
+        entry.setUserId(entries.findFirstByPatientIdAndUserIdIsNotNullOrderByCreatedAtDesc(patientId)
+                .map(QueueEntry::getUserId).orElse(null));
+        entry.setQueueType(QueueType.PHARMACY_DISPENSING);
+        entry.setConsultationPhase(null);
+        entry.setQueueClass(null);
+        entry.setServicePointId(normalizedServicePoint);
+        entry.setQueueDate(date);
+        entry.setSequenceNumber(sequence.getLastNumber());
+        entry.setQueueNumber("RX-" + String.format("%03d", sequence.getLastNumber()));
+        entry.setPriorityLevel(PriorityLevel.WALK_IN);
+        entry.setStatus(QueueStatus.QUEUED);
+        entry.setEligibleSinceAt(queuedAt);
+        return entry;
+    }
+
+    @Transactional
+    public void cancelPharmacyEntry(UUID prescriptionId, String correlationId) {
+        QueueEntry snapshot = entries.findByPrescriptionId(prescriptionId).orElse(null);
+        if (snapshot == null || snapshot.getStatus() == QueueStatus.COMPLETED
+                || snapshot.getStatus() == QueueStatus.CANCELLED) return;
+        QueueEntry entry = requireEntryForUpdate(snapshot.getId());
+        if (entry.getStatus() == QueueStatus.COMPLETED || entry.getStatus() == QueueStatus.CANCELLED) return;
+        entry.setStatus(QueueStatus.CANCELLED);
+        entry.setCancelledAt(Instant.now());
+        entries.saveAndFlush(entry);
+        events.append(entry, null, "QueueEntryCancelled", "queue.cancelled", correlationId,
+                Map.of("prescriptionId", prescriptionId));
+    }
+
+    @Transactional
+    public void completePharmacyEntry(UUID prescriptionId, Instant dispensedAt, String correlationId) {
+        QueueEntry snapshot = entries.findByPrescriptionId(prescriptionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pharmacy QueueEntry", "prescriptionId", prescriptionId));
+        if (snapshot.getStatus() == QueueStatus.COMPLETED) return;
+        QueueEntry entry = requireEntryForUpdate(snapshot.getId());
+        if (entry.getStatus() == QueueStatus.COMPLETED) return;
+        if (entry.getStatus() != QueueStatus.IN_PROGRESS) {
+            throw new BusinessException(409, "Lượt phát thuốc phải ở IN_PROGRESS trước khi xác nhận đã phát");
+        }
+        entry.setStatus(QueueStatus.COMPLETED);
+        entry.setCompletedAt(dispensedAt);
+        entries.saveAndFlush(entry);
+        events.append(entry, null, "QueueEntryCompleted", AppConstants.RK_QUEUE_COMPLETED,
+                correlationId, Map.of("prescriptionId", prescriptionId, "dispensed", true));
+    }
+
     public QueueConfig requireLockedConfig(UUID departmentId) {
         return configs.findFirstByDepartmentIdAndActiveTrue(departmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Active QueueConfig", "departmentId", departmentId));
@@ -491,6 +633,10 @@ public class QueueManagementService {
     private QueueConfig requireConfig(UUID departmentId) {
         return configs.findByDepartmentIdAndActiveTrue(departmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Active QueueConfig", "departmentId", departmentId));
+    }
+
+    private QueueConfig configFor(QueueEntry entry) {
+        return entry.getDepartmentId() == null ? null : requireConfig(entry.getDepartmentId());
     }
 
     private QueueConfig requireRoomConfig(String roomId) {
@@ -503,41 +649,32 @@ public class QueueManagementService {
         return entries.findFirstById(id).orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "id", id));
     }
 
-    private QueueEntry firstCandidate(QueueConfig config, LocalDate date, PriorityLevel level) {
-        return entries.findByQueueConfigIdAndQueueDateAndStatusAndPriorityLevelOrderByEligibleSinceAtAscSequenceNumberAsc(
-                config.getId(), date, QueueStatus.CHECKED_IN, level, PageRequest.of(0, 1)).stream().findFirst().orElse(null);
-    }
-
-    private void advancePriority(QueueConfig config) {
-        config.setServedInPhase(config.getServedInPhase() + 1);
-        if (config.getServedInPhase() >= config.getPriorityRatioN()) {
-            config.setCyclePhase(CyclePhase.NORMAL);
-            config.setServedInPhase(0);
-        }
-    }
-
-    private void advanceNormal(QueueConfig config, PriorityLevel selected) {
-        config.setNormalCursor(selected == PriorityLevel.APPOINTMENT ? NormalCursor.WALK_IN : NormalCursor.APPOINTMENT);
-        config.setServedInPhase(config.getServedInPhase() + 1);
-        if (config.getServedInPhase() >= config.getNormalRatioM()) {
-            config.setCyclePhase(CyclePhase.PRIORITY);
-            config.setServedInPhase(0);
-        }
+    private QueueEntry firstCandidate(QueueConfig config, LocalDate date, SchedulingLane lane) {
+        return entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+                        config.getId(), date, Set.of(QueueStatus.CHECKED_IN, QueueStatus.QUEUED))
+                .stream().filter(QueueEntry::isWaitingForCall)
+                .filter(entry -> entry.getSchedulingLane() == lane)
+                .findFirst().orElse(null);
     }
 
     private QueueEntryResponse response(QueueEntry entry, QueueConfig config) {
+        if (config == null) {
+            Integer position = entry.getStatus() == QueueStatus.QUEUED ? servicePointPosition(entry) : 0;
+            return QueueEntryResponse.fromServicePoint(entry, position,
+                    entry.getStatus() == QueueStatus.QUEUED ? entry.getEstimatedWaitMinutes() : 0);
+        }
         Integer position = null;
         Integer wait = entry.getEstimatedWaitMinutes();
-        if (entry.getStatus() == QueueStatus.CHECKED_IN) {
+        if (entry.isWaitingForCall()) {
             List<QueueEntry> active = entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
-                    config.getId(), entry.getQueueDate(), Set.of(QueueStatus.CHECKED_IN));
+                    config.getId(), entry.getQueueDate(), Set.of(QueueStatus.CHECKED_IN, QueueStatus.QUEUED));
             Instant now = Instant.now();
             int currentConsultation = entries.existsByQueueConfigIdAndQueueDateAndStatusIn(
                     config.getId(), entry.getQueueDate(), SERVING_STATUSES)
                     ? config.getAvgConsultationMinutes() : 0;
-            List<QueueScheduleSimulator.ScheduledEntry> schedule = QueueScheduleSimulator.schedule(
-                    config, entry.getQueueDate(), active,
-                    now.plus(Duration.ofMinutes(currentConsultation)));
+            List<ConsultationQueueScheduler.ScheduledEntry> schedule = ConsultationQueueScheduler.schedule(
+                    active, config.getLastServedLane(), now.plus(Duration.ofMinutes(currentConsultation)),
+                    config.getAvgConsultationMinutes());
             int index = -1;
             for (int candidateIndex = 0; candidateIndex < schedule.size(); candidateIndex++) {
                 if (schedule.get(candidateIndex).entryId().equals(entry.getId())) {
@@ -557,23 +694,47 @@ public class QueueManagementService {
     }
 
     private QueueEntryResponse response(QueueEntry entry, QueueConfig config, Integer position, Integer wait) {
-        return QueueEntryResponse.from(entry, QueueConfigResponse.from(config), position, wait);
+        return config == null
+                ? QueueEntryResponse.fromServicePoint(entry, position, wait)
+                : QueueEntryResponse.from(entry, QueueConfigResponse.from(config), position, wait);
+    }
+
+    private int servicePointPosition(QueueEntry entry) {
+        List<QueueEntry> waiting = entries
+                .findByServicePointIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+                        entry.getServicePointId(), entry.getQueueDate(), Set.of(QueueStatus.QUEUED));
+        for (int index = 0; index < waiting.size(); index++) {
+            if (waiting.get(index).getId().equals(entry.getId())) return index + 1;
+        }
+        return 0;
+    }
+
+    private List<QueueEntryResponse> lane(List<QueueEntryResponse> entries, SchedulingLane lane) {
+        return entries.stream().filter(entry -> entry.schedulingLane() == lane).toList();
+    }
+
+    private String normalizeServicePointId(String servicePointId) {
+        if (servicePointId == null || servicePointId.isBlank()) {
+            throw new BusinessException(400, "servicePointId không được để trống");
+        }
+        return servicePointId.trim().toUpperCase(Locale.ROOT);
     }
 
     private void appendNearTurnEvents(QueueConfig config, LocalDate date, String correlationId) {
         List<QueueEntry> waiting = entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
-                config.getId(), date, Set.of(QueueStatus.CHECKED_IN));
+                config.getId(), date, Set.of(QueueStatus.CHECKED_IN, QueueStatus.QUEUED));
         Map<UUID, QueueEntry> byId = new HashMap<>();
         waiting.forEach(entry -> byId.put(entry.getId(), entry));
         Instant now = Instant.now();
         int currentWorkload = entries.existsByQueueConfigIdAndQueueDateAndStatusIn(
                 config.getId(), date, SERVING_STATUSES)
                 ? config.getAvgConsultationMinutes() : 0;
-        List<QueueScheduleSimulator.ScheduledEntry> schedule = QueueScheduleSimulator.schedule(
-                config, date, waiting, now.plus(Duration.ofMinutes(currentWorkload)));
+        List<ConsultationQueueScheduler.ScheduledEntry> schedule = ConsultationQueueScheduler.schedule(
+                waiting, config.getLastServedLane(), now.plus(Duration.ofMinutes(currentWorkload)),
+                config.getAvgConsultationMinutes());
         int limit = Math.min(config.getNearTurnThreshold(), schedule.size());
         for (int index = 0; index < limit; index++) {
-            QueueScheduleSimulator.ScheduledEntry scheduled = schedule.get(index);
+            ConsultationQueueScheduler.ScheduledEntry scheduled = schedule.get(index);
             QueueEntry entry = byId.get(scheduled.entryId());
             if (entry.getNearTurnNotifiedAt() != null) continue;
             int position = index + 1;
@@ -610,7 +771,7 @@ public class QueueManagementService {
                     }
                     QueueEntry entry = entries.findById(record.getResultEntryId())
                             .orElseThrow(() -> new IllegalStateException("Idempotency result entry is missing"));
-                    QueueConfig config = configs.findById(entry.getQueueConfigId())
+                    QueueConfig config = entry.getQueueConfigId() == null ? null : configs.findById(entry.getQueueConfigId())
                             .orElseThrow(() -> new IllegalStateException("Idempotency result config is missing"));
                     return response(entry, config);
                 });

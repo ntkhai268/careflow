@@ -14,8 +14,11 @@ import java.util.UUID;
 
 public interface QueueEntryRepository extends JpaRepository<QueueEntry, UUID> {
     Optional<QueueEntry> findByAppointmentId(UUID appointmentId);
+    Optional<QueueEntry> findByPrescriptionId(UUID prescriptionId);
+    Optional<QueueEntry> findByLabOrderIdAndServicePointId(UUID labOrderId, String servicePointId);
     Optional<QueueEntry> findByAppointmentIdAndUserId(UUID appointmentId, UUID userId);
     List<QueueEntry> findByUserIdAndQueueDateOrderByCreatedAtDesc(UUID userId, LocalDate date);
+    Optional<QueueEntry> findFirstByPatientIdAndUserIdIsNotNullOrderByCreatedAtDesc(UUID patientId);
     Optional<QueueEntry> findFirstByPatientIdAndUserIdAndQueueDateAndStatusInOrderByCreatedAtDesc(
             UUID patientId, UUID userId, LocalDate queueDate, Collection<QueueStatus> statuses);
     Optional<QueueEntry> findFirstByPatientIdAndQueueDateAndStatusInOrderByCreatedAtDesc(
@@ -26,16 +29,14 @@ public interface QueueEntryRepository extends JpaRepository<QueueEntry, UUID> {
             UUID patientId, UUID departmentId, LocalDate date, Collection<QueueStatus> statuses);
     List<QueueEntry> findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
             UUID configId, LocalDate date, Collection<QueueStatus> statuses);
+    List<QueueEntry> findByServicePointIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+            String servicePointId, LocalDate date, Collection<QueueStatus> statuses);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<QueueEntry> findFirstById(UUID id);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<QueueEntry> findFirstByAppointmentId(UUID appointmentId);
-
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    List<QueueEntry> findByQueueConfigIdAndQueueDateAndStatusAndPriorityLevelOrderByEligibleSinceAtAscSequenceNumberAsc(
-            UUID configId, LocalDate date, QueueStatus status, PriorityLevel priority, Pageable pageable);
 
     List<QueueEntry> findByQueueConfigIdAndQueueDateAndStatusAndStartedAtIsNotNullAndCompletedAtIsNotNullOrderByCompletedAtDesc(
             UUID configId, LocalDate date, QueueStatus status, Pageable pageable);

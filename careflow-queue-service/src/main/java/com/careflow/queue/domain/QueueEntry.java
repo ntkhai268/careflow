@@ -16,12 +16,19 @@ import java.util.UUID;
 @Getter @Setter @NoArgsConstructor
 public class QueueEntry {
     @Id private UUID id;
-    @Column(name = "queue_config_id", nullable = false) private UUID queueConfigId;
-    @Column(name = "department_id", nullable = false) private UUID departmentId;
+    @Column(name = "queue_config_id") private UUID queueConfigId;
+    @Column(name = "department_id") private UUID departmentId;
     @Column(name = "department_code", length = 50) private String departmentCode;
     @Column(name = "appointment_id", unique = true) private UUID appointmentId;
+    @Column(name = "consultation_id") private UUID consultationId;
+    @Column(name = "lab_order_id") private UUID labOrderId;
+    @Column(name = "prescription_id") private UUID prescriptionId;
     @Column(name = "patient_id", nullable = false) private UUID patientId;
-    @Column(name = "user_id", nullable = false) private UUID userId;
+    @Column(name = "user_id") private UUID userId;
+    @Enumerated(EnumType.STRING) @Column(name = "queue_type", nullable = false) private QueueType queueType = QueueType.CONSULTATION;
+    @Enumerated(EnumType.STRING) @Column(name = "consultation_phase") private ConsultationPhase consultationPhase = ConsultationPhase.INITIAL;
+    @Enumerated(EnumType.STRING) @Column(name = "queue_class") private QueueClass queueClass = QueueClass.NORMAL;
+    @Column(name = "service_point_id", length = 80) private String servicePointId;
     @Column(name = "queue_date", nullable = false) private LocalDate queueDate;
     @Column(name = "sequence_number", nullable = false) private int sequenceNumber;
     @Column(name = "queue_number", nullable = false, length = 20) private String queueNumber;
@@ -48,4 +55,18 @@ public class QueueEntry {
     @CreationTimestamp @Column(name = "created_at", nullable = false, updatable = false) private Instant createdAt;
     @UpdateTimestamp @Column(name = "updated_at", nullable = false) private Instant updatedAt;
     @PrePersist void assignId() { if (id == null) id = UUID.randomUUID(); }
+
+    @Transient
+    public SchedulingLane getSchedulingLane() {
+        if (queueType != QueueType.CONSULTATION) return null;
+        if (consultationPhase == ConsultationPhase.RESULT_REVIEW) return SchedulingLane.RESULT_REVIEW;
+        return queueClass == QueueClass.PRIORITY ? SchedulingLane.PRIORITY : SchedulingLane.NORMAL;
+    }
+
+    @Transient
+    public boolean isWaitingForCall() {
+        return queueType == QueueType.CONSULTATION && consultationPhase == ConsultationPhase.INITIAL
+                ? status == QueueStatus.CHECKED_IN
+                : status == QueueStatus.QUEUED;
+    }
 }

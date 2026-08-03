@@ -21,6 +21,9 @@ public final class AppConstants {
     public static final String RK_QUEUE_COMPLETED = "queue.completed";
     public static final String RK_QUEUE_NEAR_TURN = "queue.near-turn";
     public static final String RK_PRESCRIPTION_CREATED = "prescription.created";
+    public static final String RK_PRESCRIPTION_ISSUED = "prescription.issued";
+    public static final String RK_PRESCRIPTION_CANCELLED = "prescription.cancelled";
+    public static final String RK_PRESCRIPTION_DISPENSED = "prescription.dispensed";
     public static final String RK_NOTIFICATION_SEND = "notification.send";
 
     // Roles

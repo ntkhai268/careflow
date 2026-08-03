@@ -29,6 +29,7 @@ public class QueueConfig {
     @Enumerated(EnumType.STRING) @Column(name = "cycle_phase", nullable = false) private CyclePhase cyclePhase = CyclePhase.PRIORITY;
     @Column(name = "served_in_phase", nullable = false, columnDefinition = "smallint") private int servedInPhase;
     @Enumerated(EnumType.STRING) @Column(name = "normal_cursor", nullable = false) private NormalCursor normalCursor = NormalCursor.APPOINTMENT;
+    @Enumerated(EnumType.STRING) @Column(name = "last_served_lane") private SchedulingLane lastServedLane;
     @Column(name = "is_active", nullable = false) private boolean active = true;
     @Version @Column(nullable = false) private long version;
     @CreationTimestamp @Column(name = "created_at", nullable = false, updatable = false) private Instant createdAt;
@@ -41,5 +42,6 @@ public class QueueConfig {
         cyclePhase = CyclePhase.PRIORITY;
         servedInPhase = 0;
         normalCursor = NormalCursor.APPOINTMENT;
+        lastServedLane = null;
     }
 }

@@ -1102,6 +1102,79 @@
           ]
         },
         {
+          "name": "08A - Xem Queue tại điểm phục vụ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/service-points/{{servicePointId}}/active",
+            "description": "Queue FIFO cho cận lâm sàng hoặc phát thuốc. PHARMACY_DISPENSING được tạo tự động từ PrescriptionIssued và không check-in lại."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Đọc queue điểm phục vụ thành công', () => pm.expect(pm.response.code).to.eql(200));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.recommendedNext) pm.environment.set('queueEntryId', json.data.recommendedNext.entryId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08B - Gọi FIFO tại điểm phục vụ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/service-points/{{servicePointId}}/call-next",
+            "description": "Gọi entry QUEUED đầu tiên theo FIFO tại quầy xét nghiệm hoặc quầy phát thuốc."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Gọi FIFO thành công hoặc queue rỗng', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));",
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data.queueStatus).to.eql('CALLED');",
+                  "  pm.environment.set('queueEntryId', json.data.entryId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "09 - Dashboard theo department",
           "request": {
             "method": "GET",

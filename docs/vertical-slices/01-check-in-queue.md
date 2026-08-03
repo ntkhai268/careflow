@@ -16,10 +16,10 @@ Patient đặt lịch
   → Mobile tải lại và thấy CALLED
 ```
 
-Slice này chỉ triển khai `CONSULTATION` phase `INITIAL` theo tên contract mục
-tiêu (code hiện tại chưa tách hai trường này). Queue cận lâm sàng,
-`CONSULTATION + RESULT_REVIEW` và `PHARMACY_DISPENSING` thuộc các vertical slice
-tiếp theo.
+Slice check-in này chỉ đi qua `CONSULTATION` phase `INITIAL`. Domain Queue hiện
+đã tách `QueueType` và `ConsultationPhase`; phía consumer/FIFO của
+`PHARMACY_DISPENSING` cũng đã sẵn sàng, còn producer Prescription,
+`LAB_EXECUTION` và `CONSULTATION + RESULT_REVIEW` thuộc các vertical slice tiếp theo.
 
 ## Nguồn sự thật
 

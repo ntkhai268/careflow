@@ -313,18 +313,21 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 
 ## 8. Definition of Done
 
-### Trạng thái triển khai 2026-08-02
+### Trạng thái triển khai 2026-08-03
 
 - `CONSULTATION + INITIAL` đã nối thật từ `AppointmentConfirmed` đến Visit Ticket,
   QR, staff check-in, active queue, gọi theo entry/gợi ý, start/complete và Mobile production.
 - Appointment producer và Queue producer đều dùng outbox; consumer Appointment
   của Queue có idempotency bằng `processed_events`.
-- MVP hiện cấu hình tĩnh một phòng cho mỗi khoa. Quản trị `ClinicRoom`, xác minh
-  doctor-room assignment, `LAB_EXECUTION`, `CONSULTATION + RESULT_REVIEW` và
-  `PHARMACY_DISPENSING` chưa thuộc slice này.
-- Scheduler cũ vẫn còn cấu trúc `PriorityLevel` nội bộ. Khi triển khai ba làn đầy
-  đủ phải tách rõ `QueueType`, `ConsultationPhase`, `QueueClass` và
-  `SchedulingLane` theo contract 1.2.
+- Domain và API đã tách `QueueType`, `ConsultationPhase`, `QueueClass` và
+  `SchedulingLane`; scheduler phòng khám dùng Round Robin `1:1:1`, giữ FIFO
+  trong từng làn và lưu `lastServedLane`.
+- Queue đã consume idempotent các event Prescription, tự tạo
+  `PHARMACY_DISPENSING`, cung cấp dashboard/call-next FIFO theo `servicePointId`,
+  xử lý cancel và chỉ hoàn tất khi nhận `PrescriptionDispensed`.
+- Producer thật của Prescription Service, `LAB_EXECUTION`, luồng tạo
+  `CONSULTATION + RESULT_REVIEW`, quản trị `ClinicRoom` và xác minh assignment
+  theo Hospital Directory vẫn là các slice tiếp theo.
 
 ### `CONTRACT_READY`
 

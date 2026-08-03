@@ -28,6 +28,8 @@ Nếu gọi từ thiết bị khác, đổi `baseUrl` thành IP máy chạy Dock
 7. Điền `staffToken`, chạy **Staff check-in QR**.
 8. Điền `doctorToken`, chạy dashboard; dùng **Doctor gọi một bệnh nhân được
    chọn** với `queueEntryId`, hoặc dùng **Doctor gọi nhanh lượt được gợi ý**.
+9. Với queue cận lâm sàng/phát thuốc, đặt `servicePointId`, điền `staffToken`,
+   chạy **Xem Queue tại điểm phục vụ** rồi **Gọi FIFO tại điểm phục vụ**.
 
 ## Token clinical staff
 
@@ -42,7 +44,7 @@ Admin có thể dùng request **Admin gán role user**, sau đó đăng nhập l
 ## Lưu ý
 
 - Visit Ticket được tạo bất đồng bộ, vì vậy GET ngay sau đặt lịch có thể trả 404 trong khoảng ngắn.
-- `call-next` có thể trả 204 nếu chưa đến giờ hẹn.
+- `call-next` trả 204 khi queue tương ứng không có lượt đủ điều kiện.
 - `recommendedNext` chỉ là gợi ý; API `/entries/{entryId}/call` gọi đúng hàng
   bác sĩ chọn và không chặn vì phòng đã có lượt `CALLED`/`IN_PROGRESS`.
 - Các request hủy lịch, xóa hồ sơ và cập nhật config có thay đổi dữ liệu thật.
