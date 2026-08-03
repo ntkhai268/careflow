@@ -5,7 +5,7 @@ skinparam shadowing false
 skinparam defaultFontName Arial
 
 [*] --> ORDERED
-ORDERED --> PAYMENT_PENDING : Cần xác nhận thanh toán/BHYT
+ORDERED --> PAYMENT_PENDING : Cần xác nhận thanh toán
 ORDERED --> QUEUED : Không yêu cầu thanh toán
 PAYMENT_PENDING --> QUEUED : Đã đủ điều kiện
 QUEUED --> CALLED

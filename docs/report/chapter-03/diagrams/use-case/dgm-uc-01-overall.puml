@@ -14,7 +14,7 @@ actor "Nhân viên\ntiếp nhận" as Reception
 actor "Kỹ thuật viên\ncận lâm sàng" as LabTech
 actor "Nhân viên\ncấp phát thuốc" as PharmacyStaff
 actor "Quản trị viên" as Admin
-actor "Hệ thống thanh toán/\nBHYT ngoài" as Payment
+actor "Thu ngân/hệ thống\nthanh toán ngoài" as Payment
 
 rectangle "Hệ thống CareFlow" {
   usecase "Đăng ký, đăng nhập" as UCAuth
@@ -29,7 +29,7 @@ rectangle "Hệ thống CareFlow" {
   usecase "Kê toa, hẹn tái khám\nvà hoàn tất" as UCPrescription
   usecase "Gọi lượt và\nphát thuốc" as UCDispense
   usecase "Quản lý cấu hình\nbệnh viện" as UCConfig
-  usecase "Xác nhận điều kiện\nthanh toán/BHYT" as UCPayment
+  usecase "Xác nhận điều kiện\nthanh toán" as UCPayment
 }
 
 Patient -- UCAuth

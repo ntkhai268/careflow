@@ -65,7 +65,7 @@ hóa như hệ thống ngoài và tích hợp sau.
 | Nhân viên tiếp nhận | Hospital Web App | Quét phiếu, xác nhận bệnh nhân đã đến, hỗ trợ lỡ lượt |
 | Kỹ thuật viên cận lâm sàng | Hospital Web App | Theo dõi order, gọi số, thực hiện kỹ thuật và nhập kết quả |
 | Nhân viên cấp phát thuốc | Hospital Web App | Theo dõi queue FIFO, gọi số, đối chiếu toa và xác nhận đã phát thuốc |
-| Thu ngân/BHYT | Hospital Web App hoặc hệ thống ngoài | Xác nhận thanh toán hoặc quyền lợi BHYT |
+| Thu ngân | Hospital Web App hoặc hệ thống ngoài | Xác nhận đã thu tiền mặt nếu dịch vụ yêu cầu thanh toán |
 | Quản trị viên | Hospital Web App | Cấu hình khoa, phòng, bác sĩ, lịch, capacity và điểm phục vụ |
 
 Hospital Web App là một ứng dụng phân quyền theo role. Không cần xây một web
@@ -504,38 +504,39 @@ Các hình thức được mô hình hóa:
 
 ```text
 paymentMethod:
-- ONLINE
+- ONLINE_MOCK
 - CASH_AT_HOSPITAL
-- HEALTH_INSURANCE
 
 paymentStatus:
 - UNPAID
 - PENDING
-- PAID
-- COVERED
+- PAID_ONLINE_MOCK
+- PAID_CASH
 - FAILED
 ```
 
-Nếu thanh toán online:
+Nếu thanh toán online mock:
 
 ```text
 ORDERED
 → PAYMENT_PENDING
-→ PAID
+→ PAID_ONLINE_MOCK
 → QUEUED
 ```
 
-Nếu thanh toán tiền mặt/BHYT:
+Nếu thanh toán tiền mặt:
 
 ```text
 ORDERED
-→ chờ hệ thống thu ngân hoặc BHYT xác nhận
-→ PAID/COVERED
+→ chờ hệ thống thu ngân xác nhận
+→ PAID_CASH
 → QUEUED
 ```
 
 Payment không nằm trong danh sách service cốt lõi của đề tài. MVP có thể mock
 trạng thái thanh toán hoặc coi đây là tích hợp với hệ thống bệnh viện bên ngoài.
+Thông tin BHYT nếu có chỉ là dữ liệu hành chính trong hồ sơ bệnh nhân; không phải
+phương thức thanh toán của luồng MVP. Quyết toán/quyền lợi BHYT nằm ngoài phạm vi.
 
 ## 14. Giai đoạn 7: Thực hiện cận lâm sàng
 
@@ -956,7 +957,7 @@ CALLED → MISSED → QUEUED
 | Đến bệnh viện | Xuất trình QR | Thấy trạng thái đã đến | Quét QR và tiếp nhận |
 | Chờ khám | Xem trạng thái và thông báo | Xem active queue | Recall, missed và hỗ trợ bệnh nhân |
 | Khám ban đầu | Không cần thao tác | Nhập sinh hiệu, triệu chứng và chẩn đoán | Không bắt buộc |
-| Chỉ định | Xem danh sách việc cần làm | Tạo order | Thu ngân/BHYT xác nhận nếu cần |
+| Chỉ định | Xem danh sách việc cần làm | Tạo order | Thu ngân xác nhận tiền mặt nếu cần |
 | Cận lâm sàng | Xem số, địa điểm và tiến độ | Theo dõi kết quả | Kỹ thuật viên gọi, thực hiện và nhập kết quả |
 | Quay lại | Nhận thông báo và quay lại phòng, không cần xác nhận trên app | Xem RESULT_REVIEW trong queue | Hỗ trợ `MISSED/requeue` nếu bệnh nhân chưa về |
 | Phát thuốc | Xem số và trạng thái chờ tại quầy | Không | Nhân viên gọi FIFO, đối chiếu toa và xác nhận cấp phát |

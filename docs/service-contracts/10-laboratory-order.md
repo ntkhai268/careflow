@@ -1,6 +1,6 @@
 # Laboratory Order Service Contract
 
-> Contract ID: `CF-SVC-10` | Version: `1.0` | Module: `careflow-lab-service`
+> Contract ID: `CF-SVC-10` | Version: `1.1` | Module: `careflow-lab-service`
 
 ## 1. Trách nhiệm và ranh giới
 
@@ -9,7 +9,7 @@ Sở hữu:
 - chỉ định cận lâm sàng và từng hạng mục;
 - điểm thực hiện, yêu cầu chuẩn bị, trạng thái thực hiện;
 - kết quả, khoảng tham chiếu, người nhập/xác nhận và lịch sử chỉnh sửa;
-- trạng thái đủ điều kiện thực hiện sau thanh toán/BHYT mock.
+- trạng thái đủ điều kiện thực hiện sau thanh toán mock.
 
 Không sở hữu active queue; Queue Management tự tạo lượt từ order đủ điều kiện. Không yêu cầu bệnh
 nhân check-in lần hai. Không lưu thông tin thẻ/ngân hàng.
@@ -27,11 +27,21 @@ ORDERED | PAYMENT_PENDING → CANCELLED
 `QUEUED/CALLED/MISSED` là trạng thái projection từ Queue; Lab Order vẫn là nguồn sự thật của
 `ORDERED`, payment eligibility, thực hiện và kết quả.
 
+Payment method mà bệnh nhân được chọn trong MVP:
+
+```text
+ONLINE_MOCK | CASH_AT_HOSPITAL
+```
+
 Payment status MVP:
 
 ```text
-NOT_REQUIRED | PENDING | PAID_ONLINE_MOCK | PAID_CASH | COVERED_BY_INSURANCE
+NOT_REQUIRED | PENDING | PAID_ONLINE_MOCK | PAID_CASH
 ```
+
+Thông tin BHYT vẫn có thể tồn tại trong hồ sơ hành chính bệnh nhân nhưng không
+phải phương thức thanh toán và không tham gia state machine của Laboratory Order.
+Quyết toán/quyền lợi BHYT nằm ngoài phạm vi CareFlow MVP.
 
 ## 3. HTTP API
 
@@ -41,7 +51,8 @@ NOT_REQUIRED | PENDING | PAID_ONLINE_MOCK | PAID_CASH | COVERED_BY_INSURANCE
 | `GET /api/labs/orders/{orderId}` | Doctor/Lab tech/chính patient theo view | Chi tiết |
 | `GET /api/labs/orders/consultation/{consultationId}` | Assigned doctor | Chỉ định của lần khám |
 | `GET /api/labs/orders/patient/{patientId}` | Chính chủ/assigned clinical staff | Lịch sử |
-| `POST /api/labs/orders/{orderId}/payment-confirmations` | Chính patient hoặc `STAFF` | Xác nhận phương thức MVP |
+| `POST /api/labs/orders/{orderId}/payment-selections` | Chính patient | Chọn online mock hoặc tiền mặt tại bệnh viện |
+| `POST /api/labs/orders/{orderId}/payment-confirmations` | `STAFF` | Xác nhận đã thu tiền mặt |
 | `POST /api/labs/orders/{orderId}/start` | Assigned `LAB_TECHNICIAN` | Bắt đầu sau khi queue CALLED |
 | `PUT /api/labs/orders/{orderId}/items/{itemId}/result` | Assigned lab tech | Nhập kết quả item |
 | `POST /api/labs/orders/{orderId}/finalize` | Lab tech có quyền | Phát hành đủ kết quả |
@@ -73,17 +84,27 @@ Create request:
 }
 ```
 
-Server lấy `orderedByDoctorId` từ trusted header và xác minh consultation. Payment confirmation:
+Server lấy `orderedByDoctorId` từ trusted header và xác minh consultation. Patient payment selection:
 
 ```json
 {
-  "method": "PAID_ONLINE_MOCK",
-  "reference": "MOCK-PAY-20260818-00047"
+  "method": "ONLINE_MOCK"
 }
 ```
 
-Không nhận số thẻ/CVV. Với tiền mặt, `STAFF` xác nhận `PAID_CASH`; với BHYT demo,
-`COVERED_BY_INSURANCE`.
+`ONLINE_MOCK` chuyển trạng thái sang `PAID_ONLINE_MOCK` trong môi trường demo.
+`CASH_AT_HOSPITAL` chỉ ghi nhận lựa chọn và giữ trạng thái `PENDING`; không được
+hiển thị là đã thanh toán. Sau khi thu tiền, `STAFF` xác nhận:
+
+```json
+{
+  "status": "PAID_CASH",
+  "reference": "CASH-RECEIPT-20260818-00047"
+}
+```
+
+Không nhận số thẻ, CVV hoặc dữ liệu tài khoản ngân hàng. Production payment
+gateway nằm ngoài phạm vi.
 
 Result request:
 
@@ -102,7 +123,7 @@ nếu cần độ chính xác thập phân.
 
 ## 4. Tạo queue tự động
 
-Khi order không cần thanh toán hoặc đã được xác nhận thanh toán/BHYT:
+Khi order không cần thanh toán hoặc đã được xác nhận thanh toán:
 
 1. Lab publish `LabOrderReadyForExecution`.
 2. Queue tạo một `LAB_EXECUTION` cho mỗi `servicePointId` cần đến.
@@ -172,7 +193,7 @@ Mobile. Queue dùng field này để đưa lượt đọc kết quả về đún
 ## 7. Mock cho consumer
 
 - Doctor Web mock order `PAYMENT_PENDING`, `QUEUED`, `IN_PROGRESS`, `RESULT_AVAILABLE`.
-- Mobile mock online, cash và BHYT; cả ba chỉ là option MVP, không tích hợp cổng thật.
+- Mobile mock online và tiền mặt tại bệnh viện; không tích hợp cổng thật.
 - Queue mock `LabOrderReadyForExecution`, kể cả hai service point.
 - Consultation mock partial result và `AllRequiredResultsAvailable`.
 - Test khẳng định không có endpoint check-in cận lâm sàng.
@@ -198,6 +219,6 @@ Mobile. Queue dùng field này để đưa lượt đọc kết quả về đún
 
 ### `DEMO_READY`
 
-- Doctor tạo chỉ định; patient chọn online mock/tiền mặt/BHYT.
+- Doctor tạo chỉ định; patient chọn online mock hoặc tiền mặt tại bệnh viện.
 - Lab queue xuất hiện tự động, không check-in lại.
 - Technician nhập kết quả; patient quay lại review đúng rule và thấy kết quả sau phát hành.

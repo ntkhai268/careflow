@@ -51,7 +51,8 @@ xây dựng. Không mô tả prototype hoặc mock là chức năng production �
 - AI Clinical Assistant và Analytics trong phiên bản báo cáo hiện tại.
 - SMS, email và push notification qua nhà cung cấp production.
 
-Thanh toán/BHYT được xem là hệ thống ngoài hoặc mô phỏng trạng thái trong MVP.
+Thanh toán được xem là hệ thống ngoài hoặc mô phỏng trạng thái trong MVP. BHYT
+chỉ là dữ liệu hành chính; quyết toán và quyền lợi BHYT nằm ngoài phạm vi.
 
 ## 4. Phân loại mức độ hiện thực
 
@@ -92,7 +93,7 @@ phải tách rõ phần nào đã hiện thực, phần nào là mock và phần
 | `ACT-LAB` | Kỹ thuật viên cận lâm sàng | Nhận order, gọi lượt, thực hiện và phát hành kết quả |
 | `ACT-PHARMACY` | Nhân viên cấp phát thuốc | Theo dõi queue tại điểm cấp phát, gọi lượt, đối chiếu và xác nhận đã phát thuốc |
 | `ACT-ADMIN` | Quản trị viên | Quản lý tài khoản nội bộ, khoa, phòng, lịch và điểm phục vụ |
-| `ACT-PAYMENT` | Hệ thống thanh toán/BHYT ngoài | Xác nhận trạng thái đủ điều kiện thực hiện dịch vụ trong phạm vi mock/tích hợp |
+| `ACT-PAYMENT` | Thu ngân/hệ thống thanh toán ngoài | Xác nhận trạng thái đủ điều kiện thực hiện dịch vụ trong phạm vi mock/tích hợp |
 
 `Patient Mobile App`, `Hospital Web App`, API Gateway và các microservice là
 thành phần của hệ thống, không phải tác nhân con người trong Use Case Diagram.

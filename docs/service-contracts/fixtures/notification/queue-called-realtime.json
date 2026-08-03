@@ -1,0 +1,13 @@
+{
+  "id": "c1f706bd-fc96-4868-92bd-338f71af1c87",
+  "type": "QUEUE_CALLED",
+  "title": "Đã đến lượt",
+  "body": "Mời số 47 vào Phòng 21.",
+  "action": {
+    "type": "OPEN_QUEUE",
+    "resourceId": "6fb18911-a1e8-45d9-a53e-f5b207b8c588"
+  },
+  "status": "DELIVERED",
+  "createdAt": "2026-08-18T03:35:00Z",
+  "readAt": null
+}

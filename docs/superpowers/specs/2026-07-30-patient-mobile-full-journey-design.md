@@ -163,9 +163,10 @@ IN_CONSULTATION
   -> COMPLETED
 ```
 
-Payment methods are `ONLINE`, `CASH`, and `INSURANCE`. Choosing cash records
+Payment methods are `ONLINE_MOCK` and `CASH_AT_HOSPITAL`. Choosing cash records
 that payment will be collected at the hospital; it does not pretend an online
-payment succeeded.
+payment succeeded. Health insurance may remain administrative profile data but
+is not a payment method in the MVP journey.
 
 ### 5.4 Invalid transitions
 
@@ -242,7 +243,8 @@ Vietnamese UI.
 ### 7.3 Result-review queue
 
 - `LAB_RESULT_READY` creates a result-review queue entry.
-- The entry is positioned after the next waiting initial patient.
+- The entry joins the `RESULT_REVIEW` lane using the canonical Queue contract;
+  Mobile displays server state and never calculates its own insertion position.
 - Mobile copy explains that the patient should return to the original clinic
   room and wait for the result review call.
 

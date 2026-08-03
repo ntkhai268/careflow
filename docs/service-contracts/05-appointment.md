@@ -158,6 +158,7 @@ Exchange: `appointment.exchange`.
 {
   "appointmentId": "cf367b19-b946-41dc-969b-0d7958075b22",
   "patientId": "9c613831-90c2-48f6-81c5-0105c20502a1",
+  "userId": "2f12f672-82d4-4ca2-902d-e8ad333003d5",
   "department": "NEUROLOGY",
   "roomId": "ROOM-21",
   "roomDisplayName": "Phòng khám Thần kinh 21",
@@ -168,6 +169,8 @@ Exchange: `appointment.exchange`.
 
 `roomId` là phòng đã được Appointment Service xác định và lưu trong Appointment,
 không phải giá trị do Queue Service hoặc client tự sinh.
+`userId` là owner đã được xác thực khi tạo Appointment; Queue và Notification
+dùng field này làm recipient, không nhận giá trị tùy ý từ Mobile.
 
 Runtime ghi `AppointmentConfirmed` trong `EventEnvelope` v1 vào transactional
 outbox cùng transaction tạo lịch. Publisher retry có giới hạn và Queue consumer

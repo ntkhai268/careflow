@@ -1435,8 +1435,102 @@
       ]
     },
     {
-      "name": "05 - Chưa có HTTP Controller",
-      "description": "Consultation, Prescription, Laboratory, EMR, Notification và AI hiện chưa có controller HTTP trong nhánh này.",
+      "name": "05 - Notification",
+      "item": [
+        {
+          "name": "01 - Inbox của tôi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/notifications?limit=50",
+            "description": "Inbox lưu bền vững; chạy sau khi Appointment/Queue đã phát event."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Lấy inbox thành công', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.length) pm.environment.set('notificationId', json.data[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 - Số thông báo chưa đọc",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/notifications/unread-count",
+            "description": "Trả data.unreadCount."
+          }
+        },
+        {
+          "name": "03 - Đánh dấu một thông báo đã đọc",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+            "description": "notificationId được lưu tự động từ request Inbox."
+          }
+        },
+        {
+          "name": "04 - Đánh dấu tất cả đã đọc",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/notifications/read-all",
+            "description": "Trả số item vừa chuyển sang READ."
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Chưa có HTTP Controller",
+      "description": "Consultation, Prescription, Laboratory, EMR và AI hiện chưa có controller HTTP trong nhánh này.",
       "item": []
     }
   ]

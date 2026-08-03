@@ -30,6 +30,8 @@ Nếu gọi từ thiết bị khác, đổi `baseUrl` thành IP máy chạy Dock
    chọn** với `queueEntryId`, hoặc dùng **Doctor gọi nhanh lượt được gợi ý**.
 9. Với queue cận lâm sàng/phát thuốc, đặt `servicePointId`, điền `staffToken`,
    chạy **Xem Queue tại điểm phục vụ** rồi **Gọi FIFO tại điểm phục vụ**.
+10. Chạy **Notification / Inbox của tôi** để lấy notification được tạo từ event;
+    request tự lưu `notificationId` cho thao tác đánh dấu đã đọc.
 
 ## Token clinical staff
 
@@ -48,4 +50,4 @@ Admin có thể dùng request **Admin gán role user**, sau đó đăng nhập l
 - `recommendedNext` chỉ là gợi ý; API `/entries/{entryId}/call` gọi đúng hàng
   bác sĩ chọn và không chặn vì phòng đã có lượt `CALLED`/`IN_PROGRESS`.
 - Các request hủy lịch, xóa hồ sơ và cập nhật config có thay đổi dữ liệu thật.
-- Collection chỉ chứa API có controller trong code hiện tại. Consultation, Prescription, Laboratory, EMR, Notification và AI chưa có HTTP controller.
+- Collection chỉ chứa API có controller trong code hiện tại. Consultation, Prescription, Laboratory, EMR và AI chưa có HTTP controller.
