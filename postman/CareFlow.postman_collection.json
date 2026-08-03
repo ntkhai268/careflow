@@ -1,0 +1,1443 @@
+{
+  "info": {
+    "_postman_id": "b1f6d332-9a49-4de6-80a7-careflow2026",
+    "name": "CareFlow - Current APIs",
+    "description": "Tất cả HTTP API có controller trong code hiện tại. Luồng khuyến nghị: Identity → Patient → Appointment → đợi 1–2 giây → Queue Ticket → Staff Check-in → Doctor Queue.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{patientToken}}",
+        "type": "string"
+      }
+    ]
+  },
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "pm.request.headers.upsert({ key: 'X-Correlation-Id', value: pm.variables.replaceIn('{{$guid}}') });"
+        ]
+      }
+    }
+  ],
+  "variable": [],
+  "item": [
+    {
+      "name": "00 - Operations",
+      "item": [
+        {
+          "name": "Gateway health",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "url": "{{baseUrl}}/actuator/health",
+            "description": ""
+          }
+        },
+        {
+          "name": "Gateway routes",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/actuator/gateway/routes",
+            "description": "Danh sách route do Spring Cloud Gateway đăng ký."
+          }
+        }
+      ]
+    },
+    {
+      "name": "01 - Identity & eKYC",
+      "item": [
+        {
+          "name": "01 - Đăng ký tài khoản Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{testUsername}}\",\n  \"email\": \"{{testEmail}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/auth/register",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const suffix = Date.now();",
+                  "pm.environment.set('testUsername', `careflow_${suffix}`);",
+                  "pm.environment.set('testEmail', `careflow_${suffix}@example.com`);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "if (pm.response.code !== 204) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.id) pm.environment.set('userId', json.data && json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 - Đăng nhập Patient",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"{{testUsername}}\",\n  \"password\": \"{{testPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/auth/login",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "if (pm.response.code !== 204) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.accessToken) pm.environment.set('patientToken', json.data && json.data.accessToken);",
+                  "  if (json.data && json.data.refreshToken) pm.environment.set('refreshToken', json.data && json.data.refreshToken);",
+                  "  if (json.data && json.data.user && json.data.user.id) pm.environment.set('userId', json.data && json.data.user && json.data.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 - Thông tin tài khoản hiện tại",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/auth/me",
+            "description": ""
+          }
+        },
+        {
+          "name": "04 - Làm mới token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/auth/refresh",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "if (pm.response.code !== 204) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.accessToken) pm.environment.set('patientToken', json.data && json.data.accessToken);",
+                  "  if (json.data && json.data.refreshToken) pm.environment.set('refreshToken', json.data && json.data.refreshToken);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 - Đăng xuất / thu hồi refresh token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/auth/logout",
+            "description": "Nên chạy cuối phiên test vì refresh token sẽ bị thu hồi."
+          }
+        },
+        {
+          "name": "06 - eKYC mock (ảnh JPEG/PNG)",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "image",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/auth/ekyc",
+            "description": "Chọn file JPEG/PNG tối đa 5 MB."
+          }
+        },
+        {
+          "name": "07 - Admin đổi trạng thái user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"ACTIVE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/users/{{targetUserId}}/status",
+            "description": "Role ADMIN. status: ACTIVE, LOCKED hoặc DISABLED."
+          }
+        },
+        {
+          "name": "08 - Admin gán role user",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"role\": \"STAFF\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/users/{{targetUserId}}/role",
+            "description": "Role ADMIN. role: PATIENT, DOCTOR, STAFF, LAB_TECHNICIAN, ADMIN."
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Patient & Health Records",
+      "item": [
+        {
+          "name": "01 - Tạo hồ sơ bệnh nhân",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{userId}}\",\n  \"fullName\": \"Nguyễn Văn Test\",\n  \"dateOfBirth\": \"1995-01-15\",\n  \"gender\": \"MALE\",\n  \"phone\": \"0900000000\",\n  \"idCardNumber\": \"079095000001\",\n  \"insuranceNumber\": \"DN401010000001\",\n  \"occupation\": \"Nhân viên\",\n  \"address\": \"TP. Hồ Chí Minh\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/patients",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "if (pm.response.code !== 204) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.id) pm.environment.set('patientId', json.data && json.data.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 - Lấy bệnh nhân theo ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/patients/{{patientId}}",
+            "description": ""
+          }
+        },
+        {
+          "name": "03 - Lấy bệnh nhân theo userId",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/patients/user/{{userId}}",
+            "description": ""
+          }
+        },
+        {
+          "name": "04 - Cập nhật hồ sơ bệnh nhân",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"0900000001\",\n  \"address\": \"TP. Hồ Chí Minh\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/patients/{{patientId}}",
+            "description": ""
+          }
+        },
+        {
+          "name": "05 - Upload hồ sơ sức khỏe",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "request",
+                  "value": "{\n  \"title\": \"Kết quả khám tổng quát\",\n  \"recordDate\": \"2026-08-01\",\n  \"facilityName\": \"Bệnh viện Đại học Y Dược\",\n  \"notes\": \"Hồ sơ kiểm thử\",\n  \"bloodPressure\": \"120/80\",\n  \"heightCm\": 170,\n  \"weightKg\": 65,\n  \"bloodType\": \"O+\",\n  \"pulse\": 72,\n  \"temperature\": 36.7\n}",
+                  "type": "text",
+                  "contentType": "application/json"
+                },
+                {
+                  "key": "files",
+                  "type": "file",
+                  "src": []
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/health-records",
+            "description": "Chọn một hoặc nhiều file ở key files; có thể bỏ key files nếu chỉ lưu dữ liệu."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "if (pm.response.code !== 204) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.id) pm.environment.set('healthRecordId', json.data && json.data.id);",
+                  "  if (json.data && json.data.files && json.data.files[0] && json.data.files[0].id) pm.environment.set('healthRecordFileId', json.data && json.data.files && json.data.files[0] && json.data.files[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 - Danh sách hồ sơ sức khỏe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/health-records",
+            "description": ""
+          }
+        },
+        {
+          "name": "07 - Chi tiết hồ sơ sức khỏe",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/health-records/{{healthRecordId}}",
+            "description": ""
+          }
+        },
+        {
+          "name": "08 - Cập nhật hồ sơ sức khỏe",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Đã cập nhật từ Postman\",\n  \"bloodPressure\": \"118/78\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/health-records/{{healthRecordId}}",
+            "description": ""
+          }
+        },
+        {
+          "name": "09 - Download file hồ sơ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/health-records/files/{{healthRecordFileId}}",
+            "description": "Dùng Send and Download trong Postman."
+          }
+        },
+        {
+          "name": "10 - Xóa hồ sơ sức khỏe",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/patients/{{patientId}}/health-records/{{healthRecordId}}",
+            "description": "Request phá hủy dữ liệu; chỉ chạy khi muốn dọn dữ liệu test."
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Appointment",
+      "item": [
+        {
+          "name": "01 - Danh sách chuyên khoa",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/appointments/departments",
+            "description": ""
+          }
+        },
+        {
+          "name": "02 - Danh sách ca khám",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/appointments/time-slots",
+            "description": ""
+          }
+        },
+        {
+          "name": "03 - Đặt lịch khám",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"patientName\": \"Nguyễn Văn Test\",\n  \"department\": \"THAN_KINH\",\n  \"appointmentDate\": \"{{appointmentDate}}\",\n  \"timeSlot\": \"{{timeSlot}}\",\n  \"reason\": \"Đau đầu kéo dài\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/appointments",
+            "description": "AppointmentConfirmed được ghi outbox và Queue tạo Visit Ticket bất đồng bộ."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "if (!pm.environment.get('appointmentDate')) {",
+                  "  const d = new Date(Date.now() + 24 * 60 * 60 * 1000);",
+                  "  pm.environment.set('appointmentDate', d.toISOString().slice(0, 10));",
+                  "}"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "if (pm.response.code !== 204) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.id) pm.environment.set('appointmentId', json.data && json.data.id);",
+                  "  if (json.data && json.data.roomId) pm.environment.set('roomId', json.data && json.data.roomId);",
+                  "  if (json.data && json.data.departmentId) pm.environment.set('departmentId', json.data && json.data.departmentId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 - Chi tiết lịch khám",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+            "description": ""
+          }
+        },
+        {
+          "name": "05 - Lịch khám của bệnh nhân",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/appointments/patient/{{patientId}}",
+            "description": ""
+          }
+        },
+        {
+          "name": "06 - Lịch theo khoa và ngày",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/appointments/department/THAN_KINH?date={{appointmentDate}}",
+            "description": ""
+          }
+        },
+        {
+          "name": "07 - Cập nhật trạng thái lịch",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"CHECKED_IN\",\n  \"notes\": \"Cập nhật kiểm thử\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}/status",
+            "description": "Endpoint legacy. Nên ưu tiên để Queue/Consultation cập nhật trạng thái bằng event."
+          }
+        },
+        {
+          "name": "08 - Hủy lịch khám",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/appointments/{{appointmentId}}/cancel",
+            "description": "Chỉ chạy khi muốn kết thúc/dọn lịch test."
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Queue Management",
+      "item": [
+        {
+          "name": "01 - Lấy Visit Ticket theo appointment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/tickets/appointment/{{appointmentId}}",
+            "description": "Nếu vừa đặt lịch, chờ khoảng 1–2 giây để RabbitMQ xử lý AppointmentConfirmed."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "if (pm.response.code !== 204) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.ticketId) pm.environment.set('ticketId', json.data && json.data.ticketId);",
+                  "  if (json.data && json.data.ticketId) pm.environment.set('queueEntryId', json.data && json.data.ticketId);",
+                  "  if (json.data && json.data.qrToken) pm.environment.set('qrToken', json.data && json.data.qrToken);",
+                  "  if (json.data && json.data.roomId) pm.environment.set('roomId', json.data && json.data.roomId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 - QR legacy theo appointment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/appointments/{{appointmentId}}/qr",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "if (pm.response.code !== 204) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data) pm.environment.set('qrToken', json.data);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 - Staff check-in QR",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qrToken\": \"{{qrToken}}\",\n  \"roomId\": \"{{roomId}}\",\n  \"queueClass\": \"NORMAL\",\n  \"priorityReasonCode\": null\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/queues/check-in",
+            "description": "Bắt buộc token STAFF hoặc ADMIN. Active queue chỉ nhận bệnh nhân sau bước này."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "if (pm.response.code !== 204) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.entryId) pm.environment.set('queueEntryId', json.data && json.data.entryId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 - Queue hiện tại của Patient",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/patients/{{patientId}}/current",
+            "description": ""
+          }
+        },
+        {
+          "name": "05 - Trạng thái Queue của tài khoản",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/me/status",
+            "description": ""
+          }
+        },
+        {
+          "name": "06 - Active Queue theo phòng",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/rooms/{{roomId}}/active",
+            "description": ""
+          }
+        },
+        {
+          "name": "07 - Doctor gọi một bệnh nhân được chọn",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/entries/{{queueEntryId}}/call",
+            "description": "Nút Gọi trên từng hàng của Doctor Web. Có thể gọi bất kỳ entry đang CHECKED_IN; recommendedNext chỉ là gợi ý."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Gọi bệnh nhân thành công', () => pm.expect(pm.response.code).to.eql(200));",
+                  "const json = pm.response.json();",
+                  "pm.expect(json.data.queueStatus).to.eql('CALLED');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 - Doctor gọi nhanh lượt được gợi ý",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/rooms/{{roomId}}/call-next",
+            "description": "Nút gọi nhanh recommendedNext. Trả 204 nếu chưa đến giờ lịch hẹn hoặc không có bệnh nhân đủ điều kiện."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "if (pm.response.code !== 204) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.entryId) pm.environment.set('queueEntryId', json.data && json.data.entryId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08A - Xem Queue tại điểm phục vụ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/service-points/{{servicePointId}}/active",
+            "description": "Queue FIFO cho cận lâm sàng hoặc phát thuốc. PHARMACY_DISPENSING được tạo tự động từ PrescriptionIssued và không check-in lại."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Đọc queue điểm phục vụ thành công', () => pm.expect(pm.response.code).to.eql(200));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.recommendedNext) pm.environment.set('queueEntryId', json.data.recommendedNext.entryId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08B - Gọi FIFO tại điểm phục vụ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/service-points/{{servicePointId}}/call-next",
+            "description": "Gọi entry QUEUED đầu tiên theo FIFO tại quầy xét nghiệm hoặc quầy phát thuốc."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Gọi FIFO thành công hoặc queue rỗng', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));",
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data.queueStatus).to.eql('CALLED');",
+                  "  pm.environment.set('queueEntryId', json.data.entryId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 - Dashboard theo department",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/departments/{{departmentId}}/dashboard",
+            "description": ""
+          }
+        },
+        {
+          "name": "10 - Gọi tiếp theo theo department (legacy)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/departments/{{departmentId}}/next",
+            "description": ""
+          }
+        },
+        {
+          "name": "11 - Recall bệnh nhân",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/entries/{{queueEntryId}}/recall",
+            "description": ""
+          }
+        },
+        {
+          "name": "12 - Đánh dấu lỡ lượt",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/entries/{{queueEntryId}}/miss",
+            "description": ""
+          }
+        },
+        {
+          "name": "13 - Xếp lại hàng đợi",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"position\": \"BACK\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/queues/entries/{{queueEntryId}}/requeue",
+            "description": ""
+          }
+        },
+        {
+          "name": "14 - Bắt đầu khám",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/entries/{{queueEntryId}}/start",
+            "description": ""
+          }
+        },
+        {
+          "name": "15 - Hoàn tất khám",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{doctorToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/entries/{{queueEntryId}}/complete",
+            "description": ""
+          }
+        },
+        {
+          "name": "16 - Manual intake",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": \"{{patientId}}\",\n  \"userId\": \"{{userId}}\",\n  \"departmentId\": \"{{departmentId}}\",\n  \"priorityLevel\": \"WALK_IN\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/queues/entries",
+            "description": ""
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
+                  "if (pm.response.code !== 204) {",
+                  "  const json = pm.response.json();",
+                  "  if (json.data && json.data.entryId) pm.environment.set('queueEntryId', json.data && json.data.entryId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17 - Lấy cấu hình Queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/configs/{{departmentId}}",
+            "description": ""
+          }
+        },
+        {
+          "name": "18 - Cập nhật cấu hình Queue",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{adminToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"departmentName\": \"Thần kinh\",\n  \"queuePrefix\": \"TK\",\n  \"roomCode\": \"ROOM-21\",\n  \"priorityRatioN\": 2,\n  \"normalRatioM\": 1,\n  \"avgConsultationMinutes\": 15,\n  \"nearTurnThreshold\": 3,\n  \"missedPolicy\": \"REQUEUE_BACK\",\n  \"active\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/queues/configs/{{departmentId}}",
+            "description": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Chưa có HTTP Controller",
+      "description": "Consultation, Prescription, Laboratory, EMR, Notification và AI hiện chưa có controller HTTP trong nhánh này.",
+      "item": []
+    }
+  ]
+}

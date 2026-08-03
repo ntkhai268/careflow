@@ -1,6 +1,7 @@
 # IDE
 .idea/
 .vscode/
+.worktrees/
 *.iml
 *.ipr
 *.iws

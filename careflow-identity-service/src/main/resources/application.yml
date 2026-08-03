@@ -1,25 +1,26 @@
 server:
   port: 8081
+  shutdown: graceful
+  forward-headers-strategy: framework
 
 spring:
   application:
     name: identity-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/careflow_identity
-    username: careflow
-    password: careflow
+    url: ${IDENTITY_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_identity}
+    username: ${IDENTITY_DB_USERNAME:careflow}
+    password: ${IDENTITY_DB_PASSWORD:careflow}
   jpa:
+    open-in-view: false
     hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-  rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+      ddl-auto: validate
+    show-sql: ${JPA_SHOW_SQL:false}
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 6MB
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
   threads:
     virtual:
       enabled: true
@@ -27,16 +28,27 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
 
 management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
   endpoints:
     web:
       exposure:
         include: health,info
 
 jwt:
-  secret: careflow-secret-key-for-jwt-token-generation-minimum-256-bits-long
-  expiration: 86400000
+  secret: ${JWT_SECRET}
+  expiration: ${JWT_EXPIRATION_MS:86400000}
+  refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS:2592000000}
+  issuer: careflow-identity
+
+springdoc:
+  swagger-ui:
+    operations-sorter: method
+    tags-sorter: alpha

@@ -4,12 +4,27 @@ server:
 spring:
   application:
     name: api-gateway
+  codec:
+    max-in-memory-size: 20MB
   cloud:
     gateway:
+      httpclient:
+        connect-timeout: 3000
+        response-timeout: 5s
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
       discovery:
         locator:
           enabled: true
           lower-case-service-id: true
+      default-filters:
+        - name: RequestSize
+          args:
+            maxSize: 20MB
       routes:
         - id: identity-service
           uri: lb://identity-service
@@ -18,7 +33,7 @@ spring:
         - id: patient-service
           uri: lb://patient-service
           predicates:
-            - Path=/api/patients/**
+            - Path=/api/patients/**, /api/health-records/**
         - id: appointment-service
           uri: lb://appointment-service
           predicates:
@@ -55,7 +70,7 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka/
+      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
 
@@ -64,3 +79,7 @@ management:
     web:
       exposure:
         include: health,info,gateway
+
+jwt:
+  secret: ${JWT_SECRET}
+  issuer: careflow-identity

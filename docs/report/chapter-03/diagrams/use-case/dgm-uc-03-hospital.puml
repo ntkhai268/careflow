@@ -1,0 +1,81 @@
+@startuml
+title DGM-UC-03 — Use Case phân hệ bác sĩ và nhân viên y tế
+
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+
+actor "Bác sĩ" as Doctor
+actor "Nhân viên\ntiếp nhận" as Reception
+actor "Kỹ thuật viên\ncận lâm sàng" as LabTech
+actor "Nhân viên\ncấp phát thuốc" as PharmacyStaff
+actor "Quản trị viên" as Admin
+
+rectangle "Hospital Web" {
+  usecase "Đăng nhập" as Login
+  usecase "Quét QR và check-in" as CheckIn
+  usecase "Xem active queue\ntại điểm phục vụ" as ViewQueue
+  usecase "Xem lượt được\nđề xuất" as Suggest
+  usecase "Gọi lượt khám\nđược đề xuất" as CallClinic
+  usecase "Gọi lượt\ncận lâm sàng" as CallLab
+  usecase "Xem queue và gọi\nlượt phát thuốc" as CallPharmacy
+  usecase "Đánh dấu lỡ lượt\nvà xếp lại" as Miss
+  usecase "Tra cứu hồ sơ\nđược phân công" as ViewPatient
+  usecase "Bắt đầu và cập nhật\nphiên khám" as Consult
+  usecase "Tạo chỉ định\ncận lâm sàng" as Order
+  usecase "Thực hiện kỹ thuật" as ExecuteLab
+  usecase "Nhập và phát hành\nkết quả" as FinalizeResult
+  usecase "Đọc kết quả" as Review
+  usecase "Kê toa và\nhoàn tất khám" as Complete
+  usecase "Tạo lịch tái khám" as FollowUp
+  usecase "Đối chiếu toa và\nxác nhận phát thuốc" as Dispense
+  usecase "Quản lý tài khoản, khoa,\nphòng, lịch và capacity" as Configure
+}
+
+Doctor -- Login
+Doctor -- ViewQueue
+Doctor -- Suggest
+Doctor -- CallClinic
+Doctor -- ViewPatient
+Doctor -- Consult
+Doctor -- Order
+Doctor -- Review
+Doctor -- Complete
+
+Reception -- Login
+Reception -- CheckIn
+Reception -- ViewQueue
+Reception -- Miss
+
+LabTech -- Login
+LabTech -- ViewQueue
+LabTech -- CallLab
+LabTech -- Miss
+LabTech -- ExecuteLab
+LabTech -- FinalizeResult
+
+PharmacyStaff -- Login
+PharmacyStaff -- CallPharmacy
+PharmacyStaff -- Miss
+PharmacyStaff -- Dispense
+
+Admin -- Login
+Admin -- Configure
+
+Suggest ..> ViewQueue : <<include>>
+CallClinic ..> Suggest : <<include>>
+CallLab ..> ViewQueue : <<include>>
+CallPharmacy ..> ViewQueue : <<include>>
+Dispense ..> CallPharmacy : <<include>>
+Miss ..> ViewQueue : <<extend>>
+Consult ..> ViewPatient : <<include>>
+Order ..> Consult : <<extend>>
+FinalizeResult ..> ExecuteLab : <<include>>
+FollowUp ..> Complete : <<extend>>
+
+legend bottom
+  Nguồn: Nhóm tác giả đề xuất dựa trên đặc tả CareFlow.
+endlegend
+@enduml

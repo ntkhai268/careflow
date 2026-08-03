@@ -5,10 +5,12 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.12.2
+  sdk: ">=3.11.0 <4.0.0"
 
 dependencies:
   flutter:
+    sdk: flutter
+  flutter_localizations:
     sdk: flutter
 
   cupertino_icons: ^1.0.8
@@ -32,9 +34,12 @@ dependencies:
   smooth_page_indicator: ^1.2.0+3
   flutter_svg: ^2.0.17
   cached_network_image: ^3.4.1
+  qr_flutter: ^4.1.0
 
   # Utils
   intl: ^0.20.2
+  file_picker: ^10.3.10
+  image_picker: ^1.2.3
 
 dev_dependencies:
   flutter_test:

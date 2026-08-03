@@ -1,0 +1,17 @@
+{
+  "status": 201,
+  "message": "Đặt lịch khám thành công",
+  "data": {
+    "id": "cf367b19-b946-41dc-969b-0d7958075b22",
+    "patientId": "9c613831-90c2-48f6-81c5-0105c20502a1",
+    "department": "THAN_KINH",
+    "departmentDisplayName": "Thần kinh",
+    "roomId": "ROOM-21",
+    "roomDisplayName": "Phòng khám Thần kinh 21",
+    "appointmentDate": "2026-08-18",
+    "timeSlot": "10:30-11:00",
+    "status": "CONFIRMED",
+    "statusDisplayName": "Đã xác nhận"
+  },
+  "timestamp": "2026-07-31T04:00:00Z"
+}

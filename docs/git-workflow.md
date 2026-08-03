@@ -109,12 +109,12 @@ git push origin feature/a/identity-service
 
 | Loại | Khi nào dùng | Ví dụ |
 |------|-------------|-------|
-| `feat` | Thêm tính năng mới | `feat(queue): add N:M interleaving algorithm` |
+| `feat` | Thêm tính năng mới | `feat(queue): add three-lane round-robin scheduler` |
 | `fix` | Sửa bug | `fix(patient): fix null pointer on empty phone` |
 | `refactor` | Refactor code (không thêm/sửa tính năng) | `refactor(identity): extract JWT logic to util class` |
 | `docs` | Thêm/sửa tài liệu | `docs: update API documentation` |
 | `chore` | Setup, config, dependencies | `chore: add springdoc dependency to patient-service` |
-| `test` | Thêm/sửa test | `test(queue): add unit test for priority queue` |
+| `test` | Thêm/sửa test | `test(queue): cover empty-lane round robin` |
 | `style` | Format code, thêm dấu ; | `style: format code with IntelliJ` |
 
 ### Phạm vi (scope) = tên service
@@ -127,7 +127,7 @@ consultation, prescription, emr, lab, ai, gateway, common
 ### ✅ Tốt
 
 ```
-feat(queue): implement multi-priority queue with 4 levels
+feat(queue): implement three scheduling lanes with atomic claim
 fix(appointment): return 404 when appointment not found
 chore(gateway): add route for lab-service
 ```

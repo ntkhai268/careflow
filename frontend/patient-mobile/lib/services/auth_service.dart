@@ -1,8 +1,9 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/api_config.dart';
 import 'api_service.dart';
 
-/// Auth response model
+/// Auth response model — maps to Identity Service's LoginResponse.
 class AuthResponse {
   final String token;
   final String? refreshToken;
@@ -19,37 +20,68 @@ class AuthResponse {
   });
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    final user = json['user'];
+    if (json['accessToken'] is! String || user is! Map<String, dynamic>) {
+      throw const FormatException('Identity API response không đúng contract');
+    }
     return AuthResponse(
-      token: json['token'] ?? '',
-      refreshToken: json['refreshToken'],
-      userId: json['userId'] ?? '',
-      email: json['email'] ?? '',
-      fullName: json['fullName'] ?? '',
+      token: json['accessToken'] as String,
+      refreshToken: json['refreshToken'] as String?,
+      userId: user['id'] as String? ?? '',
+      email: user['email'] as String? ?? '',
+      fullName: user['username'] as String? ?? '',
     );
   }
 }
 
-/// Authentication service — handles login, register, logout.
-/// Falls back to mock when API is unavailable.
+/// User info model — maps to Identity Service's UserResponse from /auth/me.
+class UserInfo {
+  final String id;
+  final String username;
+  final String email;
+  final String role;
+
+  UserInfo({
+    required this.id,
+    required this.username,
+    required this.email,
+    required this.role,
+  });
+
+  factory UserInfo.fromJson(Map<String, dynamic> json) {
+    return UserInfo(
+      id: json['id'] as String? ?? '',
+      username: json['username'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      role: json['role'] as String? ?? 'PATIENT',
+    );
+  }
+}
+
+/// Authentication service — handles login, register, logout, token verification.
+/// Mock mode is opt-in with --dart-define=USE_MOCK_AUTH=true.
 class AuthService {
   final ApiService _apiService;
-  bool _useMock = true; // Set to false when Identity Service API is ready
+  final bool _useMock;
 
-  AuthService(this._apiService);
+  AuthService(
+    this._apiService, {
+    bool useMock = const bool.fromEnvironment(
+      'USE_MOCK_AUTH',
+      defaultValue: false,
+    ),
+  }) : _useMock = useMock;
 
-  /// Toggle mock mode
-  void setUseMock(bool value) => _useMock = value;
-
-  /// Login with email and password
-  Future<AuthResponse> login(String email, String password) async {
+  /// Login with username/email and password.
+  Future<AuthResponse> login(String usernameOrEmail, String password) async {
     if (_useMock) {
-      return _mockLogin(email, password);
+      return _mockLogin(usernameOrEmail, password);
     }
 
     try {
       final response = await _apiService.post(
         ApiConfig.authLogin,
-        data: {'email': email, 'password': password},
+        data: {'usernameOrEmail': usernameOrEmail, 'password': password},
       );
 
       final authResponse = AuthResponse.fromJson(response.data['data']);
@@ -59,77 +91,101 @@ class AuthService {
       }
       return authResponse;
     } catch (e) {
-      // Fallback to mock if API unreachable
-      return _mockLogin(email, password);
+      throw Exception(_messageFrom(e));
     }
   }
 
-  /// Register new account
+  /// Register Identity account, then login to obtain the token pair.
   Future<AuthResponse> register({
-    required String fullName,
+    required String username,
     required String email,
-    required String phone,
     required String password,
   }) async {
     if (_useMock) {
-      return _mockRegister(fullName, email);
+      return _mockRegister(username, email);
     }
 
     try {
-      final response = await _apiService.post(
+      await _apiService.post(
         ApiConfig.authRegister,
-        data: {
-          'fullName': fullName,
-          'email': email,
-          'phone': phone,
-          'password': password,
-        },
+        data: {'username': username, 'email': email, 'password': password},
       );
-
-      final authResponse = AuthResponse.fromJson(response.data['data']);
-      await _apiService.saveToken(authResponse.token);
-      if (authResponse.refreshToken != null) {
-        await _apiService.saveRefreshToken(authResponse.refreshToken!);
-      }
-      return authResponse;
+      return await login(username, password);
     } catch (e) {
-      return _mockRegister(fullName, email);
+      throw Exception(_messageFrom(e));
     }
   }
 
-  /// Logout
-  Future<void> logout() async {
-    await _apiService.clearTokens();
+  /// Fetch current user info by verifying the stored JWT via /auth/me.
+  /// Returns null if token is invalid or expired (after refresh attempt).
+  Future<UserInfo?> fetchCurrentUser() async {
+    if (_useMock) {
+      return UserInfo(
+        id: 'mock-user-001',
+        username: 'Người dùng',
+        email: 'mock@careflow.vn',
+        role: 'PATIENT',
+      );
+    }
+
+    try {
+      final response = await _apiService.get(ApiConfig.authMe);
+      final data = response.data['data'];
+      if (data == null) return null;
+      return UserInfo.fromJson(data as Map<String, dynamic>);
+    } catch (e) {
+      // Token invalid or refresh failed — user must re-login
+      return null;
+    }
   }
 
-  /// Check if user is authenticated
+  /// Logout — revoke refresh token on server then clear local storage.
+  Future<void> logout() async {
+    try {
+      final refreshToken = await _apiService.getRefreshToken();
+      if (!_useMock && refreshToken != null && refreshToken.isNotEmpty) {
+        await _apiService.post(
+          ApiConfig.authLogout,
+          data: {'refreshToken': refreshToken},
+        );
+      }
+    } finally {
+      await _apiService.clearTokens();
+    }
+  }
+
+  /// Check if user is authenticated (local token check only).
   Future<bool> isAuthenticated() async {
     return await _apiService.hasToken();
   }
 
   // --- Mock implementations ---
 
-  Future<AuthResponse> _mockLogin(String email, String password) async {
-    // Simulate network delay
+  Future<AuthResponse> _mockLogin(
+    String usernameOrEmail,
+    String password,
+  ) async {
     await Future.delayed(const Duration(milliseconds: 800));
 
-    if (email.isEmpty || password.isEmpty) {
-      throw Exception('Email và mật khẩu không được để trống');
+    if (usernameOrEmail.isEmpty || password.isEmpty) {
+      throw Exception('Tên đăng nhập/email và mật khẩu không được để trống');
     }
 
     final mockResponse = AuthResponse(
       token: 'mock_jwt_token_${DateTime.now().millisecondsSinceEpoch}',
       refreshToken: 'mock_refresh_token',
       userId: 'mock-user-001',
-      email: email,
-      fullName: 'Nguyễn Văn A',
+      email: usernameOrEmail.contains('@')
+          ? usernameOrEmail
+          : '$usernameOrEmail@example.com',
+      fullName: usernameOrEmail,
     );
 
     await _apiService.saveToken(mockResponse.token);
     return mockResponse;
   }
 
-  Future<AuthResponse> _mockRegister(String fullName, String email) async {
+  Future<AuthResponse> _mockRegister(String username, String email) async {
     await Future.delayed(const Duration(milliseconds: 1000));
 
     final mockResponse = AuthResponse(
@@ -137,11 +193,37 @@ class AuthService {
       refreshToken: 'mock_refresh_token',
       userId: 'mock-user-${DateTime.now().millisecondsSinceEpoch}',
       email: email,
-      fullName: fullName,
+      fullName: username,
     );
 
     await _apiService.saveToken(mockResponse.token);
     return mockResponse;
+  }
+
+  String _messageFrom(Object error) {
+    if (error is DioException) {
+      final data = error.response?.data;
+      final statusCode = error.response?.statusCode;
+
+      // Try to extract server error message
+      if (data is Map<String, dynamic>) {
+        if (data['message'] is String) return data['message'] as String;
+        if (data['error'] is String) return data['error'] as String;
+        // Nested in 'data' field
+        if (data['data'] is Map && data['data']['message'] is String) {
+          return data['data']['message'] as String;
+        }
+      }
+
+      // Fallback by status code
+      if (statusCode == 401) return 'Sai tên đăng nhập hoặc mật khẩu';
+      if (statusCode == 400) return 'Thông tin không hợp lệ';
+      if (statusCode == 409) return 'Tài khoản đã tồn tại';
+      if (statusCode == 403) return 'Tài khoản bị khóa';
+
+      return 'Không thể kết nối server (${statusCode ?? 'timeout'})';
+    }
+    return error.toString();
   }
 }
 

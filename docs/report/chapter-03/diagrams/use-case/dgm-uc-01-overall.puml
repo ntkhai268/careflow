@@ -1,0 +1,64 @@
+@startuml
+title DGM-UC-01 — Biểu đồ Use Case tổng quát của CareFlow
+
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+skinparam packageStyle rectangle
+
+actor "Bệnh nhân" as Patient
+actor "Bác sĩ" as Doctor
+actor "Nhân viên\ntiếp nhận" as Reception
+actor "Kỹ thuật viên\ncận lâm sàng" as LabTech
+actor "Nhân viên\ncấp phát thuốc" as PharmacyStaff
+actor "Quản trị viên" as Admin
+actor "Hệ thống thanh toán/\nBHYT ngoài" as Payment
+
+rectangle "Hệ thống CareFlow" {
+  usecase "Đăng ký, đăng nhập" as UCAuth
+  usecase "Quản lý hồ sơ\nbệnh nhân" as UCProfile
+  usecase "Đặt và quản lý\nlịch khám" as UCAppointment
+  usecase "Xem phiếu khám\nvà hành trình" as UCJourney
+  usecase "Check-in bằng QR" as UCCheckIn
+  usecase "Theo dõi, đề xuất\nvà gọi lượt" as UCQueue
+  usecase "Thực hiện\nphiên khám" as UCConsultation
+  usecase "Tạo chỉ định\ncận lâm sàng" as UCOrder
+  usecase "Thực hiện và\nphát hành kết quả" as UCResult
+  usecase "Kê toa, hẹn tái khám\nvà hoàn tất" as UCPrescription
+  usecase "Gọi lượt và\nphát thuốc" as UCDispense
+  usecase "Quản lý cấu hình\nbệnh viện" as UCConfig
+  usecase "Xác nhận điều kiện\nthanh toán/BHYT" as UCPayment
+}
+
+Patient -- UCAuth
+Patient -- UCProfile
+Patient -- UCAppointment
+Patient -- UCJourney
+
+Reception -- UCCheckIn
+Reception -- UCQueue
+
+Doctor -- UCQueue
+Doctor -- UCConsultation
+Doctor -- UCOrder
+Doctor -- UCPrescription
+
+LabTech -- UCQueue
+LabTech -- UCResult
+
+PharmacyStaff -- UCQueue
+PharmacyStaff -- UCDispense
+
+Admin -- UCAuth
+Admin -- UCConfig
+
+Payment -- UCPayment
+UCPayment ..> UCOrder : <<extend>>
+UCOrder ..> UCConsultation : <<extend>>
+
+legend bottom
+  Nguồn: Nhóm tác giả đề xuất dựa trên đặc tả CareFlow.
+endlegend
+@enduml

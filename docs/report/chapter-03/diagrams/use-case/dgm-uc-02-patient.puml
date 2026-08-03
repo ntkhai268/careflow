@@ -1,0 +1,46 @@
+@startuml
+title DGM-UC-02 — Use Case phân hệ bệnh nhân
+
+left to right direction
+skinparam backgroundColor white
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam defaultFontSize 13
+
+actor "Bệnh nhân" as Patient
+
+rectangle "Patient Mobile" {
+  usecase "Đăng ký tài khoản" as Register
+  usecase "Đăng nhập" as Login
+  usecase "Quản lý hồ sơ" as Profile
+  usecase "Tải lên hồ sơ cũ" as Upload
+  usecase "Tra cứu khoa\nvà khung giờ" as Slots
+  usecase "Đặt lịch khám" as Book
+  usecase "Xem lịch và\nphiếu khám" as ViewTicket
+  usecase "Hủy lịch khám" as Cancel
+  usecase "Theo dõi lượt chờ" as TrackQueue
+  usecase "Xem chỉ định, kết quả\nvà hướng dẫn quay lại" as ViewResult
+  usecase "Xem toa thuốc\nvà lịch tái khám" as ViewOutcome
+  usecase "Xem thông báo" as Notification
+}
+
+Patient -- Register
+Patient -- Login
+Patient -- Profile
+Patient -- Upload
+Patient -- Book
+Patient -- ViewTicket
+Patient -- Cancel
+Patient -- TrackQueue
+Patient -- ViewResult
+Patient -- ViewOutcome
+Patient -- Notification
+
+Book ..> Slots : <<include>>
+Book ..> Profile : <<include>>\nChọn hồ sơ
+TrackQueue ..> ViewTicket : <<extend>>\nSau check-in
+
+legend bottom
+  Nguồn: Nhóm tác giả đề xuất dựa trên đặc tả CareFlow.
+endlegend
+@enduml

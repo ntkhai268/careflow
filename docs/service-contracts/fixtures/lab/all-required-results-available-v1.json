@@ -1,0 +1,16 @@
+{
+  "eventId": "9db97cf6-1c42-47be-a786-a987346574a1",
+  "eventType": "AllRequiredResultsAvailable",
+  "eventVersion": 1,
+  "aggregateId": "62210a5c-3081-48a8-82d8-e783864aa2ec",
+  "aggregateVersion": 5,
+  "occurredAt": "2026-08-18T05:00:00Z",
+  "producer": "lab-service",
+  "correlationId": "consultation-35df361e-f4b3-4113-ad0d-0ed853fe61fc",
+  "payload": {
+    "orderId": "62210a5c-3081-48a8-82d8-e783864aa2ec",
+    "consultationId": "35df361e-f4b3-4113-ad0d-0ed853fe61fc",
+    "patientId": "9c613831-90c2-48f6-81c5-0105c20502a1",
+    "sourceQueueEntryId": "6fb18911-a1e8-45d9-a53e-f5b207b8c588"
+  }
+}
