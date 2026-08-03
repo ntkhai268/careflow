@@ -88,8 +88,8 @@ hiện trong luồng khác.
 - Bác sĩ chủ động bấm gọi tại bất kỳ entry đủ điều kiện nào; server gọi đúng entry
   được chọn. `call-next` là lệnh gọi nhanh và phải tính lại gợi ý tại thời điểm xử lý.
   Scheduler không tự động gọi bệnh nhân.
-- Chỉ lượt khám ban đầu `CHECKED_IN` và lượt đọc kết quả đã xác nhận quay lại mới
-  xuất hiện trong active queue phòng khám.
+- Active queue phòng khám gồm lượt khám ban đầu `CHECKED_IN` và lượt đọc kết quả
+  được tự động tạo khi đủ kết quả bắt buộc.
 - Bao gồm gọi lại và đánh dấu `MISSED`; nhân viên có quyền chỉ hỗ trợ requeue
   theo chính sách, không thực hiện command gọi của phòng khám.
 - Bệnh nhân nhận cập nhật trạng thái và thông báo gọi lượt.
@@ -109,10 +109,11 @@ hiện trong luồng khác.
 ### `UC-LAB-03` — Thực hiện, phát hành và đọc kết quả
 
 - Kỹ thuật viên gọi, bắt đầu, nhập và finalize kết quả.
-- Khi đủ kết quả bắt buộc, consultation chờ review; Queue kích hoạt
-  entry `CONSULTATION` phase `RESULT_REVIEW` sau khi bệnh nhân xác nhận đã quay lại.
-- Bệnh nhân nhận thông báo, quay lại, xác nhận đã có mặt và được phục vụ bởi đúng
-  bác sĩ trong consultation cũ, không tạo lịch mới.
+- Khi đủ kết quả bắt buộc, consultation chờ review; Queue tự động tạo và kích
+  hoạt entry `CONSULTATION` phase `RESULT_REVIEW`.
+- Bệnh nhân được bộ phận cận lâm sàng hướng dẫn quay lại và có thể nhận thêm
+  thông báo; không cần dùng Mobile hay xác nhận có mặt. Lượt vẫn thuộc đúng bác
+  sĩ trong consultation cũ và không tạo lịch mới.
 
 ### `UC-PRE-01` — Kê toa, hẹn tái khám và hoàn tất
 

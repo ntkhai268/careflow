@@ -305,7 +305,7 @@ Người B (Bệnh nhân)          Người A (Hệ thống)          Người C
 | 4 | API: tạo số thứ tự, xem đề xuất, gọi theo entry/gọi nhanh, skip và xử lý lỡ lượt | Queue REST endpoints | 🔴 P0 |
 | 5 | Lắng nghe event `AppointmentCreated` từ RabbitMQ → tự tạo queue entry | Event-driven flow | 🔴 P0 |
 | 6 | **Unit test** queue (làn rỗng, gọi khác gợi ý, nhiều lượt CALLED, lỡ lượt) | Test coverage | 🟡 P1 |
-| 7 | API kích hoạt entry `CONSULTATION + RESULT_REVIEW` khi bệnh nhân xác nhận quay lại | Result-review flow | 🟡 P1 |
+| 7 | Consume `AllRequiredResultsAvailable` và tự động kích hoạt entry `CONSULTATION + RESULT_REVIEW` idempotent | Result-review flow | 🟡 P1 |
 | 8 | Consume `PrescriptionIssued`, tạo `PHARMACY_DISPENSING` và gọi FIFO theo điểm cấp phát | Pharmacy queue | 🟡 P1 |
 
 #### Người B — Bệnh nhân (Appointment + Mobile booking)

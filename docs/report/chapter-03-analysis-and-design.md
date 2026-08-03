@@ -77,7 +77,7 @@ migration tương ứng sẽ được đánh giá riêng ở Chương 4.
 |---|---|
 | `FR-QUE-01` | Hệ thống cấp Visit Ticket, số thứ tự và QR sau khi lịch được xác nhận. |
 | `FR-QUE-02` | Nhân viên tiếp nhận có thể quét QR để xác nhận bệnh nhân đã đến. |
-| `FR-QUE-03` | Active queue phòng khám chỉ hiển thị lượt khám ban đầu đã `CHECKED_IN` và lượt đọc kết quả đã xác nhận bệnh nhân quay lại. |
+| `FR-QUE-03` | Active queue phòng khám hiển thị lượt khám ban đầu đã `CHECKED_IN` và lượt đọc kết quả được tự động kích hoạt khi đủ kết quả bắt buộc. |
 | `FR-QUE-04` | Doctor Web xác định phòng từ khoa của bác sĩ, sau đó hiển thị riêng ba làn `PRIORITY`, `NORMAL`, `RESULT_REVIEW` và lượt được Queue Service đề xuất tiếp theo. |
 | `FR-QUE-05` | Hệ thống không tự động gọi. Bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ entry đủ điều kiện nào trong active queue của phòng. |
 | `FR-QUE-06` | Người có quyền có thể gọi lại, đánh dấu lỡ lượt và xếp lại lượt theo chính sách. |
@@ -105,7 +105,7 @@ migration tương ứng sẽ được đánh giá riêng ở Chương 4.
 | `FR-LAB-03` | Order đủ điều kiện phải tự tạo lượt tại đúng service point, không check-in lần hai. |
 | `FR-LAB-04` | Kỹ thuật viên có thể gọi, bắt đầu và cập nhật tiến trình thực hiện order được phân công. |
 | `FR-LAB-05` | Kỹ thuật viên có thể nhập và phát hành kết quả; kết quả đã phát hành không bị ghi đè âm thầm. |
-| `FR-LAB-06` | Khi đủ kết quả bắt buộc, consultation chuyển sang chờ review; entry `CONSULTATION` phase `RESULT_REVIEW` được kích hoạt sau khi bệnh nhân xác nhận đã quay lại. |
+| `FR-LAB-06` | Khi đủ kết quả bắt buộc, consultation chuyển sang chờ review và hệ thống tự động tạo entry `CONSULTATION` phase `RESULT_REVIEW`. |
 
 #### g. Toa thuốc, tái khám và thông báo
 
@@ -161,7 +161,7 @@ và đánh giá riêng, không mặc nhiên được coi là đã hoàn thành.
 | `BR-APT-02` | Không cho phép một bệnh nhân có hai lịch chưa hủy trong cùng khung giờ. |
 | `BR-APT-03` | Ca đã bắt đầu hoặc đã qua không được phép đặt. |
 | `BR-APT-04` | Một `Department` có thể có nhiều `ClinicRoom`; dữ liệu MVP chỉ có đúng một phòng active cho mỗi khoa. Nếu kết quả phân phòng là 0 hoặc nhiều hơn 1, hệ thống báo lỗi cấu hình và không random/find-first. |
-| `BR-QUE-01` | Visit Ticket có thể cấp trước nhưng lượt khám ban đầu chỉ vào active queue sau khi `CHECKED_IN`; lượt đọc kết quả chỉ active sau khi xác nhận bệnh nhân quay lại. |
+| `BR-QUE-01` | Visit Ticket có thể cấp trước nhưng lượt khám ban đầu chỉ vào active queue sau khi `CHECKED_IN`; lượt đọc kết quả tự active khi đủ kết quả bắt buộc. |
 | `BR-QUE-02` | Mỗi phòng và phiên có ba làn logic `PRIORITY`, `NORMAL`, `RESULT_REVIEW`; FIFO theo `queuedAt` trong từng làn và đề xuất Round Robin `1:1:1`, bỏ qua làn rỗng. Khi chưa có lịch sử gọi, chu kỳ bắt đầu từ `PRIORITY`. |
 | `BR-QUE-03` | Lượt `MISSED` không được giữ ở đầu queue và chỉ được xếp lại theo chính sách. |
 | `BR-QUE-04` | QR chỉ chứa token tham chiếu hoặc token đã ký và phải được kiểm tra hiệu lực khi quét. |
@@ -171,7 +171,7 @@ và đánh giá riêng, không mặc nhiên được coi là đã hoàn thành.
 | `BR-LAB-01` | Order đủ điều kiện tự tạo lượt cận lâm sàng; bệnh nhân không check-in lại tại mỗi khu. |
 | `BR-LAB-02` | Kết quả đã phát hành chỉ được sửa bằng phiên bản correction có lý do và audit. |
 | `BR-REV-01` | Lượt đọc kết quả thuộc consultation hiện tại và không tạo Appointment mới. |
-| `BR-REV-02` | `RESULT_REVIEW` dùng một làn riêng, chỉ active sau khi bệnh nhân xác nhận quay lại và tham gia Round Robin `1:1:1` tại phòng khám. |
+| `BR-REV-02` | `RESULT_REVIEW` dùng một làn riêng, tự active khi đủ kết quả bắt buộc và tham gia Round Robin `1:1:1`; nếu bệnh nhân chưa có mặt thì áp dụng `MISSED/requeue`. |
 | `BR-CON-01` | Chỉ bác sĩ được phân công mới cập nhật hoặc hoàn tất consultation. |
 | `BR-PRE-01` | Toa `CONFIRMED` không được sửa trực tiếp; thay đổi phải tạo amendment/toa thay thế. |
 | `BR-PRE-02` | Mỗi toa `CONFIRMED` có tối đa một lượt `PHARMACY_DISPENSING` đang hoạt động; lượt được gọi FIFO và hoàn tất khi toa chuyển `DISPENSED`. |
@@ -378,8 +378,8 @@ Nguồn PlantUML: [DGM-STA-01 — Appointment](chapter-03/diagrams/state/dgm-sta
 
 Queue Entry có ba loại. `CONSULTATION` phase `INITIAL` bắt đầu từ phiếu đã cấp và
 cần check-in. `LAB_EXECUTION` được tạo tự động khi order đủ điều kiện.
-`CONSULTATION` phase `RESULT_REVIEW` là một entry mới liên kết consultation cũ,
-được kích hoạt khi đủ kết quả và bệnh nhân xác nhận đã quay lại.
+`CONSULTATION` phase `RESULT_REVIEW` là một entry mới liên kết consultation cũ và
+được tự động kích hoạt ngay khi đủ kết quả bắt buộc.
 `PHARMACY_DISPENSING` được tạo khi toa chuyển `CONFIRMED`.
 
 `QueueType` biểu diễn công đoạn phục vụ; `ConsultationPhase` phân biệt khám ban

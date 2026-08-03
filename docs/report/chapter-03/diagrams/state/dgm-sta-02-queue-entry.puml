@@ -51,7 +51,7 @@ end note
 
 note bottom of ReviewQueue
   CONSULTATION phase RESULT_REVIEW là entry mới của consultation cũ
-  và chỉ active sau khi bệnh nhân xác nhận quay lại.
+  và tự active khi đủ kết quả bắt buộc.
   SchedulingLane không phải trạng thái vòng đời.
 end note
 

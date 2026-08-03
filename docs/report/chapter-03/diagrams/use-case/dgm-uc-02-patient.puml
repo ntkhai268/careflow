@@ -19,7 +19,7 @@ rectangle "Patient Mobile" {
   usecase "Xem lịch và\nphiếu khám" as ViewTicket
   usecase "Hủy lịch khám" as Cancel
   usecase "Theo dõi lượt chờ" as TrackQueue
-  usecase "Xem chỉ định, kết quả\nvà xác nhận quay lại" as ViewResult
+  usecase "Xem chỉ định, kết quả\nvà hướng dẫn quay lại" as ViewResult
   usecase "Xem toa thuốc\nvà lịch tái khám" as ViewOutcome
   usecase "Xem thông báo" as Notification
 }

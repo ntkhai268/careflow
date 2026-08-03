@@ -1,6 +1,6 @@
 # Queue Management Service Contract
 
-> Contract ID: `CF-SVC-06` | Version: `1.2` | Module: `careflow-queue-service`
+> Contract ID: `CF-SVC-06` | Version: `1.3` | Module: `careflow-queue-service`
 
 ## 1. Trách nhiệm và nguyên tắc
 
@@ -13,8 +13,8 @@ Sở hữu:
 - đề xuất lượt tiếp theo; bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ lượt
   `CHECKED_IN` nào trong phòng, sau đó recall, missed, bắt đầu và hoàn tất lượt;
 - queue cận lâm sàng tự tạo từ order;
-- kích hoạt lượt khám có `consultationPhase=RESULT_REVIEW` khi đủ kết quả và bệnh
-  nhân xác nhận đã quay lại;
+- tự động tạo và kích hoạt lượt khám có `consultationPhase=RESULT_REVIEW` ngay
+  khi đủ kết quả bắt buộc;
 - queue phát thuốc tự tạo từ toa đã xác nhận và vận hành FIFO tại điểm cấp phát.
 
 Không quản lý slot/capacity lịch hẹn, chẩn đoán hoặc kết quả xét nghiệm. Không
@@ -74,8 +74,8 @@ Round Robin `1:1:1` của phòng khám.
   không tự phân phòng và không nhận phòng mới từ bệnh nhân.
 - Số được cấp trước và giữ theo phòng/phiên.
 - Active queue phòng khám chỉ chứa lượt `CONSULTATION + INITIAL` đã
-  `CHECKED_IN` và lượt `CONSULTATION + RESULT_REVIEW` đang `QUEUED` sau khi xác
-  nhận bệnh nhân đã quay lại.
+  `CHECKED_IN` và lượt `CONSULTATION + RESULT_REVIEW` đang `QUEUED` sau khi đủ
+  kết quả bắt buộc.
 - Khi check-in, ghi `queuedAt`; FIFO trong từng `QueueClass` theo `queuedAt`, nếu
   trùng thì dùng `queueNumber` làm tiêu chí phụ.
 - `QueueClass` mặc định là `NORMAL`. Chỉ nhân viên có quyền mới được xác nhận
@@ -109,10 +109,12 @@ Round Robin `1:1:1` của phòng khám.
 - Tạo khi nhận `AllRequiredResultsAvailable`.
 - Consultation chuyển sang `WAITING_FOR_REVIEW` và bệnh nhân được thông báo quay
   lại phòng khám.
-- Chỉ kích hoạt vào active queue khi bệnh nhân hoặc nhân viên xác nhận bệnh nhân
-  đã quay lại; thời điểm này được dùng làm `queuedAt`.
-- Queue tạo một entry mới có `type=CONSULTATION` và
-  `consultationPhase=RESULT_REVIEW`, vẫn liên kết với `consultationId` cũ.
+- Queue tự động tạo và kích hoạt một entry mới có `type=CONSULTATION`,
+  `consultationPhase=RESULT_REVIEW`, vẫn liên kết với `consultationId` cũ;
+  `queuedAt` lấy theo thời điểm nhận sự kiện đủ kết quả.
+- Bệnh nhân không phải dùng Mobile, xác nhận quay lại hoặc check-in lần nữa.
+  Khu cận lâm sàng hướng dẫn bệnh nhân quay lại phòng khám; thông báo Mobile chỉ
+  là kênh hỗ trợ.
 - Lượt tham gia làn `RESULT_REVIEW`, giữ FIFO riêng và được gọi theo Round Robin
   `1:1:1` cùng hai làn khám ban đầu.
 - Nếu bị missed, chỉ xếp lại cuối làn `RESULT_REVIEW` theo chính sách.
@@ -137,7 +139,6 @@ Round Robin `1:1:1` của phòng khám.
 | `POST /api/queues/check-in` | `STAFF`, `ADMIN` | Quét QR và tiếp nhận |
 | `GET /api/queues/patients/{patientId}/current` | Chính chủ/clinical staff | Lượt hiện tại của bệnh nhân |
 | `GET /api/queues/rooms/{roomId}/active?date=&session=` | `DOCTOR`, `STAFF`, `ADMIN` | Active queue phòng; backend kiểm tra phạm vi phòng của actor |
-| `POST /api/queues/consultations/{consultationId}/review-arrival` | Chính chủ, `DOCTOR`, `STAFF` | Xác nhận bệnh nhân đã quay lại và kích hoạt `RESULT_REVIEW` |
 | `GET /api/queues/service-points/{servicePointId}/active?date=` | Staff được phân công, `ADMIN` | Active queue cận lâm sàng hoặc phát thuốc tại điểm phục vụ |
 | `POST /api/queues/entries/{entryId}/call` | Actor được phân công | Gọi đúng lượt đủ điều kiện do người phục vụ chọn |
 | `POST /api/queues/rooms/{roomId}/call-next` | `DOCTOR` | Lệnh gọi nhanh lượt được server đề xuất tại phòng khám |
@@ -241,7 +242,7 @@ Consume:
 | `AppointmentConfirmed` | Tạo ticket `TICKET_ISSUED` idempotent |
 | `AppointmentCancelled/NoShow` | Vô hiệu ticket chưa phục vụ |
 | `LabOrderReadyForExecution` | Tạo `LAB_EXECUTION` ở trạng thái `QUEUED` |
-| `AllRequiredResultsAvailable` | Lưu eligibility/projection idempotent và thông báo bệnh nhân quay lại; không tự đưa vào active queue khi chưa xác nhận có mặt |
+| `AllRequiredResultsAvailable` | Tạo ngay entry `CONSULTATION + RESULT_REVIEW` ở trạng thái `QUEUED`, dùng `occurredAt` làm `queuedAt` và thông báo bệnh nhân quay lại |
 | `PrescriptionIssued` | Tạo `PHARMACY_DISPENSING` ở trạng thái `QUEUED` tại `dispensingServicePointId` trong event |
 | `PrescriptionCancelled` | Hủy lượt phát thuốc chưa hoàn tất |
 | `PrescriptionDispensed` | Hoàn tất lượt phát thuốc tương ứng idempotent |
@@ -286,7 +287,7 @@ Publish:
 - Một appointment chỉ có một ticket khám ban đầu; một lab order chỉ có một lab
   entry tại mỗi điểm thực hiện.
 - Một consultation chỉ có tối đa một entry `CONSULTATION + RESULT_REVIEW` đang
-  hoạt động; xác nhận quay lại lặp không tạo entry trùng.
+  hoạt động; event `AllRequiredResultsAvailable` gửi lại không tạo entry trùng.
 - Một prescription chỉ có tối đa một entry `PHARMACY_DISPENSING` đang hoạt động;
   event gửi lại không tạo lượt phát thuốc trùng.
 - QR hết hạn/sai phòng/sai ngày trả `400` hoặc `409`; ticket bị hủy trả `409`.
@@ -307,6 +308,8 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 - Test Round Robin: ba làn có P1, N1, R1 và `lastServedLane=RESULT_REVIEW` → ba
   lần gọi thành công tiếp theo là P1, N1, R1.
 - Test bỏ qua làn rỗng: `NORMAL` rỗng → luân phiên `PRIORITY`, `RESULT_REVIEW`.
+- Test `AllRequiredResultsAvailable` tự tạo đúng một result-review entry active;
+  event gửi lại không tạo trùng.
 - Test bác sĩ gọi một entry không phải `recommendedNext`.
 - Test gọi thêm khi phòng đã có lượt `CALLED` hoặc `IN_PROGRESS`.
 - Test double-click cùng `Idempotency-Key` không phát `PatientCalled` hai lần.
@@ -358,7 +361,7 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 - Appointment confirmed → có phiếu số 47.
 - Trước check-in số 47 không có trong active queue; sau check-in xuất hiện đúng vị trí.
 - Lab order tự vào hàng không check-in lại.
-- Result review chỉ active sau xác nhận quay lại và tham gia Round Robin
-  `1:1:1` tại phòng khám.
+- Result review tự active khi đủ kết quả và tham gia Round Robin `1:1:1` tại
+  phòng khám; nếu bệnh nhân chưa có mặt thì dùng `MISSED/requeue`.
 - Toa đã xác nhận tự tạo lượt phát thuốc; nhân viên gọi FIFO và phát thuốc làm
   Queue Entry hoàn tất mà không yêu cầu hệ thống kho.

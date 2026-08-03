@@ -67,7 +67,7 @@ Branch `838f08f` có:
   `QueueType=CONSULTATION|LAB_EXECUTION|PHARMACY_DISPENSING`, với
   `RESULT_REVIEW` là `ConsultationPhase`/làn điều phối.
 - Chưa consume `LabOrderReadyForExecution` hoặc `AllRequiredResultsAvailable`.
-- Chưa có xác nhận bệnh nhân quay lại, làn `RESULT_REVIEW` và scheduler ba làn.
+- Chưa có cơ chế tự tạo lượt đọc kết quả, làn `RESULT_REVIEW` và scheduler ba làn.
 - API và event name đang theo contract cũ.
 
 ### Hướng xử lý

@@ -8,9 +8,10 @@
 
 > **Contract evolution — 2026-08-03:** Queue contract 1.2 models
 > `QueueType=CONSULTATION|LAB_EXECUTION|PHARMACY_DISPENSING` and keeps
-> `RESULT_REVIEW` as a consultation phase/scheduling lane. This dated design
-> keeps its existing patient UI states; pharmacy queue tracking is a follow-up
-> vertical slice rather than an implicit change to the completed plan.
+> `RESULT_REVIEW` as a consultation phase/scheduling lane. Result review is
+> activated automatically when all required results are available; Mobile only
+> informs the patient to return and is not an eligibility gate. Pharmacy queue
+> tracking is a follow-up vertical slice.
 
 ## 1. Objective
 
@@ -38,9 +39,10 @@ sources. Demo code must not leak into production behavior.
    actors.
 6. A laboratory order is automatically received by the laboratory workflow.
    The patient does not check in a second time.
-7. When all ordered results are available, the patient is asked to return to
-   the clinic. After confirming arrival, the patient enters `RESULT_REVIEW`,
-   which joins the clinic's Round Robin `1:1:1` scheduling cycle.
+7. When all ordered results are available, Queue automatically places the
+   patient in `RESULT_REVIEW`, which joins the clinic's Round Robin `1:1:1`
+   scheduling cycle. Mobile only asks the patient to return to the clinic; no
+   app confirmation is required.
 8. Analytics and AI are outside the patient journey implementation. They may
    consume the resulting data later but must not block the core flow.
 
@@ -223,7 +225,8 @@ Vietnamese UI.
   and `RESULT_REVIEW`.
 - FIFO applies inside each lane; the room scheduler suggests patients using
   Round Robin `1:1:1` and skips empty lanes.
-- Only `CHECKED_IN` initial patients and confirmed-return review patients are active.
+- Only `CHECKED_IN` initial patients and automatically created result-review
+  entries are active.
 - The electronic ticket's printed number remains stable.
 - `peopleAhead` and expected wait are derived demo values and never presented as
   guaranteed times.

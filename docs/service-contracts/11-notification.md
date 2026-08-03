@@ -68,7 +68,7 @@ Không gửi chẩn đoán chi tiết, kết quả nhạy cảm hoặc tên đ�
 | `LabOrderCreated` | `LAB_ORDER_CREATED` | Patient |
 | `LabOrderReadyForExecution` | `LAB_READY` | Patient |
 | `LabResultAvailable` | `LAB_RESULT_AVAILABLE` | Patient/Doctor, không kèm kết quả chi tiết |
-| `AllRequiredResultsAvailable` | `RETURN_FOR_REVIEW` | Patient/Doctor |
+| `AllRequiredResultsAvailable` | `RETURN_FOR_REVIEW` | Patient/Doctor; chỉ hướng dẫn quay lại, không yêu cầu xác nhận để vào queue |
 | `PrescriptionIssued` | `PRESCRIPTION_AVAILABLE` | Patient |
 | `FollowUpScheduled` | `FOLLOW_UP_SCHEDULED` | Patient |
 

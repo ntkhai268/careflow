@@ -174,9 +174,9 @@ Queue cận lâm sàng và phát thuốc giữ FIFO riêng theo từng `serviceP
 
 Lượt khám ban đầu chỉ vào active queue sau khi `CHECKED_IN`. Bệnh nhân không
 check-in lại bằng Visit Ticket ở khu cận lâm sàng hoặc khi quay lại đọc kết quả;
-entry `CONSULTATION + RESULT_REVIEW` chỉ active sau khi xác nhận bệnh nhân đã
-quay lại. Toa `CONFIRMED` tạo entry `PHARMACY_DISPENSING`; bệnh nhân không
-check-in lại tại quầy thuốc.
+entry `CONSULTATION + RESULT_REVIEW` tự active ngay khi đủ kết quả bắt buộc.
+Toa `CONFIRMED` tạo entry `PHARMACY_DISPENSING`; bệnh nhân không check-in lại tại
+quầy thuốc.
 
 ### 7.3. Consultation
 
@@ -226,20 +226,23 @@ Bệnh nhân chỉ xem toa `CONFIRMED` hoặc `DISPENSED`.
 8. QR chỉ chứa token tham chiếu hoặc token đã ký, không chứa dữ liệu y tế trực tiếp.
 9. Bệnh nhân lỡ lượt không được giữ ở đầu queue.
 10. Order đủ điều kiện tự tạo lượt cận lâm sàng; bệnh nhân không check-in lại.
-11. Khi đủ kết quả, Queue tạo entry `CONSULTATION + RESULT_REVIEW` mới nhưng vẫn
-   liên kết consultation cũ, không tạo Appointment mới và chỉ active sau khi
-   bệnh nhân xác nhận đã quay lại.
-12. Hệ thống chỉ đề xuất; bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ lượt
-   `CHECKED_IN` nào. Queue Service ghi người gọi và phát `PatientCalled`.
-13. Doctor Web có thể suy ra `roomId` từ khoa của bác sĩ, nhưng Queue Service vẫn
+11. Khi đủ kết quả, Queue tự động tạo và kích hoạt entry
+   `CONSULTATION + RESULT_REVIEW` mới nhưng vẫn liên kết consultation cũ, không
+   tạo Appointment mới; `queuedAt` lấy theo thời điểm đủ kết quả.
+12. Bệnh nhân không cần dùng Mobile hoặc xác nhận quay lại. Nếu được gọi khi chưa
+   có mặt, entry chuyển `MISSED` và được xếp lại cuối làn theo chính sách.
+13. Hệ thống chỉ đề xuất; bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ entry
+   đủ điều kiện nào trong active queue. Queue Service ghi người gọi và phát
+   `PatientCalled`.
+14. Doctor Web có thể suy ra `roomId` từ khoa của bác sĩ, nhưng Queue Service vẫn
     phải xác minh bác sĩ có quyền truy cập phòng trên URL.
-14. Chỉ bác sĩ được phân công mới cập nhật consultation và xác nhận toa.
-15. Patient chỉ được truy cập hồ sơ, kết quả và toa thuộc quyền sở hữu của mình.
-16. Toa `CONFIRMED` tự tạo một lượt `PHARMACY_DISPENSING`; điểm cấp phát gọi FIFO
+15. Chỉ bác sĩ được phân công mới cập nhật consultation và xác nhận toa.
+16. Patient chỉ được truy cập hồ sơ, kết quả và toa thuộc quyền sở hữu của mình.
+17. Toa `CONFIRMED` tự tạo một lượt `PHARMACY_DISPENSING`; điểm cấp phát gọi FIFO
     và Prescription Service chỉ chuyển toa sang `DISPENSED` sau khi phát thuốc.
-17. Queue phát thuốc không đồng nghĩa với quản lý kho; tồn kho vẫn ngoài phạm vi.
-18. Thông báo thất bại không rollback giao dịch nghiệp vụ đã thành công.
-19. AI và Analytics không xuất hiện trong luồng MVP của chương này.
+18. Queue phát thuốc không đồng nghĩa với quản lý kho; tồn kho vẫn ngoài phạm vi.
+19. Thông báo thất bại không rollback giao dịch nghiệp vụ đã thành công.
+20. AI và Analytics không xuất hiện trong luồng MVP của chương này.
 
 ## 9. Cấu trúc Chương 3 đã chốt
 

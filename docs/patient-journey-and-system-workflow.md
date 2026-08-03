@@ -37,8 +37,8 @@ hóa như hệ thống ngoài và tích hợp sau.
    không truyền `roomId` khi đặt lịch.
 4. QR thuộc phiếu khám của bệnh nhân. Nhân viên hoặc kiosk tại phòng khám quét
    QR để xác nhận tiếp nhận.
-5. Active queue của phòng khám chỉ chứa bệnh nhân đã `CHECKED_IN` hoặc bệnh nhân
-   đã quay lại và xác nhận chờ đọc kết quả.
+5. Active queue của phòng khám chỉ chứa bệnh nhân khám ban đầu đã `CHECKED_IN`
+   hoặc lượt đọc kết quả được tự động tạo khi đủ kết quả bắt buộc.
 6. Mỗi phòng và phiên khám có ba làn điều phối logic: `PRIORITY`, `NORMAL` và
    `RESULT_REVIEW`. Queue Service đề xuất lượt theo Round Robin `1:1:1`, đồng
    thời giữ FIFO riêng trong từng làn.
@@ -48,9 +48,8 @@ hóa như hệ thống ngoài và tích hợp sau.
    có thể được mock hoặc tích hợp như một hệ thống ngoài.
 9. Sau khi bác sĩ tạo chỉ định cận lâm sàng, hệ thống tự tạo lượt tại khu tương
    ứng. Bệnh nhân tới ngồi chờ, không check-in thêm tại mỗi khu.
-10. Khi đủ kết quả bắt buộc, hệ thống thông báo bệnh nhân quay lại phòng bác sĩ.
-   Sau khi bệnh nhân xác nhận đã quay lại, lượt được đưa vào làn
-   `RESULT_REVIEW` của phòng khám.
+10. Khi đủ kết quả bắt buộc, hệ thống tự đưa lượt vào làn `RESULT_REVIEW` và
+    thông báo/hướng dẫn bệnh nhân quay lại phòng bác sĩ.
 11. Lượt đọc kết quả vẫn thuộc cùng consultation, không tạo Appointment mới.
 12. Toa đã xác nhận tự tạo lượt phát thuốc FIFO tại điểm cấp phát; nghiệp vụ này
     không bao gồm quản lý kho hoặc tồn kho.
@@ -157,7 +156,7 @@ flowchart TD
     K --> L["Hệ thống tự tạo lượt cận lâm sàng"]
     L --> M["Bệnh nhân tới khu thực hiện và ngồi chờ"]
     M --> N["Kỹ thuật viên gọi, thực hiện và trả kết quả"]
-    N --> O["Bệnh nhân quay lại và vào làn RESULT_REVIEW"]
+    N --> O["Tự tạo lượt trong làn RESULT_REVIEW"]
     O --> P["Bệnh nhân quay lại và bác sĩ đọc kết quả"]
     P --> Q
     Q --> R["Tạo lượt PHARMACY_DISPENSING"]
@@ -630,9 +629,9 @@ Khi tất cả kết quả bắt buộc đã sẵn sàng:
 ```text
 LabResultAvailable
 → Consultation WAITING_FOR_REVIEW
-→ Notification yêu cầu bệnh nhân quay lại Phòng 21
-→ Bệnh nhân hoặc nhân viên xác nhận đã quay lại
-→ Queue Service kích hoạt entry CONSULTATION + RESULT_REVIEW
+→ Queue Service tự tạo entry CONSULTATION + RESULT_REVIEW ở trạng thái QUEUED
+→ queuedAt = thời điểm đủ kết quả
+→ Notification hướng dẫn bệnh nhân quay lại Phòng 21
 ```
 
 Bệnh nhân không:
@@ -663,8 +662,8 @@ làn khám ban đầu và cũng không tự động đứng đầu toàn bộ ac
 ```text
 KẾT QUẢ ĐÃ SẴN SÀNG
 
-Vui lòng quay lại Phòng 21 và xác nhận đã quay lại.
-Sau khi xác nhận, bạn sẽ vào danh sách chờ bác sĩ đọc kết quả.
+Bạn đã được đưa vào danh sách chờ đọc kết quả.
+Vui lòng quay lại Phòng 21 và chờ được gọi.
 ```
 
 ### 15.4. Doctor Web hiển thị
@@ -959,7 +958,7 @@ CALLED → MISSED → QUEUED
 | Khám ban đầu | Không cần thao tác | Nhập sinh hiệu, triệu chứng và chẩn đoán | Không bắt buộc |
 | Chỉ định | Xem danh sách việc cần làm | Tạo order | Thu ngân/BHYT xác nhận nếu cần |
 | Cận lâm sàng | Xem số, địa điểm và tiến độ | Theo dõi kết quả | Kỹ thuật viên gọi, thực hiện và nhập kết quả |
-| Quay lại | Nhận thông báo và xác nhận đã quay lại phòng | Xem RESULT_REVIEW trong queue | Hỗ trợ missed nếu bệnh nhân chưa về |
+| Quay lại | Nhận thông báo và quay lại phòng, không cần xác nhận trên app | Xem RESULT_REVIEW trong queue | Hỗ trợ `MISSED/requeue` nếu bệnh nhân chưa về |
 | Phát thuốc | Xem số và trạng thái chờ tại quầy | Không | Nhân viên gọi FIFO, đối chiếu toa và xác nhận cấp phát |
 | Hoàn tất | Xem toa, kết quả và tái khám | Kê toa, kết luận và hoàn tất | Hỗ trợ các ngoại lệ nghiệp vụ |
 | Sau khám | Xem lịch sử và nhắc tái khám | Tra cứu hồ sơ | Xem báo cáo vận hành |
@@ -1031,7 +1030,7 @@ payload
 
 - Ba làn logic `PRIORITY`, `NORMAL`, `RESULT_REVIEW` theo từng phòng và phiên.
 - Lượt khám ban đầu trong active queue chỉ chứa `CHECKED_IN`; lượt đọc kết quả
-  chỉ hoạt động sau khi bệnh nhân xác nhận đã quay lại.
+  tự động hoạt động ngay khi đủ kết quả bắt buộc.
 - Đề xuất theo Round Robin `1:1:1`, bỏ qua làn rỗng.
 - FIFO theo `queuedAt` trong từng làn.
 - Số chưa check-in không xuất hiện.
@@ -1053,8 +1052,10 @@ payload
 
 - Consultation chuyển `WAITING_FOR_REVIEW` khi đủ kết quả bắt buộc.
 - Bệnh nhân không tạo Appointment mới và không check-in lại bằng Visit Ticket.
-- Queue Entry `CONSULTATION + RESULT_REVIEW` chỉ vào active queue sau khi xác
-  nhận đã quay lại.
+- Queue Entry `CONSULTATION + RESULT_REVIEW` tự động vào active queue khi nhận
+  `AllRequiredResultsAvailable`; `queuedAt` lấy theo thời điểm đủ kết quả.
+- Bệnh nhân không cần Mobile hoặc thao tác xác nhận quay lại. Nếu chưa có mặt khi
+  được gọi, lượt chuyển `MISSED` và có thể xếp lại cuối làn.
 - FIFO riêng trong làn `RESULT_REVIEW` và tham gia Round Robin `1:1:1`.
 - Nếu bị `MISSED`, lượt chỉ được xếp lại cuối làn theo chính sách.
 
@@ -1117,7 +1118,8 @@ payload
 → bệnh nhân tới ngồi chờ
 → kỹ thuật viên gọi và thực hiện
 → kết quả sẵn sàng
-→ bệnh nhân quay lại và xác nhận chờ đọc kết quả
+→ hệ thống tự đưa vào làn chờ đọc kết quả
+→ bệnh nhân được hướng dẫn quay lại phòng khám
 → RESULT_REVIEW tham gia Round Robin 1:1:1
 → bác sĩ đọc kết quả
 → chẩn đoán và kê toa
@@ -1138,8 +1140,8 @@ Hệ thống được coi là hoàn thành luồng chính khi:
 6. Lab Order tự xuất hiện trên Lab Web.
 7. Bệnh nhân nhận được số cận lâm sàng mà không check-in lại.
 8. Kết quả tự động đưa consultation sang chờ review.
-9. Result review vào làn riêng và tham gia Round Robin `1:1:1` sau khi bệnh nhân
-   xác nhận đã quay lại.
+9. Result review tự động vào làn riêng và tham gia Round Robin `1:1:1`; bệnh
+   nhân không cần xác nhận trên Mobile.
 10. Bác sĩ hoàn thiện consultation, toa và lịch tái khám.
 11. Toa đã xác nhận tự tạo một lượt phát thuốc; nhân viên gọi FIFO và xác nhận
     cấp phát mà không cần module tồn kho.
