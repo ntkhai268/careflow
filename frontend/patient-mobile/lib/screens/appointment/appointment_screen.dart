@@ -9,7 +9,7 @@ import '../../providers/patient_provider.dart';
 import '../../services/appointment_service.dart';
 import 'package:intl/intl.dart';
 
-/// Appointment list screen — Tab "Phiếu khám"
+/// Appointment list screen — tickets are shown within their appointment.
 class AppointmentScreen extends ConsumerStatefulWidget {
   const AppointmentScreen({super.key});
 
@@ -142,7 +142,7 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Phiếu khám'),
+        title: const Text('Lịch khám'),
         automaticallyImplyLeading: false,
       ),
       body: _isLoading
@@ -155,22 +155,22 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
               onRefresh: () => _loadAppointments(currentPatientId ?? ''),
               child: _buildAppointmentList(),
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () async {
-          final result = await context.push('/booking/step1');
-          if (result != null && result is String) {
-            // result is patientId — reload appointments for that patient
-            _loadAppointments(result);
-          } else {
-            // Reload with current patient
-            _tryLoadAppointments();
-          }
-        },
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.textOnPrimary,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Đặt khám'),
-      ),
+      floatingActionButton: _appointments.isEmpty
+          ? null
+          : FloatingActionButton.extended(
+              onPressed: () async {
+                final result = await context.push('/booking/step1');
+                if (result != null && result is String) {
+                  _loadAppointments(result);
+                } else {
+                  _tryLoadAppointments();
+                }
+              },
+              backgroundColor: AppColors.primary,
+              foregroundColor: AppColors.textOnPrimary,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Đặt lịch'),
+            ),
     );
   }
 
@@ -196,12 +196,12 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
             ),
             const SizedBox(height: AppSpacing.xl),
             Text(
-              'Chưa có phiếu khám',
+              'Chưa có lịch khám sắp tới',
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: AppSpacing.sm),
             Text(
-              'Đặt lịch khám bệnh ngay để được\nphục vụ nhanh chóng và thuận tiện',
+              'Đặt lịch để chọn khoa, ngày khám và khung giờ phù hợp.',
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
@@ -214,7 +214,7 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
                 }
               },
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Đặt khám ngay'),
+              label: const Text('Đặt lịch khám'),
             ),
           ],
         ),
