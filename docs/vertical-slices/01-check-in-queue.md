@@ -16,8 +16,10 @@ Patient đặt lịch
   → Mobile tải lại và thấy CALLED
 ```
 
-Slice này chỉ triển khai `INITIAL_CONSULTATION`. Queue cận lâm sàng và
-`RESULT_REVIEW` thuộc các vertical slice tiếp theo.
+Slice này chỉ triển khai `CONSULTATION` phase `INITIAL` theo tên contract mục
+tiêu (code hiện tại chưa tách hai trường này). Queue cận lâm sàng,
+`CONSULTATION + RESULT_REVIEW` và `PHARMACY_DISPENSING` thuộc các vertical slice
+tiếp theo.
 
 ## Nguồn sự thật
 

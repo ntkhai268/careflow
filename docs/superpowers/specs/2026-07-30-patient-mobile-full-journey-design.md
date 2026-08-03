@@ -6,6 +6,12 @@
 
 **Target branch:** `feature/khai/patient-mobile`
 
+> **Contract evolution — 2026-08-03:** Queue contract 1.2 models
+> `QueueType=CONSULTATION|LAB_EXECUTION|PHARMACY_DISPENSING` and keeps
+> `RESULT_REVIEW` as a consultation phase/scheduling lane. This dated design
+> keeps its existing patient UI states; pharmacy queue tracking is a follow-up
+> vertical slice rather than an implicit change to the completed plan.
+
 ## 1. Objective
 
 Build a complete, demonstrable outpatient journey in the CareFlow Flutter

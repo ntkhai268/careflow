@@ -12,6 +12,7 @@ actor "Bệnh nhân" as Patient
 actor "Bác sĩ" as Doctor
 actor "Nhân viên\ntiếp nhận" as Reception
 actor "Kỹ thuật viên\ncận lâm sàng" as LabTech
+actor "Nhân viên\ncấp phát thuốc" as PharmacyStaff
 actor "Quản trị viên" as Admin
 actor "Hệ thống thanh toán/\nBHYT ngoài" as Payment
 
@@ -26,6 +27,7 @@ rectangle "Hệ thống CareFlow" {
   usecase "Tạo chỉ định\ncận lâm sàng" as UCOrder
   usecase "Thực hiện và\nphát hành kết quả" as UCResult
   usecase "Kê toa, hẹn tái khám\nvà hoàn tất" as UCPrescription
+  usecase "Gọi lượt và\nphát thuốc" as UCDispense
   usecase "Quản lý cấu hình\nbệnh viện" as UCConfig
   usecase "Xác nhận điều kiện\nthanh toán/BHYT" as UCPayment
 }
@@ -45,6 +47,9 @@ Doctor -- UCPrescription
 
 LabTech -- UCQueue
 LabTech -- UCResult
+
+PharmacyStaff -- UCQueue
+PharmacyStaff -- UCDispense
 
 Admin -- UCAuth
 Admin -- UCConfig

@@ -7,7 +7,7 @@ skinparam defaultFontName Arial
 [*] --> DRAFT
 DRAFT --> CONFIRMED : Bác sĩ xác nhận
 DRAFT --> CANCELLED : Hủy draft
-CONFIRMED --> DISPENSED : Đánh dấu phát thuốc demo
+CONFIRMED --> DISPENSED : Phát thuốc sau khi lượt đã bắt đầu
 CONFIRMED --> CANCELLED_BY_AMENDMENT : Thay thế toa
 DISPENSED --> [*]
 CANCELLED --> [*]
@@ -16,5 +16,7 @@ CANCELLED_BY_AMENDMENT --> [*]
 note right of CONFIRMED
   Patient chỉ xem toa CONFIRMED
   hoặc DISPENSED.
+  PrescriptionIssued tạo queue
+  PHARMACY_DISPENSING.
 end note
 @enduml

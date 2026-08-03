@@ -1,6 +1,6 @@
 # Nguồn sự thật cho Chương 3 — Phân tích và thiết kế hệ thống
 
-> Phiên bản: 1.0 — Giai đoạn 1
+> Phiên bản: 1.1 — cập nhật mô hình Queue ngày 03/08/2026
 > Phạm vi: CareFlow MVP hỗ trợ hành trình khám ngoại trú
 > Trạng thái: baseline dùng chung cho nội dung và biểu đồ các giai đoạn sau
 
@@ -38,7 +38,7 @@ xây dựng. Không mô tả prototype hoặc mock là chức năng production �
 - Thực hiện phiên khám lâm sàng.
 - Tạo chỉ định, thực hiện cận lâm sàng và phát hành kết quả.
 - Tạo lượt quay lại bác sĩ đọc kết quả trong cùng consultation.
-- Kê toa, hẹn tái khám và hoàn tất lượt khám.
+- Kê toa, tạo lượt chờ phát thuốc FIFO, ghi nhận cấp phát và hoàn tất lượt khám.
 - Hiển thị hành trình và thông báo cho bệnh nhân.
 - Xác thực, phân quyền theo vai trò và quyền sở hữu dữ liệu.
 
@@ -46,7 +46,7 @@ xây dựng. Không mô tả prototype hoặc mock là chức năng production �
 
 - Cấp cứu, nội trú và quản lý giường bệnh.
 - Quyết toán BHYT và cổng thanh toán production.
-- Kho dược, tồn kho và cấp phát thuốc hoàn chỉnh.
+- Kho dược, tồn kho, nhập/xuất kho và kiểm kê thuốc.
 - PACS, DICOM và xử lý ảnh y khoa chuyên dụng.
 - AI Clinical Assistant và Analytics trong phiên bản báo cáo hiện tại.
 - SMS, email và push notification qua nhà cung cấp production.
@@ -90,6 +90,7 @@ phải tách rõ phần nào đã hiện thực, phần nào là mock và phần
 | `ACT-DOCTOR` | Bác sĩ | Theo dõi queue, khám, chỉ định, đọc kết quả, kê toa và hẹn tái khám |
 | `ACT-RECEPTION` | Nhân viên tiếp nhận | Quét QR, check-in và hỗ trợ trường hợp lỡ lượt |
 | `ACT-LAB` | Kỹ thuật viên cận lâm sàng | Nhận order, gọi lượt, thực hiện và phát hành kết quả |
+| `ACT-PHARMACY` | Nhân viên cấp phát thuốc | Theo dõi queue tại điểm cấp phát, gọi lượt, đối chiếu và xác nhận đã phát thuốc |
 | `ACT-ADMIN` | Quản trị viên | Quản lý tài khoản nội bộ, khoa, phòng, lịch và điểm phục vụ |
 | `ACT-PAYMENT` | Hệ thống thanh toán/BHYT ngoài | Xác nhận trạng thái đủ điều kiện thực hiện dịch vụ trong phạm vi mock/tích hợp |
 
@@ -97,6 +98,8 @@ phải tách rõ phần nào đã hiện thực, phần nào là mock và phần
 thành phần của hệ thống, không phải tác nhân con người trong Use Case Diagram.
 Kiosk chỉ được biểu diễn là tác nhân phụ nếu xác định nó là hệ thống bên ngoài
 CareFlow; trong MVP, check-in chính do nhân viên tiếp nhận thực hiện.
+`ACT-PHARMACY` được ánh xạ vào role kỹ thuật `STAFF` trong MVP; việc tách role
+`PHARMACY_STAFF` là khả năng mở rộng, không phải điều kiện để triển khai queue.
 
 ## 6. Thuật ngữ nghiệp vụ thống nhất
 
@@ -108,7 +111,8 @@ CareFlow; trong MVP, check-in chính do nhân viên tiếp nhận thực hiện.
 | Visit Ticket | Phiếu khám điện tử gồm số thứ tự, phòng, khung giờ và QR |
 | Queue Entry | Một lượt chờ tại một điểm phục vụ cụ thể |
 | Active Queue | Danh sách lượt đủ điều kiện được gọi tại thời điểm hiện tại |
-| Queue Type | Mục đích của lượt: khám ban đầu, thực hiện cận lâm sàng hoặc đọc kết quả |
+| Queue Type | Công đoạn phục vụ: `CONSULTATION`, `LAB_EXECUTION` hoặc `PHARMACY_DISPENSING` |
+| Consultation Phase | Giai đoạn của lượt khám: `INITIAL` hoặc `RESULT_REVIEW` |
 | Queue Class | Diện của lượt khám ban đầu: `PRIORITY` hoặc `NORMAL` |
 | Scheduling Lane | Làn điều phối suy ra: `PRIORITY`, `NORMAL` hoặc `RESULT_REVIEW` |
 | Consultation | Một phiên khám lâm sàng, có thể tạm dừng để chờ kết quả |
@@ -116,7 +120,7 @@ CareFlow; trong MVP, check-in chính do nhân viên tiếp nhận thực hiện.
 | Result Review | Lượt quay lại bác sĩ đọc kết quả trong cùng consultation |
 | Prescription | Toa thuốc do bác sĩ tạo và xác nhận |
 | Follow-up | Lịch tái khám được tạo từ kết luận của consultation |
-| Service Point | Phòng khám, khu lấy mẫu hoặc vị trí cung cấp một dịch vụ |
+| Service Point | Phòng khám, khu lấy mẫu, quầy phát thuốc hoặc vị trí cung cấp một dịch vụ |
 
 Không dùng “Appointment”, “Visit Ticket” và “Queue Entry” thay thế cho nhau.
 Không gọi bản ghi bệnh nhân tự tải lên là bệnh án chính thức; EMR là góc nhìn
@@ -138,11 +142,12 @@ CONFIRMED → NO_SHOW
 ### 7.2. Queue Entry
 
 ```text
-QueueType: INITIAL_CONSULTATION | LAB_EXECUTION | RESULT_REVIEW
+QueueType: CONSULTATION | LAB_EXECUTION | PHARMACY_DISPENSING
+ConsultationPhase: INITIAL | RESULT_REVIEW
 QueueClass: PRIORITY | NORMAL
 SchedulingLane: PRIORITY | NORMAL | RESULT_REVIEW
 
-INITIAL_CONSULTATION:
+CONSULTATION + INITIAL:
 TICKET_ISSUED → CHECKED_IN → CALLED → IN_PROGRESS → COMPLETED
 CALLED → MISSED
 MISSED → CHECKED_IN
@@ -152,19 +157,26 @@ LAB_EXECUTION:
 QUEUED → CALLED → IN_PROGRESS → COMPLETED
 CALLED → MISSED → QUEUED
 
-RESULT_REVIEW:
+CONSULTATION + RESULT_REVIEW:
+QUEUED → CALLED → IN_PROGRESS → COMPLETED
+CALLED → MISSED → QUEUED
+
+PHARMACY_DISPENSING:
 QUEUED → CALLED → IN_PROGRESS → COMPLETED
 CALLED → MISSED → QUEUED
 ```
 
-Tại phòng khám, `INITIAL_CONSULTATION + PRIORITY`,
-`INITIAL_CONSULTATION + NORMAL` và `RESULT_REVIEW` lần lượt ánh xạ thành ba làn
-điều phối. Các làn dùng chung mô hình Queue Entry, giữ FIFO theo `queuedAt` trong
-từng làn và được Queue Service đề xuất theo Round Robin `1:1:1`.
+Tại phòng khám, `CONSULTATION + INITIAL + PRIORITY`,
+`CONSULTATION + INITIAL + NORMAL` và `CONSULTATION + RESULT_REVIEW` lần lượt ánh
+xạ thành ba làn điều phối. Các làn dùng chung mô hình Queue Entry, giữ FIFO theo
+`queuedAt` trong từng làn và được Queue Service đề xuất theo Round Robin `1:1:1`.
+Queue cận lâm sàng và phát thuốc giữ FIFO riêng theo từng `servicePointId`.
 
 Lượt khám ban đầu chỉ vào active queue sau khi `CHECKED_IN`. Bệnh nhân không
 check-in lại bằng Visit Ticket ở khu cận lâm sàng hoặc khi quay lại đọc kết quả;
-lượt `RESULT_REVIEW` chỉ active sau khi xác nhận bệnh nhân đã quay lại.
+entry `CONSULTATION + RESULT_REVIEW` chỉ active sau khi xác nhận bệnh nhân đã
+quay lại. Toa `CONFIRMED` tạo entry `PHARMACY_DISPENSING`; bệnh nhân không
+check-in lại tại quầy thuốc.
 
 ### 7.3. Consultation
 
@@ -214,16 +226,20 @@ Bệnh nhân chỉ xem toa `CONFIRMED` hoặc `DISPENSED`.
 8. QR chỉ chứa token tham chiếu hoặc token đã ký, không chứa dữ liệu y tế trực tiếp.
 9. Bệnh nhân lỡ lượt không được giữ ở đầu queue.
 10. Order đủ điều kiện tự tạo lượt cận lâm sàng; bệnh nhân không check-in lại.
-11. Khi đủ kết quả, lượt `RESULT_REVIEW` vẫn thuộc consultation cũ, không tạo
-   Appointment mới và chỉ vào active queue sau khi bệnh nhân xác nhận đã quay lại.
+11. Khi đủ kết quả, Queue tạo entry `CONSULTATION + RESULT_REVIEW` mới nhưng vẫn
+   liên kết consultation cũ, không tạo Appointment mới và chỉ active sau khi
+   bệnh nhân xác nhận đã quay lại.
 12. Hệ thống chỉ đề xuất; bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ lượt
    `CHECKED_IN` nào. Queue Service ghi người gọi và phát `PatientCalled`.
 13. Doctor Web có thể suy ra `roomId` từ khoa của bác sĩ, nhưng Queue Service vẫn
     phải xác minh bác sĩ có quyền truy cập phòng trên URL.
 14. Chỉ bác sĩ được phân công mới cập nhật consultation và xác nhận toa.
 15. Patient chỉ được truy cập hồ sơ, kết quả và toa thuộc quyền sở hữu của mình.
-16. Thông báo thất bại không rollback giao dịch nghiệp vụ đã thành công.
-17. AI và Analytics không xuất hiện trong luồng MVP của chương này.
+16. Toa `CONFIRMED` tự tạo một lượt `PHARMACY_DISPENSING`; điểm cấp phát gọi FIFO
+    và Prescription Service chỉ chuyển toa sang `DISPENSED` sau khi phát thuốc.
+17. Queue phát thuốc không đồng nghĩa với quản lý kho; tồn kho vẫn ngoài phạm vi.
+18. Thông báo thất bại không rollback giao dịch nghiệp vụ đã thành công.
+19. AI và Analytics không xuất hiện trong luồng MVP của chương này.
 
 ## 9. Cấu trúc Chương 3 đã chốt
 

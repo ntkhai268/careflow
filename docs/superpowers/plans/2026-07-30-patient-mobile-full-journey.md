@@ -8,6 +8,12 @@
 
 **Tech Stack:** Flutter 3.44.2, Dart 3.12.2, Riverpod 2.6.1, GoRouter 14.8.1, SharedPreferences 2.3.4, qr_flutter 4.1.0, flutter_test.
 
+> **Contract evolution — 2026-08-03:** Queue contract 1.2 adds
+> `PHARMACY_DISPENSING`, changes the consultation queue type to `CONSULTATION`,
+> and treats `RESULT_REVIEW` as a phase/lane. The tasks below remain historical
+> implementation instructions for the original slice; pharmacy queue UI/API
+> integration requires a separate follow-up slice.
+
 ## Global Constraints
 
 - `DEMO_MODE` defaults to `false`; mock data and demo controls must be absent when false.

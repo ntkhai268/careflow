@@ -1,6 +1,6 @@
 # Queue Management Service Contract
 
-> Contract ID: `CF-SVC-06` | Version: `1.1` | Module: `careflow-queue-service`
+> Contract ID: `CF-SVC-06` | Version: `1.2` | Module: `careflow-queue-service`
 
 ## 1. Trách nhiệm và nguyên tắc
 
@@ -13,7 +13,9 @@ Sở hữu:
 - đề xuất lượt tiếp theo; bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ lượt
   `CHECKED_IN` nào trong phòng, sau đó recall, missed, bắt đầu và hoàn tất lượt;
 - queue cận lâm sàng tự tạo từ order;
-- kích hoạt lượt `RESULT_REVIEW` khi đủ kết quả và bệnh nhân xác nhận đã quay lại.
+- kích hoạt lượt khám có `consultationPhase=RESULT_REVIEW` khi đủ kết quả và bệnh
+  nhân xác nhận đã quay lại;
+- queue phát thuốc tự tạo từ toa đã xác nhận và vận hành FIFO tại điểm cấp phát.
 
 Không quản lý slot/capacity lịch hẹn, chẩn đoán hoặc kết quả xét nghiệm. Không
 trộn cấp cứu và không áp dụng thuật toán điều phối liên phòng/toàn bệnh viện.
@@ -24,11 +26,12 @@ Queue Entry và scheduler theo phòng.
 ## 2. Loại queue và trạng thái
 
 ```text
-QueueType: INITIAL_CONSULTATION | LAB_EXECUTION | RESULT_REVIEW
+QueueType: CONSULTATION | LAB_EXECUTION | PHARMACY_DISPENSING
+ConsultationPhase: INITIAL | RESULT_REVIEW
 QueueClass: PRIORITY | NORMAL
 SchedulingLane: PRIORITY | NORMAL | RESULT_REVIEW
 
-INITIAL_CONSULTATION:
+CONSULTATION + INITIAL:
 TICKET_ISSUED → CHECKED_IN → CALLED → IN_PROGRESS → COMPLETED
 CALLED → MISSED
 MISSED → CHECKED_IN
@@ -38,23 +41,29 @@ LAB_EXECUTION:
 QUEUED → CALLED → IN_PROGRESS → COMPLETED
 CALLED → MISSED → QUEUED
 
-RESULT_REVIEW:
+CONSULTATION + RESULT_REVIEW:
+QUEUED → CALLED → IN_PROGRESS → COMPLETED
+CALLED → MISSED → QUEUED
+
+PHARMACY_DISPENSING:
 QUEUED → CALLED → IN_PROGRESS → COMPLETED
 CALLED → MISSED → QUEUED
 ```
 
-`QueueClass` áp dụng cho `INITIAL_CONSULTATION`. Làn điều phối được suy ra như
-sau:
+`ConsultationPhase` chỉ áp dụng cho `CONSULTATION`; `QueueClass` chỉ áp dụng khi
+phase là `INITIAL`. Làn điều phối tại phòng khám được suy ra như sau:
 
 ```text
-INITIAL_CONSULTATION + PRIORITY → PRIORITY
-INITIAL_CONSULTATION + NORMAL   → NORMAL
-RESULT_REVIEW                   → RESULT_REVIEW
+CONSULTATION + INITIAL + PRIORITY → PRIORITY
+CONSULTATION + INITIAL + NORMAL   → NORMAL
+CONSULTATION + RESULT_REVIEW      → RESULT_REVIEW
 ```
 
 `ARRIVED` và `READY` không tồn tại trong MVP; `CHECKED_IN` mang cả hai ý nghĩa
 đối với lượt khám ban đầu. `SchedulingLane` là giá trị suy ra, không phải trạng
-thái vòng đời và không yêu cầu ba bảng dữ liệu riêng.
+thái vòng đời và không yêu cầu ba bảng dữ liệu riêng. `LAB_EXECUTION` và
+`PHARMACY_DISPENSING` vận hành FIFO tại từng `servicePointId`, không tham gia
+Round Robin `1:1:1` của phòng khám.
 
 ## 3. Quy tắc xếp hàng
 
@@ -64,7 +73,9 @@ thái vòng đời và không yêu cầu ba bảng dữ liệu riêng.
 - `roomId` của ticket phải lấy từ event đã xác nhận; Queue Service không random,
   không tự phân phòng và không nhận phòng mới từ bệnh nhân.
 - Số được cấp trước và giữ theo phòng/phiên.
-- Active queue chỉ chứa `CHECKED_IN`.
+- Active queue phòng khám chỉ chứa lượt `CONSULTATION + INITIAL` đã
+  `CHECKED_IN` và lượt `CONSULTATION + RESULT_REVIEW` đang `QUEUED` sau khi xác
+  nhận bệnh nhân đã quay lại.
 - Khi check-in, ghi `queuedAt`; FIFO trong từng `QueueClass` theo `queuedAt`, nếu
   trùng thì dùng `queueNumber` làm tiêu chí phụ.
 - `QueueClass` mặc định là `NORMAL`. Chỉ nhân viên có quyền mới được xác nhận
@@ -72,8 +83,9 @@ thái vòng đời và không yêu cầu ba bảng dữ liệu riêng.
   không nhận diện ưu tiên do bệnh nhân tự khai trực tiếp trong command.
 - Số chưa check-in không chặn số sau đã check-in.
 - Bệnh nhân đến trễ được đưa cuối làn tương ứng hoặc staff xử lý thủ công có audit.
-- Doctor Web nhận ba làn và `recommendedNext`; mỗi phần tử `CHECKED_IN` đều có
-  thao tác **Gọi**. Việc đọc active queue không làm thay đổi scheduler.
+- Doctor Web nhận ba làn và `recommendedNext`; mỗi entry đủ điều kiện trong
+  active queue đều có thao tác **Gọi**. Việc đọc active queue không làm thay đổi
+  scheduler.
 - Khi cả ba làn có dữ liệu, đề xuất tuần tự
   `PRIORITY → NORMAL → RESULT_REVIEW → PRIORITY`. Làn rỗng được bỏ qua.
 - Nếu chưa có `lastServedLane`, bắt đầu quét từ `PRIORITY`; các lần sau quét từ
@@ -99,9 +111,23 @@ thái vòng đời và không yêu cầu ba bảng dữ liệu riêng.
   lại phòng khám.
 - Chỉ kích hoạt vào active queue khi bệnh nhân hoặc nhân viên xác nhận bệnh nhân
   đã quay lại; thời điểm này được dùng làm `queuedAt`.
+- Queue tạo một entry mới có `type=CONSULTATION` và
+  `consultationPhase=RESULT_REVIEW`, vẫn liên kết với `consultationId` cũ.
 - Lượt tham gia làn `RESULT_REVIEW`, giữ FIFO riêng và được gọi theo Round Robin
   `1:1:1` cùng hai làn khám ban đầu.
 - Nếu bị missed, chỉ xếp lại cuối làn `RESULT_REVIEW` theo chính sách.
+
+### Queue phát thuốc
+
+- Tạo tự động khi nhận `PrescriptionIssued` cho toa đã `CONFIRMED`.
+- Mỗi toa chỉ có tối đa một lượt `PHARMACY_DISPENSING` đang hoạt động.
+- Lượt gắn với `prescriptionId`, `patientId` và `servicePointId` của điểm cấp phát;
+  MVP cấu hình một điểm cấp phát mặc định nhưng mô hình hỗ trợ nhiều quầy.
+- Bệnh nhân không check-in lại. Nhân viên cấp phát thuốc gọi FIFO theo `queuedAt`,
+  đối chiếu danh tính, bắt đầu phục vụ rồi thực hiện lệnh phát thuốc.
+- Khi Prescription Service phát `PrescriptionDispensed`, Queue Service hoàn tất
+  entry tương ứng. Queue Service không sở hữu tồn kho hoặc tự chuyển trạng thái toa.
+- Toa bị hủy trước khi phát thuốc làm lượt chưa hoàn tất chuyển `CANCELLED`.
 
 ## 4. HTTP API
 
@@ -112,13 +138,15 @@ thái vòng đời và không yêu cầu ba bảng dữ liệu riêng.
 | `GET /api/queues/patients/{patientId}/current` | Chính chủ/clinical staff | Lượt hiện tại của bệnh nhân |
 | `GET /api/queues/rooms/{roomId}/active?date=&session=` | `DOCTOR`, `STAFF`, `ADMIN` | Active queue phòng; backend kiểm tra phạm vi phòng của actor |
 | `POST /api/queues/consultations/{consultationId}/review-arrival` | Chính chủ, `DOCTOR`, `STAFF` | Xác nhận bệnh nhân đã quay lại và kích hoạt `RESULT_REVIEW` |
-| `POST /api/queues/entries/{entryId}/call` | `DOCTOR` | Gọi một lượt `CHECKED_IN` do bác sĩ chọn trên Doctor Web |
+| `GET /api/queues/service-points/{servicePointId}/active?date=` | Staff được phân công, `ADMIN` | Active queue cận lâm sàng hoặc phát thuốc tại điểm phục vụ |
+| `POST /api/queues/entries/{entryId}/call` | Actor được phân công | Gọi đúng lượt đủ điều kiện do người phục vụ chọn |
 | `POST /api/queues/rooms/{roomId}/call-next` | `DOCTOR` | Lệnh gọi nhanh lượt được server đề xuất tại phòng khám |
+| `POST /api/queues/service-points/{servicePointId}/call-next` | Staff được phân công | Gọi nhanh đầu queue FIFO tại điểm phục vụ |
 | `POST /api/queues/entries/{entryId}/recall` | `DOCTOR`, `STAFF` | Gọi lại lượt đang CALLED |
 | `POST /api/queues/entries/{entryId}/miss` | `DOCTOR`, `STAFF`, `LAB_TECHNICIAN` | Đánh dấu vắng |
 | `POST /api/queues/entries/{entryId}/requeue` | Staff phù hợp | Đưa lại hàng |
-| `POST /api/queues/entries/{entryId}/start` | Doctor/Lab tech phù hợp | Bắt đầu phục vụ |
-| `POST /api/queues/entries/{entryId}/complete` | Doctor/Lab tech phù hợp | Hoàn tất lượt |
+| `POST /api/queues/entries/{entryId}/start` | Actor được phân công | Bắt đầu phục vụ |
+| `POST /api/queues/entries/{entryId}/complete` | Actor được phân công | Hoàn tất lượt; queue phát thuốc hoàn tất theo event `PrescriptionDispensed` |
 
 Check-in request:
 
@@ -161,7 +189,8 @@ Active queue item:
 ```json
 {
   "entryId": "6fb18911-a1e8-45d9-a53e-f5b207b8c588",
-  "type": "INITIAL_CONSULTATION",
+  "type": "CONSULTATION",
+  "consultationPhase": "INITIAL",
   "queueClass": "PRIORITY",
   "schedulingLane": "PRIORITY",
   "queueNumber": 47,
@@ -195,8 +224,8 @@ bác sĩ. `call-next` không nhận `entryId`; server tính lại gợi ý và c
 sang `CALLED`. Khi bác sĩ bấm nút **Gọi** tại một hàng, Doctor Web dùng
 `POST /entries/{entryId}/call` và chính entry được chọn được chuyển sang `CALLED`.
 
-`RESULT_REVIEW` luôn được điều phối trong làn cùng tên; `QueueClass` trước đó của
-bệnh nhân không tạo thêm làn thứ tư.
+Entry `CONSULTATION` có phase `RESULT_REVIEW` luôn được điều phối trong làn cùng
+tên; `QueueClass` trước đó của bệnh nhân không tạo thêm làn thứ tư.
 
 Màn hình công cộng chỉ được nhận `queueNumber`, `roomDisplayName`, `status`; không nhận tên,
 patientId hoặc dữ liệu bệnh án.
@@ -213,6 +242,9 @@ Consume:
 | `AppointmentCancelled/NoShow` | Vô hiệu ticket chưa phục vụ |
 | `LabOrderReadyForExecution` | Tạo `LAB_EXECUTION` ở trạng thái `QUEUED` |
 | `AllRequiredResultsAvailable` | Lưu eligibility/projection idempotent và thông báo bệnh nhân quay lại; không tự đưa vào active queue khi chưa xác nhận có mặt |
+| `PrescriptionIssued` | Tạo `PHARMACY_DISPENSING` ở trạng thái `QUEUED` tại `dispensingServicePointId` trong event |
+| `PrescriptionCancelled` | Hủy lượt phát thuốc chưa hoàn tất |
+| `PrescriptionDispensed` | Hoàn tất lượt phát thuốc tương ứng idempotent |
 
 Publish:
 
@@ -251,9 +283,12 @@ Publish:
   truyền lên.
 - Mọi lệnh gọi ghi `calledByUserId`, `calledAt`, tăng `callAttempts` và phát
   `PatientCalled`. Phòng có thể đồng thời có nhiều lượt `CALLED`/`IN_PROGRESS`.
-- Một appointment chỉ có một initial ticket; một lab order chỉ có một lab entry.
-- Một consultation chỉ có tối đa một `RESULT_REVIEW` đang hoạt động; xác nhận
-  quay lại lặp không tạo entry trùng.
+- Một appointment chỉ có một ticket khám ban đầu; một lab order chỉ có một lab
+  entry tại mỗi điểm thực hiện.
+- Một consultation chỉ có tối đa một entry `CONSULTATION + RESULT_REVIEW` đang
+  hoạt động; xác nhận quay lại lặp không tạo entry trùng.
+- Một prescription chỉ có tối đa một entry `PHARMACY_DISPENSING` đang hoạt động;
+  event gửi lại không tạo lượt phát thuốc trùng.
 - QR hết hạn/sai phòng/sai ngày trả `400` hoặc `409`; ticket bị hủy trả `409`.
 - Action lặp lại cùng `Idempotency-Key` trả kết quả cũ.
 - State transition sai trả `409`, không âm thầm bỏ qua.
@@ -267,6 +302,7 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 - Appointment test publish fixture và assert một `VisitTicketIssued`.
 - Doctor Web mock active queue có số 47 và 49 nhưng không có 48 chưa check-in.
 - Lab Web mock `LAB_EXECUTION` đã tự vào queue, không có nút check-in.
+- Pharmacy Web mock `PHARMACY_DISPENSING` FIFO tại một điểm cấp phát.
 - Consultation mock `QueueEntryStarted`; Notification mock called/near-turn/missed.
 - Test Round Robin: ba làn có P1, N1, R1 và `lastServedLane=RESULT_REVIEW` → ba
   lần gọi thành công tiếp theo là P1, N1, R1.
@@ -279,20 +315,24 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 
 ### Trạng thái triển khai 2026-08-02
 
-- `INITIAL_CONSULTATION` đã nối thật từ `AppointmentConfirmed` đến Visit Ticket,
+- `CONSULTATION + INITIAL` đã nối thật từ `AppointmentConfirmed` đến Visit Ticket,
   QR, staff check-in, active queue, gọi theo entry/gợi ý, start/complete và Mobile production.
 - Appointment producer và Queue producer đều dùng outbox; consumer Appointment
   của Queue có idempotency bằng `processed_events`.
 - MVP hiện cấu hình tĩnh một phòng cho mỗi khoa. Quản trị `ClinicRoom`, xác minh
-  doctor-room assignment, `LAB_EXECUTION` và `RESULT_REVIEW` chưa thuộc slice này.
+  doctor-room assignment, `LAB_EXECUTION`, `CONSULTATION + RESULT_REVIEW` và
+  `PHARMACY_DISPENSING` chưa thuộc slice này.
 - Scheduler cũ vẫn còn cấu trúc `PriorityLevel` nội bộ. Khi triển khai ba làn đầy
-  đủ phải tách rõ `QueueType`, `QueueClass`, `SchedulingLane` theo contract 1.1.
+  đủ phải tách rõ `QueueType`, `ConsultationPhase`, `QueueClass` và
+  `SchedulingLane` theo contract 1.2.
 
 ### `CONTRACT_READY`
 
-- Chốt ba loại queue, hai QueueClass, ba SchedulingLane, state machine, QR, API,
+- Chốt ba loại queue, hai ConsultationPhase, hai QueueClass, ba SchedulingLane,
+  state machine, QR, API,
   event và Round Robin `1:1:1`.
-- Các UI có fixture cho ticket, active queue, lab queue và result review.
+- Các UI có fixture cho ticket, active queue phòng khám, lab queue, result review
+  và pharmacy queue.
 
 ### `FUNCTIONAL_READY`
 
@@ -305,7 +345,8 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 
 ### `INTEGRATION_READY`
 
-- Consume event thật từ Appointment/Lab; publish envelope cho Notification/Consultation/Analytics.
+- Consume event thật từ Appointment/Lab/Prescription; publish envelope cho
+  Notification/Consultation/Analytics.
 - Redelivery không tạo entry trùng.
 - Auth/room assignment/ownership chạy qua Gateway.
 
@@ -316,3 +357,5 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 - Lab order tự vào hàng không check-in lại.
 - Result review chỉ active sau xác nhận quay lại và tham gia Round Robin
   `1:1:1` tại phòng khám.
+- Toa đã xác nhận tự tạo lượt phát thuốc; nhân viên gọi FIFO và phát thuốc làm
+  Queue Entry hoàn tất mà không yêu cầu hệ thống kho.
