@@ -9,10 +9,17 @@ import '../../features/journey/presentation/widgets/journey_status_card.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/quick_action_card.dart';
 
-/// Main landing page after login.
+/// Task-first landing page for the patient journey.
 class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key, this.onNotificationTap});
+  const HomeScreen({
+    super.key,
+    this.onAppointmentsTap,
+    this.onRecordsTap,
+    this.onNotificationTap,
+  });
 
+  final VoidCallback? onAppointmentsTap;
+  final VoidCallback? onRecordsTap;
   final VoidCallback? onNotificationTap;
 
   @override
@@ -22,23 +29,71 @@ class HomeScreen extends ConsumerWidget {
     final unreadCount = ref.watch(unreadJourneyNotificationCountProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: CustomScrollView(
-        slivers: [
-          SliverToBoxAdapter(
-            child: _Header(
-              userName: authState.fullName ?? 'Bạn',
-              unreadCount: unreadCount,
-              onNotificationTap: onNotificationTap,
+      body: SafeArea(
+        bottom: false,
+        child: CustomScrollView(
+          slivers: [
+            SliverToBoxAdapter(
+              child: _Header(
+                userName: authState.fullName ?? 'Bạn',
+                unreadCount: unreadCount,
+                onNotificationTap: onNotificationTap,
+              ),
             ),
-          ),
-          const SliverToBoxAdapter(child: _QuickActions()),
-          SliverToBoxAdapter(
-            child: _ActiveJourneySection(journey: activeJourney),
-          ),
-          const SliverToBoxAdapter(child: _HealthTip()),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+              sliver: SliverList.list(
+                children: [
+                  _JourneySection(journey: activeJourney),
+                  const SizedBox(height: AppSpacing.xl),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      key: const Key('home-quick-action-0'),
+                      onPressed: () => context.push('/booking/step1'),
+                      icon: const Icon(Icons.add_circle_outline_rounded),
+                      label: const Text('Đặt lịch khám'),
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  Text(
+                    'Truy cập nhanh',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: AppSpacing.md),
+                  QuickActionCard(
+                    key: const Key('home-quick-action-1'),
+                    icon: Icons.event_note_rounded,
+                    label: 'Lịch khám và phiếu khám',
+                    onTap: onAppointmentsTap,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  QuickActionCard(
+                    key: const Key('home-quick-action-2'),
+                    icon: Icons.folder_shared_rounded,
+                    label: 'Hồ sơ sức khỏe',
+                    iconColor: AppColors.accent,
+                    backgroundColor: AppColors.accentLight,
+                    onTap: onRecordsTap,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  QuickActionCard(
+                    key: const Key('home-quick-action-3'),
+                    icon: Icons.notifications_rounded,
+                    label: unreadCount == 0
+                        ? 'Thông báo'
+                        : 'Thông báo · $unreadCount chưa đọc',
+                    showBadge: unreadCount > 0,
+                    badgeText: unreadCount > 99 ? '99+' : '$unreadCount',
+                    onTap: onNotificationTap,
+                  ),
+                  const SizedBox(height: AppSpacing.xl),
+                  const _PreparationGuide(),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -56,313 +111,215 @@ class _Header extends StatelessWidget {
   final VoidCallback? onNotificationTap;
 
   @override
-  Widget build(BuildContext context) => Container(
-    decoration: const BoxDecoration(
-      gradient: AppColors.headerGradient,
-      borderRadius: BorderRadius.only(
-        bottomLeft: Radius.circular(24),
-        bottomRight: Radius.circular(24),
-      ),
-    ),
-    child: SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-        child: Column(
-          children: [
-            Row(
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.fromLTRB(16, 12, 8, 16),
+    child: Row(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.primarySurface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          child: const Icon(
+            Icons.local_hospital_rounded,
+            color: AppColors.primary,
+          ),
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Xin chào,', style: Theme.of(context).textTheme.bodyMedium),
+              Text(
+                userName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            ],
+          ),
+        ),
+        Semantics(
+          label: unreadCount == 0
+              ? 'Thông báo, không có thông báo chưa đọc'
+              : 'Thông báo, $unreadCount thông báo chưa đọc',
+          button: true,
+          child: IconButton(
+            key: const Key('home-notification-button'),
+            tooltip: 'Thông báo',
+            onPressed: onNotificationTap,
+            icon: Stack(
+              clipBehavior: Clip.none,
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: const Icon(
-                    Icons.local_hospital_rounded,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'CareFlow xin chào,',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.white.withValues(alpha: 0.85),
-                        ),
+                const Icon(Icons.notifications_outlined),
+                if (unreadCount > 0)
+                  Positioned(
+                    right: -8,
+                    top: -8,
+                    child: Container(
+                      constraints: const BoxConstraints(
+                        minWidth: 18,
+                        minHeight: 18,
                       ),
-                      Text(
-                        userName,
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      decoration: BoxDecoration(
+                        color: AppColors.error,
+                        borderRadius: BorderRadius.circular(AppRadius.full),
+                        border: Border.all(color: AppColors.surface),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        unreadCount > 99 ? '99+' : '$unreadCount',
                         style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
                           color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
-                IconButton(
-                  key: const Key('home-notification-button'),
-                  tooltip: 'Thông báo',
-                  onPressed: onNotificationTap,
-                  icon: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      const Icon(
-                        Icons.notifications_outlined,
-                        color: Colors.white,
-                        size: 26,
-                      ),
-                      if (unreadCount > 0)
-                        Positioned(
-                          right: -5,
-                          top: -5,
-                          child: Container(
-                            constraints: const BoxConstraints(
-                              minWidth: 18,
-                              minHeight: 18,
-                            ),
-                            padding: const EdgeInsets.symmetric(horizontal: 4),
-                            decoration: BoxDecoration(
-                              color: AppColors.error,
-                              borderRadius: BorderRadius.circular(
-                                AppRadius.full,
-                              ),
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 1.5,
-                              ),
-                            ),
-                            child: Center(
-                              child: Text(
-                                unreadCount > 99 ? '99+' : '$unreadCount',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
               ],
             ),
-            const SizedBox(height: 20),
-            Container(
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  const SizedBox(width: 16),
-                  Icon(Icons.search, color: AppColors.textHint, size: 20),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Tìm CSYT/bác sĩ/chuyên khoa/dịch vụ',
-                      style: TextStyle(color: AppColors.textHint, fontSize: 13),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    ),
-  );
-}
-
-class _QuickActions extends StatelessWidget {
-  const _QuickActions();
-
-  static const _actions = <(IconData, String, String?)>[
-    (Icons.local_hospital_rounded, 'Đặt khám\ntại cơ sở', null),
-    (Icons.medical_services_rounded, 'Đặt khám\nchuyên khoa', null),
-    (Icons.access_time_rounded, 'Đặt khám\nngoài giờ', null),
-    (Icons.science_rounded, 'Đặt lịch\nxét nghiệm', null),
-    (Icons.person_search_rounded, 'Giúp việc\ncá nhân', 'Mới'),
-    (Icons.video_call_rounded, 'Gọi video\nvới bác sĩ', 'Mới'),
-    (Icons.health_and_safety_rounded, 'Gói sức khỏe\ntoàn diện', null),
-    (Icons.groups_rounded, 'Khám doanh\nnghiệp', 'Mới'),
-  ];
-
-  @override
-  Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.fromLTRB(16, 20, 16, 0),
-    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-    decoration: BoxDecoration(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(AppRadius.lg),
-      boxShadow: AppShadows.card,
-    ),
-    child: GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        childAspectRatio: 0.72,
-      ),
-      itemCount: _actions.length,
-      itemBuilder: (context, index) {
-        final action = _actions[index];
-        final opensBooking = index < 3;
-        return QuickActionCard(
-          key: Key('home-quick-action-$index'),
-          icon: action.$1,
-          label: action.$2,
-          showBadge: action.$3 != null,
-          badgeText: action.$3,
-          onTap: opensBooking
-              ? () => context.push('/booking/step1')
-              : null,
-        );
-      },
-    ),
-  );
-}
-
-class _ActiveJourneySection extends StatelessWidget {
-  const _ActiveJourneySection({required this.journey});
-
-  final PatientJourney? journey;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Expanded(
-              child: Text(
-                'Hành trình khám đang hoạt động',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.textPrimary,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: journey == null
-                  ? null
-                  : () => context.push(
-                      '/journey/${journey!.appointmentId}/timeline',
-                    ),
-              child: const Text('Dòng thời gian'),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        if (journey == null)
-          const Card(
-            child: Padding(
-              padding: EdgeInsets.all(AppSpacing.lg),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.event_available_outlined,
-                    color: AppColors.textSecondary,
-                  ),
-                  SizedBox(width: AppSpacing.md),
-                  Expanded(
-                    child: Text('Bạn chưa có hành trình khám đang hoạt động.'),
-                  ),
-                ],
-              ),
-            ),
-          )
-        else
-          InkWell(
-            key: const Key('active-journey-card'),
-            borderRadius: BorderRadius.circular(AppRadius.lg),
-            onTap: () => context.push(_destinationFor(journey!)),
-            child: JourneyStatusCard(journey: journey!),
           ),
+        ),
       ],
     ),
   );
 }
 
-class _HealthTip extends StatelessWidget {
-  const _HealthTip();
+class _JourneySection extends StatelessWidget {
+  const _JourneySection({required this.journey});
+
+  final PatientJourney? journey;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 24, 16, 0),
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        journey == null ? 'Hôm nay của bạn' : 'Hành trình đang diễn ra',
+        style: Theme.of(context).textTheme.titleLarge,
+      ),
+      const SizedBox(height: AppSpacing.md),
+      if (journey == null)
+        const _NoActiveJourney()
+      else
+        Semantics(
+          button: true,
+          label: 'Mở bước hiện tại của hành trình khám',
+          child: InkWell(
+            key: const Key('active-journey-card'),
+            borderRadius: BorderRadius.circular(AppRadius.lg),
+            onTap: () => context.push(_destinationFor(journey!)),
+            child: JourneyStatusCard(journey: journey!),
+          ),
+        ),
+    ],
+  );
+}
+
+class _NoActiveJourney extends StatelessWidget {
+  const _NoActiveJourney();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(AppSpacing.lg),
+    decoration: BoxDecoration(
+      color: AppColors.primarySurface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      border: Border.all(color: AppColors.primaryLight),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(
+          Icons.event_available_rounded,
+          color: AppColors.primaryDark,
+          size: 28,
+        ),
+        const SizedBox(width: AppSpacing.md),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Chưa có hành trình đang hoạt động',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Lịch khám sắp tới và việc cần làm sẽ xuất hiện tại đây.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _PreparationGuide extends StatelessWidget {
+  const _PreparationGuide();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(AppSpacing.base),
+    decoration: BoxDecoration(
+      color: AppColors.surface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      border: Border.all(color: AppColors.cardBorder),
+    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Mẹo sức khỏe',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: AppColors.textPrimary,
+        Row(
+          children: [
+            const Icon(Icons.checklist_rounded, color: AppColors.info),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                'Chuẩn bị trước khi đi khám',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        const _GuideItem('Mang theo giấy tờ tùy thân và hồ sơ liên quan.'),
+        const _GuideItem('Đến đúng cơ sở, khoa và khung giờ trên phiếu khám.'),
+        const _GuideItem('Theo dõi thông báo và lượt khám trên ứng dụng.'),
+      ],
+    ),
+  );
+}
+
+class _GuideItem extends StatelessWidget {
+  const _GuideItem(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 5),
+          child: Icon(
+            Icons.check_circle_outline_rounded,
+            size: 18,
+            color: AppColors.success,
           ),
         ),
-        const SizedBox(height: 12),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(AppSpacing.base),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppColors.accentLight,
-                    borderRadius: BorderRadius.circular(AppRadius.md),
-                  ),
-                  child: const Icon(
-                    Icons.tips_and_updates_rounded,
-                    color: AppColors.accent,
-                  ),
-                ),
-                const SizedBox(width: AppSpacing.md),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Uống đủ nước mỗi ngày',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                        ),
-                      ),
-                      SizedBox(height: AppSpacing.xs),
-                      Text(
-                        'Nên uống 2-3 lít nước mỗi ngày để duy trì sức khỏe tốt nhất.',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
+        const SizedBox(width: AppSpacing.sm),
+        Expanded(
+          child: Text(text, style: Theme.of(context).textTheme.bodyMedium),
         ),
       ],
     ),
