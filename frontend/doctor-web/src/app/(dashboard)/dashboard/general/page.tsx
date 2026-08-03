@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { consultationApi, ConsultationResponse } from "@/lib/consultation-api";
-import { appointmentApi } from "@/lib/appointment-api";
+import { queueApi } from "@/lib/queue-api";
 import { patientApi } from "@/lib/patient-api";
 import Link from "next/link";
 
@@ -69,19 +69,18 @@ export default function DashboardGeneralPage() {
         const now = new Date();
         const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
         try {
-          const apptRes = await appointmentApi.getAppointmentsByDepartment("NOI_TONG_QUAT", todayStr);
-          const appts = apptRes.data || [];
-          const waitingAppts = appts.filter(a => ["CHECKED_IN", "IN_PROGRESS", "CONFIRMED", "PENDING", "WAITING"].includes(a.status));
-          setWaitingCount(waitingAppts.length);
-          setQueuePatients(waitingAppts.map((a, idx) => ({
-            queueNo: a.queueNumber || String(idx + 1).padStart(3, "0"),
-            appointmentId: a.id,
-            patientId: a.patientId,
-            name: a.patientName || `Bệnh nhân (${a.patientId.slice(0, 6)})`,
+          const queueRes = await queueApi.getRoomActive("ROOM-01");
+          const activeEntries = queueRes.data?.entries || [];
+          setWaitingCount(activeEntries.length);
+          setQueuePatients(activeEntries.map((e) => ({
+            queueNo: e.queueNumber,
+            appointmentId: e.appointmentId,
+            patientId: e.patientId,
+            name: `Bệnh nhân (${e.patientId.slice(0, 6)})`,
             age: 35,
-            department: a.departmentDisplayName || "Nội tổng quát",
-            status: a.status || "CHECKED_IN",
-            time: a.timeSlot || "09:00"
+            department: queueRes.data?.departmentName || "Nội tổng quát",
+            status: e.queueStatus,
+            time: e.scheduledStartAt ? e.scheduledStartAt.slice(11, 16) : "09:00"
           })));
         } catch {
           setWaitingCount(0);

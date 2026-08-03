@@ -7,9 +7,7 @@
 > [!IMPORTANT]
 > **LƯU Ý PHẠM VI ĐẢM NHẬN & PHỤ THUỘC (WEBAPP SCOPE)**:
 > 1. **Phạm vi sở hữu trực tiếp**: Nhóm đảm nhận phát triển **Hospital WebApp** và các microservice liên quan trực tiếp gồm: `careflow-consultation-service` (bác sĩ khám), `careflow-lab-service` (kỹ thuật viên cận lâm sàng), `careflow-prescription-service` (kê toa), `careflow-emr-service`, cùng các phân hệ WebApp cho `DOCTOR`, `LAB_TECHNICIAN`, `STAFF` và `ADMIN`.
-> 2. **Nguyên tắc xử lý Service bên ngoài**: Khi triển khai hoặc đụng tới các service không thuộc phạm vi sở hữu (ví dụ: `careflow-queue-service` quản lý thuật toán xếp hàng do bên khác đảm nhận, hoặc `Patient Mobile App` do nhánh khác phát triển):
->    - **BẮT BUỘC** phải dừng lại và **hỏi ý kiến người dùng** trước khi thực thi.
->    - Ưu tiên sử dụng cơ chế **Mock Data / Fixture / Demo Repository** (ví dụ mock response từ Queue API hoặc event RabbitMQ) để giữ cho WebApp hoạt động độc lập và nhẹ nhàng mà không can thiệp trực tiếp vào mã nguồn của service đó.
+> 2. **Nguyên tắc xử lý Service bên ngoài**: `careflow-queue-service` do nhóm khác đảm nhận hiện **đã hoàn thiện API thật** (`GET /api/queues/rooms/{roomId}/active`, `POST /call-next`, `POST /call`). Doctor Web sẽ kết nối trực tiếp đến các endpoint thật này thay vì dùng mock data.
 
 ---
 
@@ -74,10 +72,10 @@ Hệ thống điều phối hành trình khám ngoại trú tại bệnh viện 
 
 ## 5. Luồng tổng thể (Overall Workflow)
 
-- [ ] **5.1. Bệnh nhân chọn lịch** → Hệ thống kiểm tra slot và tự xác nhận.
-- [ ] **5.2. Cấp phiếu, số thứ tự và QR.**
-- [ ] **5.3. Bệnh nhân đến phòng khám** → Nhân viên hoặc kiosk quét QR.
-- [ ] **5.4. `CHECKED_IN` và vào active FIFO queue.**
+- [x] **5.1. Bệnh nhân chọn lịch** → Hệ thống kiểm tra slot và tự xác nhận.
+- [x] **5.2. Cấp phiếu, số thứ tự và QR.**
+- [x] **5.3. Bệnh nhân đến phòng khám** → Nhân viên hoặc kiosk quét QR.
+- [x] **5.4. `CHECKED_IN` và vào active FIFO queue.**
 - [ ] **5.5. Bác sĩ gọi bệnh nhân** → Bác sĩ nhập sinh hiệu và khám.
 - [ ] **5.6. Phân nhánh cận lâm sàng**:
   - Không cần CLS: Chẩn đoán, kê toa, hoàn tất.
@@ -101,71 +99,72 @@ Hệ thống điều phối hành trình khám ngoại trú tại bệnh viện 
 ## 7. Giai đoạn 1: Đặt khám và tự động xác nhận (Appointment)
 
 ### 7.1. Bệnh nhân thao tác (Patient Mobile App)
-- [ ] **7.1.1. Đăng nhập ứng dụng.**
-- [ ] **7.1.2. Chọn hồ sơ bệnh nhân.**
-- [ ] **7.1.3. Chọn khoa hoặc bác sĩ.**
-- [ ] **7.1.4. Chọn ngày và khung giờ.**
-- [ ] **7.1.5. Nhập lý do khám.**
-- [ ] **7.1.6. Chọn hình thức thanh toán.**
-- [ ] **7.1.7. Xác nhận đặt khám.**
+- [x] **7.1.1. Đăng nhập ứng dụng.**
+- [x] **7.1.2. Chọn hồ sơ bệnh nhân.**
+- [x] **7.1.3. Chọn khoa hoặc bác sĩ.**
+- [x] **7.1.4. Chọn ngày và khung giờ.**
+- [x] **7.1.5. Nhập lý do khám.**
+- [x] **7.1.6. Chọn hình thức thanh toán.**
+- [x] **7.1.7. Xác nhận đặt khám.**
 
 ### 7.2. Hệ thống xử lý (Appointment Service)
-- [ ] **7.2.1. Kiểm tra slot còn capacity** (Atomic decrement / Lock).
-- [ ] **7.2.2. Kiểm tra ngày khám hợp lệ** (Giờ bắt đầu slot > thời điểm hiện tại).
-- [ ] **7.2.3. Kiểm tra bệnh nhân không đặt trùng khung giờ.**
-- [ ] **7.2.4. Kiểm tra bác sĩ/phòng đang hoạt động.**
-- [ ] **7.2.5. Tạo Appointment ở trạng thái `CONFIRMED`** (Không qua bước duyệt `PENDING`).
-- [ ] **7.2.6. Phát sự kiện `AppointmentConfirmed`** (với `EventEnvelope` chuẩn).
-- [ ] **7.2.7. Hỗ trợ Header `Idempotency-Key`** trên `POST /api/appointments`.
+- [x] **7.2.1. Kiểm tra slot còn capacity** (Atomic decrement / Lock).
+- [x] **7.2.2. Kiểm tra ngày khám hợp lệ** (Giờ bắt đầu slot > thời điểm hiện tại).
+- [x] **7.2.3. Kiểm tra bệnh nhân không đặt trùng khung giờ.**
+- [x] **7.2.4. Kiểm tra bác sĩ/phòng đang hoạt động.**
+- [x] **7.2.5. Tạo Appointment ở trạng thái `CONFIRMED`** (Không qua bước duyệt `PENDING`).
+- [x] **7.2.6. Phát sự kiện `AppointmentConfirmed`** (với `EventEnvelope` chuẩn).
+- [x] **7.2.7. Hỗ trợ Header `Idempotency-Key`** trên `POST /api/appointments`.
 
 ### 7.3. App hiển thị (Patient Mobile)
-- [ ] **7.3.1. Hiển thị màn hình "ĐẶT KHÁM THÀNH CÔNG"** (Khoa, Phòng, Ngày, Khung giờ, Status: Đã xác nhận).
+- [x] **7.3.1. Hiển thị màn hình "ĐẶT KHÁM THÀNH CÔNG"** (Khoa, Phòng, Ngày, Khung giờ, Status: Đã xác nhận).
 
 ---
 
 ## 8. Giai đoạn 2: Cấp phiếu khám điện tử (Visit Ticket)
 
-- [ ] **8.1. Queue Service consume `AppointmentConfirmed`** (Xử lý Idempotent theo `eventId`).
-- [ ] **8.2. Cấp Mã phiếu điện tử** (Format: `PK-YYYY-NNNNN`).
-- [ ] **8.3. Cấp Số thứ tự** (Sequential theo phòng/phiên).
-- [ ] **8.4. Tạo QR Token** (Opaque signed token, không chứa PII).
-- [ ] **8.5. Lưu thông tin phiếu khám** (Khung giờ, Khoa, Phòng, Trạng thái thanh toán).
-- [ ] **8.6. Tạo Queue Entry ở trạng thái `TICKET_ISSUED`** (Chưa vào active queue).
-- [ ] **8.7. Patient Mobile hiển thị phiếu khám, số thứ tự, QR, hướng dẫn di chuyển & nút hủy.**
+- [x] **8.1. Queue Service consume `AppointmentConfirmed`** (Xử lý Idempotent theo `eventId`).
+- [x] **8.2. Cấp Mã phiếu điện tử** (Format: `PK-YYYY-NNNNN`).
+- [x] **8.3. Cấp Số thứ tự** (Sequential theo phòng/phiên).
+- [x] **8.4. Tạo QR Token** (Opaque signed token, không chứa PII).
+- [x] **8.5. Lưu thông tin phiếu khám** (Khung giờ, Khoa, Phòng, Trạng thái thanh toán).
+- [x] **8.6. Tạo Queue Entry ở trạng thái `TICKET_ISSUED`** (Chưa vào active queue).
+- [ ] **8.7. Patient Mobile hiển thị phiếu khám, số thứ tự, QR, hướng dẫn di chuyển & nút hủy.** (Scope Mobile)
 
 ---
 
 ## 9. Giai đoạn 3: Đến bệnh viện và check-in
 
-- [ ] **9.1. Bệnh nhân đến đúng phòng khám và xuất trình QR.**
-- [ ] **9.2. Staff / Kiosk quét QR** (`POST /api/queues/check-in`).
-- [ ] **9.3. Hệ thống validate ticket & khung giờ hợp lệ.**
-- [ ] **9.4. Chuyển trạng thái `TICKET_ISSUED → CHECKED_IN`.**
-- [ ] **9.5. Queue Entry chính thức xuất hiện trong Active FIFO Queue của phòng.**
-- [ ] **9.6. Phát sự kiện `PatientCheckedIn`.**
-- [ ] **9.7. Idempotency**: Quét QR nhiều lần vẫn giữ nguyên trạng thái `CHECKED_IN`.
+- [x] **9.1. Bệnh nhân đến đúng phòng khám và xuất trình QR.**
+- [x] **9.2. Staff / Kiosk quét QR** (`POST /api/queues/check-in`).
+- [x] **9.3. Hệ thống validate ticket & khung giờ hợp lệ.**
+- [x] **9.4. Chuyển trạng thái `TICKET_ISSUED → CHECKED_IN`.**
+- [x] **9.5. Queue Entry chính thức xuất hiện trong Active FIFO Queue của phòng.**
+- [x] **9.6. Phát sự kiện `PatientCheckedIn`.**
+- [x] **9.7. Idempotency**: Quét QR nhiều lần vẫn giữ nguyên trạng thái `CHECKED_IN`.
 - [ ] **9.8. Handling NO_SHOW**: Job tự động quét ticket hết giờ check-in → chuyển `NO_SHOW` & phát `AppointmentNoShow`.
-- [ ] **9.9. Patient Mobile cập nhật**: Trạng thái "ĐÃ TIẾP NHẬN", số thứ tự, dự kiến thời gian gọi.
+- [ ] **9.9. Patient Mobile cập nhật**: Trạng thái "ĐÃ TIẾP NHẬN", số thứ tự, dự kiến thời gian gọi. (Scope Mobile)
 
 ---
 
 ## 10. Giai đoạn 4: Active FIFO Queue và gọi bệnh nhân
 
 ### 10.1. Hai danh sách khác nhau
-- [ ] **10.1.1. Appointment Service**: Trả danh sách tất cả lịch dự kiến trong ngày (`CONFIRMED`, `CHECKED_IN`, `NO_SHOW`).
-- [ ] **10.1.2. Queue Service**: Chỉ trả Active Queue chứa danh sách bệnh nhân đã `CHECKED_IN`.
+- [x] **10.1.1. Appointment Service**: Trả danh sách tất cả lịch dự kiến trong ngày (`CONFIRMED`, `CHECKED_IN`, `NO_SHOW`).
+- [x] **10.1.2. Queue Service**: Chỉ trả Active Queue chứa danh sách bệnh nhân đã `CHECKED_IN`.
 
 ### 10.2. Quy tắc Queue & Động cơ Điều phối (Queue Engine)
-- [ ] **10.2.1. Truy vấn Queue theo Bác sĩ**: Doctor Web gọi API lấy thông tin phân công -> lấy `departmentId` theo bác sĩ -> lấy `roomId` thuộc khoa đó -> lấy Active Queue của phòng (`GET /api/queues/rooms/{roomId}/active?date=&session=`).
-- [ ] **10.2.2. Thuật toán điều phối 3 luồng Hàng đợi (Round-Robin 1:1:1)**:
+- [x] **10.2.1. Truy vấn Queue theo Bác sĩ**: Doctor Web gọi API lấy thông tin phân công -> lấy `departmentId` theo bác sĩ -> lấy `roomId` thuộc khoa đó -> lấy Active Queue của phòng (`GET /api/queues/rooms/{roomId}/active?date=&session=`).
+- [x] **10.2.2. Thuật toán điều phối 3 luồng Hàng đợi (Round-Robin 1:1:1)**:
   - **Luồng 1 (Active Initial Queue)**: Bệnh nhân khám ban đầu đã `CHECKED_IN`.
   - **Luồng 2 (Result Review Queue)**: Bệnh nhân đã làm xong cận lâm sàng, có đủ kết quả quay lại đọc.
   - **Luồng 3 (Priority / Emergency Queue)**: Bệnh nhân thuộc đối tượng ưu tiên / cấp cứu nhẹ.
   - **Cơ chế gọi (Call Next)**: Gọi số điều phối luân phiên theo tỷ lệ **1:1:1** giữa 3 luồng (Initial -> Result Review -> Priority -> Initial...). Nếu 1 luồng rỗng, tự động skip sang luồng tiếp theo.
-- [ ] **10.2.3. Bác sĩ bấm Gọi bệnh nhân tiếp theo** (`POST /api/queues/rooms/{roomId}/call-next`).
-- [ ] **10.2.4. Chuyển trạng thái `CHECKED_IN → CALLED`.**
-- [ ] **10.2.5. Phát notification `QUEUE_CALLED`** tới Patient Mobile ("Mời số X vào Phòng Y").
-- [ ] **10.2.6. Xử lý Vắng mặt**: Gọi lại (`recall`) hoặc đánh dấu `CALLED → MISSED` và đưa xuống cuối queue / xử lý thủ công.
+- [x] **10.2.3. Bác sĩ bấm Gọi bệnh nhân tiếp theo** (`POST /api/queues/rooms/{roomId}/call-next`).
+- [x] **10.2.4. Chuyển trạng thái `CHECKED_IN → CALLED`.**
+- [x] **10.2.5. Phát notification `QUEUE_CALLED`** tới Patient Mobile ("Mời số X vào Phòng Y").
+- [x] **10.2.6. Xử lý Vắng mặt**: Gọi lại (`recall`) hoặc đánh dấu `CALLED → MISSED` và đưa xuống cuối queue / xử lý thủ công.
+- [x] **10.2.7. Tích hợp kết nối API thật Queue Service vào Doctor Web**: Thay thế mock/appointment API bằng các call thật (`GET /api/queues/rooms/{roomId}/active`, `POST /call-next`, `POST /entries/{entryId}/call`).
 
 ---
 

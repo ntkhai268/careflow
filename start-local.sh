@@ -91,7 +91,7 @@ echo " Tailing logs in real-time. Press [Ctrl + C] to STOP all services. "
 echo "================================================================="
 
 # Create empty log files if they don't exist yet to avoid tail errors
-touch logs_eureka-server.log logs_api-gateway.log logs_identity-service.log logs_patient-service.log logs_appointment-service.log logs_consultation-service.log logs_prescription-service.log logs_frontend.log
+touch logs_eureka-server.log logs_api-gateway.log logs_identity-service.log logs_patient-service.log logs_appointment-service.log logs_consultation-service.log logs_prescription-service.log logs_queue-service.log logs_frontend.log
 
 # Tail all logs
-tail -f logs_eureka-server.log -f logs_api-gateway.log -f logs_identity-service.log -f logs_patient-service.log -f logs_appointment-service.log -f logs_consultation-service.log -f logs_prescription-service.log -f logs_frontend.log
+tail -f logs_eureka-server.log -f logs_api-gateway.log -f logs_identity-service.log -f logs_patient-service.log -f logs_appointment-service.log -f logs_consultation-service.log -f logs_prescription-service.log -f logs_queue-service.log -f logs_frontend.log
