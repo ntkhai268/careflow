@@ -1,14 +1,27 @@
 server:
   port: 8085
+  shutdown: graceful
 
 spring:
   application:
     name: notification-service
+  datasource:
+    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_notification}
+    username: ${NOTIFICATION_DB_USERNAME:careflow}
+    password: ${NOTIFICATION_DB_PASSWORD:careflow}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    schemas: notification
   rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
+    host: ${RABBITMQ_HOST:100.116.233.60}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:guest}
-    password: ${RABBITMQ_PASSWORD:guest}
+    username: ${RABBITMQ_USERNAME:admin}
+    password: ${RABBITMQ_PASSWORD:admin123}
+    publisher-confirm-type: correlated
+    publisher-returns: true
     listener:
       simple:
         default-requeue-rejected: false
@@ -21,8 +34,9 @@ spring:
 
 eureka:
   client:
+    enabled: ${EUREKA_CLIENT_ENABLED:false}
     service-url:
-      defaultZone: ${EUREKA_URL:http://localhost:8761/eureka/}
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
   instance:
     prefer-ip-address: true
 
@@ -33,8 +47,10 @@ management:
         include: health,info
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:careflow-demo-jwt-secret-key-2026-must-be-at-least-256-bits-long}
   issuer: careflow-identity
 
 notification:
   allowed-origins: ${ALLOWED_ORIGINS:http://localhost:3000,http://localhost:5173}
+  outbox-poll-ms: ${NOTIFICATION_OUTBOX_POLL_MS:1000}
+  outbox-max-attempts: ${NOTIFICATION_OUTBOX_MAX_ATTEMPTS:12}

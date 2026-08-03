@@ -33,7 +33,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOriginPatterns(allowedOrigins);
+        registry.addEndpoint("/ws/notifications").setAllowedOriginPatterns(allowedOrigins);
     }
 
     @Override
@@ -66,12 +66,7 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
         }
         String destination = accessor.getDestination();
         if (destination == null) throw new AccessDeniedException("Destination không hợp lệ");
-        if (destination.startsWith("/user/queue/notifications")) return;
-        if (destination.startsWith("/topic/queues/departments/")) {
-            boolean allowed = authentication.getAuthorities().stream().anyMatch(authority ->
-                    authority.getAuthority().equals("ROLE_DOCTOR") || authority.getAuthority().equals("ROLE_ADMIN"));
-            if (allowed) return;
-        }
+        if (destination.equals("/user/queue/notifications")) return;
         throw new AccessDeniedException("Không có quyền subscribe destination này");
     }
 }

@@ -127,9 +127,20 @@ services:
     ports:
       - "8085:8085"
     environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://careflow-postgres:5432/careflow_notification
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-careflow}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
       SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-admin123}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+      EUREKA_CLIENT_ENABLED: "true"
+      JWT_SECRET: ${JWT_SECRET:-careflow-demo-jwt-secret-key-2026-must-be-at-least-256-bits-long}
     depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
       careflow-eureka-server:
         condition: service_healthy
     networks:

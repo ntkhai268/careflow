@@ -16,7 +16,7 @@ import java.util.UUID;
 
 @Component
 public class JwtAuthenticator {
-    private static final Set<String> ROLES = Set.of("PATIENT", "DOCTOR", "ADMIN");
+    private static final Set<String> ROLES = Set.of("PATIENT", "DOCTOR", "STAFF", "LAB_TECHNICIAN", "ADMIN");
     private final SecretKey key;
     private final String issuer;
 
