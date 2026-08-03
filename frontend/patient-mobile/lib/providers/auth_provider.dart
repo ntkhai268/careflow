@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
+import '../services/push_notification_service.dart';
 
 /// Authentication state
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
@@ -47,8 +48,10 @@ class AuthState {
 /// Auth state notifier using Riverpod
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
+  final PushNotificationService? _pushNotifications;
 
-  AuthNotifier(this._authService) : super(const AuthState());
+  AuthNotifier(this._authService, [this._pushNotifications])
+    : super(const AuthState());
 
   /// Check if user is already logged in (app startup).
   /// Verifies the stored JWT against the Identity Service /auth/me endpoint
@@ -73,6 +76,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           username: userInfo.username,
           role: userInfo.role,
         );
+        await _pushNotifications?.bindAuthenticatedSession();
       } else {
         // Token invalid or expired — user must re-login
         state = state.copyWith(status: AuthStatus.unauthenticated);
@@ -94,6 +98,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         fullName: response.fullName,
         username: response.fullName, // fullName is mapped to username
       );
+      await _pushNotifications?.bindAuthenticatedSession();
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
@@ -122,6 +127,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         fullName: response.fullName,
         username: response.fullName,
       );
+      await _pushNotifications?.bindAuthenticatedSession();
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
@@ -132,6 +138,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Logout
   Future<void> logout() async {
+    await _pushNotifications?.unbindAuthenticatedSession();
     await _authService.logout();
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
@@ -145,5 +152,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 /// Auth state provider
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   final authService = ref.read(authServiceProvider);
-  return AuthNotifier(authService);
+  final pushNotifications = ref.read(pushNotificationServiceProvider);
+  return AuthNotifier(authService, pushNotifications);
 });

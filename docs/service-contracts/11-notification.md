@@ -1,6 +1,6 @@
 # Notification Service Contract
 
-> Contract ID: `CF-SVC-11` | Version: `1.1` | Module: `careflow-notification-service`
+> Contract ID: `CF-SVC-11` | Version: `1.2` | Module: `careflow-notification-service`
 
 ## 1. Trách nhiệm và ranh giới
 
@@ -22,11 +22,11 @@ rollback giao dịch nghiệp vụ đã thành công.
 ## 2. Kênh MVP
 
 ```text
-IN_APP | WEBSOCKET
+IN_APP | WEBSOCKET | FCM_PUSH
 ```
 
-Push notification thật, SMS và email là mở rộng. Có thể mock adapter nhưng không tuyên bố đã tích hợp
-provider production.
+FCM là kênh bổ sung cho app chạy nền/đã đóng. Inbox vẫn là nguồn sự thật; lỗi FCM
+không đổi trạng thái nghiệp vụ và không làm mất notification. SMS và email ngoài phạm vi.
 
 ## 3. HTTP/WebSocket API
 
@@ -36,6 +36,8 @@ provider production.
 | `GET /api/notifications/unread-count` | Chính user | Số chưa đọc |
 | `POST /api/notifications/{notificationId}/read` | Chính user | Đánh dấu đã đọc |
 | `POST /api/notifications/read-all` | Chính user | Đọc tất cả |
+| `PUT /api/notifications/devices` | Chính user | Upsert device ID, FCM token, platform và app version |
+| `DELETE /api/notifications/devices/{deviceId}` | Chính user | Vô hiệu hóa push trên thiết bị khi logout |
 | `WS /ws/notifications` | Authenticated | STOMP handshake qua Gateway |
 
 Sau khi kết nối, client subscribe destination `/user/queue/notifications`.
@@ -142,6 +144,10 @@ Exchange: `notification.exchange`.
   `FAILED` chỉ dùng khi xử lý/template đã hết retry.
 - Retry adapter lỗi hữu hạn; hết retry vào DLQ và publish `NotificationFailed`.
 - Không retry vô hạn và không làm nghẽn consumer của event khác.
+- Mỗi `notificationId + deviceInstallationId` chỉ tạo một push delivery.
+- Push delivery retry theo backoff hữu hạn. Token bị FCM trả về là không còn đăng ký
+  hoặc sai vĩnh viễn được chuyển `DEAD` và device installation bị vô hiệu hóa.
+- Service-account JSON chỉ được mount/secret-inject lúc chạy; không nằm trong Git hoặc image.
 
 ## 7. Mock cho frontend và producer
 
