@@ -30,7 +30,7 @@ nhóm, không phải một mã yêu cầu mới.
 | Kỹ thuật viên cận lâm sàng | Hospital Web | `UC-AUTH-02`, `UC-LAB-03` |
 | Nhân viên cấp phát thuốc | Hospital Web | `UC-AUTH-02`, `UC-PHA-01` |
 | Quản trị viên | Hospital Web | Đăng nhập và các Use Case cấu hình được mô tả tóm tắt |
-| Hệ thống thanh toán/BHYT ngoài | Tích hợp/mock | Luồng thay thế của `UC-LAB-01` |
+| Thu ngân/hệ thống thanh toán ngoài | Hospital Web hoặc mock | Luồng thay thế của `UC-LAB-01` |
 
 ## 3. Quy tắc kiểm soát khi viết chi tiết
 

@@ -10,6 +10,7 @@
   "payload": {
     "appointmentId": "cf367b19-b946-41dc-969b-0d7958075b22",
     "patientId": "9c613831-90c2-48f6-81c5-0105c20502a1",
+    "userId": "2f12f672-82d4-4ca2-902d-e8ad333003d5",
     "department": "THAN_KINH",
     "roomId": "ROOM-21",
     "roomDisplayName": "Phòng khám Thần kinh 21",

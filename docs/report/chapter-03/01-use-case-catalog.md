@@ -26,7 +26,7 @@
 | `UC-CON-01` | Bắt đầu và thực hiện phiên khám | Bác sĩ | **Chi tiết** |
 | `UC-CON-02` | Cập nhật sinh hiệu và thông tin lâm sàng | Bác sĩ | Gộp vào `UC-CON-01` |
 | `UC-LAB-01` | Tạo chỉ định cận lâm sàng | Bác sĩ | **Chi tiết** |
-| `UC-LAB-02` | Xác nhận điều kiện thanh toán/BHYT | Bệnh nhân/Nhân viên/Hệ thống ngoài | Tóm tắt |
+| `UC-LAB-02` | Chọn và xác nhận hình thức thanh toán MVP | Bệnh nhân/Nhân viên thu ngân | Tóm tắt |
 | `UC-LAB-03` | Thực hiện và phát hành kết quả | Kỹ thuật viên cận lâm sàng | **Chi tiết** |
 | `UC-LAB-04` | Quay lại bác sĩ đọc kết quả | Bác sĩ | Gộp vào `UC-LAB-03` |
 | `UC-PRE-01` | Kê toa, hẹn tái khám và hoàn tất | Bác sĩ | **Chi tiết** |
@@ -103,7 +103,7 @@ hiện trong luồng khác.
 ### `UC-LAB-01` — Tạo chỉ định cận lâm sàng
 
 - Bác sĩ tạo order từ consultation đang `IN_PROGRESS`.
-- Nếu cần thanh toán/BHYT, order chờ xác nhận điều kiện.
+- Nếu cần thanh toán, order chờ online mock hoặc thu ngân xác nhận tiền mặt.
 - Khi đủ điều kiện, Queue tự tạo `LAB_EXECUTION`; bệnh nhân không check-in lại.
 
 ### `UC-LAB-03` — Thực hiện, phát hành và đọc kết quả

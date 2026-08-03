@@ -26,10 +26,10 @@ không được xem là tác nhân trong Use Case Diagram.
 | `ACT-RECEPTION` | Nhân viên tiếp nhận | Quét QR, xác nhận bệnh nhân có mặt, hỗ trợ gọi lại, lỡ lượt và xếp lại hàng |
 | `ACT-LAB` | Kỹ thuật viên cận lâm sàng | Theo dõi order và queue, gọi lượt, thực hiện kỹ thuật, nhập và phát hành kết quả |
 | `ACT-ADMIN` | Quản trị viên | Quản lý tài khoản nội bộ, khoa, phòng, lịch làm việc, slot, capacity và điểm phục vụ |
-| `ACT-PAYMENT` | Hệ thống thanh toán/BHYT ngoài | Xác nhận trạng thái đủ điều kiện thực hiện dịch vụ trong phạm vi tích hợp hoặc mô phỏng của MVP |
+| `ACT-PAYMENT` | Thu ngân/hệ thống thanh toán ngoài | Xác nhận trạng thái đủ điều kiện thực hiện dịch vụ trong phạm vi tích hợp hoặc mô phỏng của MVP |
 
 Trong MVP, Hospital Web là một ứng dụng dùng chung và hiển thị chức năng theo
-vai trò. Thanh toán/BHYT không phải service cốt lõi của CareFlow mà được xem là
+vai trò. Thanh toán không phải service cốt lõi của CareFlow mà được xem là
 hệ thống ngoài. Kiosk chỉ trở thành tác nhân riêng nếu được phát triển như một
 hệ thống độc lập; quy trình hiện tại sử dụng nhân viên tiếp nhận để check-in.
 
@@ -101,7 +101,7 @@ migration tương ứng sẽ được đánh giá riêng ở Chương 4.
 | Mã | Yêu cầu |
 |---|---|
 | `FR-LAB-01` | Bác sĩ được phân công có thể tạo order gồm một hoặc nhiều hạng mục. |
-| `FR-LAB-02` | Hệ thống có thể ghi nhận trạng thái thanh toán/BHYT ở mức MVP. |
+| `FR-LAB-02` | Hệ thống có thể ghi nhận online mock hoặc tiền mặt tại bệnh viện ở mức MVP. |
 | `FR-LAB-03` | Order đủ điều kiện phải tự tạo lượt tại đúng service point, không check-in lần hai. |
 | `FR-LAB-04` | Kỹ thuật viên có thể gọi, bắt đầu và cập nhật tiến trình thực hiện order được phân công. |
 | `FR-LAB-05` | Kỹ thuật viên có thể nhập và phát hành kết quả; kết quả đã phát hành không bị ghi đè âm thầm. |
@@ -406,7 +406,7 @@ Nguồn PlantUML: [DGM-STA-03 — Consultation](chapter-03/diagrams/state/dgm-st
 
 ### 3.5.4. Trạng thái chỉ định cận lâm sàng
 
-Laboratory Order được tạo ở `ORDERED`. Nếu cần xác nhận thanh toán/BHYT, order
+Laboratory Order được tạo ở `ORDERED`. Nếu cần xác nhận thanh toán, order
 chuyển `PAYMENT_PENDING`; khi đủ điều kiện, nó chuyển `QUEUED`. Kỹ thuật viên gọi,
 bắt đầu và phát hành kết quả. Trạng thái `QUEUED`, `CALLED` và `MISSED` được đồng
 bộ từ Queue, trong khi order vẫn là nguồn sự thật của nội dung chỉ định và kết

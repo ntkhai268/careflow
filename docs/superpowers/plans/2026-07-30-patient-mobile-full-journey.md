@@ -152,7 +152,7 @@ enum JourneyStatus {
   completed,
 }
 
-enum PaymentMethod { online, cash, insurance }
+enum PaymentMethod { onlineMock, cashAtHospital }
 ```
 
 - [ ] **Step 4: Run model tests and verify GREEN**
@@ -285,8 +285,9 @@ Cover:
 - stable ticket number and QR on repeated bootstrap;
 - deterministic clinic queue (`peopleAhead: 3`);
 - laboratory order branch with a complete mock order;
-- online, cash, and insurance payment acknowledgement;
-- result-review queue position after one next initial patient;
+- online mock and cash-at-hospital payment acknowledgement;
+- result-review queue state supplied by Queue Service without client-side
+  insertion logic;
 - switching the authenticated patient clears the active in-memory journey and
   never loads the previous patient's namespaced data;
 - invalid events preserve controller state and expose Vietnamese error;
@@ -494,7 +495,7 @@ Run the laboratory widget test and expect missing-screen failure.
 
 Payment selection calls `acknowledgePayment`. Online mode displays a simulated
 success receipt only in Demo Mode; production mode displays the unavailable
-backend message. Cash and insurance record acknowledgement without claiming
+backend message. Cash records a pending hospital payment without claiming
 electronic settlement.
 
 - [ ] **Step 7: Write failing result-review queue tests**
