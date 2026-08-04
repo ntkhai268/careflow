@@ -268,7 +268,7 @@ export default function LabQueuePage() {
                           <div className="flex items-center gap-1.5 text-xs font-semibold">
                             <span className={`w-1.5 h-1.5 rounded-full ${isCalled ? "bg-amber-500" : isInProgress ? "bg-emerald-500" : isMissed ? "bg-rose-500" : "bg-blue-500"}`} />
                             <span className={isCalled ? "text-amber-700" : isInProgress ? "text-emerald-700" : isMissed ? "text-rose-700" : "text-blue-700"}>
-                              {entry.queueStatus}
+                              {entry.queueStatus === "CHECKED_IN" ? "Đã tiếp nhận" : entry.queueStatus === "CALLED" ? "Đang gọi" : entry.queueStatus === "IN_PROGRESS" ? "Đang thực hiện" : entry.queueStatus === "MISSED" ? "Vắng mặt" : entry.queueStatus === "COMPLETED" ? "Hoàn tất" : entry.queueStatus}
                             </span>
                           </div>
                         </div>

@@ -4,6 +4,7 @@ import com.careflow.queue.domain.PriorityLevel;
 import com.careflow.queue.domain.QueueConfig;
 import com.careflow.queue.domain.QueueEntry;
 import com.careflow.queue.domain.QueueStatus;
+import com.careflow.queue.domain.QueueType;
 import com.careflow.queue.repository.IdempotencyRecordRepository;
 import com.careflow.queue.repository.QueueConfigRepository;
 import com.careflow.queue.repository.QueueEntryRepository;
@@ -143,6 +144,7 @@ public class QueueDataInitializer implements CommandLineRunner {
         QueueEntry entry = new QueueEntry();
         entry.setServicePointId(spId);
         entry.setQueueType(type);
+        entry.setConsultationPhase(null);
         entry.setPatientId(patientId);
         entry.setQueueDate(date);
         entry.setSequenceNumber(seq);

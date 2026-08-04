@@ -83,16 +83,16 @@ export default function StaffCheckinPage() {
             Phân hệ Nhân viên Quầy Tiếp nhận
           </span>
         </div>
-        <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Quét QR & Tiếp nhận Bệnh nhân (Check-in)</h1>
+        <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Quét QR & Tiếp nhận Bệnh nhân</h1>
         <p className="text-xs text-text-muted mt-0.5">
-          Nhập hoặc quét mã QR trên phiếu khám điện tử của bệnh nhân để kích hoạt lượt khám vào Active Queue.
+          Nhập hoặc quét mã QR trên phiếu khám điện tử của bệnh nhân để kích hoạt lượt khám vào hàng đợi.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Form Input Section */}
         <div className="border border-card-border bg-card-bg p-6 rounded-xl shadow-sm space-y-4">
-          <h2 className="text-base font-bold text-[#2B1D30]">Thông tin Check-in</h2>
+          <h2 className="text-base font-bold text-[#2B1D30]">Thông tin tiếp nhận</h2>
 
           <form onSubmit={handleCheckIn} className="space-y-4">
             <div>
@@ -102,16 +102,16 @@ export default function StaffCheckinPage() {
                 onChange={(e) => setRoomId(e.target.value)}
                 className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg text-text text-xs font-medium focus:ring-2 focus:ring-purple-500"
               >
-                <option value="ROOM-01">Phòng khám Nội 01 (ROOM-01)</option>
-                <option value="ROOM-02">Phòng khám Nội 02 (ROOM-02)</option>
-                <option value="ROOM-03">Phòng khám Nhi 01 (ROOM-03)</option>
-                <option value="ROOM-04">Phòng khám Ngoại 01 (ROOM-04)</option>
+                <option value="ROOM-01">Phòng khám Nội 01</option>
+                <option value="ROOM-02">Phòng khám Nội 02</option>
+                <option value="ROOM-03">Phòng khám Nhi 01</option>
+                <option value="ROOM-04">Phòng khám Ngoại 01</option>
               </select>
             </div>
 
             <div>
               <label className="block text-xs font-bold text-text mb-1">
-                Mã QR / Token Phiếu khám (Scan hoặc nhập tay):
+                Mã QR / Chuỗi ký tự phiếu khám (Quét mã hoặc nhập tay):
               </label>
               <input
                 type="text"
@@ -145,7 +145,7 @@ export default function StaffCheckinPage() {
           {checkInResult ? (
             <div className="p-5 bg-purple-50 border border-purple-200 rounded-xl space-y-3">
               <div className="flex items-center justify-between border-b border-purple-200 pb-3">
-                <span className="text-xs font-bold text-purple-900 uppercase tracking-wider">Trạng thái: CHECKED_IN</span>
+                <span className="text-xs font-bold text-purple-900 uppercase tracking-wider">Trạng thái: Đã tiếp nhận</span>
                 <span className="text-xs font-bold px-2.5 py-1 bg-[#6E2582] text-white rounded-full">
                   Thành công
                 </span>

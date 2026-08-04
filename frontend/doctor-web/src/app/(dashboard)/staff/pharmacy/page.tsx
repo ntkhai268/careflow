@@ -117,7 +117,7 @@ export default function StaffPharmacyPage() {
           </div>
           <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Hàng đợi Phát thuốc</h1>
           <p className="text-xs text-text-muted mt-0.5">
-            Cấp phát thuốc theo thứ tự FIFO cho các đơn thuốc đã được Bác sĩ Ký & Xác nhận (Prescription CONFIRMED)
+            Cấp phát thuốc theo thứ tự cho các đơn thuốc đã được Bác sĩ ký và xác nhận
           </p>
         </div>
 
@@ -162,7 +162,9 @@ export default function StaffPharmacyPage() {
                     </div>
                     <div>
                       <p className="text-sm font-bold text-[#2B1D30]">Số thứ tự: {entry.queueNumber}</p>
-                      <p className="text-xs text-text-muted mt-0.5">Trạng thái: {entry.queueStatus}</p>
+                      <p className="text-xs text-text-muted mt-0.5">
+                        Trạng thái: {entry.queueStatus === "CHECKED_IN" ? "Đã tiếp nhận" : entry.queueStatus === "CALLED" ? "Đang gọi" : entry.queueStatus === "IN_PROGRESS" ? "Đang phát thuốc" : entry.queueStatus === "COMPLETED" ? "Hoàn tất" : entry.queueStatus}
+                      </p>
                     </div>
                   </div>
 
@@ -186,7 +188,7 @@ export default function StaffPharmacyPage() {
             <div className="space-y-4 text-xs">
               <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
                 <p className="font-bold text-purple-900 text-sm">Số thứ tự: {activeEntry.queueNumber}</p>
-                <p className="text-purple-700 mt-1">Đơn thuốc đã được Bác sĩ xác nhận (CONFIRMED)</p>
+                <p className="text-purple-700 mt-1">Đơn thuốc đã được Bác sĩ ký và xác nhận</p>
               </div>
 
               <div className="space-y-2">
