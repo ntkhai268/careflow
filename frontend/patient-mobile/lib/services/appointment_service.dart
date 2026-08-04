@@ -29,6 +29,34 @@ String appointmentBookingErrorMessage(Object error) {
   );
 }
 
+/// Converts appointment API failures into copy safe for patient-facing UI.
+/// The raw Dio exception must never be shown to a patient.
+String appointmentRequestErrorMessage(Object error) {
+  if (error is AppointmentBookingException) return error.message;
+  if (error is! DioException) {
+    return 'Không thể tải dữ liệu lịch khám. Vui lòng thử lại.';
+  }
+
+  final responseData = error.response?.data;
+  final serverMessage = responseData is Map
+      ? responseData['message']?.toString().trim()
+      : null;
+  if (serverMessage != null &&
+      serverMessage.isNotEmpty &&
+      !serverMessage.contains('DioException')) {
+    return serverMessage;
+  }
+
+  return switch (error.response?.statusCode) {
+    401 => 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+    403 => 'Bạn không có quyền xem lịch khám này.',
+    404 => 'Không tìm thấy lịch khám.',
+    500 || 502 || 503 || 504 =>
+      'Hệ thống lịch khám đang bận. Vui lòng thử lại sau.',
+    _ => 'Không thể kết nối hệ thống lịch khám. Vui lòng thử lại.',
+  };
+}
+
 /// Service for communicating with the Appointment Service via API Gateway.
 /// Uses the shared ApiService (with JWT interceptor) so all requests
 /// carry the authenticated user's Bearer token automatically.

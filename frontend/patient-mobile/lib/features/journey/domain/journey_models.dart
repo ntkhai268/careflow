@@ -16,7 +16,28 @@ enum JourneyStatus {
   completed,
 }
 
-enum PaymentMethod { online, cash, insurance }
+/// Payment methods supported by the Mobile MVP.
+///
+/// These are intentionally limited to the two methods agreed in the payment
+/// contract. Health-insurance information may still exist on the patient
+/// profile, but it is not a payment method handled by CareFlow.
+enum PaymentMethod { online, cash }
+
+extension PaymentMethodContract on PaymentMethod {
+  /// Stable wire value for persistence and future Laboratory Order APIs.
+  String get wireValue => switch (this) {
+    PaymentMethod.online => 'ONLINE_MOCK',
+    PaymentMethod.cash => 'CASH_AT_HOSPITAL',
+  };
+
+  static PaymentMethod fromWireValue(Object? value) => switch (
+    value?.toString().toUpperCase()
+  ) {
+    'ONLINE_MOCK' || 'ONLINE' => PaymentMethod.online,
+    'CASH_AT_HOSPITAL' || 'CASH' => PaymentMethod.cash,
+    _ => throw FormatException('Unsupported payment method: $value'),
+  };
+}
 
 const Object _unset = Object();
 
@@ -275,13 +296,13 @@ class VisitPayment {
   final DateTime acknowledgedAt;
 
   Map<String, dynamic> toJson() => {
-    'method': method.name,
+    'method': method.wireValue,
     'amount': amount,
     'acknowledgedAt': _iso(acknowledgedAt),
   };
 
   factory VisitPayment.fromJson(Map<String, dynamic> json) => VisitPayment(
-    method: PaymentMethod.values.byName(json['method'] as String),
+    method: PaymentMethodContract.fromWireValue(json['method']),
     amount: (json['amount'] as num).toInt(),
     acknowledgedAt: _utc(json['acknowledgedAt'] as String),
   );

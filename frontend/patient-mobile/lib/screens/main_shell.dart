@@ -22,7 +22,15 @@ class MainShell extends ConsumerStatefulWidget {
 }
 
 class _MainShellState extends ConsumerState<MainShell> {
-  int _currentIndex = 0;
+  late int _currentIndex = widget.initialIndex.clamp(0, 4).toInt();
+
+  @override
+  void didUpdateWidget(covariant MainShell oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialIndex != widget.initialIndex) {
+      setState(() => _currentIndex = widget.initialIndex.clamp(0, 4).toInt());
+    }
+  }
 
   @override
   void initState() {

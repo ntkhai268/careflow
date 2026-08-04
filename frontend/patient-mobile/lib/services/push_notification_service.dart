@@ -185,6 +185,13 @@ class PushNotificationService {
       appRouter.go('/appointment/$resourceId');
       return;
     }
+    if (actionType == 'OPEN_QUEUE' || actionType == 'OPEN_TICKET') {
+      // Queue notifications currently carry a queue-entry ID. The Mobile
+      // contract exposes queue details through the appointment list, so take
+      // the patient there instead of treating the entry ID as an appointment.
+      appRouter.go('/?tab=1');
+      return;
+    }
     appRouter.go('/');
   }
 }

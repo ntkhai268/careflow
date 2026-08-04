@@ -46,7 +46,13 @@ final GoRouter appRouter = GoRouter(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
     ),
-    GoRoute(path: '/', builder: (context, state) => const MainShell()),
+    GoRoute(
+      path: '/',
+      builder: (context, state) {
+        final tab = int.tryParse(state.uri.queryParameters['tab'] ?? '') ?? 0;
+        return MainShell(initialIndex: tab);
+      },
+    ),
     GoRoute(
       path: '/appointments',
       builder: (context, state) => const MainShell(initialIndex: 1),

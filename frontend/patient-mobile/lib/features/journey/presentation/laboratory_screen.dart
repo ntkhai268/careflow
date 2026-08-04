@@ -37,15 +37,19 @@ class _LaboratoryScreenState extends ConsumerState<LaboratoryScreen> {
         : _successMessage(method);
     setState(() {
       _isSubmitting = false;
-      _paymentMessage = message;
-      _paymentFailed = !acknowledged;
+      // Keep successful acknowledgement visible in the page. Failures stay
+      // in a SnackBar so the same copy is not rendered twice.
+      _paymentMessage = acknowledged ? message : null;
+      _paymentFailed = false;
     });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        backgroundColor: acknowledged ? null : AppColors.error,
-        content: Text(message),
-      ),
-    );
+    if (!acknowledged) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.error,
+          content: Text(message),
+        ),
+      );
+    }
   }
 
   @override
@@ -220,20 +224,6 @@ class _PaymentMethods extends StatelessWidget {
             padding: EdgeInsets.only(top: AppSpacing.xs),
             child: Text('Thanh toán tại bệnh viện'),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: isSubmitting
-                  ? null
-                  : () => onSelected(PaymentMethod.insurance),
-              child: const Text('Bảo hiểm y tế'),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(top: AppSpacing.xs),
-            child: Text('Bệnh viện sẽ xác nhận quyền lợi bảo hiểm.'),
-          ),
         ],
       ),
     ),
@@ -244,8 +234,6 @@ String _successMessage(PaymentMethod method) => switch (method) {
   PaymentMethod.online => 'Thanh toán trực tuyến mô phỏng thành công',
   PaymentMethod.cash =>
     'Đã ghi nhận lựa chọn tiền mặt. Thanh toán tại bệnh viện.',
-  PaymentMethod.insurance =>
-    'Đã ghi nhận thông tin bảo hiểm để bệnh viện xác nhận.',
 };
 
 class _PaymentMessage extends StatelessWidget {

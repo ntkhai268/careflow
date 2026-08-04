@@ -181,6 +181,19 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                   child: Text(canOpenJourney ? 'Xem phiếu khám' : 'Hoàn tất'),
                 ),
               ),
+              if (canOpenJourney) ...[
+                const SizedBox(height: AppSpacing.sm),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                      context.go('/?tab=1');
+                    },
+                    child: const Text('Về danh sách lịch khám'),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
