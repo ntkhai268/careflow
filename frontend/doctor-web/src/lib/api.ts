@@ -22,6 +22,14 @@ export async function request<T>(path: string, options?: RequestInit): Promise<A
     headers["Authorization"] = `Bearer ${token}`;
   }
 
+  // Auto-generate Idempotency-Key for state-mutating requests (POST, PUT) if not provided
+  const method = (options?.method || "GET").toUpperCase();
+  if ((method === "POST" || method === "PUT") && !headers["Idempotency-Key"]) {
+    headers["Idempotency-Key"] = typeof crypto !== "undefined" && crypto.randomUUID 
+      ? crypto.randomUUID() 
+      : `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+  }
+
   try {
     const response = await fetch(url, {
       ...options,

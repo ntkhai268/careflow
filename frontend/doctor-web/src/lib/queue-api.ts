@@ -10,7 +10,7 @@ export interface QueueEntry {
   roomCode: string;
   queueDate: string;
   queueNumber: string;
-  priorityLevel: "APPOINTMENT" | "PRIORITY" | "EMERGENCY" | "WALK_IN";
+  priorityLevel: "APPOINTMENT" | "PRIORITY" | "EMERGENCY" | "WALK_IN" | "RESULT_REVIEW";
   queueStatus: "CHECKED_IN" | "CALLED" | "IN_PROGRESS" | "COMPLETED" | "MISSED";
   effectivePosition: number | null;
   estimatedWaitMinutes: number | null;

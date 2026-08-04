@@ -48,6 +48,7 @@ public class DataInitializer implements CommandLineRunner {
                     .reason("Sốt cao, đau họng 2 ngày (Đã thanh toán tạm ứng khám)")
                     .queueNumber("001")
                     .build();
+            a1.setId(UUID.fromString("a0000001-0000-0000-0000-000000000001"));
 
             Appointment a2 = Appointment.builder()
                     .patientId(UUID.fromString("f0000001-0000-0000-0000-000000000005"))

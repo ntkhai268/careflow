@@ -29,6 +29,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
+    // Clear sessionStorage & transient app data when browser tab initializes
+    if (typeof window !== "undefined") {
+      sessionStorage.clear();
+    }
+
     const savedUser = localStorage.getItem("careflow_user");
     if (savedUser) {
       try {
@@ -88,6 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("careflow_token");
     localStorage.removeItem("careflow_user");
     localStorage.clear(); // Clear all remaining session tokens/keys
+    if (typeof window !== "undefined") {
+      sessionStorage.clear();
+    }
     setUser(null);
     router.push("/login");
   }, [router]);

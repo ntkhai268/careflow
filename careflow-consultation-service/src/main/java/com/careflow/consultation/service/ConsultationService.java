@@ -59,37 +59,31 @@ public class ConsultationService {
             throw new BusinessException(400, "Bác sĩ hiện tại đang có một ca khám chưa hoàn tất. Vui lòng hoàn thành lượt khám hiện tại trước khi gọi bệnh nhân khác.");
         }
 
-        // 1. Validate Appointment via Feign Client
+        // 1. Validate Appointment via Feign Client (if appointment exists in appointment-service)
         try {
             ApiResponse<AppointmentResponse> apptRes = appointmentClient.getAppointmentById(appointmentId);
-            if (apptRes == null || apptRes.getData() == null) {
-                throw new BusinessException(404, "Không tìm thấy thông tin lịch khám: " + appointmentId);
-            }
+            if (apptRes != null && apptRes.getData() != null) {
+                AppointmentResponse appointment = apptRes.getData();
+                String currentStatus = appointment.getStatus();
 
-            AppointmentResponse appointment = apptRes.getData();
-            String currentStatus = appointment.getStatus();
+                if (!"CONFIRMED".equalsIgnoreCase(currentStatus) && !"CHECKED_IN".equalsIgnoreCase(currentStatus) && !"IN_PROGRESS".equalsIgnoreCase(currentStatus)) {
+                    throw new BusinessException(400, String.format(
+                            "Lịch khám không ở trạng thái hợp lệ để bắt đầu khám (hiện tại: %s, yêu cầu: CONFIRMED hoặc CHECKED_IN)",
+                            appointment.getStatusDisplayName() != null ? appointment.getStatusDisplayName() : currentStatus));
+                }
 
-            if (!"CONFIRMED".equalsIgnoreCase(currentStatus) && !"CHECKED_IN".equalsIgnoreCase(currentStatus) && !"IN_PROGRESS".equalsIgnoreCase(currentStatus)) {
-                throw new BusinessException(400, String.format(
-                        "Lịch khám không ở trạng thái hợp lệ để bắt đầu khám (hiện tại: %s, yêu cầu: CONFIRMED hoặc CHECKED_IN)",
-                        appointment.getStatusDisplayName() != null ? appointment.getStatusDisplayName() : currentStatus));
-            }
-
-            // 2. Cập nhật trạng thái Appointment sang IN_PROGRESS (nếu chưa phải IN_PROGRESS)
-            if (!"IN_PROGRESS".equalsIgnoreCase(currentStatus)) {
-                ApiResponse<AppointmentResponse> updateRes = appointmentClient.updateAppointmentStatus(
-                        appointmentId,
-                        UpdateAppointmentStatusRequest.builder().status("IN_PROGRESS").build()
-                );
-                if (updateRes == null || updateRes.getData() == null) {
-                    throw new BusinessException(500, "Cập nhật trạng thái lịch khám sang IN_PROGRESS thất bại");
+                // 2. Cập nhật trạng thái Appointment sang IN_PROGRESS (nếu chưa phải IN_PROGRESS)
+                if (!"IN_PROGRESS".equalsIgnoreCase(currentStatus)) {
+                    appointmentClient.updateAppointmentStatus(
+                            appointmentId,
+                            UpdateAppointmentStatusRequest.builder().status("IN_PROGRESS").build()
+                    );
                 }
             }
         } catch (BusinessException e) {
             throw e;
         } catch (Exception e) {
-            log.error("Lỗi khi kết nối tới Appointment Service cho appointmentId {}: {}", appointmentId, e.getMessage());
-            throw new BusinessException(500, "Không thể kết nối đến Appointment Service để xác thực lịch khám: " + e.getMessage());
+            log.warn("Không tìm thấy hoặc không thể kết nối tới Appointment Service cho appointmentId {}, tiếp tục khởi tạo ca khám với thông tin Queue...", appointmentId);
         }
 
         // 3. Tạo Consultation Entity
