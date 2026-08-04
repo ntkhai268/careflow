@@ -23,6 +23,16 @@ abstract interface class JourneyRepository {
   Future<void> reset(PatientJourney journey);
 }
 
+/// Optional capability for repositories that can settle the pharmacy step.
+/// Keeping this separate preserves compatibility with existing queue/lab
+/// adapters until the backend pharmacy contract is implemented.
+abstract interface class PrescriptionPaymentRepository {
+  Future<PatientJourney> acknowledgePrescriptionPayment(
+    PatientJourney journey,
+    PaymentMethod method,
+  );
+}
+
 abstract interface class JourneySnapshotRepository {
   Future<void> restoreSnapshot(PatientJourney journey);
 

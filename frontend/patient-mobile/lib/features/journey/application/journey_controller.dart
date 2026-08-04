@@ -80,6 +80,18 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
     (journey) => _repository.acknowledgePayment(journey, method),
   );
 
+  Future<bool> acknowledgePrescriptionPayment(PaymentMethod method) {
+    final repository = _repository;
+    if (repository is! PrescriptionPaymentRepository) {
+      _onActionError('Tính năng thanh toán tiền thuốc đang chờ backend triển khai');
+      return Future.value(false);
+    }
+    final capability = repository as PrescriptionPaymentRepository;
+    return _runDemoAction(
+      (journey) => capability.acknowledgePrescriptionPayment(journey, method),
+    );
+  }
+
   Future<void> markNotificationRead(String notificationId) async {
     final journey = state.valueOrNull;
     if (journey == null) return;

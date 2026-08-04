@@ -15,6 +15,9 @@ enum JourneyEvent {
   admittedToResultReviewQueue,
   resultReviewCalled,
   finalPrescriptionIssued,
+  prescriptionPaymentRequested,
+  prescriptionPaymentAcknowledged,
+  medicationDispensed,
   visitCompleted,
 }
 
@@ -110,6 +113,17 @@ const Map<JourneyStatus, Map<JourneyEvent, JourneyStatus>> _transitions = {
     JourneyEvent.finalPrescriptionIssued: JourneyStatus.prescribed,
   },
   JourneyStatus.prescribed: {
+    JourneyEvent.prescriptionPaymentRequested:
+        JourneyStatus.prescriptionPaymentPending,
+    JourneyEvent.visitCompleted: JourneyStatus.completed,
+  },
+  JourneyStatus.prescriptionPaymentPending: {
+    JourneyEvent.prescriptionPaymentAcknowledged: JourneyStatus.prescriptionPaid,
+  },
+  JourneyStatus.prescriptionPaid: {
+    JourneyEvent.medicationDispensed: JourneyStatus.medicationReady,
+  },
+  JourneyStatus.medicationReady: {
     JourneyEvent.visitCompleted: JourneyStatus.completed,
   },
 };
@@ -184,6 +198,21 @@ const Map<JourneyEvent, _JourneyMessage> _messages = {
     'Đã kê đơn sau đọc kết quả',
     'Đơn thuốc đã sẵn sàng',
     'Bác sĩ đã phát hành đơn thuốc sau khi đọc kết quả.',
+  ),
+  JourneyEvent.prescriptionPaymentRequested: _JourneyMessage(
+    'Chờ thanh toán tiền thuốc',
+    'Cần thanh toán tiền thuốc',
+    'Vui lòng chọn phương thức thanh toán để nhà thuốc chuẩn bị thuốc.',
+  ),
+  JourneyEvent.prescriptionPaymentAcknowledged: _JourneyMessage(
+    'Đã thanh toán tiền thuốc',
+    'Nhà thuốc đang chuẩn bị thuốc',
+    'Thanh toán tiền thuốc đã được ghi nhận. Nhà thuốc đang chuẩn bị đơn.',
+  ),
+  JourneyEvent.medicationDispensed: _JourneyMessage(
+    'Thuốc đã sẵn sàng',
+    'Đã sẵn sàng nhận thuốc',
+    'Vui lòng đến quầy thuốc để nhận thuốc theo đơn.',
   ),
   JourneyEvent.visitCompleted: _JourneyMessage(
     'Đã hoàn tất lượt khám',

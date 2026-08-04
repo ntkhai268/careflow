@@ -136,6 +136,17 @@ List<_DemoEvent> _eventsFor(JourneyStatus status) => switch (status) {
     ),
   ],
   JourneyStatus.prescribed => const [
+    _DemoEvent(
+      JourneyEvent.prescriptionPaymentRequested,
+      'Mô phỏng yêu cầu thanh toán tiền thuốc',
+    ),
+    _DemoEvent(JourneyEvent.visitCompleted, 'Mô phỏng hoàn tất lượt khám'),
+  ],
+  JourneyStatus.prescriptionPaymentPending => const [],
+  JourneyStatus.prescriptionPaid => const [
+    _DemoEvent(JourneyEvent.medicationDispensed, 'Mô phỏng thuốc đã sẵn sàng'),
+  ],
+  JourneyStatus.medicationReady => const [
     _DemoEvent(JourneyEvent.visitCompleted, 'Mô phỏng hoàn tất lượt khám'),
   ],
   _ => const [],

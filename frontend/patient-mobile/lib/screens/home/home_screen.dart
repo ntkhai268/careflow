@@ -439,6 +439,10 @@ String _destinationFor(PatientJourney journey) {
     JourneyStatus.labResultReady => '$base/laboratory',
     JourneyStatus.waitingResultReview ||
     JourneyStatus.resultReview => '$base/result-review',
-    JourneyStatus.prescribed || JourneyStatus.completed => '$base/outcome',
+    JourneyStatus.prescribed ||
+    JourneyStatus.prescriptionPaymentPending ||
+    JourneyStatus.prescriptionPaid ||
+    JourneyStatus.medicationReady => '$base/pharmacy',
+    JourneyStatus.completed => '$base/outcome',
   };
 }

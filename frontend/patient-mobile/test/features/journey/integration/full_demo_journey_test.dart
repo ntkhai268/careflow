@@ -9,6 +9,7 @@ import 'package:careflow_patient/features/journey/presentation/clinic_queue_scre
 import 'package:careflow_patient/features/journey/presentation/consultation_screen.dart';
 import 'package:careflow_patient/features/journey/presentation/journey_notification_screen.dart';
 import 'package:careflow_patient/features/journey/presentation/laboratory_screen.dart';
+import 'package:careflow_patient/features/journey/presentation/pharmacy_screen.dart';
 import 'package:careflow_patient/features/journey/presentation/result_review_screen.dart';
 import 'package:careflow_patient/features/journey/presentation/visit_outcome_screen.dart';
 import 'package:careflow_patient/features/journey/presentation/visit_ticket_screen.dart';
@@ -171,8 +172,8 @@ void main() {
       );
       await _openDestination(
         tester,
-        label: 'Xem kết quả lượt khám',
-        path: '$hubPath/outcome',
+        label: 'Thanh toán/nhận thuốc',
+        path: '$hubPath/pharmacy',
         instruction: 'Paracetamol 500 mg',
       );
 
@@ -430,6 +431,7 @@ Finder _screenForPath(String path) {
   if (path.endsWith('/result-review')) {
     return find.byType(ResultReviewScreen);
   }
+  if (path.endsWith('/pharmacy')) return find.byType(PharmacyScreen);
   return find.byType(VisitOutcomeScreen);
 }
 
@@ -541,8 +543,15 @@ class _JourneyHarnessState extends State<_JourneyHarness> {
         ),
         JourneyStatus.waitingResultReview || JourneyStatus.resultReview =>
           ResultReviewScreen(appointmentId: widget.appointmentId),
-        JourneyStatus.prescribed || JourneyStatus.completed =>
-          VisitOutcomeScreen(appointmentId: widget.appointmentId),
+        JourneyStatus.prescribed ||
+        JourneyStatus.prescriptionPaymentPending ||
+        JourneyStatus.prescriptionPaid ||
+        JourneyStatus.medicationReady => PharmacyScreen(
+          appointmentId: widget.appointmentId,
+        ),
+        JourneyStatus.completed => VisitOutcomeScreen(
+          appointmentId: widget.appointmentId,
+        ),
       };
     },
   );
