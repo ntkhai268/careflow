@@ -98,7 +98,23 @@ public class QueueDataInitializer implements CommandLineRunner {
                 UUID.fromString("00000001-0000-0000-0000-000000000002"),
                 today, 5, "NOI-005", PriorityLevel.WALK_IN, QueueStatus.CHECKED_IN, now.minusSeconds(600));
 
-        log.info("Successfully seeded 5 clean CHECKED_IN Active QueueEntries for ROOM-01 today ({})", today);
+        // 4. Seed Lab entries for LAB-HEMATOLOGY-01
+        createServicePointEntry("LAB-HEMATOLOGY-01", QueueType.LAB_EXECUTION,
+                UUID.fromString("f0000001-0000-0000-0000-000000000004"),
+                today, 1, "XN-001", PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, now.minusSeconds(1400));
+        createServicePointEntry("LAB-HEMATOLOGY-01", QueueType.LAB_EXECUTION,
+                UUID.fromString("f0000001-0000-0000-0000-000000000005"),
+                today, 2, "XN-002", PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, now.minusSeconds(1100));
+
+        // 5. Seed Pharmacy entries for PHARMACY-MAIN-01
+        createServicePointEntry("PHARMACY-MAIN-01", QueueType.PHARMACY_DISPENSING,
+                UUID.fromString("f0000001-0000-0000-0000-000000000006"),
+                today, 1, "DUOC-001", PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, now.minusSeconds(1000));
+        createServicePointEntry("PHARMACY-MAIN-01", QueueType.PHARMACY_DISPENSING,
+                UUID.fromString("f0000001-0000-0000-0000-000000000001"),
+                today, 2, "DUOC-002", PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, now.minusSeconds(800));
+
+        log.info("Successfully seeded ROOM-01 and ServicePoint active entries for today ({})", today);
     }
 
     private void createQueueEntry(QueueConfig config, UUID deptId, UUID apptId, UUID patientId, UUID userId,
@@ -111,6 +127,23 @@ public class QueueDataInitializer implements CommandLineRunner {
         entry.setAppointmentId(apptId);
         entry.setPatientId(patientId);
         entry.setUserId(userId);
+        entry.setQueueDate(date);
+        entry.setSequenceNumber(seq);
+        entry.setQueueNumber(queueNo);
+        entry.setPriorityLevel(priority);
+        entry.setStatus(status);
+        entry.setCheckedInAt(checkInTime);
+        entry.setEligibleSinceAt(checkInTime);
+        entryRepository.save(entry);
+    }
+
+    private void createServicePointEntry(String spId, QueueType type, UUID patientId,
+                                         LocalDate date, int seq, String queueNo, PriorityLevel priority,
+                                         QueueStatus status, Instant checkInTime) {
+        QueueEntry entry = new QueueEntry();
+        entry.setServicePointId(spId);
+        entry.setQueueType(type);
+        entry.setPatientId(patientId);
         entry.setQueueDate(date);
         entry.setSequenceNumber(seq);
         entry.setQueueNumber(queueNo);

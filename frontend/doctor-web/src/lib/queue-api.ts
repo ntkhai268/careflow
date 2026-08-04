@@ -34,12 +34,37 @@ export interface QueueDashboardResponse {
   recommendedNext: QueueEntry | null;
 }
 
+export interface ServicePointQueueResponse {
+  servicePointId: string;
+  queueDate: string;
+  entries: QueueEntry[];
+  recommendedNext: QueueEntry | null;
+}
+
+export interface CheckInRequest {
+  qrToken: string;
+  roomId: string;
+  queueClass?: "INITIAL" | "RESULT_REVIEW" | "PRIORITY";
+  priorityReasonCode?: string;
+}
+
 export const queueApi = {
   getRoomActive: (roomId: string) =>
     api.get<QueueDashboardResponse>(`/api/queues/rooms/${roomId}/active`),
 
   callNextInRoom: (roomId: string) =>
     api.post<QueueEntry>(`/api/queues/rooms/${roomId}/call-next`, {}),
+
+  getServicePointActive: (servicePointId: string, date?: string) =>
+    api.get<ServicePointQueueResponse>(
+      `/api/queues/service-points/${servicePointId}/active${date ? `?date=${date}` : ""}`
+    ),
+
+  callNextAtServicePoint: (servicePointId: string) =>
+    api.post<QueueEntry>(`/api/queues/service-points/${servicePointId}/call-next`, {}),
+
+  checkIn: (data: CheckInRequest) =>
+    api.post<QueueEntry>(`/api/queues/check-in`, data),
 
   callEntry: (entryId: string) =>
     api.post<QueueEntry>(`/api/queues/entries/${entryId}/call`, {}),
@@ -55,4 +80,8 @@ export const queueApi = {
 
   completeEntry: (entryId: string) =>
     api.post<QueueEntry>(`/api/queues/entries/${entryId}/complete`, {}),
+
+  requeueEntry: (entryId: string, reason?: string) =>
+    api.post<QueueEntry>(`/api/queues/entries/${entryId}/requeue`, { reason }),
 };
+

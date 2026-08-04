@@ -240,14 +240,7 @@ export default function LoginPage() {
               disabled={isSubmitting}
               className="w-full bg-primary-600 px-4 py-2.5 text-sm font-bold text-white shadow-sm hover:bg-primary-700 transition-all focus:outline-none active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? (
-                <span className="flex items-center justify-center gap-2">
-                  <span className="h-4 w-4 animate-spin border-2 border-white/30 border-t-white" />
-                  Đang kết nối hệ thống...
-                </span>
-              ) : (
-                "ĐĂNG NHẬP"
-              )}
+              {isSubmitting ? "Đang kết nối..." : "ĐĂNG NHẬP"}
             </button>
           </form>
 

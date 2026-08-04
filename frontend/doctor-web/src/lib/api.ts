@@ -40,7 +40,7 @@ export async function request<T>(path: string, options?: RequestInit): Promise<A
 
     // Handle No Content (204)
     if (response.status === 204) {
-      return { status: "success", data: {} as T };
+      return { status: "success", data: null as unknown as T };
     }
 
     const resJson = await response.json().catch(() => ({}));

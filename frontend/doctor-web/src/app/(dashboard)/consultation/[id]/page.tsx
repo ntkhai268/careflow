@@ -7,6 +7,7 @@ import { consultationApi, ConsultationResponse, UpdateConsultationRequest } from
 import { appointmentApi } from "@/lib/appointment-api";
 import { prescriptionApi, PrescriptionResponse, PrescriptionItemRequest, MedicineCatalogItem } from "@/lib/prescription-api";
 import { patientApi, emrApi, PatientAllergyResponse } from "@/lib/patient-api";
+import { labApi, MOCK_LAB_SERVICES, LabCatalogItem, LabOrderResponse } from "@/lib/lab-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmModal from "@/components/ConfirmModal";
 
@@ -27,7 +28,13 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const { user } = useAuth();
 
   // Active tab for clinical details
-  const [activeTab, setActiveTab] = useState<"vitals" | "clinical" | "diagnosis" | "summary">("vitals");
+  const [activeTab, setActiveTab] = useState<"vitals" | "clinical" | "diagnosis" | "labs" | "summary">("vitals");
+
+  // Lab Orders state
+  const [selectedLabServices, setSelectedLabServices] = useState<LabCatalogItem[]>([]);
+  const [labClinicalNote, setLabClinicalNote] = useState("");
+  const [existingLabOrders, setExistingLabOrders] = useState<LabOrderResponse[]>([]);
+  const [isSubmittingLabOrder, setIsSubmittingLabOrder] = useState(false);
 
   // Allergy banner eager-load state
   const [allergyNotes, setAllergyNotes] = useState<string | null>(null);
@@ -234,6 +241,16 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             quantity: item.quantity,
             notes: item.notes
           })));
+        }
+
+        // Fetch existing lab orders if any
+        try {
+          const labRes = await labApi.getByConsultation(consultationId);
+          if (labRes.data) {
+            setExistingLabOrders(labRes.data);
+          }
+        } catch {
+          // Silent catch for lab order fetch
         }
       } catch (err) {
         console.error(err);
@@ -741,6 +758,17 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             </button>
             <button
               type="button"
+              onClick={() => setActiveTab("labs")}
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+                activeTab === "labs"
+                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+              }`}
+            >
+              4. Chỉ định Cận lâm sàng ({selectedLabServices.length > 0 ? selectedLabServices.length : existingLabOrders.length})
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab("summary")}
               className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-tr-lg ${
                 activeTab === "summary"
@@ -748,7 +776,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
               }`}
             >
-              4. Tóm tắt lâm sàng
+              5. Tóm tắt lâm sàng
             </button>
           </div>
 
@@ -998,7 +1026,166 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             </div>
           )}
 
-          {/* TAB 4: Clinical Summary */}
+          {/* TAB 4: Lab Orders (Chỉ định Cận lâm sàng) */}
+          {activeTab === "labs" && (
+            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-5">
+              <div className="flex items-center justify-between border-b border-card-border pb-3">
+                <div>
+                  <h2 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide">
+                    Chỉ định Cận lâm sàng (Xét nghiệm & Cẩn lâm sàng)
+                  </h2>
+                  <p className="text-[11px] text-[#6A5C70] mt-0.5">
+                    Chọn các chỉ định cận lâm sàng cần thiết cho ca khám. Hệ thống sẽ tự động tạo lượt xếp hàng tại khu tương ứng.
+                  </p>
+                </div>
+                {selectedLabServices.length > 0 && !isConsultationLocked && (
+                  <button
+                    type="button"
+                    disabled={isSubmittingLabOrder}
+                    onClick={async () => {
+                      if (!user || !consultation) return;
+                      setIsSubmittingLabOrder(true);
+                      try {
+                        const items = selectedLabServices.map(s => ({
+                          serviceCode: s.serviceCode,
+                          serviceName: s.serviceName,
+                          servicePointId: s.servicePointId,
+                          required: true,
+                          preparationInstruction: s.preparationInstruction
+                        }));
+                        const res = await labApi.createOrder({
+                          consultationId,
+                          patientId: consultation.patientId,
+                          items,
+                          clinicalNote: labClinicalNote || symptoms || "Chỉ định cận lâm sàng",
+                          paymentRequired: true
+                        });
+                        showToast("Đã tạo chỉ định Cận lâm sàng thành công. Bệnh nhân đã được tự động xếp lượt!", "success");
+                        setSelectedLabServices([]);
+                        setLabClinicalNote("");
+                        const updatedOrders = await labApi.getByConsultation(consultationId);
+                        setExistingLabOrders(updatedOrders.data);
+                      } catch (err) {
+                        showToast(err instanceof Error ? err.message : "Không thể tạo chỉ định Cận lâm sàng.", "danger");
+                      } finally {
+                        setIsSubmittingLabOrder(false);
+                      }
+                    }}
+                    className="px-3.5 py-1.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-semibold rounded-md shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  >
+                    {isSubmittingLabOrder ? "Đang gửi chỉ định..." : `Gửi ${selectedLabServices.length} chỉ định CLS`}
+                  </button>
+                )}
+              </div>
+
+              {/* Danh sách Chỉ định đã được tạo */}
+              {existingLabOrders.length > 0 && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wider flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />
+                    <span>Các Chỉ định CLS đã phát hành ({existingLabOrders.length})</span>
+                  </h3>
+                  <div className="space-y-2">
+                    {existingLabOrders.map((order) => (
+                      <div key={order.id} className="border border-indigo-100 bg-indigo-50/50 p-3 rounded-md space-y-2">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="font-mono font-bold text-indigo-900">Order ID: {order.id.slice(0, 8)}...</span>
+                          <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
+                            order.status === "RESULT_AVAILABLE" ? "bg-emerald-100 text-emerald-800" :
+                            order.status === "IN_PROGRESS" ? "bg-purple-100 text-purple-800" :
+                            "bg-amber-100 text-amber-800"
+                          }`}>
+                            {order.status === "RESULT_AVAILABLE" ? "Đã có kết quả" :
+                             order.status === "IN_PROGRESS" ? "Đang thực hiện" : "Đã vào hàng chờ CLS"}
+                          </span>
+                        </div>
+                        <div className="divide-y divide-indigo-100 border border-indigo-100 bg-white rounded-md text-xs">
+                          {order.items.map(item => (
+                            <div key={item.id} className="p-2.5 flex items-center justify-between">
+                              <div>
+                                <span className="font-semibold text-gray-900">{item.serviceName}</span>
+                                <span className="text-[11px] text-gray-500 block">Điểm thực hiện: {item.servicePointId}</span>
+                              </div>
+                              {item.resultValue ? (
+                                <div className="text-right font-mono text-xs">
+                                  <span className="font-bold text-emerald-700">{item.resultValue} {item.unit || ""}</span>
+                                  {item.referenceRange && <span className="text-[10px] text-gray-400 block">Chuẩn: {item.referenceRange}</span>}
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-amber-600 italic">Chờ KTV nhập kết quả</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Danh mục các Xét nghiệm / Dịch vụ để Bác sĩ chọn */}
+              {!isConsultationLocked && (
+                <div className="space-y-3">
+                  <h3 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wider">
+                    Chọn dịch vụ Cận lâm sàng từ Danh mục
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {MOCK_LAB_SERVICES.map((service) => {
+                      const isSelected = selectedLabServices.some(s => s.serviceCode === service.serviceCode);
+                      return (
+                        <div
+                          key={service.serviceCode}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedLabServices(prev => prev.filter(s => s.serviceCode !== service.serviceCode));
+                            } else {
+                              setSelectedLabServices(prev => [...prev, service]);
+                            }
+                          }}
+                          className={`p-3 border rounded-lg cursor-pointer transition-all ${
+                            isSelected
+                              ? "border-primary-600 bg-primary-50/40 shadow-xs"
+                              : "border-card-border bg-white hover:border-gray-300"
+                          }`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="space-y-1">
+                              <span className="text-xs font-bold text-gray-900">{service.serviceName}</span>
+                              <span className="text-[11px] text-gray-500 block">{service.servicePointName}</span>
+                              {service.preparationInstruction && (
+                                <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded inline-block">
+                                  {service.preparationInstruction}
+                                </span>
+                              )}
+                            </div>
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => {}}
+                              className="h-4 w-4 text-primary-600 rounded focus:ring-primary-500 cursor-pointer mt-0.5"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Ghi chú chỉ định cận lâm sàng cho KTV</label>
+                    <input
+                      type="text"
+                      value={labClinicalNote}
+                      onChange={(e) => setLabClinicalNote(e.target.value)}
+                      placeholder="Ví dụ: Kiểm tra nghi ngờ viêm dạ dày, loại trừ thiếu máu..."
+                      className="w-full border border-input-border bg-input-bg px-3 py-2 text-xs text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB 5: Clinical Summary */}
           {activeTab === "summary" && (
             <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-5">
               <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">

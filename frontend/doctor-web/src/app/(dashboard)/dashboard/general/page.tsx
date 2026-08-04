@@ -55,72 +55,123 @@ export default function DashboardGeneralPage() {
     message: string;
     consultationId?: string;
   }>({ show: false, message: "" });
+  const isLabTech = user?.role?.toUpperCase().includes("LAB");
+  const isStaff = user?.role?.toUpperCase().includes("STAFF");
+  const isDoctor = !isLabTech && !isStaff;
 
   useEffect(() => {
     async function loadDashboardData() {
       if (!user?.id) return;
       setIsLoading(true);
       try {
-        const consRes = await consultationApi.getTodayByDoctor(user.id);
-        const todayCons = consRes.data || [];
-        const completedList = todayCons.filter(c => c.status === "COMPLETED");
-        setRecentCompleted(completedList);
-
-        const now = new Date();
-        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,"0")}-${String(now.getDate()).padStart(2,"0")}`;
-        try {
-          const queueRes = await queueApi.getRoomActive("ROOM-01");
-          const activeEntries = queueRes.data?.entries || [];
-          setWaitingCount(activeEntries.length);
-          setQueuePatients(activeEntries.map((e) => ({
-            queueNo: e.queueNumber,
-            appointmentId: e.appointmentId,
-            patientId: e.patientId,
-            name: `Bệnh nhân (${e.patientId.slice(0, 6)})`,
-            age: 35,
-            department: queueRes.data?.departmentName || "Nội tổng quát",
-            status: e.queueStatus,
-            time: e.scheduledStartAt ? e.scheduledStartAt.slice(11, 16) : "09:00"
-          })));
-        } catch {
-          setWaitingCount(0);
-          setQueuePatients([]);
-        }
-
-        const pNames: Record<string, string> = {};
-        for (const c of completedList) {
-          if (!pNames[c.patientId]) {
-            try {
-              const pRes = await patientApi.getPatientById(c.patientId);
-              if (pRes.data?.fullName) pNames[c.patientId] = pRes.data.fullName;
-            } catch { pNames[c.patientId] = `Bệnh nhân (${c.patientId.slice(0, 6)})`; }
+        if (isLabTech) {
+          try {
+            const labRes = await queueApi.getServicePointActive("LAB-HEMATOLOGY-01");
+            const activeEntries = labRes.data?.entries || [];
+            setWaitingCount(activeEntries.length);
+            setQueuePatients(activeEntries.map((e) => ({
+              queueNo: e.queueNumber,
+              appointmentId: e.appointmentId,
+              patientId: e.patientId,
+              name: `Bệnh nhân (${e.patientId.slice(0, 6)})`,
+              age: 30,
+              department: "Khu Xét nghiệm Cận lâm sàng",
+              status: e.queueStatus,
+              time: e.scheduledStartAt ? e.scheduledStartAt.slice(11, 16) : "08:30"
+            })));
+          } catch {
+            setWaitingCount(0);
+            setQueuePatients([]);
           }
+          setRecentCompleted([]);
+        } else if (isStaff) {
+          try {
+            const staffRes = await queueApi.getServicePointActive("PHARMACY-MAIN-01");
+            const activeEntries = staffRes.data?.entries || [];
+            setWaitingCount(activeEntries.length);
+            setQueuePatients(activeEntries.map((e) => ({
+              queueNo: e.queueNumber,
+              appointmentId: e.appointmentId,
+              patientId: e.patientId,
+              name: `Bệnh nhân (${e.patientId.slice(0, 6)})`,
+              age: 40,
+              department: "Quầy Phát thuốc",
+              status: e.queueStatus,
+              time: e.scheduledStartAt ? e.scheduledStartAt.slice(11, 16) : "08:30"
+            })));
+          } catch {
+            setWaitingCount(0);
+            setQueuePatients([]);
+          }
+          setRecentCompleted([]);
+        } else {
+          const consRes = await consultationApi.getTodayByDoctor(user.id);
+          const todayCons = consRes.data || [];
+          const completedList = todayCons.filter(c => c.status === "COMPLETED");
+          setRecentCompleted(completedList);
+
+          try {
+            const queueRes = await queueApi.getRoomActive("ROOM-01");
+            const activeEntries = queueRes.data?.entries || [];
+            setWaitingCount(activeEntries.length);
+            setQueuePatients(activeEntries.map((e) => ({
+              queueNo: e.queueNumber,
+              appointmentId: e.appointmentId,
+              patientId: e.patientId,
+              name: `Bệnh nhân (${e.patientId.slice(0, 6)})`,
+              age: 35,
+              department: queueRes.data?.departmentName || "Nội tổng quát",
+              status: e.queueStatus,
+              time: e.scheduledStartAt ? e.scheduledStartAt.slice(11, 16) : "09:00"
+            })));
+          } catch {
+            setWaitingCount(0);
+            setQueuePatients([]);
+          }
+
+          const pNames: Record<string, string> = {};
+          for (const c of completedList) {
+            if (!pNames[c.patientId]) {
+              try {
+                const pRes = await patientApi.getPatientById(c.patientId);
+                if (pRes.data?.fullName) pNames[c.patientId] = pRes.data.fullName;
+              } catch { pNames[c.patientId] = `Bệnh nhân (${c.patientId.slice(0, 6)})`; }
+            }
+          }
+          setPatientNames(pNames);
         }
-        setPatientNames(pNames);
       } catch { /* outer silent */ } finally {
         setIsLoading(false);
       }
     }
     loadDashboardData();
-  }, [user]);
+  }, [user, isLabTech, isStaff]);
 
   const handleCallPatient = async (patientId: string, appointmentId: string) => {
     if (!user) return;
+
+    if (isLabTech) {
+      router.push("/lab/queue");
+      return;
+    }
+
+    if (isStaff) {
+      router.push("/staff/pharmacy");
+      return;
+    }
+
     setIsCalling(true);
     setActiveNotice({ show: false, message: "" });
 
     try {
-      // 1. Check if doctor already has an in-progress consultation
       const consRes = await consultationApi.getTodayByDoctor(user.id);
       const activeCons = (consRes.data || []).find(c => c.status === "IN_PROGRESS");
       if (activeCons) {
-        // If clicking on the SAME patient/appointment -> Go straight into their consultation room!
         if (activeCons.patientId === patientId || activeCons.appointmentId === appointmentId) {
           router.push(`/consultation/${activeCons.id}`);
           return;
         }
 
-        // If clicking a DIFFERENT patient -> Notify via AI Ferret Assistant
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
             detail: {
@@ -156,9 +207,15 @@ export default function DashboardGeneralPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-            Xin chào, {user?.title || user?.username || "Bác sĩ"}
+            Xin chào, {user?.title || user?.username || (isLabTech ? "Kỹ thuật viên" : isStaff ? "Nhân viên Tiếp nhận & Dược" : "Bác sĩ")}
           </h1>
-          <p className="mt-0.5 text-xs text-gray-400">Tổng quan hoạt động khám bệnh hôm nay</p>
+          <p className="mt-0.5 text-xs text-gray-400">
+            {isLabTech
+              ? "Tổng quan hoạt động thực hiện Cận lâm sàng hôm nay"
+              : isStaff
+              ? "Tổng quan hoạt động tiếp nhận & phát thuốc hôm nay"
+              : "Tổng quan hoạt động khám bệnh hôm nay"}
+          </p>
         </div>
         <p className="text-xs text-gray-400">
           {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
@@ -176,26 +233,14 @@ export default function DashboardGeneralPage() {
               {activeNotice.message}
             </p>
           </div>
-          <div className="flex items-center gap-3 flex-shrink-0">
-            {activeNotice.consultationId && (
-              <button
-                onClick={() => router.push(`/consultation/${activeNotice.consultationId}`)}
-                className="text-[#6366F1] hover:text-indigo-700 font-semibold text-xs transition-colors underline flex items-center gap-1"
-              >
-                <span>Đến ca khám hiện tại</span>
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </button>
-            )}
+          {activeNotice.consultationId && (
             <button
-              onClick={() => setActiveNotice({ show: false, message: "" })}
-              className="text-slate-400 hover:text-slate-600 text-xs px-1 py-0.5 transition-colors"
-              title="Đóng thông báo"
+              onClick={() => router.push(`/consultation/${activeNotice.consultationId}`)}
+              className="px-2.5 py-1 bg-[#6366F1] hover:bg-[#4F46E5] text-white text-[11px] font-bold rounded-lg transition-colors whitespace-nowrap"
             >
-              ✕
+              Vào ca khám →
             </button>
-          </div>
+          )}
         </div>
       )}
 
@@ -237,18 +282,22 @@ export default function DashboardGeneralPage() {
           </div>
         </div>
 
-        {/* Queue shortcut */}
+        {/* Queue shortcut card depending on Role */}
         <div className="rounded-xl px-4 py-3 shadow-sm col-span-2 sm:col-span-1 hover:shadow-md transition-shadow"
-          style={{ background: "linear-gradient(135deg, #6366F1 0%, #3B82F6 100%)" }}>
-          <Link href="/dashboard/queue" className="flex items-center gap-3 w-full">
+          style={{ background: "linear-gradient(135deg, #6E2582 0%, #3B82F6 100%)" }}>
+          <Link href={isLabTech ? "/lab/queue" : isStaff ? "/staff/pharmacy" : "/dashboard/queue"} className="flex items-center gap-3 w-full">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
               <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
             </div>
             <div>
-              <p className="text-[10px] text-white/70 font-medium">Phòng khám</p>
-              <p className="text-xs font-bold text-white">Vào hàng đợi →</p>
+              <p className="text-[10px] text-white/70 font-medium">
+                {isLabTech ? "Khu Cận lâm sàng" : isStaff ? "Quầy Phát thuốc" : "Phòng khám"}
+              </p>
+              <p className="text-xs font-bold text-white">
+                {isLabTech ? "Đến hàng đợi CLS →" : isStaff ? "Hàng đợi Phát thuốc →" : "Vào hàng đợi →"}
+              </p>
             </div>
           </Link>
         </div>
@@ -261,7 +310,9 @@ export default function DashboardGeneralPage() {
         <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-[480px]">
           <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 flex-wrap gap-2 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-gray-800">Hàng đợi khám cần xử lý</h2>
+              <h2 className="text-sm font-bold text-gray-800">
+                {isLabTech ? "Hàng đợi Cận lâm sàng" : isStaff ? "Hàng đợi Phát thuốc" : "Hàng đợi khám cần xử lý"}
+              </h2>
               {waitingCount > 0 && (
                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">
                   {waitingCount}
@@ -289,7 +340,7 @@ export default function DashboardGeneralPage() {
                 )}
               </div>
 
-              <Link href="/dashboard/queue"
+              <Link href={isLabTech ? "/lab/queue" : isStaff ? "/staff/pharmacy" : "/dashboard/queue"}
                 className="text-[11px] font-semibold text-indigo-500 hover:text-indigo-700 transition-colors flex items-center gap-0.5 whitespace-nowrap">
                 Xem tất cả
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

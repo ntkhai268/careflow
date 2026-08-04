@@ -141,7 +141,7 @@ export default function DashboardQueuePage() {
       const callRes = await queueApi.callNextInRoom(roomId);
       const nextEntry = callRes.data;
 
-      if (nextEntry) {
+      if (nextEntry && nextEntry.queueNumber) {
         // 2. Automatically create consultation and navigate to consultation page
         const res = await consultationApi.createConsultation({
           appointmentId: nextEntry.appointmentId,
@@ -150,10 +150,19 @@ export default function DashboardQueuePage() {
         });
         router.push(`/consultation/${res.data.id}`);
       } else {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
+            detail: { text: "Bác sĩ ơi, hiện tại chưa có bệnh nhân nào đâu ạ!" }
+          }));
+        }
         await loadQueue();
       }
-    } catch (err: any) {
-      setErrorMessage(err?.message || "Không thể gọi bệnh nhân tiếp theo. Vui lòng thử lại.");
+    } catch {
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
+          detail: { text: "Bác sĩ ơi, hiện tại chưa có bệnh nhân nào đâu ạ!" }
+        }));
+      }
     } finally {
       setIsCallingNext(false);
     }
@@ -230,7 +239,7 @@ export default function DashboardQueuePage() {
               <span>Đang gọi số tiếp theo...</span>
             </>
           ) : (
-            <span>Gọi số tiếp theo (Round-Robin)</span>
+            <span>Gọi số</span>
           )}
         </button>
       </div>
@@ -261,7 +270,7 @@ export default function DashboardQueuePage() {
             disabled={callingEntryId === recommended.entryId}
             className="px-3 py-1.5 bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white font-semibold text-xs rounded-md shadow-xs transition-colors cursor-pointer"
           >
-            {callingEntryId === recommended.entryId ? "Đang gọi..." : "Gọi ngay bệnh nhân này"}
+            {callingEntryId === recommended.entryId ? "Đang gọi..." : "Gọi số"}
           </button>
         </div>
       )}
