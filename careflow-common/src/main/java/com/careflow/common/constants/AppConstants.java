@@ -9,6 +9,7 @@ public final class AppConstants {
     public static final String EXCHANGE_NOTIFICATION = "notification.exchange";
     public static final String EXCHANGE_PRESCRIPTION = "prescription.exchange";
     public static final String EXCHANGE_CONSULTATION = "consultation.exchange";
+    public static final String EXCHANGE_LAB = "lab.exchange";
 
     // RabbitMQ routing keys
     public static final String RK_APPOINTMENT_CREATED = "appointment.created";
@@ -23,6 +24,10 @@ public final class AppConstants {
     public static final String RK_QUEUE_NEAR_TURN = "queue.near-turn";
     public static final String RK_PRESCRIPTION_CREATED = "prescription.created";
     public static final String RK_CONSULTATION_COMPLETED = "consultation.completed";
+    public static final String RK_PRESCRIPTION_ISSUED = "prescription.issued";
+    public static final String RK_PRESCRIPTION_CANCELLED = "prescription.cancelled";
+    public static final String RK_PRESCRIPTION_DISPENSED = "prescription.dispensed";
+    public static final String RK_LAB_ALL_REQUIRED_RESULTS_AVAILABLE = "lab.results.all-required-available";
     public static final String RK_NOTIFICATION_SEND = "notification.send";
 
     // Roles

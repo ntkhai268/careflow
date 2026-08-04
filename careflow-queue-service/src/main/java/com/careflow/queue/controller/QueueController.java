@@ -11,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
+import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -111,9 +112,33 @@ public class QueueController {
             @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
             @RequestHeader(value = AppConstants.HEADER_IDEMPOTENCY_KEY, required = false) String idempotencyKey,
             @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
-        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
+        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
+                AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
         return ApiResponse.success("Đã gọi bệnh nhân", queueService.call(
                 entryId, userId, idempotencyKey, correlationId));
+    }
+
+    @GetMapping("/service-points/{servicePointId}/active")
+    public ApiResponse<ServicePointQueueResponse> servicePointDashboard(
+            @PathVariable String servicePointId,
+            @RequestParam(required = false) LocalDate date,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        requireAnyRole(role, AppConstants.ROLE_STAFF, AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success(queueService.servicePointDashboard(servicePointId, date));
+    }
+
+    @PostMapping("/service-points/{servicePointId}/call-next")
+    public ResponseEntity<ApiResponse<QueueEntryResponse>> callNextAtServicePoint(
+            @PathVariable String servicePointId,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
+            @RequestHeader(value = AppConstants.HEADER_IDEMPOTENCY_KEY, required = false) String idempotencyKey,
+            @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
+        requireAnyRole(role, AppConstants.ROLE_STAFF, AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
+        Optional<QueueEntryResponse> result = queueService.callNextAtServicePoint(
+                servicePointId, userId, idempotencyKey, correlationId);
+        return result.map(entry -> ResponseEntity.ok(ApiResponse.success("Đã gọi lượt tiếp theo", entry)))
+                .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
     @GetMapping("/departments/{departmentId}/dashboard")
@@ -138,17 +163,20 @@ public class QueueController {
 
     @PostMapping("/entries/{entryId}/recall")
     public ApiResponse<QueueEntryResponse> recall(@PathVariable UUID entryId,
+                                                  @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
                                                   @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                   @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
-        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
-        return ApiResponse.success(queueService.recall(entryId, correlationId));
+        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
+                AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success(queueService.recall(entryId, userId, correlationId));
     }
 
     @PostMapping("/entries/{entryId}/miss")
     public ApiResponse<QueueEntryResponse> miss(@PathVariable UUID entryId,
                                                 @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                 @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
-        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
+        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
+                AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
         return ApiResponse.success(queueService.miss(entryId, correlationId));
     }
 
@@ -157,7 +185,8 @@ public class QueueController {
                                                    @RequestBody(required = false) RequeueRequest request,
                                                    @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                    @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
-        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
+        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
+                AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
         return ApiResponse.success(queueService.requeue(entryId, request, correlationId));
     }
 
@@ -165,7 +194,8 @@ public class QueueController {
     public ApiResponse<QueueEntryResponse> start(@PathVariable UUID entryId,
                                                  @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                  @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
-        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
+        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
+                AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
         return ApiResponse.success(queueService.start(entryId, correlationId));
     }
 
@@ -173,7 +203,8 @@ public class QueueController {
     public ApiResponse<QueueEntryResponse> complete(@PathVariable UUID entryId,
                                                     @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                     @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
-        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
+        requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
+                AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
         return ApiResponse.success(queueService.complete(entryId, correlationId));
     }
 

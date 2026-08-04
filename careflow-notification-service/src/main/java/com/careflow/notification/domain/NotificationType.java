@@ -1,0 +1,16 @@
+package com.careflow.notification.domain;
+
+public enum NotificationType {
+    APPOINTMENT_CONFIRMED,
+    VISIT_TICKET_ISSUED,
+    CHECK_IN_SUCCESS,
+    QUEUE_NEAR_TURN,
+    QUEUE_CALLED,
+    QUEUE_MISSED,
+    LAB_ORDER_CREATED,
+    LAB_READY,
+    LAB_RESULT_AVAILABLE,
+    RETURN_FOR_REVIEW,
+    PRESCRIPTION_AVAILABLE,
+    FOLLOW_UP_SCHEDULED
+}

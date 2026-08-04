@@ -1,6 +1,6 @@
 # Notification Service Contract
 
-> Contract ID: `CF-SVC-11` | Version: `1.0` | Module: `careflow-notification-service`
+> Contract ID: `CF-SVC-11` | Version: `1.2` | Module: `careflow-notification-service`
 
 ## 1. Trách nhiệm và ranh giới
 
@@ -12,17 +12,21 @@ Sở hữu:
 - WebSocket realtime và delivery log;
 - retry/DLQ của kênh gửi.
 
+Notification Service giữ projection tối thiểu `patientId → userId` từ
+`PatientProfileCreated`; projection này chỉ dùng để xác định người nhận và không
+thay thế Patient Service.
+
 Không quyết định queue state, appointment state hoặc clinical state. Notification thất bại không được
 rollback giao dịch nghiệp vụ đã thành công.
 
 ## 2. Kênh MVP
 
 ```text
-IN_APP | WEBSOCKET
+IN_APP | WEBSOCKET | FCM_PUSH
 ```
 
-Push notification thật, SMS và email là mở rộng. Có thể mock adapter nhưng không tuyên bố đã tích hợp
-provider production.
+FCM là kênh bổ sung cho app chạy nền/đã đóng. Inbox vẫn là nguồn sự thật; lỗi FCM
+không đổi trạng thái nghiệp vụ và không làm mất notification. SMS và email ngoài phạm vi.
 
 ## 3. HTTP/WebSocket API
 
@@ -32,9 +36,15 @@ provider production.
 | `GET /api/notifications/unread-count` | Chính user | Số chưa đọc |
 | `POST /api/notifications/{notificationId}/read` | Chính user | Đánh dấu đã đọc |
 | `POST /api/notifications/read-all` | Chính user | Đọc tất cả |
-| `GET /api/notifications/preferences` | Chính user | Xem lựa chọn kênh |
-| `PUT /api/notifications/preferences` | Chính user | Cập nhật lựa chọn |
-| `WS /ws/notifications` | Authenticated | Stream realtime của chính user |
+| `PUT /api/notifications/devices` | Chính user | Upsert device ID, FCM token, platform và app version |
+| `DELETE /api/notifications/devices/{deviceId}` | Chính user | Vô hiệu hóa push trên thiết bị khi logout |
+| `WS /ws/notifications` | Authenticated | STOMP handshake qua Gateway |
+
+Sau khi kết nối, client subscribe destination `/user/queue/notifications`.
+Mỗi session chỉ nhận notification của principal trong JWT; client không truyền
+`userId` trong URL hoặc destination. Preferences chưa cần trong MVP vì
+`IN_APP/WEBSOCKET` là hai mặt của cùng một inbox bắt buộc, không phải hai kênh
+marketing để người dùng bật/tắt.
 
 Notification response `data` item:
 
@@ -62,18 +72,44 @@ Không gửi chẩn đoán chi tiết, kết quả nhạy cảm hoặc tên đ�
 |---|---|---|
 | `AppointmentConfirmed` | `APPOINTMENT_CONFIRMED` | Patient |
 | `VisitTicketIssued` | `VISIT_TICKET_ISSUED` | Patient |
+| `PatientCheckedIn` | `CHECK_IN_SUCCESS` | Patient |
 | `QueueNearTurn` | `QUEUE_NEAR_TURN` | Patient |
-| `PatientCalled` | `QUEUE_CALLED` | Patient và room display payload tối thiểu |
+| `PatientCalled` | `QUEUE_CALLED` | Patient |
 | `QueueEntryMissed` | `QUEUE_MISSED` | Patient |
 | `LabOrderCreated` | `LAB_ORDER_CREATED` | Patient |
 | `LabOrderReadyForExecution` | `LAB_READY` | Patient |
-| `LabResultAvailable` | `LAB_RESULT_AVAILABLE` | Patient/Doctor, không kèm kết quả chi tiết |
-| `AllRequiredResultsAvailable` | `RETURN_FOR_REVIEW` | Patient/Doctor |
+| `LabResultAvailable` | `LAB_RESULT_AVAILABLE` | Patient, không kèm kết quả chi tiết |
+| `AllRequiredResultsAvailable` | `RETURN_FOR_REVIEW` | Patient; chỉ hướng dẫn quay lại, không yêu cầu xác nhận để vào queue |
 | `PrescriptionIssued` | `PRESCRIPTION_AVAILABLE` | Patient |
 | `FollowUpScheduled` | `FOLLOW_UP_SCHEDULED` | Patient |
 
 Template nhận dữ liệu tối thiểu và action link/resource ID. Nội dung chi tiết được tải qua API nguồn sau
 khi kiểm tra quyền.
+
+### 4.1. Xác định người nhận
+
+Notification xử lý theo thứ tự sau:
+
+1. Event Queue có `recipientUserId`: dùng trực tiếp sau khi validate UUID.
+2. `AppointmentConfirmed` v1 có `userId`: dùng field này cho patient owner.
+3. Event Lab/Prescription có `patientId`: tra projection được tạo từ
+   `PatientProfileCreated(patientId, userId)`.
+
+Trong giai đoạn Patient Service chưa phát `PatientProfileCreated`, Notification
+cũng được phép upsert cùng projection khi nhận Appointment/Queue event có đồng
+thời `patientId` và `userId`/`recipientUserId`. Đây là fallback tương thích,
+không thay đổi ownership dữ liệu gốc.
+
+Producer không gọi Notification API và không phải đổi `patientId` thành
+`userId`. Nếu projection chưa có do event đến sai thứ tự, consumer retry hữu hạn;
+hết retry đưa event vào DLQ. Không mở Patient API nội bộ vô danh để giải quyết
+background event.
+
+`PatientProfileCreated` được bind từ `patient.exchange` chỉ để upsert projection,
+không tạo inbox item cho bệnh nhân.
+
+Notification cho Doctor Web và topic màn hình công cộng nằm ngoài vertical slice
+này. Doctor Web tiếp tục lấy trạng thái lâm sàng từ service nguồn và Queue API.
 
 ## 5. Event publish
 
@@ -101,9 +137,17 @@ Exchange: `notification.exchange`.
 
 - Unique theo `sourceEventId + recipientUserId + notificationType`.
 - Duplicate broker delivery không tạo hai inbox item.
-- WebSocket offline vẫn lưu `IN_APP`; user lấy lại qua REST.
+- Inbox item được lưu bền vững trước khi thử gửi WebSocket. WebSocket offline
+  không làm item `FAILED`; user lấy lại qua REST khi mở app.
+- `PENDING` là trạng thái xử lý trước khi inbox item được lưu/gửi;
+  `DELIVERED` nghĩa là item đã có trong inbox, `READ` là user đã đọc, còn
+  `FAILED` chỉ dùng khi xử lý/template đã hết retry.
 - Retry adapter lỗi hữu hạn; hết retry vào DLQ và publish `NotificationFailed`.
 - Không retry vô hạn và không làm nghẽn consumer của event khác.
+- Mỗi `notificationId + deviceInstallationId` chỉ tạo một push delivery.
+- Push delivery retry theo backoff hữu hạn. Token bị FCM trả về là không còn đăng ký
+  hoặc sai vĩnh viễn được chuyển `DEAD` và device installation bị vô hiệu hóa.
+- Service-account JSON chỉ được mount/secret-inject lúc chạy; không nằm trong Git hoặc image.
 
 ## 7. Mock cho frontend và producer
 
@@ -111,6 +155,11 @@ Exchange: `notification.exchange`.
 - Producer chỉ cần publish event nghiệp vụ; không gọi Notification database/API.
 - Fixture phải có near-turn, called, lab result, prescription và follow-up.
 - WebSocket mock duplicate message để UI deduplicate theo notification ID.
+
+Canonical fixture:
+
+- [`fixtures/notification/inbox-list.json`](fixtures/notification/inbox-list.json)
+- [`fixtures/notification/queue-called-realtime.json`](fixtures/notification/queue-called-realtime.json)
 
 ## 8. Definition of Done
 
@@ -121,7 +170,7 @@ Exchange: `notification.exchange`.
 
 ### `FUNCTIONAL_READY`
 
-- Inbox/read/preferences/WebSocket và delivery states hoạt động.
+- Inbox/read/WebSocket và delivery states hoạt động.
 - Test template, duplicate event, offline user, retry và DLQ pass.
 - Không có dữ liệu nhạy cảm ngoài mức cần thiết.
 

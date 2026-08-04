@@ -33,8 +33,13 @@ package "Các dịch vụ nghiệp vụ" {
 }
 
 note right of Queue
-  Quản lý ba làn PRIORITY, NORMAL, RESULT_REVIEW
-  Đề xuất Round Robin 1:1:1 và gọi lượt bác sĩ chọn
+  Phòng khám: ba làn PRIORITY, NORMAL, RESULT_REVIEW
+  Cận lâm sàng/phát thuốc: FIFO theo service point
+end note
+
+note right of Prescription
+  Toa CONFIRMED phát PrescriptionIssued
+  để Queue tạo lượt PHARMACY_DISPENSING
 end note
 
 note left of Appointment

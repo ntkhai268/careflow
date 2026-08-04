@@ -62,9 +62,12 @@ Branch `838f08f` có:
 - Prototype cũ chia `EMERGENCY`, `PRIORITY`, `APPOINTMENT`, `WALK_IN` và chạy tỷ lệ N:M.
 - Contract mục tiêu hiện dùng ba làn `PRIORITY`, `NORMAL`, `RESULT_REVIEW`, FIFO
   trong từng làn và Round Robin `1:1:1` theo phòng/phiên; cấp cứu không tham gia.
-- Chưa có `INITIAL_CONSULTATION`, `LAB_EXECUTION`, `RESULT_REVIEW`.
+- Theo thuật ngữ contract tại thời điểm audit, chưa có `INITIAL_CONSULTATION`,
+  `LAB_EXECUTION`, `RESULT_REVIEW`. Contract 1.2 sau đó đổi mô hình mục tiêu thành
+  `QueueType=CONSULTATION|LAB_EXECUTION|PHARMACY_DISPENSING`, với
+  `RESULT_REVIEW` là `ConsultationPhase`/làn điều phối.
 - Chưa consume `LabOrderReadyForExecution` hoặc `AllRequiredResultsAvailable`.
-- Chưa có xác nhận bệnh nhân quay lại, làn `RESULT_REVIEW` và scheduler ba làn.
+- Chưa có cơ chế tự tạo lượt đọc kết quả, làn `RESULT_REVIEW` và scheduler ba làn.
 - API và event name đang theo contract cũ.
 
 ### Hướng xử lý

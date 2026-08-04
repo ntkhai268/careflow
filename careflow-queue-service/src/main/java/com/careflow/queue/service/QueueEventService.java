@@ -34,7 +34,10 @@ public class QueueEventService {
         body.put("recipientUserId", entry.getUserId());
         body.put("departmentId", entry.getDepartmentId());
         body.put("queueNumber", entry.getQueueNumber());
-        body.put("roomId", config.getRoomCode());
+        body.put("queueType", entry.getQueueType());
+        body.put("consultationPhase", entry.getConsultationPhase());
+        body.put("servicePointId", entry.getServicePointId());
+        body.put("roomId", config == null ? null : config.getRoomCode());
         body.putAll(extra);
         EventEnvelope envelope = new EventEnvelope(eventId, eventType, 1, entry.getId(), entry.getVersion(),
                 now, "queue-service", correlationId == null ? eventId.toString() : correlationId,

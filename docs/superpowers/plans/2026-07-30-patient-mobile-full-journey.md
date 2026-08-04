@@ -8,6 +8,13 @@
 
 **Tech Stack:** Flutter 3.44.2, Dart 3.12.2, Riverpod 2.6.1, GoRouter 14.8.1, SharedPreferences 2.3.4, qr_flutter 4.1.0, flutter_test.
 
+> **Contract evolution — 2026-08-03:** Queue contract 1.2 adds
+> `PHARMACY_DISPENSING`, changes the consultation queue type to `CONSULTATION`,
+> and treats `RESULT_REVIEW` as a phase/lane. Result review now activates
+> automatically when all required results are available; any older confirmation
+> step below is superseded. Pharmacy queue UI/API integration requires a separate
+> follow-up slice.
+
 ## Global Constraints
 
 - `DEMO_MODE` defaults to `false`; mock data and demo controls must be absent when false.
@@ -18,8 +25,9 @@
 - The clinic queue has `PRIORITY`, `NORMAL`, and `RESULT_REVIEW` lanes, FIFO
   within each lane and Round Robin `1:1:1` across non-empty lanes.
 - Laboratory orders enter their queue without a second check-in.
-- Result review becomes active after the patient confirms return and participates
-  in the `RESULT_REVIEW` lane.
+- Result review becomes active automatically after all required results are
+  available and participates in the `RESULT_REVIEW` lane; Mobile confirmation
+  is not required.
 - Patient-visible copy is Vietnamese; source files are UTF-8.
 - Demo state is namespaced by authenticated patient ID and appointment ID and survives app restart.
 - Every behavior change follows RED-GREEN-REFACTOR; no production function is added without a test that first fails for the expected missing behavior.
@@ -144,7 +152,7 @@ enum JourneyStatus {
   completed,
 }
 
-enum PaymentMethod { online, cash, insurance }
+enum PaymentMethod { onlineMock, cashAtHospital }
 ```
 
 - [ ] **Step 4: Run model tests and verify GREEN**
@@ -277,8 +285,9 @@ Cover:
 - stable ticket number and QR on repeated bootstrap;
 - deterministic clinic queue (`peopleAhead: 3`);
 - laboratory order branch with a complete mock order;
-- online, cash, and insurance payment acknowledgement;
-- result-review queue position after one next initial patient;
+- online mock and cash-at-hospital payment acknowledgement;
+- result-review queue state supplied by Queue Service without client-side
+  insertion logic;
 - switching the authenticated patient clears the active in-memory journey and
   never loads the previous patient's namespaced data;
 - invalid events preserve controller state and expose Vietnamese error;
@@ -486,7 +495,7 @@ Run the laboratory widget test and expect missing-screen failure.
 
 Payment selection calls `acknowledgePayment`. Online mode displays a simulated
 success receipt only in Demo Mode; production mode displays the unavailable
-backend message. Cash and insurance record acknowledgement without claiming
+backend message. Cash records a pending hospital payment without claiming
 electronic settlement.
 
 - [ ] **Step 7: Write failing result-review queue tests**
@@ -495,7 +504,7 @@ Assert `WAITING_RESULT_REVIEW` displays:
 
 ```text
 Quay lại Phòng 21
-Hãy xác nhận khi bạn đã quay lại để vào hàng chờ đọc kết quả
+Bạn đã được đưa vào hàng chờ đọc kết quả. Vui lòng quay lại và chờ được gọi.
 ```
 
 Assert `RESULT_REVIEW` displays that the doctor is reviewing results.

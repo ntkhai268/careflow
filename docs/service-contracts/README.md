@@ -144,10 +144,10 @@ Quy tắc:
 | 3 | [Patient](03-patient.md) | `careflow-patient-service` | Mobile, Doctor Web, EMR | Identity |
 | 4 | [Electronic Medical Record](04-electronic-medical-record.md) | `careflow-emr-service` | Doctor Web, Patient Mobile | Patient và các event lâm sàng |
 | 5 | [Appointment](05-appointment.md) | `careflow-appointment-service` | Patient Mobile, Doctor/Staff Web, Queue | Patient |
-| 6 | [Queue Management](06-queue-management.md) | `careflow-queue-service` | Mobile, Doctor/Staff/Lab Web | Appointment, Consultation, Laboratory Order |
+| 6 | [Queue Management](06-queue-management.md) | `careflow-queue-service` | Mobile, Doctor/Staff/Lab/Pharmacy Web | Appointment, Consultation, Laboratory Order, Prescription |
 | 7 | [Analytics](07-analytics.md) | `careflow-analytics-service` chưa tạo | Admin Web | Event từ các service |
 | 8 | [Doctor Consultation](08-doctor-consultation.md) | `careflow-consultation-service` | Doctor Web, EMR | Queue, Patient, Laboratory Order, Prescription |
-| 9 | [Prescription](09-prescription.md) | `careflow-prescription-service` | Doctor Web, Patient Mobile, EMR | Consultation, Patient |
+| 9 | [Prescription](09-prescription.md) | `careflow-prescription-service` | Doctor/Pharmacy Web, Patient Mobile, EMR, Queue | Consultation, Patient, Queue |
 | 10 | [Laboratory Order](10-laboratory-order.md) | `careflow-lab-service` | Doctor/Lab Web, Mobile, EMR | Consultation, Patient, Queue |
 | 11 | [Notification](11-notification.md) | `careflow-notification-service` | Mobile và Web | Event nghiệp vụ |
 | 12 | [AI Clinical Assistant](12-ai-clinical-assistant.md) | `careflow-ai-service` | Doctor Web | EMR, Consultation |
@@ -163,7 +163,7 @@ Gateway + Identity + Patient
 → Queue phòng khám
 → Consultation
 → Laboratory Order + Queue cận lâm sàng
-→ Prescription
+→ Prescription + Queue phát thuốc
 → EMR projection
 → Notification
 → Analytics
@@ -210,7 +210,7 @@ Hai cột dưới đây cố ý tách biệt:
 | Identity & eKYC | Có auth, refresh token và eKYC mock trên `develop` | Chưa đánh giá lại đầy đủ; thiếu role mục tiêu và contract tích hợp |
 | Patient | Có profile và patient-uploaded health record trên `develop` | Chưa đánh giá lại đầy đủ; cần ownership/auth test và event chuẩn |
 | Appointment | Có CRUD/query; create tự trả `CONFIRMED`, lưu owner/phòng và phát `AppointmentConfirmed` v1 qua outbox | Chưa có bảng quản trị `ClinicRoom`, capacity concurrency-safe/idempotency/follow-up |
-| Queue Management | Initial consultation vertical slice có ticket/QR, staff check-in đúng phòng, active queue, call/start/complete, outbox và consumer idempotent | Chưa có Lab, result-review và authorization theo doctor-room assignment |
+| Queue Management | Initial consultation chạy thật; domain ba loại queue, Round Robin ba làn, result-review tự active và pharmacy dispensing FIFO đã có consumer idempotent/API | Chưa có producer thật từ Lab/Prescription, `LAB_EXECUTION`, quản trị service point và authorization theo assignment |
 | Consultation | Prototype lớn tại `aaf0716`: domain, API, state, RabbitMQ và Doctor Web; module build thành công | `BELOW_CONTRACT`: thiếu queue assignment/ownership, transition guard, Lab flow, envelope/outbox và test |
 | Prescription | Prototype lớn tại `e1381f5`: domain thuốc/toa, API, RabbitMQ và Doctor Web; module build thành công | `BELOW_CONTRACT`: thiếu ownership, cancel/dispense/amendment, event chuẩn, migration và test |
 | Laboratory Order | Chỉ có module skeleton trên mọi remote ref | `BELOW_CONTRACT`: chưa có domain/API/state/event/test |

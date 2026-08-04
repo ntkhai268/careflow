@@ -4,7 +4,7 @@ skinparam backgroundColor white
 skinparam shadowing false
 skinparam defaultFontName Arial
 
-state "INITIAL_CONSULTATION" as Initial {
+state "CONSULTATION — INITIAL" as Initial {
   [*] --> TICKET_ISSUED
   TICKET_ISSUED --> CHECKED_IN : Quét QR hợp lệ
   CHECKED_IN --> CALLED : Gọi lượt
@@ -25,7 +25,7 @@ state "LAB_EXECUTION" as LabQueue {
   LAB_MISSED --> LAB_QUEUED
 }
 
-state "RESULT_REVIEW" as ReviewQueue {
+state "CONSULTATION — RESULT_REVIEW" as ReviewQueue {
   [*] --> REVIEW_QUEUED
   REVIEW_QUEUED --> REVIEW_CALLED
   REVIEW_CALLED --> REVIEW_IN_PROGRESS
@@ -34,13 +34,29 @@ state "RESULT_REVIEW" as ReviewQueue {
   REVIEW_MISSED --> REVIEW_QUEUED : Xếp cuối làn RESULT_REVIEW
 }
 
+state "PHARMACY_DISPENSING" as PharmacyQueue {
+  [*] --> PHARMACY_QUEUED
+  PHARMACY_QUEUED --> PHARMACY_CALLED : Gọi FIFO
+  PHARMACY_CALLED --> PHARMACY_IN_PROGRESS : Bắt đầu cấp phát
+  PHARMACY_IN_PROGRESS --> PHARMACY_COMPLETED : Toa DISPENSED
+  PHARMACY_CALLED --> PHARMACY_MISSED
+  PHARMACY_MISSED --> PHARMACY_QUEUED
+  PHARMACY_QUEUED --> PHARMACY_CANCELLED : Toa bị hủy
+}
+
 note bottom of Initial
-  INITIAL_CONSULTATION chỉ active sau CHECKED_IN.
+  CONSULTATION phase INITIAL chỉ active sau CHECKED_IN.
   QueueClass: PRIORITY hoặc NORMAL.
 end note
 
 note bottom of ReviewQueue
-  RESULT_REVIEW chỉ active sau khi bệnh nhân xác nhận quay lại.
+  CONSULTATION phase RESULT_REVIEW là entry mới của consultation cũ
+  và tự active khi đủ kết quả bắt buộc.
   SchedulingLane không phải trạng thái vòng đời.
+end note
+
+note bottom of PharmacyQueue
+  PHARMACY_DISPENSING giữ FIFO theo servicePointId.
+  Queue không quản lý tồn kho hoặc tự sửa trạng thái toa.
 end note
 @enduml

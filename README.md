@@ -24,7 +24,7 @@ CareFlow là hệ thống quản lý khám chữa bệnh tại bệnh viện, g�
 | Patient Service | ✅ Hoạt động, port `8082` |
 | Appointment Service | ✅ Hoạt động, port `8083` |
 | Queue Management | ✅ Hoạt động, port `8084` |
-| Notification Service | 🔧 Planned |
+| Notification Service | ✅ Inbox/WebSocket, port `8085` |
 | Doctor Consultation | 🔧 Planned |
 | Prescription Service | 🔧 Planned |
 | EMR Service | 🔧 Planned |

@@ -26,17 +26,18 @@
 | `UC-CON-01` | Bắt đầu và thực hiện phiên khám | Bác sĩ | **Chi tiết** |
 | `UC-CON-02` | Cập nhật sinh hiệu và thông tin lâm sàng | Bác sĩ | Gộp vào `UC-CON-01` |
 | `UC-LAB-01` | Tạo chỉ định cận lâm sàng | Bác sĩ | **Chi tiết** |
-| `UC-LAB-02` | Xác nhận điều kiện thanh toán/BHYT | Bệnh nhân/Nhân viên/Hệ thống ngoài | Tóm tắt |
+| `UC-LAB-02` | Chọn và xác nhận hình thức thanh toán MVP | Bệnh nhân/Nhân viên thu ngân | Tóm tắt |
 | `UC-LAB-03` | Thực hiện và phát hành kết quả | Kỹ thuật viên cận lâm sàng | **Chi tiết** |
 | `UC-LAB-04` | Quay lại bác sĩ đọc kết quả | Bác sĩ | Gộp vào `UC-LAB-03` |
 | `UC-PRE-01` | Kê toa, hẹn tái khám và hoàn tất | Bác sĩ | **Chi tiết** |
 | `UC-PRE-02` | Xem toa thuốc và kết quả sau khám | Bệnh nhân | Tóm tắt |
+| `UC-PHA-01` | Gọi lượt và phát thuốc | Nhân viên cấp phát thuốc | **Chi tiết** |
 | `UC-NOT-01` | Xem và đánh dấu thông báo | Bệnh nhân | Tóm tắt |
 | `UC-ADM-01` | Quản lý tài khoản nội bộ | Quản trị viên | Tóm tắt |
 | `UC-ADM-02` | Cấu hình khoa, phòng và điểm phục vụ | Quản trị viên | Tóm tắt/thiết kế mục tiêu |
 | `UC-ADM-03` | Cấu hình lịch làm việc, slot và capacity | Quản trị viên | Tóm tắt/thiết kế mục tiêu |
 
-## 2. Tám Use Case cốt lõi trình bày đầy đủ
+## 2. Chín Use Case cốt lõi trình bày đầy đủ
 
 | Thứ tự | Mã | Use Case | Đặc tả | Activity | Sequence |
 |---:|---|---|:---:|:---:|:---:|
@@ -48,6 +49,7 @@
 | 6 | `UC-LAB-01` | Tạo chỉ định cận lâm sàng | Có | Có | Có |
 | 7 | `UC-LAB-03` | Thực hiện, phát hành và đọc kết quả | Có | Có | Có |
 | 8 | `UC-PRE-01` | Kê toa, hẹn tái khám và hoàn tất | Có | Có | Có |
+| 9 | `UC-PHA-01` | Gọi lượt và phát thuốc | Có | Có | Có |
 
 Hai Use Case mở rộng `UC-PAT-01` và `UC-APT-04` có bảng đặc tả và Activity
 Diagram nhưng không bắt buộc Sequence Diagram riêng nếu lời gọi đã được thể
@@ -83,11 +85,11 @@ hiện trong luồng khác.
   API Queue theo `roomId`; Queue Service kiểm tra lại quyền truy cập phòng.
 - Doctor Web hiển thị ba làn `PRIORITY`, `NORMAL`, `RESULT_REVIEW` và lượt được
   Queue Service đề xuất theo Round Robin `1:1:1`.
-- Bác sĩ chủ động bấm gọi tại bất kỳ lượt `CHECKED_IN` nào; server gọi đúng entry
+- Bác sĩ chủ động bấm gọi tại bất kỳ entry đủ điều kiện nào; server gọi đúng entry
   được chọn. `call-next` là lệnh gọi nhanh và phải tính lại gợi ý tại thời điểm xử lý.
   Scheduler không tự động gọi bệnh nhân.
-- Chỉ lượt khám ban đầu `CHECKED_IN` và lượt đọc kết quả đã xác nhận quay lại mới
-  xuất hiện trong active queue phòng khám.
+- Active queue phòng khám gồm lượt khám ban đầu `CHECKED_IN` và lượt đọc kết quả
+  được tự động tạo khi đủ kết quả bắt buộc.
 - Bao gồm gọi lại và đánh dấu `MISSED`; nhân viên có quyền chỉ hỗ trợ requeue
   theo chính sách, không thực hiện command gọi của phòng khám.
 - Bệnh nhân nhận cập nhật trạng thái và thông báo gọi lượt.
@@ -101,22 +103,33 @@ hiện trong luồng khác.
 ### `UC-LAB-01` — Tạo chỉ định cận lâm sàng
 
 - Bác sĩ tạo order từ consultation đang `IN_PROGRESS`.
-- Nếu cần thanh toán/BHYT, order chờ xác nhận điều kiện.
+- Nếu cần thanh toán, order chờ online mock hoặc thu ngân xác nhận tiền mặt.
 - Khi đủ điều kiện, Queue tự tạo `LAB_EXECUTION`; bệnh nhân không check-in lại.
 
 ### `UC-LAB-03` — Thực hiện, phát hành và đọc kết quả
 
 - Kỹ thuật viên gọi, bắt đầu, nhập và finalize kết quả.
-- Khi đủ kết quả bắt buộc, consultation chờ review; Queue kích hoạt
-  `RESULT_REVIEW` sau khi bệnh nhân xác nhận đã quay lại.
-- Bệnh nhân nhận thông báo, quay lại, xác nhận đã có mặt và được phục vụ bởi đúng
-  bác sĩ trong consultation cũ, không tạo lịch mới.
+- Khi đủ kết quả bắt buộc, consultation chờ review; Queue tự động tạo và kích
+  hoạt entry `CONSULTATION` phase `RESULT_REVIEW`.
+- Bệnh nhân được bộ phận cận lâm sàng hướng dẫn quay lại và có thể nhận thêm
+  thông báo; không cần dùng Mobile hay xác nhận có mặt. Lượt vẫn thuộc đúng bác
+  sĩ trong consultation cũ và không tạo lịch mới.
 
 ### `UC-PRE-01` — Kê toa, hẹn tái khám và hoàn tất
 
 - Bác sĩ tạo, kiểm tra và xác nhận toa.
 - Có thể tạo follow-up appointment.
 - Hoàn tất Consultation, Queue Entry và Appointment; bệnh nhân xem kết quả sau khám.
+
+### `UC-PHA-01` — Gọi lượt và phát thuốc
+
+- Toa `CONFIRMED` làm Queue Service tạo một entry `PHARMACY_DISPENSING` tại điểm
+  cấp phát mặc định; bệnh nhân không check-in lại.
+- Nhân viên cấp phát xem queue FIFO, gọi lượt, đối chiếu bệnh nhân và bắt đầu phục vụ.
+- Nhân viên xác nhận đã phát thuốc; Prescription chuyển `DISPENSED` và Queue Entry
+  tương ứng chuyển `COMPLETED`.
+- Ngoại lệ chính: toa đã hủy/đã phát, sai điểm phục vụ, lượt chưa được gọi hoặc
+  actor không được phân công.
 
 ## 4. Quan hệ include/extend dự kiến
 
@@ -126,5 +139,7 @@ hiện trong luồng khác.
 - `Thực hiện phiên khám` **extend** `Tạo chỉ định cận lâm sàng` khi cần xét nghiệm.
 - `Thực hiện và phát hành kết quả` **include** `Tạo lượt quay lại đọc kết quả` khi đủ kết quả.
 - `Kê toa và hoàn tất` **extend** `Tạo lịch tái khám` khi bác sĩ yêu cầu.
+- `Gọi lượt và phát thuốc` **include** `Đối chiếu toa và Queue Entry` trước khi
+  xác nhận cấp phát.
 
 Không lạm dụng `include`/`extend` cho các bước kỹ thuật nội bộ hoặc lời gọi API.

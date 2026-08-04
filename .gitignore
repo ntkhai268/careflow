@@ -33,6 +33,11 @@ build/
 .flutter-plugins
 .flutter-plugins-dependencies
 *.g.dart
+frontend/patient-mobile/android/app/google-services.json
+
+# Firebase credentials (never commit service-account private keys)
+secrets/firebase-service-account*.json
+**/firebase-service-account*.json
 
 # Docker
 docker-compose.override.yml

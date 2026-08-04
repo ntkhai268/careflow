@@ -26,10 +26,10 @@ không được xem là tác nhân trong Use Case Diagram.
 | `ACT-RECEPTION` | Nhân viên tiếp nhận | Quét QR, xác nhận bệnh nhân có mặt, hỗ trợ gọi lại, lỡ lượt và xếp lại hàng |
 | `ACT-LAB` | Kỹ thuật viên cận lâm sàng | Theo dõi order và queue, gọi lượt, thực hiện kỹ thuật, nhập và phát hành kết quả |
 | `ACT-ADMIN` | Quản trị viên | Quản lý tài khoản nội bộ, khoa, phòng, lịch làm việc, slot, capacity và điểm phục vụ |
-| `ACT-PAYMENT` | Hệ thống thanh toán/BHYT ngoài | Xác nhận trạng thái đủ điều kiện thực hiện dịch vụ trong phạm vi tích hợp hoặc mô phỏng của MVP |
+| `ACT-PAYMENT` | Thu ngân/hệ thống thanh toán ngoài | Xác nhận trạng thái đủ điều kiện thực hiện dịch vụ trong phạm vi tích hợp hoặc mô phỏng của MVP |
 
 Trong MVP, Hospital Web là một ứng dụng dùng chung và hiển thị chức năng theo
-vai trò. Thanh toán/BHYT không phải service cốt lõi của CareFlow mà được xem là
+vai trò. Thanh toán không phải service cốt lõi của CareFlow mà được xem là
 hệ thống ngoài. Kiosk chỉ trở thành tác nhân riêng nếu được phát triển như một
 hệ thống độc lập; quy trình hiện tại sử dụng nhân viên tiếp nhận để check-in.
 
@@ -77,13 +77,14 @@ migration tương ứng sẽ được đánh giá riêng ở Chương 4.
 |---|---|
 | `FR-QUE-01` | Hệ thống cấp Visit Ticket, số thứ tự và QR sau khi lịch được xác nhận. |
 | `FR-QUE-02` | Nhân viên tiếp nhận có thể quét QR để xác nhận bệnh nhân đã đến. |
-| `FR-QUE-03` | Active queue phòng khám chỉ hiển thị lượt khám ban đầu đã `CHECKED_IN` và lượt đọc kết quả đã xác nhận bệnh nhân quay lại. |
+| `FR-QUE-03` | Active queue phòng khám hiển thị lượt khám ban đầu đã `CHECKED_IN` và lượt đọc kết quả được tự động kích hoạt khi đủ kết quả bắt buộc. |
 | `FR-QUE-04` | Doctor Web xác định phòng từ khoa của bác sĩ, sau đó hiển thị riêng ba làn `PRIORITY`, `NORMAL`, `RESULT_REVIEW` và lượt được Queue Service đề xuất tiếp theo. |
-| `FR-QUE-05` | Hệ thống không tự động gọi. Bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ lượt `CHECKED_IN` nào trong queue của phòng. |
+| `FR-QUE-05` | Hệ thống không tự động gọi. Bác sĩ có thể gọi lượt được đề xuất hoặc bất kỳ entry đủ điều kiện nào trong active queue của phòng. |
 | `FR-QUE-06` | Người có quyền có thể gọi lại, đánh dấu lỡ lượt và xếp lại lượt theo chính sách. |
 | `FR-QUE-07` | Bệnh nhân có thể theo dõi trạng thái và vị trí tương đối của lượt hiện tại. |
-| `FR-QUE-08` | Hệ thống tự tạo lượt cận lâm sàng và kích hoạt lượt `RESULT_REVIEW` khi đủ điều kiện. |
+| `FR-QUE-08` | Hệ thống tự tạo lượt cận lâm sàng và kích hoạt entry `CONSULTATION` phase `RESULT_REVIEW` khi đủ điều kiện. |
 | `FR-QUE-09` | Gọi nhanh phải tính lại đề xuất; gọi theo hàng phải chuyển đúng Queue Entry được bác sĩ chọn sang `CALLED`. |
+| `FR-QUE-10` | Khi toa được xác nhận, hệ thống tự tạo lượt `PHARMACY_DISPENSING`; nhân viên cấp phát gọi FIFO tại đúng điểm phục vụ. |
 
 #### e. Phiên khám
 
@@ -100,11 +101,11 @@ migration tương ứng sẽ được đánh giá riêng ở Chương 4.
 | Mã | Yêu cầu |
 |---|---|
 | `FR-LAB-01` | Bác sĩ được phân công có thể tạo order gồm một hoặc nhiều hạng mục. |
-| `FR-LAB-02` | Hệ thống có thể ghi nhận trạng thái thanh toán/BHYT ở mức MVP. |
+| `FR-LAB-02` | Hệ thống có thể ghi nhận online mock hoặc tiền mặt tại bệnh viện ở mức MVP. |
 | `FR-LAB-03` | Order đủ điều kiện phải tự tạo lượt tại đúng service point, không check-in lần hai. |
 | `FR-LAB-04` | Kỹ thuật viên có thể gọi, bắt đầu và cập nhật tiến trình thực hiện order được phân công. |
 | `FR-LAB-05` | Kỹ thuật viên có thể nhập và phát hành kết quả; kết quả đã phát hành không bị ghi đè âm thầm. |
-| `FR-LAB-06` | Khi đủ kết quả bắt buộc, consultation chuyển sang chờ review; lượt `RESULT_REVIEW` được kích hoạt sau khi bệnh nhân xác nhận đã quay lại. |
+| `FR-LAB-06` | Khi đủ kết quả bắt buộc, consultation chuyển sang chờ review và hệ thống tự động tạo entry `CONSULTATION` phase `RESULT_REVIEW`. |
 
 #### g. Toa thuốc, tái khám và thông báo
 
@@ -113,6 +114,7 @@ migration tương ứng sẽ được đánh giá riêng ở Chương 4.
 | `FR-PRE-01` | Bác sĩ được phân công có thể tạo và cập nhật toa ở trạng thái `DRAFT`. |
 | `FR-PRE-02` | Bác sĩ có thể xác nhận toa hợp lệ; toa đã xác nhận không được sửa trực tiếp. |
 | `FR-PRE-03` | Bệnh nhân chỉ có thể xem toa đã `CONFIRMED` hoặc `DISPENSED` của mình. |
+| `FR-PRE-04` | Nhân viên cấp phát chỉ được xác nhận phát thuốc khi Queue Entry tương ứng đã được gọi, bắt đầu và thuộc đúng điểm phục vụ. |
 | `FR-NOT-01` | Hệ thống tạo thông báo tại các mốc quan trọng của lịch khám, queue, xét nghiệm, toa và tái khám. |
 | `FR-NOT-02` | Người dùng có thể xem lại thông báo đã lưu và đánh dấu đã đọc. |
 | `FR-NOT-03` | Cập nhật realtime không được thay thế nguồn dữ liệu nghiệp vụ bền vững. |
@@ -159,7 +161,7 @@ và đánh giá riêng, không mặc nhiên được coi là đã hoàn thành.
 | `BR-APT-02` | Không cho phép một bệnh nhân có hai lịch chưa hủy trong cùng khung giờ. |
 | `BR-APT-03` | Ca đã bắt đầu hoặc đã qua không được phép đặt. |
 | `BR-APT-04` | Một `Department` có thể có nhiều `ClinicRoom`; dữ liệu MVP chỉ có đúng một phòng active cho mỗi khoa. Nếu kết quả phân phòng là 0 hoặc nhiều hơn 1, hệ thống báo lỗi cấu hình và không random/find-first. |
-| `BR-QUE-01` | Visit Ticket có thể cấp trước nhưng lượt khám ban đầu chỉ vào active queue sau khi `CHECKED_IN`; lượt đọc kết quả chỉ active sau khi xác nhận bệnh nhân quay lại. |
+| `BR-QUE-01` | Visit Ticket có thể cấp trước nhưng lượt khám ban đầu chỉ vào active queue sau khi `CHECKED_IN`; lượt đọc kết quả tự active khi đủ kết quả bắt buộc. |
 | `BR-QUE-02` | Mỗi phòng và phiên có ba làn logic `PRIORITY`, `NORMAL`, `RESULT_REVIEW`; FIFO theo `queuedAt` trong từng làn và đề xuất Round Robin `1:1:1`, bỏ qua làn rỗng. Khi chưa có lịch sử gọi, chu kỳ bắt đầu từ `PRIORITY`. |
 | `BR-QUE-03` | Lượt `MISSED` không được giữ ở đầu queue và chỉ được xếp lại theo chính sách. |
 | `BR-QUE-04` | QR chỉ chứa token tham chiếu hoặc token đã ký và phải được kiểm tra hiệu lực khi quét. |
@@ -169,9 +171,10 @@ và đánh giá riêng, không mặc nhiên được coi là đã hoàn thành.
 | `BR-LAB-01` | Order đủ điều kiện tự tạo lượt cận lâm sàng; bệnh nhân không check-in lại tại mỗi khu. |
 | `BR-LAB-02` | Kết quả đã phát hành chỉ được sửa bằng phiên bản correction có lý do và audit. |
 | `BR-REV-01` | Lượt đọc kết quả thuộc consultation hiện tại và không tạo Appointment mới. |
-| `BR-REV-02` | `RESULT_REVIEW` dùng một làn riêng, chỉ active sau khi bệnh nhân xác nhận quay lại và tham gia Round Robin `1:1:1` tại phòng khám. |
+| `BR-REV-02` | `RESULT_REVIEW` dùng một làn riêng, tự active khi đủ kết quả bắt buộc và tham gia Round Robin `1:1:1`; nếu bệnh nhân chưa có mặt thì áp dụng `MISSED/requeue`. |
 | `BR-CON-01` | Chỉ bác sĩ được phân công mới cập nhật hoặc hoàn tất consultation. |
 | `BR-PRE-01` | Toa `CONFIRMED` không được sửa trực tiếp; thay đổi phải tạo amendment/toa thay thế. |
+| `BR-PRE-02` | Mỗi toa `CONFIRMED` có tối đa một lượt `PHARMACY_DISPENSING` đang hoạt động; lượt được gọi FIFO và hoàn tất khi toa chuyển `DISPENSED`. |
 | `BR-PAT-01` | Bệnh nhân chỉ truy cập hồ sơ, kết quả và toa thuộc quyền sở hữu của mình. |
 | `BR-NOT-01` | Lỗi gửi thông báo không làm thất bại giao dịch nghiệp vụ nguồn. |
 
@@ -181,12 +184,12 @@ và transition trong các Use Case cốt lõi.
 ## 3.2. Mô hình Use Case tổng quát
 
 Mô hình Use Case mô tả chức năng từ góc nhìn của tác nhân, không mô tả cấu trúc
-microservice hoặc endpoint nội bộ. Danh mục đầy đủ gồm 28 Use Case; trong đó tám
+microservice hoặc endpoint nội bộ. Danh mục đầy đủ gồm 29 Use Case; trong đó chín
 Use Case cốt lõi được đặc tả chi tiết ở mục 3.3.
 
 ### 3.2.1. Biểu đồ Use Case tổng thể
 
-Biểu đồ tổng thể thể hiện sáu tác nhân và các nhóm chức năng chính của CareFlow.
+Biểu đồ tổng thể thể hiện bảy tác nhân và các nhóm chức năng chính của CareFlow.
 Các chức năng được gom ở mức nghiệp vụ để sơ đồ vẫn đọc được khi trình bày trên
 khổ A4.
 
@@ -202,9 +205,10 @@ Nguồn PlantUML: [DGM-UC-02 — Phân hệ bệnh nhân](chapter-03/diagrams/us
 
 ### 3.2.3. Use Case phân hệ bác sĩ và nhân viên y tế
 
-Hospital Web được dùng chung cho bác sĩ, nhân viên tiếp nhận, kỹ thuật viên và
-quản trị viên. Chức năng hiển thị và quyền thao tác phụ thuộc vào vai trò đã xác
-thực. Biểu đồ phân hệ thể hiện sự khác biệt trách nhiệm giữa các nhóm này.
+Hospital Web được dùng chung cho bác sĩ, nhân viên tiếp nhận, kỹ thuật viên cận
+lâm sàng, nhân viên cấp phát thuốc và quản trị viên. Chức năng hiển thị và quyền
+thao tác phụ thuộc vào vai trò đã xác thực. Biểu đồ phân hệ thể hiện sự khác biệt
+trách nhiệm giữa các nhóm này.
 
 Nguồn PlantUML: [DGM-UC-03 — Phân hệ bác sĩ và nhân viên](chapter-03/diagrams/use-case/dgm-uc-03-hospital.puml).
 
@@ -239,7 +243,9 @@ biểu đồ lặp lại quá lớn cho các thao tác CRUD đơn giản.
 
 ### 3.3.8. Kê toa, hẹn tái khám và hoàn tất
 
-### 3.3.9. Các Use Case mở rộng
+### 3.3.9. Gọi lượt và phát thuốc
+
+### 3.3.10. Các Use Case mở rộng
 
 ## 3.4. Thiết kế kiến trúc hệ thống
 
@@ -249,7 +255,8 @@ CareFlow được thiết kế theo kiến trúc Microservices và tổ chức t
 thành phần logic:
 
 1. **Lớp trình bày:** Patient Mobile dành cho bệnh nhân và Hospital Web dành
-   cho bác sĩ, nhân viên tiếp nhận, kỹ thuật viên và quản trị viên.
+   cho bác sĩ, nhân viên tiếp nhận, kỹ thuật viên, nhân viên cấp phát thuốc và
+   quản trị viên.
 2. **Lớp truy cập:** API Gateway cung cấp điểm vào chung; Eureka Server hỗ trợ
    đăng ký và phát hiện service.
 3. **Lớp dịch vụ nghiệp vụ:** mỗi service sở hữu một miền nghiệp vụ và dữ liệu
@@ -277,10 +284,10 @@ Analytics không được đưa vào luồng cốt lõi.
 | Nghiệp vụ | Identity & eKYC Service | Tài khoản, vai trò, access/refresh token và eKYC mock |
 | Nghiệp vụ | Patient Service | Hồ sơ hành chính, tiền sử khai báo và hồ sơ cũ do bệnh nhân upload |
 | Nghiệp vụ | Appointment Service | Khoa, `ClinicRoom`, slot, capacity, phân phòng, lịch khám, hủy, no-show và tái khám |
-| Nghiệp vụ | Queue Management Service | Visit Ticket, QR, số thứ tự, Queue Entry, ba làn điều phối, đề xuất và gọi entry do bác sĩ chọn |
+| Nghiệp vụ | Queue Management Service | Visit Ticket, QR, số thứ tự, Queue Entry; ba làn phòng khám; queue FIFO tại điểm cận lâm sàng và phát thuốc |
 | Nghiệp vụ | Doctor Consultation Service | Phiên khám, sinh hiệu, triệu chứng, chẩn đoán và trạng thái chờ kết quả |
 | Nghiệp vụ | Laboratory Order Service | Chỉ định, hạng mục, quá trình thực hiện và kết quả cận lâm sàng |
-| Nghiệp vụ | Prescription Service | Toa thuốc, dòng thuốc, xác nhận, amendment và trạng thái phát thuốc demo |
+| Nghiệp vụ | Prescription Service | Toa thuốc, dòng thuốc, xác nhận, amendment và trạng thái phát thuốc; không sở hữu hàng đợi hoặc tồn kho |
 | Nghiệp vụ | EMR Service | Góc nhìn tổng hợp lịch sử bệnh nhân từ dữ liệu nguồn |
 | Nghiệp vụ | Notification Service | Inbox, template, trạng thái gửi và cập nhật realtime |
 
@@ -303,7 +310,7 @@ hữu. Service khác truy cập thông qua REST API hoặc xây dựng projectio
 | Identity | User, role, trạng thái tài khoản, refresh token, eKYC mock | Patient profile, appointment và dữ liệu lâm sàng |
 | Patient | Patient profile, dị ứng/tiền sử khai báo, uploaded record | Chẩn đoán, lab result và prescription chính thức |
 | Appointment | Appointment, Department, ClinicRoom, room assignment, slot/capacity và follow-up | QR, queue number và active queue |
-| Queue | Visit Ticket, QR token, room snapshot/reference, Queue Entry, scheduler phòng/phiên, `lastServedLane` và chính sách xếp lượt | ClinicRoom configuration, Appointment slot, consultation và lab result |
+| Queue | Visit Ticket, QR token, room/service-point snapshot, Queue Entry, scheduler phòng/phiên, `lastServedLane` và chính sách xếp lượt | ClinicRoom configuration, Appointment slot, consultation, lab result, nội dung toa và tồn kho |
 | Consultation | Consultation, sinh hiệu, triệu chứng, chẩn đoán và kết luận | Order result, toa thuốc và lịch hẹn |
 | Laboratory Order | Order, item, payment eligibility, kết quả và correction | Active queue và chẩn đoán cuối cùng |
 | Prescription | Prescription, item và trạng thái toa | Kho dược, thanh toán và quyết định chẩn đoán |
@@ -334,7 +341,8 @@ chế at-least-once và phải idempotent.
 | `QueueEntryStarted` | Queue | Consultation/Lab | Đối chiếu quyền bắt đầu phục vụ |
 | `LabOrderReadyForExecution` | Laboratory Order | Queue, Notification | Tạo lượt tại đúng service point |
 | `AllRequiredResultsAvailable` | Laboratory Order | Consultation, Queue, Notification | Chuyển consultation và tạo lượt đọc kết quả |
-| `PrescriptionIssued` | Prescription | Consultation, EMR, Notification | Ghi nhận toa đã phát hành |
+| `PrescriptionIssued` | Prescription | Queue, Consultation, EMR, Notification | Ghi nhận toa đã phát hành và tạo lượt phát thuốc |
+| `PrescriptionDispensed` | Prescription | Queue, EMR, Notification | Hoàn tất lượt phát thuốc và cập nhật hành trình |
 | `ConsultationCompleted` | Consultation | EMR, Appointment, Notification | Tổng hợp hồ sơ và hoàn tất hành trình |
 
 WebSocket chỉ dùng để chuyển cập nhật nhanh đến client. Trạng thái nghiệp vụ vẫn
@@ -368,14 +376,18 @@ Nguồn PlantUML: [DGM-STA-01 — Appointment](chapter-03/diagrams/state/dgm-sta
 
 ### 3.5.2. Trạng thái lượt chờ
 
-Queue Entry có ba loại. `INITIAL_CONSULTATION` bắt đầu từ phiếu đã cấp và cần
-check-in. `LAB_EXECUTION` được tạo tự động khi order đủ điều kiện.
-`RESULT_REVIEW` được kích hoạt khi đủ kết quả và bệnh nhân xác nhận đã quay lại.
+Queue Entry có ba loại. `CONSULTATION` phase `INITIAL` bắt đầu từ phiếu đã cấp và
+cần check-in. `LAB_EXECUTION` được tạo tự động khi order đủ điều kiện.
+`CONSULTATION` phase `RESULT_REVIEW` là một entry mới liên kết consultation cũ và
+được tự động kích hoạt ngay khi đủ kết quả bắt buộc.
+`PHARMACY_DISPENSING` được tạo khi toa chuyển `CONFIRMED`.
 
-`QueueType` biểu diễn mục đích phục vụ, `QueueClass` phân biệt lượt khám ban đầu
-`PRIORITY`/`NORMAL`, còn `SchedulingLane` là giá trị suy ra để điều phối. Ba làn
+`QueueType` biểu diễn công đoạn phục vụ; `ConsultationPhase` phân biệt khám ban
+đầu và đọc kết quả; `QueueClass` phân biệt lượt khám ban đầu `PRIORITY`/`NORMAL`;
+còn `SchedulingLane` là giá trị suy ra để điều phối tại phòng khám. Ba làn
 `PRIORITY`, `NORMAL`, `RESULT_REVIEW` không làm thay đổi state machine: FIFO được
-giữ trong từng làn và Queue Service đề xuất theo Round Robin `1:1:1`.
+giữ trong từng làn và Queue Service đề xuất theo Round Robin `1:1:1`. Queue cận
+lâm sàng và phát thuốc giữ FIFO riêng tại từng điểm phục vụ.
 
 Các trạng thái `ARRIVED` và `READY` không được tách trong MVP;
 `CHECKED_IN` mang ý nghĩa bệnh nhân đã đến, đã tiếp nhận và đủ điều kiện được gọi.
@@ -394,7 +406,7 @@ Nguồn PlantUML: [DGM-STA-03 — Consultation](chapter-03/diagrams/state/dgm-st
 
 ### 3.5.4. Trạng thái chỉ định cận lâm sàng
 
-Laboratory Order được tạo ở `ORDERED`. Nếu cần xác nhận thanh toán/BHYT, order
+Laboratory Order được tạo ở `ORDERED`. Nếu cần xác nhận thanh toán, order
 chuyển `PAYMENT_PENDING`; khi đủ điều kiện, nó chuyển `QUEUED`. Kỹ thuật viên gọi,
 bắt đầu và phát hành kết quả. Trạng thái `QUEUED`, `CALLED` và `MISSED` được đồng
 bộ từ Queue, trong khi order vẫn là nguồn sự thật của nội dung chỉ định và kết
@@ -407,8 +419,10 @@ Nguồn PlantUML: [DGM-STA-04 — Laboratory Order](chapter-03/diagrams/state/dg
 Toa được tạo dưới dạng `DRAFT` để bác sĩ kiểm tra và chỉnh sửa. Sau khi xác nhận,
 toa chuyển `CONFIRMED` và được phép hiển thị cho bệnh nhân. Toa đã xác nhận không
 được sửa trực tiếp; nếu thay đổi phải hủy bằng amendment và tạo toa thay thế để
-giữ lịch sử. `DISPENSED` chỉ biểu diễn bước phát thuốc ở mức demo, không thay thế
-hệ thống quản lý kho dược.
+giữ lịch sử. Khi toa `CONFIRMED`, Queue Service tạo lượt
+`PHARMACY_DISPENSING`. Nhân viên chỉ xác nhận phát thuốc sau khi lượt đã được gọi
+và bắt đầu; `DISPENSED` hoàn tất lượt tương ứng. Quy trình này không thay thế hệ
+thống quản lý kho dược.
 
 Nguồn PlantUML: [DGM-STA-05 — Prescription](chapter-03/diagrams/state/dgm-sta-05-prescription.puml).
 ## 3.6. Thiết kế dữ liệu

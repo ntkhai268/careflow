@@ -33,6 +33,7 @@ import static org.mockito.Mockito.*;
 class QueueManagementServiceTest {
     @Mock QueueConfigRepository configs;
     @Mock QueueNumberSequenceRepository sequences;
+    @Mock ServicePointSequenceRepository servicePointSequences;
     @Mock QueueEntryRepository entries;
     @Mock IdempotencyRecordRepository idempotencyRecords;
     @Mock QueueEventService events;
@@ -46,7 +47,7 @@ class QueueManagementServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new QueueManagementService(configs, sequences, entries, idempotencyRecords,
+        service = new QueueManagementService(configs, sequences, servicePointSequences, entries, idempotencyRecords,
                 events, qrTokens, "Asia/Ho_Chi_Minh");
         today = service.businessDate();
         departmentId = UUID.randomUUID();
@@ -172,7 +173,7 @@ class QueueManagementServiceTest {
     }
 
     @Test
-    void callNextProtectsDueAppointmentWithoutAdvancingPriorityCycle() {
+    void callNextUsesPriorityLaneBeforeNormalLaneRegardlessOfAppointmentTime() {
         QueueEntry appointment = entry(PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, 1);
         appointment.setScheduledStartAt(Instant.now().minusSeconds(60));
         QueueEntry priority = entry(PriorityLevel.PRIORITY, QueueStatus.CHECKED_IN, 2);
@@ -183,10 +184,9 @@ class QueueManagementServiceTest {
                 eq(config.getId()), eq(today), anyCollection())).thenReturn(List.of(priority, appointment));
 
         assertThat(service.callNext(departmentId, doctorUserId, "request-1", "trace-1"))
-                .get().extracting(response -> response.entryId()).isEqualTo(appointment.getId());
-        assertThat(config.getCyclePhase()).isEqualTo(CyclePhase.PRIORITY);
-        assertThat(config.getServedInPhase()).isZero();
-        assertThat(priority.getStatus()).isEqualTo(QueueStatus.CHECKED_IN);
+                .get().extracting(response -> response.entryId()).isEqualTo(priority.getId());
+        assertThat(config.getLastServedLane()).isEqualTo(SchedulingLane.PRIORITY);
+        assertThat(appointment.getStatus()).isEqualTo(QueueStatus.CHECKED_IN);
     }
 
     @Test
@@ -254,7 +254,7 @@ class QueueManagementServiceTest {
         assertThat(selected.getCallAttempts()).isEqualTo(1);
         verify(events).append(eq(selected), eq(config), eq("PatientCalled"),
                 eq("queue.called"), eq("trace-1"),
-                argThat(extra -> Boolean.TRUE.equals(extra.get("selectedByDoctor"))));
+                argThat(extra -> Boolean.TRUE.equals(extra.get("selectedByActor"))));
     }
 
     @Test
@@ -281,9 +281,8 @@ class QueueManagementServiceTest {
         when(entries.findById(missed.getId())).thenReturn(Optional.of(missed));
         when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
         when(entries.findFirstById(missed.getId())).thenReturn(Optional.of(missed));
-        when(entries.findByQueueConfigIdAndQueueDateAndStatusAndPriorityLevelOrderByEligibleSinceAtAscSequenceNumberAsc(
-                eq(config.getId()), eq(today), eq(QueueStatus.CHECKED_IN),
-                eq(PriorityLevel.PRIORITY), any())).thenReturn(List.of(first));
+        when(entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+                eq(config.getId()), eq(today), anyCollection())).thenReturn(List.of(first));
 
         service.requeue(missed.getId(), new RequeueRequest(RequeueRequest.Position.FRONT), "trace-1");
 
@@ -327,10 +326,11 @@ class QueueManagementServiceTest {
         when(entries.findFirstById(called.getId())).thenReturn(Optional.of(called));
         when(configs.findByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
 
-        service.recall(called.getId(), "trace-1");
+        service.recall(called.getId(), doctorUserId, "trace-1");
 
         assertThat(called.getStatus()).isEqualTo(QueueStatus.CALLED);
         assertThat(called.getCallAttempts()).isEqualTo(2);
+        assertThat(called.getCalledByUserId()).isEqualTo(doctorUserId);
         verify(events).append(eq(called), eq(config), eq("PatientCalled"), anyString(),
                 eq("trace-1"), argThat(extra -> Integer.valueOf(2).equals(extra.get("callAttempt"))));
     }
@@ -349,6 +349,135 @@ class QueueManagementServiceTest {
         assertThat(called.getMissedAt()).isNotNull();
     }
 
+    @Test
+    void prescriptionIssuedCreatesQueuedPharmacyEntryWithoutSecondCheckIn() {
+        UUID prescriptionId = UUID.randomUUID();
+        UUID consultationId = UUID.randomUUID();
+        UUID patientId = UUID.randomUUID();
+        UUID patientUserId = UUID.randomUUID();
+        Instant issuedAt = Instant.parse("2026-08-18T05:05:00Z");
+        ServicePointSequence sequence = new ServicePointSequence();
+        sequence.setLastNumber(6);
+        QueueEntry previous = entry(PriorityLevel.APPOINTMENT, QueueStatus.COMPLETED, 1);
+        previous.setPatientId(patientId);
+        previous.setUserId(patientUserId);
+        when(entries.findByPrescriptionId(prescriptionId)).thenReturn(Optional.empty());
+        when(entries.findFirstByPatientIdAndUserIdIsNotNullOrderByCreatedAtDesc(patientId))
+                .thenReturn(Optional.of(previous));
+        when(servicePointSequences.findByServicePointIdAndQueueDate("PHARMACY-01",
+                LocalDate.of(2026, 8, 18))).thenReturn(Optional.of(sequence));
+
+        QueueEntry pharmacy = service.createPharmacyEntry(
+                prescriptionId, consultationId, patientId, "pharmacy-01", issuedAt);
+
+        assertThat(pharmacy.getQueueType()).isEqualTo(QueueType.PHARMACY_DISPENSING);
+        assertThat(pharmacy.getConsultationPhase()).isNull();
+        assertThat(pharmacy.getQueueClass()).isNull();
+        assertThat(pharmacy.getStatus()).isEqualTo(QueueStatus.QUEUED);
+        assertThat(pharmacy.getQueueNumber()).isEqualTo("RX-007");
+        assertThat(pharmacy.getUserId()).isEqualTo(patientUserId);
+        assertThat(pharmacy.getEligibleSinceAt()).isEqualTo(issuedAt);
+    }
+
+    @Test
+    void servicePointCallNextUsesStrictFifo() {
+        UUID staffId = UUID.randomUUID();
+        QueueEntry first = pharmacyEntry(1, QueueStatus.QUEUED);
+        QueueEntry second = pharmacyEntry(2, QueueStatus.QUEUED);
+        when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
+                eq("CALL_NEXT_SERVICE_POINT"), any(), eq("rx-call-1"))).thenReturn(Optional.empty());
+        when(entries.findByServicePointIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
+                "PHARMACY-01", today, java.util.Set.of(QueueStatus.QUEUED)))
+                .thenReturn(List.of(first, second));
+        when(entries.findFirstById(first.getId())).thenReturn(Optional.of(first));
+
+        var selected = service.callNextAtServicePoint(
+                "pharmacy-01", staffId, "rx-call-1", "trace-1");
+
+        assertThat(selected).get().extracting(response -> response.entryId()).isEqualTo(first.getId());
+        assertThat(first.getStatus()).isEqualTo(QueueStatus.CALLED);
+        assertThat(second.getStatus()).isEqualTo(QueueStatus.QUEUED);
+        assertThat(first.getCalledByUserId()).isEqualTo(staffId);
+    }
+
+    @Test
+    void pharmacyEntryCanOnlyCompleteFromDispensedEventWhileInProgress() {
+        UUID prescriptionId = UUID.randomUUID();
+        QueueEntry pharmacy = pharmacyEntry(1, QueueStatus.IN_PROGRESS);
+        pharmacy.setPrescriptionId(prescriptionId);
+        Instant dispensedAt = Instant.parse("2026-08-18T05:15:00Z");
+        when(entries.findByPrescriptionId(prescriptionId)).thenReturn(Optional.of(pharmacy));
+        when(entries.findFirstById(pharmacy.getId())).thenReturn(Optional.of(pharmacy));
+
+        service.completePharmacyEntry(prescriptionId, dispensedAt, "trace-1");
+
+        assertThat(pharmacy.getStatus()).isEqualTo(QueueStatus.COMPLETED);
+        assertThat(pharmacy.getCompletedAt()).isEqualTo(dispensedAt);
+        verify(events).append(eq(pharmacy), isNull(), eq("QueueEntryCompleted"),
+                eq("queue.completed"), eq("trace-1"), anyMap());
+    }
+
+    @Test
+    void allRequiredResultsCreatesQueuedResultReviewFromInitialConsultation() {
+        UUID consultationId = UUID.randomUUID();
+        UUID patientId = UUID.randomUUID();
+        Instant readyAt = Instant.parse("2026-08-18T05:00:00Z");
+        QueueEntry initial = entry(PriorityLevel.APPOINTMENT, QueueStatus.COMPLETED, 47);
+        initial.setPatientId(patientId);
+        initial.setQueueNumber("NOI-047");
+        initial.setRoomDisplayNameSnapshot("Phòng 101");
+        when(entries.findByConsultationIdAndQueueTypeAndConsultationPhase(
+                consultationId, QueueType.CONSULTATION, ConsultationPhase.RESULT_REVIEW))
+                .thenReturn(Optional.empty());
+        when(entries.findById(initial.getId())).thenReturn(Optional.of(initial));
+
+        QueueEntry review = service.createResultReviewEntry(
+                consultationId, patientId, initial.getId(), readyAt);
+
+        assertThat(review.getQueueType()).isEqualTo(QueueType.CONSULTATION);
+        assertThat(review.getConsultationPhase()).isEqualTo(ConsultationPhase.RESULT_REVIEW);
+        assertThat(review.getQueueClass()).isNull();
+        assertThat(review.getStatus()).isEqualTo(QueueStatus.QUEUED);
+        assertThat(review.getEligibleSinceAt()).isEqualTo(readyAt);
+        assertThat(review.getQueueNumber()).isEqualTo("NOI-047-R");
+        assertThat(review.getQueueConfigId()).isEqualTo(initial.getQueueConfigId());
+        assertThat(review.getUserId()).isEqualTo(initial.getUserId());
+        assertThat(initial.getConsultationId()).isEqualTo(consultationId);
+    }
+
+    @Test
+    void resultReviewCreationIsIdempotentByConsultation() {
+        UUID consultationId = UUID.randomUUID();
+        QueueEntry existing = entry(PriorityLevel.APPOINTMENT, QueueStatus.QUEUED, 47);
+        existing.setConsultationPhase(ConsultationPhase.RESULT_REVIEW);
+        existing.setQueueClass(null);
+        when(entries.findByConsultationIdAndQueueTypeAndConsultationPhase(
+                consultationId, QueueType.CONSULTATION, ConsultationPhase.RESULT_REVIEW))
+                .thenReturn(Optional.of(existing));
+
+        assertThat(service.createResultReviewEntry(
+                consultationId, existing.getPatientId(), null, Instant.now())).isSameAs(existing);
+        verify(entries, never()).findByPatientIdAndQueueTypeAndConsultationPhaseAndStatusInOrderByCreatedAtDesc(
+                any(), any(), any(), anyCollection());
+    }
+
+    @Test
+    void missedResultReviewAlwaysRequeuesAtBackOfItsLane() {
+        config.setMissedPolicy(MissedPolicy.REQUIRE_MANUAL);
+        QueueEntry review = entry(PriorityLevel.APPOINTMENT, QueueStatus.MISSED, 47);
+        review.setConsultationPhase(ConsultationPhase.RESULT_REVIEW);
+        review.setQueueClass(null);
+        review.setEligibleSinceAt(Instant.EPOCH);
+        when(entries.findById(review.getId())).thenReturn(Optional.of(review));
+        when(entries.findFirstById(review.getId())).thenReturn(Optional.of(review));
+        when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
+
+        service.requeue(review.getId(), new RequeueRequest(RequeueRequest.Position.FRONT), "trace-1");
+
+        assertThat(review.getStatus()).isEqualTo(QueueStatus.QUEUED);
+        assertThat(review.getEligibleSinceAt()).isAfter(Instant.EPOCH);
+    }
+
     private QueueEntry entry(PriorityLevel priority, QueueStatus status, int sequence) {
         QueueEntry entry = new QueueEntry();
         entry.setId(UUID.randomUUID());
@@ -359,9 +488,29 @@ class QueueManagementServiceTest {
         entry.setQueueDate(today);
         entry.setQueueNumber("NOI-" + sequence);
         entry.setPriorityLevel(priority);
+        entry.setQueueType(QueueType.CONSULTATION);
+        entry.setConsultationPhase(ConsultationPhase.INITIAL);
+        entry.setQueueClass(priority == PriorityLevel.PRIORITY ? QueueClass.PRIORITY : QueueClass.NORMAL);
         entry.setStatus(status);
         entry.setSequenceNumber(sequence);
         entry.setEligibleSinceAt(Instant.parse("2026-07-26T00:00:00Z").plusSeconds(sequence));
+        return entry;
+    }
+
+    private QueueEntry pharmacyEntry(int sequence, QueueStatus status) {
+        QueueEntry entry = new QueueEntry();
+        entry.setId(UUID.randomUUID());
+        entry.setPatientId(UUID.randomUUID());
+        entry.setQueueType(QueueType.PHARMACY_DISPENSING);
+        entry.setConsultationPhase(null);
+        entry.setQueueClass(null);
+        entry.setServicePointId("PHARMACY-01");
+        entry.setQueueDate(today);
+        entry.setQueueNumber("RX-" + sequence);
+        entry.setSequenceNumber(sequence);
+        entry.setPriorityLevel(PriorityLevel.WALK_IN);
+        entry.setStatus(status);
+        entry.setEligibleSinceAt(Instant.EPOCH.plusSeconds(sequence));
         return entry;
     }
 

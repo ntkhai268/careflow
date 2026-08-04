@@ -1102,6 +1102,79 @@
           ]
         },
         {
+          "name": "08A - Xem Queue tại điểm phục vụ",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/service-points/{{servicePointId}}/active",
+            "description": "Queue FIFO cho cận lâm sàng hoặc phát thuốc. PHARMACY_DISPENSING được tạo tự động từ PrescriptionIssued và không check-in lại."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Đọc queue điểm phục vụ thành công', () => pm.expect(pm.response.code).to.eql(200));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.recommendedNext) pm.environment.set('queueEntryId', json.data.recommendedNext.entryId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08B - Gọi FIFO tại điểm phục vụ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{$guid}}",
+                "type": "text"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{staffToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/queues/service-points/{{servicePointId}}/call-next",
+            "description": "Gọi entry QUEUED đầu tiên theo FIFO tại quầy xét nghiệm hoặc quầy phát thuốc."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Gọi FIFO thành công hoặc queue rỗng', () => pm.expect(pm.response.code).to.be.oneOf([200, 204]));",
+                  "if (pm.response.code === 200) {",
+                  "  const json = pm.response.json();",
+                  "  pm.expect(json.data.queueStatus).to.eql('CALLED');",
+                  "  pm.environment.set('queueEntryId', json.data.entryId);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "09 - Dashboard theo department",
           "request": {
             "method": "GET",
@@ -1362,8 +1435,154 @@
       ]
     },
     {
-      "name": "05 - Chưa có HTTP Controller",
-      "description": "Consultation, Prescription, Laboratory, EMR, Notification và AI hiện chưa có controller HTTP trong nhánh này.",
+      "name": "05 - Notification",
+      "item": [
+        {
+          "name": "01 - Inbox của tôi",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/notifications?limit=50",
+            "description": "Inbox lưu bền vững; chạy sau khi Appointment/Queue đã phát event."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Lấy inbox thành công', () => pm.response.to.have.status(200));",
+                  "const json = pm.response.json();",
+                  "if (json.data && json.data.length) pm.environment.set('notificationId', json.data[0].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 - Số thông báo chưa đọc",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/notifications/unread-count",
+            "description": "Trả data.unreadCount."
+          }
+        },
+        {
+          "name": "03 - Đánh dấu một thông báo đã đọc",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+            "description": "notificationId được lưu tự động từ request Inbox."
+          }
+        },
+        {
+          "name": "04 - Đánh dấu tất cả đã đọc",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/notifications/read-all",
+            "description": "Trả số item vừa chuyển sang READ."
+          }
+        },
+        {
+          "name": "05 - Đăng ký thiết bị nhận FCM",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deviceId\": \"postman-test-device\",\n  \"registrationToken\": \"{{fcmToken}}\",\n  \"platform\": \"ANDROID\",\n  \"appVersion\": \"1.0.0+1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{baseUrl}}/api/notifications/devices",
+            "description": "Dùng FCM registration token thật lấy từ app; Gateway suy ra user từ JWT."
+          }
+        },
+        {
+          "name": "06 - Hủy thiết bị nhận FCM",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{patientToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": "{{baseUrl}}/api/notifications/devices/postman-test-device",
+            "description": "Mobile gọi tương đương trước khi logout."
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Chưa có HTTP Controller",
+      "description": "Consultation, Prescription, Laboratory, EMR và AI hiện chưa có controller HTTP trong nhánh này.",
       "item": []
     }
   ]

@@ -136,7 +136,18 @@ Nếu bệnh nhân lỡ lượt → đưa cuối làn tương ứng theo chính 
 Hệ thống chỉ đề xuất; bác sĩ có thể gọi lượt gợi ý hoặc bất kỳ lượt CHECKED_IN
 ```
 
-### 4.3. Ước tính thời gian chờ
+### 4.3. Queue FIFO tại điểm phục vụ
+
+Ngoài ba làn của phòng khám, Queue Service quản lý hai loại queue FIFO độc lập:
+
+```text
+LAB_EXECUTION       - Thực hiện cận lâm sàng
+PHARMACY_DISPENSING - Chờ phát thuốc
+```
+
+`RESULT_REVIEW` là phase/làn của `CONSULTATION`, không phải một `QueueType`.
+
+### 4.4. Ước tính thời gian chờ
 
 ```
 estimated_wait_time = position_in_queue × avg_consultation_time
@@ -294,7 +305,8 @@ Người B (Bệnh nhân)          Người A (Hệ thống)          Người C
 | 4 | API: tạo số thứ tự, xem đề xuất, gọi theo entry/gọi nhanh, skip và xử lý lỡ lượt | Queue REST endpoints | 🔴 P0 |
 | 5 | Lắng nghe event `AppointmentCreated` từ RabbitMQ → tự tạo queue entry | Event-driven flow | 🔴 P0 |
 | 6 | **Unit test** queue (làn rỗng, gọi khác gợi ý, nhiều lượt CALLED, lỡ lượt) | Test coverage | 🟡 P1 |
-| 7 | API kích hoạt `RESULT_REVIEW` khi bệnh nhân xác nhận quay lại | Result-review flow | 🟡 P1 |
+| 7 | Consume `AllRequiredResultsAvailable` và tự động kích hoạt entry `CONSULTATION + RESULT_REVIEW` idempotent | Result-review flow | 🟡 P1 |
+| 8 | Consume `PrescriptionIssued`, tạo `PHARMACY_DISPENSING` và gọi FIFO theo điểm cấp phát | Pharmacy queue | 🟡 P1 |
 
 #### Người B — Bệnh nhân (Appointment + Mobile booking)
 
@@ -619,12 +631,14 @@ theo khoa; MVP yêu cầu đúng một kết quả và không dùng random/find-
 queue_schedulers (id, room_id, session_date, session_code,
                   last_served_lane, version)
 
-queue_entries (id, appointment_id, consultation_id, patient_id, room_id,
-              queue_number, queue_type, queue_class, status,
+queue_entries (id, appointment_id, consultation_id, prescription_id, patient_id,
+              room_id, service_point_id, queue_number, queue_type,
+              consultation_phase, queue_class, status,
               queued_at, called_at, called_by_doctor_id, completed_at,
               estimated_wait_minutes)
--- queue_type: INITIAL_CONSULTATION, LAB_EXECUTION, RESULT_REVIEW
--- queue_class: PRIORITY, NORMAL (áp dụng cho INITIAL_CONSULTATION)
+-- queue_type: CONSULTATION, LAB_EXECUTION, PHARMACY_DISPENSING
+-- consultation_phase: INITIAL, RESULT_REVIEW (chỉ áp dụng cho CONSULTATION)
+-- queue_class: PRIORITY, NORMAL (chỉ áp dụng cho CONSULTATION + INITIAL)
 -- scheduling lane được suy ra, không lưu thành ba bảng riêng
 -- status: TICKET_ISSUED/QUEUED, CHECKED_IN, CALLED, IN_PROGRESS,
 --         COMPLETED, MISSED, CANCELLED, NO_SHOW

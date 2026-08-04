@@ -100,7 +100,7 @@ Patient response không được lộ internal note hoặc AI prompt; chỉ tr�
 - Doctor Web gọi `POST /api/labs/orders` để tạo chỉ định thuộc consultation.
 - `LabOrderCreated` làm consultation sang `WAITING_FOR_RESULTS`.
 - Khi đủ kết quả, Lab publish `AllRequiredResultsAvailable`; Consultation sang `WAITING_FOR_REVIEW`.
-- Khi Queue bắt đầu `RESULT_REVIEW`, Doctor gọi `/resume`.
+- Khi Queue bắt đầu entry `CONSULTATION` phase `RESULT_REVIEW`, Doctor gọi `/resume`.
 - Doctor Web gọi Prescription API để tạo/xác nhận toa trước khi complete nếu có kê thuốc.
 - Appointment API nhận yêu cầu follow-up sau kết luận.
 

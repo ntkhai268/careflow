@@ -15,6 +15,7 @@ Tài liệu này liên kết Use Case cốt lõi với yêu cầu, quy tắc, ag
 | `UC-LAB-01` Tạo chỉ định | `FR-LAB-01..03`, `FR-CON-03` | `BR-LAB-01`, `BR-CON-01` | Consultation, Laboratory Order, Queue Entry | Consultation, Laboratory Order, Queue, Notification |
 | `UC-LAB-03` Thực hiện/phát hành/đọc kết quả | `FR-LAB-04..06`, `FR-CON-04`, `FR-QUE-08` | `BR-LAB-02`, `BR-REV-01`, `BR-REV-02` | Laboratory Order, Consultation, Queue Entry | Laboratory Order, Queue, Consultation, EMR, Notification |
 | `UC-PRE-01` Kê toa/tái khám/hoàn tất | `FR-PRE-01..03`, `FR-APT-05`, `FR-CON-05` | `BR-PRE-01`, `BR-CON-01` | Prescription, Consultation, Appointment, Queue Entry | Prescription, Consultation, Appointment, Queue, EMR, Notification |
+| `UC-PHA-01` Gọi lượt và phát thuốc | `FR-QUE-10`, `FR-PRE-03`, `FR-PRE-04` | `BR-PRE-01`, `BR-PRE-02`, `BR-QUE-03` | Prescription, Queue Entry, Service Point reference | Prescription, Queue, Notification |
 
 Ký hiệu `FR-XXX-01..03` nghĩa là toàn bộ dải yêu cầu từ 01 đến 03 trong cùng
 nhóm, không phải một mã yêu cầu mới.
@@ -27,8 +28,9 @@ nhóm, không phải một mã yêu cầu mới.
 | Bác sĩ | Hospital Web | `UC-AUTH-02`, `UC-QUE-04`, `UC-CON-01`, `UC-LAB-01`, `UC-LAB-03`, `UC-PRE-01` |
 | Nhân viên tiếp nhận | Hospital Web | `UC-AUTH-02`, `UC-QUE-02`, `UC-QUE-04` |
 | Kỹ thuật viên cận lâm sàng | Hospital Web | `UC-AUTH-02`, `UC-LAB-03` |
+| Nhân viên cấp phát thuốc | Hospital Web | `UC-AUTH-02`, `UC-PHA-01` |
 | Quản trị viên | Hospital Web | Đăng nhập và các Use Case cấu hình được mô tả tóm tắt |
-| Hệ thống thanh toán/BHYT ngoài | Tích hợp/mock | Luồng thay thế của `UC-LAB-01` |
+| Thu ngân/hệ thống thanh toán ngoài | Hospital Web hoặc mock | Luồng thay thế của `UC-LAB-01` |
 
 ## 3. Quy tắc kiểm soát khi viết chi tiết
 
