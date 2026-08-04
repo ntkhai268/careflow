@@ -68,7 +68,7 @@ class _AppointmentDetailScreenState
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = appointmentRequestErrorMessage(e);
         _isLoading = false;
       });
     }
@@ -132,7 +132,7 @@ class _AppointmentDetailScreenState
       setState(() => _isCancelling = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi: ${e.toString()}'),
+          content: Text(appointmentRequestErrorMessage(e)),
           backgroundColor: AppColors.error,
         ),
       );

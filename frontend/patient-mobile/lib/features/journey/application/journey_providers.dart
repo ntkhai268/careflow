@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../providers/auth_provider.dart';
 import '../../../providers/patient_provider.dart';
+import '../../../services/notification_service.dart';
 import '../data/demo_journey_repository.dart';
 import '../data/journey_repository.dart';
 import '../data/journey_store.dart';
@@ -95,11 +96,12 @@ final activeJourneyProvider = Provider<PatientJourney?>((ref) {
 });
 
 final unreadJourneyNotificationCountProvider = Provider<int>(
-  (ref) =>
-      ref
-          .watch(activeJourneyProvider)
-          ?.notifications
-          .where((notification) => !notification.isRead)
-          .length ??
-      0,
+  (ref) {
+    final journey = ref.watch(activeJourneyProvider);
+    if (journey != null) {
+      return journey.notifications.where((item) => !item.isRead).length;
+    }
+    final inbox = ref.watch(notificationInboxProvider).valueOrNull;
+    return inbox?.where((item) => !item.isRead).length ?? 0;
+  },
 );

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../features/journey/application/journey_providers.dart';
 import '../../features/journey/presentation/journey_notification_screen.dart';
+import 'notification_inbox_screen.dart';
 
 /// Notification tab backed by the active patient's journey.
 class NotificationScreen extends ConsumerWidget {
@@ -11,6 +12,10 @@ class NotificationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appointmentId = ref.watch(activeJourneyProvider)?.appointmentId ?? '';
-    return JourneyNotificationScreen(appointmentId: appointmentId);
+    final demoMode = ref.watch(demoModeProvider);
+    if (demoMode || appointmentId.isNotEmpty) {
+      return JourneyNotificationScreen(appointmentId: appointmentId);
+    }
+    return const NotificationInboxScreen();
   }
 }

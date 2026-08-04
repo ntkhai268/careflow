@@ -71,7 +71,7 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
     } catch (e) {
       if (!mounted || patientId != _patientId) return;
       setState(() {
-        _error = e.toString();
+        _error = appointmentRequestErrorMessage(e);
         _isLoading = false;
       });
     }

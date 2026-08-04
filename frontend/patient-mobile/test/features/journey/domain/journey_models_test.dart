@@ -59,7 +59,7 @@ void main() {
           ),
         ],
         payment: VisitPayment(
-          method: PaymentMethod.insurance,
+          method: PaymentMethod.online,
           amount: 120000,
           acknowledgedAt: DateTime.parse('2026-08-18T03:45:00Z'),
         ),
@@ -119,6 +119,19 @@ void main() {
       );
     },
   );
+
+  test('uses stable payment contract values', () {
+    expect(PaymentMethod.online.wireValue, 'ONLINE_MOCK');
+    expect(PaymentMethod.cash.wireValue, 'CASH_AT_HOSPITAL');
+    expect(
+      PaymentMethodContract.fromWireValue('ONLINE_MOCK'),
+      PaymentMethod.online,
+    );
+    expect(
+      PaymentMethodContract.fromWireValue('CASH_AT_HOSPITAL'),
+      PaymentMethod.cash,
+    );
+  });
 
   test(
     'keeps omitted optional outcome fields null through JSON and copyWith',

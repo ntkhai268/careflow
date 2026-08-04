@@ -25,6 +25,11 @@ class VisitTicketScreen extends ConsumerWidget {
           title: const Text('Phiếu khám'),
           actions: [
             IconButton(
+              tooltip: 'Lịch khám',
+              onPressed: () => context.go('/?tab=1'),
+              icon: const Icon(Icons.event_note_rounded),
+            ),
+            IconButton(
               tooltip: 'Tải lại',
               onPressed: () =>
                   ref.invalidate(queueTicketProvider(appointmentId)),
@@ -46,7 +51,16 @@ class VisitTicketScreen extends ConsumerWidget {
     }
     final journey = ref.watch(journeyForAppointmentProvider(appointmentId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Phiếu khám')),
+      appBar: AppBar(
+        title: const Text('Phiếu khám'),
+        actions: [
+          IconButton(
+            tooltip: 'Lịch khám',
+            onPressed: () => context.go('/?tab=1'),
+            icon: const Icon(Icons.event_note_rounded),
+          ),
+        ],
+      ),
       body: journey.when(
         loading: () => const _JourneyMessage(
           icon: Icons.hourglass_top_rounded,

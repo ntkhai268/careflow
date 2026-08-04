@@ -26,7 +26,7 @@ void main() {
     expect(find.text('120.000 ₫'), findsOneWidget);
   });
 
-  testWidgets('offers all payment methods and hospital cash copy', (
+  testWidgets('offers MVP payment methods and hospital cash copy', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -35,7 +35,7 @@ void main() {
 
     expect(find.text('Thanh toán trực tuyến'), findsOneWidget);
     expect(find.text('Tiền mặt'), findsOneWidget);
-    expect(find.text('Bảo hiểm y tế'), findsOneWidget);
+    expect(find.text('Bảo hiểm y tế'), findsNothing);
     expect(find.text('Thanh toán tại bệnh viện'), findsOneWidget);
   });
 
@@ -56,28 +56,6 @@ void main() {
     expect(repository.paymentMethods, [PaymentMethod.cash]);
     expect(
       find.text('Đã ghi nhận lựa chọn tiền mặt. Thanh toán tại bệnh viện.'),
-      findsOneWidget,
-    );
-  });
-
-  testWidgets('shows insurance acknowledgement only after payment succeeds', (
-    tester,
-  ) async {
-    final repository = PaymentJourneyRepository();
-    await tester.pumpWidget(
-      laboratoryApp(
-        labJourney(JourneyStatus.paymentPending),
-        controller: paymentController(repository),
-      ),
-    );
-
-    await tester.ensureVisible(find.text('Bảo hiểm y tế'));
-    await tester.tap(find.text('Bảo hiểm y tế'));
-    await tester.pumpAndSettle();
-
-    expect(repository.paymentMethods, [PaymentMethod.insurance]);
-    expect(
-      find.text('Đã ghi nhận thông tin bảo hiểm để bệnh viện xác nhận.'),
       findsOneWidget,
     );
   });
