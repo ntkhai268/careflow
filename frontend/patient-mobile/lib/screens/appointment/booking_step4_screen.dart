@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,8 +7,11 @@ import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
+import '../../models/appointment_payment.dart';
+import '../../models/appointment_service_option.dart';
 import '../../models/patient.dart';
 import '../../services/appointment_service.dart';
+import '../../services/appointment_payment_store.dart';
 
 /// Booking Step 4: Confirm and submit
 class BookingStep4Screen extends ConsumerStatefulWidget {
@@ -29,6 +34,9 @@ class BookingStep4Screen extends ConsumerStatefulWidget {
 
 class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
   final _reasonController = TextEditingController();
+  final _service = AppointmentServiceOption.generalConsultation;
+  AppointmentPaymentMethod _paymentMethod =
+      AppointmentPaymentMethod.onlineMock;
   bool _isSubmitting = false;
 
   @override
@@ -54,6 +62,10 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
             ? _reasonController.text.trim()
             : null,
       });
+
+      unawaited(
+        _savePaymentReceipt(appointment.id).catchError((_) {}),
+      );
 
       if (appointment.allowsActiveJourney) {
         try {
@@ -123,8 +135,8 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
               const SizedBox(height: AppSpacing.sm),
               Text(
                 canOpenJourney
-                    ? 'Lịch khám của bạn đã được ghi nhận.\n'
-                          'Phiếu khám đã sẵn sàng để theo dõi.'
+                    ? '${_paymentMethod == AppointmentPaymentMethod.onlineMock ? 'Đã thanh toán phí khám trực tuyến. ' : 'Đã ghi nhận thanh toán tại bệnh viện. '}'
+                          'Lịch khám và phiếu khám đã sẵn sàng.'
                     : 'Lịch khám đang chờ xác nhận.',
                 textAlign: TextAlign.center,
                 style: Theme.of(ctx).textTheme.bodyMedium,
@@ -233,6 +245,10 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
+                  _buildServiceCard(),
+                  const SizedBox(height: AppSpacing.lg),
+                  _buildPaymentCard(),
+                  const SizedBox(height: AppSpacing.lg),
                   // Reason input
                   Text(
                     'Lý do khám (không bắt buộc)',
@@ -282,6 +298,188 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
           ),
           _buildBottomBar(),
         ],
+      ),
+    );
+  }
+
+  Widget _buildServiceCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.primarySurface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.primaryLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.medical_services_rounded,
+                color: AppColors.primary,
+              ),
+              const SizedBox(width: AppSpacing.sm),
+              Expanded(
+                child: Text(
+                  'Dịch vụ khám',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              const Icon(Icons.check_circle_rounded, color: AppColors.success),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.md),
+          Text(_service.name, style: Theme.of(context).textTheme.titleLarge),
+          const SizedBox(height: AppSpacing.xs),
+          Text(_service.description),
+          const SizedBox(height: AppSpacing.md),
+          Row(
+            children: [
+              const Icon(
+                Icons.schedule_rounded,
+                size: 18,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              Text('Khoảng ${_service.estimatedMinutes} phút'),
+              const Spacer(),
+              Text(
+                _currency(_service.price),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: AppColors.primaryDark,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _savePaymentReceipt(String appointmentId) async {
+    try {
+      await AppointmentPaymentStore().save(
+        AppointmentPaymentReceipt(
+          appointmentId: appointmentId,
+          serviceCode: _service.code,
+          serviceName: _service.name,
+          amount: _service.price,
+          method: _paymentMethod,
+          status: _paymentMethod == AppointmentPaymentMethod.onlineMock
+              ? AppointmentPaymentStatus.paid
+              : AppointmentPaymentStatus.dueAtHospital,
+          createdAt: DateTime.now().toUtc(),
+        ),
+      );
+    } catch (_) {
+      // The appointment itself is authoritative. Until the payment API is
+      // available, a storage/plugin issue must not turn a successful booking
+      // into a booking error.
+    }
+  }
+
+  Widget _buildPaymentCard() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.card,
+        border: Border.all(color: AppColors.cardBorder, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Thanh toán phí khám',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.xs),
+          const Text('Chọn cách thanh toán trước khi nhận phiếu khám.'),
+          const SizedBox(height: AppSpacing.md),
+          _paymentOption(
+            AppointmentPaymentMethod.onlineMock,
+            Icons.account_balance_wallet_rounded,
+            'Thanh toán trực tuyến',
+            'Mô phỏng cổng thanh toán an toàn',
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          _paymentOption(
+            AppointmentPaymentMethod.cashAtHospital,
+            Icons.payments_rounded,
+            'Tiền mặt tại bệnh viện',
+            'Thanh toán tại quầy trước khi tiếp nhận',
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _paymentOption(
+    AppointmentPaymentMethod method,
+    IconData icon,
+    String title,
+    String subtitle,
+  ) {
+    final selected = _paymentMethod == method;
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: '$title. $subtitle',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        onTap: _isSubmitting
+            ? null
+            : () => setState(() => _paymentMethod = method),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.primarySurface : AppColors.surface,
+            borderRadius: BorderRadius.circular(AppRadius.md),
+            border: Border.all(
+              color: selected ? AppColors.primary : AppColors.cardBorder,
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: selected
+                    ? AppColors.primary
+                    : AppColors.textSecondary,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+              Icon(
+                selected
+                    ? Icons.radio_button_checked_rounded
+                    : Icons.radio_button_unchecked_rounded,
+                color: selected ? AppColors.primary : AppColors.textHint,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -437,5 +635,17 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
         ),
       ),
     );
+  }
+
+  String _currency(int amount) {
+    final digits = amount.toString();
+    final buffer = StringBuffer();
+    for (var index = 0; index < digits.length; index++) {
+      if (index > 0 && (digits.length - index) % 3 == 0) {
+        buffer.write('.');
+      }
+      buffer.write(digits[index]);
+    }
+    return '${buffer.toString()} ₫';
   }
 }

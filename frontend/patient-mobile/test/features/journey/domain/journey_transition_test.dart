@@ -119,6 +119,36 @@ void main() {
     }
   });
 
+  test('accepts the pharmacy payment and dispensing transitions', () {
+    final paymentPending = JourneyTransition.apply(
+      journeyAt(JourneyStatus.prescribed),
+      JourneyEvent.prescriptionPaymentRequested,
+      now: now,
+    );
+    expect(paymentPending.status, JourneyStatus.prescriptionPaymentPending);
+
+    final paid = JourneyTransition.apply(
+      paymentPending,
+      JourneyEvent.prescriptionPaymentAcknowledged,
+      now: now.add(const Duration(minutes: 1)),
+    );
+    expect(paid.status, JourneyStatus.prescriptionPaid);
+
+    final ready = JourneyTransition.apply(
+      paid,
+      JourneyEvent.medicationDispensed,
+      now: now.add(const Duration(minutes: 2)),
+    );
+    expect(ready.status, JourneyStatus.medicationReady);
+
+    final completed = JourneyTransition.apply(
+      ready,
+      JourneyEvent.visitCompleted,
+      now: now.add(const Duration(minutes: 3)),
+    );
+    expect(completed.status, JourneyStatus.completed);
+  });
+
   test(
     'adds Vietnamese timeline and unread notification for a ticket event',
     () {

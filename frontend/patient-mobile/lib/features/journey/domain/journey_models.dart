@@ -13,6 +13,9 @@ enum JourneyStatus {
   waitingResultReview,
   resultReview,
   prescribed,
+  prescriptionPaymentPending,
+  prescriptionPaid,
+  medicationReady,
   completed,
 }
 
@@ -566,6 +569,7 @@ class PatientJourney {
     this.clinicQueue,
     required List<LaboratoryOrder> laboratoryOrders,
     this.payment,
+    this.prescriptionPayment,
     this.resultReviewQueue,
     this.diagnosis,
     this.prescription,
@@ -586,6 +590,7 @@ class PatientJourney {
   final QueueSnapshot? clinicQueue;
   final List<LaboratoryOrder> laboratoryOrders;
   final VisitPayment? payment;
+  final VisitPayment? prescriptionPayment;
   final QueueSnapshot? resultReviewQueue;
   final DiagnosisSummary? diagnosis;
   final Prescription? prescription;
@@ -603,6 +608,7 @@ class PatientJourney {
     Object? clinicQueue = _unset,
     List<LaboratoryOrder>? laboratoryOrders,
     Object? payment = _unset,
+    Object? prescriptionPayment = _unset,
     Object? resultReviewQueue = _unset,
     Object? diagnosis = _unset,
     Object? prescription = _unset,
@@ -625,6 +631,9 @@ class PatientJourney {
     payment: identical(payment, _unset)
         ? this.payment
         : payment as VisitPayment?,
+    prescriptionPayment: identical(prescriptionPayment, _unset)
+        ? this.prescriptionPayment
+        : prescriptionPayment as VisitPayment?,
     resultReviewQueue: identical(resultReviewQueue, _unset)
         ? this.resultReviewQueue
         : resultReviewQueue as QueueSnapshot?,
@@ -653,6 +662,8 @@ class PatientJourney {
         .map((order) => order.toJson())
         .toList(),
     if (payment != null) 'payment': payment!.toJson(),
+    if (prescriptionPayment != null)
+      'prescriptionPayment': prescriptionPayment!.toJson(),
     if (resultReviewQueue != null)
       'resultReviewQueue': resultReviewQueue!.toJson(),
     if (diagnosis != null) 'diagnosis': diagnosis!.toJson(),
@@ -681,6 +692,9 @@ class PatientJourney {
     payment: json['payment'] == null
         ? null
         : VisitPayment.fromJson(_map(json['payment'])),
+    prescriptionPayment: json['prescriptionPayment'] == null
+        ? null
+        : VisitPayment.fromJson(_map(json['prescriptionPayment'])),
     resultReviewQueue: json['resultReviewQueue'] == null
         ? null
         : QueueSnapshot.fromJson(_map(json['resultReviewQueue'])),
@@ -712,6 +726,7 @@ class PatientJourney {
       clinicQueue == other.clinicQueue &&
       _sameList(laboratoryOrders, other.laboratoryOrders) &&
       payment == other.payment &&
+      prescriptionPayment == other.prescriptionPayment &&
       resultReviewQueue == other.resultReviewQueue &&
       diagnosis == other.diagnosis &&
       prescription == other.prescription &&
@@ -730,6 +745,7 @@ class PatientJourney {
     clinicQueue,
     Object.hashAll(laboratoryOrders),
     payment,
+    prescriptionPayment,
     resultReviewQueue,
     diagnosis,
     prescription,

@@ -74,6 +74,9 @@ _PrimaryDestination? _destinationFor(JourneyStatus status) => switch (status) {
   JourneyStatus.waitingResultReview ||
   JourneyStatus.resultReview => _PrimaryDestination.resultReview,
   JourneyStatus.prescribed ||
+  JourneyStatus.prescriptionPaymentPending ||
+  JourneyStatus.prescriptionPaid ||
+  JourneyStatus.medicationReady => _PrimaryDestination.pharmacy,
   JourneyStatus.completed => _PrimaryDestination.outcome,
   JourneyStatus.booked => null,
 };
@@ -86,6 +89,7 @@ String _pathFor(_PrimaryDestination destination, String appointmentId) {
     _PrimaryDestination.consultation => '$base/consultation',
     _PrimaryDestination.laboratory => '$base/laboratory',
     _PrimaryDestination.resultReview => '$base/result-review',
+    _PrimaryDestination.pharmacy => '$base/pharmacy',
     _PrimaryDestination.outcome => '$base/outcome',
   };
 }
@@ -96,6 +100,7 @@ IconData _iconFor(_PrimaryDestination destination) => switch (destination) {
   _PrimaryDestination.consultation => Icons.medical_services_rounded,
   _PrimaryDestination.laboratory => Icons.science_rounded,
   _PrimaryDestination.resultReview => Icons.manage_search_rounded,
+  _PrimaryDestination.pharmacy => Icons.local_pharmacy_rounded,
   _PrimaryDestination.outcome => Icons.task_alt_rounded,
 };
 
@@ -105,6 +110,7 @@ String _labelFor(_PrimaryDestination destination) => switch (destination) {
   _PrimaryDestination.consultation => 'Xem trạng thái khám',
   _PrimaryDestination.laboratory => 'Xem xét nghiệm',
   _PrimaryDestination.resultReview => 'Xem đọc kết quả',
+  _PrimaryDestination.pharmacy => 'Thanh toán/nhận thuốc',
   _PrimaryDestination.outcome => 'Xem kết quả lượt khám',
 };
 
@@ -114,5 +120,6 @@ enum _PrimaryDestination {
   consultation,
   laboratory,
   resultReview,
+  pharmacy,
   outcome,
 }

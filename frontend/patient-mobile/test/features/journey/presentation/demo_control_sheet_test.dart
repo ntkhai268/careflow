@@ -57,7 +57,13 @@ void main() {
       (JourneyStatus.labResultReady, ['Mô phỏng đưa vào hàng đợi đọc kết quả']),
       (JourneyStatus.waitingResultReview, ['Mô phỏng bác sĩ đọc kết quả']),
       (JourneyStatus.resultReview, ['Mô phỏng bác sĩ kê đơn sau đọc kết quả']),
-      (JourneyStatus.prescribed, ['Mô phỏng hoàn tất lượt khám']),
+       (
+         JourneyStatus.prescribed,
+         [
+           'Mô phỏng yêu cầu thanh toán tiền thuốc',
+           'Mô phỏng hoàn tất lượt khám',
+         ],
+       ),
       (JourneyStatus.completed, <String>[]),
     ];
 
@@ -97,7 +103,7 @@ void main() {
       (JourneyStatus.labResultReady, 'Xem xét nghiệm'),
       (JourneyStatus.waitingResultReview, 'Xem đọc kết quả'),
       (JourneyStatus.resultReview, 'Xem đọc kết quả'),
-      (JourneyStatus.prescribed, 'Xem kết quả lượt khám'),
+       (JourneyStatus.prescribed, 'Thanh toán/nhận thuốc'),
       (JourneyStatus.completed, 'Xem kết quả lượt khám'),
     ];
 

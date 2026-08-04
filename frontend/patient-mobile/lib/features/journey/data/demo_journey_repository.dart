@@ -5,7 +5,10 @@ import 'journey_repository.dart';
 import 'journey_store.dart';
 
 class DemoJourneyRepository
-    implements JourneyRepository, JourneySnapshotRepository {
+    implements
+        JourneyRepository,
+        PrescriptionPaymentRepository,
+        JourneySnapshotRepository {
   DemoJourneyRepository({required JourneyStore store, DateTime Function()? now})
     : _store = store,
       _now = now ?? DateTime.now;
@@ -14,6 +17,7 @@ class DemoJourneyRepository
   final DateTime Function() _now;
   DateTime? _lastTimestamp;
   static const _demoDoctorName = 'BS. Nguyễn Minh Anh (dữ liệu mô phỏng)';
+  static const _demoMedicationTotal = 85000;
 
   @override
   Future<PatientJourney> bootstrap({
@@ -141,6 +145,27 @@ class DemoJourneyRepository
               0,
               (sum, order) => sum + order.price,
             ),
+            acknowledgedAt: _timestamp(),
+          ),
+        );
+    await _store.save(next);
+    return next;
+  }
+
+  @override
+  Future<PatientJourney> acknowledgePrescriptionPayment(
+    PatientJourney journey,
+    PaymentMethod method,
+  ) async {
+    final next =
+        JourneyTransition.apply(
+          journey,
+          JourneyEvent.prescriptionPaymentAcknowledged,
+          now: _timestamp(),
+        ).copyWith(
+          prescriptionPayment: VisitPayment(
+            method: method,
+            amount: _demoMedicationTotal,
             acknowledgedAt: _timestamp(),
           ),
         );

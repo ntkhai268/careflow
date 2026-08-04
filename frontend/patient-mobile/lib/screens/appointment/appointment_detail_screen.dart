@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,7 +7,9 @@ import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
+import '../../models/appointment_payment.dart';
 import '../../services/appointment_service.dart';
+import '../../services/appointment_payment_store.dart';
 
 /// Appointment detail screen
 class AppointmentDetailScreen extends ConsumerStatefulWidget {
@@ -23,6 +27,7 @@ class _AppointmentDetailScreenState
   static const _unauthorizedMessage = 'Bạn không có quyền xem phiếu khám này.';
 
   Appointment? _appointment;
+  AppointmentPaymentReceipt? _paymentReceipt;
   bool _isLoading = true;
   bool _isCancelling = false;
   String? _error;
@@ -65,6 +70,7 @@ class _AppointmentDetailScreenState
         _appointment = appointment;
         _isLoading = false;
       });
+      _loadPaymentReceipt(appointment.id);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -115,8 +121,12 @@ class _AppointmentDetailScreenState
         throw StateError(_unauthorizedMessage);
       }
       if (!mounted) return;
+      unawaited(
+        AppointmentPaymentStore().delete(appointment.id).catchError((_) {}),
+      );
       setState(() {
         _appointment = updated;
+        _paymentReceipt = null;
         _isCancelling = false;
       });
       final retired = await ref
@@ -344,6 +354,10 @@ class _AppointmentDetailScreenState
                   ),
                 ),
                 const SizedBox(height: AppSpacing.base),
+                if (_paymentReceipt case final receipt?) ...[
+                  _PaymentReceiptCard(receipt: receipt),
+                  const SizedBox(height: AppSpacing.base),
+                ],
                 // Status timeline
                 _buildTimeline(appt),
               ],
@@ -587,5 +601,84 @@ class _AppointmentDetailScreenState
         ),
       ),
     );
+  }
+
+  Future<void> _loadPaymentReceipt(String appointmentId) async {
+    try {
+      final receipt = await AppointmentPaymentStore().load(appointmentId);
+      if (!mounted || _appointment?.id != appointmentId) return;
+      setState(() => _paymentReceipt = receipt);
+    } catch (_) {
+      // Payment persistence is local until the backend payment contract is
+      // available; it must not make a real appointment unreadable.
+    }
+  }
+}
+
+class _PaymentReceiptCard extends StatelessWidget {
+  const _PaymentReceiptCard({required this.receipt});
+
+  final AppointmentPaymentReceipt receipt;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(AppSpacing.lg),
+    decoration: BoxDecoration(
+      color: receipt.isPaid ? AppColors.successLight : AppColors.warningLight,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      border: Border.all(
+        color: receipt.isPaid ? AppColors.success : AppColors.warning,
+        width: 0.7,
+      ),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(
+              receipt.isPaid
+                  ? Icons.verified_rounded
+                  : Icons.payments_outlined,
+              color: receipt.isPaid ? AppColors.success : AppColors.warning,
+            ),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                'Phí khám',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+            Text(
+              receipt.status.displayName,
+              style: TextStyle(
+                color: receipt.isPaid ? AppColors.success : AppColors.warning,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text(receipt.serviceName),
+        const SizedBox(height: AppSpacing.xs),
+        Text(
+          '${_currency(receipt.amount)} • ${receipt.method.displayName}',
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ],
+    ),
+  );
+
+  static String _currency(int amount) {
+    final digits = amount.toString();
+    final buffer = StringBuffer();
+    for (var index = 0; index < digits.length; index++) {
+      if (index > 0 && (digits.length - index) % 3 == 0) buffer.write('.');
+      buffer.write(digits[index]);
+    }
+    return '${buffer.toString()} ₫';
   }
 }
