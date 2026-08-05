@@ -11,7 +11,7 @@ export interface QueueEntry {
   queueDate: string;
   queueNumber: string;
   priorityLevel: "APPOINTMENT" | "PRIORITY" | "EMERGENCY" | "WALK_IN" | "RESULT_REVIEW";
-  queueStatus: "CHECKED_IN" | "CALLED" | "IN_PROGRESS" | "COMPLETED" | "MISSED";
+  queueStatus: "WAITING" | "TICKET_ISSUED" | "CHECKED_IN" | "CALLED" | "IN_PROGRESS" | "COMPLETED" | "MISSED" | "CANCELLED";
   effectivePosition: number | null;
   estimatedWaitMinutes: number | null;
   callAttempts: number;
@@ -83,5 +83,8 @@ export const queueApi = {
 
   requeueEntry: (entryId: string, reason?: string) =>
     api.post<QueueEntry>(`/api/queues/entries/${entryId}/requeue`, { reason }),
+
+  getQr: (appointmentId: string) =>
+    api.get<{ qrToken: string }>(`/api/queues/appointments/${appointmentId}/qr`),
 };
 

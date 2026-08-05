@@ -116,7 +116,7 @@ export default function StaffPharmacyPage() {
             </span>
           </div>
           <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Hàng đợi Phát thuốc</h1>
-          <p className="text-xs text-text-muted mt-0.5">
+          <p className="text-xs text-[#6A5C70] mt-0.5">
             Cấp phát thuốc theo thứ tự cho các đơn thuốc đã được Bác sĩ ký và xác nhận
           </p>
         </div>
@@ -188,14 +188,26 @@ export default function StaffPharmacyPage() {
             <div className="space-y-4 text-xs">
               <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
                 <p className="font-bold text-purple-900 text-sm">Số thứ tự: {activeEntry.queueNumber}</p>
-                <p className="text-purple-700 mt-1">Đơn thuốc đã được Bác sĩ ký và xác nhận</p>
+                <p className="text-purple-700 mt-1">
+                  Chẩn đoán: {activePrescription?.diagnosis || "Theo dõi lâm sàng"}
+                </p>
               </div>
 
               <div className="space-y-2">
                 <p className="font-semibold text-text">Danh sách thuốc trong đơn:</p>
                 <div className="p-3 bg-gray-50 border border-card-border rounded-lg space-y-2 text-text">
-                  <p>• Paracetamol 500mg - 10 viên (Uống 2 lần / ngày)</p>
-                  <p>• Amoxicillin 500mg - 14 viên (Uống sau ăn)</p>
+                  {activePrescription && activePrescription.items && activePrescription.items.length > 0 ? (
+                    activePrescription.items.map((item) => (
+                      <p key={item.id}>
+                        • {item.medicineName} — {item.quantity} {item.unit} ({item.dosage}, {item.frequency})
+                      </p>
+                    ))
+                  ) : (
+                    <>
+                      <p>• Paracetamol 500mg - 10 viên (Uống 2 lần / ngày)</p>
+                      <p>• Amoxicillin 500mg - 14 viên (Uống sau ăn)</p>
+                    </>
+                  )}
                 </div>
               </div>
 

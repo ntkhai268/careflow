@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState, use } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import { consultationApi, ConsultationResponse, UpdateConsultationRequest } from "@/lib/consultation-api";
 import { appointmentApi } from "@/lib/appointment-api";
 import { prescriptionApi, PrescriptionResponse, PrescriptionItemRequest, MedicineCatalogItem } from "@/lib/prescription-api";
 import { patientApi, emrApi, PatientAllergyResponse } from "@/lib/patient-api";
 import { labApi, MOCK_LAB_SERVICES, LabCatalogItem, LabOrderResponse } from "@/lib/lab-api";
+import { queueApi } from "@/lib/queue-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmModal from "@/components/ConfirmModal";
 
@@ -25,6 +26,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const resolvedParams = use(params);
   const consultationId = resolvedParams.id;
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const entryId = searchParams.get("entryId");
   const { user } = useAuth();
 
   // Active tab for clinical details
@@ -513,6 +516,13 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     try {
       await saveDraft();
       await consultationApi.completeConsultation(consultationId);
+      if (entryId) {
+        try {
+          await queueApi.completeEntry(entryId);
+        } catch {
+          /* Ignore secondary queue complete failure */
+        }
+      }
       if (consultation?.appointmentId) {
         try {
           await appointmentApi.updateStatus(consultation.appointmentId, "COMPLETED", "Hoàn tất khám bệnh");
@@ -700,7 +710,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
       {/* Locked Consultation Banner */}
       {isConsultationLocked && (
-        <div className="border border-amber-300 bg-amber-50 p-4 text-amber-900 text-xs font-semibold flex items-center justify-between rounded-none shadow-sm">
+        <div className="border border-amber-300 bg-amber-50 p-4 text-amber-900 text-xs font-semibold flex items-center justify-between rounded-lg shadow-sm">
           <div className="flex items-center gap-2">
             <span className="font-bold text-amber-700 uppercase tracking-wider text-[11px]">Đã khóa phiên khám</span>
             <span>· Phiên khám này đã HOÀN TẤT. Hồ sơ bệnh án đã được lưu trữ an toàn và ở chế độ chỉ xem (Read-Only).</span>
@@ -708,9 +718,44 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           <button 
             type="button"
             onClick={() => router.push("/dashboard")}
-            className="px-3 py-1 bg-amber-800 text-white text-xs font-bold hover:bg-amber-900 rounded-none transition-all"
+            className="px-3 py-1 bg-amber-800 text-white text-xs font-bold hover:bg-amber-900 rounded-md transition-all cursor-pointer"
           >
             Về Bảng điều khiển
+          </button>
+        </div>
+      )}
+
+      {/* Awaiting CLS Banner */}
+      {consultation?.status === "AWAITING_CLS" && !isConsultationLocked && (
+        <div className="border border-blue-300 bg-blue-50 p-4 text-blue-900 text-xs font-semibold flex items-center justify-between rounded-lg shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-blue-700 uppercase tracking-wider text-[11px]">Chờ Cận lâm sàng</span>
+            <span>· Đã tạo chỉ định Cận lâm sàng. Đang chờ bệnh nhân tới phòng kỹ thuật và chờ trả kết quả.</span>
+          </div>
+        </div>
+      )}
+
+      {/* Awaiting Review Banner */}
+      {consultation?.status === "AWAITING_REVIEW" && !isConsultationLocked && (
+        <div className="border border-purple-300 bg-purple-50 p-4 text-purple-900 text-xs font-semibold flex items-center justify-between rounded-lg shadow-sm">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-purple-700 uppercase tracking-wider text-[11px]">Đã có kết quả CLS</span>
+            <span>· Kết quả Cận lâm sàng đã sẵn sàng. Bác sĩ bấm "Tiếp tục đọc kết quả" để xem và hoàn tất ca khám.</span>
+          </div>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await consultationApi.updateStatus(consultationId, "IN_PROGRESS");
+                setConsultation(prev => prev ? { ...prev, status: "IN_PROGRESS" } : null);
+                showToast("Đã chuyển sang đọc kết quả và tiếp tục phiên khám.", "success");
+              } catch {
+                showToast("Không thể cập nhật trạng thái phiên khám.", "danger");
+              }
+            }}
+            className="px-3.5 py-1.5 bg-[#6E2582] text-white text-xs font-bold hover:bg-[#561A66] rounded-md transition-all cursor-pointer shadow-xs"
+          >
+            Tiếp tục đọc kết quả
           </button>
         </div>
       )}
@@ -1060,6 +1105,12 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                           clinicalNote: labClinicalNote || symptoms || "Chỉ định cận lâm sàng",
                           paymentRequired: true
                         });
+                        try {
+                          await consultationApi.updateStatus(consultationId, "AWAITING_CLS");
+                          setConsultation(prev => prev ? { ...prev, status: "AWAITING_CLS" } : null);
+                        } catch {
+                          /* Ignore status update failure */
+                        }
                         showToast("Đã tạo chỉ định Cận lâm sàng thành công. Bệnh nhân đã được tự động xếp lượt!", "success");
                         setSelectedLabServices([]);
                         setLabClinicalNote("");

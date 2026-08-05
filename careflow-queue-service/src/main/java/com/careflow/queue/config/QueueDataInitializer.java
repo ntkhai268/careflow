@@ -23,13 +23,16 @@ public class QueueDataInitializer implements CommandLineRunner {
     private final QueueConfigRepository configRepository;
     private final QueueEntryRepository entryRepository;
     private final IdempotencyRecordRepository idempotencyRecordRepository;
+    private final com.careflow.queue.service.QrTokenService qrTokenService;
 
     public QueueDataInitializer(QueueConfigRepository configRepository,
                                 QueueEntryRepository entryRepository,
-                                IdempotencyRecordRepository idempotencyRecordRepository) {
+                                IdempotencyRecordRepository idempotencyRecordRepository,
+                                com.careflow.queue.service.QrTokenService qrTokenService) {
         this.configRepository = configRepository;
         this.entryRepository = entryRepository;
         this.idempotencyRecordRepository = idempotencyRecordRepository;
+        this.qrTokenService = qrTokenService;
     }
 
     @Override
@@ -64,12 +67,12 @@ public class QueueDataInitializer implements CommandLineRunner {
         // 3. Seed 6 Bệnh nhân đã Check-in ở các làn khác nhau (Priority, Normal, Result Review) cho ROOM-01
         Instant now = Instant.now();
 
-        // Patient 1: Làn Cấp cứu / Ưu tiên (PRIORITY)
+        // Patient 1 (Bệnh nhân A - Phạm Đức Anh): Lượt hẹn CHƯA CHECK-IN (WAITING) để Staff quét/nhập QR test luồng E2E
         createQueueEntry(config, deptId,
                 UUID.fromString("a0000001-0000-0000-0000-000000000001"),
                 UUID.fromString("f0000001-0000-0000-0000-000000000004"),
                 UUID.fromString("00000001-0000-0000-0000-000000000004"),
-                today, 1, "NOI-001", PriorityLevel.PRIORITY, QueueStatus.CHECKED_IN, now.minusSeconds(1800));
+                today, 1, "NOI-001", PriorityLevel.PRIORITY, QueueStatus.WAITING, null);
 
         // Patient 2: Làn Đọc kết quả CLS (PRIORITY)
         createQueueEntry(config, deptId,
@@ -134,8 +137,11 @@ public class QueueDataInitializer implements CommandLineRunner {
         entry.setPriorityLevel(priority);
         entry.setStatus(status);
         entry.setCheckedInAt(checkInTime);
-        entry.setEligibleSinceAt(checkInTime);
-        entryRepository.save(entry);
+        QueueEntry saved = entryRepository.save(entry);
+        if (status == QueueStatus.WAITING && qrTokenService != null) {
+            String token = qrTokenService.issue(saved);
+            log.info("===> ISSUED TEST QR TOKEN FOR UN-CHECKED-IN PATIENT A (queueNo: {}, apptId: {}): {}", queueNo, apptId, token);
+        }
     }
 
     private void createServicePointEntry(String spId, QueueType type, UUID patientId,

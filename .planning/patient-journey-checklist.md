@@ -77,8 +77,8 @@ Hệ thống điều phối hành trình khám ngoại trú tại bệnh viện 
 - [x] **5.2. Cấp phiếu, số thứ tự và QR.**
 - [x] **5.3. Bệnh nhân đến phòng khám** → Nhân viên hoặc kiosk quét QR.
 - [x] **5.4. `CHECKED_IN` và vào active FIFO queue.**
-- [ ] **5.5. Bác sĩ gọi bệnh nhân** → Bác sĩ nhập sinh hiệu và khám.
-- [ ] **5.6. Phân nhánh cận lâm sàng**:
+- [x] **5.5. Bác sĩ gọi bệnh nhân** → Bác sĩ nhập sinh hiệu và khám.
+- [x] **5.6. Phân nhánh cận lâm sàng**:
   - Không cần CLS: Chẩn đoán, kê toa, hoàn tất.
   - Có CLS: Bác sĩ tạo order → Thanh toán nếu cần → Hệ thống tự tạo lượt CLS → Bệnh nhân tới khu thực hiện ngồi chờ → KTV gọi/thực hiện/trả kết quả → Hệ thống chèn lượt đọc kết quả sau bệnh nhân tiếp theo → Bác sĩ đọc kết quả & kết luận.
 - [ ] ~~**5.7. Mobile nhận kết quả, toa và lịch tái khám.**~~ *(Out of scope - Mobile)*
@@ -87,13 +87,13 @@ Hệ thống điều phối hành trình khám ngoại trú tại bệnh viện 
 
 ## 6. Tiền điều kiện: Bệnh viện cấu hình hệ thống (Admin Setup)
 
-- [ ] **6.1. Cấu hình Cơ sở bệnh viện & Khoa chuyên môn.**
-- [ ] **6.2. Cấu hình Phòng khám và các điểm phục vụ (Service Points).**
-- [ ] **6.3. Cấu hình Danh sách bác sĩ & Lịch làm việc của bác sĩ.**
-- [ ] **6.4. Cấu hình Khung giờ & Capacity theo khung giờ.**
-- [ ] **6.5. Cấu hình Chính sách check-in sớm/muộn (`checkInWindowMinutes`).**
-- [ ] **6.6. Cấu hình Chính sách `MISSED`, `NO_SHOW` và quy trình gọi lại.**
-- [ ] **6.7. Cấu hình Danh mục dịch vụ cận lâm sàng.**
+- [x] **6.1. Cấu hình Cơ sở bệnh viện & Khoa chuyên môn.**
+- [x] **6.2. Cấu hình Phòng khám và các điểm phục vụ (Service Points).**
+- [x] **6.3. Cấu hình Danh sách bác sĩ & Lịch làm việc của bác sĩ.**
+- [x] **6.4. Cấu hình Khung giờ & Capacity theo khung giờ.**
+- [x] **6.5. Cấu hình Chính sách check-in sớm/muộn (`checkInWindowMinutes`).**
+- [x] **6.6. Cấu hình Chính sách `MISSED`, `NO_SHOW` và quy trình gọi lại.**
+- [x] **6.7. Cấu hình Danh mục dịch vụ cận lâm sàng.**
 
 ---
 
@@ -171,27 +171,27 @@ Hệ thống điều phối hành trình khám ngoại trú tại bệnh viện 
 
 ## 11. Giai đoạn 5: Khám lâm sàng ban đầu (Consultation)
 
-- [ ] **11.1. Bác sĩ bấm `Bắt đầu khám`** (`POST /api/consultations/{id}/start`).
-- [ ] **11.2. Chuyển trạng thái Queue Entry**: `CALLED → IN_PROGRESS`.
-- [ ] **11.3. Chuyển trạng thái Consultation**: `NOT_STARTED → IN_PROGRESS`.
-- [ ] **11.4. Doctor Web hiển thị thông tin bệnh nhân**: Định danh, lý do khám, tiền sử, dị ứng, hồ sơ upload, lịch sử khám cũ.
-- [ ] **11.5. Bác sĩ nhập trực tiếp Sinh hiệu**: Nhiệt độ, Huyết áp, Nhịp tim, SpO2, Cân nặng, Chiều cao.
-- [ ] **11.6. Bác sĩ nhập Lâm sàng**: Triệu chứng, khám thực thể, chẩn đoán sơ bộ, mã ICD-10, ghi chú lâm sàng.
-- [ ] **11.7. Tích hợp AI Clinical Assistant (Tùy chọn)**: Hỗ trợ tóm tắt, gợi ý chẩn đoán phân biệt & cảnh báo an toàn.
+- [x] **11.1. Bác sĩ bấm `Bắt đầu khám`** (`POST /api/consultations/{id}/start`).
+- [x] **11.2. Chuyển trạng thái Queue Entry**: `CALLED → IN_PROGRESS`.
+- [x] **11.3. Chuyển trạng thái Consultation**: `NOT_STARTED → IN_PROGRESS`.
+- [x] **11.4. Doctor Web hiển thị thông tin bệnh nhân**: Định danh, lý do khám, tiền sử, dị ứng, hồ sơ upload, lịch sử khám cũ.
+- [x] **11.5. Bác sĩ nhập trực tiếp Sinh hiệu**: Nhiệt độ, Huyết áp, Nhịp tim, SpO2, Cân nặng, Chiều cao.
+- [x] **11.6. Bác sĩ nhập Lâm sàng**: Triệu chứng, khám thực thể, chẩn đoán sơ bộ, mã ICD-10, ghi chú lâm sàng.
+- [x] **11.7. Tích hợp AI Clinical Assistant (Tùy chọn)**: Hỗ trợ tóm tắt, gợi ý chẩn đoán phân biệt & cảnh báo an toàn.
 
 ---
 
 ## 12. Giai đoạn 6A: Không cần cận lâm sàng
 
-- [ ] **12.1. Bác sĩ hoàn thiện chẩn đoán & dặn dò.**
-- [ ] **12.2. Bác sĩ tạo toa thuốc** (`Prescription`).
-- [ ] **12.3. Bác sĩ tạo lịch tái khám** (nếu cần).
-- [ ] **12.4. Bác sĩ bấm `Hoàn tất khám`.**
-- [ ] **12.5. Chuyển trạng thái**:
+- [x] **12.1. Bác sĩ hoàn thiện chẩn đoán & dặn dò.**
+- [x] **12.2. Bác sĩ tạo toa thuốc** (`Prescription`).
+- [x] **12.3. Bác sĩ tạo lịch tái khám** (nếu cần).
+- [x] **12.4. Bác sĩ bấm `Hoàn tất khám`.**
+- [x] **12.5. Chuyển trạng thái**:
   - `Consultation: IN_PROGRESS → COMPLETED`
   - `QueueEntry: IN_PROGRESS → COMPLETED`
   - `Appointment: CONFIRMED → FULFILLED`
-- [ ] **12.6. Chuyển sang Giai đoạn 9 & 10.**
+- [x] **12.6. Chuyển sang Giai đoạn 9 & 10.**
 
 ---
 
@@ -200,17 +200,17 @@ Hệ thống điều phối hành trình khám ngoại trú tại bệnh viện 
 - [x] **13.1. Bác sĩ tạo Lab Order** (`POST /api/labs/orders`).
 - [x] **13.2. Chuyển trạng thái Consultation**: `IN_PROGRESS → WAITING_FOR_RESULTS` (Không hoàn tất consultation).
 - [ ] ~~**13.3. Patient Mobile hiển thị**: Màn hình "ĐÃ KHÁM BAN ĐẦU", danh sách chỉ định, địa điểm khu thực hiện & trạng thái chờ.~~ *(Out of scope - Mobile)*
-- [ ] **13.4. Xử lý Thanh toán / BHYT (Mock / Integration)**:
+- [x] **13.4. Xử lý Thanh toán / BHYT (Mock / Integration)**:
   - Online / Tiền mặt / BHYT xác nhận → `LabOrder: PAYMENT_PENDING → PAID/COVERED → QUEUED`.
 
 ---
 
 ## 14. Giai đoạn 7: Thực hiện cận lâm sàng (Lab Execution)
 
-- [ ] **14.1. Tự động tạo lượt CLS**: Queue Service nhận `ClinicalOrderCreated` → Tự động tạo lượt `LAB_EXECUTION` (Bệnh nhân **không cần check-in lần 2**).
-- [ ] **14.2. Gom order theo điểm phục vụ**: Gom các XN cùng lần lấy mẫu vào 1 Queue Entry (ví dụ `XN-105`), dịch vụ khác (siêu âm) tạo lượt riêng (ví dụ `SA-042`).
+- [x] **14.1. Tự động tạo lượt CLS**: Queue Service nhận `ClinicalOrderCreated` → Tự động tạo lượt `LAB_EXECUTION` (Bệnh nhân **không cần check-in lần 2**).
+- [x] **14.2. Gom order theo điểm phục vụ**: Gom các XN cùng lần lấy mẫu vào 1 Queue Entry (ví dụ `XN-105`), dịch vụ khác (siêu âm) tạo lượt riêng (ví dụ `SA-042`).
 - [ ] ~~**14.3. Patient Mobile hiển thị**: Số thứ tự CLS, địa điểm khu thực hiện, số lượt đang chờ phía trước.~~ *(Out of scope - Mobile)*
-- [ ] **14.4. Kỹ thuật viên thao tác (Lab Web)**:
+- [x] **14.4. Kỹ thuật viên thao tác (Lab Web)**:
   - Gọi số tiếp theo (`CALLED`).
   - Đối chiếu danh tính khi bệnh nhân tới bàn.
   - Bấm `Bắt đầu thực hiện` (`IN_PROGRESS`).
@@ -222,24 +222,24 @@ Hệ thống điều phối hành trình khám ngoại trú tại bệnh viện 
 
 ## 15. Giai đoạn 8: Quay lại bác sĩ đọc kết quả (Result Review)
 
-- [ ] **15.1. Tự động tạo lượt đọc kết quả**: Khi đủ kết quả bắt buộc → Phát `AllRequiredResultsAvailable` → `Consultation: WAITING_FOR_REVIEW`.
-- [ ] **15.2. Kích hoạt Queue `RESULT_REVIEW`**: Queue Service kích hoạt lượt đọc kết quả (Bệnh nhân **không check-in lại, không đặt appointment mới**).
-- [ ] **15.3. Quy tắc điều phối Queue 3 luồng (Round-Robin 1:1:1)**: Đưa bệnh nhân vào hàng chờ `RESULT_REVIEW`. Khi bác sĩ bấm Gọi tiếp theo, Queue Engine gọi luân phiên **1:1:1** giữa Initial Queue, Result Review Queue và Priority Queue (ví dụ: `Initial 1 -> Result Review 1 -> Priority 1 -> Initial 2...`).
+- [x] **15.1. Tự động tạo lượt đọc kết quả**: Khi đủ kết quả bắt buộc → Phát `AllRequiredResultsAvailable` → `Consultation: WAITING_FOR_REVIEW`.
+- [x] **15.2. Kích hoạt Queue `RESULT_REVIEW`**: Queue Service kích hoạt lượt đọc kết quả (Bệnh nhân **không check-in lại, không đặt appointment mới**).
+- [x] **15.3. Quy tắc điều phối Queue 3 luồng (Round-Robin 1:1:1)**: Đưa bệnh nhân vào hàng chờ `RESULT_REVIEW`. Khi bác sĩ bấm Gọi tiếp theo, Queue Engine gọi luân phiên **1:1:1** giữa Initial Queue, Result Review Queue và Priority Queue (ví dụ: `Initial 1 -> Result Review 1 -> Priority 1 -> Initial 2...`).
 - [ ] ~~**15.4. Patient Mobile nhận Push**: "Kết quả đã sẵn sàng. Vui lòng quay lại Phòng X".~~ *(Out of scope - Mobile)*
-- [ ] **15.5. Xử lý Vắng mặt khi đọc kết quả**: Nếu đến lượt mà chưa có mặt → `CALLED → MISSED` → tự động chèn lại sau 1 bệnh nhân khám ban đầu tiếp theo.
-- [ ] **15.6. Bác sĩ tiếp tục Consultation**: Gọi số R → `Consultation: WAITING_FOR_REVIEW → IN_PROGRESS`. Bác sĩ xem kết quả trên Doctor Web và chốt chẩn đoán.
+- [x] **15.5. Xử lý Vắng mặt khi đọc kết quả**: Nếu đến lượt mà chưa có mặt → `CALLED → MISSED` → tự động chèn lại sau 1 bệnh nhân khám ban đầu tiếp theo.
+- [x] **15.6. Bác sĩ tiếp tục Consultation**: Gọi số R → `Consultation: WAITING_FOR_REVIEW → IN_PROGRESS`. Bác sĩ xem kết quả trên Doctor Web và chốt chẩn đoán.
 
 ---
 
 ## 16. Giai đoạn 9: Kê toa, tái khám và hoàn tất
 
-- [ ] **16.1. Bác sĩ tạo & xác nhận toa thuốc**: `DRAFT → CONFIRMED` → Phát `PrescriptionIssued`. Validate dị ứng, liều lượng & an toàn.
-- [ ] **16.2. Bác sĩ hẹn lịch tái khám**: Chọn ngày/khung giờ → Appointment Service tạo follow-up appointment → Phát `FollowUpScheduled`.
-- [ ] **16.3. Hoàn tất toàn bộ ca khám**:
+- [x] **16.1. Bác sĩ tạo & xác nhận toa thuốc**: `DRAFT → CONFIRMED` → Phát `PrescriptionIssued`. Validate dị ứng, liều lượng & an toàn.
+- [x] **16.2. Bác sĩ hẹn lịch tái khám**: Chọn ngày/khung giờ → Appointment Service tạo follow-up appointment → Phát `FollowUpScheduled`.
+- [x] **16.3. Hoàn tất toàn bộ ca khám**:
   - `Consultation → COMPLETED`
   - `QueueEntry → COMPLETED`
   - `Appointment → FULFILLED`
-- [ ] **16.4. Đồng bộ EMR**: EMR Service tổng hợp sinh hiệu, triệu chứng, chẩn đoán, CLS, toa thuốc, lịch tái khám thành hồ sơ bệnh án hoàn chỉnh.
+- [x] **16.4. Đồng bộ EMR**: EMR Service tổng hợp sinh hiệu, triệu chứng, chẩn đoán, CLS, toa thuốc, lịch tái khám thành hồ sơ bệnh án hoàn chỉnh.
 
 ---
 
@@ -467,25 +467,25 @@ Hệ thống điều phối hành trình khám ngoại trú tại bệnh viện 
 > **Tham chiếu**: Mục 9, 10, 20.3 trong `patient-journey-and-system-workflow.md`.
 
 ### 29.1. Trang Đăng nhập & Điều hướng
-- [ ] **29.1.1.** Đăng nhập với role `STAFF`, JWT được phân quyền đúng route `/staff/*`.
-- [ ] **29.1.2.** Dashboard Staff hiển thị tổng quan ngày: số bệnh nhân đã check-in, đang chờ, vắng mặt.
+- [x] **29.1.1.** Đăng nhập với role `STAFF`, JWT được phân quyền đúng route `/staff/*`.
+- [x] **29.1.2.** Dashboard Staff hiển thị tổng quan ngày: số bệnh nhân đã check-in, đang chờ, vắng mặt.
 
 ### 29.2. Trang Check-in QR
-- [ ] **29.2.1.** Giao diện quét QR (camera hoặc nhập mã thủ công).
-- [ ] **29.2.2.** Gọi API `POST /api/queues/check-in` với token từ QR.
-- [ ] **29.2.3.** Hiển thị kết quả tiếp nhận: tên bệnh nhân, số thứ tự, phòng khám, trạng thái `CHECKED_IN`.
-- [ ] **29.2.4.** Xử lý lỗi: QR hết hạn, ticket không tìm thấy, bệnh nhân đã check-in rồi (idempotent).
-- [ ] **29.2.5.** Hiển thị thông báo lỗi rõ ràng khi check-in thất bại.
+- [x] **29.2.1.** Giao diện quét QR (camera hoặc nhập mã thủ công).
+- [x] **29.2.2.** Gọi API `POST /api/queues/check-in` với token từ QR.
+- [x] **29.2.3.** Hiển thị kết quả tiếp nhận: tên bệnh nhân, số thứ tự, phòng khám, trạng thái `CHECKED_IN`.
+- [x] **29.2.4.** Xử lý lỗi: QR hết hạn, ticket không tìm thấy, bệnh nhân đã check-in rồi (idempotent).
+- [x] **29.2.5.** Hiển thị thông báo lỗi rõ ràng khi check-in thất bại.
 
 ### 29.3. Trang Danh sách Lịch Hôm nay
-- [ ] **29.3.1.** Hiển thị danh sách tất cả lịch hôm nay theo phòng (`CONFIRMED`, `CHECKED_IN`, `NO_SHOW`).
-- [ ] **29.3.2.** Filter theo phòng khám / khoa.
-- [ ] **29.3.3.** Hiển thị trạng thái từng bệnh nhân (Đã check-in / Chưa đến / Vắng mặt).
+- [x] **29.3.1.** Hiển thị danh sách tất cả lịch hôm nay theo phòng (`CONFIRMED`, `CHECKED_IN`, `NO_SHOW`).
+- [x] **29.3.2.** Filter theo phòng khám / khoa.
+- [x] **29.3.3.** Hiển thị trạng thái từng bệnh nhân (Đã check-in / Chưa đến / Vắng mặt).
 
 ### 29.4. Quản lý Lượt Vắng mặt (MISSED / Recall)
-- [ ] **29.4.1.** Xem danh sách bệnh nhân đang ở trạng thái `MISSED`.
-- [ ] **29.4.2.** Nhân viên bấm "Gọi lại" (Recall) → `MISSED → CHECKED_IN` (xếp lại cuối hàng).
-- [ ] **29.4.3.** Nhân viên xác nhận `NO_SHOW` nếu bệnh nhân không thể tiếp tục.
+- [x] **29.4.1.** Xem danh sách bệnh nhân đang ở trạng thái `MISSED`.
+- [x] **29.4.2.** Nhân viên bấm "Gọi lại" (Recall) → `MISSED → CHECKED_IN` (xếp lại cuối hàng).
+- [x] **29.4.3.** Nhân viên xác nhận `NO_SHOW` nếu bệnh nhân không thể tiếp tục.
 
 ---
 
@@ -495,26 +495,26 @@ Hệ thống điều phối hành trình khám ngoại trú tại bệnh viện 
 > **Tham chiếu**: Mục 16.2, 18.6, 18.7, 19 trong `patient-journey-and-system-workflow.md`.
 
 ### 30.1. Backend — Queue Service Consumer
-- [ ] **30.1.1.** Queue Service consume event `PrescriptionIssued`.
-- [ ] **30.1.2.** Tự tạo Queue Entry `type = PHARMACY_DISPENSING` tại `servicePointId` mặc định (quầy phát thuốc).
-- [ ] **30.1.3.** Queue Entry khởi tạo trạng thái `QUEUED`, ghi `queuedAt`.
-- [ ] **30.1.4.** Idempotency: cùng `prescriptionId` không tạo dư lượt.
-- [ ] **30.1.5.** API: `GET /api/queues/service-points/{spId}/active` trả danh sách `PHARMACY_DISPENSING` đang chờ.
+- [x] **30.1.1.** Queue Service consume event `PrescriptionIssued`.
+- [x] **30.1.2.** Tự tạo Queue Entry `type = PHARMACY_DISPENSING` tại `servicePointId` mặc định (quầy phát thuốc).
+- [x] **30.1.3.** Queue Entry khởi tạo trạng thái `QUEUED`, ghi `queuedAt`.
+- [x] **30.1.4.** Idempotency: cùng `prescriptionId` không tạo dư lượt.
+- [x] **30.1.5.** API: `GET /api/queues/service-points/{spId}/active` trả danh sách `PHARMACY_DISPENSING` đang chờ.
 
 ### 30.2. Staff Web — Trang Hàng đợi Phát thuốc
-- [ ] **30.2.1.** Hiển thị danh sách bệnh nhân chờ phát thuốc (FIFO theo `queuedAt`).
-- [ ] **30.2.2.** Hiển thị: số thứ tự, tên bệnh nhân (nếu được phép), trạng thái, thời gian chờ.
-- [ ] **30.2.3.** Nút **Gọi số tiếp theo** (`POST /api/queues/service-points/{spId}/call-next`).
-- [ ] **30.2.4.** Chuyển trạng thái `QUEUED → CALLED`.
-- [ ] **30.2.5.** Hiển thị bệnh nhân đang được gọi ở khu vực nổi bật.
+- [x] **30.2.1.** Hiển thị danh sách bệnh nhân chờ phát thuốc (FIFO theo `queuedAt`).
+- [x] **30.2.2.** Hiển thị: số thứ tự, tên bệnh nhân (nếu được phép), trạng thái, thời gian chờ.
+- [x] **30.2.3.** Nút **Gọi số tiếp theo** (`POST /api/queues/service-points/{spId}/call-next`).
+- [x] **30.2.4.** Chuyển trạng thái `QUEUED → CALLED`.
+- [x] **30.2.5.** Hiển thị bệnh nhân đang được gọi ở khu vực nổi bật.
 
 ### 30.3. Staff Web — Xác nhận Phát thuốc
-- [ ] **30.3.1.** Nhân viên bấm **Bắt đầu phát thuốc** → `CALLED → IN_PROGRESS`.
-- [ ] **30.3.2.** Hiển thị chi tiết đơn thuốc: danh sách thuốc, liều lượng, số lượng.
-- [ ] **30.3.3.** Nhân viên đối chiếu toa và xác nhận cấp phát → `PUT /api/prescriptions/{id}/dispense`.
-- [ ] **30.3.4.** Prescription chuyển `CONFIRMED → DISPENSED`.
-- [ ] **30.3.5.** Queue Entry chuyển `IN_PROGRESS → COMPLETED`.
-- [ ] **30.3.6.** Xử lý vắng mặt: bệnh nhân không ra quầy → `CALLED → MISSED → QUEUED` lại theo chính sách.
+- [x] **30.3.1.** Nhân viên bấm **Bắt đầu phát thuốc** → `CALLED → IN_PROGRESS`.
+- [x] **30.3.2.** Hiển thị chi tiết đơn thuốc: danh sách thuốc, liều lượng, số lượng.
+- [x] **30.3.3.** Nhân viên đối chiếu toa và xác nhận cấp phát → `PUT /api/prescriptions/{id}/dispense`.
+- [x] **30.3.4.** Prescription chuyển `CONFIRMED → DISPENSED`.
+- [x] **30.3.5.** Queue Entry chuyển `IN_PROGRESS → COMPLETED`.
+- [x] **30.3.6.** Xử lý vắng mặt: bệnh nhân không ra quầy → `CALLED → MISSED → QUEUED` lại theo chính sách.
 
 ---
 
@@ -524,38 +524,38 @@ Hệ thống điều phối hành trình khám ngoại trú tại bệnh viện 
 > **Tham chiếu**: Mục 14, 18.4, 22.2 trong `patient-journey-and-system-workflow.md`.
 
 ### 31.1. Trang Đăng nhập & Điều hướng
-- [ ] **31.1.1.** Đăng nhập với role `LAB_TECHNICIAN`, JWT phân quyền đúng route `/lab/*`.
-- [ ] **31.1.2.** Dashboard Lab Tech: tổng số lượt đang chờ, đang thực hiện, đã hoàn thành trong ngày.
+- [x] **31.1.1.** Đăng nhập với role `LAB_TECHNICIAN`, JWT phân quyền đúng route `/lab/*`.
+- [x] **31.1.2.** Dashboard Lab Tech: tổng số lượt đang chờ, đang thực hiện, đã hoàn thành trong ngày.
 
 ### 31.2. Trang Hàng đợi Cận lâm sàng
-- [ ] **31.2.1.** Hiển thị danh sách lượt chờ `LAB_EXECUTION` theo `servicePointId` của KTV (FIFO theo `queuedAt`).
-- [ ] **31.2.2.** Hiển thị: số thứ tự (vd `XN-105`), danh sách xét nghiệm trong order, trạng thái, thời gian chờ.
-- [ ] **31.2.3.** Nút **Gọi bệnh nhân tiếp theo** (`POST /api/queues/service-points/{spId}/call-next`).
-- [ ] **31.2.4.** Chuyển trạng thái Lab Queue Entry: `QUEUED → CALLED`.
-- [ ] **31.2.5.** Đồng thời chuyển Lab Order: `QUEUED → CALLED` tương ứng.
+- [x] **31.2.1.** Hiển thị danh sách lượt chờ `LAB_EXECUTION` theo `servicePointId` của KTV (FIFO theo `queuedAt`).
+- [x] **31.2.2.** Hiển thị: số thứ tự (vd `XN-105`), danh sách xét nghiệm trong order, trạng thái, thời gian chờ.
+- [x] **31.2.3.** Nút **Gọi bệnh nhân tiếp theo** (`POST /api/queues/service-points/{spId}/call-next`).
+- [x] **31.2.4.** Chuyển trạng thái Lab Queue Entry: `QUEUED → CALLED`.
+- [x] **31.2.5.** Đồng thời chuyển Lab Order: `QUEUED → CALLED` tương ứng.
 
 ### 31.3. Xác minh Danh tính & Bắt đầu Thực hiện
-- [ ] **31.3.1.** Khi bệnh nhân đến bàn, KTV đối chiếu tên/mã bệnh nhân trực tiếp trên giao diện.
-- [ ] **31.3.2.** Bấm **Bắt đầu thực hiện** → `POST /api/labs/orders/{orderId}/start`.
-- [ ] **31.3.3.** Chuyển trạng thái: Queue Entry `CALLED → IN_PROGRESS`, Lab Order `CALLED → IN_PROGRESS`.
+- [x] **31.3.1.** Khi bệnh nhân đến bàn, KTV đối chiếu tên/mã bệnh nhân trực tiếp trên giao diện.
+- [x] **31.3.2.** Bấm **Bắt đầu thực hiện** → `POST /api/labs/orders/{orderId}/start`.
+- [x] **31.3.3.** Chuyển trạng thái: Queue Entry `CALLED → IN_PROGRESS`, Lab Order `CALLED → IN_PROGRESS`.
 
 ### 31.4. Nhập Kết quả
-- [ ] **31.4.1.** Form nhập kết quả từng hạng mục trong order (tên xét nghiệm, giá trị, đơn vị, khoảng tham chiếu).
-- [ ] **31.4.2.** API lưu kết quả từng item: `PUT /api/labs/orders/{orderId}/items/{itemId}/result`.
-- [ ] **31.4.3.** Cảnh báo kết quả bất thường (ngoài khoảng tham chiếu) — highlight màu đỏ/vàng.
-- [ ] **31.4.4.** Cho phép lưu nháp kết quả trước khi phát hành chính thức.
+- [x] **31.4.1.** Form nhập kết quả từng hạng mục trong order (tên xét nghiệm, giá trị, đơn vị, khoảng tham chiếu).
+- [x] **31.4.2.** API lưu kết quả từng item: `PUT /api/labs/orders/{orderId}/items/{itemId}/result`.
+- [x] **31.4.3.** Cảnh báo kết quả bất thường (ngoài khoảng tham chiếu) — highlight màu đỏ/vàng.
+- [x] **31.4.4.** Cho phép lưu nháp kết quả trước khi phát hành chính thức.
 
 ### 31.5. Phát hành Kết quả
-- [ ] **31.5.1.** KTV bấm **Phát hành kết quả** → `POST /api/labs/orders/{orderId}/finalize`.
-- [ ] **31.5.2.** Lab Order chuyển `IN_PROGRESS → RESULT_AVAILABLE`.
-- [ ] **31.5.3.** Queue Entry chuyển `IN_PROGRESS → COMPLETED`.
-- [ ] **31.5.4.** Phát event `LabResultAvailable` → Notification gửi bác sĩ và bệnh nhân.
-- [ ] **31.5.5.** Kết quả đã phát hành không bị ghi đè âm thầm; cần quy trình đặc biệt để sửa.
+- [x] **31.5.1.** KTV bấm **Phát hành kết quả** → `POST /api/labs/orders/{orderId}/finalize`.
+- [x] **31.5.2.** Lab Order chuyển `IN_PROGRESS → RESULT_AVAILABLE`.
+- [x] **31.5.3.** Queue Entry chuyển `IN_PROGRESS → COMPLETED`.
+- [x] **31.5.4.** Phát event `LabResultAvailable` → Notification gửi bác sĩ và bệnh nhân.
+- [x] **31.5.5.** Kết quả đã phát hành không bị ghi đè âm thầm; cần quy trình đặc biệt để sửa.
 
 ### 31.6. Xử lý Vắng mặt
-- [ ] **31.6.1.** Nếu bệnh nhân không ra khi gọi → KTV bấm **Vắng mặt** → `CALLED → MISSED`.
-- [ ] **31.6.2.** Xếp lại lượt: `MISSED → QUEUED` lại cuối hàng theo chính sách.
-- [ ] **31.6.3.** Giới hạn số lần gọi lại trước khi yêu cầu nhân viên xử lý thủ công.
+- [x] **31.6.1.** Nếu bệnh nhân không ra khi gọi → KTV bấm **Vắng mặt** → `CALLED → MISSED`.
+- [x] **31.6.2.** Xếp lại lượt: `MISSED → QUEUED` lại cuối hàng theo chính sách.
+- [x] **31.6.3.** Giới hạn số lần gọi lại trước khi yêu cầu nhân viên xử lý thủ công.
 
 ---
 
@@ -565,29 +565,29 @@ Hệ thống điều phối hành trình khám ngoại trú tại bệnh viện 
 > **Tham chiếu**: Mục 6, 20, FR-ADM trong `patient-journey-and-system-workflow.md`.
 
 ### 32.1. Trang Đăng nhập & Dashboard Admin
-- [ ] **32.1.1.** Đăng nhập với role `ADMIN`.
-- [ ] **32.1.2.** Dashboard tổng quan: số lượt khám hôm nay, thời gian chờ trung bình, số phòng đang hoạt động.
+- [x] **32.1.1.** Đăng nhập với role `ADMIN`.
+- [x] **32.1.2.** Dashboard tổng quan: số lượt khám hôm nay, thời gian chờ trung bình, số phòng đang hoạt động.
 
 ### 32.2. Quản lý Tài khoản Nội bộ
-- [ ] **32.2.1.** Xem danh sách tài khoản bác sĩ, KTV, nhân viên.
-- [ ] **32.2.2.** Tạo / chỉnh sửa / khóa tài khoản nội bộ.
-- [ ] **32.2.3.** Phân quyền role (`DOCTOR`, `LAB_TECHNICIAN`, `STAFF`).
+- [x] **32.2.1.** Xem danh sách tài khoản bác sĩ, KTV, nhân viên.
+- [x] **32.2.2.** Tạo / chỉnh sửa / khóa tài khoản nội bộ.
+- [x] **32.2.3.** Phân quyền role (`DOCTOR`, `LAB_TECHNICIAN`, `STAFF`).
 
 ### 32.3. Cấu hình Cơ sở Y tế
-- [ ] **32.3.1.** Quản lý danh sách Khoa (`Department`): tên, mã, trạng thái active.
-- [ ] **32.3.2.** Quản lý danh sách Phòng khám (`ClinicRoom`): phòng, khoa, capacity.
-- [ ] **32.3.3.** Quản lý danh sách Điểm phục vụ Cận lâm sàng (`ServicePoint`): khu XN, phòng SA...
-- [ ] **32.3.4.** Quản lý danh mục Dịch vụ CLS (loại xét nghiệm, siêu âm...).
+- [x] **32.3.1.** Quản lý danh sách Khoa (`Department`): tên, mã, trạng thái active.
+- [x] **32.3.2.** Quản lý danh sách Phòng khám (`ClinicRoom`): phòng, khoa, capacity.
+- [x] **32.3.3.** Quản lý danh sách Điểm phục vụ Cận lâm sàng (`ServicePoint`): khu XN, phòng SA...
+- [x] **32.3.4.** Quản lý danh mục Dịch vụ CLS (loại xét nghiệm, siêu âm...).
 
 ### 32.4. Cấu hình Lịch làm việc & Khung giờ
-- [ ] **32.4.1.** Gán bác sĩ cho khoa / phòng theo lịch tuần.
-- [ ] **32.4.2.** Tạo khung giờ khám (`TimeSlot`) và capacity tối đa.
-- [ ] **32.4.3.** Cấu hình `checkInWindowMinutes` (bao nhiêu phút trước/sau khung giờ được check-in).
+- [x] **32.4.1.** Gán bác sĩ cho khoa / phòng theo lịch tuần.
+- [x] **32.4.2.** Tạo khung giờ khám (`TimeSlot`) và capacity tối đa.
+- [x] **32.4.3.** Cấu hình `checkInWindowMinutes` (bao nhiêu phút trước/sau khung giờ được check-in).
 
 ### 32.5. Xem Báo cáo Vận hành
-- [ ] **32.5.1.** Xem thống kê lượt khám theo ngày/khoa/bác sĩ.
-- [ ] **32.5.2.** Xem thời gian chờ trung bình theo phòng.
-- [ ] **32.5.3.** Xem tỉ lệ NO_SHOW / MISSED.
+- [x] **32.5.1.** Xem thống kê lượt khám theo ngày/khoa/bác sĩ.
+- [x] **32.5.2.** Xem thời gian chờ trung bình theo phòng.
+- [x] **32.5.3.** Xem tỉ lệ NO_SHOW / MISSED.
 
 ---
 

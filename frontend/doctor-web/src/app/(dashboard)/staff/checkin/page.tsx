@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { queueApi, QueueEntry } from "@/lib/queue-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
@@ -10,9 +10,13 @@ export default function StaffCheckinPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkInResult, setCheckInResult] = useState<QueueEntry | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "danger" } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: "success" | "danger" | "warning" } | null>(null);
 
-  const showToast = (message: string, type: "success" | "danger" = "success") => {
+  // Today's Room Queue List
+  const [roomEntries, setRoomEntries] = useState<QueueEntry[] | null>(null);
+  const [isLoadingQueue, setIsLoadingQueue] = useState(false);
+
+  const showToast = (message: string, type: "success" | "danger" | "warning" = "success") => {
     setToast({ message, type });
     setTimeout(() => setToast(null), 3000);
   };
@@ -22,6 +26,22 @@ export default function StaffCheckinPage() {
       window.dispatchEvent(new CustomEvent("careflow:ai-notify", { detail: { text } }));
     }
   };
+
+  const fetchRoomQueue = async () => {
+    setIsLoadingQueue(true);
+    try {
+      const res = await queueApi.getRoomActive(roomId);
+      setRoomEntries(res.data?.entries ?? []);
+    } catch {
+      setRoomEntries([]);
+    } finally {
+      setIsLoadingQueue(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchRoomQueue();
+  }, [roomId]);
 
   const handleCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +66,7 @@ export default function StaffCheckinPage() {
         notifyAi(`Tiếp nhận thành công bệnh nhân! Số thứ tự cấp: ${res.data.queueNumber} tại ${res.data.roomCode} ✨`);
         showToast(`Tiếp nhận thành công bệnh nhân! STT: ${res.data.queueNumber}`);
         setQrInput("");
+        await fetchRoomQueue();
       }
     } catch (err: any) {
       const errorMsg = err.message || "Không thể check-in ticket này. Mã QR không hợp lệ hoặc đã quá hạn.";
@@ -57,13 +78,39 @@ export default function StaffCheckinPage() {
     }
   };
 
+  const handleRecall = async (entryId: string, num: string) => {
+    try {
+      await queueApi.recallEntry(entryId);
+      notifyAi(`Đã gọi lại số thứ tự ${num}!`);
+      showToast(`Đã gọi lại số ${num}`);
+      await fetchRoomQueue();
+    } catch (err: any) {
+      showToast(err.message || "Lỗi khi gọi lại.", "danger");
+    }
+  };
+
+  const handleMiss = async (entryId: string, num: string) => {
+    try {
+      await queueApi.missEntry(entryId);
+      notifyAi(`Đã đánh dấu vắng mặt cho số thứ tự ${num}!`);
+      showToast(`Đã đánh dấu vắng mặt cho số ${num}`, "warning");
+      await fetchRoomQueue();
+    } catch (err: any) {
+      showToast(err.message || "Lỗi khi đánh dấu vắng mặt.", "danger");
+    }
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Toast Notification Container */}
       {toast && (
         <div
           className={`fixed top-5 right-5 z-50 p-4 border shadow-lg max-w-md transition-all rounded-lg text-white ${
-            toast.type === "success" ? "bg-[#2B1D30] border-emerald-500" : "bg-rose-900 border-rose-500"
+            toast.type === "success"
+              ? "bg-[#2B1D30] border-[#6E2582]"
+              : toast.type === "warning"
+              ? "bg-amber-900 border-amber-500"
+              : "bg-rose-900 border-rose-500"
           }`}
         >
           <div className="flex items-center justify-between gap-4">
@@ -169,6 +216,87 @@ export default function StaffCheckinPage() {
             </div>
           )}
         </div>
+      </div>
+
+      {/* Today's Active Queue & Missed Handling Section */}
+      <div className="border border-card-border bg-card-bg p-6 rounded-xl shadow-sm space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-base font-bold text-[#2B1D30]">Danh sách lượt khám trong ngày ({roomId})</h2>
+          <button
+            onClick={fetchRoomQueue}
+            className="text-xs font-semibold text-purple-700 hover:text-purple-900 cursor-pointer"
+          >
+            Tải lại
+          </button>
+        </div>
+
+        {isLoadingQueue ? (
+          <div className="py-8 flex justify-center">
+            <LoadingSpinner size="md" />
+          </div>
+        ) : (roomEntries ?? []).length === 0 ? (
+          <div className="py-8 text-center text-text-muted text-xs">
+            Chưa có lượt chờ nào tại {roomId}.
+          </div>
+        ) : (
+          <div className="divide-y divide-card-border">
+            {(roomEntries ?? []).map((entry) => (
+              <div key={entry.entryId} className="py-3 flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-800 font-extrabold flex items-center justify-center text-sm">
+                    {entry.queueNumber}
+                  </div>
+                  <div>
+                    <span className="text-xs font-bold text-[#2B1D30]">Số thứ tự: {entry.queueNumber}</span>
+                    <span className="ml-2 text-[11px] font-semibold text-purple-700">({entry.queueStatus})</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {(entry.queueStatus === "WAITING" || entry.queueStatus === "TICKET_ISSUED" as any) && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          let token = entry.appointmentId;
+                          try {
+                            const qrRes = await queueApi.getQr(entry.appointmentId);
+                            if (qrRes.data?.qrToken) token = qrRes.data.qrToken;
+                          } catch {
+                            /* Fallback to appointmentId */
+                          }
+                          const res = await queueApi.checkIn({ qrToken: token, roomId });
+                          if (res.data) {
+                            setCheckInResult(res.data);
+                            showToast(`Duyệt tiếp nhận thành công STT ${res.data.queueNumber}!`);
+                            notifyAi(`Tiếp nhận thành công bệnh nhân STT ${res.data.queueNumber}!`);
+                            await fetchRoomQueue();
+                          }
+                        } catch (err: any) {
+                          showToast(err.message || "Lỗi khi duyệt tiếp nhận.", "danger");
+                        }
+                      }}
+                      className="px-3 py-1 bg-emerald-600 text-white text-xs font-semibold rounded-md hover:bg-emerald-700 cursor-pointer"
+                    >
+                      Duyệt vào hàng chờ
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleRecall(entry.entryId, entry.queueNumber)}
+                    className="px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-md hover:bg-purple-700 cursor-pointer"
+                  >
+                    Gọi lại
+                  </button>
+                  <button
+                    onClick={() => handleMiss(entry.entryId, entry.queueNumber)}
+                    className="px-3 py-1 bg-rose-600 text-white text-xs font-semibold rounded-md hover:bg-rose-700 cursor-pointer"
+                  >
+                    Vắng mặt
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

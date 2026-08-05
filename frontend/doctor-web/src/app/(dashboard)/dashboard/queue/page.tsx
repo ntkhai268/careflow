@@ -148,7 +148,7 @@ export default function DashboardQueuePage() {
           patientId: nextEntry.patientId,
           doctorId: user.id
         });
-        router.push(`/consultation/${res.data.id}`);
+        router.push(`/consultation/${res.data.id}?entryId=${nextEntry.entryId}`);
       } else {
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
@@ -177,7 +177,7 @@ export default function DashboardQueuePage() {
       const activeCons = (consRes.data ?? []).find(c => c.status === "IN_PROGRESS");
       if (activeCons) {
         if (activeCons.patientId === entry.patientId || activeCons.appointmentId === entry.appointmentId) {
-          router.push(`/consultation/${activeCons.id}`);
+          router.push(`/consultation/${activeCons.id}?entryId=${entry.entryId}`);
           return;
         }
         if (typeof window !== "undefined") {
@@ -202,7 +202,7 @@ export default function DashboardQueuePage() {
         patientId: entry.patientId,
         doctorId: user.id
       });
-      router.push(`/consultation/${res.data.id}`);
+      router.push(`/consultation/${res.data.id}?entryId=${entry.entryId}`);
     } catch (err: any) {
       setErrorMessage(err?.message || "Không thể khởi tạo ca khám cho bệnh nhân.");
     } finally {

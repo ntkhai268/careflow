@@ -101,16 +101,16 @@ UC4 .> UC5 : <<precede>>
 
 ---
 
-### UC-CONS-04: Đọc Kết quả CLS & Chốt Chẩn đoán ICD-10 (`READY_TO_COMPLETE`)
+### UC-CONS-04: Đọc Kết quả CLS & Chốt Chẩn đoán ICD-10 (`AWAITING_REVIEW` → `IN_PROGRESS`)
 
 | Mục | Nội dung Đặc tả |
 | :--- | :--- |
 | **Mã Use Case** | **UC-CONS-04** |
 | **Tên Use Case** | Duyệt Kết quả Cận lâm sàng & Nhập Mã Chẩn đoán ICD-10 |
 | **Tác nhân chính** | Bác sĩ Khám bệnh |
-| **Mô tả** | Khi phòng Lab/CLS trả kết quả, bệnh nhân quay lại phòng khám. Bác sĩ đọc kết quả, kết luận chẩn đoán và nhập mã danh mục quốc tế ICD-10. |
-| **Luồng sự kiện chính** | 1. Khi có kết quả từ phòng Lab, ca khám chuyển sang trạng thái `AWAITING_REVIEW`.<br>2. Bệnh nhân quay lại phòng khám, Bác sĩ mở giao diện xem kết quả CLS chi tiết.<br>3. Bác sĩ tra cứu và chọn mã chẩn đoán ICD-10 (mã bệnh + tên bệnh).<br>4. Bác sĩ nhập chẩn đoán phụ / ghi chú lâm sàng.<br>5. Trạng thái ca khám chuyển thành `READY_TO_COMPLETE`. |
-| **Hậu điều kiện** | Đã chốt chẩn đoán bệnh chính xác theo mã chuẩn ICD-10. |
+| **Mô tả** | Khi phòng Lab/CLS trả kết quả (`RESULT_AVAILABLE`), ca khám chuyển sang trạng thái `AWAITING_REVIEW` và bệnh nhân tự động quay lại Queue đọc kết quả của Bác sĩ. Bác sĩ mở ca khám, đọc kết quả, chuyển ca khám lại `IN_PROGRESS`, chốt chẩn đoán ICD-10. |
+| **Luồng sự kiện chính** | 1. Khi có kết quả từ phòng Lab, ca khám chuyển trạng thái `status = AWAITING_REVIEW`. Màn hình `/consultation/{id}` hiển thị Banner tím: *"Đã có kết quả CLS — Bấm Tiếp tục đọc kết quả"*.<br>2. Bác sĩ bấm nút **"Tiếp tục đọc kết quả"** (`PUT /api/consultations/{id}/status` với `status = IN_PROGRESS`).<br>3. Bác sĩ mở giao diện xem kết quả CLS chi tiết và nhận xét lâm sàng.<br>4. Bác sĩ tra cứu và chọn mã chẩn đoán ICD-10 (mã bệnh + tên bệnh).<br>5. Bác sĩ nhập chẩn đoán phụ / ghi chú lâm sàng. |
+| **Hậu điều kiện** | Ca khám trở lại `IN_PROGRESS`, chốt chẩn đoán bệnh chính xác theo mã chuẩn ICD-10. |
 
 ---
 
@@ -119,11 +119,11 @@ UC4 .> UC5 : <<precede>>
 | Mục | Nội dung Đặc tả |
 | :--- | :--- |
 | **Mã Use Case** | **UC-CONS-05** |
-| **Tên Use Case** | Hoàn tất Phiên khám & Đẩy Event sang EMR |
+| **Tên Use Case** | Hoàn tất Phiên khám, Khóa Hàng đợi & Đẩy Event sang EMR |
 | **Tác nhân chính** | Bác sĩ Khám bệnh |
-| **Mô tả** | Sau khi đã chốt chẩn đoán và kê đơn thuốc xong, Bác sĩ nhấn "Hoàn tất phiên khám". Ca khám bị khóa và đồng bộ sang Bệnh án Điện tử. |
-| **Luồng sự kiện chính** | 1. Bác sĩ nhấn nút **"HOÀN TẤT PHIÊN KHÁM"**.<br>2. Hệ thống kiểm tra đơn thuốc liên quan (nếu có đơn nháp phải xác nhận hoặc bỏ qua).<br>3. Hệ thống cập nhật `status = COMPLETED` và `completed_at = NOW()`.<br>4. Hệ thống phát RabbitMQ Event `consultation.completed` chứa toàn bộ dữ liệu khám sang `careflow-emr-service`.<br>5. Bác sĩ giải phóng ca khám, sẵn sàng đón bệnh nhân tiếp theo. |
-| **Hậu điều kiện** | Phiên khám bị khóa vĩnh viễn (Read-only), dữ liệu được lưu vết vào EMR. |
+| **Mô tả** | Sau khi đã chốt chẩn đoán và kê đơn thuốc xong, Bác sĩ nhấn "Hoàn tất phiên khám". Ca khám bị khóa, hàng đợi Queue Entry (`entryId`) hoàn tất và đồng bộ sang Bệnh án Điện tử. |
+| **Luồng sự kiện chính** | 1. Bác sĩ nhấn nút **"HOÀN TẤT PHIÊN KHÁM"**.<br>2. Hệ thống kiểm tra đơn thuốc liên quan (yêu cầu đơn thuốc phải ở trạng thái `CONFIRMED` trước khi hoàn tất).<br>3. Hệ thống cập nhật `status = COMPLETED` và `completed_at = NOW()`.<br>4. Nếu có query parameter `entryId`, frontend gọi `queueApi.completeEntry(entryId)` chuyển Queue Entry sang `COMPLETED` và tự động đẩy đơn thuốc sang Quầy phát thuốc (`PHARMACY_DISPENSING`).<br>5. Hệ thống phát RabbitMQ Event `consultation.completed` chứa toàn bộ dữ liệu khám sang `careflow-emr-service`.<br>6. Màn hình hiển thị Banner vàng: *"Phiên khám đã HOÀN TẤT (Read-only)"*, tự động chuyển Bác sĩ về Bảng điều khiển. |
+| **Hậu điều kiện** | Phiên khám bị khóa vĩnh viễn (Read-only), hàng đợi hoàn tất, dữ liệu được lưu vết vào EMR. |
 
 ---
 

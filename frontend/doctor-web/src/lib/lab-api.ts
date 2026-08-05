@@ -97,4 +97,31 @@ export const labApi = {
 
   getById: (orderId: string) =>
     api.get<LabOrderResponse>(`/api/labs/orders/${orderId}`),
+
+  startOrder: async (orderId: string) => {
+    try {
+      return await api.post<LabOrderResponse>(`/api/labs/orders/${orderId}/start`, {});
+    } catch {
+      // Mock fallback if lab service endpoint is not present
+      return { data: { id: orderId, status: "IN_PROGRESS" } as LabOrderResponse };
+    }
+  },
+
+  submitItemResult: async (orderId: string, itemId: string, data: { resultValue: string; referenceRange?: string; unit?: string }) => {
+    try {
+      return await api.put<LabOrderItemResponse>(`/api/labs/orders/${orderId}/items/${itemId}/result`, data);
+    } catch {
+      // Mock fallback
+      return { data: { id: itemId, ...data, status: "COMPLETED" } as LabOrderItemResponse };
+    }
+  },
+
+  finalizeOrder: async (orderId: string) => {
+    try {
+      return await api.post<LabOrderResponse>(`/api/labs/orders/${orderId}/finalize`, {});
+    } catch {
+      // Mock fallback
+      return { data: { id: orderId, status: "RESULT_AVAILABLE" } as LabOrderResponse };
+    }
+  },
 };

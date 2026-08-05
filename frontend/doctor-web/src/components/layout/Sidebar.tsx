@@ -7,6 +7,15 @@ import { useAuth } from "@/contexts/AuthContext";
 const getNavItems = (role?: string) => {
   const normalizedRole = role?.toUpperCase() || "";
 
+  if (normalizedRole.includes("ADMIN")) {
+    return [
+      { label: "Tổng quan Quản trị", href: "/admin" },
+      { label: "Quản lý Tài khoản", href: "/admin/accounts" },
+      { label: "Cấu hình Cơ sở Y tế", href: "/admin/facility" },
+      { label: "Cấu hình Lịch & Khung giờ", href: "/admin/schedule" },
+    ];
+  }
+
   if (normalizedRole.includes("LAB")) {
     return [
       { label: "Tổng quan", href: "/dashboard/general" },
@@ -27,6 +36,7 @@ const getNavItems = (role?: string) => {
     { label: "Tổng quan", href: "/dashboard/general" },
     { label: "Hàng đợi khám", href: "/dashboard/queue" },
     { label: "Đơn thuốc", href: "/dashboard/prescriptions" },
+    { label: "Quản trị hệ thống", href: "/admin" },
   ];
 };
 

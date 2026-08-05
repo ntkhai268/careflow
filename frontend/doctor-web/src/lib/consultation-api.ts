@@ -36,7 +36,7 @@ export interface ConsultationResponse {
   icd10Code?: string;
   icd10Name?: string;
   diagnosis?: string;
-  status: "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
+  status: "IN_PROGRESS" | "AWAITING_CLS" | "AWAITING_REVIEW" | "READY_TO_COMPLETE" | "COMPLETED" | "CANCELLED" | "TRANSFERRED";
   startedAt: string;
   completedAt?: string;
   createdAt: string;
@@ -53,6 +53,9 @@ export const consultationApi = {
   updateConsultation: (id: string, data: UpdateConsultationRequest) => 
     api.put<ConsultationResponse>(`/api/consultations/${id}`, data),
     
+  updateStatus: (id: string, status: string) =>
+    api.put<ConsultationResponse>(`/api/consultations/${id}/status`, { status }),
+
   completeConsultation: (id: string) => 
     api.put<ConsultationResponse>(`/api/consultations/${id}/complete`, {}),
     
