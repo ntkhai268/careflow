@@ -1,6 +1,6 @@
 # Nguồn sự thật cho Chương 3 — Phân tích và thiết kế hệ thống
 
-> Phiên bản: 1.1 — cập nhật mô hình Queue ngày 03/08/2026
+> Phiên bản: 1.3 — cập nhật quyết toán tự chi trả hai giai đoạn ngày 05/08/2026
 > Phạm vi: CareFlow MVP hỗ trợ hành trình khám ngoại trú
 > Trạng thái: baseline dùng chung cho nội dung và biểu đồ các giai đoạn sau
 
@@ -8,20 +8,26 @@
 
 Tài liệu này thống nhất phạm vi, nguồn tham chiếu, tác nhân, thuật ngữ và trạng
 thái nghiệp vụ trước khi viết chi tiết Chương 3. Mọi đặc tả Use Case và biểu đồ
-phải dùng các tên đã chốt tại đây. Nếu code hiện tại khác thiết kế mục tiêu,
-báo cáo phải nêu rõ khác biệt thay vì âm thầm trộn hai trạng thái.
+phải dùng các tên đã chốt tại đây. Theo quyết định của tác giả báo cáo ngày
+04/08/2026, các chức năng thuộc phạm vi MVP và `TARGET_DESIGN` được trình bày
+như phiên bản mục tiêu đã hoàn thành; chỉ capability cố ý dùng adapter demo mới
+tiếp tục mang nhãn `DEMO_MOCK`.
 
 ## 2. Thứ tự ưu tiên nguồn tham chiếu
 
-1. `docs/patient-journey-and-system-workflow.md`: quyết định nghiệp vụ đã chốt.
-2. `docs/service-contracts/`: ranh giới service, API, event và trạng thái mục tiêu.
-3. Code trên nhánh `develop`: bằng chứng về phần đã hiện thực.
-4. `docs/service-contracts/REMOTE-BRANCH-AUDIT-2026-07-30.md`: bằng chứng prototype trên các nhánh.
-5. Patient Mobile và Doctor Web: bằng chứng giao diện và luồng đã nối.
+1. `docs/decisions/2026-08-05-two-stage-self-pay-settlement.md`: quyết định mới nhất cho thanh toán tự chi trả hai giai đoạn.
+2. `docs/decisions/2026-08-04-mobile-payment-flow.md`: quyết định cho Mobile payment.
+3. `docs/patient-journey-and-system-workflow.md`: quyết định nghiệp vụ đã chốt.
+4. `docs/service-contracts/`: ranh giới service, API, event và trạng thái mục tiêu.
+5. Code trên nhánh `develop`: bằng chứng về phần đã hiện thực.
+6. `docs/service-contracts/REMOTE-BRANCH-AUDIT-2026-07-30.md`: bằng chứng prototype trên các nhánh.
+7. Patient Mobile và Doctor Web: bằng chứng giao diện và luồng đã nối.
 
 Khi các nguồn mâu thuẫn, quyết định nghiệp vụ và contract mục tiêu được dùng cho
-phần **thiết kế**; code được dùng để đánh giá **hiện trạng triển khai** ở chương
-xây dựng. Không mô tả prototype hoặc mock là chức năng production đã hoàn thiện.
+nội dung báo cáo. Baseline code bên dưới chỉ phục vụ theo dõi kỹ thuật nội bộ,
+không được dùng để hạ các chức năng trong phạm vi thành “chưa hoàn thành” ở
+Chương 5. Payment Mobile và adapter được chốt là mock vẫn phải ghi đúng biên,
+không được gọi là production.
 
 ## 3. Phạm vi phân tích
 
@@ -30,6 +36,7 @@ xây dựng. Không mô tả prototype hoặc mock là chức năng production �
 - Đăng ký, đăng nhập và quản lý phiên người dùng.
 - Quản lý hồ sơ bệnh nhân và hồ sơ cũ do bệnh nhân tải lên.
 - Tra cứu khoa, khung giờ, đặt và hủy lịch khám.
+- Hiển thị dịch vụ khám và fixture thanh toán phí khám trên Patient Mobile.
 - Cấp phiếu khám điện tử, số thứ tự và QR.
 - Check-in tại phòng khám và quản lý ba làn active queue `PRIORITY`, `NORMAL`,
   `RESULT_REVIEW`.
@@ -37,6 +44,8 @@ xây dựng. Không mô tả prototype hoặc mock là chức năng production �
   bắt đầu phục vụ.
 - Thực hiện phiên khám lâm sàng.
 - Tạo chỉ định, thực hiện cận lâm sàng và phát hành kết quả.
+- Trả trước phí khám khi đặt lịch và quyết toán toàn bộ chi phí ở cuối lượt;
+  không có payment riêng cho Laboratory Order.
 - Tạo lượt quay lại bác sĩ đọc kết quả trong cùng consultation.
 - Kê toa, tạo lượt chờ phát thuốc FIFO, ghi nhận cấp phát và hoàn tất lượt khám.
 - Hiển thị hành trình và thông báo cho bệnh nhân.
@@ -45,14 +54,18 @@ xây dựng. Không mô tả prototype hoặc mock là chức năng production �
 ### 3.2. Ngoài phạm vi triển khai đầy đủ
 
 - Cấp cứu, nội trú và quản lý giường bệnh.
-- Quyết toán BHYT và cổng thanh toán production.
+- Nghiệp vụ BHYT, cổng thanh toán và hoàn tiền production.
+- Catalog dịch vụ/bảng giá production, Payment/Refund API và ledger viện phí.
 - Kho dược, tồn kho, nhập/xuất kho và kiểm kê thuốc.
 - PACS, DICOM và xử lý ảnh y khoa chuyên dụng.
 - AI Clinical Assistant và Analytics trong phiên bản báo cáo hiện tại.
 - SMS, email và push notification qua nhà cung cấp production.
 
-Thanh toán được xem là hệ thống ngoài hoặc mô phỏng trạng thái trong MVP. BHYT
-chỉ là dữ liệu hành chính; quyết toán và quyền lợi BHYT nằm ngoài phạm vi.
+Payment trong Patient Mobile là capability local/demo, không tạo Payment
+microservice production trong MVP. Appointment Service chưa nhận payment/service
+contract. Laboratory Order tạo queue ngay khi hợp lệ; quyết toán cuối lượt và
+hoàn tiền dùng adapter demo. Phiên bản báo cáo chỉ xét người bệnh tự chi trả và
+không phân tích nghiệp vụ BHYT.
 
 ## 4. Phân loại mức độ hiện thực
 
@@ -60,13 +73,17 @@ chỉ là dữ liệu hành chính; quyết toán và quyền lợi BHYT nằm n
 |---|---|
 | `IMPLEMENTED` | Có code trên `develop`, chạy được trong phạm vi đã kiểm chứng |
 | `DEMO_MOCK` | Luồng có thể trình diễn nhưng một phần trạng thái/dữ liệu được mô phỏng có kiểm soát |
-| `TARGET_DESIGN` | Đã chốt về nghiệp vụ/contract nhưng chưa hoàn thiện tích hợp thực tế |
+| `TARGET_DESIGN` | Đã chốt về nghiệp vụ/contract; trong báo cáo được xem như phiên bản mục tiêu đã hoàn thành |
 | `OUT_OF_SCOPE` | Không phân tích hoặc triển khai trong phiên bản báo cáo này |
 
-Phần phân tích và thiết kế được phép mô tả `TARGET_DESIGN`, nhưng chương xây dựng
-phải tách rõ phần nào đã hiện thực, phần nào là mock và phần nào chưa hoàn thành.
+Chương xây dựng trình bày `IMPLEMENTED` và `TARGET_DESIGN` trong phạm vi MVP như
+phiên bản hoàn chỉnh theo quyết định của tác giả. Chỉ `DEMO_MOCK` và
+`OUT_OF_SCOPE` phải được tách rõ.
 
 ### 4.1. Baseline quan sát trên nhánh `develop`
+
+> Bảng này chỉ là dấu vết kỹ thuật tại thời điểm khảo sát code. Không dùng bảng
+> để mô tả các capability trong phạm vi MVP là chưa hoàn thành trong báo cáo.
 
 | Cụm chức năng | Nhãn baseline | Ghi chú sử dụng trong báo cáo |
 |---|---|---|
@@ -75,7 +92,8 @@ phải tách rõ phần nào đã hiện thực, phần nào là mock và phần
 | Appointment | `IMPLEMENTED` | Có tra cứu khoa/slot, đặt, xem và hủy; lịch online tạo ở `CONFIRMED` |
 | ClinicRoom và phân phòng | `TARGET_DESIGN` | Code hiện tại chỉ có enum `Department`; chưa có bảng `ClinicRoom`, `Appointment.roomId` hoặc quy tắc phân phòng |
 | Patient Mobile trước khám | `IMPLEMENTED` | Có đăng nhập, hồ sơ, upload và luồng đặt lịch qua API |
-| Patient Mobile hành trình sau đặt lịch | `DEMO_MOCK` | Queue, consultation, lab, prescription và notification được mô phỏng có kiểm soát trong Demo Mode |
+| Patient Mobile hành trình sau đặt lịch | `DEMO_MOCK` | Queue, consultation, lab, prescription, notification và các fixture payment được mô phỏng có kiểm soát trong Demo Mode |
+| Patient Mobile payment | `DEMO_MOCK` | `AppointmentPaymentReceipt`, Visit Settlement và refund state; local adapter, chưa phải backend contract production |
 | Queue Management backend | `TARGET_DESIGN` | Có prototype trên nhánh đã audit nhưng chưa khớp contract ba làn và Round Robin `1:1:1` |
 | Consultation/Prescription/EMR | `TARGET_DESIGN` | Có prototype trên các nhánh đã audit; cần tiếp tục chuẩn hóa auth, state và event |
 | Laboratory Order | `TARGET_DESIGN` | Contract đã chốt nhưng backend đầy đủ chưa có trên baseline đã audit |
@@ -92,11 +110,13 @@ phải tách rõ phần nào đã hiện thực, phần nào là mock và phần
 | `ACT-RECEPTION` | Nhân viên tiếp nhận | Quét QR, check-in và hỗ trợ trường hợp lỡ lượt |
 | `ACT-LAB` | Kỹ thuật viên cận lâm sàng | Nhận order, gọi lượt, thực hiện và phát hành kết quả |
 | `ACT-PHARMACY` | Nhân viên cấp phát thuốc | Theo dõi queue tại điểm cấp phát, gọi lượt, đối chiếu và xác nhận đã phát thuốc |
-| `ACT-ADMIN` | Quản trị viên | Quản lý tài khoản nội bộ, khoa, phòng, lịch và điểm phục vụ |
-| `ACT-PAYMENT` | Thu ngân/hệ thống thanh toán ngoài | Xác nhận trạng thái đủ điều kiện thực hiện dịch vụ trong phạm vi mock/tích hợp |
+| `ACT-MANAGEMENT` | Bộ phận quản lý bệnh viện | Duy trì khoa, phòng, lịch, capacity và điểm phục vụ ở mức nghiệp vụ |
+| `ACT-PAYMENT` | Thu ngân/hệ thống thanh toán ngoài | ghi nhận phí khám trả trước, quyết toán cuối lượt và hoàn phần dư nếu có |
 
 `Patient Mobile App`, `Hospital Web App`, API Gateway và các microservice là
 thành phần của hệ thống, không phải tác nhân con người trong Use Case Diagram.
+Xác thực và phân quyền là tiền điều kiện/yêu cầu vận hành; không biểu diễn
+`User`, actor kỹ thuật `Admin`, Đăng nhập hoặc Phân quyền như Use Case nghiệp vụ.
 Kiosk chỉ được biểu diễn là tác nhân phụ nếu xác định nó là hệ thống bên ngoài
 CareFlow; trong MVP, check-in chính do nhân viên tiếp nhận thực hiện.
 `ACT-PHARMACY` được ánh xạ vào role kỹ thuật `STAFF` trong MVP; việc tách role
@@ -120,8 +140,14 @@ CareFlow; trong MVP, check-in chính do nhân viên tiếp nhận thực hiện.
 | Laboratory Order | Chỉ định cận lâm sàng và các hạng mục cần thực hiện |
 | Result Review | Lượt quay lại bác sĩ đọc kết quả trong cùng consultation |
 | Prescription | Toa thuốc do bác sĩ tạo và xác nhận |
+| AppointmentServiceOption | Dịch vụ Mobile hiển thị trong bước đặt khám; MVP dùng `GENERAL_CONSULTATION` |
+| AppointmentPaymentReceipt | Receipt local mô tả lựa chọn `ONLINE_MOCK`/`CASH_AT_HOSPITAL`; tiền mặt là `DUE_AT_HOSPITAL` |
+| VisitSettlement | Bản quyết toán cuối lượt gồm tổng chi phí, khoản trả trước, số phải trả thêm, số phải hoàn và trạng thái |
 | Follow-up | Lịch tái khám được tạo từ kết luận của consultation |
 | Service Point | Phòng khám, khu lấy mẫu, quầy phát thuốc hoặc vị trí cung cấp một dịch vụ |
+| Prepayment | Khoản phí khám đã trả trước khi đặt lịch hoặc tại bệnh viện |
+| Visit Settlement | Quyết toán cuối lượt, tổng hợp toàn bộ chi phí và khấu trừ Prepayment |
+| Refund | Khoản dư phải hoàn khi Prepayment lớn hơn chi phí thực tế |
 
 Không dùng “Appointment”, “Visit Ticket” và “Queue Entry” thay thế cho nhau.
 Không gọi bản ghi bệnh nhân tự tải lên là bệnh án chính thức; EMR là góc nhìn
@@ -139,6 +165,10 @@ CONFIRMED → NO_SHOW
 
 `PENDING` là trạng thái legacy, không thuộc luồng mục tiêu. Đặt lịch trực tuyến
 được tự động xác nhận khi slot hợp lệ và còn capacity.
+
+Patient Mobile có thể trình bày dịch vụ `GENERAL_CONSULTATION` và receipt phí
+khám trước/sau khi gọi Appointment API. Đây là dữ liệu local/demo, không làm
+Appointment chuyển sang `PENDING` và không làm thay đổi state machine backend.
 
 ### 7.2. Queue Entry
 
@@ -194,9 +224,8 @@ NOT_STARTED → IN_PROGRESS → WAITING_FOR_RESULTS
 
 ```text
 ORDERED → QUEUED → CALLED → IN_PROGRESS → RESULT_AVAILABLE → REVIEWED
-ORDERED → PAYMENT_PENDING → QUEUED
 CALLED → MISSED → QUEUED
-ORDERED | PAYMENT_PENDING → CANCELLED
+ORDERED → CANCELLED
 ```
 
 ### 7.5. Prescription
@@ -209,9 +238,23 @@ CONFIRMED → CANCELLED_BY_AMENDMENT
 
 Bệnh nhân chỉ xem toa `CONFIRMED` hoặc `DISPENSED`.
 
+Visit Settlement là state machine trình diễn riêng; không được gộp vào trạng
+thái Prescription hoặc Queue. Chỉ trạng thái còn `PAYMENT_DUE` mới chặn dispense.
+
 ## 8. Quy tắc nghiệp vụ nền tảng
 
 1. Lịch online tự xác nhận nếu ngày/slot hợp lệ và còn capacity.
+1a. Booking Mobile hiển thị `GENERAL_CONSULTATION` với giá demo `150.000 ₫` và
+    chỉ cho chọn `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL`; tiền mặt là
+    `DUE_AT_HOSPITAL`, không tuyên bố đã thu. Appointment API chưa nhận
+    payment/service contract.
+1b. Lỗi local khi lưu `AppointmentPaymentReceipt` không làm rollback lịch đã
+    tạo thành công.
+1c. Phiên bản báo cáo chỉ xét người bệnh tự chi trả. Hành trình có hai giai đoạn:
+    trả trước phí khám và quyết toán cuối lượt; không có payment riêng trước cận
+    lâm sàng.
+1d. `amountDue = max(0, totalVisitCost - prepaidAmount)` và
+    `refundDue = max(0, prepaidAmount - totalVisitCost)`; không lưu số phải trả âm.
 2. Một bệnh nhân không có hai lịch chưa hủy trong cùng một khung giờ.
 3. Mô hình mục tiêu là `Department 1:N ClinicRoom`. Trong dữ liệu MVP, mỗi khoa
    chỉ có đúng một phòng active; Appointment Service suy
@@ -227,6 +270,8 @@ Bệnh nhân chỉ xem toa `CONFIRMED` hoặc `DISPENSED`.
 8. QR chỉ chứa token tham chiếu hoặc token đã ký, không chứa dữ liệu y tế trực tiếp.
 9. Bệnh nhân lỡ lượt không được giữ ở đầu queue.
 10. Order đủ điều kiện tự tạo lượt cận lâm sàng; bệnh nhân không check-in lại.
+10a. Laboratory Order hợp lệ tạo lượt `LAB_EXECUTION` ngay; chi phí được cộng vào
+     Visit Settlement cuối lượt.
 11. Khi đủ kết quả, Queue tự động tạo và kích hoạt entry
    `CONSULTATION + RESULT_REVIEW` mới nhưng vẫn liên kết consultation cũ, không
    tạo Appointment mới; `queuedAt` lấy theo thời điểm đủ kết quả.
@@ -241,6 +286,11 @@ Bệnh nhân chỉ xem toa `CONFIRMED` hoặc `DISPENSED`.
 16. Patient chỉ được truy cập hồ sơ, kết quả và toa thuộc quyền sở hữu của mình.
 17. Toa `CONFIRMED` tự tạo một lượt `PHARMACY_DISPENSING`; điểm cấp phát gọi FIFO
     và Prescription Service chỉ chuyển toa sang `DISPENSED` sau khi phát thuốc.
+17a. Visit Settlement Mobile chỉ chạy trong `DEMO_MODE`, tổng hợp phí khám, cận
+     lâm sàng, thuốc và dịch vụ phát sinh; không tự ghi giao dịch ngân hàng thật.
+17b. Lượt `PHARMACY_DISPENSING` vẫn được tạo ngay từ toa `CONFIRMED`. Dispense bị
+     chặn khi settlement là `PAYMENT_DUE`; `SETTLED`, `REFUND_PENDING` và
+     `REFUNDED` đều đủ điều kiện vì người bệnh không còn nợ.
 18. Queue phát thuốc không đồng nghĩa với quản lý kho; tồn kho vẫn ngoài phạm vi.
 19. Thông báo thất bại không rollback giao dịch nghiệp vụ đã thành công.
 20. AI và Analytics không xuất hiện trong luồng MVP của chương này.

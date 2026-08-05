@@ -1,8 +1,8 @@
 # CareFlow Service Contracts
 
-> Phiên bản chuẩn: `1.0`
+> Phiên bản chuẩn: `1.1`
 >
-> Ngày chốt: `2026-07-30`
+> Ngày chốt: `2026-08-04`
 >
 > Phạm vi: MVP khám ngoại trú tại bệnh viện công
 >
@@ -154,6 +154,16 @@ Quy tắc:
 
 `careflow-common` và `careflow-eureka-server` là platform modules, không phải bounded-context service.
 Chúng vẫn phải build, có health check và không được chứa nghiệp vụ của 12 service trên.
+
+### Ranh giới payment của MVP
+
+MVP không có Payment microservice độc lập. Phí khám trên Patient Mobile được
+trình bày bằng fixture `GENERAL_CONSULTATION` và lưu receipt qua local adapter;
+tiền mặt là `DUE_AT_HOSPITAL`. Cuối lượt, `VisitSettlement` local/demo cộng phí
+khám, cận lâm sàng và thuốc, đối trừ `prepaidAmount`, rồi trả `amountDue`,
+`refundDue` và trạng thái quyết toán. Laboratory Order không có payment contract
+riêng và order hợp lệ tạo `LAB_EXECUTION` ngay. Chỉ `PAYMENT_DUE` chặn dispense;
+`REFUND_PENDING` không chặn. Phạm vi nghiệp vụ chỉ xét người bệnh tự chi trả.
 
 ## 7. Thứ tự triển khai khuyến nghị
 

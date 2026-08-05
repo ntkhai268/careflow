@@ -12,6 +12,13 @@
 > activated automatically when all required results are available; Mobile only
 > informs the patient to return and is not an eligibility gate. Pharmacy queue
 > tracking is a follow-up vertical slice.
+>
+> **Mobile payment evolution — 2026-08-04:** Booking now presents a fixed
+> `GENERAL_CONSULTATION` service (`Khám thường`, `150.000 ₫`, 15 minutes) and
+> `ONLINE_MOCK`/`CASH_AT_HOSPITAL` payment. Appointment payment is local Mobile
+> UX only; Appointment Service has no payment/service contract. After
+> prescription, Mobile has a demo-only medication payment path with a fixture
+> total of `85.000 ₫`; no Pharmacy/Dispensing payment backend is assumed.
 
 ## 1. Objective
 
@@ -76,18 +83,25 @@ Appointment responses are adapted into the mobile journey model. Backend status
 values remain authoritative for appointment lifecycle operations, while demo
 state augments only the downstream clinical journey.
 
+Booking service options and `AppointmentPaymentReceipt` are local Mobile
+presentation data until Directory/Appointment exposes a catalog and Payment
+contract. A local receipt write failure must not invalidate an appointment that
+the backend has already created successfully.
+
 ### 3.2 Demo-backed capabilities
 
 These capabilities use deterministic local repositories until their backend
 contracts are deployed:
 
 - Visit ticket and QR payload.
+- Booking service option and appointment payment receipt.
 - Clinic queue and queue notifications.
 - Consultation progress.
 - Laboratory order, payment state, laboratory queue, and results.
 - Result-review queue.
 - Final diagnosis.
 - Prescription.
+- Prescription payment and medication-ready state.
 - Follow-up appointment.
 - Patient inbox and journey timeline.
 
@@ -145,6 +159,9 @@ The staff QR scan produces `CHECKED_IN`; queue admission immediately produces
 ```text
 IN_CONSULTATION
   -> PRESCRIBED
+  -> PRESCRIPTION_PAYMENT_PENDING
+  -> PRESCRIPTION_PAID
+  -> MEDICATION_READY
   -> COMPLETED
 ```
 
@@ -163,10 +180,14 @@ IN_CONSULTATION
   -> COMPLETED
 ```
 
-Payment methods are `ONLINE_MOCK` and `CASH_AT_HOSPITAL`. Choosing cash records
-that payment will be collected at the hospital; it does not pretend an online
-payment succeeded. Health insurance may remain administrative profile data but
-is not a payment method in the MVP journey.
+Payment methods are `ONLINE_MOCK` and `CASH_AT_HOSPITAL`. For appointment
+booking, cash is displayed as `DUE_AT_HOSPITAL` and never as collected. The
+laboratory flow keeps its existing payment contract. Health insurance may remain
+administrative profile data but is not a payment method in the MVP journey.
+
+The post-prescription states above are Mobile-only demo states. The demo
+medication total is `85.000 ₫`; they must not be written into Prescription or
+Queue backend state until a Pharmacy/Dispensing contract exists.
 
 ### 5.4 Invalid transitions
 
@@ -191,6 +212,8 @@ The UI displays the error in Vietnamese and retains the previous state.
 - consultation summary;
 - zero or more laboratory orders;
 - optional payment;
+- optional appointment payment receipt;
+- optional medication payment state;
 - optional result-review queue snapshot;
 - optional diagnosis;
 - optional prescription;
@@ -207,6 +230,9 @@ Supporting value objects:
 - `LaboratoryOrder`
 - `LaboratoryResult`
 - `VisitPayment`
+- `AppointmentServiceOption`
+- `AppointmentPaymentReceipt`
+- `PrescriptionPayment`
 - `DiagnosisSummary`
 - `Prescription`
 - `PrescriptionItem`
@@ -240,6 +266,10 @@ Vietnamese UI.
 - No QR scan or secondary check-in is required.
 - The patient sees destination, preparation notes, and queue progress.
 
+The pharmacy queue remains a backend follow-up slice. Medication payment and
+`MEDICATION_READY` are local Mobile demo states and do not replace the queue's
+FIFO contract.
+
 ### 7.3 Result-review queue
 
 - `LAB_RESULT_READY` creates a result-review queue entry.
@@ -258,10 +288,12 @@ The application adds the following patient-facing routes:
 - Consultation status.
 - Laboratory orders and order detail.
 - Payment method and payment status.
+- Appointment service selection and consultation-fee receipt.
 - Laboratory queue.
 - Laboratory results.
 - Result-review queue.
 - Visit outcome containing diagnosis, prescription, and follow-up.
+- Medication payment/readiness card (Demo Mode only).
 - Journey timeline.
 - Notification inbox.
 
@@ -287,6 +319,7 @@ It is visually separated from patient actions and labelled
 - simulate laboratory result publication;
 - simulate result-review call;
 - simulate final prescription and follow-up.
+- simulate medication payment and medication-ready confirmation.
 
 Each event:
 
@@ -313,6 +346,7 @@ Required notifications:
 - laboratory result available;
 - called for result review;
 - prescription available;
+- medication payment/readiness updated;
 - follow-up scheduled.
 
 The repository boundary must allow a future WebSocket/FCM adapter to feed the
@@ -323,6 +357,8 @@ same notification model.
 - Existing real API errors continue through the shared Dio error mapping.
 - A real API failure never silently falls back to demo data.
 - Demo persistence failures show a retryable Vietnamese error.
+- A local appointment-payment receipt failure never rolls back a successful
+  appointment; the UI offers a retry/save-later action.
 - Empty states explain what the patient should do next.
 - Screens tolerate missing optional clinical values.
 - A malformed stored demo journey is discarded only for its appointment; the
@@ -374,6 +410,8 @@ without errors.
 ## 14. Out of Scope
 
 - Production payment gateway integration.
+- Production consultation-fee catalog/pricing API.
+- Production medication payment or Pharmacy/Dispensing contract.
 - Production QR scanner used by staff.
 - Real-time Queue, Consultation, Laboratory, Prescription, or Notification
   backend integration when those contracts are not deployed.
