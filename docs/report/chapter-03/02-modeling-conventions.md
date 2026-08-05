@@ -11,8 +11,11 @@
 | Non-functional Requirement | `NFR-<GROUP>-<NN>` |
 | Diagram | `DGM-<TYPE>-<DOMAIN>-<NN>` |
 
-Domain dùng trong mã: `AUTH`, `PAT`, `APT`, `QUE`, `CON`, `LAB`, `PRE`, `NOT`,
-`ADM`. Tên file dùng chữ thường, dấu gạch ngang và mã Use Case, ví dụ
+Domain dùng trong mã: `AUTH`, `PAT`, `APT`, `MOB`, `QUE`, `CON`, `LAB`, `PRE`,
+`NOT`, `CFG`. `AUTH` dùng cho yêu cầu nền tảng, không phải Use Case nghiệp vụ;
+`MOB` chỉ dùng cho các yêu cầu/luồng trình diễn thuộc Patient
+Mobile, không đại diện cho một backend service. Tên file dùng chữ thường, dấu
+gạch ngang và mã Use Case, ví dụ
 `uc-apt-02-book-appointment.puml`.
 
 ## 2. Mẫu bảng đặc tả Use Case
@@ -57,7 +60,7 @@ class, method hoặc câu lệnh SQL.
 | Use Case | Phạm vi chức năng và tác nhân | Một sơ đồ tổng quát và sơ đồ theo phân hệ nếu tổng thể quá dày |
 | Activity | Luồng, nhánh và ngoại lệ | Một biểu đồ cho mỗi Use Case cốt lõi; không vẽ chi tiết HTTP |
 | Sequence | Tương tác theo thời gian | Chỉ dùng cho luồng có nhiều client/service hoặc event |
-| State Machine | Vòng đời aggregate | Vẽ theo Appointment, Queue Entry, Consultation, Lab Order, Prescription |
+| State Machine | Vòng đời aggregate | Vẽ theo Appointment, Queue Entry, Consultation, Lab Order, Prescription; nếu vẽ Prepayment/Visit Settlement phải ghi rõ `DEMO_MOCK` và không gộp vào state backend |
 | Component | Cấu trúc hệ thống | Vẽ client, platform, service và hạ tầng; không trộn bảng dữ liệu |
 | ERD | Cấu trúc dữ liệu | Vẽ riêng theo service; không tạo khóa ngoại xuyên service |
 | Deployment | Môi trường triển khai | Vẽ container/node/network ở mức tổng quát, không chép Docker Compose |

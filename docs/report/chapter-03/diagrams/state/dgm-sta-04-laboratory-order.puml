@@ -5,9 +5,7 @@ skinparam shadowing false
 skinparam defaultFontName Arial
 
 [*] --> ORDERED
-ORDERED --> PAYMENT_PENDING : Cần xác nhận thanh toán
-ORDERED --> QUEUED : Không yêu cầu thanh toán
-PAYMENT_PENDING --> QUEUED : Đã đủ điều kiện
+ORDERED --> QUEUED : Order hợp lệ
 QUEUED --> CALLED
 CALLED --> IN_PROGRESS
 IN_PROGRESS --> RESULT_AVAILABLE : Phát hành kết quả
@@ -15,7 +13,6 @@ RESULT_AVAILABLE --> REVIEWED : Bác sĩ đã đọc
 CALLED --> MISSED
 MISSED --> QUEUED
 ORDERED --> CANCELLED
-PAYMENT_PENDING --> CANCELLED
 REVIEWED --> [*]
 CANCELLED --> [*]
 @enduml
