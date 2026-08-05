@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 interface HelpModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -55,11 +53,6 @@ export default function HelpModal({ isOpen, onClose }: HelpModalProps) {
             </div>
           </div>
 
-          <div className="bg-indigo-50/60 border-l-3 border-indigo-500 rounded-r-lg p-3">
-            <p className="text-[11px] text-indigo-900 leading-relaxed font-medium">
-              💡 **Mẹo:** Bác sĩ có thể nhấn phím tắt bất kỳ lúc nào khi đang mở trang WebApp để chuyển nhanh danh mục công việc mà không cần dùng chuột.
-            </p>
-          </div>
         </div>
 
         {/* Footer */}

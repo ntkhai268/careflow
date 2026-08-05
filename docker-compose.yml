@@ -233,9 +233,28 @@ services:
       dockerfile: careflow-ai-service/Dockerfile
     container_name: careflow-ai-service
     ports:
-      - "8090:8090"
+      - "8091:8091"
     environment:
       SPRING_RABBITMQ_HOST: careflow-rabbitmq
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+    depends_on:
+      careflow-eureka-server:
+        condition: service_healthy
+    networks:
+      - careflow-net
+    restart: unless-stopped
+
+  careflow-hospital-directory-service:
+    build:
+      context: .
+      dockerfile: careflow-hospital-directory-service/Dockerfile
+    container_name: careflow-hospital-directory-service
+    ports:
+      - "8090:8090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://careflow-postgres:5432/careflow_hospital_directory
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-careflow}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-careflow}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
     depends_on:
       careflow-eureka-server:

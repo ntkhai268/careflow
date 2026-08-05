@@ -36,6 +36,7 @@ public class ConsultationService {
     private final ConsultationMapper consultationMapper;
     private final RabbitTemplate rabbitTemplate;
     private final AppointmentClient appointmentClient;
+    private final com.careflow.consultation.client.DirectoryClient directoryClient;
 
     /**
      * Tạo phiên khám mới — status mặc định là IN_PROGRESS.
@@ -86,14 +87,35 @@ public class ConsultationService {
             log.warn("Không tìm thấy hoặc không thể kết nối tới Appointment Service cho appointmentId {}, tiếp tục khởi tạo ca khám với thông tin Queue...", appointmentId);
         }
 
+        // 2.5 Snapshot Doctor Profile từ Hospital Directory Service (Bảo đảm tính pháp lý y tế)
+        String doctorName = null;
+        String departmentCode = null;
+        String departmentName = null;
+        try {
+            var docRes = directoryClient.getDoctorByUserId(request.getDoctorId());
+            if (docRes != null && docRes.getData() != null) {
+                var docProfile = docRes.getData();
+                doctorName = docProfile.getFullName();
+                departmentCode = docProfile.getDepartmentCode();
+                departmentName = docProfile.getDepartmentName();
+                log.info("Successfully fetched doctor profile snapshot for userId {}: {}", request.getDoctorId(), doctorName);
+            }
+        } catch (Exception e) {
+            log.warn("Không thể kết nối Hospital Directory Service để snapshot bác sĩ {}, tiếp tục với snapshot rỗng...", request.getDoctorId());
+        }
+
         // 3. Tạo Consultation Entity
         Consultation consultation = Consultation.builder()
                 .appointmentId(appointmentId)
                 .patientId(request.getPatientId())
                 .doctorId(request.getDoctorId())
+                .doctorName(doctorName)
+                .departmentCode(departmentCode)
+                .departmentName(departmentName)
                 .status(ConsultationStatus.IN_PROGRESS)
                 .startedAt(LocalDateTime.now())
                 .build();
+
 
         Consultation saved = consultationRepository.save(consultation);
         log.info("Created consultation {} for patient {} by doctor {}, appointment {}",

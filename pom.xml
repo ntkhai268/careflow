@@ -32,6 +32,7 @@
         <module>careflow-emr-service</module>
         <module>careflow-lab-service</module>
         <module>careflow-ai-service</module>
+        <module>careflow-hospital-directory-service</module>
     </modules>
 
     <properties>

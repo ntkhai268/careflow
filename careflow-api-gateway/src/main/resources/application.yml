@@ -72,6 +72,10 @@ spring:
           uri: lb://ai-service
           predicates:
             - Path=/api/ai/**
+        - id: hospital-directory-service
+          uri: lb://hospital-directory-service
+          predicates:
+            - Path=/api/directory/**
 
 eureka:
   client:

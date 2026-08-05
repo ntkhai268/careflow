@@ -1,0 +1,36 @@
+// Database Schema: Hospital Directory Service (Master Data Bệnh viện)
+// File: .planning/hospital-directory-service/hospital-directory-service-db.dbml
+
+Table departments {
+  code varchar(50) [pk, note: 'Mã khoa: NOI_TONG_QUAT, NHI, TIM_MACH...']
+  id uuid [not null, unique, note: 'UUID cố định để tham chiếu chéo']
+  name varchar(100) [not null, note: 'Tên hiển thị của khoa: Khoa Nội tổng quát']
+  description varchar(500)
+  is_active boolean [default: true]
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table rooms {
+  id varchar(50) [pk, note: 'Mã phòng: ROOM-01, ROOM-02...']
+  department_code varchar(50) [not null, ref: > departments.code]
+  display_name varchar(150) [not null, note: 'Tên hiển thị: Phòng 01 - Khoa Nội']
+  room_type varchar(30) [not null, note: 'CONSULTATION, LAB, IMAGING, PHARMACY']
+  is_active boolean [default: true]
+  created_at timestamptz
+  updated_at timestamptz
+}
+
+Table doctor_profiles {
+  id uuid [pk]
+  user_id uuid [not null, unique, note: 'Liên kết 1:1 với account trong identity-service']
+  full_name varchar(150) [not null, note: 'Họ tên bác sĩ: BS. CKI Nguyễn Văn An']
+  title varchar(50) [note: 'Chức danh: BS., ThS.BS., PGS.TS.']
+  department_code varchar(50) [ref: > departments.code]
+  assigned_room_id varchar(50) [ref: > rooms.id]
+  specialization varchar(100) [note: 'Chuyên khoa']
+  license_number varchar(50) [note: 'Chứng chỉ hành nghề']
+  is_active boolean [default: true]
+  created_at timestamptz
+  updated_at timestamptz
+}

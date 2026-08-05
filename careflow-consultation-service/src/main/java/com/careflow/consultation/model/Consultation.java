@@ -31,6 +31,16 @@ public class Consultation extends BaseEntity {
     @Column(nullable = false)
     private UUID doctorId;
 
+    // --- Doctor Profile Snapshot (Pháp lý Y tế) ---
+    @Column(length = 150)
+    private String doctorName;
+
+    @Column(length = 50)
+    private String departmentCode;
+
+    @Column(length = 100)
+    private String departmentName;
+
     // --- Sinh hiệu (Vital Signs) ---
 
     @Column(precision = 4, scale = 1)

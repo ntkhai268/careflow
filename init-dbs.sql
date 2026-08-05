@@ -10,3 +10,4 @@ CREATE DATABASE careflow_prescription;
 CREATE DATABASE careflow_emr;
 CREATE DATABASE careflow_lab;
 CREATE DATABASE careflow_notification;
+CREATE DATABASE careflow_hospital_directory;

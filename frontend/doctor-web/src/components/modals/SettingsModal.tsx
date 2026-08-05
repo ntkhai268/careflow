@@ -124,15 +124,21 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <p className="text-xs font-semibold text-gray-800">Tần suất làm mới Hàng đợi</p>
                 <p className="text-[10px] text-gray-500">Tự động đồng bộ danh sách bệnh nhân chờ</p>
               </div>
-              <select
-                value={autoRefreshSecs}
-                onChange={e => setAutoRefreshSecs(e.target.value)}
-                className="bg-gray-50 border border-gray-200 text-gray-800 text-xs rounded-lg px-2.5 py-1 outline-none focus:border-indigo-500 font-medium"
-              >
-                <option value="15">15 giây</option>
-                <option value="30">30 giây</option>
-                <option value="60">1 phút</option>
-              </select>
+              <div className="relative shrink-0">
+                <select
+                  aria-label="Tần suất làm mới hàng đợi"
+                  value={autoRefreshSecs}
+                  onChange={e => setAutoRefreshSecs(e.target.value)}
+                  className="h-9 w-28 appearance-none rounded-md border border-slate-200 bg-white px-3 pr-8 text-[11px] font-semibold text-[#2B1D30] outline-none transition-colors hover:border-[#BFA3C8] focus:border-[#7B4B94] focus:ring-2 focus:ring-[#F3E8F5]"
+                >
+                  <option value="15">15 giây</option>
+                  <option value="30">30 giây</option>
+                  <option value="60">1 phút</option>
+                </select>
+                <svg className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                  <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.51a.75.75 0 01-1.08 0l-4.25-4.51a.75.75 0 01.02-1.06z" clipRule="evenodd" />
+                </svg>
+              </div>
             </div>
           </div>
         </div>

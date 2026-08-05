@@ -20,6 +20,9 @@ public class ConsultationResponse {
     private UUID appointmentId;
     private UUID patientId;
     private UUID doctorId;
+    private String doctorName;
+    private String departmentCode;
+    private String departmentName;
 
     // Sinh hiệu
     private BigDecimal temperature;

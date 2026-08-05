@@ -51,6 +51,9 @@ run_service "prescription-service" "mvn -pl careflow-prescription-service spring
 # 10. Start Queue Service (Port 8084)
 run_service "queue-service" "mvn -pl careflow-queue-service spring-boot:run -Dspring-boot.run.profiles=remote"
 
+# 11. Start Hospital Directory Service (Port 8090)
+run_service "hospital-directory-service" "mvn -pl careflow-hospital-directory-service spring-boot:run -Dspring-boot.run.profiles=remote"
+
 # 11. Start Frontend Web (Port 3000)
 echo "--> Launching Doctor Web Frontend..."
 if [ -d "frontend/doctor-web" ]; then
@@ -91,7 +94,7 @@ echo " Tailing logs in real-time. Press [Ctrl + C] to STOP all services. "
 echo "================================================================="
 
 # Create empty log files if they don't exist yet to avoid tail errors
-touch "$LOG_DIR/logs_eureka-server.log" "$LOG_DIR/logs_api-gateway.log" "$LOG_DIR/logs_identity-service.log" "$LOG_DIR/logs_patient-service.log" "$LOG_DIR/logs_appointment-service.log" "$LOG_DIR/logs_consultation-service.log" "$LOG_DIR/logs_prescription-service.log" "$LOG_DIR/logs_queue-service.log" "$LOG_DIR/logs_frontend.log"
+touch "$LOG_DIR/logs_eureka-server.log" "$LOG_DIR/logs_api-gateway.log" "$LOG_DIR/logs_identity-service.log" "$LOG_DIR/logs_patient-service.log" "$LOG_DIR/logs_appointment-service.log" "$LOG_DIR/logs_consultation-service.log" "$LOG_DIR/logs_prescription-service.log" "$LOG_DIR/logs_queue-service.log" "$LOG_DIR/logs_hospital-directory-service.log" "$LOG_DIR/logs_frontend.log"
 
 # Tail all logs
-tail -f "$LOG_DIR/logs_eureka-server.log" -f "$LOG_DIR/logs_api-gateway.log" -f "$LOG_DIR/logs_identity-service.log" -f "$LOG_DIR/logs_patient-service.log" -f "$LOG_DIR/logs_appointment-service.log" -f "$LOG_DIR/logs_consultation-service.log" -f "$LOG_DIR/logs_prescription-service.log" -f "$LOG_DIR/logs_queue-service.log" -f "$LOG_DIR/logs_frontend.log"
+tail -f "$LOG_DIR/logs_eureka-server.log" -f "$LOG_DIR/logs_api-gateway.log" -f "$LOG_DIR/logs_identity-service.log" -f "$LOG_DIR/logs_patient-service.log" -f "$LOG_DIR/logs_appointment-service.log" -f "$LOG_DIR/logs_consultation-service.log" -f "$LOG_DIR/logs_prescription-service.log" -f "$LOG_DIR/logs_queue-service.log" -f "$LOG_DIR/logs_hospital-directory-service.log" -f "$LOG_DIR/logs_frontend.log"
