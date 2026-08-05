@@ -11,10 +11,10 @@ actor "Bác sĩ" as Doctor
 actor "Nhân viên\ntiếp nhận" as Reception
 actor "Kỹ thuật viên\ncận lâm sàng" as LabTech
 actor "Nhân viên\ncấp phát thuốc" as PharmacyStaff
-actor "Quản trị viên" as Admin
+actor "Thu ngân" as Cashier
+actor "Bộ phận quản lý\nbệnh viện" as Management
 
 rectangle "Hospital Web" {
-  usecase "Đăng nhập" as Login
   usecase "Quét QR và check-in" as CheckIn
   usecase "Xem active queue\ntại điểm phục vụ" as ViewQueue
   usecase "Xem lượt được\nđề xuất" as Suggest
@@ -31,10 +31,10 @@ rectangle "Hospital Web" {
   usecase "Kê toa và\nhoàn tất khám" as Complete
   usecase "Tạo lịch tái khám" as FollowUp
   usecase "Đối chiếu toa và\nxác nhận phát thuốc" as Dispense
+  usecase "Ghi nhận phí khám trả trước\nvà quyết toán cuối lượt" as Settlement
   usecase "Quản lý tài khoản, khoa,\nphòng, lịch và capacity" as Configure
 }
 
-Doctor -- Login
 Doctor -- ViewQueue
 Doctor -- Suggest
 Doctor -- CallClinic
@@ -44,31 +44,30 @@ Doctor -- Order
 Doctor -- Review
 Doctor -- Complete
 
-Reception -- Login
 Reception -- CheckIn
 Reception -- ViewQueue
 Reception -- Miss
 
-LabTech -- Login
 LabTech -- ViewQueue
 LabTech -- CallLab
 LabTech -- Miss
 LabTech -- ExecuteLab
 LabTech -- FinalizeResult
 
-PharmacyStaff -- Login
 PharmacyStaff -- CallPharmacy
 PharmacyStaff -- Miss
 PharmacyStaff -- Dispense
 
-Admin -- Login
-Admin -- Configure
+Cashier -- Settlement
+
+Management -- Configure
 
 Suggest ..> ViewQueue : <<include>>
 CallClinic ..> Suggest : <<include>>
 CallLab ..> ViewQueue : <<include>>
 CallPharmacy ..> ViewQueue : <<include>>
 Dispense ..> CallPharmacy : <<include>>
+Settlement ..> Dispense : <<extend>>\nTrước khi xác nhận phát thuốc
 Miss ..> ViewQueue : <<extend>>
 Consult ..> ViewPatient : <<include>>
 Order ..> Consult : <<extend>>
@@ -77,5 +76,7 @@ FollowUp ..> Complete : <<extend>>
 
 legend bottom
   Nguồn: Nhóm tác giả đề xuất dựa trên đặc tả CareFlow.
+  Không thu tiền riêng tại khu cận lâm sàng; REFUND_PENDING không chặn phát thuốc.
+  Xác thực và phân quyền là tiền điều kiện của các Use Case.
 endlegend
 @enduml

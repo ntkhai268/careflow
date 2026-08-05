@@ -5,6 +5,10 @@
 > Ngày chốt: 2026-08-03
 >
 > Áp dụng cho: Patient Mobile, Notification Service, Laboratory Order contract
+>
+> Lưu ý: phần Payment của quyết định này đã được thay thế bởi
+> `2026-08-05-two-stage-self-pay-settlement.md`. Các quyết định Notification và
+> Queue trong tài liệu vẫn còn hiệu lực.
 
 ## 1. Quyết định
 
@@ -19,18 +23,14 @@
 4. Notification xác định patient recipient bằng `recipientUserId`/`userId` có
    trong event hoặc projection `patientId → userId` từ `PatientProfileCreated`.
    Không gọi Patient Service qua internal API vô danh.
-5. Payment không phải microservice độc lập và không tích hợp cổng thanh toán
-   production. Laboratory journey chỉ mô hình hóa:
-   - `ONLINE_MOCK`;
-   - `CASH_AT_HOSPITAL`.
-6. `HEALTH_INSURANCE` bị loại khỏi payment method và payment state của MVP.
-   Số BHYT vẫn có thể tồn tại như dữ liệu hành chính trong Patient Profile,
-   nhưng CareFlow không tính quyền lợi hoặc quyết toán BHYT.
+5. Payment không phải microservice production độc lập. Phiên bản báo cáo giả
+   định người bệnh tự chi trả và dùng mô hình trả trước phí khám, quyết toán cuối
+   lượt theo quyết định ngày 05/08/2026.
+6. BHYT không tham gia phạm vi nghiệp vụ của phiên bản báo cáo.
 7. Mobile không tính thuật toán/vị trí Queue. Nó hiển thị queue state và
    `recommendedNext` do Queue Service trả về.
-8. Appointment vẫn tự `CONFIRMED` khi slot hợp lệ và không bị chặn bởi Payment.
-   Payment mock trong quyết định này chỉ áp dụng cho Laboratory Order có
-   `paymentRequired=true`.
+8. Appointment vẫn tự `CONFIRMED` khi slot hợp lệ và không bị rollback bởi lỗi
+   receipt local. Laboratory Order không còn bị chặn bởi payment riêng.
 
 ## 2. Ranh giới implementation tiếp theo
 
@@ -46,10 +46,11 @@
 
 ## 3. Điều kiện kết thúc Giai đoạn 0
 
-- Contract Payment chỉ còn `ONLINE_MOCK` và `CASH_AT_HOSPITAL`.
+- Payment Mobile dùng `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL` cho phí khám và
+  settlement mock cho quyết toán cuối lượt.
 - REST/WebSocket Notification, recipient resolution, offline và idempotency đã
   có một cách hiểu duy nhất.
 - Appointment fixture có owner `userId`; clinical event có thể dùng patient
   projection.
-- Các implementation cũ còn `insurance` được xem là technical debt phải xóa ở
-  Giai đoạn 1, không còn là contract hợp lệ.
+- Các implementation payment cũ còn nhánh BHYT hoặc payment riêng của Lab được
+  xem là technical debt, không còn là contract hợp lệ.

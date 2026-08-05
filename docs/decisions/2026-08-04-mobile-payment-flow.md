@@ -1,40 +1,40 @@
-# Mobile MVP — Phí khám và tiền thuốc
+# Mobile MVP — Trả trước phí khám và quyết toán cuối lượt
 
-> Trạng thái: Accepted for Mobile MVP  
-> Ngày chốt: 2026-08-04
+> Trạng thái: Superseded in part by `2026-08-05-two-stage-self-pay-settlement.md`
+> Ngày chốt ban đầu: 2026-08-04
 
-## Quyết định
+## Quyết định còn hiệu lực
 
-1. Luồng đặt khám được trình bày theo thứ tự thực tế:
-   `chọn hồ sơ/khoa/ngày/ca → chọn dịch vụ → thanh toán phí khám → nhận phiếu khám`.
-2. Trong lúc Hospital Directory/Appointment chưa có catalog dịch vụ, Mobile
-   dùng đúng một mục cố định:
+1. Mobile hiển thị đúng một dịch vụ khám mặc định:
    - code: `GENERAL_CONSULTATION`;
    - tên: `Khám thường`;
    - giá demo: `150.000 ₫`;
    - thời lượng tham khảo: 15 phút.
-3. Người bệnh có thể chọn `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL`. Cả hai lựa
-   chọn đều được lưu cùng lịch hẹn; tiền mặt được hiển thị là
-   `DUE_AT_HOSPITAL`, không tuyên bố đã thu tiền.
-4. Appointment Service hiện chưa nhận payment/service contract. Mobile lưu
-   `AppointmentPaymentReceipt` qua local adapter để diễn tả UX và có thể thay
-   adapter bằng API thanh toán sau này. Việc local storage lỗi không được làm
-   hỏng một lịch hẹn đã tạo thành công.
-5. Sau khi bác sĩ kê toa, hành trình có bước riêng:
-   `prescribed → prescriptionPaymentPending → prescriptionPaid → medicationReady → completed`.
-   Tổng tiền thuốc demo là `85.000 ₫`; đây là fixture cho Mobile, chưa phải
-   bảng giá bệnh viện.
-6. Chưa có Pharmacy/Dispensing backend contract. Màn hình Nhà thuốc hiện dùng
-   `PrescriptionPaymentRepository` capability và chỉ hoạt động trong
-   `DEMO_MODE`; production hiển thị ranh giới backend thay vì giả lập giao dịch.
-7. `HEALTH_INSURANCE` không phải phương thức thanh toán. Thông tin BHYT chỉ
-   còn ở hồ sơ hành chính cho tới khi có nghiệp vụ quyết toán riêng.
+2. Người bệnh chọn `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL` cho phí khám.
+   `ONLINE_MOCK` tạo khoản trả trước; tiền mặt là `DUE_AT_HOSPITAL`, không được
+   trình bày là đã thu.
+3. Appointment Service chưa nhận payment/service contract. Mobile lưu
+   `AppointmentPaymentReceipt` qua local adapter; lỗi lưu local không rollback
+   Appointment đã tạo thành công.
+4. Phiên bản báo cáo chỉ xét người bệnh tự chi trả, không đưa BHYT vào phương
+   thức, công thức hoặc trạng thái payment.
 
-## Việc thay thế khi backend sẵn sàng
+## Quyết định được thay thế từ ngày 05/08/2026
 
-- Appointment Service/Directory trả catalog dịch vụ và giá theo cơ sở, thay
-  fixture `AppointmentServiceOption.catalog`.
-- Payment API trả receipt/idempotency/status; bỏ local
-  `AppointmentPaymentStore` nhưng giữ model hiển thị.
-- Pharmacy/Dispensing Service phát hành giá thuốc, trạng thái thu tiền và
-  xác nhận phát thuốc; thay `DemoJourneyRepository` bằng adapter thật.
+- Không thanh toán tiền thuốc bằng một journey riêng và không thanh toán riêng
+  trước cận lâm sàng.
+- Sau khi bác sĩ kết luận/kê toa, Mobile mở quyết toán cuối lượt, tổng hợp phí
+  khám, cận lâm sàng, thuốc và dịch vụ phát sinh rồi khấu trừ khoản trả trước.
+- Kết quả là `PAYMENT_DUE`, `SETTLED`, `REFUND_PENDING` hoặc `REFUNDED`; không
+  biểu diễn số tiền phải trả âm.
+- Trạng thái hoàn tiền trong MVP là mock; không tự ghi nhận đã hoàn tiền qua
+  ngân hàng production.
+
+## Ranh giới backend
+
+- Appointment receipt và Visit Settlement là capability adapter/demo, không tạo
+  Payment microservice production trong MVP.
+- Laboratory Order không còn payment contract hoặc trạng thái
+  `PAYMENT_PENDING`; order hợp lệ tạo queue thực hiện ngay.
+- Queue phát thuốc được tạo từ toa `CONFIRMED`; chỉ hoàn tất dispense khi
+  settlement không còn `PAYMENT_DUE`.

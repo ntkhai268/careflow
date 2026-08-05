@@ -1,6 +1,6 @@
 # Prescription Service Contract
 
-> Contract ID: `CF-SVC-09` | Version: `1.1` | Module: `careflow-prescription-service`
+> Contract ID: `CF-SVC-09` | Version: `1.2` | Module: `careflow-prescription-service`
 
 ## 1. Trách nhiệm và ranh giới
 
@@ -10,6 +10,7 @@ Sở hữu:
 - trạng thái draft, xác nhận, hủy và ghi nhận phát thuốc;
 - cảnh báo validation cơ bản và chữ ký/xác nhận của bác sĩ;
 - bản snapshot tên thuốc, hàm lượng, cách dùng tại thời điểm phát hành.
+- đơn giá/thành tiền snapshot của từng dòng để tổng hợp quyết toán cuối lượt.
 
 Không sở hữu kho dược, tồn kho, thanh toán, hàng đợi hoặc quyết định chẩn đoán.
 MVP quản lý lượt chờ phát thuốc bằng Queue Service nhưng không kiểm kê hay tự
@@ -65,7 +66,8 @@ Server lấy `doctorId` từ trusted header và xác minh doctor được phân 
 Response phải có `id`, `consultationId`, `patientId`, `doctorId`, `status`, `items`, `advice`,
 `dispensingServicePointId`, `confirmedAt`, `dispensedAt`, `createdAt`, `updatedAt`.
 Điểm cấp phát được server suy ra từ cấu hình active của cơ sở; client bệnh nhân
-không tự chọn hoặc gửi giá trị này.
+không tự chọn hoặc gửi giá trị này. Mỗi item trả thêm `unitPrice` và
+`lineAmount`; MVP dùng fixture/catalog tự chi trả, không nhận giá do bác sĩ nhập.
 
 ## 4. Validation và an toàn
 
@@ -75,6 +77,9 @@ không tự chọn hoặc gửi giá trị này.
 - Confirm là idempotent; sau confirm không sửa trực tiếp.
 - Dispense chỉ hợp lệ khi Queue Entry `PHARMACY_DISPENSING` tương ứng đang
   `IN_PROGRESS` và actor được phân công tại đúng điểm cấp phát.
+- Dispense bị từ chối nếu Visit Settlement đang `PAYMENT_DUE`. `SETTLED`,
+  `REFUND_PENDING` và `REFUNDED` đều đủ điều kiện; trạng thái được lấy từ adapter
+  phía server, không tin giá trị do Mobile gửi.
 - Sửa toa đã confirm phải hủy bằng amendment và tạo toa mới liên kết `replacesPrescriptionId`.
 - Cảnh báo dị ứng/interaction trong MVP là warning cho doctor; không được âm thầm thay đổi toa.
 
@@ -110,7 +115,7 @@ projection consumer được cấp đúng payload version.
 - Doctor Web mock draft rỗng, draft hợp lệ, validation error và confirmed.
 - Mobile chỉ mock confirmed/dispensed, không hiển thị draft.
 - Pharmacy Web mock toa confirmed kèm Queue Entry `PHARMACY_DISPENSING` đang
-  `CALLED`/`IN_PROGRESS` và thao tác phát thuốc.
+  `CALLED`/`IN_PROGRESS`, các trạng thái Visit Settlement và thao tác phát thuốc.
 - Consultation mock `PrescriptionIssued`; Notification mock một thông báo có link đến toa.
 - Fixture dị ứng phải trả warning rõ, không tự confirm.
 
@@ -124,13 +129,14 @@ projection consumer được cấp đúng payload version.
 ### `FUNCTIONAL_READY`
 
 - Draft/update/confirm/cancel/dispense đúng transition; dispense bị từ chối nếu
-  lượt phát thuốc chưa `IN_PROGRESS`.
+  lượt phát thuốc chưa `IN_PROGRESS` hoặc settlement còn `PAYMENT_DUE`.
 - Test quantity, empty item, consultation mismatch, ownership và immutable confirmed prescription.
 - Migration và concurrent confirm không tạo hai event.
 
 ### `INTEGRATION_READY`
 
-- Xác minh consultation/doctor và Queue Entry phát thuốc; Queue, EMR và
+- Xác minh consultation/doctor, Queue Entry phát thuốc và settlement status;
+  Queue, EMR và
   Notification nhận event envelope idempotent.
 - Patient chỉ đọc toa của mình qua Gateway.
 - Audit đủ người xác nhận, thời điểm và amendment.
@@ -139,5 +145,7 @@ projection consumer được cấp đúng payload version.
 
 - Doctor kê và xác nhận toa; Mobile nhận thông báo và xem đúng toa.
 - Queue tự tạo lượt phát thuốc, nhân viên gọi FIFO và xác nhận cấp phát.
+- `PAYMENT_DUE` chặn phát thuốc; `REFUND_PENDING` không chặn và có thể chuyển
+  sang `REFUNDED` độc lập.
 - Toa xuất hiện trong EMR.
 - Demo cancel/replacement không làm mất lịch sử toa cũ.

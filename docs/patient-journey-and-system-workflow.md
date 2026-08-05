@@ -1,7 +1,8 @@
 # Hành trình khám ngoại trú và vai trò của hệ thống CareFlow
 
 > Phiên bản nghiệp vụ đã thống nhất ngày 30/07/2026, cập nhật mô hình Queue ngày
-> 03/08/2026.
+> 03/08/2026, luồng thanh toán Mobile ngày 04/08/2026 và mô hình tự chi trả hai
+> giai đoạn ngày 05/08/2026.
 >
 > Tài liệu mô tả hành trình của bệnh nhân, bác sĩ và nhân viên y tế trong một lượt
 > khám ngoại trú; đồng thời xác định Mobile App, Hospital Web App và các
@@ -22,8 +23,8 @@ Hệ thống giải quyết các vấn đề chính:
 - Kết quả, toa thuốc và lịch tái khám được lưu thành lịch sử liên tục.
 
 CareFlow không thay thế toàn bộ HIS của bệnh viện. Những nghiệp vụ như quản lý
-viện phí đầy đủ, kho dược, nội trú, PACS hoặc quyết toán BHYT có thể được mô hình
-hóa như hệ thống ngoài và tích hợp sau.
+viện phí đầy đủ, kho dược, nội trú hoặc PACS có thể được mô hình hóa như hệ
+thống ngoài và tích hợp sau. Phiên bản báo cáo chỉ xét người bệnh tự chi trả.
 
 ## 2. Các quyết định nghiệp vụ đã chốt
 
@@ -44,17 +45,34 @@ hóa như hệ thống ngoài và tích hợp sau.
    thời giữ FIFO riêng trong từng làn.
 7. Bác sĩ nhập sinh hiệu trực tiếp trong màn hình khám. Role điều dưỡng có thể
    được bổ sung sau nhưng không bắt buộc trong MVP.
-8. Thanh toán có thể online hoặc tại bệnh viện. Payment không phải trọng tâm và
-   có thể được mock hoặc tích hợp như một hệ thống ngoài.
-9. Sau khi bác sĩ tạo chỉ định cận lâm sàng, hệ thống tự tạo lượt tại khu tương
+8. Trong Patient Mobile, luồng đặt khám có thêm bước chọn dịch vụ và thanh toán
+   phí khám. Khi chưa có catalog dịch vụ, Mobile dùng fixture duy nhất
+   `GENERAL_CONSULTATION` — “Khám thường”, giá demo `150.000 ₫`, thời lượng tham
+   khảo 15 phút.
+9. Patient Mobile chỉ chọn `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL` cho phí khám.
+   Cả hai lựa chọn được lưu cùng lịch hẹn; tiền mặt hiển thị
+   `DUE_AT_HOSPITAL`, không được trình bày là đã thu. Appointment vẫn tự
+   `CONFIRMED` khi slot hợp lệ; Appointment Service chưa nhận payment/service
+   contract. Receipt của bước này được lưu qua local adapter và lỗi local không
+   làm hỏng lịch hẹn đã tạo thành công.
+9a. Hành trình chỉ có hai giai đoạn thanh toán: trả trước phí khám khi đặt lịch
+    và quyết toán một lần ở cuối lượt khám. Chi phí cận lâm sàng và thuốc được
+    cộng vào tổng chi phí lượt khám, không tạo lần thanh toán riêng.
+10. Sau khi bác sĩ tạo chỉ định cận lâm sàng, hệ thống tự tạo lượt tại khu tương
    ứng. Bệnh nhân tới ngồi chờ, không check-in thêm tại mỗi khu.
-10. Khi đủ kết quả bắt buộc, hệ thống tự đưa lượt vào làn `RESULT_REVIEW` và
+11. Khi đủ kết quả bắt buộc, hệ thống tự đưa lượt vào làn `RESULT_REVIEW` và
     thông báo/hướng dẫn bệnh nhân quay lại phòng bác sĩ.
-11. Lượt đọc kết quả vẫn thuộc cùng consultation, không tạo Appointment mới.
-12. Toa đã xác nhận tự tạo lượt phát thuốc FIFO tại điểm cấp phát; nghiệp vụ này
-    không bao gồm quản lý kho hoặc tồn kho.
-13. Hệ thống chỉ đề xuất lượt tiếp theo; bác sĩ phải chủ động bấm gọi. Việc xem
-    đề xuất không làm thay đổi trạng thái Queue Entry.
+12. Lượt đọc kết quả vẫn thuộc cùng consultation, không tạo Appointment mới.
+13. Toa đã xác nhận tự tạo lượt phát thuốc FIFO tại điểm cấp phát; nghiệp vụ này
+   không bao gồm quản lý kho hoặc tồn kho.
+14. Sau khi bác sĩ hoàn tất kết luận, hệ thống tính `totalVisitCost`, đối trừ
+   `prepaidAmount` và xác định `amountDue` hoặc `refundDue`. Các trạng thái quyết
+   toán gồm `PAYMENT_DUE`, `SETTLED`, `REFUND_PENDING` và `REFUNDED`; số tiền cần
+   thu không bao giờ được lưu âm.
+15. `REFUND_PENDING` không chặn phát thuốc vì người bệnh không còn nghĩa vụ phải
+   nộp thêm. Chỉ trạng thái `PAYMENT_DUE` mới chặn thao tác xác nhận phát thuốc.
+16. Hệ thống chỉ đề xuất lượt tiếp theo; bác sĩ phải chủ động bấm gọi. Việc xem
+   đề xuất không làm thay đổi trạng thái Queue Entry.
 
 ## 3. Các vai trò và giao diện
 
@@ -65,7 +83,7 @@ hóa như hệ thống ngoài và tích hợp sau.
 | Nhân viên tiếp nhận | Hospital Web App | Quét phiếu, xác nhận bệnh nhân đã đến, hỗ trợ lỡ lượt |
 | Kỹ thuật viên cận lâm sàng | Hospital Web App | Theo dõi order, gọi số, thực hiện kỹ thuật và nhập kết quả |
 | Nhân viên cấp phát thuốc | Hospital Web App | Theo dõi queue FIFO, gọi số, đối chiếu toa và xác nhận đã phát thuốc |
-| Thu ngân | Hospital Web App hoặc hệ thống ngoài | Xác nhận đã thu tiền mặt nếu dịch vụ yêu cầu thanh toán |
+| Thu ngân | Hospital Web App hoặc hệ thống ngoài | Ghi nhận phí khám trả trước, quyết toán cuối lượt và xử lý hoàn tiền; adapter demo không được xem là chứng từ production |
 | Quản trị viên | Hospital Web App | Cấu hình khoa, phòng, bác sĩ, lịch, capacity và điểm phục vụ |
 
 Hospital Web App là một ứng dụng phân quyền theo role. Không cần xây một web
@@ -76,9 +94,11 @@ riêng cho từng loại nhân viên.
 ### 4.1. Appointment
 
 Lịch đặt khám trong tương lai, gồm bệnh nhân, khoa, phòng đã được hệ thống phân,
-bác sĩ nếu có, ngày và khung giờ. Appointment giữ capacity nhưng không chứng
-minh bệnh nhân đã đến. Request từ bệnh nhân không chứa `roomId`; Appointment
-Service xác định và lưu `roomId` trước khi xác nhận lịch.
+bác sĩ nếu có, ngày, khung giờ và thông tin dịch vụ hiển thị trên Mobile.
+Appointment giữ capacity nhưng không chứng minh bệnh nhân đã đến. Request từ
+bệnh nhân không chứa `roomId`; Appointment Service xác định và lưu `roomId`
+trước khi xác nhận lịch. Ở Mobile MVP, thông tin dịch vụ và receipt thanh toán
+được giữ qua local adapter vì Appointment Service chưa có payment/service contract.
 
 ### 4.2. Department và ClinicRoom
 
@@ -98,7 +118,7 @@ Phiếu khám điện tử do Queue Management Service cấp sau khi nhận sự
 - Khung giờ dự kiến.
 - Khoa và phòng.
 - QR tham chiếu phiếu.
-- Trạng thái thanh toán nếu có.
+- Trạng thái phí khám trả trước nếu có.
 
 ### 4.4. Queue Entry
 
@@ -142,25 +162,35 @@ Toa thuốc và lịch tái khám được tạo sau khi bác sĩ hoàn thiện 
 
 ```mermaid
 flowchart TD
-    A["Bệnh nhân chọn lịch"] --> B["Hệ thống kiểm tra slot và tự xác nhận"]
+    A["Chọn hồ sơ/khoa/ngày/ca"] --> A1["Chọn dịch vụ"]
+    A1 --> A2["Chọn hình thức phí khám trên Mobile"]
+    A2 --> B["Hệ thống kiểm tra slot và tự xác nhận"]
     B --> C["Cấp phiếu, số thứ tự và QR"]
     C --> D["Bệnh nhân đến phòng khám"]
-    D --> E["Nhân viên hoặc kiosk quét QR"]
+    D --> D1["Xác nhận phí khám/tạm ứng tại tiếp nhận nếu cần"]
+    D1 --> E["Nhân viên hoặc kiosk quét QR"]
     E --> F["CHECKED_IN và vào làn PRIORITY hoặc NORMAL"]
     F --> G["Hệ thống đề xuất theo Round Robin; bác sĩ bấm gọi"]
     G --> H["Bác sĩ nhập sinh hiệu và khám"]
     H --> I{"Cần cận lâm sàng?"}
     I -- "Không" --> Q["Chẩn đoán, kê toa, hoàn tất khám"]
     I -- "Có" --> J["Bác sĩ tạo order"]
-    J --> K["Thanh toán online hoặc tại bệnh viện nếu cần"]
-    K --> L["Hệ thống tự tạo lượt cận lâm sàng"]
+    J --> L["Ghi nhận chi phí và tự tạo lượt cận lâm sàng"]
     L --> M["Bệnh nhân tới khu thực hiện và ngồi chờ"]
     M --> N["Kỹ thuật viên gọi, thực hiện và trả kết quả"]
     N --> O["Tự tạo lượt trong làn RESULT_REVIEW"]
     O --> P["Bệnh nhân quay lại và bác sĩ đọc kết quả"]
     P --> Q
-    Q --> R["Tạo lượt PHARMACY_DISPENSING"]
-    R --> S["Nhân viên gọi FIFO và phát thuốc"]
+    Q --> R["Tính tổng chi phí và đối trừ phí khám đã trả trước"]
+    R --> R1{"Trạng thái quyết toán?"}
+    R1 -- "PAYMENT_DUE" --> R2["Thu số tiền còn phải trả"]
+    R1 -- "SETTLED" --> R3["Không cần thu thêm"]
+    R1 -- "REFUND_PENDING" --> R4["Ghi nhận khoản cần hoàn; không chặn phát thuốc"]
+    R2 --> R5["SETTLED"]
+    R3 --> R5
+    R4 --> R5
+    R5 --> R6["Tạo lượt PHARMACY_DISPENSING nếu có toa"]
+    R6 --> S["Nhân viên gọi FIFO, đối chiếu và phát thuốc"]
     S --> T["Mobile nhận kết quả, toa và lịch tái khám"]
 ```
 
@@ -177,6 +207,11 @@ Trước khi mở lịch, quản trị viên cấu hình:
 - Chính sách check-in sớm/muộn.
 - Chính sách `MISSED`, `NO_SHOW` và gọi lại.
 - Danh mục dịch vụ cận lâm sàng.
+
+Trong Patient Mobile MVP, catalog dịch vụ khám chưa lấy từ backend. Mobile dùng
+fixture cố định `GENERAL_CONSULTATION` / “Khám thường” / `150.000 ₫` / 15 phút.
+Fixture này sẽ được thay bằng catalog theo cơ sở khi Hospital Directory hoặc
+Appointment Service hỗ trợ contract tương ứng.
 
 Ví dụ:
 
@@ -210,9 +245,10 @@ Trên Patient Mobile App:
 2. Chọn hồ sơ bệnh nhân.
 3. Chọn khoa hoặc bác sĩ.
 4. Chọn ngày và khung giờ.
-5. Nhập lý do khám.
-6. Chọn hình thức thanh toán.
-7. Xác nhận đặt khám.
+5. Chọn dịch vụ “Khám thường” (fixture hiện tại).
+6. Nhập lý do khám.
+7. Chọn `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL` cho phí khám.
+8. Xác nhận đặt khám.
 
 ### 7.2. Hệ thống xử lý
 
@@ -233,6 +269,12 @@ POST /api/appointments
 → phát AppointmentConfirmed
 ```
 
+Payment/service catalog không nằm trong request contract hiện tại của Appointment.
+Sau khi API tạo lịch thành công, Mobile lưu `AppointmentPaymentReceipt` qua
+local adapter để thể hiện UX. `ONLINE_MOCK` có receipt mô phỏng; tiền mặt có
+trạng thái `DUE_AT_HOSPITAL`. Nếu local storage lỗi, Mobile vẫn giữ lịch hẹn đã
+được backend tạo thành công và hiển thị cảnh báo có thể thử lưu lại receipt.
+
 Không có bước nhân viên duyệt thủ công.
 
 ### 7.3. App hiển thị
@@ -244,6 +286,9 @@ Khoa: Thần kinh
 Phòng: 21
 Ngày khám: 18/08/2026
 Khung giờ: 10:30-11:30
+Dịch vụ: Khám thường
+Phí khám: 150.000 ₫
+Thanh toán: Đã mô phỏng / Thanh toán tại bệnh viện
 Trạng thái: Đã xác nhận
 ```
 
@@ -255,6 +300,10 @@ Trạng thái: Đã xác nhận
 - Appointment Service: sở hữu `Department`, `ClinicRoom`, kiểm tra/phân phòng và
   giữ slot theo chính sách MVP.
 - Notification Service: thông báo thành công.
+
+Patient Mobile giữ `AppointmentServiceOption.catalog` và
+`AppointmentPaymentReceipt` qua local adapter trong MVP; đây không phải Payment
+Service và không làm thay đổi Appointment API hiện tại.
 
 ## 8. Giai đoạn 2: Cấp phiếu khám điện tử
 
@@ -463,7 +512,7 @@ Appointment: CONFIRMED → FULFILLED
 
 Luồng tiếp tục tại Giai đoạn 9 và 10.
 
-## 13. Giai đoạn 6B: Tạo chỉ định cận lâm sàng và thanh toán
+## 13. Giai đoạn 6B: Tạo chỉ định cận lâm sàng
 
 Nếu cần cận lâm sàng, bác sĩ tạo order, ví dụ:
 
@@ -498,45 +547,17 @@ Lượt khám của bạn chưa hoàn tất.
    Trạng thái: Chờ thực hiện
 ```
 
-### 13.2. Thanh toán
+### 13.2. Ghi nhận chi phí
 
-Các hình thức được mô hình hóa:
-
-```text
-paymentMethod:
-- ONLINE_MOCK
-- CASH_AT_HOSPITAL
-
-paymentStatus:
-- UNPAID
-- PENDING
-- PAID_ONLINE_MOCK
-- PAID_CASH
-- FAILED
-```
-
-Nếu thanh toán online mock:
+Laboratory Order lưu đơn giá và thành tiền của từng hạng mục để tổng hợp khi kết
+thúc lượt khám. Order hợp lệ được đưa ngay vào queue thực hiện:
 
 ```text
-ORDERED
-→ PAYMENT_PENDING
-→ PAID_ONLINE_MOCK
-→ QUEUED
+ORDERED → QUEUED
 ```
 
-Nếu thanh toán tiền mặt:
-
-```text
-ORDERED
-→ chờ hệ thống thu ngân xác nhận
-→ PAID_CASH
-→ QUEUED
-```
-
-Payment không nằm trong danh sách service cốt lõi của đề tài. MVP có thể mock
-trạng thái thanh toán hoặc coi đây là tích hợp với hệ thống bệnh viện bên ngoài.
-Thông tin BHYT nếu có chỉ là dữ liệu hành chính trong hồ sơ bệnh nhân; không phải
-phương thức thanh toán của luồng MVP. Quyết toán/quyền lợi BHYT nằm ngoài phạm vi.
+Không có phương thức, trạng thái hoặc API thanh toán riêng cho cận lâm sàng.
+Việc thu tiền chỉ diễn ra tại bước quyết toán cuối lượt.
 
 ## 14. Giai đoạn 7: Thực hiện cận lâm sàng
 
@@ -776,6 +797,26 @@ khám và không yêu cầu bệnh nhân check-in lại. MVP có thể cấu hì
 phát; mô hình vẫn giữ `servicePointId` để hỗ trợ nhiều quầy sau này. Queue Service
 không quản lý tồn kho và không tự sửa trạng thái toa.
 
+Trước khi xác nhận cấp phát, nhân viên kiểm tra trạng thái quyết toán cuối lượt.
+Queue vẫn được tạo ngay từ toa `CONFIRMED` để mọi bệnh nhân, kể cả người không
+dùng Mobile, có lượt chờ. Chỉ `PAYMENT_DUE` chặn thao tác dispense;
+`SETTLED`, `REFUND_PENDING` và `REFUNDED` đều cho phép tiếp tục.
+
+### 16.3. Quyết toán cuối lượt trên Patient Mobile MVP
+
+Mobile trình bày bảng tổng hợp gồm phí khám, cận lâm sàng, thuốc,
+`prepaidAmount`, `amountDue` và `refundDue`. Công thức thống nhất là:
+
+```text
+patientPayable = totalVisitCost
+amountDue = max(0, patientPayable - prepaidAmount)
+refundDue = max(0, prepaidAmount - patientPayable)
+```
+
+Adapter local/demo có thể mô phỏng việc xác nhận `SETTLED` hoặc hoàn tiền từ
+`REFUND_PENDING` sang `REFUNDED`. Đây là lớp trình diễn để hoàn thiện hành trình,
+không phải cổng thanh toán hay sổ kế toán production.
+
 ## 17. Giai đoạn 10: Patient Mobile sau khám
 
 Patient Mobile hiển thị:
@@ -797,6 +838,12 @@ Kết quả
 Toa thuốc
 • 3 loại thuốc
 [Xem toa]
+
+Quyết toán lượt khám
+• Tổng chi phí: ...
+• Đã trả trước: 150.000 ₫
+• Còn phải trả / Cần hoàn: ...
+• Trạng thái: PAYMENT_DUE / SETTLED / REFUND_PENDING / REFUNDED
 
 Lịch tái khám
 • 15/09/2026 — 09:00
@@ -877,14 +924,6 @@ ORDERED
 → REVIEWED
 ```
 
-Nếu có thanh toán:
-
-```text
-ORDERED
-→ PAYMENT_PENDING
-→ QUEUED
-```
-
 Ngoại lệ:
 
 ```text
@@ -922,6 +961,9 @@ DRAFT
 → DISPENSED
 ```
 
+Trạng thái quyết toán thuộc toàn bộ lượt khám, không thuộc vòng đời Prescription.
+Prescription chỉ quản lý việc tạo, xác nhận và phát toa.
+
 ### 18.7. Queue Entry phát thuốc
 
 ```text
@@ -947,21 +989,26 @@ CALLED → MISSED → QUEUED
 | AI Clinical Assistant Service | Tóm tắt, cảnh báo và gợi ý tham khảo; bác sĩ quyết định cuối cùng |
 | Analytics Service | Thống kê thời gian chờ, lượt khám và hiệu quả vận hành |
 
+Patient Mobile giữ adapter local cho phí khám trả trước và `VisitSettlement` của
+MVP. Các adapter này không phải service backend, không sở hữu payment ledger và
+không được xem là contract production.
+
 ## 20. App và Web tham gia ở đâu?
 
 | Giai đoạn | Patient Mobile | Doctor Web | Staff Web |
 |---|---|---|---|
 | Cấu hình | Không | Xem lịch cá nhân | Admin cấu hình khoa, phòng, lịch và capacity |
-| Đặt khám | Chọn lịch, hồ sơ, hình thức thanh toán | Không | Chỉ hỗ trợ ngoại lệ |
+| Đặt khám | Chọn lịch, hồ sơ, dịch vụ, hình thức thanh toán; lưu receipt local | Không | Chỉ hỗ trợ ngoại lệ |
 | Phiếu khám | Xem số, QR, phòng và khung giờ | Xem lịch sắp tới | Xem lịch hôm nay |
 | Đến bệnh viện | Xuất trình QR | Thấy trạng thái đã đến | Quét QR và tiếp nhận |
 | Chờ khám | Xem trạng thái và thông báo | Xem active queue | Recall, missed và hỗ trợ bệnh nhân |
 | Khám ban đầu | Không cần thao tác | Nhập sinh hiệu, triệu chứng và chẩn đoán | Không bắt buộc |
-| Chỉ định | Xem danh sách việc cần làm | Tạo order | Thu ngân xác nhận tiền mặt nếu cần |
+| Chỉ định | Xem danh sách việc cần làm và chi phí phát sinh | Tạo order | Không thu tiền riêng tại bước này |
 | Cận lâm sàng | Xem số, địa điểm và tiến độ | Theo dõi kết quả | Kỹ thuật viên gọi, thực hiện và nhập kết quả |
 | Quay lại | Nhận thông báo và quay lại phòng, không cần xác nhận trên app | Xem RESULT_REVIEW trong queue | Hỗ trợ `MISSED/requeue` nếu bệnh nhân chưa về |
-| Phát thuốc | Xem số và trạng thái chờ tại quầy | Không | Nhân viên gọi FIFO, đối chiếu toa và xác nhận cấp phát |
-| Hoàn tất | Xem toa, kết quả và tái khám | Kê toa, kết luận và hoàn tất | Hỗ trợ các ngoại lệ nghiệp vụ |
+| Quyết toán cuối lượt | Xem tổng chi phí, khoản trả trước, còn phải trả hoặc cần hoàn | Hoàn tất kết luận | Thu thêm hoặc ghi nhận hoàn tiền theo trạng thái quyết toán |
+| Phát thuốc | Xem số và trạng thái chờ tại quầy | Không | Nhân viên gọi FIFO, đối chiếu toa; chỉ `PAYMENT_DUE` chặn xác nhận cấp phát |
+| Hoàn tất | Xem toa, kết quả, quyết toán và tái khám | Kê toa, kết luận và hoàn tất | Hỗ trợ các ngoại lệ nghiệp vụ |
 | Sau khám | Xem lịch sử và nhắc tái khám | Tra cứu hồ sơ | Xem báo cáo vận hành |
 
 ## 21. Tương tác đồng bộ và bất đồng bộ
@@ -982,6 +1029,9 @@ Gọi lượt phát thuốc
 Xác nhận đã phát thuốc
 Hoàn tất consultation
 ```
+
+Chọn phương thức trả trước phí khám và xác nhận quyết toán trong Mobile MVP là
+thao tác qua adapter; không được mô tả như command của Payment Service production.
 
 Ví dụ:
 
@@ -1093,6 +1143,8 @@ payload
 
 ```text
 Đăng nhập
+→ chọn dịch vụ Khám thường
+→ chọn hình thức thanh toán phí khám
 → đặt lịch tự động xác nhận
 → nhận phiếu và số
 → quét QR tại phòng
@@ -1101,7 +1153,8 @@ payload
 → khám và nhập sinh hiệu
 → chẩn đoán
 → kê toa
-→ hoàn tất
+→ tính tổng chi phí và đối trừ khoản trả trước
+→ xác nhận SETTLED hoặc ghi nhận REFUND_PENDING
 → vào queue phát thuốc FIFO
 → nhân viên gọi và phát thuốc
 → Mobile nhận toa và lịch tái khám
@@ -1124,7 +1177,9 @@ payload
 → RESULT_REVIEW tham gia Round Robin 1:1:1
 → bác sĩ đọc kết quả
 → chẩn đoán và kê toa
-→ vào queue phát thuốc FIFO
+→ tính tổng chi phí và đối trừ khoản trả trước
+→ PAYMENT_DUE thì thu phần còn thiếu; REFUND_PENDING thì ghi nhận khoản cần hoàn
+→ vào queue phát thuốc FIFO; chỉ PAYMENT_DUE chặn dispense
 → nhân viên gọi và phát thuốc
 → Mobile nhận kết quả, toa và tái khám
 ```
@@ -1134,25 +1189,30 @@ payload
 Hệ thống được coi là hoàn thành luồng chính khi:
 
 1. Bệnh nhân đặt được lịch và nhận phiếu mà không cần duyệt thủ công.
-2. Quét QR đưa đúng bệnh nhân vào đúng làn `PRIORITY` hoặc `NORMAL`.
-3. Bệnh nhân chưa check-in không xuất hiện trong active queue.
-4. Doctor Web hiển thị ba làn, đề xuất đúng chu kỳ và chỉ gọi khi bác sĩ bấm nút.
-5. Bác sĩ nhập được sinh hiệu, chẩn đoán và chỉ định.
-6. Lab Order tự xuất hiện trên Lab Web.
-7. Bệnh nhân nhận được số cận lâm sàng mà không check-in lại.
-8. Kết quả tự động đưa consultation sang chờ review.
-9. Result review tự động vào làn riêng và tham gia Round Robin `1:1:1`; bệnh
+2. Mobile hiển thị dịch vụ `GENERAL_CONSULTATION`, phí demo `150.000 ₫` và
+   `ONLINE_MOCK`/`CASH_AT_HOSPITAL`; lỗi lưu receipt local không làm mất lịch.
+3. Quét QR đưa đúng bệnh nhân vào đúng làn `PRIORITY` hoặc `NORMAL`.
+4. Bệnh nhân chưa check-in không xuất hiện trong active queue.
+5. Doctor Web hiển thị ba làn, đề xuất đúng chu kỳ và chỉ gọi khi bác sĩ bấm nút.
+6. Bác sĩ nhập được sinh hiệu, chẩn đoán và chỉ định.
+7. Lab Order tự xuất hiện trên Lab Web.
+8. Bệnh nhân nhận được số cận lâm sàng mà không check-in lại.
+9. Kết quả tự động đưa consultation sang chờ review.
+10. Result review tự động vào làn riêng và tham gia Round Robin `1:1:1`; bệnh
    nhân không cần xác nhận trên Mobile.
-10. Bác sĩ hoàn thiện consultation, toa và lịch tái khám.
-11. Toa đã xác nhận tự tạo một lượt phát thuốc; nhân viên gọi FIFO và xác nhận
+11. Bác sĩ hoàn thiện consultation, toa và lịch tái khám.
+12. Toa đã xác nhận tự tạo một lượt phát thuốc; nhân viên gọi FIFO và xác nhận
     cấp phát mà không cần module tồn kho.
-12. Mobile hiển thị đầy đủ timeline, kết quả và tài liệu sau khám.
-13. Các API bảo vệ đúng role và ownership.
+13. Hệ thống tính đúng `amountDue`/`refundDue`, không lưu số tiền âm và chỉ
+    `PAYMENT_DUE` chặn phát thuốc; `REFUND_PENDING` vẫn cho phép tiếp tục.
+14. Mobile hiển thị đầy đủ timeline, kết quả và tài liệu sau khám.
+15. Các API bảo vệ đúng role và ownership.
 
 ## 26. Ngoài phạm vi MVP
 
 - Thanh toán production với ngân hàng/ví điện tử.
-- Quyết toán BHYT đầy đủ.
+- Catalog dịch vụ và bảng giá khám/thuốc production.
+- Payment/Refund production API và ledger viện phí.
 - Kho dược, tồn kho, nhập/xuất kho và kiểm kê thuốc.
 - PACS và lưu trữ ảnh DICOM.
 - Nội trú và quản lý giường bệnh.

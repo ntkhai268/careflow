@@ -7,9 +7,6 @@
 
 | Mã | Tên Use Case | Tác nhân chính | Mức trình bày |
 |---|---|---|---|
-| `UC-AUTH-01` | Đăng ký tài khoản bệnh nhân | Bệnh nhân | Tóm tắt |
-| `UC-AUTH-02` | Đăng nhập hệ thống | Bệnh nhân/Bác sĩ/Nhân viên | **Chi tiết** |
-| `UC-AUTH-03` | Làm mới phiên và đăng xuất | Người dùng đã xác thực | Tóm tắt |
 | `UC-PAT-01` | Quản lý hồ sơ bệnh nhân | Bệnh nhân | Mở rộng |
 | `UC-PAT-02` | Tải lên và quản lý hồ sơ cũ | Bệnh nhân | Tóm tắt |
 | `UC-PAT-03` | Tra cứu hồ sơ được phân công | Bác sĩ | Tóm tắt |
@@ -26,30 +23,32 @@
 | `UC-CON-01` | Bắt đầu và thực hiện phiên khám | Bác sĩ | **Chi tiết** |
 | `UC-CON-02` | Cập nhật sinh hiệu và thông tin lâm sàng | Bác sĩ | Gộp vào `UC-CON-01` |
 | `UC-LAB-01` | Tạo chỉ định cận lâm sàng | Bác sĩ | **Chi tiết** |
-| `UC-LAB-02` | Chọn và xác nhận hình thức thanh toán MVP | Bệnh nhân/Nhân viên thu ngân | Tóm tắt |
+| `UC-PAY-01` | Thanh toán và quyết toán lượt khám | Thu ngân/hệ thống thanh toán ngoài | Tóm tắt; hỗ trợ hai giai đoạn |
 | `UC-LAB-03` | Thực hiện và phát hành kết quả | Kỹ thuật viên cận lâm sàng | **Chi tiết** |
 | `UC-LAB-04` | Quay lại bác sĩ đọc kết quả | Bác sĩ | Gộp vào `UC-LAB-03` |
 | `UC-PRE-01` | Kê toa, hẹn tái khám và hoàn tất | Bác sĩ | **Chi tiết** |
 | `UC-PRE-02` | Xem toa thuốc và kết quả sau khám | Bệnh nhân | Tóm tắt |
 | `UC-PHA-01` | Gọi lượt và phát thuốc | Nhân viên cấp phát thuốc | **Chi tiết** |
 | `UC-NOT-01` | Xem và đánh dấu thông báo | Bệnh nhân | Tóm tắt |
-| `UC-ADM-01` | Quản lý tài khoản nội bộ | Quản trị viên | Tóm tắt |
-| `UC-ADM-02` | Cấu hình khoa, phòng và điểm phục vụ | Quản trị viên | Tóm tắt/thiết kế mục tiêu |
-| `UC-ADM-03` | Cấu hình lịch làm việc, slot và capacity | Quản trị viên | Tóm tắt/thiết kế mục tiêu |
+| `UC-CFG-01` | Duy trì khoa, phòng và điểm phục vụ | Bộ phận quản lý bệnh viện | Tóm tắt/thiết kế mục tiêu |
+| `UC-CFG-02` | Duy trì lịch làm việc, slot và capacity | Bộ phận quản lý bệnh viện | Tóm tắt/thiết kế mục tiêu |
 
-## 2. Chín Use Case cốt lõi trình bày đầy đủ
+Xác thực, làm mới phiên và phân quyền là yêu cầu nền tảng/tiền điều kiện. Chúng
+được thiết kế và kiểm thử ở phần bảo mật, không được dùng làm Use Case nghiệp
+vụ cốt lõi.
+
+## 2. Tám Use Case cốt lõi trình bày đầy đủ
 
 | Thứ tự | Mã | Use Case | Đặc tả | Activity | Sequence |
 |---:|---|---|:---:|:---:|:---:|
-| 1 | `UC-AUTH-02` | Đăng nhập hệ thống | Có | Có | Có |
-| 2 | `UC-APT-02` | Đặt lịch khám | Có | Có | Có |
-| 3 | `UC-QUE-02` | Check-in bằng QR | Có | Có | Có |
-| 4 | `UC-QUE-04` | Theo dõi, đề xuất và gọi lượt khám | Có | Có | Có |
-| 5 | `UC-CON-01` | Bắt đầu và thực hiện phiên khám | Có | Có | Có |
-| 6 | `UC-LAB-01` | Tạo chỉ định cận lâm sàng | Có | Có | Có |
-| 7 | `UC-LAB-03` | Thực hiện, phát hành và đọc kết quả | Có | Có | Có |
-| 8 | `UC-PRE-01` | Kê toa, hẹn tái khám và hoàn tất | Có | Có | Có |
-| 9 | `UC-PHA-01` | Gọi lượt và phát thuốc | Có | Có | Có |
+| 1 | `UC-APT-02` | Đặt lịch khám | Có | Có | Có |
+| 2 | `UC-QUE-02` | Check-in bằng QR | Có | Có | Có |
+| 3 | `UC-QUE-04` | Theo dõi, đề xuất và gọi lượt khám | Có | Có | Có |
+| 4 | `UC-CON-01` | Bắt đầu và thực hiện phiên khám | Có | Có | Có |
+| 5 | `UC-LAB-01` | Tạo chỉ định cận lâm sàng | Có | Có | Có |
+| 6 | `UC-LAB-03` | Thực hiện, phát hành và đọc kết quả | Có | Có | Có |
+| 7 | `UC-PRE-01` | Kê toa, hẹn tái khám và hoàn tất | Có | Có | Có |
+| 8 | `UC-PHA-01` | Gọi lượt và phát thuốc | Có | Có | Có |
 
 Hai Use Case mở rộng `UC-PAT-01` và `UC-APT-04` có bảng đặc tả và Activity
 Diagram nhưng không bắt buộc Sequence Diagram riêng nếu lời gọi đã được thể
@@ -57,19 +56,26 @@ hiện trong luồng khác.
 
 ## 3. Phạm vi của từng Use Case cốt lõi
 
-### `UC-AUTH-02` — Đăng nhập hệ thống
-
-- Bắt đầu: người dùng nhập thông tin đăng nhập.
-- Kết thúc: nhận access/refresh token và vào giao diện theo vai trò.
-- Ngoại lệ chính: sai thông tin, tài khoản khóa/vô hiệu, lỗi kết nối.
+Use Case hỗ trợ `UC-PAY-01` được gọi tại `UC-APT-02` để ghi nhận phí khám trả
+trước và tại `UC-PHA-01` để quyết toán cuối lượt trước khi phát thuốc. Cận lâm
+sàng chỉ ghi nhận chi phí, không gọi Use Case thanh toán. Adapter demo mô phỏng
+trạng thái; Use Case này không làm tăng số Use Case cốt lõi cần vẽ chi tiết.
 
 ### `UC-APT-02` — Đặt lịch khám
 
-- Bao gồm chọn hồ sơ, khoa, ngày, slot, lý do và xác nhận.
+- Bao gồm chọn hồ sơ, khoa, ngày, slot, dịch vụ, lý do và xác nhận.
+- Trên Patient Mobile, bệnh nhân chọn fixture `GENERAL_CONSULTATION`/“Khám
+  thường” giá demo `150.000 ₫`, sau đó chọn `ONLINE_MOCK` hoặc
+  `CASH_AT_HOSPITAL`. Tiền mặt chỉ hiển thị `DUE_AT_HOSPITAL`.
+- Nếu chọn `CASH_AT_HOSPITAL`, thu ngân xác nhận khoản phí khám đã thu trước khi
+  check-in; chỉ số tiền thực tế đã thu mới được cộng vào `prepaidAmount`.
 - Bệnh nhân không chọn phòng. Appointment Service truy vấn `ClinicRoom` active
   của khoa và, theo chính sách MVP, chỉ tiếp tục khi có đúng một phòng phù hợp.
 - Kết thúc: Appointment lưu `roomId`, chuyển `CONFIRMED`, sau đó phát sự kiện cấp
   Visit Ticket cho đúng phòng.
+- Appointment Service chưa nhận payment/service contract. Mobile lưu
+  `AppointmentPaymentReceipt` qua local adapter; lỗi local không làm hỏng lịch
+  hẹn đã tạo thành công.
 - Ngoại lệ: ca đã qua, trùng lịch, hết capacity, không sở hữu hồ sơ hoặc cấu hình
   phòng trả 0/nhiều hơn 1 kết quả trong MVP.
 
@@ -103,8 +109,8 @@ hiện trong luồng khác.
 ### `UC-LAB-01` — Tạo chỉ định cận lâm sàng
 
 - Bác sĩ tạo order từ consultation đang `IN_PROGRESS`.
-- Nếu cần thanh toán, order chờ online mock hoặc thu ngân xác nhận tiền mặt.
-- Khi đủ điều kiện, Queue tự tạo `LAB_EXECUTION`; bệnh nhân không check-in lại.
+- Order hợp lệ được ghi nhận đơn giá/thành tiền và Queue tự tạo
+  `LAB_EXECUTION`; bệnh nhân không thanh toán hay check-in lại tại bước này.
 
 ### `UC-LAB-03` — Thực hiện, phát hành và đọc kết quả
 
@@ -119,13 +125,17 @@ hiện trong luồng khác.
 
 - Bác sĩ tạo, kiểm tra và xác nhận toa.
 - Có thể tạo follow-up appointment.
-- Hoàn tất Consultation, Queue Entry và Appointment; bệnh nhân xem kết quả sau khám.
+- Hoàn tất Consultation, Queue Entry và Appointment; hệ thống chốt
+  `totalVisitCost` từ phí khám, cận lâm sàng và thuốc để chuẩn bị quyết toán.
 
 ### `UC-PHA-01` — Gọi lượt và phát thuốc
 
 - Toa `CONFIRMED` làm Queue Service tạo một entry `PHARMACY_DISPENSING` tại điểm
   cấp phát mặc định; bệnh nhân không check-in lại.
 - Nhân viên cấp phát xem queue FIFO, gọi lượt, đối chiếu bệnh nhân và bắt đầu phục vụ.
+- Hệ thống tính `amountDue = max(0, totalVisitCost - prepaidAmount)` và
+  `refundDue = max(0, prepaidAmount - totalVisitCost)`. Chỉ `PAYMENT_DUE` chặn
+  xác nhận phát thuốc; `SETTLED`, `REFUND_PENDING` và `REFUNDED` đều cho phép.
 - Nhân viên xác nhận đã phát thuốc; Prescription chuyển `DISPENSED` và Queue Entry
   tương ứng chuyển `COMPLETED`.
 - Ngoại lệ chính: toa đã hủy/đã phát, sai điểm phục vụ, lượt chưa được gọi hoặc
@@ -135,11 +145,17 @@ hiện trong luồng khác.
 
 - `Đặt lịch khám` **include** `Tra cứu khoa và khung giờ`.
 - `Đặt lịch khám` **include** `Chọn hồ sơ bệnh nhân`.
+- `Đặt lịch khám` **include** `Chọn dịch vụ và ghi nhận lựa chọn thanh toán Mobile`
+  ở mức UX; đây không phải lời gọi Payment Service.
+- `UC-PAY-01 — Thanh toán và quyết toán lượt khám` **extend** `Đặt lịch khám` để
+  ghi nhận phí khám trả trước.
 - `Quản lý và gọi lượt` **extend** `Gọi lại/đánh dấu lỡ lượt` khi bệnh nhân vắng.
 - `Thực hiện phiên khám` **extend** `Tạo chỉ định cận lâm sàng` khi cần xét nghiệm.
 - `Thực hiện và phát hành kết quả` **include** `Tạo lượt quay lại đọc kết quả` khi đủ kết quả.
 - `Kê toa và hoàn tất` **extend** `Tạo lịch tái khám` khi bác sĩ yêu cầu.
 - `Gọi lượt và phát thuốc` **include** `Đối chiếu toa và Queue Entry` trước khi
   xác nhận cấp phát.
+- `UC-PAY-01 — Thanh toán và quyết toán lượt khám` **extend** `Gọi lượt và phát
+  thuốc` để quyết toán cuối lượt trước khi xác nhận cấp phát.
 
 Không lạm dụng `include`/`extend` cho các bước kỹ thuật nội bộ hoặc lời gọi API.
