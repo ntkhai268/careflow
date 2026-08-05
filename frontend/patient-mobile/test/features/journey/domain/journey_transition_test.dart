@@ -149,6 +149,69 @@ void main() {
     expect(completed.status, JourneyStatus.completed);
   });
 
+  test('queues laboratory work without a separate payment transition', () {
+    final queued = JourneyTransition.apply(
+      journeyAt(JourneyStatus.labOrdered),
+      JourneyEvent.laboratoryQueued,
+      now: now,
+    );
+
+    expect(queued.status, JourneyStatus.waitingLab);
+  });
+
+  test('supports the final visit settlement and dispensing flow', () {
+    final pending = JourneyTransition.apply(
+      journeyAt(JourneyStatus.prescribed),
+      JourneyEvent.settlementCalculated,
+      now: now,
+    );
+    expect(pending.status, JourneyStatus.settlementPending);
+
+    final due = JourneyTransition.apply(
+      pending,
+      JourneyEvent.settlementPaymentRequested,
+      now: now.add(const Duration(minutes: 1)),
+    );
+    expect(due.status, JourneyStatus.paymentDue);
+
+    final settled = JourneyTransition.apply(
+      due,
+      JourneyEvent.settlementAcknowledged,
+      now: now.add(const Duration(minutes: 2)),
+    );
+    expect(settled.status, JourneyStatus.settled);
+
+    final ready = JourneyTransition.apply(
+      settled,
+      JourneyEvent.medicationDispensed,
+      now: now.add(const Duration(minutes: 3)),
+    );
+    expect(ready.status, JourneyStatus.medicationReady);
+  });
+
+  test('allows refund pending and refund completion without blocking dispense', () {
+    final pending = JourneyTransition.apply(
+      journeyAt(JourneyStatus.settlementPending),
+      JourneyEvent.settlementRefundRequested,
+      now: now,
+    );
+    expect(pending.status, JourneyStatus.refundPending);
+
+    final refunded = JourneyTransition.apply(
+      pending,
+      JourneyEvent.refundAcknowledged,
+      now: now.add(const Duration(minutes: 1)),
+    );
+    expect(refunded.status, JourneyStatus.refunded);
+
+    final ready = JourneyTransition.apply(
+      refunded,
+      JourneyEvent.medicationDispensed,
+      now: now.add(const Duration(minutes: 2)),
+    );
+    expect(ready.status, JourneyStatus.medicationReady);
+  });
+
   test(
     'adds Vietnamese timeline and unread notification for a ticket event',
     () {

@@ -77,19 +77,37 @@ _StatusPresentation _presentationFor(JourneyStatus status) => switch (status) {
     Icons.medication_rounded,
     AppColors.info,
     'Đã kê toa thuốc',
-    'Vui lòng thanh toán tiền thuốc để nhà thuốc chuẩn bị đơn.',
+    'Hệ thống đang tổng hợp quyết toán cuối lượt khám.',
   ),
-  JourneyStatus.prescriptionPaymentPending => const _StatusPresentation(
+  JourneyStatus.settlementPending => const _StatusPresentation(
+    Icons.receipt_long_rounded,
+    AppColors.info,
+    'Đã lập quyết toán lượt khám',
+    'Tổng hợp phí khám, xét nghiệm và thuốc đã sẵn sàng.',
+  ),
+  JourneyStatus.paymentDue => const _StatusPresentation(
     Icons.payment_rounded,
     AppColors.warning,
-    'Chờ thanh toán tiền thuốc',
-    'Chọn phương thức thanh toán để tiếp tục nhận thuốc.',
+    'Cần thanh toán phần còn lại',
+    'Thanh toán trước khi nhận thuốc tại bệnh viện.',
   ),
-  JourneyStatus.prescriptionPaid => const _StatusPresentation(
-    Icons.inventory_2_rounded,
-    AppColors.info,
-    'Nhà thuốc đang chuẩn bị đơn',
-    'Bạn sẽ nhận thông báo khi thuốc sẵn sàng.',
+  JourneyStatus.settled => const _StatusPresentation(
+    Icons.verified_rounded,
+    AppColors.success,
+    'Đã quyết toán lượt khám',
+    'Nhà thuốc có thể tiếp nhận và phát thuốc theo đơn.',
+  ),
+  JourneyStatus.refundPending => const _StatusPresentation(
+    Icons.currency_exchange_rounded,
+    AppColors.warning,
+    'Đang chờ hoàn khoản dư',
+    'Khoản hoàn không chặn việc nhận thuốc.',
+  ),
+  JourneyStatus.refunded => const _StatusPresentation(
+    Icons.check_circle_outline_rounded,
+    AppColors.success,
+    'Đã hoàn khoản dư',
+    'Nhà thuốc có thể tiếp nhận và phát thuốc theo đơn.',
   ),
   JourneyStatus.medicationReady => const _StatusPresentation(
     Icons.local_pharmacy_rounded,
@@ -97,11 +115,36 @@ _StatusPresentation _presentationFor(JourneyStatus status) => switch (status) {
     'Thuốc đã sẵn sàng',
     'Đến quầy thuốc để nhận thuốc theo đơn.',
   ),
-  _ => const _StatusPresentation(
-    Icons.info_outline_rounded,
+  JourneyStatus.completed => const _StatusPresentation(
+    Icons.task_alt_rounded,
+    AppColors.success,
+    'Lượt khám đã hoàn tất',
+    'Bạn có thể xem lại kết quả và toa thuốc trong hồ sơ.',
+  ),
+  JourneyStatus.paymentPending ||
+  JourneyStatus.prescriptionPaymentPending ||
+  JourneyStatus.prescriptionPaid => const _StatusPresentation(
+    Icons.sync_rounded,
     AppColors.info,
-    'Hành trình khám',
-    'Thông tin hành trình sẽ được cập nhật tại đây.',
+    'Đang đồng bộ hành trình',
+    'Dữ liệu cũ sẽ được chuyển sang quyết toán cuối lượt.',
+  ),
+  JourneyStatus.booked => const _StatusPresentation(
+    Icons.event_note_rounded,
+    AppColors.info,
+    'Đã đặt lịch',
+    'Phiếu khám sẽ được phát hành sau khi lịch hẹn được xác nhận.',
+  ),
+  JourneyStatus.labOrdered ||
+  JourneyStatus.waitingLab ||
+  JourneyStatus.labInProgress ||
+  JourneyStatus.labResultReady ||
+  JourneyStatus.waitingResultReview ||
+  JourneyStatus.resultReview => const _StatusPresentation(
+    Icons.science_rounded,
+    AppColors.info,
+    'Đang xử lý xét nghiệm',
+    'Theo dõi hàng đợi và kết quả xét nghiệm tại đây.',
   ),
 };
 

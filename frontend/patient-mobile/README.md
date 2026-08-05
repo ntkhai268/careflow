@@ -3,7 +3,7 @@
 ## Chạy ứng dụng
 
 Từ thư mục `frontend/patient-mobile`, cài dependency bằng `flutter pub get`, sau
-đó chọn một trong các chế độ:
+đó chọn một chế độ:
 
 ```text
 flutter run --dart-define=DEMO_MODE=true
@@ -12,47 +12,59 @@ flutter run --dart-define=DEMO_MODE=true --dart-define=API_BASE_URL=<gateway>
 ```
 
 - `DEMO_MODE=true` bật hành trình khám mô phỏng. Đăng nhập, chọn hồ sơ bệnh
-  nhân, rồi tạo hoặc mở một lịch hẹn thật từ API. Phiếu khám và các bước tiếp
-  theo của lịch hẹn đó được lưu cục bộ, tách biệt theo tài khoản và bệnh nhân.
-- `DEMO_MODE=false` tắt toàn bộ dữ liệu và điều khiển hành trình mô phỏng. Khi
-  backend hành trình chưa sẵn sàng, ứng dụng hiển thị thông báo không khả dụng
-  và không tự chuyển sang dữ liệu demo.
-- `API_BASE_URL` đổi gateway cho các API thật. Nếu không truyền giá trị này,
-  ứng dụng dùng gateway mặc định trong `ApiConfig`.
+  nhân, rồi tạo hoặc mở một lịch hẹn thật từ API. Các bước sau lịch hẹn được
+  lưu cục bộ, tách biệt theo tài khoản và bệnh nhân.
+- `DEMO_MODE=false` tắt dữ liệu và điều khiển mô phỏng. Khi backend hành trình
+  chưa sẵn sàng, ứng dụng hiển thị trạng thái chưa khả dụng.
+- `API_BASE_URL` thay gateway cho các API thật. Nếu bỏ qua, ứng dụng dùng
+  gateway mặc định trong `ApiConfig`.
 
-Đăng nhập/đăng ký, hồ sơ bệnh nhân, lịch hẹn và hồ sơ sức khỏe luôn gọi API
-thật qua gateway, kể cả khi `DEMO_MODE=true`. Chỉ phần hành trình sau khi lịch
-hẹn API đã được tạo hoặc tải thành công mới dùng mô phỏng cục bộ.
+Đăng nhập/đăng ký, hồ sơ bệnh nhân, lịch hẹn và hồ sơ sức khỏe luôn gọi API thật
+qua gateway, kể cả khi `DEMO_MODE=true`. Chỉ phần hành trình sau khi lịch hẹn API
+đã tạo hoặc tải thành công mới dùng adapter mô phỏng cục bộ.
+
+## Luồng thanh toán Mobile MVP
+
+Mobile dùng hai thời điểm thanh toán theo quyết định mới nhất trên `develop`:
+
+1. Khi đặt lịch, bệnh nhân trả trước phí khám thường (fixture hiện tại:
+   150.000 VND) bằng online mock hoặc chọn tiền mặt tại bệnh viện.
+2. Sau khi bác sĩ kết luận/kê toa, hệ thống lập **quyết toán cuối lượt khám**:
+   tổng hợp phí khám, xét nghiệm và thuốc rồi trừ khoản đã trả trước.
+
+Xét nghiệm được đưa thẳng vào hàng đợi, không có màn hình thanh toán xét nghiệm
+riêng. Toa thuốc được đưa vào hàng đợi nhà thuốc, không có màn hình thanh toán
+tiền thuốc riêng. Chỉ trạng thái `PAYMENT_DUE` chặn phát thuốc; `SETTLED`,
+`REFUND_PENDING` và `REFUNDED` đều cho phép phát thuốc.
+
+Trong demo, màn hình **Quyết toán lượt khám** mô phỏng số tiền còn phải trả,
+online mock/tiền mặt, hoàn khoản dư và xác nhận đã nhận thuốc. Adapter này sẽ
+được thay bằng Visit Settlement Service khi backend hoàn thiện.
 
 ## Chạy hành trình khám đầy đủ
 
-Trong chế độ demo, vào tab lịch hẹn, mở một lịch hẹn và chọn **Hành trình
-khám**. Thẻ **Điều khiển mô phỏng** xuất hiện trong màn hình **Hành trình
-khám** và chỉ cung cấp sự kiện hợp lệ tiếp theo của nhân viên hoặc bác sĩ.
-Dùng nút ngữ cảnh phía trên thẻ để mở phiếu khám, hàng đợi, khám bệnh, xét
-nghiệm, đọc kết quả hoặc kết quả lượt khám. Ở bước chờ thanh toán, mở
-**Xem xét nghiệm** và chọn một phương thức thanh toán, sau đó quay lại màn hình
-hành trình để tiếp tục mô phỏng.
+Trong chế độ demo, vào tab lịch hẹn, mở một lịch hẹn và chọn **Hành trình khám**.
+Thẻ **Điều khiển mô phỏng** chỉ cung cấp sự kiện hợp lệ tiếp theo của nhân viên
+hoặc bác sĩ. Nút ngữ cảnh cho phép mở phiếu khám, hàng đợi, khám bệnh, xét
+nghiệm, đọc kết quả, quyết toán hoặc kết quả lượt khám.
 
-Nút **Đặt lại hành trình** yêu cầu xác nhận và chỉ xóa hành trình của lịch hẹn
-đang hoạt động. Dữ liệu của tài khoản, bệnh nhân và lịch hẹn khác không bị xóa.
+Nút **Đặt lại hành trình** yêu cầu xác nhận và chỉ xóa dữ liệu của lịch hẹn đang
+hoạt động.
 
 ## Kiểm tra và build APK demo
 
 ```text
-flutter test
-flutter analyze
+flutter test --no-pub
+flutter analyze --no-pub
 flutter build apk --debug --dart-define=DEMO_MODE=true
 ```
 
 APK debug được tạo tại `build/app/outputs/flutter-apk/app-debug.apk`.
 
-## Chạy hybrid demo với Gateway local và điện thoại Android thật
+## Chạy hybrid demo với Gateway local và Android thật
 
 Hướng dẫn đầy đủ nằm tại
 [`../../docs/local-patient-mobile-demo.md`](../../docs/local-patient-mobile-demo.md).
-
-Lệnh chạy nhanh sau khi năm container core đã `UP`:
 
 ```text
 adb reverse tcp:8080 tcp:8080
@@ -61,6 +73,3 @@ flutter run \
   --dart-define=API_BASE_URL=http://127.0.0.1:8080/api \
   --dart-define=WS_BASE_URL=ws://127.0.0.1:8080/ws
 ```
-
-`DEMO_MODE=true` không mock Auth, Patient, khoa, ca khám hoặc Appointment. Không
-truyền `API_BASE_URL` sẽ dùng Gateway public mặc định, không phải Gateway local.

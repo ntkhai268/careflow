@@ -53,6 +53,40 @@ class ControlledBootstrapRepository implements JourneyRepository {
       Future<void>.error(UnimplementedError());
 }
 
+class SettlementCapableRepository
+    implements JourneyRepository, VisitSettlementRepository {
+  @override
+  Future<PatientJourney> bootstrap({
+    required Appointment appointment,
+    required String patientId,
+  }) => Future.value(journeyForPatient(patientId, appointment.id));
+
+  @override
+  Future<PatientJourney> advance(PatientJourney journey, JourneyEvent event) =>
+      Future.value(journey);
+
+  @override
+  Future<PatientJourney> acknowledgePayment(
+    PatientJourney journey,
+    PaymentMethod method,
+  ) => Future.value(journey);
+
+  @override
+  Future<PatientJourney> acknowledgeSettlement(
+    PatientJourney journey,
+    PaymentMethod method,
+  ) => Future.value(journey.copyWith(status: JourneyStatus.settled));
+
+  @override
+  Future<PatientJourney> markNotificationRead(
+    PatientJourney journey,
+    String notificationId,
+  ) => Future.value(journey);
+
+  @override
+  Future<void> reset(PatientJourney journey) async {}
+}
+
 class ConfigurablePersistence implements JourneyPersistenceAdapter {
   bool setSucceeds = true;
   bool removeSucceeds = true;
@@ -356,6 +390,22 @@ void main() {
       controller.dispose();
     },
   );
+
+  test('forwards final settlement acknowledgement to the repository capability', () async {
+    final controller = JourneyController(
+      repository: SettlementCapableRepository(),
+      demoMode: true,
+    );
+    controller.state = AsyncData(
+      journeyForPatient('patient-a', 'apt-settlement').copyWith(
+        status: JourneyStatus.paymentDue,
+      ),
+    );
+
+    expect(await controller.acknowledgeSettlement(PaymentMethod.online), isTrue);
+    expect(controller.state.requireValue!.status, JourneyStatus.settled);
+    controller.dispose();
+  });
 
   test(
     'failed persisted mutation retains data and succeeds on retry',

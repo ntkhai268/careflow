@@ -77,6 +77,18 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
     );
   }
 
+  Future<bool> acknowledgeSettlement(PaymentMethod method) {
+    final repository = _repository;
+    if (repository is! VisitSettlementRepository) {
+      _onActionError('TĂ­nh nÄƒng quyáº¿t toĂ¡n Ä‘ang chá» backend triá»ƒn khai');
+      return Future.value(false);
+    }
+    final capability = repository as VisitSettlementRepository;
+    return _runDemoAction(
+      (journey) => capability.acknowledgeSettlement(journey, method),
+    );
+  }
+
   Future<void> markNotificationRead(String notificationId) async {
     final journey = state.valueOrNull;
     if (journey == null) return;

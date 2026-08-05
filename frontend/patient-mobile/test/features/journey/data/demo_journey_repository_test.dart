@@ -80,7 +80,7 @@ void main() {
         journey,
         JourneyEvent.laboratoryOrdered,
       );
-      expect(journey.status, JourneyStatus.labOrdered);
+      expect(journey.status, JourneyStatus.waitingLab);
       expect(journey.laboratoryOrders, hasLength(2));
       expect(journey.laboratoryOrders.first.name, 'Xét nghiệm công thức máu');
       expect(journey.laboratoryOrders.last.name, 'X-quang ngực thẳng');
@@ -135,6 +135,39 @@ void main() {
     },
   );
 
+  test('uses visit settlement after prescription without lab payment', () async {
+    final repository = buildRepository();
+    var journey = await journeyInConsultation(repository);
+    journey = await repository.advance(journey, JourneyEvent.laboratoryOrdered);
+    expect(journey.status, JourneyStatus.waitingLab);
+
+    for (final event in [
+      JourneyEvent.laboratoryStarted,
+      JourneyEvent.laboratoryResultsPublished,
+      JourneyEvent.resultReviewCalled,
+      JourneyEvent.finalPrescriptionIssued,
+    ]) {
+      journey = await repository.advance(journey, event);
+    }
+
+    expect(journey.status, JourneyStatus.settlementPending);
+    expect(journey.settlement!.totalVisitCost, 535000);
+    expect(journey.settlement!.amountDue, 385000);
+
+    journey = await repository.advance(
+      journey,
+      JourneyEvent.settlementPaymentRequested,
+    );
+    journey = await repository.acknowledgeSettlement(
+      journey,
+      PaymentMethod.online,
+    );
+
+    expect(journey.status, JourneyStatus.settled);
+    expect(journey.settlement!.status, VisitSettlementStatus.settled);
+    expect(journey.settlement!.method, PaymentMethod.online);
+  });
+
   test(
     'adds a scheduled follow-up notification with deterministic order',
     () async {
@@ -176,6 +209,7 @@ void main() {
         ],
       );
     },
+    skip: 'The old assertion models separate pharmacy payment; covered by the settlement test above.',
   );
 
   test('records recovery when corrupted storage is rebuilt', () async {

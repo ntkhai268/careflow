@@ -8,6 +8,7 @@ class DemoJourneyRepository
     implements
         JourneyRepository,
         PrescriptionPaymentRepository,
+        VisitSettlementRepository,
         JourneySnapshotRepository {
   DemoJourneyRepository({required JourneyStore store, DateTime Function()? now})
     : _store = store,
@@ -17,6 +18,8 @@ class DemoJourneyRepository
   final DateTime Function() _now;
   DateTime? _lastTimestamp;
   static const _demoDoctorName = 'BS. Nguyễn Minh Anh (dữ liệu mô phỏng)';
+  static const _demoConsultationFee = 150000;
+  static const _demoPrepaidAmount = 150000;
   static const _demoMedicationTotal = 85000;
 
   @override
@@ -71,6 +74,12 @@ class DemoJourneyRepository
     PatientJourney journey,
     JourneyEvent event,
   ) async {
+    // Previously persisted demos may replay the removed lab payment event
+    // after the order has already entered the queue. Treat it as a no-op.
+    if (event == JourneyEvent.paymentRequested &&
+        journey.status == JourneyStatus.waitingLab) {
+      return journey;
+    }
     var next = JourneyTransition.apply(journey, event, now: _timestamp());
     if (event == JourneyEvent.staffScannedQr) {
       next = JourneyTransition.apply(
@@ -110,6 +119,11 @@ class DemoJourneyRepository
         );
       case JourneyEvent.laboratoryOrdered:
         next = next.copyWith(laboratoryOrders: _laboratoryOrders(next));
+        next = JourneyTransition.apply(
+          next,
+          JourneyEvent.laboratoryQueued,
+          now: _timestamp(),
+        );
       case JourneyEvent.admittedToResultReviewQueue:
         next = next.copyWith(resultReviewQueue: _resultReviewQueue(next));
       case JourneyEvent.directPrescriptionIssued:
@@ -120,6 +134,39 @@ class DemoJourneyRepository
           id: 'follow-up-scheduled',
           title: 'Tái khám đã lên lịch',
           body: 'Lịch tái khám của bạn đã được đặt sau 7 ngày.',
+        );
+        next = JourneyTransition.apply(
+          next,
+          JourneyEvent.settlementCalculated,
+          now: _timestamp(),
+        ).copyWith(settlement: _calculateSettlement(next));
+      case JourneyEvent.settlementCalculated:
+        next = next.copyWith(settlement: _calculateSettlement(next));
+      case JourneyEvent.settlementPaymentRequested:
+        next = next.copyWith(
+          settlement: next.settlement?.copyWith(
+            status: VisitSettlementStatus.paymentDue,
+          ),
+        );
+      case JourneyEvent.settlementRefundRequested:
+        next = next.copyWith(
+          settlement: next.settlement?.copyWith(
+            status: VisitSettlementStatus.refundPending,
+          ),
+        );
+      case JourneyEvent.settlementAcknowledged:
+        next = next.copyWith(
+          settlement: next.settlement?.copyWith(
+            status: VisitSettlementStatus.settled,
+            acknowledgedAt: _timestamp(),
+          ),
+        );
+      case JourneyEvent.refundAcknowledged:
+        next = next.copyWith(
+          settlement: next.settlement?.copyWith(
+            status: VisitSettlementStatus.refunded,
+            acknowledgedAt: _timestamp(),
+          ),
         );
       default:
         break;
@@ -133,6 +180,20 @@ class DemoJourneyRepository
     PatientJourney journey,
     PaymentMethod method,
   ) async {
+    if (journey.status == JourneyStatus.waitingLab) {
+      final next = journey.copyWith(
+        payment: VisitPayment(
+          method: method,
+          amount: journey.laboratoryOrders.fold(
+            0,
+            (sum, order) => sum + order.price,
+          ),
+          acknowledgedAt: _timestamp(),
+        ),
+      );
+      await _store.save(next);
+      return next;
+    }
     final next =
         JourneyTransition.apply(
           journey,
@@ -169,6 +230,27 @@ class DemoJourneyRepository
             acknowledgedAt: _timestamp(),
           ),
         );
+    await _store.save(next);
+    return next;
+  }
+
+  @override
+  Future<PatientJourney> acknowledgeSettlement(
+    PatientJourney journey,
+    PaymentMethod method,
+  ) async {
+    final timestamp = _timestamp();
+    final next = JourneyTransition.apply(
+      journey,
+      JourneyEvent.settlementAcknowledged,
+      now: timestamp,
+    ).copyWith(
+      settlement: journey.settlement?.copyWith(
+        status: VisitSettlementStatus.settled,
+        method: method,
+        acknowledgedAt: timestamp,
+      ),
+    );
     await _store.save(next);
     return next;
   }
@@ -282,6 +364,8 @@ class DemoJourneyRepository
           frequency: '3 lần/ngày',
           duration: '5 ngày',
           caution: 'Uống sau ăn; không dùng quá liều khuyến cáo.',
+          unitPrice: 25000,
+          quantity: 1,
         ),
         PrescriptionItem(
           medicationName: 'Amoxicillin 500 mg',
@@ -290,6 +374,8 @@ class DemoJourneyRepository
           frequency: '2 lần/ngày',
           duration: '7 ngày',
           caution: 'Uống đủ liệu trình theo chỉ định.',
+          unitPrice: 60000,
+          quantity: 1,
         ),
       ],
     ),
@@ -299,6 +385,28 @@ class DemoJourneyRepository
       note: 'Tái khám nếu triệu chứng không cải thiện.',
     ),
   );
+
+  VisitSettlement _calculateSettlement(PatientJourney journey) =>
+      VisitSettlement.calculate(
+        consultationFee: _demoConsultationFee,
+        laboratoryTotal: journey.laboratoryOrders.fold(
+          0,
+          (sum, order) => sum + order.price,
+        ),
+        medicationTotal: journey.prescription == null
+            ? 0
+            : _medicationTotal(journey.prescription!),
+        prepaidAmount: _demoPrepaidAmount,
+        calculatedAt: journey.updatedAt,
+      );
+
+  int _medicationTotal(Prescription prescription) {
+    final pricedTotal = prescription.items.fold(
+      0,
+      (sum, item) => sum + item.lineAmount,
+    );
+    return pricedTotal == 0 ? _demoMedicationTotal : pricedTotal;
+  }
 
   PatientJourney _appendNotification(
     PatientJourney journey, {

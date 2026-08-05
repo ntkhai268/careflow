@@ -21,10 +21,7 @@ class DemoControlSheet extends ConsumerWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Điều khiển mô phỏng',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Điều khiển mô phỏng', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: AppSpacing.xs),
             const Text('Chỉ dùng để mô phỏng sự kiện từ nhân viên và bác sĩ.'),
             const SizedBox(height: AppSpacing.md),
@@ -58,9 +55,7 @@ class DemoControlSheet extends ConsumerWidget {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Xác nhận đặt lại hành trình?'),
-        content: const Text(
-          'Dữ liệu mô phỏng của lịch hẹn hiện tại sẽ bị xóa.',
-        ),
+        content: const Text('Dữ liệu mô phỏng của lịch hẹn hiện tại sẽ bị xóa.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -86,31 +81,20 @@ List<_DemoEvent> _eventsFor(JourneyStatus status) => switch (status) {
   JourneyStatus.checkedIn => const [
     _DemoEvent(
       JourneyEvent.admittedToClinicQueue,
-      'Mô phỏng nhân viên đưa vào hàng đợi',
+      'Mô phỏng đưa vào hàng đợi khám',
     ),
   ],
   JourneyStatus.waiting => const [
     _DemoEvent(JourneyEvent.doctorCalled, 'Mô phỏng bác sĩ gọi'),
   ],
   JourneyStatus.called => const [
-    _DemoEvent(
-      JourneyEvent.consultationStarted,
-      'Mô phỏng bác sĩ bắt đầu khám',
-    ),
+    _DemoEvent(JourneyEvent.consultationStarted, 'Mô phỏng bắt đầu khám'),
   ],
   JourneyStatus.inConsultation => const [
-    _DemoEvent(
-      JourneyEvent.laboratoryOrdered,
-      'Mô phỏng bác sĩ chỉ định xét nghiệm',
-    ),
-    _DemoEvent(
-      JourneyEvent.directPrescriptionIssued,
-      'Mô phỏng bác sĩ kê đơn trực tiếp',
-    ),
+    _DemoEvent(JourneyEvent.laboratoryOrdered, 'Mô phỏng chỉ định xét nghiệm'),
+    _DemoEvent(JourneyEvent.directPrescriptionIssued, 'Mô phỏng kê đơn trực tiếp'),
   ],
-  JourneyStatus.labOrdered => const [
-    _DemoEvent(JourneyEvent.paymentRequested, 'Mô phỏng yêu cầu thanh toán'),
-  ],
+  JourneyStatus.labOrdered || JourneyStatus.paymentPending => const [],
   JourneyStatus.waitingLab => const [
     _DemoEvent(JourneyEvent.laboratoryStarted, 'Mô phỏng bắt đầu xét nghiệm'),
   ],
@@ -137,19 +121,32 @@ List<_DemoEvent> _eventsFor(JourneyStatus status) => switch (status) {
   ],
   JourneyStatus.prescribed => const [
     _DemoEvent(
-      JourneyEvent.prescriptionPaymentRequested,
-      'Mô phỏng yêu cầu thanh toán tiền thuốc',
+      JourneyEvent.settlementCalculated,
+      'Mô phỏng lập quyết toán lượt khám',
     ),
-    _DemoEvent(JourneyEvent.visitCompleted, 'Mô phỏng hoàn tất lượt khám'),
   ],
-  JourneyStatus.prescriptionPaymentPending => const [],
-  JourneyStatus.prescriptionPaid => const [
-    _DemoEvent(JourneyEvent.medicationDispensed, 'Mô phỏng thuốc đã sẵn sàng'),
+  JourneyStatus.settlementPending => const [
+    _DemoEvent(
+      JourneyEvent.settlementPaymentRequested,
+      'Mô phỏng yêu cầu thanh toán phần còn lại',
+    ),
   ],
+  JourneyStatus.paymentDue => const [],
+  JourneyStatus.settled => const [
+    _DemoEvent(JourneyEvent.medicationDispensed, 'Mô phỏng thuốc đã phát'),
+  ],
+  JourneyStatus.refundPending => const [
+    _DemoEvent(JourneyEvent.refundAcknowledged, 'Mô phỏng đã hoàn khoản dư'),
+  ],
+  JourneyStatus.refunded => const [
+    _DemoEvent(JourneyEvent.medicationDispensed, 'Mô phỏng thuốc đã phát'),
+  ],
+  JourneyStatus.prescriptionPaymentPending || JourneyStatus.prescriptionPaid =>
+    const [],
   JourneyStatus.medicationReady => const [
     _DemoEvent(JourneyEvent.visitCompleted, 'Mô phỏng hoàn tất lượt khám'),
   ],
-  _ => const [],
+  JourneyStatus.completed || JourneyStatus.booked => const [],
 };
 
 class _DemoEvent {

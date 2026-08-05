@@ -6,124 +6,74 @@ import '../application/journey_providers.dart';
 import '../domain/journey_models.dart';
 import 'widgets/journey_status_card.dart';
 
-class LaboratoryScreen extends ConsumerStatefulWidget {
+/// Laboratory orders are queued immediately after the doctor submits them.
+/// Payment is intentionally handled later by the visit settlement screen.
+class LaboratoryScreen extends ConsumerWidget {
   const LaboratoryScreen({super.key, required this.appointmentId});
 
   final String appointmentId;
 
   @override
-  ConsumerState<LaboratoryScreen> createState() => _LaboratoryScreenState();
-}
-
-class _LaboratoryScreenState extends ConsumerState<LaboratoryScreen> {
-  String? _paymentMessage;
-  bool _paymentFailed = false;
-  bool _isSubmitting = false;
-
-  Future<void> _acknowledgePayment(PaymentMethod method, bool demoMode) async {
-    if (_isSubmitting) return;
-    setState(() {
-      _isSubmitting = true;
-      _paymentMessage = null;
-      _paymentFailed = false;
-    });
-    final controller = ref.read(journeyControllerProvider.notifier);
-    final acknowledged = await controller.acknowledgePayment(method);
-    if (!mounted) return;
-    final message = !demoMode
-        ? 'Tính năng đang chờ backend triển khai'
-        : !acknowledged
-        ? 'Không thể ghi nhận thanh toán. Vui lòng thử lại.'
-        : _successMessage(method);
-    setState(() {
-      _isSubmitting = false;
-      // Keep successful acknowledgement visible in the page. Failures stay
-      // in a SnackBar so the same copy is not rendered twice.
-      _paymentMessage = acknowledged ? message : null;
-      _paymentFailed = false;
-    });
-    if (!acknowledged) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          backgroundColor: AppColors.error,
-          content: Text(message),
-        ),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final journey = ref.watch(
-      journeyForAppointmentProvider(widget.appointmentId),
-    );
-    final demoMode = ref.watch(demoModeProvider);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final journey = ref.watch(journeyForAppointmentProvider(appointmentId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Xét nghiệm và thanh toán')),
+      appBar: AppBar(title: const Text('Xét nghiệm')),
       body: journey.when(
-        loading: () =>
-            const Center(child: Text('Đang tải chỉ định xét nghiệm...')),
-        error: (_, _) =>
-            const Center(child: Text('Không thể tải thông tin xét nghiệm.')),
+        loading: () => const Center(child: Text('Đang tải chỉ định xét nghiệm...')),
+        error: (_, _) => const Center(
+          child: Text('Không thể tải thông tin xét nghiệm.'),
+        ),
         data: (value) => value == null
             ? const Center(child: Text('Chưa có chỉ định xét nghiệm.'))
-            : ListView(
-                padding: const EdgeInsets.all(AppSpacing.base),
-                children: [
-                  JourneyStatusCard(journey: value),
-                  if (_paymentMessage != null) ...[
-                    const SizedBox(height: AppSpacing.base),
-                    _PaymentMessage(
-                      message: _paymentMessage!,
-                      isError: _paymentFailed,
-                    ),
-                  ],
-                  const SizedBox(height: AppSpacing.base),
-                  _LaboratoryInstruction(journey: value),
-                  const SizedBox(height: AppSpacing.base),
-                  if (value.status == JourneyStatus.paymentPending) ...[
-                    _PaymentMethods(
-                      isSubmitting: _isSubmitting,
-                      onSelected: (method) =>
-                          _acknowledgePayment(method, demoMode),
-                    ),
-                    const SizedBox(height: AppSpacing.base),
-                  ],
-                  for (final order in value.laboratoryOrders) ...[
-                    _LaboratoryOrderCard(order: order),
-                    const SizedBox(height: AppSpacing.md),
-                  ],
-                ],
-              ),
+            : _buildBody(context, value),
       ),
     );
   }
-}
 
-class _LaboratoryInstruction extends StatelessWidget {
-  const _LaboratoryInstruction({required this.journey});
-
-  final PatientJourney journey;
-
-  @override
-  Widget build(BuildContext context) {
-    final message = switch (journey.status) {
-      JourneyStatus.labOrdered => 'Bác sĩ đã chỉ định xét nghiệm cho bạn.',
-      JourneyStatus.paymentPending => 'Vui lòng chọn phương thức thanh toán.',
-      JourneyStatus.waitingLab =>
-        'Chỉ định đã được tiếp nhận. Vui lòng đến đúng nơi thực hiện.',
-      JourneyStatus.labInProgress => 'Xét nghiệm đang được thực hiện.',
-      JourneyStatus.labResultReady => 'Kết quả xét nghiệm đã sẵn sàng.',
-      _ => 'Theo dõi thông tin chỉ định xét nghiệm tại đây.',
-    };
-    return Card(
-      color: AppColors.primarySurface,
-      child: Padding(
-        padding: const EdgeInsets.all(AppSpacing.base),
-        child: Text(message, style: Theme.of(context).textTheme.titleMedium),
-      ),
+  Widget _buildBody(BuildContext context, PatientJourney journey) {
+    if (journey.laboratoryOrders.isEmpty) {
+      return const Center(child: Text('Chưa có chỉ định xét nghiệm.'));
+    }
+    final total = journey.laboratoryOrders.fold(
+      0,
+      (sum, order) => sum + order.price,
+    );
+    return ListView(
+      padding: const EdgeInsets.all(AppSpacing.base),
+      children: [
+        JourneyStatusCard(journey: journey),
+        const SizedBox(height: AppSpacing.base),
+        Card(
+          color: AppColors.primarySurface,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.base),
+            child: Text(_messageFor(journey.status)),
+          ),
+        ),
+        const SizedBox(height: AppSpacing.base),
+        for (final order in journey.laboratoryOrders) ...[
+          _LaboratoryOrderCard(order: order),
+          const SizedBox(height: AppSpacing.md),
+        ],
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.receipt_long_rounded),
+            title: const Text('Tổng chỉ định'),
+            subtitle: const Text('Chi phí sẽ được cộng vào quyết toán cuối lượt khám.'),
+            trailing: Text(_currency(total)),
+          ),
+        ),
+      ],
     );
   }
+
+  String _messageFor(JourneyStatus status) => switch (status) {
+    JourneyStatus.labOrdered || JourneyStatus.waitingLab =>
+      'Chỉ định đã được tiếp nhận và đưa vào hàng đợi xét nghiệm. Vui lòng đến đúng nơi thực hiện.',
+    JourneyStatus.labInProgress => 'Xét nghiệm đang được thực hiện.',
+    JourneyStatus.labResultReady => 'Kết quả xét nghiệm đã sẵn sàng.',
+    _ => 'Theo dõi thông tin chỉ định xét nghiệm tại đây.',
+  };
 }
 
 class _LaboratoryOrderCard extends StatelessWidget {
@@ -183,82 +133,11 @@ class _OrderDetail extends StatelessWidget {
   );
 }
 
-class _PaymentMethods extends StatelessWidget {
-  const _PaymentMethods({required this.isSubmitting, required this.onSelected});
-
-  final bool isSubmitting;
-  final ValueChanged<PaymentMethod> onSelected;
-
-  @override
-  Widget build(BuildContext context) => Card(
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.base),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Phương thức thanh toán',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-          const SizedBox(height: AppSpacing.md),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: isSubmitting
-                  ? null
-                  : () => onSelected(PaymentMethod.online),
-              child: const Text('Thanh toán trực tuyến'),
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton(
-              onPressed: isSubmitting
-                  ? null
-                  : () => onSelected(PaymentMethod.cash),
-              child: const Text('Tiền mặt'),
-            ),
-          ),
-          const Padding(
-            padding: EdgeInsets.only(top: AppSpacing.xs),
-            child: Text('Thanh toán tại bệnh viện'),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-
-String _successMessage(PaymentMethod method) => switch (method) {
-  PaymentMethod.online => 'Thanh toán trực tuyến mô phỏng thành công',
-  PaymentMethod.cash =>
-    'Đã ghi nhận lựa chọn tiền mặt. Thanh toán tại bệnh viện.',
-};
-
-class _PaymentMessage extends StatelessWidget {
-  const _PaymentMessage({required this.message, required this.isError});
-
-  final String message;
-  final bool isError;
-
-  @override
-  Widget build(BuildContext context) => Card(
-    color: isError ? AppColors.errorLight : AppColors.successLight,
-    child: Padding(
-      padding: const EdgeInsets.all(AppSpacing.base),
-      child: Text(message, style: Theme.of(context).textTheme.titleMedium),
-    ),
-  );
-}
-
 String _currency(int amount) {
   final digits = amount.toString();
   final buffer = StringBuffer();
   for (var index = 0; index < digits.length; index++) {
-    if (index > 0 && (digits.length - index) % 3 == 0) {
-      buffer.write('.');
-    }
+    if (index > 0 && (digits.length - index) % 3 == 0) buffer.write('.');
     buffer.write(digits[index]);
   }
   return '${buffer.toString()} ₫';

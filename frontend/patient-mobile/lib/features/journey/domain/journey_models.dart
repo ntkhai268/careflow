@@ -13,9 +13,18 @@ enum JourneyStatus {
   waitingResultReview,
   resultReview,
   prescribed,
+  /// Final visit settlement is being assembled after the prescription.
+  settlementPending,
+  /// Legacy lab/pharmacy payment states kept only for old demo snapshots.
   prescriptionPaymentPending,
   prescriptionPaid,
   medicationReady,
+  /// Final settlement outcomes. These map to the backend Visit Settlement
+  /// statuses and are deliberately independent from the laboratory queue.
+  paymentDue,
+  settled,
+  refundPending,
+  refunded,
   completed,
 }
 
@@ -39,6 +48,28 @@ extension PaymentMethodContract on PaymentMethod {
     'ONLINE_MOCK' || 'ONLINE' => PaymentMethod.online,
     'CASH_AT_HOSPITAL' || 'CASH' => PaymentMethod.cash,
     _ => throw FormatException('Unsupported payment method: $value'),
+  };
+}
+
+enum VisitSettlementStatus { paymentDue, settled, refundPending, refunded }
+
+extension VisitSettlementStatusContract on VisitSettlementStatus {
+  String get wireValue => switch (this) {
+    VisitSettlementStatus.paymentDue => 'PAYMENT_DUE',
+    VisitSettlementStatus.settled => 'SETTLED',
+    VisitSettlementStatus.refundPending => 'REFUND_PENDING',
+    VisitSettlementStatus.refunded => 'REFUNDED',
+  };
+
+  static VisitSettlementStatus fromWireValue(Object? value) => switch (
+    value?.toString().toUpperCase()
+  ) {
+    'PAYMENT_DUE' || 'PAYMENTDUE' => VisitSettlementStatus.paymentDue,
+    'SETTLED' => VisitSettlementStatus.settled,
+    'REFUND_PENDING' || 'REFUNDPENDING' =>
+      VisitSettlementStatus.refundPending,
+    'REFUNDED' => VisitSettlementStatus.refunded,
+    _ => throw FormatException('Unsupported visit settlement status: $value'),
   };
 }
 
@@ -321,6 +352,124 @@ class VisitPayment {
   int get hashCode => Object.hash(method, amount, acknowledgedAt);
 }
 
+class VisitSettlement {
+  VisitSettlement({
+    required this.status,
+    required this.totalVisitCost,
+    required this.prepaidAmount,
+    required this.amountDue,
+    required this.refundDue,
+    required DateTime calculatedAt,
+    this.method,
+    DateTime? acknowledgedAt,
+  }) : calculatedAt = calculatedAt.toUtc(),
+       acknowledgedAt = acknowledgedAt?.toUtc();
+
+  final VisitSettlementStatus status;
+  final int totalVisitCost;
+  final int prepaidAmount;
+  final int amountDue;
+  final int refundDue;
+  final DateTime calculatedAt;
+  final PaymentMethod? method;
+  final DateTime? acknowledgedAt;
+
+  static VisitSettlement calculate({
+    required int consultationFee,
+    required int laboratoryTotal,
+    required int medicationTotal,
+    required int prepaidAmount,
+    required DateTime calculatedAt,
+  }) {
+    final totalVisitCost = consultationFee + laboratoryTotal + medicationTotal;
+    final amountDue = totalVisitCost > prepaidAmount
+        ? totalVisitCost - prepaidAmount
+        : 0;
+    final refundDue = prepaidAmount > totalVisitCost
+        ? prepaidAmount - totalVisitCost
+        : 0;
+    return VisitSettlement(
+      status: amountDue > 0
+          ? VisitSettlementStatus.paymentDue
+          : refundDue > 0
+          ? VisitSettlementStatus.refundPending
+          : VisitSettlementStatus.settled,
+      totalVisitCost: totalVisitCost,
+      prepaidAmount: prepaidAmount,
+      amountDue: amountDue,
+      refundDue: refundDue,
+      calculatedAt: calculatedAt,
+    );
+  }
+
+  VisitSettlement copyWith({
+    VisitSettlementStatus? status,
+    PaymentMethod? method,
+    Object? acknowledgedAt = _unset,
+  }) => VisitSettlement(
+    status: status ?? this.status,
+    totalVisitCost: totalVisitCost,
+    prepaidAmount: prepaidAmount,
+    amountDue: amountDue,
+    refundDue: refundDue,
+    calculatedAt: calculatedAt,
+    method: method ?? this.method,
+    acknowledgedAt: identical(acknowledgedAt, _unset)
+        ? this.acknowledgedAt
+        : acknowledgedAt as DateTime?,
+  );
+
+  Map<String, dynamic> toJson() => {
+    'status': status.wireValue,
+    'totalVisitCost': totalVisitCost,
+    'prepaidAmount': prepaidAmount,
+    'amountDue': amountDue,
+    'refundDue': refundDue,
+    'calculatedAt': _iso(calculatedAt),
+    if (method != null) 'method': method!.wireValue,
+    if (acknowledgedAt != null) 'acknowledgedAt': _iso(acknowledgedAt!),
+  };
+
+  factory VisitSettlement.fromJson(Map<String, dynamic> json) => VisitSettlement(
+    status: VisitSettlementStatusContract.fromWireValue(json['status']),
+    totalVisitCost: (json['totalVisitCost'] as num).toInt(),
+    prepaidAmount: (json['prepaidAmount'] as num).toInt(),
+    amountDue: (json['amountDue'] as num).toInt(),
+    refundDue: (json['refundDue'] as num).toInt(),
+    calculatedAt: _utc(json['calculatedAt'] as String),
+    method: json['method'] == null
+        ? null
+        : PaymentMethodContract.fromWireValue(json['method']),
+    acknowledgedAt: json['acknowledgedAt'] == null
+        ? null
+        : _utc(json['acknowledgedAt'] as String),
+  );
+
+  @override
+  bool operator ==(Object other) =>
+      other is VisitSettlement &&
+      status == other.status &&
+      totalVisitCost == other.totalVisitCost &&
+      prepaidAmount == other.prepaidAmount &&
+      amountDue == other.amountDue &&
+      refundDue == other.refundDue &&
+      calculatedAt == other.calculatedAt &&
+      method == other.method &&
+      acknowledgedAt == other.acknowledgedAt;
+
+  @override
+  int get hashCode => Object.hash(
+    status,
+    totalVisitCost,
+    prepaidAmount,
+    amountDue,
+    refundDue,
+    calculatedAt,
+    method,
+    acknowledgedAt,
+  );
+}
+
 class DiagnosisSummary {
   const DiagnosisSummary({required this.title, required this.detail});
 
@@ -353,6 +502,8 @@ class PrescriptionItem {
     required this.frequency,
     required this.duration,
     required this.caution,
+    this.unitPrice,
+    this.quantity = 1,
   });
 
   final String medicationName;
@@ -361,6 +512,10 @@ class PrescriptionItem {
   final String frequency;
   final String duration;
   final String caution;
+  final int? unitPrice;
+  final int quantity;
+
+  int get lineAmount => (unitPrice ?? 0) * quantity;
 
   Map<String, dynamic> toJson() => {
     'medicationName': medicationName,
@@ -369,6 +524,8 @@ class PrescriptionItem {
     'frequency': frequency,
     'duration': duration,
     'caution': caution,
+    if (unitPrice != null) 'unitPrice': unitPrice,
+    'quantity': quantity,
   };
 
   factory PrescriptionItem.fromJson(Map<String, dynamic> json) =>
@@ -379,6 +536,12 @@ class PrescriptionItem {
         frequency: json['frequency'] as String,
         duration: json['duration'] as String,
         caution: json['caution'] as String,
+        unitPrice: json['unitPrice'] == null
+            ? null
+            : (json['unitPrice'] as num).toInt(),
+        quantity: json['quantity'] == null
+            ? 1
+            : (json['quantity'] as num).toInt(),
       );
 
   @override
@@ -389,11 +552,22 @@ class PrescriptionItem {
       route == other.route &&
       frequency == other.frequency &&
       duration == other.duration &&
-      caution == other.caution;
+      caution == other.caution &&
+      unitPrice == other.unitPrice &&
+      quantity == other.quantity;
 
   @override
   int get hashCode =>
-      Object.hash(medicationName, dosage, route, frequency, duration, caution);
+      Object.hash(
+        medicationName,
+        dosage,
+        route,
+        frequency,
+        duration,
+        caution,
+        unitPrice,
+        quantity,
+      );
 }
 
 class Prescription {
@@ -559,6 +733,16 @@ class PatientNotification {
   int get hashCode => Object.hash(id, title, body, createdAt, isRead);
 }
 
+JourneyStatus _journeyStatusFromJson(String value) {
+  // Old snapshots used separate lab/pharmacy payment states. Keep loading
+  // those snapshots without making them part of the new default journey.
+  return switch (value) {
+    'labPaymentPending' => JourneyStatus.waitingLab,
+    'settlementPaymentDue' => JourneyStatus.paymentDue,
+    _ => JourneyStatus.values.byName(value),
+  };
+}
+
 class PatientJourney {
   PatientJourney({
     required this.appointmentId,
@@ -568,6 +752,7 @@ class PatientJourney {
     this.ticket,
     this.clinicQueue,
     required List<LaboratoryOrder> laboratoryOrders,
+    this.settlement,
     this.payment,
     this.prescriptionPayment,
     this.resultReviewQueue,
@@ -589,6 +774,7 @@ class PatientJourney {
   final VisitTicket? ticket;
   final QueueSnapshot? clinicQueue;
   final List<LaboratoryOrder> laboratoryOrders;
+  final VisitSettlement? settlement;
   final VisitPayment? payment;
   final VisitPayment? prescriptionPayment;
   final QueueSnapshot? resultReviewQueue;
@@ -607,6 +793,7 @@ class PatientJourney {
     Object? ticket = _unset,
     Object? clinicQueue = _unset,
     List<LaboratoryOrder>? laboratoryOrders,
+    Object? settlement = _unset,
     Object? payment = _unset,
     Object? prescriptionPayment = _unset,
     Object? resultReviewQueue = _unset,
@@ -628,6 +815,9 @@ class PatientJourney {
         ? this.clinicQueue
         : clinicQueue as QueueSnapshot?,
     laboratoryOrders: laboratoryOrders ?? this.laboratoryOrders,
+    settlement: identical(settlement, _unset)
+        ? this.settlement
+        : settlement as VisitSettlement?,
     payment: identical(payment, _unset)
         ? this.payment
         : payment as VisitPayment?,
@@ -661,6 +851,7 @@ class PatientJourney {
     'laboratoryOrders': laboratoryOrders
         .map((order) => order.toJson())
         .toList(),
+    if (settlement != null) 'settlement': settlement!.toJson(),
     if (payment != null) 'payment': payment!.toJson(),
     if (prescriptionPayment != null)
       'prescriptionPayment': prescriptionPayment!.toJson(),
@@ -677,7 +868,7 @@ class PatientJourney {
   factory PatientJourney.fromJson(Map<String, dynamic> json) => PatientJourney(
     appointmentId: json['appointmentId'] as String,
     patientId: json['patientId'] as String,
-    status: JourneyStatus.values.byName(json['status'] as String),
+    status: _journeyStatusFromJson(json['status'] as String),
     doctorName: json['doctorName'] as String?,
     ticket: json['ticket'] == null
         ? null
@@ -689,6 +880,9 @@ class PatientJourney {
       json['laboratoryOrders'],
       LaboratoryOrder.fromJson,
     ),
+    settlement: json['settlement'] == null
+        ? null
+        : VisitSettlement.fromJson(_map(json['settlement'])),
     payment: json['payment'] == null
         ? null
         : VisitPayment.fromJson(_map(json['payment'])),
@@ -725,6 +919,7 @@ class PatientJourney {
       ticket == other.ticket &&
       clinicQueue == other.clinicQueue &&
       _sameList(laboratoryOrders, other.laboratoryOrders) &&
+      settlement == other.settlement &&
       payment == other.payment &&
       prescriptionPayment == other.prescriptionPayment &&
       resultReviewQueue == other.resultReviewQueue &&
@@ -744,6 +939,7 @@ class PatientJourney {
     ticket,
     clinicQueue,
     Object.hashAll(laboratoryOrders),
+    settlement,
     payment,
     prescriptionPayment,
     resultReviewQueue,
