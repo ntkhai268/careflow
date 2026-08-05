@@ -74,6 +74,11 @@ _PrimaryDestination? _destinationFor(JourneyStatus status) => switch (status) {
   JourneyStatus.waitingResultReview ||
   JourneyStatus.resultReview => _PrimaryDestination.resultReview,
   JourneyStatus.prescribed ||
+  JourneyStatus.settlementPending ||
+  JourneyStatus.paymentDue ||
+  JourneyStatus.settled ||
+  JourneyStatus.refundPending ||
+  JourneyStatus.refunded ||
   JourneyStatus.prescriptionPaymentPending ||
   JourneyStatus.prescriptionPaid ||
   JourneyStatus.medicationReady => _PrimaryDestination.pharmacy,
@@ -89,7 +94,7 @@ String _pathFor(_PrimaryDestination destination, String appointmentId) {
     _PrimaryDestination.consultation => '$base/consultation',
     _PrimaryDestination.laboratory => '$base/laboratory',
     _PrimaryDestination.resultReview => '$base/result-review',
-    _PrimaryDestination.pharmacy => '$base/pharmacy',
+    _PrimaryDestination.pharmacy => '$base/settlement',
     _PrimaryDestination.outcome => '$base/outcome',
   };
 }
@@ -110,7 +115,7 @@ String _labelFor(_PrimaryDestination destination) => switch (destination) {
   _PrimaryDestination.consultation => 'Xem trạng thái khám',
   _PrimaryDestination.laboratory => 'Xem xét nghiệm',
   _PrimaryDestination.resultReview => 'Xem đọc kết quả',
-  _PrimaryDestination.pharmacy => 'Thanh toán/nhận thuốc',
+  _PrimaryDestination.pharmacy => 'Quyết toán/nhận thuốc',
   _PrimaryDestination.outcome => 'Xem kết quả lượt khám',
 };
 

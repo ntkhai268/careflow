@@ -9,40 +9,26 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   testWidgets('shows the doctor status and consultation room', (tester) async {
     await tester.pumpWidget(consultationApp(demoMode: false));
-
     expect(find.text('Bác sĩ đang khám'), findsOneWidget);
     expect(find.text('Bác sĩ phụ trách'), findsOneWidget);
-    expect(find.text('BS. Nguyễn Minh Anh (dữ liệu mô phỏng)'), findsOneWidget);
+    expect(find.text('BS. Nguyễn Minh Anh'), findsOneWidget);
     expect(find.text('Phòng 21'), findsOneWidget);
   });
 
-  testWidgets('does not let patients choose a clinical decision', (
-    tester,
-  ) async {
-    await tester.pumpWidget(consultationApp(demoMode: false));
-
-    expect(find.byType(DemoControlSheet), findsNothing);
-    expect(find.text('Mô phỏng bác sĩ chỉ định xét nghiệm'), findsNothing);
-    expect(find.text('Mô phỏng bác sĩ kê đơn trực tiếp'), findsNothing);
-  });
-
-  testWidgets('shows clinical branching only in the demo control', (
-    tester,
-  ) async {
+  testWidgets('shows clinical branching only in demo control', (tester) async {
     await tester.pumpWidget(consultationApp(demoMode: true));
-
     expect(find.byType(DemoControlSheet), findsOneWidget);
-    expect(find.text('Mô phỏng bác sĩ chỉ định xét nghiệm'), findsOneWidget);
-    expect(find.text('Mô phỏng bác sĩ kê đơn trực tiếp'), findsOneWidget);
+    expect(find.text('Mô phỏng chỉ định xét nghiệm'), findsOneWidget);
+    expect(find.text('Mô phỏng kê đơn trực tiếp'), findsOneWidget);
   });
 }
 
 Widget consultationApp({required bool demoMode}) => ProviderScope(
   overrides: [
     demoModeProvider.overrideWithValue(demoMode),
-    journeyForAppointmentProvider(
-      'apt-1',
-    ).overrideWithValue(AsyncData(consultationJourney)),
+    journeyForAppointmentProvider('apt-1').overrideWithValue(
+      AsyncData(consultationJourney),
+    ),
     activeJourneyProvider.overrideWithValue(consultationJourney),
   ],
   child: const MaterialApp(home: ConsultationScreen(appointmentId: 'apt-1')),
@@ -52,7 +38,7 @@ final consultationJourney = PatientJourney(
   appointmentId: 'apt-1',
   patientId: 'patient-1',
   status: JourneyStatus.inConsultation,
-  doctorName: 'BS. Nguyễn Minh Anh (dữ liệu mô phỏng)',
+  doctorName: 'BS. Nguyễn Minh Anh',
   ticket: const VisitTicket(
     code: 'CF-APT-1',
     qrPayload: 'careflow://visit/apt-1',

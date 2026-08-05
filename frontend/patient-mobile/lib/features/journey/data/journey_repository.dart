@@ -23,11 +23,21 @@ abstract interface class JourneyRepository {
   Future<void> reset(PatientJourney journey);
 }
 
-/// Optional capability for repositories that can settle the pharmacy step.
-/// Keeping this separate preserves compatibility with existing queue/lab
-/// adapters until the backend pharmacy contract is implemented.
+/// Legacy capability retained only so old persisted demo snapshots can be
+/// replayed. New code uses [VisitSettlementRepository] for the whole visit.
 abstract interface class PrescriptionPaymentRepository {
   Future<PatientJourney> acknowledgePrescriptionPayment(
+    PatientJourney journey,
+    PaymentMethod method,
+  );
+}
+
+/// Optional capability for the visit-level settlement adapter.
+///
+/// The mobile demo implements this locally today; the production adapter will
+/// call Visit Settlement Service when that backend slice is available.
+abstract interface class VisitSettlementRepository {
+  Future<PatientJourney> acknowledgeSettlement(
     PatientJourney journey,
     PaymentMethod method,
   );

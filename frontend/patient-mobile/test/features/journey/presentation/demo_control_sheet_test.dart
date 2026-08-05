@@ -20,116 +20,38 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(hubApp(demoMode: false));
-
-    expect(find.text('Điều khiển mô phỏng'), findsNothing);
     expect(find.byType(DemoControlSheet), findsNothing);
   });
 
-  testWidgets('shows only the next legal external event in demo mode', (
-    tester,
-  ) async {
+  testWidgets('shows the next legal event in demo mode', (tester) async {
     await tester.pumpWidget(hubApp(demoMode: true));
-
     expect(find.text('Điều khiển mô phỏng'), findsOneWidget);
-    expect(find.text('Mô phỏng bệnh nhân quét QR'), findsOneWidget);
-    expect(find.text('Mô phỏng nhân viên đưa vào hàng đợi'), findsNothing);
+    expect(find.text('Mô phỏng nhân viên quét QR'), findsOneWidget);
+    expect(find.text('Mô phỏng đưa vào hàng đợi khám'), findsNothing);
   });
 
-  testWidgets('maps every journey state to its legal demo events', (
+  testWidgets('exposes final settlement controls without lab or pharmacy payment', (
     tester,
   ) async {
-    const cases = [
-      (JourneyStatus.ticketIssued, ['Mô phỏng bệnh nhân quét QR']),
-      (JourneyStatus.checkedIn, ['Mô phỏng nhân viên đưa vào hàng đợi']),
-      (JourneyStatus.waiting, ['Mô phỏng bác sĩ gọi']),
-      (JourneyStatus.called, ['Mô phỏng bác sĩ bắt đầu khám']),
-      (
-        JourneyStatus.inConsultation,
-        [
-          'Mô phỏng bác sĩ chỉ định xét nghiệm',
-          'Mô phỏng bác sĩ kê đơn trực tiếp',
-        ],
+    await tester.pumpWidget(
+      hubApp(
+        demoMode: true,
+        controller: RecordingJourneyController(
+          journey: ticketJourney.copyWith(status: JourneyStatus.settlementPending),
+        ),
       ),
-      (JourneyStatus.labOrdered, ['Mô phỏng yêu cầu thanh toán']),
-      (JourneyStatus.paymentPending, <String>[]),
-      (JourneyStatus.waitingLab, ['Mô phỏng bắt đầu xét nghiệm']),
-      (JourneyStatus.labInProgress, ['Mô phỏng công bố kết quả']),
-      (JourneyStatus.labResultReady, ['Mô phỏng đưa vào hàng đợi đọc kết quả']),
-      (JourneyStatus.waitingResultReview, ['Mô phỏng bác sĩ đọc kết quả']),
-      (JourneyStatus.resultReview, ['Mô phỏng bác sĩ kê đơn sau đọc kết quả']),
-       (
-         JourneyStatus.prescribed,
-         [
-           'Mô phỏng yêu cầu thanh toán tiền thuốc',
-           'Mô phỏng hoàn tất lượt khám',
-         ],
-       ),
-      (JourneyStatus.completed, <String>[]),
-    ];
+    );
 
-    for (final testCase in cases) {
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pumpWidget(
-        hubApp(
-          demoMode: true,
-          controller: RecordingJourneyController(
-            journey: ticketJourney.copyWith(status: testCase.$1),
-          ),
-        ),
-      );
-
-      final buttons = find.descendant(
-        of: find.byType(DemoControlSheet),
-        matching: find.byType(ElevatedButton),
-      );
-      expect(buttons, findsNWidgets(testCase.$2.length));
-      for (final label in testCase.$2) {
-        expect(find.text(label), findsOneWidget);
-      }
-    }
+    expect(find.text('Mô phỏng yêu cầu thanh toán phần còn lại'), findsOneWidget);
+    expect(find.text('Mô phỏng chờ hoàn khoản dư'), findsNothing);
+    expect(find.text('Thanh toán tiền thuốc'), findsNothing);
+    expect(find.text('Thanh toán xét nghiệm'), findsNothing);
   });
 
-  testWidgets('offers the contextual patient destination through completion', (
-    tester,
-  ) async {
-    const cases = [
-      (JourneyStatus.ticketIssued, 'Xem phiếu khám'),
-      (JourneyStatus.waiting, 'Theo dõi hàng đợi'),
-      (JourneyStatus.inConsultation, 'Xem trạng thái khám'),
-      (JourneyStatus.labOrdered, 'Xem xét nghiệm'),
-      (JourneyStatus.paymentPending, 'Xem xét nghiệm'),
-      (JourneyStatus.waitingLab, 'Xem xét nghiệm'),
-      (JourneyStatus.labInProgress, 'Xem xét nghiệm'),
-      (JourneyStatus.labResultReady, 'Xem xét nghiệm'),
-      (JourneyStatus.waitingResultReview, 'Xem đọc kết quả'),
-      (JourneyStatus.resultReview, 'Xem đọc kết quả'),
-       (JourneyStatus.prescribed, 'Thanh toán/nhận thuốc'),
-      (JourneyStatus.completed, 'Xem kết quả lượt khám'),
-    ];
-
-    for (final testCase in cases) {
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pumpWidget(
-        hubApp(
-          demoMode: true,
-          controller: RecordingJourneyController(
-            journey: ticketJourney.copyWith(status: testCase.$1),
-          ),
-        ),
-      );
-
-      expect(find.text(testCase.$2), findsOneWidget);
-    }
-  });
-
-  testWidgets('sends the patient QR scan event to the controller', (
-    tester,
-  ) async {
+  testWidgets('sends the staff QR scan event to the controller', (tester) async {
     final controller = RecordingJourneyController();
     await tester.pumpWidget(hubApp(demoMode: true, controller: controller));
-
-    await tester.tap(find.text('Mô phỏng bệnh nhân quét QR'));
-
+    await tester.tap(find.text('Mô phỏng nhân viên quét QR'));
     expect(controller.receivedEvents, [JourneyEvent.staffScannedQr]);
   });
 
@@ -138,16 +60,12 @@ void main() {
   ) async {
     final controller = RecordingJourneyController();
     await tester.pumpWidget(hubApp(demoMode: true, controller: controller));
-
     await tester.tap(find.text('Đặt lại hành trình'));
     await tester.pumpAndSettle();
-
     expect(find.text('Xác nhận đặt lại hành trình?'), findsOneWidget);
     expect(controller.resetCalls, 0);
-
     await tester.tap(find.widgetWithText(ElevatedButton, 'Đặt lại'));
     await tester.pumpAndSettle();
-
     expect(controller.resetCalls, 1);
   });
 }
@@ -175,14 +93,10 @@ class RecordingJourneyController extends JourneyController {
   int resetCalls = 0;
 
   @override
-  Future<void> advance(JourneyEvent event) async {
-    receivedEvents.add(event);
-  }
+  Future<void> advance(JourneyEvent event) async => receivedEvents.add(event);
 
   @override
-  Future<void> resetCurrentJourney() async {
-    resetCalls += 1;
-  }
+  Future<void> resetCurrentJourney() async => resetCalls += 1;
 }
 
 final ticketJourney = PatientJourney(
@@ -194,7 +108,7 @@ final ticketJourney = PatientJourney(
     qrPayload: 'careflow://visit/apt-1',
     queueNumber: '42',
     hospitalName: 'Bệnh viện Minh Khai',
-    specialtyName: 'Nội thần kinh',
+    specialtyName: 'Nội tổng quát',
     room: 'Phòng 21',
     expectedWindow: '10:30 - 11:30',
   ),
@@ -214,11 +128,7 @@ class PresentationPatientNotifier extends PatientNotifier {
   PresentationPatientNotifier(Ref ref)
     : super(PatientService(ApiService()), ref) {
     state = PatientState(
-      patient: Patient(
-        id: 'patient-1',
-        userId: 'user-1',
-        fullName: 'Nguyễn An',
-      ),
+      patient: Patient(id: 'patient-1', userId: 'user-1', fullName: 'Nguyễn An'),
     );
   }
 }

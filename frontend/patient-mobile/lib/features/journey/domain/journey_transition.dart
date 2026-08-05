@@ -7,6 +7,8 @@ enum JourneyEvent {
   doctorCalled,
   consultationStarted,
   laboratoryOrdered,
+  laboratoryQueued,
+  // Legacy replay events only. New lab orders never wait for payment.
   paymentRequested,
   directPrescriptionIssued,
   paymentAcknowledged,
@@ -15,6 +17,13 @@ enum JourneyEvent {
   admittedToResultReviewQueue,
   resultReviewCalled,
   finalPrescriptionIssued,
+  // Visit-level settlement events.
+  settlementCalculated,
+  settlementPaymentRequested,
+  settlementAcknowledged,
+  settlementRefundRequested,
+  refundAcknowledged,
+  // Legacy pharmacy-payment events kept for old snapshots.
   prescriptionPaymentRequested,
   prescriptionPaymentAcknowledged,
   medicationDispensed,
@@ -92,6 +101,8 @@ const Map<JourneyStatus, Map<JourneyEvent, JourneyStatus>> _transitions = {
     JourneyEvent.directPrescriptionIssued: JourneyStatus.prescribed,
   },
   JourneyStatus.labOrdered: {
+    JourneyEvent.laboratoryQueued: JourneyStatus.waitingLab,
+    // Legacy snapshots may still replay the old payment gate.
     JourneyEvent.paymentRequested: JourneyStatus.paymentPending,
   },
   JourneyStatus.paymentPending: {
@@ -113,9 +124,29 @@ const Map<JourneyStatus, Map<JourneyEvent, JourneyStatus>> _transitions = {
     JourneyEvent.finalPrescriptionIssued: JourneyStatus.prescribed,
   },
   JourneyStatus.prescribed: {
+    JourneyEvent.settlementCalculated: JourneyStatus.settlementPending,
+    // Legacy pharmacy payment path retained for old snapshots only.
     JourneyEvent.prescriptionPaymentRequested:
         JourneyStatus.prescriptionPaymentPending,
     JourneyEvent.visitCompleted: JourneyStatus.completed,
+  },
+  JourneyStatus.settlementPending: {
+    JourneyEvent.settlementPaymentRequested: JourneyStatus.paymentDue,
+    JourneyEvent.settlementRefundRequested: JourneyStatus.refundPending,
+    // A zero-balance settlement can be acknowledged directly.
+    JourneyEvent.settlementAcknowledged: JourneyStatus.settled,
+  },
+  JourneyStatus.paymentDue: {
+    JourneyEvent.settlementAcknowledged: JourneyStatus.settled,
+  },
+  JourneyStatus.settled: {
+    JourneyEvent.medicationDispensed: JourneyStatus.medicationReady,
+  },
+  JourneyStatus.refundPending: {
+    JourneyEvent.refundAcknowledged: JourneyStatus.refunded,
+  },
+  JourneyStatus.refunded: {
+    JourneyEvent.medicationDispensed: JourneyStatus.medicationReady,
   },
   JourneyStatus.prescriptionPaymentPending: {
     JourneyEvent.prescriptionPaymentAcknowledged: JourneyStatus.prescriptionPaid,
@@ -159,6 +190,11 @@ const Map<JourneyEvent, _JourneyMessage> _messages = {
     'Có chỉ định xét nghiệm',
     'Bác sĩ đã chỉ định các xét nghiệm cần thực hiện.',
   ),
+  JourneyEvent.laboratoryQueued: _JourneyMessage(
+    'Đã vào hàng đợi xét nghiệm',
+    'Đã tiếp nhận chỉ định',
+    'Chỉ định đã được đưa vào hàng đợi xét nghiệm. Vui lòng đến đúng nơi thực hiện.',
+  ),
   JourneyEvent.paymentRequested: _JourneyMessage(
     'Chờ thanh toán xét nghiệm',
     'Cần xác nhận thanh toán',
@@ -198,6 +234,31 @@ const Map<JourneyEvent, _JourneyMessage> _messages = {
     'Đã kê đơn sau đọc kết quả',
     'Đơn thuốc đã sẵn sàng',
     'Bác sĩ đã phát hành đơn thuốc sau khi đọc kết quả.',
+  ),
+  JourneyEvent.settlementCalculated: _JourneyMessage(
+    'Đã lập quyết toán lượt khám',
+    'Đã có tổng chi phí lượt khám',
+    'Hệ thống đã tổng hợp phí khám, xét nghiệm và thuốc sau khi bác sĩ kết luận.',
+  ),
+  JourneyEvent.settlementPaymentRequested: _JourneyMessage(
+    'Cần thanh toán phần còn lại',
+    'Cần thanh toán phần còn lại',
+    'Vui lòng chọn thanh toán trực tuyến mô phỏng hoặc tiền mặt tại bệnh viện.',
+  ),
+  JourneyEvent.settlementAcknowledged: _JourneyMessage(
+    'Đã quyết toán lượt khám',
+    'Đã ghi nhận thanh toán',
+    'Khoản phải trả của lượt khám đã được ghi nhận.',
+  ),
+  JourneyEvent.settlementRefundRequested: _JourneyMessage(
+    'Đang chờ hoàn tiền',
+    'Khoản dư đang chờ hoàn',
+    'Số tiền trả trước cao hơn tổng chi phí; khoản dư đang chờ bệnh viện hoàn.',
+  ),
+  JourneyEvent.refundAcknowledged: _JourneyMessage(
+    'Đã hoàn khoản dư',
+    'Đã hoàn khoản dư',
+    'Khoản dư của lượt khám đã được ghi nhận hoàn tất.',
   ),
   JourneyEvent.prescriptionPaymentRequested: _JourneyMessage(
     'Chờ thanh toán tiền thuốc',

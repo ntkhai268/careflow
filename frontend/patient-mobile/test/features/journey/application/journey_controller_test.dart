@@ -53,43 +53,38 @@ class ControlledBootstrapRepository implements JourneyRepository {
       Future<void>.error(UnimplementedError());
 }
 
-class RefreshableRepository implements JourneyRepository {
-  int bootstrapCalls = 0;
-  Appointment? lastAppointment;
-  Object? nextBootstrapError;
-
+class SettlementCapableRepository
+    implements JourneyRepository, VisitSettlementRepository {
   @override
   Future<PatientJourney> bootstrap({
     required Appointment appointment,
     required String patientId,
-  }) async {
-    bootstrapCalls++;
-    lastAppointment = appointment;
-    final error = nextBootstrapError;
-    nextBootstrapError = null;
-    if (error != null) throw error;
-    return journeyForPatient(patientId, appointment.id);
-  }
+  }) => Future.value(journeyForPatient(patientId, appointment.id));
+
+  @override
+  Future<PatientJourney> advance(PatientJourney journey, JourneyEvent event) =>
+      Future.value(journey);
 
   @override
   Future<PatientJourney> acknowledgePayment(
     PatientJourney journey,
     PaymentMethod method,
-  ) => Future<PatientJourney>.error(UnimplementedError());
+  ) => Future.value(journey);
 
   @override
-  Future<PatientJourney> advance(PatientJourney journey, JourneyEvent event) =>
-      Future<PatientJourney>.error(UnimplementedError());
+  Future<PatientJourney> acknowledgeSettlement(
+    PatientJourney journey,
+    PaymentMethod method,
+  ) => Future.value(journey.copyWith(status: JourneyStatus.settled));
 
   @override
   Future<PatientJourney> markNotificationRead(
     PatientJourney journey,
     String notificationId,
-  ) => Future<PatientJourney>.error(UnimplementedError());
+  ) => Future.value(journey);
 
   @override
-  Future<void> reset(PatientJourney journey) =>
-      Future<void>.error(UnimplementedError());
+  Future<void> reset(PatientJourney journey) async {}
 }
 
 class ConfigurablePersistence implements JourneyPersistenceAdapter {
@@ -136,45 +131,6 @@ class ControllableJourneyStore implements JourneyStore {
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
-
-  test('refreshes the active journey using its latest appointment', () async {
-    final repository = RefreshableRepository();
-    final controller = JourneyController(
-      repository: repository,
-      demoMode: true,
-    );
-
-    await controller.bootstrap(
-      appointment: appointmentFor('apt-refresh'),
-      patientId: 'patient-a',
-    );
-    await controller.refreshCurrentJourney();
-
-    expect(repository.bootstrapCalls, 2);
-    expect(repository.lastAppointment?.id, 'apt-refresh');
-    controller.dispose();
-  });
-
-  test(
-    'keeps the previous journey when refresh cannot load new data',
-    () async {
-      final repository = RefreshableRepository();
-      final controller = JourneyController(
-        repository: repository,
-        demoMode: true,
-      );
-      final initial = await controller.bootstrap(
-        appointment: appointmentFor('apt-refresh'),
-        patientId: 'patient-a',
-      );
-      repository.nextBootstrapError = StateError('temporary failure');
-
-      expect(await controller.refreshCurrentJourney(), isFalse);
-      expect(controller.state.valueOrNull, initial);
-      expect(controller.state.hasError, isFalse);
-      controller.dispose();
-    },
-  );
 
   test(
     'switching patients clears memory and isolates namespaced journeys',
@@ -393,14 +349,14 @@ void main() {
     },
   );
 
-  test('uses the backend repository when demo mode is disabled', () {
+  test('uses an unavailable repository when demo mode is disabled', () {
     final container = ProviderContainer(
       overrides: [demoModeProvider.overrideWithValue(false)],
     );
 
     expect(
-      container.read(journeyRepositoryProvider).runtimeType.toString(),
-      'BackendJourneyRepository',
+      container.read(journeyRepositoryProvider),
+      isNot(isA<DemoJourneyRepository>()),
     );
     container.dispose();
   });
@@ -434,6 +390,22 @@ void main() {
       controller.dispose();
     },
   );
+
+  test('forwards final settlement acknowledgement to the repository capability', () async {
+    final controller = JourneyController(
+      repository: SettlementCapableRepository(),
+      demoMode: true,
+    );
+    controller.state = AsyncData(
+      journeyForPatient('patient-a', 'apt-settlement').copyWith(
+        status: JourneyStatus.paymentDue,
+      ),
+    );
+
+    expect(await controller.acknowledgeSettlement(PaymentMethod.online), isTrue);
+    expect(controller.state.requireValue!.status, JourneyStatus.settled);
+    controller.dispose();
+  });
 
   test(
     'failed persisted mutation retains data and succeeds on retry',

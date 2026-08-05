@@ -440,9 +440,14 @@ String _destinationFor(PatientJourney journey) {
     JourneyStatus.waitingResultReview ||
     JourneyStatus.resultReview => '$base/result-review',
     JourneyStatus.prescribed ||
+    JourneyStatus.settlementPending ||
+    JourneyStatus.paymentDue ||
+    JourneyStatus.settled ||
+    JourneyStatus.refundPending ||
+    JourneyStatus.refunded ||
     JourneyStatus.prescriptionPaymentPending ||
     JourneyStatus.prescriptionPaid ||
-    JourneyStatus.medicationReady => '$base/pharmacy',
+    JourneyStatus.medicationReady => '$base/settlement',
     JourneyStatus.completed => '$base/outcome',
   };
 }

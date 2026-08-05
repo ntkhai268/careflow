@@ -23,6 +23,7 @@ import '../features/journey/presentation/journey_hub_screen.dart';
 import '../features/journey/presentation/journey_timeline_screen.dart';
 import '../features/journey/presentation/laboratory_screen.dart';
 import '../features/journey/presentation/pharmacy_screen.dart';
+import '../features/journey/presentation/settlement_screen.dart';
 import '../features/journey/presentation/result_review_screen.dart';
 import '../features/journey/presentation/visit_outcome_screen.dart';
 import '../features/journey/presentation/visit_results_screen.dart';
@@ -211,6 +212,12 @@ final GoRouter appRouter = GoRouter(
             initialJourney: state.extra is PatientJourney
                 ? state.extra as PatientJourney
                 : null,
+          ),
+        ),
+        GoRoute(
+          path: 'settlement',
+          builder: (context, state) => SettlementScreen(
+            appointmentId: state.pathParameters['appointmentId']!,
           ),
         ),
         GoRoute(
