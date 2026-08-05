@@ -1,8 +1,58 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { queueApi, QueueEntry } from "@/lib/queue-api";
+import { patientApi, PatientResponse } from "@/lib/patient-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+
+const statusLabels: Record<string, string> = {
+  WAITING: "Đang chờ",
+  TICKET_ISSUED: "Chờ tiếp nhận",
+  CHECKED_IN: "Đã tiếp nhận",
+  CALLED: "Đã gọi số",
+  IN_PROGRESS: "Đang khám",
+  COMPLETED: "Hoàn tất",
+  MISSED: "Lỡ lượt",
+  CANCELLED: "Đã hủy",
+};
+
+const statusColors: Record<string, string> = {
+  WAITING: "text-amber-600",
+  TICKET_ISSUED: "text-amber-600",
+  CHECKED_IN: "text-blue-600",
+  CALLED: "text-purple-600",
+  IN_PROGRESS: "text-purple-600",
+  COMPLETED: "text-emerald-600",
+  MISSED: "text-rose-600",
+  CANCELLED: "text-slate-500",
+};
+
+const priorityLabels: Record<string, string> = {
+  APPOINTMENT: "Đặt lịch",
+  PRIORITY: "Ưu tiên",
+  EMERGENCY: "Khẩn cấp",
+  WALK_IN: "Vãng lai",
+  RESULT_REVIEW: "Đọc kết quả CLS",
+};
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
+function StatusText({ status }: { status: string }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 text-[10px] font-medium ${statusColors[status] || "text-slate-500"}`}>
+      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      {statusLabels[status] || status}
+    </span>
+  );
+}
+
+function notifyAi(text: string) {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("careflow:ai-notify", { detail: { text } }));
+  }
+}
 
 export default function StaffCheckinPage() {
   const [qrInput, setQrInput] = useState("");
@@ -10,44 +60,48 @@ export default function StaffCheckinPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkInResult, setCheckInResult] = useState<QueueEntry | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "danger" | "warning" } | null>(null);
-
-  // Today's Room Queue List
   const [roomEntries, setRoomEntries] = useState<QueueEntry[] | null>(null);
+  const [patientDetails, setPatientDetails] = useState<Record<string, PatientResponse | null>>({});
   const [isLoadingQueue, setIsLoadingQueue] = useState(false);
+  const [processingEntryId, setProcessingEntryId] = useState<string | null>(null);
 
-  const showToast = (message: string, type: "success" | "danger" | "warning" = "success") => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), 3000);
-  };
-
-  const notifyAi = (text: string) => {
-    if (typeof window !== "undefined") {
-      window.dispatchEvent(new CustomEvent("careflow:ai-notify", { detail: { text } }));
-    }
-  };
-
-  const fetchRoomQueue = async () => {
+  const fetchRoomQueue = useCallback(async () => {
     setIsLoadingQueue(true);
     try {
       const res = await queueApi.getRoomActive(roomId);
-      setRoomEntries(res.data?.entries ?? []);
+      const entries = res.data?.entries ?? [];
+      setRoomEntries(entries);
+
+      const uniquePatientIds = [...new Set(entries.map((entry) => entry.patientId).filter(Boolean))];
+      const patientResults = await Promise.all(
+        uniquePatientIds.map(async (patientId) => {
+          try {
+            const patientRes = await patientApi.getPatientById(patientId);
+            return [patientId, patientRes.data ?? null] as const;
+          } catch {
+            return [patientId, null] as const;
+          }
+        }),
+      );
+      setPatientDetails(Object.fromEntries(patientResults));
     } catch {
       setRoomEntries([]);
+      notifyAi("Không thể tải hàng đợi phòng khám. Vui lòng thử lại.");
     } finally {
       setIsLoadingQueue(false);
     }
-  };
+  }, [roomId]);
 
   useEffect(() => {
-    fetchRoomQueue();
-  }, [roomId]);
+    const loadQueue = window.setTimeout(() => void fetchRoomQueue(), 0);
+    return () => window.clearTimeout(loadQueue);
+  }, [fetchRoomQueue]);
 
   const handleCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!qrInput.trim()) {
       setError("Vui lòng nhập hoặc quét mã QR phiếu khám.");
-      notifyAi("Nhân viên vui lòng nhập hoặc quét mã QR trên phiếu khám điện tử trước khi bấm xác nhận check-in nha!");
+      notifyAi("Nhân viên vui lòng nhập hoặc quét mã QR trên phiếu khám trước khi xác nhận.");
       return;
     }
 
@@ -56,98 +110,108 @@ export default function StaffCheckinPage() {
     setCheckInResult(null);
 
     try {
-      const res = await queueApi.checkIn({
-        qrToken: qrInput.trim(),
-        roomId: roomId,
-      });
-
+      const res = await queueApi.checkIn({ qrToken: qrInput.trim(), roomId });
       if (res.data) {
         setCheckInResult(res.data);
-        notifyAi(`Tiếp nhận thành công bệnh nhân! Số thứ tự cấp: ${res.data.queueNumber} tại ${res.data.roomCode} ✨`);
-        showToast(`Tiếp nhận thành công bệnh nhân! STT: ${res.data.queueNumber}`);
         setQrInput("");
+        notifyAi(`Tiếp nhận thành công bệnh nhân. Số thứ tự ${res.data.queueNumber} tại ${res.data.roomCode}.`);
         await fetchRoomQueue();
       }
-    } catch (err: any) {
-      const errorMsg = err.message || "Không thể check-in ticket này. Mã QR không hợp lệ hoặc đã quá hạn.";
-      setError(errorMsg);
-      notifyAi(`Rất tiếc! ${errorMsg}`);
-      showToast("Lỗi khi tiếp nhận bệnh nhân", "danger");
+    } catch (err: unknown) {
+      const errorMessage = getErrorMessage(err, "Mã QR không hợp lệ hoặc đã quá hạn.");
+      setError(errorMessage);
+      notifyAi(`Rất tiếc. ${errorMessage}`);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleRecall = async (entryId: string, num: string) => {
+  const handleCheckInEntry = async (entry: QueueEntry) => {
+    setProcessingEntryId(entry.entryId);
     try {
-      await queueApi.recallEntry(entryId);
-      notifyAi(`Đã gọi lại số thứ tự ${num}!`);
-      showToast(`Đã gọi lại số ${num}`);
-      await fetchRoomQueue();
-    } catch (err: any) {
-      showToast(err.message || "Lỗi khi gọi lại.", "danger");
+      let token = entry.appointmentId;
+      try {
+        const qrRes = await queueApi.getQr(entry.appointmentId);
+        if (qrRes.data?.qrToken) token = qrRes.data.qrToken;
+      } catch {
+        token = entry.appointmentId;
+      }
+
+      const res = await queueApi.checkIn({ qrToken: token, roomId });
+      if (res.data) {
+        setCheckInResult(res.data);
+        notifyAi(`Tiếp nhận thành công bệnh nhân. Số thứ tự ${res.data.queueNumber}.`);
+        await fetchRoomQueue();
+      }
+    } catch (err: unknown) {
+      notifyAi(getErrorMessage(err, "Không thể duyệt tiếp nhận lượt khám."));
+    } finally {
+      setProcessingEntryId(null);
     }
   };
 
-  const handleMiss = async (entryId: string, num: string) => {
+  const handleRecall = async (entry: QueueEntry) => {
+    setProcessingEntryId(entry.entryId);
     try {
-      await queueApi.missEntry(entryId);
-      notifyAi(`Đã đánh dấu vắng mặt cho số thứ tự ${num}!`);
-      showToast(`Đã đánh dấu vắng mặt cho số ${num}`, "warning");
+      await queueApi.recallEntry(entry.entryId);
+      notifyAi(`Đã gọi lại số thứ tự ${entry.queueNumber}.`);
       await fetchRoomQueue();
-    } catch (err: any) {
-      showToast(err.message || "Lỗi khi đánh dấu vắng mặt.", "danger");
+    } catch (err: unknown) {
+      notifyAi(getErrorMessage(err, "Không thể gọi lại lượt khám."));
+    } finally {
+      setProcessingEntryId(null);
     }
   };
+
+  const handleMiss = async (entry: QueueEntry) => {
+    setProcessingEntryId(entry.entryId);
+    try {
+      await queueApi.missEntry(entry.entryId);
+      notifyAi(`Đã đánh dấu vắng mặt cho số thứ tự ${entry.queueNumber}.`);
+      await fetchRoomQueue();
+    } catch (err: unknown) {
+      notifyAi(getErrorMessage(err, "Không thể đánh dấu vắng mặt."));
+    } finally {
+      setProcessingEntryId(null);
+    }
+  };
+
+  const waitingCount = (roomEntries ?? []).filter((entry) =>
+    ["WAITING", "TICKET_ISSUED", "CHECKED_IN"].includes(entry.queueStatus),
+  ).length;
 
   return (
-    <div className="space-y-6 pb-12">
-      {/* Toast Notification Container */}
-      {toast && (
-        <div
-          className={`fixed top-5 right-5 z-50 p-4 border shadow-lg max-w-md transition-all rounded-lg text-white ${
-            toast.type === "success"
-              ? "bg-[#2B1D30] border-[#6E2582]"
-              : toast.type === "warning"
-              ? "bg-amber-900 border-amber-500"
-              : "bg-rose-900 border-rose-500"
-          }`}
-        >
-          <div className="flex items-center justify-between gap-4">
-            <span className="text-xs font-semibold">{toast.message}</span>
-            <button onClick={() => setToast(null)} className="text-white/60 hover:text-white text-xs font-bold">
-              X
-            </button>
+    <div className="mx-auto max-w-[1440px] space-y-5 pb-12">
+      <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7B4B94]">Quầy tiếp nhận</p>
+          <h1 className="mt-1 text-xl font-bold tracking-tight text-[#2B1D30]">Check-in bệnh nhân</h1>
+          <p className="mt-1 text-[11px] text-slate-500">Quét mã trên phiếu khám để đưa bệnh nhân vào đúng hàng đợi.</p>
+        </div>
+        <div className="flex items-center gap-4 text-[10px] text-slate-500">
+          <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Hệ thống sẵn sàng</span>
+          <span>{waitingCount} lượt đang chờ</span>
+        </div>
+      </header>
+
+      <section className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)]">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-[15px] font-semibold text-[#2B1D30]">Tiếp nhận lượt khám</h2>
+              <p className="mt-1 text-[10px] text-slate-500">Chọn phòng và nhập mã phiếu khám điện tử.</p>
+            </div>
+            <span className="text-[10px] font-medium text-slate-400">Bước 1 / 1</span>
           </div>
-        </div>
-      )}
-
-      {/* Header */}
-      <div className="border border-card-border bg-card-bg p-5 rounded-xl shadow-sm">
-        <div className="flex items-center gap-2">
-          <span className="inline-block w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
-          <span className="text-xs font-bold uppercase tracking-wider text-purple-600">
-            Phân hệ Nhân viên Quầy Tiếp nhận
-          </span>
-        </div>
-        <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Quét QR & Tiếp nhận Bệnh nhân</h1>
-        <p className="text-xs text-text-muted mt-0.5">
-          Nhập hoặc quét mã QR trên phiếu khám điện tử của bệnh nhân để kích hoạt lượt khám vào hàng đợi.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Form Input Section */}
-        <div className="border border-card-border bg-card-bg p-6 rounded-xl shadow-sm space-y-4">
-          <h2 className="text-base font-bold text-[#2B1D30]">Thông tin tiếp nhận</h2>
 
           <form onSubmit={handleCheckIn} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-text mb-1">Chọn phòng khám tiếp nhận:</label>
+              <label htmlFor="room" className="mb-1.5 block text-[10px] font-semibold text-slate-700">Phòng khám</label>
               <select
+                id="room"
                 value={roomId}
                 onChange={(e) => setRoomId(e.target.value)}
-                className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg text-text text-xs font-medium focus:ring-2 focus:ring-purple-500"
+                className="h-11 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-[11px] text-slate-800 outline-none focus:border-[#7B4B94] focus:ring-2 focus:ring-[#F3E8F5]"
               >
                 <option value="ROOM-01">Phòng khám Nội 01</option>
                 <option value="ROOM-02">Phòng khám Nội 02</option>
@@ -157,147 +221,132 @@ export default function StaffCheckinPage() {
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-text mb-1">
-                Mã QR / Chuỗi ký tự phiếu khám (Quét mã hoặc nhập tay):
-              </label>
+              <label htmlFor="qr-input" className="mb-1.5 block text-[10px] font-semibold text-slate-700">Mã QR hoặc mã phiếu khám</label>
               <input
+                id="qr-input"
                 type="text"
                 value={qrInput}
                 onChange={(e) => setQrInput(e.target.value)}
-                placeholder="Ví dụ: TICKET-2026-00125 hoặc careflow:ticket:xyz..."
-                className="w-full p-3 border border-card-border rounded-lg bg-card-bg text-text text-sm font-mono focus:ring-2 focus:ring-purple-500"
+                placeholder="Quét mã hoặc nhập mã phiếu khám"
+                autoComplete="off"
+                className="h-12 w-full rounded-md border border-slate-200 bg-white px-3 font-mono text-xs text-slate-800 outline-none placeholder:font-sans placeholder:text-slate-400 focus:border-[#7B4B94] focus:ring-2 focus:ring-[#F3E8F5]"
               />
+              {error && <p className="mt-2 text-[10px] text-[#D9381E]">{error}</p>}
             </div>
-
-            {error && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-medium">
-                {error}
-              </div>
-            )}
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 bg-[#6E2582] hover:bg-[#561A66] text-white font-bold rounded-xl shadow-md transition-all text-xs cursor-pointer disabled:opacity-50"
+              className="h-11 w-full rounded-md bg-[#6E2582] px-4 text-[11px] font-semibold text-white transition-colors hover:bg-[#561A66] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting ? "Đang xử lý..." : "Xác nhận check-in"}
+              {isSubmitting ? "Đang tiếp nhận..." : "Xác nhận check-in"}
             </button>
           </form>
         </div>
 
-        {/* Check-in Result Card */}
-        <div className="border border-card-border bg-card-bg p-6 rounded-xl shadow-sm space-y-4">
-          <h2 className="text-base font-bold text-[#2B1D30]">Kết quả Tiếp nhận Gần nhất</h2>
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)]">
+          <div className="mb-5 flex items-start justify-between gap-4">
+            <div>
+              <h2 className="text-[15px] font-semibold text-[#2B1D30]">Kết quả gần nhất</h2>
+              <p className="mt-1 text-[10px] text-slate-500">Thông tin được cập nhật sau mỗi lượt tiếp nhận.</p>
+            </div>
+            {checkInResult && <span className="text-[10px] font-medium text-emerald-600">Đã cập nhật</span>}
+          </div>
 
           {checkInResult ? (
-            <div className="p-5 bg-purple-50 border border-purple-200 rounded-xl space-y-3">
-              <div className="flex items-center justify-between border-b border-purple-200 pb-3">
-                <span className="text-xs font-bold text-purple-900 uppercase tracking-wider">Trạng thái: Đã tiếp nhận</span>
-                <span className="text-xs font-bold px-2.5 py-1 bg-[#6E2582] text-white rounded-full">
-                  Thành công
-                </span>
+            <div className="border-l-3 border-[#7B4B94] bg-[#F8FAFC] px-5 py-4">
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-600">Tiếp nhận thành công</p>
+                <StatusText status={checkInResult.queueStatus} />
               </div>
-
-              <div className="text-center py-4">
-                <p className="text-xs text-purple-700">Số thứ tự khám</p>
-                <p className="text-5xl font-extrabold text-purple-900 mt-1">{checkInResult.queueNumber}</p>
-                <p className="text-xs font-semibold text-purple-800 mt-2">Phòng: {checkInResult.roomCode}</p>
+              <div className="mt-5 flex items-end gap-3 border-b border-slate-200 pb-5">
+                <span className="font-mono text-5xl font-bold leading-none text-[#2B1D30]">{checkInResult.queueNumber}</span>
+                <div className="pb-1 text-[10px] text-slate-500">
+                  <p>Phòng {checkInResult.roomCode}</p>
+                  <p className="mt-1">{checkInResult.departmentName}</p>
+                </div>
               </div>
-
-              <div className="text-xs space-y-1 text-purple-800 pt-2 border-t border-purple-200">
-                <p>Khoa: {checkInResult.departmentName}</p>
-                <p>Thời gian check-in: {new Date(checkInResult.checkedInAt || Date.now()).toLocaleTimeString("vi-VN")}</p>
-                <p>Loại lượt: {checkInResult.priorityLevel}</p>
-              </div>
+              <dl className="mt-4 grid grid-cols-2 gap-4 text-[10px]">
+                <div><dt className="text-slate-400">Thời gian</dt><dd className="mt-1 font-medium text-slate-700">{checkInResult.checkedInAt ? new Date(checkInResult.checkedInAt).toLocaleTimeString("vi-VN") : "Vừa xong"}</dd></div>
+                <div><dt className="text-slate-400">Loại lượt</dt><dd className="mt-1 font-medium text-slate-700">{priorityLabels[checkInResult.priorityLevel] || checkInResult.priorityLevel}</dd></div>
+              </dl>
             </div>
           ) : (
-            <div className="py-16 text-center text-text-muted text-xs">
-              Quét mã QR hoặc nhập phiếu khám ở cột bên trái để thực hiện tiếp nhận bệnh nhân.
+            <div className="flex min-h-[220px] items-center justify-center border-l-3 border-slate-200 bg-slate-50 px-8 text-center text-[11px] text-slate-500">
+              Kết quả check-in sẽ hiển thị tại đây sau khi quét mã.
             </div>
           )}
         </div>
-      </div>
+      </section>
 
-      {/* Today's Active Queue & Missed Handling Section */}
-      <div className="border border-card-border bg-card-bg p-6 rounded-xl shadow-sm space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-[#2B1D30]">Danh sách lượt khám trong ngày ({roomId})</h2>
-          <button
-            onClick={fetchRoomQueue}
-            className="text-xs font-semibold text-purple-700 hover:text-purple-900 cursor-pointer"
-          >
-            Tải lại
-          </button>
+      <section className="rounded-lg border border-slate-200 bg-white shadow-[0_1px_3px_rgba(110,37,130,0.06)]">
+        <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-[15px] font-semibold text-[#2B1D30]">Hàng đợi phòng khám</h2>
+            <p className="mt-1 text-[10px] text-slate-500">Phòng đang chọn: <span className="font-medium text-slate-700">{roomId}</span></p>
+          </div>
+          <button onClick={() => void fetchRoomQueue()} className="h-9 rounded-md border border-slate-200 px-3 text-[10px] font-semibold text-[#7B4B94] hover:bg-[#F3E8F5]">Tải lại</button>
         </div>
 
         {isLoadingQueue ? (
-          <div className="py-8 flex justify-center">
-            <LoadingSpinner size="md" />
-          </div>
+          <div className="flex min-h-[180px] items-center justify-center"><LoadingSpinner size="md" /></div>
         ) : (roomEntries ?? []).length === 0 ? (
-          <div className="py-8 text-center text-text-muted text-xs">
-            Chưa có lượt chờ nào tại {roomId}.
-          </div>
+          <div className="flex min-h-[180px] items-center justify-center px-5 text-center text-[11px] text-slate-500">Chưa có lượt khám trong hàng đợi của phòng này.</div>
         ) : (
-          <div className="divide-y divide-card-border">
-            {(roomEntries ?? []).map((entry) => (
-              <div key={entry.entryId} className="py-3 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-purple-100 text-purple-800 font-extrabold flex items-center justify-center text-sm">
-                    {entry.queueNumber}
-                  </div>
-                  <div>
-                    <span className="text-xs font-bold text-[#2B1D30]">Số thứ tự: {entry.queueNumber}</span>
-                    <span className="ml-2 text-[11px] font-semibold text-purple-700">({entry.queueStatus})</span>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  {(entry.queueStatus === "WAITING" || entry.queueStatus === "TICKET_ISSUED" as any) && (
-                    <button
-                      onClick={async () => {
-                        try {
-                          let token = entry.appointmentId;
-                          try {
-                            const qrRes = await queueApi.getQr(entry.appointmentId);
-                            if (qrRes.data?.qrToken) token = qrRes.data.qrToken;
-                          } catch {
-                            /* Fallback to appointmentId */
-                          }
-                          const res = await queueApi.checkIn({ qrToken: token, roomId });
-                          if (res.data) {
-                            setCheckInResult(res.data);
-                            showToast(`Duyệt tiếp nhận thành công STT ${res.data.queueNumber}!`);
-                            notifyAi(`Tiếp nhận thành công bệnh nhân STT ${res.data.queueNumber}!`);
-                            await fetchRoomQueue();
-                          }
-                        } catch (err: any) {
-                          showToast(err.message || "Lỗi khi duyệt tiếp nhận.", "danger");
-                        }
-                      }}
-                      className="px-3 py-1 bg-emerald-600 text-white text-xs font-semibold rounded-md hover:bg-emerald-700 cursor-pointer"
-                    >
-                      Duyệt vào hàng chờ
-                    </button>
-                  )}
-                  <button
-                    onClick={() => handleRecall(entry.entryId, entry.queueNumber)}
-                    className="px-3 py-1 bg-purple-600 text-white text-xs font-semibold rounded-md hover:bg-purple-700 cursor-pointer"
-                  >
-                    Gọi lại
-                  </button>
-                  <button
-                    onClick={() => handleMiss(entry.entryId, entry.queueNumber)}
-                    className="px-3 py-1 bg-rose-600 text-white text-xs font-semibold rounded-md hover:bg-rose-700 cursor-pointer"
-                  >
-                    Vắng mặt
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[760px] border-collapse text-left">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                  <th className="px-5 py-3">Số thứ tự</th>
+                  <th className="px-4 py-3">Bệnh nhân</th>
+                  <th className="px-4 py-3">Loại lượt</th>
+                  <th className="px-4 py-3">Trạng thái</th>
+                  <th className="px-4 py-3">Thời gian tiếp nhận</th>
+                  <th className="px-5 py-3 text-right">Thao tác</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(roomEntries ?? []).map((entry) => {
+                  const patient = patientDetails[entry.patientId];
+                  const isProcessing = processingEntryId === entry.entryId;
+                  const canCheckIn = entry.queueStatus === "WAITING" || entry.queueStatus === "TICKET_ISSUED";
+                  return (
+                    <tr key={entry.entryId} className="min-h-[44px] border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                      <td className="px-5 py-3.5"><span className="font-mono text-sm font-bold text-[#2B1D30]">{entry.queueNumber}</span></td>
+                      <td className="px-4 py-3.5">
+                        {patient ? (
+                          <div>
+                            <p className="text-[11px] font-semibold text-[#2B1D30]">{patient.fullName}</p>
+                            <p className="mt-1 text-[9px] text-slate-500">
+                              Mã BN: {patient.id.slice(0, 8)} · {patient.gender || "Chưa rõ giới tính"}
+                              {patient.dateOfBirth ? ` · ${new Date(patient.dateOfBirth).getFullYear()}` : ""}
+                            </p>
+                          </div>
+                        ) : (
+                          <div>
+                            <p className="text-[11px] font-medium text-slate-400">Đang tải thông tin</p>
+                            <p className="mt-1 text-[9px] text-slate-400">Mã BN: {entry.patientId.slice(0, 8)}</p>
+                          </div>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5 text-[10px] text-slate-600">{priorityLabels[entry.priorityLevel] || entry.priorityLevel}</td>
+                      <td className="px-4 py-3.5"><StatusText status={entry.queueStatus} /></td>
+                      <td className="px-4 py-3.5 text-[10px] text-slate-500">{entry.checkedInAt ? new Date(entry.checkedInAt).toLocaleTimeString("vi-VN") : "Chưa tiếp nhận"}</td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex justify-end gap-2">
+                          {canCheckIn && <button onClick={() => void handleCheckInEntry(entry)} disabled={isProcessing} className="h-8 w-24 rounded-md text-[10px] font-semibold text-[#7B4B94] hover:bg-[#F3E8F5] disabled:opacity-50">{isProcessing ? "Đang xử lý" : "Duyệt vào"}</button>}
+                          <button onClick={() => void handleRecall(entry)} disabled={isProcessing} className="h-8 w-20 rounded-md border border-slate-200 text-[10px] font-semibold text-slate-600 hover:border-[#7B4B94] hover:text-[#7B4B94] disabled:opacity-50">Gọi lại</button>
+                          <button onClick={() => void handleMiss(entry)} disabled={isProcessing} className="h-8 w-20 rounded-md text-[10px] font-medium text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50">Vắng mặt</button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         )}
-      </div>
+      </section>
     </div>
   );
 }

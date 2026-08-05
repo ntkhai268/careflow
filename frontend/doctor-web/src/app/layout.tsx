@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import ReactGrepInspector from "@/components/ReactGrepInspector";
 
 const inter = Inter({
   variable: "--font-geist-sans",
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="vi" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>
+        <ReactGrepInspector />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
