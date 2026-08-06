@@ -25,7 +25,6 @@ export default function DashboardLayout({
     }
   }, [isAuthenticated, isLoading, router]);
 
-  // Global Keyboard Shortcuts for Tab Switching
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.altKey || e.ctrlKey) {
@@ -55,7 +54,6 @@ export default function DashboardLayout({
 
   if (!isAuthenticated) return null;
 
-  // Strict Role-Based Route Authorization Check (Strict RBAC)
   const userRole = user?.role?.toUpperCase() || "";
   const isAdmin = userRole.includes("ADMIN");
   const isLabTech = userRole.includes("LAB");

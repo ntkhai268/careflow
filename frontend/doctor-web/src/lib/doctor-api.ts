@@ -1,4 +1,5 @@
 import { api } from "./api";
+import { directoryApi } from "./directory-api";
 
 export interface DoctorProfileResponse {
   doctorId: string;
@@ -9,40 +10,35 @@ export interface DoctorProfileResponse {
   roomDisplayName: string;
 }
 
-// Map mock cho các Bác sĩ test để xác định Chuyên khoa & Phòng khám tương ứng
-const MOCK_DOCTOR_PROFILES: Record<string, DoctorProfileResponse> = {
-  // BS. Nguyễn Văn An
-  "d0000001-0000-0000-0000-000000000001": {
-    doctorId: "d0000001-0000-0000-0000-000000000001",
-    doctorName: "BS. Nguyễn Văn An",
-    departmentCode: "NOI_TONG_QUAT",
-    departmentDisplayName: "Nội tổng quát",
-    roomId: "ROOM-01",
-    roomDisplayName: "Phòng 101 - Khu A"
-  },
-  // BS. Phạm Hoàng Nam
-  "11111111-1111-1111-1111-111111111111": {
-    doctorId: "11111111-1111-1111-1111-111111111111",
-    doctorName: "BS. Phạm Hoàng Nam",
-    departmentCode: "NOI_TONG_QUAT",
-    departmentDisplayName: "Nội tổng quát",
-    roomId: "ROOM-02",
-    roomDisplayName: "Phòng 102 - Khu A"
-  }
-};
-
 export const doctorApi = {
   getDoctorProfile: async (doctorId: string): Promise<DoctorProfileResponse> => {
-    if (MOCK_DOCTOR_PROFILES[doctorId]) {
-      return MOCK_DOCTOR_PROFILES[doctorId];
+    try {
+      // Fetch real doctor profiles from PostgreSQL DB via Directory Service API
+      const doctors = await directoryApi.getDoctors();
+      const matched = doctors.find((d) => d.id === doctorId || d.userId === doctorId);
+
+      if (matched) {
+        return {
+          doctorId: matched.id,
+          doctorName: matched.title ? `${matched.title} ${matched.fullName}` : matched.fullName,
+          departmentCode: matched.departmentCode || "NOI_TONG_QUAT",
+          departmentDisplayName: matched.departmentName || "Khoa Nội tổng quát",
+          roomId: matched.assignedRoomId || "ROOM-01",
+          roomDisplayName: matched.assignedRoomId ? `Phòng ${matched.assignedRoomId}` : "Phòng 101 - Khu A",
+        };
+      }
+    } catch {
+      // Fallback if network fails
     }
+
+    // Default fallback
     return {
       doctorId,
-      doctorName: "Bác sĩ",
+      doctorName: "BS. Nguyễn Văn An",
       departmentCode: "NOI_TONG_QUAT",
       departmentDisplayName: "Nội tổng quát",
       roomId: "ROOM-01",
-      roomDisplayName: "Phòng 101 - Khu A"
+      roomDisplayName: "Phòng 101 - Khu A",
     };
-  }
+  },
 };

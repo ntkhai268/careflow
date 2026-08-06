@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **careflow** (5528 symbols, 12723 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **careflow** (5668 symbols, 12998 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -64,12 +64,13 @@ This project is indexed by GitNexus as **careflow** (5528 symbols, 12723 relatio
 
 ## Automatic Data Seeding Strategy & Rules
 - **Automatic DataInitializer Pattern**: Mọi microservice khi khởi chạy (`CommandLineRunner`) BẮT BUỘC phải tự động kiểm tra và seed dữ liệu mẫu hợp lệ (clean & ready-to-test data) cho ngày hiện tại (`LocalDate.now()`).
-- **Quy tắc Xử lý Bản ghi đã tồn tại trong ngày**:
+- **Quy tắc Xử lý Bản ghi đã tồn tại trong ngày / Master Data**:
   - **Dữ liệu Hàng đợi & Lượt khám theo ngày (`QueueEntry`, `VisitTicket`)**: Thực hiện **Reset / Clear dữ liệu cũ (`deleteAll()`) và seed lại danh sách active mới cho ngày hiện tại** để sau mỗi lần khởi động lại hệ thống luôn có hàng đợi sạch sẵn sàng cho việc test.
-  - **Dữ liệu Danh mục & Master Data (`Patient`, `User`, `Drug`, `Config`)**: Sử dụng **Idempotent Update**: Kiểm tra tồn tại (`existsById` / `findByCode`). Nếu chưa có thì `INSERT` mới; nếu đã có thì `UPDATE` đồng bộ lại nội dung chuẩn, không tạo trùng lặp ID và không làm crash ứng dụng.
+  - **Dữ liệu Danh mục & Master Data (`Patient`, `User`, `Drug`, `Department`, `Room`, `DoctorProfile`, `Config`)**: Sử dụng **Idempotent Seeding**: Ngoại trừ dữ liệu hàng đợi thay đổi theo ngày, tất cả các dữ liệu danh mục tĩnh/master data **chỉ khởi tạo 1 lần (kiểm tra `existsById` / `findByCode`), nếu đã có bản ghi rồi thì KHÔNG tạo thêm bản ghi trùng lặp**, không làm tăng rác CSDL và không làm crash ứng dụng.
 - **Nguồn dữ liệu seed chuẩn**:
   - `careflow-patient-service`: Seed 6 bệnh nhân mẫu (`f0000001-0000-0000-0000-000000000001` đến `...0006`) đầy đủ tiền sử y tế, dị ứng thuốc và thẻ BHYT.
   - `careflow-queue-service`: Reset và seed danh sách lượt chờ khám active trong ngày cho `ROOM-01` (`NOI-001` đến `NOI-005`), lượt Cận lâm sàng (`LAB-HEMATOLOGY-01`), và lượt Quầy phát thuốc (`PHARMACY-MAIN-01`).
+  - `careflow-hospital-directory-service`: Seed 11 Khoa chuyên môn (`NOI_TONG_QUAT`, `NHI`...), 12 Phòng khám/CLS (`ROOM-01` đến `ROOM-11`, `LAB-HEMATOLOGY-01`, `PHARMACY-MAIN-01`) và 6 Hồ sơ Bác sĩ mẫu.
   - `careflow-prescription-service`: Seed danh mục thuốc mẫu (`drugs_dictionary`).
   - `careflow-identity-service`: Seed tài khoản nội bộ & bệnh nhân mẫu (`PATIENT`, `DOCTOR`, `STAFF`, `LAB_TECHNICIAN`, `ADMIN`).
 - **Quy tắc khi tạo tính năng/Entity mới**: Mỗi khi phát triển tính năng hoặc entity mới có danh sách/hàng đợi, BẮT BUỘC phải bổ sung logic seed data tương ứng vào lớp `DataInitializer.java` của microservice đó để mỗi lần chạy lại hệ thống đều có dữ liệu test tức thì.

@@ -11,6 +11,7 @@ import java.util.UUID;
 @Repository
 public interface DoctorProfileRepository extends JpaRepository<DoctorProfile, UUID> {
     Optional<DoctorProfile> findByUserId(UUID userId);
+    boolean existsByUserId(UUID userId);
     List<DoctorProfile> findByDepartmentCodeAndIsActiveTrue(String departmentCode);
     List<DoctorProfile> findByIsActiveTrue();
 }

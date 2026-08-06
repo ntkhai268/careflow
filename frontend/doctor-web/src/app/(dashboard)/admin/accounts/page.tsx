@@ -28,7 +28,8 @@ const ROLE_OPTIONS: { value: AccountItem["role"]; label: string }[] = [
 ];
 
 export default function AdminAccountsPage() {
-  const [accounts, setAccounts] = useState<AccountItem[]>(INITIAL_ACCOUNTS);
+  const [isLoading, setIsLoading] = useState(true);
+  const [accounts, setAccounts] = useState<AccountItem[] | null>(null);
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [confirmAccount, setConfirmAccount] = useState<AccountItem | null>(null);
@@ -63,25 +64,46 @@ export default function AdminAccountsPage() {
   }, []);
 
   useEffect(() => {
-    async function loadDepts() {
+    async function loadData() {
+      setIsLoading(true);
       try {
-        const list = await directoryApi.getDepartments();
-        setDepartments(list ?? []);
-        if ((list ?? []).length > 0 && !selectedDept) {
-          setSelectedDept(list[0]);
-          setNewDept(list[0].name);
+        const [deptsList, doctorProfiles] = await Promise.all([
+          directoryApi.getDepartments(),
+          directoryApi.getDoctors(),
+        ]);
+
+        setDepartments(deptsList ?? []);
+        if ((deptsList ?? []).length > 0) {
+          setSelectedDept(deptsList[0]);
+          setNewDept(deptsList[0].name);
+        }
+
+        if (doctorProfiles && doctorProfiles.length > 0) {
+          const realAccounts: AccountItem[] = doctorProfiles.map((doc, idx) => ({
+            id: doc.id || String(idx + 1),
+            fullName: doc.title ? `${doc.title} ${doc.fullName}` : doc.fullName,
+            email: `${doc.fullName.toLowerCase().replace(/[^a-z0-9]/g, ".")}@careflow.vn`,
+            role: "DOCTOR",
+            department: doc.specialization || doc.departmentName || "Khoa Nội tổng quát",
+            status: doc.isActive !== false ? "ACTIVE" : "LOCKED",
+          }));
+          setAccounts([...realAccounts, ...INITIAL_ACCOUNTS.filter(a => a.role !== "DOCTOR")]);
+        } else {
+          setAccounts(INITIAL_ACCOUNTS);
         }
       } catch {
-        // Fallback default
+        setAccounts(INITIAL_ACCOUNTS);
+      } finally {
+        setIsLoading(false);
       }
     }
-    loadDepts();
+    loadData();
   }, []);
 
   const handleConfirmToggleStatus = () => {
     if (!confirmAccount) return;
     setAccounts(prev =>
-      prev.map(acc =>
+      (prev ?? []).map(acc =>
         acc.id === confirmAccount.id ? { ...acc, status: acc.status === "ACTIVE" ? "LOCKED" : "ACTIVE" } : acc
       )
     );
@@ -101,13 +123,13 @@ export default function AdminAccountsPage() {
       status: "ACTIVE",
     };
 
-    setAccounts(prev => [newAcc, ...prev]);
+    setAccounts(prev => [newAcc, ...(prev ?? [])]);
     setShowAddModal(false);
     setNewFullName("");
     setNewEmail("");
   };
 
-  const filtered = accounts.filter(
+  const filtered = (accounts ?? []).filter(
     a =>
       a.fullName.toLowerCase().includes(search.toLowerCase()) ||
       a.email.toLowerCase().includes(search.toLowerCase())
