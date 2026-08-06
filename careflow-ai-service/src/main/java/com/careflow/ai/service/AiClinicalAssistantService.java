@@ -25,139 +25,192 @@ public class AiClinicalAssistantService {
     private static final String MEDICAL_DISCLAIMER =
             "Gợi ý hỗ trợ lâm sàng từ CareFlow AI. Bác sĩ chịu trách nhiệm hoàn toàn đối với quyết định chẩn đoán và chỉ định điều trị.";
 
-    // In-memory store for audit trail of interactions
+    private static final String SYSTEM_INSTRUCTION =
+            "Bạn là Bác sĩ Chồn AI (CareFlow Clinical Assistant) 🐾 - Trợ lý Y tế & Lâm sàng chuyên trách cho Hệ thống Quản lý Bệnh viện CareFlow.\n\n" +
+            "TÍNH CÁCH & PHONG CÁCH PHẢN HỒI (AI CHARACTERISTIC & PERSONA):\n" +
+            "- TÊN CỦA BẠN: Bác sĩ Chồn AI 🐾 (CareFlow Clinical Assistant).\n" +
+            "- PHONG CÁCH: Thân thiện, lễ phép, hóm hỉnh nhẹ nhàng nhưng CỰC KỲ CHUYÊN NGHIỆP và CHÍNH XÁC VỀ Y KHOA.\n" +
+            "- GIAO TIẾP & HỎI ĐÁP ĐƠN GIẢN: Khi Bác sĩ chào hỏi, đố vui nhẹ nhàng hoặc hỏi các câu giao tiếp đơn giản:\n" +
+            "  -> Hãy trả lời câu hỏi đó một cách hóm hỉnh, dễ thương và thông minh theo cách ngẫu nhiên tự nhiên nhất của một mô hình ngôn ngữ lớn, sau đó khéo léo dẫn dắt về nhiệm vụ hỗ trợ y tế lâm sàng (như tóm tắt ca khám, tra cứu dược lý, phân tích dữ liệu màn hình hay kiểm tra dị ứng thuốc).\n" +
+            "- PHÂN TÍCH Y TẾ & LÂM SÀNG: Khi Bác sĩ hỏi các câu hỏi chuyên môn y tế, triệu chứng, chẩn đoán, dược lý hoặc dữ liệu trực tiếp trên màn hình:\n" +
+            "  -> Phân tích chính xác, súc tích, chuyên nghiệp. Trình bày bằng các gạch đầu dòng rõ ràng và chữ in đậm (**chữ in đậm**).\n\n" +
+            "QUY TẮC AN TOÀN NGHỀ NGHIỆP & BẢO MẬT (STRICT GUARDRAILS):\n" +
+            "1. CHỈ PHẢN HỒI CÁC CÂU HỎI VỀ Y TẾ, CHẨN ĐOÁN LÂM SÀNG, BỆNH ÁN, DƯỢC LÝ, VẬN HÀNH BỆNH VIỆN CAREFLOW VÀ GIAO TIẾP THÂN THIỆN BAN ĐẦU VỚI BÁC SĨ.\n" +
+            "2. NẾU NGƯỜI DÙNG HỎI CÁC CHỦ ĐỀ HOÀN TOÀN KHÔNG LIÊN QUAN VÀ VI PHẠM NGUYÊN TẮC (như chính trị, cờ bạc, nội dung độc hại...), BẠN PHẢI TỪ CHỐI LỊCH SỰ:\n" +
+            "   \"Xin lỗi Bác sĩ, em là Bác sĩ Chồn AI 🐾. Em chỉ được phép hỗ trợ các vấn đề về y tế, chẩn đoán lâm sàng và vận hành bệnh viện CareFlow thôi ạ.\"\n" +
+            "3. Mọi câu trả lời chuyên môn phải giữ độ chính xác y khoa tuyệt đối.";
+
+    private final GeminiClientService geminiClientService;
+    private final DeepSeekClientService deepSeekClientService;
     private final Map<String, ClinicalSuggestionResponse> interactionStore = new ConcurrentHashMap<>();
 
     public ClinicalSuggestionResponse getClinicalSuggestions(ClinicalSuggestionRequest request) {
         log.info("Processing AI clinical suggestion for consultationId: {}", request.getConsultationId());
 
         String interactionId = UUID.randomUUID().toString();
-        String question = request.getQuestion() != null ? request.getQuestion().toLowerCase() : "";
+        String question = request.getQuestion() != null ? request.getQuestion() : "Gợi ý chẩn đoán phân biệt và dữ liệu còn thiếu";
 
-        List<ClinicalSuggestionItem> suggestions = new ArrayList<>();
-        List<String> missingInfo = new ArrayList<>();
-        List<String> warnings = new ArrayList<>();
+        String prompt = String.format("Mã ca khám (ConsultationId): %s. Yêu cầu của Bác sĩ: %s", request.getConsultationId(), question);
 
-        if (question.contains("tim") || question.contains("ngực") || question.contains("huyết áp")) {
-            suggestions.add(ClinicalSuggestionItem.builder()
-                    .type("DIFFERENTIAL_DIAGNOSIS")
-                    .text("Cân nhắc Cơn đau thắt ngực không ổn định (Unstable Angina) hoặc Tăng huyết áp độ II")
-                    .evidenceRefs(List.of(
-                            EvidenceRef.builder().sourceType("CONSULTATION").sourceId(request.getConsultationId()).field("symptoms").build()
-                    ))
-                    .build());
-            suggestions.add(ClinicalSuggestionItem.builder()
-                    .type("DIFFERENTIAL_DIAGNOSIS")
-                    .text("Theo dõi Bệnh cơ tim thiếu máu cục bộ mãn tính")
-                    .evidenceRefs(List.of(
-                            EvidenceRef.builder().sourceType("EMR").sourceId("EMR-HISTORY-01").field("medicalHistory").build()
-                    ))
-                    .build());
-            missingInfo.add("Kết quả Điện tâm đồ (ECG) 12 chuyển đạo lúc nghỉ");
-            missingInfo.add("Định lượng Enzyem tim (Troponin I / T)");
-            warnings.add("Cảnh báo: Kiểm tra tiền sử dị ứng thuốc nhóm Beta-blocker và Thuốc giãn mạch Nitrat");
-        } else if (question.contains("nhi") || question.contains("sốt") || question.contains("ho")) {
-            suggestions.add(ClinicalSuggestionItem.builder()
-                    .type("DIFFERENTIAL_DIAGNOSIS")
-                    .text("Cân nhắc Viêm phế quản cấp tính hoặc Nhiễm trùng đường hô hấp trên do virus")
-                    .evidenceRefs(List.of(
-                            EvidenceRef.builder().sourceType("CONSULTATION").sourceId(request.getConsultationId()).field("symptoms").build()
-                    ))
-                    .build());
-            missingInfo.add("Tần số thở và chỉ số SpO2 phòng học");
-            missingInfo.add("Tiền sử tiêm chủng vắc-xin DPT và Phế cầu");
-            warnings.add("Theo dõi dấu hiệu co kéo lồng ngực và tím quầng môi ở trẻ em");
-        } else {
-            suggestions.add(ClinicalSuggestionItem.builder()
-                    .type("DIFFERENTIAL_DIAGNOSIS")
-                    .text("Cân nhắc Hội chứng Viêm dạ dày cấp / Trào ngược dạ dày thực quản (GERD)")
-                    .evidenceRefs(List.of(
-                            EvidenceRef.builder().sourceType("CONSULTATION").sourceId(request.getConsultationId()).field("reasonForVisit").build()
-                    ))
-                    .build());
-            suggestions.add(ClinicalSuggestionItem.builder()
-                    .type("DIFFERENTIAL_DIAGNOSIS")
-                    .text("Theo dõi Rối loạn thần kinh thực vật / Căng thẳng thể chất")
-                    .evidenceRefs(List.of(
-                            EvidenceRef.builder().sourceType("CONSULTATION").sourceId(request.getConsultationId()).field("vitalSigns").build()
-                    ))
-                    .build());
-            missingInfo.add("Thời gian diễn tiến triệu chứng trong ngày (trước/sau ăn)");
-            missingInfo.add("Tiền sử dùng thuốc giảm đau hạ sốt nhóm NSAIDs");
-            warnings.add("Lưu ý kiểm tra dị ứng Penicillin & Aspirin được ghi nhận trên Thẻ BHYT");
+        // 1. Try Gemini AI Provider Chain (gemini-2.5-flash, gemini-2.5-flash-lite, gemini-2.0-flash)
+        if (geminiClientService.isGeminiConfigured()) {
+            String aiText = geminiClientService.generateClinicalContent(SYSTEM_INSTRUCTION, prompt);
+            if (aiText != null) {
+                ClinicalSuggestionResponse response = ClinicalSuggestionResponse.builder()
+                        .interactionId(interactionId)
+                        .mode("LLM_PROVIDER")
+                        .summary(aiText)
+                        .suggestions(List.of(
+                                ClinicalSuggestionItem.builder()
+                                        .type("DIFFERENTIAL_DIAGNOSIS")
+                                        .text("Gợi ý phân tích từ Gemini AI")
+                                        .evidenceRefs(List.of(EvidenceRef.builder().sourceType("CONSULTATION").sourceId(request.getConsultationId()).field("symptoms").build()))
+                                        .build()
+                        ))
+                        .missingInformation(List.of("Tiền sử gia đình", "Thời gian xuất hiện triệu chứng cụ thể"))
+                        .warnings(List.of("Kiểm tra dị ứng thuốc nhóm Beta-lactam & NSAIDs"))
+                        .disclaimer(MEDICAL_DISCLAIMER)
+                        .model(AiModelInfo.builder()
+                                .provider("Google AI Studio (Gemini)")
+                                .name("gemini-2.5-flash")
+                                .version("2.5")
+                                .build())
+                        .generatedAt(Instant.now().toString())
+                        .build();
+
+                interactionStore.put(interactionId, response);
+                return response;
+            }
         }
 
-        ClinicalSuggestionResponse response = ClinicalSuggestionResponse.builder()
-                .interactionId(interactionId)
-                .mode("MOCK_RULE_BASED")
-                .summary("Tóm tắt ca khám: Bệnh nhân ghi nhận triệu chứng mệt mỏi, khó chịu. Đã phân tích dấu hiệu sinh tồn và tiền sử y tế.")
-                .suggestions(suggestions)
-                .missingInformation(missingInfo)
-                .warnings(warnings)
-                .disclaimer(MEDICAL_DISCLAIMER)
-                .model(AiModelInfo.builder()
-                        .provider("CareFlow Clinical Rule Engine")
-                        .name("careflow-clinical-v1")
-                        .version("1.0.0")
-                        .build())
-                .generatedAt(Instant.now().toString())
-                .build();
+        // 2. Fallback to DeepSeek AI Provider if Gemini is rate limited or unavailable
+        if (deepSeekClientService.isDeepSeekConfigured()) {
+            log.info("Gemini unavailable. Falling back to DeepSeek AI for clinical suggestions...");
+            String dsText = deepSeekClientService.generateClinicalContent(SYSTEM_INSTRUCTION, prompt);
+            if (dsText != null) {
+                ClinicalSuggestionResponse response = ClinicalSuggestionResponse.builder()
+                        .interactionId(interactionId)
+                        .mode("LLM_PROVIDER")
+                        .summary(dsText)
+                        .suggestions(List.of())
+                        .missingInformation(List.of())
+                        .warnings(List.of())
+                        .disclaimer(MEDICAL_DISCLAIMER)
+                        .model(AiModelInfo.builder()
+                                .provider("DeepSeek AI")
+                                .name("deepseek-chat")
+                                .version("V3/R1")
+                                .build())
+                        .generatedAt(Instant.now().toString())
+                        .build();
 
-        interactionStore.put(interactionId, response);
-        return response;
+                interactionStore.put(interactionId, response);
+                return response;
+            }
+        }
+
+        // 3. Fallback to MOCK_RULE_BASED mode if all AI providers are offline/limited
+        return buildRuleBasedSuggestions(interactionId, request.getConsultationId(), question);
     }
 
     public ClinicalSuggestionResponse processClinicalChat(ClinicalChatRequest request) {
         log.info("Processing AI clinical chat message for consultationId: {}", request.getConsultationId());
 
         String interactionId = UUID.randomUUID().toString();
-        String userMsg = request.getMessage().toLowerCase();
+        String message = request.getMessage();
 
-        List<ClinicalSuggestionItem> suggestions = new ArrayList<>();
-        List<String> missingInfo = new ArrayList<>();
-        List<String> warnings = new ArrayList<>();
+        StringBuilder promptBuilder = new StringBuilder();
+        promptBuilder.append(String.format("Mã ca khám (ConsultationId): %s.\n", request.getConsultationId()));
 
-        if (userMsg.contains("xét nghiệm") || userMsg.contains("cls") || userMsg.contains("chỉ định")) {
-            suggestions.add(ClinicalSuggestionItem.builder()
-                    .type("TREATMENT_REFERRAL")
-                    .text("Khuyến nghị chỉ định Cận lâm sàng: Công thức máu (CBC) & Định lượng Glucose máu khẩn")
-                    .evidenceRefs(List.of(
-                            EvidenceRef.builder().sourceType("LAB").sourceId("LAB-HEMATOLOGY-01").field("serviceCode").build()
-                    ))
-                    .build());
-            missingInfo.add("Chỉ số Huyết áp trung bình và Nhịp tim hiện tại");
-        } else if (userMsg.contains("thuốc") || userMsg.contains("toa") || userMsg.contains("đơn")) {
-            suggestions.add(ClinicalSuggestionItem.builder()
-                    .type("TREATMENT_REFERRAL")
-                    .text("Tham khảo phác đồ: Paracetamol 500mg (khi sốt/đau) + Phác đồ bọc niêm mạc dạ dày (Esomeprazole 20mg)")
-                    .evidenceRefs(List.of(
-                            EvidenceRef.builder().sourceType("CONSULTATION").sourceId(request.getConsultationId()).field("diagnosis").build()
-                    ))
-                    .build());
-            warnings.add("Cảnh báo tương tác: Tránh phối hợp 2 thuốc cùng nhóm NSAIDs để phòng xuất huyết dạ dày");
-        } else {
-            suggestions.add(ClinicalSuggestionItem.builder()
-                    .type("DIFFERENTIAL_DIAGNOSIS")
-                    .text("Trả lời lâm sàng: Bác sĩ nên kiểm tra kỹ phản xạ đồng tử, dấu hiệu màng não và SpO2 trước khi kết luận.")
-                    .evidenceRefs(List.of(
-                            EvidenceRef.builder().sourceType("CONSULTATION").sourceId(request.getConsultationId()).field("physicalExam").build()
-                    ))
-                    .build());
+        if (request.getPageTitle() != null || request.getPageRoute() != null) {
+            promptBuilder.append(String.format("NGỮ CẢNH MÀN HÌNH BÁC SĨ ĐANG XEM:\n- Trang: %s (%s)\n",
+                    request.getPageTitle() != null ? request.getPageTitle() : "Trang hiện tại",
+                    request.getPageRoute() != null ? request.getPageRoute() : ""));
         }
+        if (request.getPageData() != null && !request.getPageData().isBlank()) {
+            promptBuilder.append(String.format("- DỮ LIỆU TRỰC TIẾP TRÊN MÀN HÌNH: %s\n", request.getPageData()));
+        }
+
+        promptBuilder.append(String.format("\nCÂU HỎI TƯƠNG TÁC CỦA BÁC SĨ: %s", message));
+
+        String prompt = promptBuilder.toString();
+
+        // 1. Try Gemini AI Provider Chain
+        if (geminiClientService.isGeminiConfigured()) {
+            String aiText = geminiClientService.generateClinicalContent(SYSTEM_INSTRUCTION, prompt);
+            if (aiText != null) {
+                ClinicalSuggestionResponse response = ClinicalSuggestionResponse.builder()
+                        .interactionId(interactionId)
+                        .mode("LLM_PROVIDER")
+                        .summary(aiText)
+                        .suggestions(List.of())
+                        .missingInformation(List.of())
+                        .warnings(List.of())
+                        .disclaimer(MEDICAL_DISCLAIMER)
+                        .model(AiModelInfo.builder()
+                                .provider("Google AI Studio (Gemini)")
+                                .name("gemini-2.5-flash")
+                                .version("2.5")
+                                .build())
+                        .generatedAt(Instant.now().toString())
+                        .build();
+
+                interactionStore.put(interactionId, response);
+                return response;
+            }
+        }
+
+        // 2. Fallback to DeepSeek AI Provider
+        if (deepSeekClientService.isDeepSeekConfigured()) {
+            log.info("Gemini unavailable. Falling back to DeepSeek AI for clinical chat...");
+            String dsText = deepSeekClientService.generateClinicalContent(SYSTEM_INSTRUCTION, prompt);
+            if (dsText != null) {
+                ClinicalSuggestionResponse response = ClinicalSuggestionResponse.builder()
+                        .interactionId(interactionId)
+                        .mode("LLM_PROVIDER")
+                        .summary(dsText)
+                        .suggestions(List.of())
+                        .missingInformation(List.of())
+                        .warnings(List.of())
+                        .disclaimer(MEDICAL_DISCLAIMER)
+                        .model(AiModelInfo.builder()
+                                .provider("DeepSeek AI")
+                                .name("deepseek-chat")
+                                .version("V3/R1")
+                                .build())
+                        .generatedAt(Instant.now().toString())
+                        .build();
+
+                interactionStore.put(interactionId, response);
+                return response;
+            }
+        }
+
+        return buildRuleBasedChat(interactionId, request.getConsultationId(), message);
+    }
+
+    public ClinicalSuggestionResponse getInteractionById(String interactionId) {
+        return interactionStore.get(interactionId);
+    }
+
+    private ClinicalSuggestionResponse buildRuleBasedSuggestions(String interactionId, String consultationId, String question) {
+        List<ClinicalSuggestionItem> suggestions = List.of(
+                ClinicalSuggestionItem.builder()
+                        .type("DIFFERENTIAL_DIAGNOSIS")
+                        .text("Cân nhắc Cơn đau thắt ngực không ổn định hoặc Viêm màng ngoài tim cấp")
+                        .evidenceRefs(List.of(EvidenceRef.builder().sourceType("CONSULTATION").sourceId(consultationId).field("symptoms").build()))
+                        .build()
+        );
 
         ClinicalSuggestionResponse response = ClinicalSuggestionResponse.builder()
                 .interactionId(interactionId)
                 .mode("MOCK_RULE_BASED")
-                .summary("Phản hồi tương tác câu hỏi của Bác sĩ trong ca khám ID: " + request.getConsultationId())
+                .summary("Tóm tắt ca khám: Đã ghi nhận các triệu chứng lâm sàng và chỉ số sinh tồn của ca khám " + consultationId)
                 .suggestions(suggestions)
-                .missingInformation(missingInfo)
-                .warnings(warnings)
+                .missingInformation(List.of("Kết quả Điện tâm đồ (ECG)", "Định lượng Enzyme tim Troponin"))
+                .warnings(List.of("Lưu ý tiền sử dị ứng thuốc nhóm Beta-lactam"))
                 .disclaimer(MEDICAL_DISCLAIMER)
-                .model(AiModelInfo.builder()
-                        .provider("CareFlow Clinical Rule Engine")
-                        .name("careflow-clinical-v1")
-                        .version("1.0.0")
-                        .build())
+                .model(AiModelInfo.builder().provider("CareFlow Rule Engine").name("careflow-clinical-v1").version("1.0.0").build())
                 .generatedAt(Instant.now().toString())
                 .build();
 
@@ -165,7 +218,23 @@ public class AiClinicalAssistantService {
         return response;
     }
 
-    public ClinicalSuggestionResponse getInteractionById(String interactionId) {
-        return interactionStore.get(interactionId);
+    private ClinicalSuggestionResponse buildRuleBasedChat(String interactionId, String consultationId, String message) {
+        String replySummary = String.format("Bác sĩ Chồn AI 🐾: Đã ghi nhận câu hỏi '%s'. Em đang xử lý dữ liệu lâm sàng cho ca khám %s.",
+                message != null ? message : "", consultationId);
+
+        ClinicalSuggestionResponse response = ClinicalSuggestionResponse.builder()
+                .interactionId(interactionId)
+                .mode("MOCK_RULE_BASED")
+                .summary(replySummary)
+                .suggestions(List.of())
+                .missingInformation(List.of())
+                .warnings(List.of())
+                .disclaimer(MEDICAL_DISCLAIMER)
+                .model(AiModelInfo.builder().provider("CareFlow Rule Engine").name("careflow-clinical-v1").version("1.0.0").build())
+                .generatedAt(Instant.now().toString())
+                .build();
+
+        interactionStore.put(interactionId, response);
+        return response;
     }
 }

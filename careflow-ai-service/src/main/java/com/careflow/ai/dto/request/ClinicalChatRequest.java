@@ -18,4 +18,8 @@ public class ClinicalChatRequest {
 
     @NotBlank(message = "message không được để trống")
     private String message;
+
+    private String pageRoute;
+    private String pageTitle;
+    private String pageData;
 }

@@ -20,21 +20,20 @@ interface DisplayQueuePatient {
 }
 
 function StatusDot({ status }: { status: string }) {
-  const config: Record<string, { color: string; label: string; bg: string; text: string }> = {
-    WAITING:     { color: "#F59E0B", label: "Chờ khám",     bg: "#FEF3C7", text: "#92400E" },
-    PENDING:     { color: "#F59E0B", label: "Chờ khám",     bg: "#FEF3C7", text: "#92400E" },
-    CHECKED_IN:  { color: "#3B82F6", label: "Đã tiếp nhận", bg: "#DBEAFE", text: "#1E40AF" },
-    IN_PROGRESS: { color: "#8B5CF6", label: "Đang khám",    bg: "#EDE9FE", text: "#5B21B6" },
-    CONFIRMED:   { color: "#3B82F6", label: "Đã tiếp nhận", bg: "#DBEAFE", text: "#1E40AF" },
-    COMPLETED:   { color: "#10B981", label: "Hoàn tất",     bg: "#D1FAE5", text: "#065F46" },
-    CANCELLED:   { color: "#EF4444", label: "Đã huỷ",       bg: "#FEE2E2", text: "#991B1B" },
+  const config: Record<string, { color: string; label: string; textClass: string }> = {
+    WAITING:     { color: "#F59E0B", label: "Chờ khám", textClass: "text-amber-600 font-medium" },
+    PENDING:     { color: "#F59E0B", label: "Chờ khám", textClass: "text-amber-600 font-medium" },
+    CHECKED_IN:  { color: "#3B82F6", label: "Đã tiếp nhận", textClass: "text-blue-600 font-medium" },
+    IN_PROGRESS: { color: "#8B5CF6", label: "Đang khám", textClass: "text-purple-600 font-semibold" },
+    CONFIRMED:   { color: "#3B82F6", label: "Đã tiếp nhận", textClass: "text-blue-600 font-medium" },
+    COMPLETED:   { color: "#10B981", label: "Hoàn tất", textClass: "text-emerald-600 font-medium" },
+    CANCELLED:   { color: "#EF4444", label: "Đã huỷ", textClass: "text-rose-600 font-medium" },
   };
-  const cfg = config[status] || { color: "#94A3B8", label: status, bg: "#F1F5F9", text: "#475569" };
+  const cfg = config[status] || { color: "#94A3B8", label: status, textClass: "text-gray-600 font-medium" };
   return (
-    <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold"
-      style={{ backgroundColor: cfg.bg, color: cfg.text }}>
-      <span className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: cfg.color }} />
-      {cfg.label}
+    <span className={`inline-flex items-center gap-1.5 text-[11px] leading-none ${cfg.textClass}`}>
+      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 inline-block align-middle" style={{ backgroundColor: cfg.color }} />
+      <span className="leading-none">{cfg.label}</span>
     </span>
   );
 }
@@ -117,15 +116,30 @@ export default function DashboardGeneralPage() {
           const completedList = todayCons.filter(c => c.status === "COMPLETED");
           setRecentCompleted(completedList);
 
+          const pNames: Record<string, string> = {};
+
           try {
             const queueRes = await queueApi.getRoomActive("ROOM-01");
             const activeEntries = queueRes.data?.entries || [];
             setWaitingCount(activeEntries.length);
+
+            // Fetch patient names for queue entries
+            for (const e of activeEntries) {
+              if (!pNames[e.patientId]) {
+                try {
+                  const pRes = await patientApi.getPatientById(e.patientId);
+                  if (pRes.data?.fullName) pNames[e.patientId] = pRes.data.fullName;
+                } catch {
+                  pNames[e.patientId] = `Bệnh nhân (${e.patientId.slice(0, 8)})`;
+                }
+              }
+            }
+
             setQueuePatients(activeEntries.map((e) => ({
               queueNo: e.queueNumber,
               appointmentId: e.appointmentId,
               patientId: e.patientId,
-              name: `Bệnh nhân (${e.patientId.slice(0, 6)})`,
+              name: pNames[e.patientId] || `Bệnh nhân (${e.patientId.slice(0, 8)})`,
               age: 35,
               department: queueRes.data?.departmentName || "Nội tổng quát",
               status: e.queueStatus,
@@ -136,13 +150,14 @@ export default function DashboardGeneralPage() {
             setQueuePatients([]);
           }
 
-          const pNames: Record<string, string> = {};
           for (const c of completedList) {
             if (!pNames[c.patientId]) {
               try {
                 const pRes = await patientApi.getPatientById(c.patientId);
                 if (pRes.data?.fullName) pNames[c.patientId] = pRes.data.fullName;
-              } catch { pNames[c.patientId] = `Bệnh nhân (${c.patientId.slice(0, 6)})`; }
+              } catch {
+                pNames[c.patientId] = `Bệnh nhân (${c.patientId.slice(0, 8)})`;
+              }
             }
           }
           setPatientNames(pNames);

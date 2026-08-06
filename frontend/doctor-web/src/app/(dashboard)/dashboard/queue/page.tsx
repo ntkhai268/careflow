@@ -17,9 +17,9 @@ function StatusDot({ status }: { status: string }) {
   };
   const cfg = config[status] || { color: "#94A3B8", label: status, textClass: "text-gray-600 font-medium" };
   return (
-    <span className={`inline-flex items-center gap-1.5 text-xs ${cfg.textClass}`}>
-      <span className="inline-block w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: cfg.color }} />
-      <span>{cfg.label}</span>
+    <span className={`inline-flex items-center gap-1.5 text-[11px] leading-none ${cfg.textClass}`}>
+      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 inline-block align-middle" style={{ backgroundColor: cfg.color }} />
+      <span className="leading-none">{cfg.label}</span>
     </span>
   );
 }
@@ -27,24 +27,24 @@ function StatusDot({ status }: { status: string }) {
 function PriorityBadge({ level }: { level: string }) {
   if (level === "PRIORITY" || level === "EMERGENCY") {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-rose-600 font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-rose-600 flex-shrink-0" />
-        <span>Ưu tiên</span>
+      <span className="inline-flex items-center gap-1.5 text-[11px] leading-none text-rose-600 font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-rose-600 flex-shrink-0 inline-block align-middle" />
+        <span className="leading-none">Ưu tiên</span>
       </span>
     );
   }
   if (level === "RESULT_REVIEW") {
     return (
-      <span className="inline-flex items-center gap-1 text-xs text-purple-600 font-medium">
-        <span className="w-1.5 h-1.5 rounded-full bg-purple-600 flex-shrink-0" />
-        <span>Đọc kết quả CLS</span>
+      <span className="inline-flex items-center gap-1.5 text-[11px] leading-none text-purple-600 font-medium">
+        <span className="w-1.5 h-1.5 rounded-full bg-purple-600 flex-shrink-0 inline-block align-middle" />
+        <span className="leading-none">Đọc kết quả CLS</span>
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 text-xs text-blue-600 font-medium">
-      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 flex-shrink-0" />
-      <span>Khám thông thường</span>
+    <span className="inline-flex items-center gap-1.5 text-[11px] leading-none text-blue-600 font-medium">
+      <span className="w-1.5 h-1.5 rounded-full bg-blue-600 flex-shrink-0 inline-block align-middle" />
+      <span className="leading-none">Khám thông thường</span>
     </span>
   );
 }
@@ -97,7 +97,7 @@ export default function DashboardQueuePage() {
                 pMap[entry.patientId] = pRes.data.fullName;
               }
             } catch {
-              pMap[entry.patientId] = `Bệnh nhân (${entry.patientId.slice(0, 6)})`;
+              pMap[entry.patientId] = `Bệnh nhân (${entry.patientId.slice(0, 8)})`;
             }
           }
         }
@@ -218,17 +218,17 @@ export default function DashboardQueuePage() {
       {/* Header Bar */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">
             Hàng đợi khám (Phòng {dashboardData?.roomCode || roomId})
           </h1>
-          <p className="mt-0.5 text-xs text-gray-500">
-            Danh sách bệnh nhân đã Check-in sẵn sàng vào khám theo điều phối Round-Robin
+          <p className="mt-0.5 text-[11px] text-gray-500">
+            Danh sách bệnh nhân đã tiếp nhận sẵn sàng vào khám
           </p>
         </div>
         <button
           onClick={handleCallNext}
           disabled={isCallingNext || isLoading || (safeEntries).length === 0}
-          className="px-3.5 py-2 bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white rounded-md text-xs font-semibold shadow-xs flex items-center gap-2 transition-all cursor-pointer"
+          className="px-4 py-2 bg-[#6E2582] hover:bg-[#581c69] disabled:opacity-50 text-white rounded-md text-[11px] font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
         >
           {isCallingNext ? (
             <>
@@ -236,7 +236,7 @@ export default function DashboardQueuePage() {
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
-              <span>Đang gọi số tiếp theo...</span>
+              <span>Đang gọi...</span>
             </>
           ) : (
             <span>Gọi số</span>
@@ -248,7 +248,7 @@ export default function DashboardQueuePage() {
       {recommended && (
         <div className="bg-gradient-to-r from-[#0D0F1E] via-[#161930] to-[#1E2340] rounded-lg p-3.5 text-white border border-[#2E3462] shadow-xs flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-xl font-black bg-indigo-500/20 text-[#818CF8] border border-indigo-500/30 px-3 py-1 rounded-md font-mono">
+            <span className="text-lg font-black bg-indigo-500/20 text-[#818CF8] border border-indigo-500/30 px-2.5 py-0.5 rounded-md font-mono">
               #{recommended.queueNumber}
             </span>
             <div>
@@ -257,10 +257,10 @@ export default function DashboardQueuePage() {
                   Đề xuất gọi tiếp theo
                 </span>
                 <span className="text-xs font-semibold text-gray-200">
-                  {patientNames[recommended.patientId] || `Bệnh nhân (${recommended.patientId.slice(0, 8)}...)`}
+                  {patientNames[recommended.patientId] || "Đang tải tên..."}
                 </span>
               </div>
-              <p className="text-[11px] text-gray-300 mt-0.5">
+              <p className="text-[10px] text-gray-300 mt-0.5">
                 Dự kiến thời gian chờ: <span className="font-semibold text-indigo-300">~{recommended.estimatedWaitMinutes ?? 0} phút</span>
               </p>
             </div>
@@ -268,16 +268,16 @@ export default function DashboardQueuePage() {
           <button
             onClick={() => handleCallEntry(recommended)}
             disabled={callingEntryId === recommended.entryId}
-            className="px-3 py-1.5 bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white font-semibold text-xs rounded-md shadow-xs transition-colors cursor-pointer"
+            className="px-3.5 py-1.5 bg-[#6E2582] hover:bg-[#581c69] disabled:opacity-50 text-white font-semibold text-[11px] rounded-md shadow-xs transition-colors cursor-pointer"
           >
             {callingEntryId === recommended.entryId ? "Đang gọi..." : "Gọi số"}
           </button>
         </div>
       )}
 
-      {/* Clean Inline Errors as specified in design.md */}
+      {/* Clean Inline Errors as specified in design.md Rule 39-40 */}
       {errorMessage && (
-        <p className="text-xs text-rose-600 font-medium px-1">
+        <p className="text-[11px] text-[#D9381E] font-medium px-1">
           {errorMessage}
         </p>
       )}
@@ -285,10 +285,10 @@ export default function DashboardQueuePage() {
       {/* Active Queue Table Card */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-xs overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2 bg-gray-50/50">
-          <h2 className="text-xs font-bold text-gray-800 tracking-tight">
-            Hàng đợi Active ({isLoading ? "..." : (safeEntries).length} bệnh nhân)
+          <h2 className="text-[13px] font-bold text-[#2B1D30] tracking-tight">
+            Hàng đợi ({isLoading ? "..." : (safeEntries).length} bệnh nhân)
           </h2>
-          <div className="flex items-center gap-3 text-[11px] font-medium flex-wrap">
+          <div className="flex items-center gap-3 text-[10px] font-medium flex-wrap">
             <span className="inline-flex items-center gap-1 text-rose-600">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
               <span>Ưu tiên</span>
@@ -305,9 +305,9 @@ export default function DashboardQueuePage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
+          <table className="w-full text-left text-[11px]">
             <thead>
-              <tr className="border-b border-gray-200 bg-[#EEF2FF] text-gray-700">
+              <tr className="border-b border-gray-200 bg-[#F8FAFC] text-gray-700">
                 <th className="px-4 py-2.5 font-semibold w-20 font-mono">Số STT</th>
                 <th className="px-4 py-2.5 font-semibold">Họ tên & Mã bệnh nhân</th>
                 <th className="px-4 py-2.5 font-semibold">Phòng khám</th>
@@ -321,25 +321,25 @@ export default function DashboardQueuePage() {
                 Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
               ) : fetchError ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-xs text-rose-600">
+                  <td colSpan={6} className="px-4 py-6 text-center text-[11px] text-[#D9381E]">
                     {fetchError}
                   </td>
                 </tr>
               ) : (safeEntries).length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-xs text-gray-400">
-                    Hiện chưa có bệnh nhân nào trong Active Queue
+                  <td colSpan={6} className="px-4 py-8 text-center text-[11px] text-gray-400">
+                    Hiện chưa có bệnh nhân nào trong hàng đợi
                   </td>
                 </tr>
               ) : (
                 safeEntries.map(entry => (
-                  <tr key={entry.entryId} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3 font-bold text-[#6366F1] font-mono">
+                  <tr key={entry.entryId} className="hover:bg-gray-50/80 transition-colors">
+                    <td className="px-4 py-3 font-bold text-[#6E2582] font-mono">
                       #{entry.queueNumber}
                     </td>
                     <td className="px-4 py-3">
                       <div className="font-medium text-gray-900">
-                        {patientNames[entry.patientId] || "Đang tải tên..."}
+                        {patientNames[entry.patientId] || "Đang tải..."}
                       </div>
                       <div className="text-[10px] text-gray-400 font-mono">
                         {entry.patientId}
@@ -358,7 +358,7 @@ export default function DashboardQueuePage() {
                       <button
                         onClick={() => handleCallEntry(entry)}
                         disabled={callingEntryId === entry.entryId}
-                        className="w-20 py-1 bg-[#3B82F6] hover:bg-[#2563EB] disabled:opacity-50 text-white rounded text-[11px] font-semibold transition-colors cursor-pointer text-center inline-block"
+                        className="w-20 py-1 bg-white hover:bg-purple-50 border border-gray-200 text-[#2B1D30] hover:text-[#6E2582] disabled:opacity-50 rounded text-[11px] font-medium transition-all cursor-pointer text-center inline-block shadow-2xs"
                       >
                         {callingEntryId === entry.entryId
                           ? "Đang gọi..."

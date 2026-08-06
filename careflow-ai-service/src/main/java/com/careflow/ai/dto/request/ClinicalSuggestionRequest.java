@@ -15,4 +15,8 @@ public class ClinicalSuggestionRequest {
     private String consultationId;
 
     private String question;
+
+    private String pageRoute;
+    private String pageTitle;
+    private String pageData;
 }

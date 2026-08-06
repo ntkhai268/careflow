@@ -30,19 +30,38 @@ export interface ClinicalSuggestionResponse {
   generatedAt: string;
 }
 
+export interface ScreenContext {
+  pageRoute?: string;
+  pageTitle?: string;
+  pageData?: string;
+}
+
 export const aiApi = {
-  getClinicalSuggestions: async (consultationId: string, question?: string) => {
+  getClinicalSuggestions: async (consultationId: string, question?: string, context?: ScreenContext) => {
     return api.post<ClinicalSuggestionResponse>("/api/ai/clinical-suggestions", {
       consultationId,
       question: question || "Gợi ý chẩn đoán phân biệt và dữ liệu còn thiếu",
+      pageRoute: context?.pageRoute,
+      pageTitle: context?.pageTitle,
+      pageData: context?.pageData,
     });
   },
 
-  sendClinicalChat: async (consultationId: string, message: string, parentInteractionId?: string) => {
+  sendClinicalChat: async (
+    consultationId: string,
+    message: string,
+    contextOrParentId?: ScreenContext | string,
+    parentInteractionId?: string
+  ) => {
+    const context = typeof contextOrParentId === "object" ? contextOrParentId : undefined;
+    const parentId = typeof contextOrParentId === "string" ? contextOrParentId : parentInteractionId;
     return api.post<ClinicalSuggestionResponse>("/api/ai/clinical-chat", {
       consultationId,
       message,
-      parentInteractionId,
+      parentInteractionId: parentId,
+      pageRoute: context?.pageRoute,
+      pageTitle: context?.pageTitle,
+      pageData: context?.pageData,
     });
   },
 

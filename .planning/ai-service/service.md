@@ -14,7 +14,17 @@ Tài liệu tổng quan kiến trúc và API Reference của Microservice `caref
 
 ---
 
-## 2. API Endpoints Reference
+## 2. Google AI Studio (Gemini 1.5 Flash) Integration & Guardrails
+
+- **API Key Env Var**: `GEMINI_API_KEY` (hoặc cấu hình `gemini.api-key` trong `application.yml`).
+- **Endpoint Provider**: `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`
+- **Fallback**: Nếu chưa cấu hình `GEMINI_API_KEY` hoặc mạng gián đoạn, tự động chuyển về chế độ `MOCK_RULE_BASED` giúp hệ thống hoạt động liên tục không bị gián đoạn ca khám.
+- **Strict Guardrails**:
+  1. Chỉ hỗ trợ các vấn đề y tế, chẩn đoán lâm sàng, dược lý và vận hành bệnh viện CareFlow.
+  2. Tự động từ chối lịch sự các câu hỏi ngoài luồng (thời tiết, thể thao, chính trị, game...).
+  3. Mọi phản hồi đều đính kèm Tuyên bố miễn trừ trách nhiệm y tế (Medical Disclaimer).
+
+## 3. API Endpoints Reference
 
 | Method | Path | Security Scope | Description |
 |---|---|---|---|

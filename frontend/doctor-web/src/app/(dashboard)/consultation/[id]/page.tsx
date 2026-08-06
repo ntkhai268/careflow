@@ -10,6 +10,7 @@ import { patientApi, emrApi, PatientAllergyResponse } from "@/lib/patient-api";
 import { labApi, MOCK_LAB_SERVICES, LabCatalogItem, LabOrderResponse } from "@/lib/lab-api";
 import { queueApi } from "@/lib/queue-api";
 import { aiApi, ClinicalSuggestionResponse } from "@/lib/ai-api";
+import { renderFormattedAiText } from "@/lib/format-ai-text";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmModal from "@/components/ConfirmModal";
 
@@ -1589,7 +1590,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   {/* Summary */}
                   <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
                     <span className="text-[11px] font-bold text-purple-900 uppercase tracking-wider block">Tóm tắt phân tích:</span>
-                    <p className="text-xs font-medium text-purple-950 mt-1">{aiResponse.summary}</p>
+                    <div className="text-xs font-medium text-purple-950 mt-1">{renderFormattedAiText(aiResponse.summary)}</div>
                   </div>
 
                   {/* Suggestions list with evidence & copy action */}
@@ -1673,7 +1674,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                           <span>{chat.sender === "user" ? "Bác sĩ" : "CareFlow AI"}</span>
                           <span>{chat.time}</span>
                         </div>
-                        <p className="font-medium">{chat.text}</p>
+                        <div>{renderFormattedAiText(chat.text)}</div>
                       </div>
                     ))}
                   </div>
