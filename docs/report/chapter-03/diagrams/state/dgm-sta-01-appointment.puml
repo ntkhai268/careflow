@@ -15,5 +15,7 @@ NO_SHOW --> [*]
 note right of CONFIRMED
   MVP tự động xác nhận.
   PENDING là trạng thái legacy.
+  Receipt phí khám của Mobile là local/demo,
+  không tạo thêm transition cho Appointment.
 end note
 @enduml

@@ -14,6 +14,13 @@
 > automatically when all required results are available; any older confirmation
 > step below is superseded. Pharmacy queue UI/API integration requires a separate
 > follow-up slice.
+>
+> **Mobile payment evolution — 2026-08-04:** Booking presents the fixed
+> `GENERAL_CONSULTATION` service (`Khám thường`, `150.000 ₫`) and only
+> `ONLINE_MOCK`/`CASH_AT_HOSPITAL`. Appointment payment is stored through a local
+> Mobile adapter and does not change the Appointment API. Add the demo-only
+> medication payment path with a fixture total of `85.000 ₫`; do not introduce a
+> Payment or Pharmacy/Dispensing backend contract in this slice.
 
 ## Global Constraints
 
@@ -28,6 +35,11 @@
 - Result review becomes active automatically after all required results are
   available and participates in the `RESULT_REVIEW` lane; Mobile confirmation
   is not required.
+- Booking uses the fixed `GENERAL_CONSULTATION` service until a backend catalog
+  exists. A failed local appointment-payment receipt write must not invalidate a
+  successful appointment.
+- Medication payment/readiness is Mobile-only in `DEMO_MODE`; it must not mutate
+  Prescription or Queue backend state without a future contract.
 - Patient-visible copy is Vietnamese; source files are UTF-8.
 - Demo state is namespaced by authenticated patient ID and appointment ID and survives app restart.
 - Every behavior change follows RED-GREEN-REFACTOR; no production function is added without a test that first fails for the expected missing behavior.
@@ -149,6 +161,9 @@ enum JourneyStatus {
   waitingResultReview,
   resultReview,
   prescribed,
+  prescriptionPaymentPending,
+  prescriptionPaid,
+  medicationReady,
   completed,
 }
 
@@ -196,6 +211,7 @@ enum JourneyEvent {
   doctorCalled,
   consultationStarted,
   laboratoryOrdered,
+  appointmentPaymentSelected,
   paymentRequested,
   directPrescriptionIssued,
   paymentAcknowledged,
@@ -204,6 +220,9 @@ enum JourneyEvent {
   admittedToResultReviewQueue,
   resultReviewCalled,
   finalPrescriptionIssued,
+  prescriptionPaymentRequested,
+  prescriptionPaymentAcknowledged,
+  medicationReady,
   visitCompleted,
 }
 ```
@@ -482,7 +501,7 @@ it passes.
 - [ ] **Step 4: Write failing laboratory/payment widget tests**
 
 For `LAB_ORDERED` and `PAYMENT_PENDING`, assert order cards include department,
-destination, preparation note, and price. Assert all three payment methods are
+destination, preparation note, and price. Assert both payment methods are
 available and cash copy says `Thanh toán tại bệnh viện`. For `WAITING_LAB` and
 `LAB_IN_PROGRESS`, assert no second check-in button exists. For
 `LAB_RESULT_READY`, assert result values and `Dữ liệu mô phỏng` are visible.

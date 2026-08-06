@@ -1,6 +1,6 @@
 # Appointment Service Contract
 
-> Contract ID: `CF-SVC-05` | Version: `1.1` | Module: `careflow-appointment-service`
+> Contract ID: `CF-SVC-05` | Version: `1.2` | Module: `careflow-appointment-service`
 
 ## 1. Trách nhiệm và ranh giới
 
@@ -25,6 +25,33 @@ Appointment N ─── 1 ClinicRoom
 `ClinicRoom` thuộc cấu hình lịch khám của Appointment Service. Trong MVP, mỗi
 khoa chỉ có đúng một phòng active. Đây là invariant của
 dữ liệu/cấu hình MVP, không phải ràng buộc 1:1 trong schema.
+
+### Ranh giới payment của Patient Mobile
+
+Appointment Service **chưa nhận payment/service contract** và chưa sở hữu
+catalog dịch vụ khám trong phiên bản này. Khi Mobile chưa có catalog từ
+Directory/Appointment, ứng dụng dùng fixture:
+
+```text
+code: GENERAL_CONSULTATION
+name: Khám thường
+price: 150.000 ₫ (demo)
+duration: 15 phút (tham khảo)
+```
+
+Mobile cho phép chọn `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL`, sau đó lưu
+`AppointmentPaymentReceipt` qua local adapter. Tiền mặt chỉ hiển thị
+`DUE_AT_HOSPITAL`; receipt local không được đưa vào request hoặc event của
+Appointment. Nếu local storage lỗi, Mobile không được coi lịch đã tạo thành công
+là thất bại.
+
+Giá trị thực tế đã thu được lưu thành `prepaidAmount` để đối trừ khi tạo
+`VisitSettlement` cuối lượt khám. Chi phí cận lâm sàng không tạo lần thanh toán
+riêng. Phạm vi contract chỉ xét người bệnh tự chi trả.
+
+Khi backend sẵn sàng, catalog dịch vụ/giá và Payment/Refund API sẽ thay
+fixture/adapter qua một contract mới có version; request tạo Appointment hiện
+tại vẫn giữ nguyên.
 
 ## 2. Trạng thái mục tiêu
 

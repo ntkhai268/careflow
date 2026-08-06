@@ -10,22 +10,20 @@ skinparam defaultFontSize 13
 actor "Bệnh nhân" as Patient
 
 rectangle "Patient Mobile" {
-  usecase "Đăng ký tài khoản" as Register
-  usecase "Đăng nhập" as Login
   usecase "Quản lý hồ sơ" as Profile
   usecase "Tải lên hồ sơ cũ" as Upload
   usecase "Tra cứu khoa\nvà khung giờ" as Slots
   usecase "Đặt lịch khám" as Book
+  usecase "Chọn dịch vụ và\ntrả trước phí khám" as BookingPayment
   usecase "Xem lịch và\nphiếu khám" as ViewTicket
   usecase "Hủy lịch khám" as Cancel
   usecase "Theo dõi lượt chờ" as TrackQueue
   usecase "Xem chỉ định, kết quả\nvà hướng dẫn quay lại" as ViewResult
   usecase "Xem toa thuốc\nvà lịch tái khám" as ViewOutcome
+  usecase "Xem và xác nhận\nquyết toán cuối lượt" as Settlement
   usecase "Xem thông báo" as Notification
 }
 
-Patient -- Register
-Patient -- Login
 Patient -- Profile
 Patient -- Upload
 Patient -- Book
@@ -34,13 +32,18 @@ Patient -- Cancel
 Patient -- TrackQueue
 Patient -- ViewResult
 Patient -- ViewOutcome
+Patient -- Settlement
 Patient -- Notification
 
 Book ..> Slots : <<include>>
 Book ..> Profile : <<include>>\nChọn hồ sơ
+Book ..> BookingPayment : <<include>>\nUX Mobile; local adapter
 TrackQueue ..> ViewTicket : <<extend>>\nSau check-in
 
 legend bottom
   Nguồn: Nhóm tác giả đề xuất dựa trên đặc tả CareFlow.
+  Mobile mô phỏng trả trước phí khám và quyết toán cuối lượt qua local adapter.
+  Cận lâm sàng không có bước thanh toán riêng; chỉ xét người bệnh tự chi trả.
+  Xác thực là tiền điều kiện, không phải Use Case nghiệp vụ của biểu đồ.
 endlegend
 @enduml
