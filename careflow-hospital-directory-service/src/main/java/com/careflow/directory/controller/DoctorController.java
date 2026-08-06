@@ -3,8 +3,12 @@ package com.careflow.directory.controller;
 import com.careflow.common.dto.ApiResponse;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.directory.dto.DoctorProfileResponse;
+import com.careflow.directory.dto.request.CreateDoctorProfileRequest;
+import com.careflow.directory.dto.request.UpdateDoctorProfileRequest;
 import com.careflow.directory.service.DirectoryService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -37,5 +41,29 @@ public class DoctorController {
         }
         UUID userId = UUID.fromString(userIdHeader);
         return ResponseEntity.ok(ApiResponse.success(directoryService.getDoctorByUserId(userId)));
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<DoctorProfileResponse>> createDoctorProfile(
+            @Valid @RequestBody CreateDoctorProfileRequest request,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+        checkAdminRole(userRole);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success(directoryService.createDoctorProfile(request)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<DoctorProfileResponse>> updateDoctorProfile(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateDoctorProfileRequest request,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+        checkAdminRole(userRole);
+        return ResponseEntity.ok(ApiResponse.success(directoryService.updateDoctorProfile(id, request)));
+    }
+
+    private void checkAdminRole(String userRole) {
+        if (userRole != null && !userRole.isBlank() && !userRole.toUpperCase().contains("ADMIN")) {
+            throw new BusinessException(403, "Chỉ Quản trị viên (ADMIN) mới có quyền thực hiện thao tác này");
+        }
     }
 }

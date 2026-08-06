@@ -19,12 +19,12 @@ export default function AdminDashboardPage() {
         <div className="flex items-center gap-2">
           <span className="inline-block w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
           <span className="text-xs font-bold uppercase tracking-wider text-purple-600">
-            Phân hệ Quản trị viên Bệnh viện (Admin Web)
+            Phân hệ Quản trị viên Bệnh viện
           </span>
         </div>
         <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Tổng quan Bảng điều khiển Quản trị</h1>
         <p className="text-xs text-[#6A5C70] mt-0.5">
-          Theo dõi chỉ số vận hành bệnh viện, công suất phòng khám và hiệu quả điều phối hàng đợi realtime
+          Theo dõi chỉ số vận hành bệnh viện, công suất phòng khám và hiệu quả điều phối hàng đợi
         </p>
       </div>
 
@@ -51,12 +51,12 @@ export default function AdminDashboardPage() {
         </div>
 
         <div className="border border-card-border bg-card-bg p-4 rounded-xl shadow-sm">
-          <p className="text-[11px] font-bold text-[#6A5C70] uppercase">Tỷ lệ Vắng mặt (MISSED)</p>
+          <p className="text-[11px] font-bold text-[#6A5C70] uppercase">Tỷ lệ Vắng mặt</p>
           <p className="text-2xl font-extrabold text-rose-600 mt-1">{stats.missedRate}</p>
         </div>
 
         <div className="border border-card-border bg-card-bg p-4 rounded-xl shadow-sm">
-          <p className="text-[11px] font-bold text-[#6A5C70] uppercase">Tỷ lệ Không đến (NO_SHOW)</p>
+          <p className="text-[11px] font-bold text-[#6A5C70] uppercase">Tỷ lệ Không đến</p>
           <p className="text-2xl font-extrabold text-gray-600 mt-1">{stats.noShowRate}</p>
         </div>
       </div>
@@ -68,26 +68,35 @@ export default function AdminDashboardPage() {
           <div className="space-y-2.5 text-xs">
             <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg flex justify-between items-center">
               <div>
-                <p className="font-bold text-purple-900">Khoa Nội tổng quát (ROOM-01, ROOM-02)</p>
+                <p className="font-bold text-purple-900">Khoa Nội tổng quát</p>
                 <p className="text-purple-700">45 ca khám thành công · Chờ trung bình: 15 phút</p>
               </div>
-              <span className="px-2.5 py-1 bg-emerald-600 text-white font-bold rounded-full text-[10px]">Đang hoạt động</span>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>Đang hoạt động</span>
+              </div>
             </div>
 
             <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg flex justify-between items-center">
               <div>
-                <p className="font-bold text-purple-900">Khoa Nhi (ROOM-03)</p>
+                <p className="font-bold text-purple-900">Khoa Nhi</p>
                 <p className="text-purple-700">28 ca khám thành công · Chờ trung bình: 12 phút</p>
               </div>
-              <span className="px-2.5 py-1 bg-emerald-600 text-white font-bold rounded-full text-[10px]">Đang hoạt động</span>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>Đang hoạt động</span>
+              </div>
             </div>
 
             <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg flex justify-between items-center">
               <div>
-                <p className="font-bold text-purple-900">Khoa Ngoại (ROOM-04)</p>
+                <p className="font-bold text-purple-900">Khoa Ngoại</p>
                 <p className="text-purple-700">25 ca khám thành công · Chờ trung bình: 22 phút</p>
               </div>
-              <span className="px-2.5 py-1 bg-emerald-600 text-white font-bold rounded-full text-[10px]">Đang hoạt động</span>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-emerald-700">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>Đang hoạt động</span>
+              </div>
             </div>
           </div>
         </div>
@@ -100,7 +109,10 @@ export default function AdminDashboardPage() {
                 <p className="font-bold text-[#2B1D30]">Phòng Xét nghiệm Huyết học 101</p>
                 <p className="text-[#6A5C70]">32 lượt xét nghiệm đã phát hành kết quả</p>
               </div>
-              <span className="px-2.5 py-1 bg-purple-100 text-purple-800 font-bold rounded-full text-[10px]">Bình thường</span>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-700">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                <span>Hoạt động tốt</span>
+              </div>
             </div>
 
             <div className="p-3 bg-gray-50 border border-card-border rounded-lg flex justify-between items-center">
@@ -108,7 +120,10 @@ export default function AdminDashboardPage() {
                 <p className="font-bold text-[#2B1D30]">Phòng Siêu âm 201</p>
                 <p className="text-[#6A5C70]">18 lượt siêu âm hoàn tất</p>
               </div>
-              <span className="px-2.5 py-1 bg-purple-100 text-purple-800 font-bold rounded-full text-[10px]">Bình thường</span>
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-purple-700">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+                <span>Hoạt động tốt</span>
+              </div>
             </div>
           </div>
         </div>

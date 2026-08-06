@@ -42,19 +42,31 @@ run_service "patient-service" "mvn -pl careflow-patient-service spring-boot:run 
 # 7. Start Appointment Service (Port 8083)
 run_service "appointment-service" "mvn -pl careflow-appointment-service spring-boot:run -Dspring-boot.run.profiles=remote"
 
-# 8. Start Consultation Service (Port 8086)
-run_service "consultation-service" "mvn -pl careflow-consultation-service spring-boot:run -Dspring-boot.run.profiles=remote"
-
-# 9. Start Prescription Service (Port 8087)
-run_service "prescription-service" "mvn -pl careflow-prescription-service spring-boot:run -Dspring-boot.run.profiles=remote"
-
-# 10. Start Queue Service (Port 8084)
+# 8. Start Queue Service (Port 8084)
 run_service "queue-service" "mvn -pl careflow-queue-service spring-boot:run -Dspring-boot.run.profiles=remote"
 
-# 11. Start Hospital Directory Service (Port 8090)
+# 9. Start Notification Service (Port 8085)
+run_service "notification-service" "mvn -pl careflow-notification-service spring-boot:run -Dspring-boot.run.profiles=remote"
+
+# 10. Start Consultation Service (Port 8086)
+run_service "consultation-service" "mvn -pl careflow-consultation-service spring-boot:run -Dspring-boot.run.profiles=remote"
+
+# 11. Start Prescription Service (Port 8087)
+run_service "prescription-service" "mvn -pl careflow-prescription-service spring-boot:run -Dspring-boot.run.profiles=remote"
+
+# 12. Start EMR Service (Port 8088)
+run_service "emr-service" "mvn -pl careflow-emr-service spring-boot:run -Dspring-boot.run.profiles=remote"
+
+# 13. Start Lab Service (Port 8089)
+run_service "lab-service" "mvn -pl careflow-lab-service spring-boot:run -Dspring-boot.run.profiles=remote"
+
+# 14. Start Hospital Directory Service (Port 8090)
 run_service "hospital-directory-service" "mvn -pl careflow-hospital-directory-service spring-boot:run -Dspring-boot.run.profiles=remote"
 
-# 11. Start Frontend Web (Port 3000)
+# 15. Start AI Service (Port 8091)
+run_service "ai-service" "mvn -pl careflow-ai-service spring-boot:run -Dspring-boot.run.profiles=remote"
+
+# 16. Start Doctor Web Frontend (Port 3000)
 echo "--> Launching Doctor Web Frontend..."
 if [ -d "frontend/doctor-web" ]; then
     (cd frontend/doctor-web && npm run dev > "$LOG_DIR/logs_frontend.log" 2>&1) &
@@ -81,20 +93,26 @@ trap cleanup SIGINT SIGTERM EXIT
 
 echo "================================================================="
 echo " All services have been launched!                                "
-echo " - Eureka Server:         http://localhost:8761                  "
-echo " - API Gateway:           http://localhost:8080                  "
-echo " - Identity Service:      http://localhost:8081                  "
-echo " - Patient Service:       http://localhost:8082                  "
-echo " - Appointment Service:   http://localhost:8083                  "
-echo " - Consultation Service:  http://localhost:8086                  "
-echo " - Prescription Service:   http://localhost:8087                  "
-echo " - Doctor Web Frontend:   http://localhost:3000                  "
+echo " - Eureka Server:             http://localhost:8761              "
+echo " - API Gateway:               http://localhost:8080              "
+echo " - Identity Service:          http://localhost:8081              "
+echo " - Patient Service:           http://localhost:8082              "
+echo " - Appointment Service:       http://localhost:8083              "
+echo " - Queue Service:             http://localhost:8084              "
+echo " - Notification Service:      http://localhost:8085              "
+echo " - Consultation Service:      http://localhost:8086              "
+echo " - Prescription Service:      http://localhost:8087              "
+echo " - EMR Service:               http://localhost:8088              "
+echo " - Lab Service:               http://localhost:8089              "
+echo " - Hospital Directory Service:http://localhost:8090              "
+echo " - AI Service:                http://localhost:8091              "
+echo " - Doctor Web Frontend:       http://localhost:3000              "
 echo "================================================================="
 echo " Tailing logs in real-time. Press [Ctrl + C] to STOP all services. "
 echo "================================================================="
 
 # Create empty log files if they don't exist yet to avoid tail errors
-touch "$LOG_DIR/logs_eureka-server.log" "$LOG_DIR/logs_api-gateway.log" "$LOG_DIR/logs_identity-service.log" "$LOG_DIR/logs_patient-service.log" "$LOG_DIR/logs_appointment-service.log" "$LOG_DIR/logs_consultation-service.log" "$LOG_DIR/logs_prescription-service.log" "$LOG_DIR/logs_queue-service.log" "$LOG_DIR/logs_hospital-directory-service.log" "$LOG_DIR/logs_frontend.log"
+touch "$LOG_DIR/logs_eureka-server.log" "$LOG_DIR/logs_api-gateway.log" "$LOG_DIR/logs_identity-service.log" "$LOG_DIR/logs_patient-service.log" "$LOG_DIR/logs_appointment-service.log" "$LOG_DIR/logs_queue-service.log" "$LOG_DIR/logs_notification-service.log" "$LOG_DIR/logs_consultation-service.log" "$LOG_DIR/logs_prescription-service.log" "$LOG_DIR/logs_emr-service.log" "$LOG_DIR/logs_lab-service.log" "$LOG_DIR/logs_hospital-directory-service.log" "$LOG_DIR/logs_ai-service.log" "$LOG_DIR/logs_frontend.log"
 
 # Tail all logs
-tail -f "$LOG_DIR/logs_eureka-server.log" -f "$LOG_DIR/logs_api-gateway.log" -f "$LOG_DIR/logs_identity-service.log" -f "$LOG_DIR/logs_patient-service.log" -f "$LOG_DIR/logs_appointment-service.log" -f "$LOG_DIR/logs_consultation-service.log" -f "$LOG_DIR/logs_prescription-service.log" -f "$LOG_DIR/logs_queue-service.log" -f "$LOG_DIR/logs_hospital-directory-service.log" -f "$LOG_DIR/logs_frontend.log"
+tail -f "$LOG_DIR/logs_eureka-server.log" -f "$LOG_DIR/logs_api-gateway.log" -f "$LOG_DIR/logs_identity-service.log" -f "$LOG_DIR/logs_patient-service.log" -f "$LOG_DIR/logs_appointment-service.log" -f "$LOG_DIR/logs_queue-service.log" -f "$LOG_DIR/logs_notification-service.log" -f "$LOG_DIR/logs_consultation-service.log" -f "$LOG_DIR/logs_prescription-service.log" -f "$LOG_DIR/logs_emr-service.log" -f "$LOG_DIR/logs_lab-service.log" -f "$LOG_DIR/logs_hospital-directory-service.log" -f "$LOG_DIR/logs_ai-service.log" -f "$LOG_DIR/logs_frontend.log"

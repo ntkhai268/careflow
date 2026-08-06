@@ -78,7 +78,7 @@ public class DataInitializer implements CommandLineRunner {
             log.info("Seeding default doctor profiles...");
             List<DoctorProfile> doctors = List.of(
                     DoctorProfile.builder()
-                            .id(UUID.fromString("dp000001-0000-0000-0000-000000000001"))
+                            .id(UUID.fromString("d0000001-0000-0000-0000-000000000001"))
                             .userId(UUID.fromString("d0000001-0000-0000-0000-000000000001"))
                             .fullName("BS. CKI Nguyễn Văn An")
                             .title("BS. CKI")
@@ -89,7 +89,7 @@ public class DataInitializer implements CommandLineRunner {
                             .isActive(true)
                             .build(),
                     DoctorProfile.builder()
-                            .id(UUID.fromString("dp000001-0000-0000-0000-000000000002"))
+                            .id(UUID.fromString("d0000002-0000-0000-0000-000000000002"))
                             .userId(UUID.fromString("11111111-1111-1111-1111-111111111111"))
                             .fullName("BS. Phạm Hoàng Nam")
                             .title("BS. CKI")

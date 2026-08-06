@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { getDefaultRouteForRole } from "@/lib/role-utils";
 
 interface User {
   id: string;
@@ -78,7 +79,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem("careflow_token", resJson.data.accessToken);
         localStorage.setItem("careflow_user", JSON.stringify(doctorUser));
         setUser(doctorUser);
-        router.push("/dashboard");
+        const targetRoute = getDefaultRouteForRole(doctorUser.role);
+        router.push(targetRoute);
         return;
       }
 

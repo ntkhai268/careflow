@@ -50,10 +50,31 @@ run_service "prescription-service" "mvn -pl careflow-prescription-service spring
 # 8. Start Queue Service (Port 8084)
 run_service "queue-service" "mvn -pl careflow-queue-service spring-boot:run -Dspring-boot.run.profiles=local"
 
-# 9. Start Frontend Web (Port 3000)
+# 9. Start Notification Service (Port 8085)
+run_service "notification-service" "mvn -pl careflow-notification-service spring-boot:run -Dspring-boot.run.profiles=local"
+
+# 10. Start Consultation Service (Port 8086)
+run_service "consultation-service" "mvn -pl careflow-consultation-service spring-boot:run -Dspring-boot.run.profiles=local"
+
+# 11. Start Prescription Service (Port 8087)
+run_service "prescription-service" "mvn -pl careflow-prescription-service spring-boot:run -Dspring-boot.run.profiles=local"
+
+# 12. Start EMR Service (Port 8088)
+run_service "emr-service" "mvn -pl careflow-emr-service spring-boot:run -Dspring-boot.run.profiles=local"
+
+# 13. Start Lab Service (Port 8089)
+run_service "lab-service" "mvn -pl careflow-lab-service spring-boot:run -Dspring-boot.run.profiles=local"
+
+# 14. Start Hospital Directory Service (Port 8090)
+run_service "hospital-directory-service" "mvn -pl careflow-hospital-directory-service spring-boot:run -Dspring-boot.run.profiles=local"
+
+# 15. Start AI Service (Port 8091)
+run_service "ai-service" "mvn -pl careflow-ai-service spring-boot:run -Dspring-boot.run.profiles=local"
+
+# 16. Start Frontend Web (Port 3000)
 echo "--> Launching Doctor Web Frontend..."
 cd frontend/doctor-web
-npm run dev > ../../logs_frontend.log 2>&1 &
+npm run dev > "../../logs_frontend.log" 2>&1 &
 SERVICE_PIDS+=($!)
 cd ../..
 
@@ -78,20 +99,26 @@ trap cleanup SIGINT SIGTERM EXIT
 
 echo "================================================================="
 echo " All Local services have been launched!                          "
-echo " - Eureka Server:         http://localhost:8761                  "
-echo " - API Gateway:           http://localhost:8080                  "
-echo " - Identity Service:      http://localhost:8081                  "
-echo " - Patient Service:       http://localhost:8082                  "
-echo " - Appointment Service:   http://localhost:8083                  "
-echo " - Consultation Service:  http://localhost:8086                  "
-echo " - Prescription Service:   http://localhost:8087                  "
-echo " - Doctor Web Frontend:   http://localhost:3000                  "
+echo " - Eureka Server:             http://localhost:8761              "
+echo " - API Gateway:               http://localhost:8080              "
+echo " - Identity Service:          http://localhost:8081              "
+echo " - Patient Service:           http://localhost:8082              "
+echo " - Appointment Service:       http://localhost:8083              "
+echo " - Queue Service:             http://localhost:8084              "
+echo " - Notification Service:      http://localhost:8085              "
+echo " - Consultation Service:      http://localhost:8086              "
+echo " - Prescription Service:      http://localhost:8087              "
+echo " - EMR Service:               http://localhost:8088              "
+echo " - Lab Service:               http://localhost:8089              "
+echo " - Hospital Directory Service:http://localhost:8090              "
+echo " - AI Service:                http://localhost:8091              "
+echo " - Doctor Web Frontend:       http://localhost:3000              "
 echo "================================================================="
 echo " Tailing logs in real-time. Press [Ctrl + C] to STOP all services. "
 echo "================================================================="
 
 # Create empty log files if they don't exist yet to avoid tail errors
-touch logs_eureka-server.log logs_api-gateway.log logs_identity-service.log logs_patient-service.log logs_appointment-service.log logs_consultation-service.log logs_prescription-service.log logs_queue-service.log logs_frontend.log
+touch logs_eureka-server.log logs_api-gateway.log logs_identity-service.log logs_patient-service.log logs_appointment-service.log logs_queue-service.log logs_notification-service.log logs_consultation-service.log logs_prescription-service.log logs_emr-service.log logs_lab-service.log logs_hospital-directory-service.log logs_ai-service.log logs_frontend.log
 
 # Tail all logs
-tail -f logs_eureka-server.log -f logs_api-gateway.log -f logs_identity-service.log -f logs_patient-service.log -f logs_appointment-service.log -f logs_consultation-service.log -f logs_prescription-service.log -f logs_queue-service.log -f logs_frontend.log
+tail -f logs_eureka-server.log -f logs_api-gateway.log -f logs_identity-service.log -f logs_patient-service.log -f logs_appointment-service.log -f logs_queue-service.log -f logs_notification-service.log -f logs_consultation-service.log -f logs_prescription-service.log -f logs_emr-service.log -f logs_lab-service.log -f logs_hospital-directory-service.log -f logs_ai-service.log -f logs_frontend.log

@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **careflow** (5507 symbols, 12687 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **careflow** (5528 symbols, 12723 relationships, 300 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > If any GitNexus tool warns the index is stale, run `npx gitnexus analyze` in terminal first.
 
@@ -73,6 +73,13 @@ This project is indexed by GitNexus as **careflow** (5507 symbols, 12687 relatio
   - `careflow-prescription-service`: Seed danh mục thuốc mẫu (`drugs_dictionary`).
   - `careflow-identity-service`: Seed tài khoản nội bộ & bệnh nhân mẫu (`PATIENT`, `DOCTOR`, `STAFF`, `LAB_TECHNICIAN`, `ADMIN`).
 - **Quy tắc khi tạo tính năng/Entity mới**: Mỗi khi phát triển tính năng hoặc entity mới có danh sách/hàng đợi, BẮT BUỘC phải bổ sung logic seed data tương ứng vào lớp `DataInitializer.java` của microservice đó để mỗi lần chạy lại hệ thống đều có dữ liệu test tức thì.
+
+## UI & Master Data Selection Controls Rule
+- **Searchable Combobox & Real Data Only**: Mọi trường chọn dữ liệu Master (như Khoa chuyên môn, Phòng khám, Bác sĩ, Danh mục thuốc...) **BẮT BUỘC phải dùng Combobox/Select có Chips search từ Real Data API** (`directoryApi.getDepartments()`, v.v.).
+- **Strict Existing Values Only**: Người dùng chỉ được chọn những giá trị đã tồn tại trong CSDL/hệ thống (gõ phím tìm kiếm chỉ để filter nhanh, không cho phép nhập text tự do). Nếu chưa có dữ liệu mới, người dùng bắt buộc phải qua trang quản lý Master Data tương ứng (như `/admin/facility`) để tạo mới rồi quay lại chọn.
+- **Outside Click Dismiss**: Mọi dropdown combobox **BẮT BUỘC phải dùng `useRef` + `mousedown` listener để tự động đóng menu (`setShowDropdown(false)`) khi user click ra ngoài**, không được treo menu cố định vĩnh viễn.
+- **Custom UI Over Native Select**: **TUYỆT ĐỐI KHÔNG dùng `<select>` HTML mặc định của trình duyệt** (tránh góc vuông thô và highlight cam). Mọi dropdown chọn (Vai trò, Trạng thái, Khoa, Phòng) phải tự dựng Custom Component với bo góc nhẹ (`rounded-lg`/`rounded-xl`), hiệu ứng tím SJD nhạt khi hover và bóng đổ `shadow-lg`.
+- **Role Guard & 403 Forbidden Page**: Mọi truy cập vào route trang ngoài phân quyền vai trò hiện tại (`/admin`, `/lab`, `/staff`, `/dashboard`) BẮT BUỘC hiển thị trang Cảnh báo Không có quyền truy cập 403 (`AccessDenied.tsx`) kèm nút quay về trang chính theo vai trò của user, không cho phép hiển thị dữ liệu hoặc âm thầm chuyển hướng.
 
 ---
 

@@ -12,7 +12,7 @@ const getNavItems = (role?: string) => {
       { label: "Tổng quan Quản trị", href: "/admin" },
       { label: "Quản lý Tài khoản", href: "/admin/accounts" },
       { label: "Cấu hình Cơ sở Y tế", href: "/admin/facility" },
-      { label: "Cấu hình Lịch & Khung giờ", href: "/admin/schedule" },
+      { label: "Cấu hình khung giờ", href: "/admin/schedule" },
     ];
   }
 
@@ -116,7 +116,10 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
       {/* Navigation */}
       <nav className="flex-1 overflow-y-auto px-2.5 py-2 space-y-0.5">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+          const isExactRoot = item.href === "/admin" || item.href === "/dashboard/general" || item.href === "/dashboard";
+          const isActive = isExactRoot
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(item.href + "/");
           return (
             <Link
               key={item.href}

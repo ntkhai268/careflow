@@ -61,7 +61,7 @@ export default function AdminSchedulePage() {
           </div>
           <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Cấu hình Khung giờ & Lịch làm việc</h1>
           <p className="text-xs text-[#6A5C70] mt-0.5">
-            Cấu hình thời gian check-in sớm/muộn (checkInWindowMinutes), khung giờ khám (TimeSlot) và Capacity tối đa
+            Cấu hình thời gian check-in sớm/muộn, khung giờ khám và Capacity tối đa
           </p>
         </div>
 
@@ -95,7 +95,7 @@ export default function AdminSchedulePage() {
 
       {/* Time Slots & Capacity Config */}
       <div className="border border-card-border bg-card-bg rounded-xl p-5 shadow-sm space-y-4">
-        <h2 className="text-base font-bold text-[#2B1D30]">Danh sách Khung giờ & Capacity tối đa (Slot Capacity)</h2>
+        <h2 className="text-base font-bold text-[#2B1D30]">Danh sách Khung giờ & Capacity tối đa</h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {timeSlots.map((slot, idx) => (

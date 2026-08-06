@@ -3,9 +3,10 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
+import { getDefaultRouteForRole } from "@/lib/role-utils";
 
 export default function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
+  const { user, login, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -16,10 +17,11 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace("/dashboard");
+    if (!isLoading && isAuthenticated) {
+      const target = getDefaultRouteForRole(user?.role);
+      router.replace(target);
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isLoading, user?.role, router]);
 
   if (isAuthenticated) {
     return null;

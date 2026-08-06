@@ -55,9 +55,16 @@ export default function DashboardGeneralPage() {
     message: string;
     consultationId?: string;
   }>({ show: false, message: "" });
+  const isAdmin = user?.role?.toUpperCase().includes("ADMIN");
   const isLabTech = user?.role?.toUpperCase().includes("LAB");
   const isStaff = user?.role?.toUpperCase().includes("STAFF");
-  const isDoctor = !isLabTech && !isStaff;
+  const isDoctor = !isAdmin && !isLabTech && !isStaff;
+
+  useEffect(() => {
+    if (isAdmin) {
+      router.replace("/admin");
+    }
+  }, [isAdmin, router]);
 
   useEffect(() => {
     async function loadDashboardData() {

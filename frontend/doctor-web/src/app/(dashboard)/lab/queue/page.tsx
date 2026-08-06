@@ -178,9 +178,9 @@ export default function LabQueuePage() {
               Phân hệ Kỹ thuật viên Cận lâm sàng
             </span>
           </div>
-          <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Hàng đợi Thực hiện Xét nghiệm (LAB_EXECUTION)</h1>
+          <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Hàng đợi Thực hiện Xét nghiệm</h1>
           <p className="text-xs text-text-muted mt-0.5">
-            Điều phối và nhập kết quả xét nghiệm / chẩn đoán hình ảnh theo Điểm phục vụ (Service Point)
+            Điều phối và nhập kết quả xét nghiệm, chẩn đoán hình ảnh theo Điểm phục vụ
           </p>
         </div>
 
@@ -329,7 +329,7 @@ export default function LabQueuePage() {
             <div className="space-y-4 text-xs">
               <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
                 <p className="font-bold text-purple-900 text-sm">Số thứ tự: {activeEntry.queueNumber}</p>
-                <p className="text-purple-700 mt-1">Trạng thái: IN_PROGRESS (Đang lấy mẫu / chụp chiếu)</p>
+                <p className="text-purple-700 mt-1">Trạng thái: Đang thực hiện</p>
               </div>
 
               <div className="space-y-3">

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
@@ -8,9 +9,16 @@ import SettingsModal from "../modals/SettingsModal";
 import HelpModal from "../modals/HelpModal";
 
 const BREADCRUMB_MAP: Record<string, string> = {
-  "/dashboard/general": "Tổng quan",
-  "/dashboard/queue": "Hàng đợi khám",
-  "/dashboard/prescriptions": "Đơn thuốc",
+  "/dashboard/general": "Tổng quan Khám bệnh",
+  "/dashboard/queue": "Hàng đợi Khám bệnh",
+  "/dashboard/prescriptions": "Quản lý Đơn thuốc",
+  "/admin": "Tổng quan Quản trị",
+  "/admin/accounts": "Quản lý Tài khoản",
+  "/admin/facility": "Cấu hình Cơ sở Y tế",
+  "/admin/schedule": "Cấu hình Lịch & Khung giờ",
+  "/lab/queue": "Hàng đợi Cận lâm sàng",
+  "/staff/checkin": "Quét QR Check-in",
+  "/staff/pharmacy": "Hàng đợi Phát thuốc",
 };
 
 export default function Topbar() {
@@ -55,6 +63,7 @@ export default function Topbar() {
   }, []);
 
   const pageTitle = BREADCRUMB_MAP[pathname] || "Dashboard";
+  const rootHref = user?.role?.toUpperCase().includes("ADMIN") ? "/admin" : "/dashboard/general";
   const initials = user?.fullName
     ? user.fullName.split(" ").map((n: string) => n[0]).slice(-2).join("").toUpperCase()
     : "BS";
@@ -63,12 +72,22 @@ export default function Topbar() {
     <>
       <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-6 bg-white border-b border-gray-200 shadow-sm">
         {/* Left — Breadcrumb */}
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-gray-400">Dashboard</span>
-          <svg className="w-3 h-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="flex items-center gap-2 text-[11px]">
+          <Link
+            href={rootHref}
+            className="text-gray-400 hover:text-indigo-600 transition-colors font-medium"
+          >
+            Bảng điều khiển
+          </Link>
+          <svg className="w-3 h-3 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
-          <span className="text-[11px] font-semibold text-indigo-500">{pageTitle}</span>
+          <Link
+            href={pathname}
+            className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+          >
+            {pageTitle}
+          </Link>
         </div>
 
         {/* Center — Search */}
