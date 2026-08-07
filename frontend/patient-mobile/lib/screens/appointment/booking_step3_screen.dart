@@ -28,7 +28,7 @@ class BookingStep3Screen extends ConsumerStatefulWidget {
 class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
   late DateTime _selectedDate;
   String? _selectedSlot;
-  List<String> _timeSlots = [];
+  List<AppointmentTimeSlot> _timeSlots = [];
   bool _isLoading = true;
   String? _error;
 
@@ -50,21 +50,13 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
     });
     try {
       final service = ref.read(appointmentServiceProvider);
-      final slots = await service.getTimeSlots(
+      final slots = await service.getTimeSlotAvailability(
         department: widget.department.code,
         date: _selectedDate,
       );
       if (!mounted) return;
       setState(() {
         _timeSlots = slots;
-        if (_availableSlotsFor(_selectedDate).isEmpty &&
-            _isSameDay(_selectedDate, _now)) {
-          _selectedDate = DateTime(
-            _selectedDate.year,
-            _selectedDate.month,
-            _selectedDate.day + 1,
-          );
-        }
         _isLoading = false;
       });
     } catch (_) {
@@ -79,28 +71,23 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
 
   DateTime get _now => widget.currentTimeOverride ?? DateTime.now();
 
-  List<String> _availableSlotsFor(DateTime date) => _timeSlots
-      .where(
-        (slot) => isAppointmentSlotAvailable(
-          selectedDate: date,
-          slot: slot,
-          now: _now,
-        ),
-      )
+  List<AppointmentTimeSlot> _slotsFor() => _timeSlots;
+
+  bool _isPast(AppointmentTimeSlot slot) => !isAppointmentSlotAvailable(
+    selectedDate: _selectedDate,
+    slot: slot.timeSlot,
+    now: _now,
+  );
+
+  bool _isSelectable(AppointmentTimeSlot slot) => !_isPast(slot) && slot.available;
+
+  List<AppointmentTimeSlot> get _morningSlots => _slotsFor()
+      .where((s) => s.timeSlot.compareTo('12:00') < 0)
       .toList();
 
-  List<String> get _morningSlots => _availableSlotsFor(
-    _selectedDate,
-  ).where((s) => s.compareTo('12:00') < 0).toList();
-
-  List<String> get _afternoonSlots => _availableSlotsFor(
-    _selectedDate,
-  ).where((s) => s.compareTo('12:00') >= 0).toList();
-
-  bool _isSameDay(DateTime left, DateTime right) =>
-      left.year == right.year &&
-      left.month == right.month &&
-      left.day == right.day;
+  List<AppointmentTimeSlot> get _afternoonSlots => _slotsFor()
+      .where((s) => s.timeSlot.compareTo('12:00') >= 0)
+      .toList();
 
   Future<void> _pickDate() async {
     final now = _now;
@@ -126,6 +113,7 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
         _selectedDate = picked;
         _selectedSlot = null;
       });
+      await _loadTimeSlots();
     }
   }
 
@@ -377,7 +365,7 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
 
   Widget _buildTimeSlotsSection(
     String title,
-    List<String> slots,
+    List<AppointmentTimeSlot> slots,
     IconData icon,
   ) {
     return Column(
@@ -396,6 +384,16 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
           ],
         ),
         const SizedBox(height: AppSpacing.md),
+        if (slots.any((slot) => !_isSelectable(slot)))
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: Text(
+              'Màu xám: đã qua giờ • màu đỏ: đã đủ người',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textHint,
+              ),
+            ),
+          ),
         if (slots.isEmpty)
           Text(
             'Không còn ca phù hợp trong buổi này.',
@@ -408,31 +406,58 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
             spacing: AppSpacing.sm,
             runSpacing: AppSpacing.sm,
             children: slots.map((slot) {
-              final isSelected = _selectedSlot == slot;
-              return ChoiceChip(
-                label: Text(slot),
-                selected: isSelected,
-                onSelected: (selected) {
-                  setState(() {
-                    _selectedSlot = selected ? slot : null;
-                  });
-                },
-                selectedColor: AppColors.primary,
-                backgroundColor: AppColors.surface,
-                labelStyle: TextStyle(
-                  color: isSelected ? Colors.white : AppColors.textPrimary,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-                  fontSize: 13,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.sm),
-                  side: BorderSide(
+              final isSelected = _selectedSlot == slot.timeSlot;
+              final isPast = _isPast(slot);
+              final isSelectable = _isSelectable(slot);
+              final status = isPast
+                  ? 'Đã qua giờ'
+                  : slot.isFull
+                  ? 'Đã đầy'
+                  : '${slot.remaining} chỗ trống';
+              return Semantics(
+                button: true,
+                enabled: isSelectable,
+                label: '${slot.timeSlot}, $status',
+                child: ChoiceChip(
+                  label: Text(slot.timeSlot),
+                  selected: isSelected,
+                  onSelected: isSelectable
+                      ? (selected) {
+                          setState(() {
+                            _selectedSlot = selected ? slot.timeSlot : null;
+                          });
+                        }
+                      : null,
+                  selectedColor: AppColors.primary,
+                  backgroundColor: AppColors.surface,
+                  disabledColor: isPast
+                      ? AppColors.background
+                      : AppColors.errorLight,
+                  materialTapTargetSize: MaterialTapTargetSize.padded,
+                  labelStyle: TextStyle(
                     color: isSelected
-                        ? AppColors.primary
-                        : AppColors.cardBorder,
+                        ? Colors.white
+                        : isSelectable
+                        ? AppColors.textPrimary
+                        : AppColors.textHint,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                    fontSize: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.sm),
+                    side: BorderSide(
+                      color: isSelected
+                          ? AppColors.primary
+                          : isSelectable
+                          ? AppColors.cardBorder
+                          : AppColors.textHint,
+                    ),
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
                   ),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               );
             }).toList(),
           ),
@@ -453,16 +478,17 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
           child: ElevatedButton(
             onPressed: _selectedSlot != null
                 ? () {
-                    if (!isAppointmentSlotAvailable(
-                      selectedDate: _selectedDate,
-                      slot: _selectedSlot!,
-                      now: _now,
-                    )) {
+                    final selectedSlot = _timeSlots
+                        .where((slot) => slot.timeSlot == _selectedSlot)
+                        .firstOrNull;
+                    if (selectedSlot == null || !_isSelectable(selectedSlot)) {
                       setState(() => _selectedSlot = null);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           content: Text(
-                            'Ca khám này đã qua. Vui lòng chọn ca khác.',
+                            selectedSlot?.isFull == true
+                                ? 'Ca khám này đã đủ người. Vui lòng chọn ca khác.'
+                                : 'Ca khám này đã qua. Vui lòng chọn ca khác.',
                           ),
                         ),
                       );

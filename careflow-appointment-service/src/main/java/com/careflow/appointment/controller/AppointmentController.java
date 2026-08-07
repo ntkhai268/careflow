@@ -5,6 +5,7 @@ import com.careflow.appointment.dto.request.CreateFollowUpRequest;
 import com.careflow.appointment.dto.request.UpdateAppointmentStatusRequest;
 import com.careflow.appointment.dto.response.AppointmentResponse;
 import com.careflow.appointment.dto.response.ClinicalContextResponse;
+import com.careflow.appointment.dto.response.TimeSlotAvailabilityResponse;
 import com.careflow.appointment.model.Department;
 import com.careflow.appointment.service.AppointmentService;
 import com.careflow.common.dto.ApiResponse;
@@ -167,13 +168,15 @@ public class AppointmentController {
     @GetMapping("/time-slots")
     @Operation(summary = "Danh sách ca khám có sẵn")
     public ResponseEntity<ApiResponse<List<String>>> getTimeSlots() {
-        // Các ca khám mặc định (30 phút/ca, sáng 7:30-11:30, chiều 13:30-16:30)
-        List<String> slots = List.of(
-                "07:30-08:00", "08:00-08:30", "08:30-09:00", "09:00-09:30",
-                "09:30-10:00", "10:00-10:30", "10:30-11:00", "11:00-11:30",
-                "13:30-14:00", "14:00-14:30", "14:30-15:00", "15:00-15:30",
-                "15:30-16:00", "16:00-16:30"
-        );
-        return ResponseEntity.ok(ApiResponse.success(slots));
+        return ResponseEntity.ok(ApiResponse.success(AppointmentService.DEFAULT_TIME_SLOTS));
+    }
+
+    @GetMapping("/time-slots/availability")
+    @Operation(summary = "Tình trạng số chỗ theo ca khám")
+    public ResponseEntity<ApiResponse<List<TimeSlotAvailabilityResponse>>> getTimeSlotAvailability(
+            @RequestParam String department,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+        return ResponseEntity.ok(ApiResponse.success(
+                appointmentService.getTimeSlotAvailability(department, date)));
     }
 }

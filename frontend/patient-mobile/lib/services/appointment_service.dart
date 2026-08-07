@@ -127,6 +127,25 @@ class AppointmentService {
     final list = apiResponse['data'] as List<dynamic>;
     return list.map((e) => e as String).toList();
   }
+
+  /// Get every slot together with booked/remaining capacity and disable reason.
+  Future<List<AppointmentTimeSlot>> getTimeSlotAvailability({
+    required String department,
+    required DateTime date,
+  }) async {
+    final response = await _apiService.get(
+      '${ApiConfig.appointments}/time-slots/availability',
+      queryParams: <String, dynamic>{
+        'department': department,
+        'date': date.toIso8601String().split('T').first,
+      },
+    );
+    final apiResponse = response.data as Map<String, dynamic>;
+    final list = apiResponse['data'] as List<dynamic>;
+    return list
+        .map((e) => AppointmentTimeSlot.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
 }
 
 /// Global provider for AppointmentService — uses the shared ApiService

@@ -81,7 +81,7 @@ void main() {
     expect(find.widgetWithText(OutlinedButton, 'Thử lại'), findsOneWidget);
   });
 
-  testWidgets('today hides slots whose start time has already passed', (
+  testWidgets('today shows past and full slots as disabled', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -97,10 +97,15 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('07:30-08:00'), findsNothing);
-    expect(find.text('14:30-15:00'), findsNothing);
+    expect(find.text('07:30-08:00'), findsOneWidget);
+    expect(find.text('14:30-15:00'), findsOneWidget);
     expect(find.text('15:00-15:30'), findsOneWidget);
-    expect(find.text('Không còn ca phù hợp trong buổi này.'), findsOneWidget);
+    expect(find.text('Không còn ca phù hợp trong buổi này.'), findsNothing);
+
+    final fullChip = tester.widget<ChoiceChip>(
+      find.widgetWithText(ChoiceChip, '14:30-15:00'),
+    );
+    expect(fullChip.onSelected, isNull);
   });
 }
 
@@ -136,6 +141,12 @@ class FailingReferenceDataService extends AppointmentService {
   @override
   Future<List<String>> getTimeSlots({String? department, DateTime? date}) =>
       Future.error(StateError('gateway unavailable'));
+
+  @override
+  Future<List<AppointmentTimeSlot>> getTimeSlotAvailability({
+    required String department,
+    required DateTime date,
+  }) => Future.error(StateError('gateway unavailable'));
 }
 
 class AvailableReferenceDataService extends AppointmentService {
@@ -146,5 +157,34 @@ class AvailableReferenceDataService extends AppointmentService {
     '07:30-08:00',
     '14:30-15:00',
     '15:00-15:30',
+  ];
+
+  @override
+  Future<List<AppointmentTimeSlot>> getTimeSlotAvailability({
+    required String department,
+    required DateTime date,
+  }) async => const [
+    AppointmentTimeSlot(
+      timeSlot: '07:30-08:00',
+      bookedCount: 0,
+      capacity: 5,
+      remaining: 5,
+      available: true,
+    ),
+    AppointmentTimeSlot(
+      timeSlot: '14:30-15:00',
+      bookedCount: 5,
+      capacity: 5,
+      remaining: 0,
+      available: false,
+      unavailableReason: 'FULL',
+    ),
+    AppointmentTimeSlot(
+      timeSlot: '15:00-15:30',
+      bookedCount: 0,
+      capacity: 5,
+      remaining: 5,
+      available: true,
+    ),
   ];
 }
