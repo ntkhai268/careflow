@@ -19,6 +19,7 @@ class Appointment {
   final String statusDisplayName;
   final String? reason;
   final String? notes;
+  final String? sourceConsultationId;
   final String? queueNumber;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -39,6 +40,7 @@ class Appointment {
     required this.statusDisplayName,
     this.reason,
     this.notes,
+    this.sourceConsultationId,
     this.queueNumber,
     this.createdAt,
     this.updatedAt,
@@ -47,7 +49,8 @@ class Appointment {
   bool get allowsActiveJourney =>
       status == 'CONFIRMED' ||
       status == 'CHECKED_IN' ||
-      status == 'IN_PROGRESS';
+      status == 'IN_PROGRESS' ||
+      status == 'COMPLETED';
 
   factory Appointment.fromJson(Map<String, dynamic> json) {
     return Appointment(
@@ -66,6 +69,7 @@ class Appointment {
       statusDisplayName: json['statusDisplayName'] as String? ?? '',
       reason: json['reason'] as String?,
       notes: json['notes'] as String?,
+      sourceConsultationId: json['sourceConsultationId'] as String?,
       queueNumber: json['queueNumber'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)

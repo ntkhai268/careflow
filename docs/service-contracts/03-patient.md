@@ -19,7 +19,8 @@ liệu lâm sàng chính thức thuộc Consultation/Lab/Prescription và đư�
 | Method và path | Quyền | Mục đích |
 |---|---|---|
 | `POST /api/patients` | `PATIENT` chính chủ hoặc `ADMIN` | Tạo profile |
-| `GET /api/patients/{patientId}` | Chính chủ hoặc clinical staff có assignment | Xem profile |
+| `GET /api/patients/{patientId}` | Chính chủ, `ADMIN`, hoặc assigned `DOCTOR` | Xem profile lâm sàng |
+| `GET /api/patients/{patientId}/operational-summary?appointmentId=&roomId=` | `STAFF` có assignment phòng/lượt hoặc `ADMIN` | Dữ liệu tối thiểu cho check-in |
 | `GET /api/patients/user/{userId}` | Chính user hoặc internal | Tra profile theo Identity user |
 | `PUT /api/patients/{patientId}` | Chính chủ hoặc `STAFF` | Partial update |
 | `POST /api/patients/{patientId}/health-records` | Chính chủ | Upload hồ sơ cũ |
@@ -58,8 +59,10 @@ Upload hồ sơ dùng `multipart/form-data`:
 
 - Với role `PATIENT`, `X-User-Id` phải map đúng `patient.userId`.
 - Không cho bệnh nhân tạo profile bằng `userId` của người khác.
-- Doctor chỉ truy cập khi có consultation được phân công; Patient duy trì access-grant projection từ
-  `ConsultationStarted/Completed`, không dựa vào UI.
+- Doctor chỉ truy cập khi `Appointment.doctorId` (trusted Identity user ID) khớp với actor và appointment
+  chưa bị hủy; Patient Service kiểm tra assignment với Appointment Service, không dựa vào UI hoặc role đơn lẻ.
+- Staff không đọc profile đầy đủ. Staff chỉ gọi `operational-summary` với đúng `appointmentId` và `roomId`
+  trong queue/phòng đang xử lý; response không chứa CCCD, BHYT, địa chỉ, tiền sử hoặc dị ứng.
 - File download phải kiểm tra file → health record → patient, không chỉ kiểm tra `fileId`.
 - Path lưu vật lý không xuất hiện trong response.
 
@@ -131,5 +134,6 @@ Phải mock thêm `404`, ownership `403` và file `413`/`415`.
 ### `DEMO_READY`
 
 - Mobile tạo/sửa profile, upload/xem/tải hồ sơ.
-- Doctor Web chỉ xem được bệnh nhân được phân công.
+- Doctor Web chỉ xem được bệnh nhân được phân công; doctor khác nhận `403`.
+- Check-in của Staff chỉ nhận dữ liệu tối thiểu trong đúng appointment/room scope.
 - File không bị lộ qua URL không kiểm soát; audit được lượt truy cập của doctor.

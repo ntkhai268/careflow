@@ -1,26 +1,215 @@
 @import "tailwindcss";
 
+/* ==========================================
+   CareFlow Doctor Web — Design System
+   Indigo-Navy Dark Theme (Active)
+   Blue-Purple + Black + Blue
+   ========================================== */
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Primary — Indigo / Blue-Purple */
+  --primary-50:  #EEF2FF;
+  --primary-100: #E0E7FF;
+  --primary-200: #C7D2FE;
+  --primary-300: #A5B4FC;
+  --primary-400: #818CF8;
+  --primary-500: #6366F1;   /* indigo — active, accent */
+  --primary-600: #4F46E5;
+  --primary-700: #4338CA;
+  --primary-800: #3730A3;
+  --primary-900: #312E81;
+
+  /* CTA — Blue */
+  --blue-400: #60A5FA;
+  --blue-500: #3B82F6;      /* blue — buttons, CTA */
+  --blue-600: #2563EB;
+  --blue-700: #1D4ED8;
+
+  /* Dark Navy (sidebar & dark elements) */
+  --navy-950: #0D0F1E;
+  --navy-900: #111427;
+  --navy-800: #161930;
+  --navy-700: #1E2340;
+  --navy-600: #252A4A;
+  --navy-500: #2E3462;
+
+  /* Neutral */
+  --gray-50:  #F8FAFC;
+  --gray-100: #F1F5F9;
+  --gray-200: #E2E8F0;
+  --gray-300: #CBD5E1;
+  --gray-400: #94A3B8;
+  --gray-500: #64748B;
+  --gray-600: #475569;
+  --gray-700: #334155;
+  --gray-800: #1E293B;
+  --gray-900: #0F172A;
+
+  /* Semantic */
+  --success:       #10B981;
+  --success-light: #D1FAE5;
+  --warning:       #F59E0B;
+  --warning-light: #FEF3C7;
+  --danger:        #EF4444;
+  --danger-light:  #FEE2E2;
+  --info:          #3B82F6;
+  --info-light:    #DBEAFE;
+
+  /* Status palette */
+  --status-green:  #10B981;
+  --status-blue:   #3B82F6;
+  --status-purple: #8B5CF6;
+  --status-amber:  #F59E0B;
+  --status-red:    #EF4444;
+
+  /* Layout tokens */
+  --background:        #F1F5F9;
+  --foreground:        #0F172A;
+  --card-bg:           #ffffff;
+  --card-border:       #E2E8F0;
+  --sidebar-bg:        #0D0F1E;
+  --sidebar-border:    #1E2340;
+  --sidebar-text:      #94A3B8;
+  --sidebar-active-bg: rgba(99,102,241,0.15);
+  --sidebar-active:    #818CF8;
+  --sidebar-hover:     #161930;
+  --topbar-bg:         #ffffff;
+  --topbar-border:     #E2E8F0;
+  --input-bg:          #F8FAFC;
+  --input-border:      #E2E8F0;
+  --input-focus:       #6366F1;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+  --color-background:     var(--background);
+  --color-foreground:     var(--foreground);
+  --color-card-bg:        var(--card-bg);
+  --color-card-border:    var(--card-border);
+  --color-sidebar-bg:     var(--sidebar-bg);
+  --color-sidebar-text:   var(--sidebar-text);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-hover:  var(--sidebar-hover);
+  --color-topbar-bg:      var(--topbar-bg);
+  --color-topbar-border:  var(--topbar-border);
+  --color-input-bg:       var(--input-bg);
+  --color-input-border:   var(--input-border);
+  --color-input-focus:    var(--input-focus);
+  --color-primary-50:     var(--primary-50);
+  --color-primary-100:    var(--primary-100);
+  --color-primary-200:    var(--primary-200);
+  --color-primary-300:    var(--primary-300);
+  --color-primary-400:    var(--primary-400);
+  --color-primary-500:    var(--primary-500);
+  --color-primary-600:    var(--primary-600);
+  --color-primary-700:    var(--primary-700);
+  --color-primary-800:    var(--primary-800);
+  --color-primary-900:    var(--primary-900);
+  --color-success:        var(--success);
+  --color-success-light:  var(--success-light);
+  --color-warning:        var(--warning);
+  --color-warning-light:  var(--warning-light);
+  --color-danger:         var(--danger);
+  --color-danger-light:   var(--danger-light);
+  --color-info:           var(--info);
+  --color-info-light:     var(--info-light);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  /* Soft Rounded System */
+  --radius-xs:   4px;
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   10px;
+  --radius-xl:   12px;
+  --radius-2xl:  16px;
+  --radius-3xl:  20px;
+  --radius-full: 9999px;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans, "Inter", system-ui, sans-serif);
 }
+
+* {
+  transition: background-color 0.15s ease, border-color 0.15s ease,
+              color 0.15s ease, box-shadow 0.15s ease;
+}
+
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--gray-300); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--gray-400); }
+
+.focus-ring {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--primary-500);
+}
+
+/* Segmented Tab Bar */
+.tab-bar {
+  background: var(--gray-100);
+  border-radius: 12px;
+  padding: 4px;
+  display: flex;
+  gap: 2px;
+}
+.tab-item {
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+.tab-item:hover { color: var(--gray-700); background: rgba(255,255,255,0.6); }
+.tab-item.active {
+  background: #fff;
+  color: var(--primary-500);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Clinical AI Assistant Animations */
+@keyframes clinicalBreathing {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+@keyframes clinicalPulseRing {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.25;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.05;
+  }
+  100% {
+    transform: scale(0.95);
+    opacity: 0;
+  }
+}
+
+.animate-clinical-breathing {
+  animation: clinicalBreathing 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.animate-clinical-pulse-ring {
+  animation: clinicalPulseRing 4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+

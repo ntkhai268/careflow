@@ -181,13 +181,24 @@ class _AppointmentDetailScreenState
         !appointment.allowsActiveJourney) {
       return;
     }
-    if (ref.read(realQueueEnabledProvider)) {
-      context.push('/journey/${appointment.id}/ticket');
-      return;
-    }
-    final activeJourney = ref.read(activeJourneyProvider);
-    if (activeJourney?.appointmentId != appointment.id ||
-        activeJourney?.patientId != appointment.patientId) {
+    final isCompleted = appointment.status == 'COMPLETED';
+    final needsJourneyBootstrap =
+        isCompleted || !ref.read(realQueueEnabledProvider);
+    if (needsJourneyBootstrap) {
+      final activeJourney = ref.read(activeJourneyProvider);
+      if (activeJourney?.appointmentId == appointment.id &&
+          activeJourney?.patientId == appointment.patientId) {
+        if (mounted) {
+          if (isCompleted && ref.read(realQueueEnabledProvider)) {
+            context.push('/journey/${appointment.id}/outcome');
+          } else if (ref.read(realQueueEnabledProvider)) {
+            context.push('/journey/${appointment.id}/ticket');
+          } else {
+            context.push('/journey/${appointment.id}');
+          }
+        }
+        return;
+      }
       try {
         await ref
             .read(journeyControllerProvider.notifier)
@@ -199,7 +210,14 @@ class _AppointmentDetailScreenState
         // Preserve the real controller error for the journey screen.
       }
     }
-    if (mounted) context.push('/journey/${appointment.id}');
+    if (!mounted) return;
+    if (isCompleted && ref.read(realQueueEnabledProvider)) {
+      context.push('/journey/${appointment.id}/outcome');
+    } else if (ref.read(realQueueEnabledProvider)) {
+      context.push('/journey/${appointment.id}/ticket');
+    } else {
+      context.push('/journey/${appointment.id}');
+    }
   }
 
   @override

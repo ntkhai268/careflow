@@ -27,4 +27,11 @@ public enum Department {
         this.roomId = roomId;
         this.roomDisplayName = roomDisplayName;
     }
+
+    public static Department fromCode(String value) {
+        if (value == null) throw new IllegalArgumentException("department is null");
+        String normalized = value.trim().toUpperCase(java.util.Locale.ROOT);
+        if ("NEUROLOGY".equals(normalized)) normalized = THAN_KINH.name();
+        return valueOf(normalized);
+    }
 }

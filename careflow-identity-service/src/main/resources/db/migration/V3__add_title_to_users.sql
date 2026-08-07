@@ -1,0 +1,1 @@
+ALTER TABLE identity.users ADD COLUMN IF NOT EXISTS title VARCHAR(100);

@@ -1,0 +1,69 @@
+// CareFlow - Prescription Service Database Design (DBML)
+// Schema: careflow_prescription
+
+Project CareFlow_Prescription_Service {
+  database_type: 'PostgreSQL'
+  note: 'Database Schema cho dịch vụ Kê đơn thuốc điện tử (CareFlow Prescription Service)'
+}
+
+Enum PrescriptionStatus {
+  DRAFT [note: 'Đơn thuốc nháp, có thể chỉnh sửa']
+  CONFIRMED [note: 'Đã xác nhận kê đơn, không thể sửa']
+  DISPENSED [note: 'Đã cấp phát thuốc tại nhà thuốc']
+  CANCELLED [note: 'Đã hủy đơn']
+}
+
+Table prescriptions {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  consultation_id uuid [not null, note: 'Khóa ngoại tham chiếu phiên khám (Consultation Service)']
+  patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bệnh nhân (Patient Service)']
+  doctor_id uuid [not null, note: 'Khóa ngoại tham chiếu bác sĩ (Identity Service)']
+  diagnosis varchar(500) [note: 'Chẩn đoán bệnh']
+  notes text [note: 'Dặn dò / Ghi chú chung cho đơn thuốc']
+  follow_up_date date [note: 'Ngày hẹn tái khám']
+  status PrescriptionStatus [not null, default: 'DRAFT', note: 'Trạng thái đơn thuốc (DRAFT, CONFIRMED, DISPENSED, CANCELLED)']
+  created_at timestamptz [not null, note: 'Thời điểm tạo đơn thuốc']
+  updated_at timestamptz [not null, note: 'Thời điểm cập nhật gần nhất']
+
+  indexes {
+    consultation_id [name: 'idx_prescription_consultation', note: 'Index tra cứu đơn thuốc theo phiên khám']
+    patient_id [name: 'idx_prescription_patient', note: 'Index tra cứu lịch sử đơn thuốc của bệnh nhân']
+    doctor_id [name: 'idx_prescription_doctor', note: 'Index tra cứu đơn thuốc do bác sĩ kê']
+    status [name: 'idx_prescription_status', note: 'Index lọc đơn thuốc theo trạng thái']
+  }
+}
+
+Table prescription_items {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  prescription_id uuid [not null, ref: > prescriptions.id, note: 'Khóa ngoại liên kết tới đơn thuốc (prescriptions.id)']
+  medicine_name varchar(255) [not null, note: 'Tên thuốc']
+  medicine_code varchar(50) [note: 'Mã thuốc trong danh mục (drugs_dictionary.code)']
+  unit varchar(50) [note: 'Đơn vị tính (viên, ống, vỉ, gói,...)']
+  dosage varchar(100) [note: 'Liều dùng (ví dụ: 500mg, 1 viên,...)']
+  frequency varchar(100) [note: 'Tần suất uống (ví dụ: 2 lần/ngày)']
+  timing varchar(100) [note: 'Thời điểm uống (trước ăn, sau ăn,...)']
+  duration int [note: 'Số ngày sử dụng thuốc']
+  quantity int [note: 'Tổng số lượng thuốc cấp']
+  notes text [note: 'Ghi chú riêng cho thuốc này']
+  created_at timestamptz [not null, note: 'Thời điểm tạo dòng thuốc']
+  updated_at timestamptz [not null, note: 'Thời điểm cập nhật gần nhất']
+
+  indexes {
+    prescription_id [name: 'idx_item_prescription', note: 'Index tìm danh sách thuốc thuộc đơn thuốc']
+  }
+}
+
+Table drugs_dictionary {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  code varchar(50) [not null, unique, note: 'Mã thuốc độc nhất trong danh mục']
+  name varchar(200) [not null, note: 'Tên thuốc thương mại / hoạt chất']
+  unit varchar(50) [note: 'Đơn vị tính mặc định']
+  description text [note: 'Mô tả chi tiết / Hướng dẫn sử dụng']
+  active boolean [not null, default: true, note: 'Trạng thái kinh doanh / khả dụng']
+  created_at timestamptz [not null, note: 'Thời điểm tạo thuốc trong danh mục']
+  updated_at timestamptz [not null, note: 'Thời điểm cập nhật gần nhất']
+
+  indexes {
+    code [name: 'idx_drug_code', unique, note: 'Index Unique tra cứu theo Mã thuốc']
+  }
+}

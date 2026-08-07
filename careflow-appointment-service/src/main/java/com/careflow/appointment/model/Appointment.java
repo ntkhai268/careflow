@@ -64,6 +64,9 @@ public class Appointment extends BaseEntity {
     @Column(length = 1000)
     private String notes;
 
+    @Column(name = "source_consultation_id")
+    private UUID sourceConsultationId;
+
     @Column(length = 20)
     private String queueNumber;
 }

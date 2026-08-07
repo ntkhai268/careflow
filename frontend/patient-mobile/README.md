@@ -37,6 +37,10 @@ hành trình để tiếp tục mô phỏng.
 Nút **Đặt lại hành trình** yêu cầu xác nhận và chỉ xóa hành trình của lịch hẹn
 đang hoạt động. Dữ liệu của tài khoản, bệnh nhân và lịch hẹn khác không bị xóa.
 
+Từ Trang chủ, mở **Kết quả khám và toa thuốc** để xem danh sách các lượt khám đã
+hoàn tất. Mỗi lượt hiển thị tóm tắt chẩn đoán, toa thuốc và chỉ định xét nghiệm;
+chọn **Xem kết quả và toa thuốc** để mở chi tiết lượt khám.
+
 ## Kiểm tra và build APK demo
 
 ```text

@@ -5,6 +5,9 @@ import com.careflow.common.exception.ResourceNotFoundException;
 import com.careflow.patient.dto.request.CreatePatientRequest;
 import com.careflow.patient.dto.request.UpdatePatientRequest;
 import com.careflow.patient.dto.response.PatientResponse;
+import com.careflow.patient.dto.response.PatientOperationalResponse;
+import com.careflow.patient.client.AssignmentClient;
+import com.careflow.patient.client.dto.AssignmentAccessResponse;
 import com.careflow.patient.mapper.PatientMapper;
 import com.careflow.patient.model.Patient;
 import com.careflow.patient.repository.PatientRepository;
@@ -21,12 +24,16 @@ import java.util.UUID;
 public class PatientService {
 
     private final PatientRepository patientRepository;
+    private final AssignmentClient assignmentClient;
+    private static final PatientAccessPolicy ACCESS_POLICY = new PatientAccessPolicy();
 
     /**
      * Tạo hồ sơ bệnh nhân mới (UC-P01)
      */
     @Transactional
-    public PatientResponse createPatient(CreatePatientRequest request) {
+    public PatientResponse createPatient(CreatePatientRequest request, UUID requesterId, String role) {
+        ACCESS_POLICY.requireCreate(requesterId, role, request.getUserId());
+
         // Kiểm tra userId đã tồn tại chưa
         if (patientRepository.existsByUserId(request.getUserId())) {
             throw new BusinessException(409, "Bệnh nhân với userId này đã tồn tại");
@@ -60,20 +67,52 @@ public class PatientService {
      * Xem hồ sơ bệnh nhân theo ID (UC-P02)
      */
     @Transactional(readOnly = true)
-    public PatientResponse getPatientById(UUID id) {
+    public PatientResponse getPatientById(UUID id, UUID requesterId, String role) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
 
+        boolean assigned = hasAssignment(id, null, null, requesterId, role);
+        ACCESS_POLICY.requireClinicalRead(requesterId, role, patient, assigned);
+
         return PatientMapper.toResponse(patient);
+    }
+
+    @Transactional(readOnly = true)
+    public PatientOperationalResponse getOperationalSummary(UUID id, UUID appointmentId, String roomId,
+                                                             UUID requesterId, String role) {
+        Patient patient = patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
+        boolean assigned = hasAssignment(id, appointmentId, roomId, requesterId, role);
+        ACCESS_POLICY.requireOperationalRead(requesterId, role, assigned);
+        return PatientOperationalResponse.builder()
+                .id(patient.getId())
+                .fullName(patient.getFullName())
+                .dateOfBirth(patient.getDateOfBirth())
+                .gender(patient.getGender())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public UUID getOwnerUserId(UUID id, UUID requesterId, String role) {
+        if (requesterId == null || role == null
+                || !("DOCTOR".equalsIgnoreCase(role) || "STAFF".equalsIgnoreCase(role)
+                || "ADMIN".equalsIgnoreCase(role))) {
+            throw new BusinessException(403, "Clinical access is required");
+        }
+        return patientRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id))
+                .getUserId();
     }
 
     /**
      * Tìm hồ sơ bệnh nhân theo userId
      */
     @Transactional(readOnly = true)
-    public PatientResponse getPatientByUserId(UUID userId) {
+    public PatientResponse getPatientByUserId(UUID userId, UUID requesterId, String role) {
         Patient patient = patientRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "userId", userId));
+
+        ACCESS_POLICY.requireRead(requesterId, role, patient);
 
         return PatientMapper.toResponse(patient);
     }
@@ -82,9 +121,11 @@ public class PatientService {
      * Cập nhật hồ sơ bệnh nhân (UC-P03) — partial update
      */
     @Transactional
-    public PatientResponse updatePatient(UUID id, UpdatePatientRequest request) {
+    public PatientResponse updatePatient(UUID id, UpdatePatientRequest request, UUID requesterId, String role) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
+
+        ACCESS_POLICY.requireUpdate(requesterId, role, patient);
 
         // Kiểm tra CMND/CCCD trùng (nếu thay đổi)
         if (request.getIdCardNumber() != null &&
@@ -103,10 +144,29 @@ public class PatientService {
         if (request.getOccupation() != null) patient.setOccupation(request.getOccupation());
         if (request.getAddress() != null) patient.setAddress(request.getAddress());
         if (request.getAvatarUrl() != null) patient.setAvatarUrl(request.getAvatarUrl());
+        if (request.getAllergyNotes() != null) patient.setAllergyNotes(request.getAllergyNotes());
+        if (request.getMedicalHistory() != null) patient.setMedicalHistory(request.getMedicalHistory());
 
         Patient updated = patientRepository.save(patient);
         log.info("Updated patient {}", updated.getId());
 
         return PatientMapper.toResponse(updated);
+    }
+
+    private boolean hasAssignment(UUID patientId, UUID appointmentId, String roomId,
+                                  UUID requesterId, String role) {
+        if (requesterId == null || role == null || role.isBlank()
+                || "PATIENT".equalsIgnoreCase(role)) {
+            return false;
+        }
+        try {
+            var response = assignmentClient.getPatientAccess(
+                    patientId, appointmentId, roomId, requesterId, role);
+            AssignmentAccessResponse access = response == null ? null : response.getData();
+            return access != null && access.isAllowed();
+        } catch (RuntimeException exception) {
+            log.warn("Assignment authorization unavailable for patient {} and actor {}", patientId, requesterId);
+            return false;
+        }
     }
 }

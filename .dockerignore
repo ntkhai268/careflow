@@ -1,5 +1,7 @@
 .git
 **/.git
+.gitnexus
+**/.gitnexus
 .idea
 **/.idea
 .vscode

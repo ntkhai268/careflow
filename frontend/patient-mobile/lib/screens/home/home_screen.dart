@@ -16,11 +16,13 @@ class HomeScreen extends ConsumerWidget {
     this.onAppointmentsTap,
     this.onRecordsTap,
     this.onNotificationTap,
+    this.onResultsTap,
   });
 
   final VoidCallback? onAppointmentsTap;
   final VoidCallback? onRecordsTap;
   final VoidCallback? onNotificationTap;
+  final VoidCallback? onResultsTap;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -86,6 +88,15 @@ class HomeScreen extends ConsumerWidget {
                     showBadge: unreadCount > 0,
                     badgeText: unreadCount > 99 ? '99+' : '$unreadCount',
                     onTap: onNotificationTap,
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
+                  QuickActionCard(
+                    key: const Key('home-quick-action-4'),
+                    icon: Icons.assignment_turned_in_rounded,
+                    label: 'Kết quả khám và toa thuốc',
+                    iconColor: AppColors.success,
+                    backgroundColor: AppColors.successLight,
+                    onTap: onResultsTap,
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   const _PreparationGuide(),

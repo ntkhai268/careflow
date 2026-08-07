@@ -5,9 +5,14 @@ spring:
   application:
     name: consultation-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/careflow_consultation
-    username: careflow
-    password: careflow
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://${DB_HOST:100.116.233.60}:${DB_PORT:5432}/careflow_consultation}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:careflow}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASS:careflow}}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 30000
+      connection-timeout: 20000
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,10 +21,10 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   rabbitmq:
-    host: localhost
-    port: 5672
-    username: guest
-    password: guest
+    host: ${RABBITMQ_HOST:100.116.233.60}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:${RABBITMQ_USER:careflow}}
+    password: ${RABBITMQ_PASSWORD:careflow}
   threads:
     virtual:
       enabled: true

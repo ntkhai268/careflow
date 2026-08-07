@@ -167,6 +167,32 @@ không gửi, Queue Service dùng `NORMAL`.
 request chỉ dùng để đối chiếu điểm tiếp nhận, không cho phép chuyển ticket sang
 phòng khác.
 
+Queue là nguồn assignment vận hành cho Staff: request đọc hoặc mutate queue phải
+được giới hạn ở đúng room/service point mà actor đang xử lý. Với queue khám,
+Queue Service xác minh room của actor qua Hospital Directory ở các endpoint
+room dashboard, call-next và các thao tác trên entry (`call`, `recall`, `miss`,
+`requeue`, `start`, `complete`): Doctor phải là doctor active được phân công vào
+room; Staff phải có bản ghi `staff_assignments` active cho room; Admin được
+phép trong scope quản trị. Không được suy ra quyền chỉ từ `X-User-Role` hoặc
+`roomId` do client gửi. Queue response chỉ nên cung cấp patient identifier và
+dữ liệu vận hành cần thiết; Staff không dùng được endpoint Patient profile đầy
+đủ để vượt qua scope này.
+
+Hospital Directory cung cấp endpoint kiểm tra staff room scope:
+`GET /api/directory/staff/{userId}/room-access?roomId={roomId}`. Assignment
+doctor được kiểm tra bằng `GET /api/directory/doctors/{userId}`. Nếu Directory
+không sẵn sàng hoặc không xác nhận assignment, request bị từ chối (fail-closed).
+
+Staff room assignment được ADMIN quản trị qua Hospital Directory:
+
+- `GET /api/directory/staff/assignments?userId=&roomId=` — xem assignment;
+- `POST /api/directory/staff/assignments` — tạo assignment;
+- `PUT /api/directory/staff/assignments/{id}` — đổi room/department hoặc
+  revoke bằng `isActive=false`.
+
+Request quản trị phải có `X-User-Role=ADMIN`. Directory kiểm tra department và
+room active, đồng thời room phải thuộc đúng department trước khi lưu.
+
 Ticket response `data`:
 
 ```json

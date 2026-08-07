@@ -1,0 +1,58 @@
+// CareFlow - Consultation Service Database Design (DBML)
+// Schema: careflow_consultation
+
+Project CareFlow_Consultation_Service {
+  database_type: 'PostgreSQL'
+  note: 'Database Schema cho dịch vụ Phân luồng & Quản lý Ca khám (CareFlow Consultation Service)'
+}
+
+Enum ConsultationStatus {
+  IN_PROGRESS [note: 'Đang khám bệnh ban đầu']
+  AWAITING_CLS [note: 'Đã có chỉ định, chờ làm/kết quả cận lâm sàng']
+  AWAITING_REVIEW [note: 'Có kết quả CLS, chờ bác sĩ xem & kết luận']
+  READY_TO_COMPLETE [note: 'Đã đủ dữ liệu, sẵn sàng chốt ca khám']
+  COMPLETED [note: 'Đã hoàn tất ca khám']
+  CANCELLED [note: 'Đã hủy ca khám']
+  TRANSFERRED [note: 'Đã chuyển khoa / chuyển tuyến']
+}
+
+Table consultations {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  appointment_id uuid [not null, note: 'Khóa ngoại bắt buộc tham chiếu lịch hẹn (Appointment Service)']
+  patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bệnh nhân (Patient Service)']
+  doctor_id uuid [not null, note: 'Khóa ngoại tham chiếu bác sĩ (Identity Service)']
+
+  // Sinh hiệu (Vital Signs)
+  temperature decimal(4,1) [note: 'Nhiệt độ cơ thể (°C), ví dụ: 37.5']
+  blood_pressure varchar(20) [note: 'Huyết áp (mmHg), ví dụ: "120/80"']
+  heart_rate int [note: 'Nhịp tim (lần/phút)']
+  spo2 int [note: 'Độ bão hòa oxy máu (%)']
+  height decimal(5,1) [note: 'Chiều cao (cm)']
+  weight decimal(5,1) [note: 'Cân nặng (kg)']
+
+  // Lâm sàng (Clinical)
+  symptoms text [note: 'Triệu chứng bệnh nhân mô tả']
+  clinical_notes text [note: 'Ghi chú diễn tiến lâm sàng của bác sĩ']
+
+  // Chẩn đoán (Diagnosis)
+  icd10_code varchar(10) [note: 'Mã chuẩn quốc tế ICD-10, ví dụ: J06.9']
+  icd10_name varchar(500) [note: 'Tên bệnh theo chuẩn ICD-10']
+  diagnosis text [note: 'Chẩn đoán chi tiết của bác sĩ']
+
+  // Trạng thái (Status)
+  status ConsultationStatus [not null, default: 'IN_PROGRESS', note: 'Trạng thái ca khám (IN_PROGRESS, AWAITING_CLS, AWAITING_REVIEW, READY_TO_COMPLETE, COMPLETED, CANCELLED, TRANSFERRED)']
+  started_at timestamptz [note: 'Thời điểm bắt đầu ca khám']
+  completed_at timestamptz [note: 'Thời điểm kết thúc ca khám']
+
+  // Audit
+  created_at timestamptz [not null, note: 'Thời điểm tạo bản ghi']
+  updated_at timestamptz [not null, note: 'Thời điểm cập nhật gần nhất']
+
+  indexes {
+    patient_id [name: 'idx_consultation_patient', note: 'Index tra cứu ca khám theo bệnh nhân']
+    doctor_id [name: 'idx_consultation_doctor', note: 'Index tra cứu ca khám theo bác sĩ']
+    appointment_id [name: 'idx_consultation_appointment', note: 'Index tra cứu ca khám theo lịch hẹn']
+    status [name: 'idx_consultation_status', note: 'Index lọc ca khám theo trạng thái']
+    (doctor_id, status) [name: 'idx_consultation_doctor_status', note: 'Index hỗ trợ danh sách khám theo bác sĩ & trạng thái']
+  }
+}

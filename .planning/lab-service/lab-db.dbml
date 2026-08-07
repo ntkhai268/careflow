@@ -1,0 +1,71 @@
+// CareFlow - Lab Service Database Design (DBML)
+// Schema: careflow_lab
+
+Project CareFlow_Lab_Service {
+  database_type: 'PostgreSQL'
+  note: 'Database Schema cho dịch vụ Quản lý Chỉ định & Kết quả Cận lâm sàng (CareFlow Lab Service)'
+}
+
+Enum LabOrderStatus {
+  ORDERED [note: 'Bác sĩ đã tạo chỉ định']
+  PAYMENT_PENDING [note: 'Chờ xác nhận thanh toán/BHYT (nếu có yêu cầu)']
+  QUEUED [note: 'Đã đưa vào hàng chờ tại khu thực hiện']
+  IN_PROGRESS [note: 'Kỹ thuật viên đang thực hiện']
+  RESULT_AVAILABLE [note: 'Đã có kết quả, phát hành']
+  REVIEWED [note: 'Bác sĩ chỉ định đã xem kết quả']
+  CANCELLED [note: 'Hủy chỉ định']
+}
+
+Enum PaymentStatus {
+  NOT_REQUIRED [note: 'Không yêu cầu thanh toán thêm']
+  PENDING [note: 'Chờ thanh toán']
+  PAID_ONLINE_MOCK [note: 'Đã thanh toán online (Mock)']
+  PAID_CASH [note: 'Đã thanh toán tiền mặt tại quầy']
+  COVERED_BY_INSURANCE [note: 'Được BHYT chi trả']
+}
+
+Table lab_orders {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  consultation_id uuid [not null, note: 'Tham chiếu ca khám (Consultation Service)']
+  patient_id uuid [not null, note: 'Tham chiếu bệnh nhân (Patient Service)']
+  ordered_by_doctor_id uuid [not null, note: 'Bác sĩ chỉ định']
+  clinical_note text [note: 'Ghi chú lâm sàng / lý do chỉ định']
+  status LabOrderStatus [not null, default: 'ORDERED', note: 'Trạng thái chỉ định']
+  payment_status PaymentStatus [not null, default: 'NOT_REQUIRED', note: 'Trạng thái thanh toán']
+  
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  indexes {
+    consultation_id [name: 'idx_lab_order_consultation']
+    patient_id [name: 'idx_lab_order_patient']
+    status [name: 'idx_lab_order_status']
+  }
+}
+
+Table lab_order_items {
+  id uuid [pk, note: 'Khóa chính UUID']
+  lab_order_id uuid [not null, note: 'Tham chiếu lab_orders']
+  service_code varchar(50) [not null, note: 'Mã dịch vụ (CBC, GLUCOSE, ULTRASOUND_ABDOMEN)']
+  service_name varchar(255) [not null, note: 'Tên dịch vụ']
+  service_point_id varchar(50) [not null, note: 'Điểm thực hiện (LAB-HEMATOLOGY-01, ROOM-ULTRASOUND-02)']
+  
+  // Kết quả
+  result_value varchar(255) [note: 'Giá trị kết quả (ví dụ: "13.4")']
+  result_unit varchar(50) [note: 'Đơn vị đo (ví dụ: "g/dL")']
+  reference_range varchar(100) [note: 'Khoảng tham chiếu (ví dụ: "12.0-15.5")']
+  result_flag varchar(20) [note: 'Đánh giá (NORMAL, HIGH, LOW, CRITICAL)']
+  comment text [note: 'Ghi chú của KTV']
+  performed_by_staff_id uuid [note: 'Kỹ thuật viên thực hiện']
+  performed_at timestamptz [note: 'Thời điểm nhập kết quả']
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  indexes {
+    lab_order_id [name: 'idx_lab_item_order']
+    service_point_id [name: 'idx_lab_item_service_point']
+  }
+}
+
+Ref: lab_order_items.lab_order_id > lab_orders.id

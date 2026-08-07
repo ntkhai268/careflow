@@ -33,9 +33,26 @@ public class AppointmentEventService {
         payload.put("departmentDisplayName", appointment.getDepartment().getDisplayName());
         payload.put("roomId", appointment.getRoomId());
         payload.put("roomDisplayName", appointment.getRoomDisplayName());
+        payload.put("doctorId", appointment.getDoctorId());
+        payload.put("doctorUserId", appointment.getDoctorId());
+        payload.put("doctorName", appointment.getDoctorName());
         payload.put("appointmentDate", appointment.getAppointmentDate());
         payload.put("timeSlot", appointment.getTimeSlot());
         append(appointment, "AppointmentConfirmed", AppConstants.RK_APPOINTMENT_CONFIRMED,
+                correlationId, payload);
+    }
+
+    public void followUpScheduled(Appointment appointment, UUID consultationId, String correlationId) {
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("appointmentId", appointment.getId());
+        payload.put("consultationId", consultationId);
+        payload.put("patientId", appointment.getPatientId());
+        payload.put("doctorId", appointment.getDoctorId());
+        payload.put("departmentId", appointment.getDepartmentId());
+        payload.put("roomId", appointment.getRoomId());
+        payload.put("appointmentDate", appointment.getAppointmentDate());
+        payload.put("timeSlot", appointment.getTimeSlot());
+        append(appointment, "FollowUpScheduled", AppConstants.RK_APPOINTMENT_FOLLOW_UP_SCHEDULED,
                 correlationId, payload);
     }
 

@@ -55,6 +55,8 @@ class PatientQueueStatus {
     required this.status,
     required this.position,
     required this.estimatedWaitMinutes,
+    this.type,
+    this.consultationPhase,
   });
 
   final String entryId;
@@ -64,6 +66,8 @@ class PatientQueueStatus {
   final String status;
   final int? position;
   final int? estimatedWaitMinutes;
+  final String? type;
+  final String? consultationPhase;
 
   factory PatientQueueStatus.fromJson(Map<String, dynamic> json) =>
       PatientQueueStatus(
@@ -74,5 +78,7 @@ class PatientQueueStatus {
         status: (json['queueStatus'] ?? json['status']) as String,
         position: json['effectivePosition'] as int?,
         estimatedWaitMinutes: json['estimatedWaitMinutes'] as int?,
+        type: json['type'] as String?,
+        consultationPhase: json['consultationPhase'] as String?,
       );
 }

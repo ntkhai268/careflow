@@ -48,4 +48,14 @@ public class Patient extends BaseEntity {
 
     @Column(length = 255)
     private String avatarUrl;
+
+    @Column(length = 500)
+    private String allergyNotes;
+
+    @Column(length = 1000)
+    private String medicalHistory;
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<PatientAllergy> allergies = new java.util.ArrayList<>();
 }

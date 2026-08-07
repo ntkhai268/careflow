@@ -39,4 +39,10 @@ public class UpdatePatientRequest {
 
     @Size(max = 255, message = "URL ảnh tối đa 255 ký tự")
     private String avatarUrl;
+
+    @Size(max = 500, message = "Ghi chú dị ứng tối đa 500 ký tự")
+    private String allergyNotes;
+
+    @Size(max = 1000, message = "Tiền sử bệnh tối đa 1000 ký tự")
+    private String medicalHistory;
 }

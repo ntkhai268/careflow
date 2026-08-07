@@ -195,7 +195,7 @@ void main() {
   });
 
   testWidgets(
-    'production booking opens backend-unavailable without creating demo data',
+    'production booking bootstraps the backend journey without demo data',
     (tester) async {
       final service = FakeAppointmentService(createdAppointment: appointment);
       final repository = RecordingJourneyRepository();
@@ -230,10 +230,11 @@ void main() {
       await tester.tap(find.text('Xem phiếu khám'));
       await tester.pumpAndSettle();
 
-      expect(repository.bootstrapAppointments, isEmpty);
+      expect(repository.bootstrapAppointments, [appointment]);
+      expect(repository.bootstrapPatientIds, [patient.id]);
       expect(
         find.text('Hành trình khám đang chờ backend triển khai.'),
-        findsOneWidget,
+        findsNothing,
       );
     },
   );
@@ -274,7 +275,7 @@ void main() {
     },
   );
 
-  for (final status in ['PENDING', 'CANCELLED', 'COMPLETED']) {
+  for (final status in ['PENDING', 'CANCELLED']) {
     testWidgets('$status appointment detail cannot create or open a journey', (
       tester,
     ) async {
@@ -308,13 +309,42 @@ void main() {
     });
   }
 
+  testWidgets('completed appointment opens its read-only journey', (
+    tester,
+  ) async {
+    final completed = appointmentWith(status: 'COMPLETED');
+    final service = FakeAppointmentService(detailAppointment: completed);
+    final repository = RecordingJourneyRepository();
+    final router = testRouter(
+      const AppointmentDetailScreen(appointmentId: 'apt-1'),
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      integrationApp(router: router, service: service, repository: repository),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      tester
+          .widget<ElevatedButton>(find.byKey(const Key('open-journey-detail')))
+          .onPressed,
+      isNotNull,
+    );
+
+    await tester.tap(find.byKey(const Key('open-journey-detail')));
+    await tester.pumpAndSettle();
+
+    expect(repository.bootstrapAppointments, [completed]);
+    expect(find.text('journey apt-1'), findsOneWidget);
+  });
+
   testWidgets(
-    'appointment list disables journeys for backend-closed statuses',
+    'appointment list disables journeys for pending and cancelled statuses',
     (tester) async {
       final appointments = [
         appointmentWith(status: 'PENDING', id: 'apt-pending'),
         appointmentWith(status: 'CANCELLED', id: 'apt-cancelled'),
-        appointmentWith(status: 'COMPLETED', id: 'apt-completed'),
       ];
       final service = FakeAppointmentService(appointments: appointments);
       final repository = RecordingJourneyRepository();
@@ -583,7 +613,10 @@ class FakeAppointmentService extends AppointmentService {
   int createCalls = 0;
 
   @override
-  Future<Appointment> createAppointment(Map<String, dynamic> data) async {
+  Future<Appointment> createAppointment(
+    Map<String, dynamic> data, {
+    String? idempotencyKey,
+  }) async {
     createCalls++;
     if (createError case final error?) {
       throw AppointmentBookingException(error);

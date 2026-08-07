@@ -1,5 +1,5 @@
 server:
-  port: 8090
+  port: 8091
 
 spring:
   application:
@@ -12,6 +12,14 @@ spring:
   threads:
     virtual:
       enabled: true
+
+gemini:
+  api-key: ${GEMINI_API_KEY:}
+  model: ${GEMINI_MODEL:gemini-2.5-flash}
+
+deepseek:
+  api-key: ${DEEPSEEK_API_KEY:}
+  model: ${DEEPSEEK_MODEL:deepseek-chat}
 
 eureka:
   client:
