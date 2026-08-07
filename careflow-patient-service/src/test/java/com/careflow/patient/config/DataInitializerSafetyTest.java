@@ -58,7 +58,7 @@ class DataInitializerSafetyTest {
         when(patientRepository.existsById(any())).thenReturn(false);
         when(patientRepository.existsByUserId(any())).thenAnswer(invocation ->
                 seededUserId.equals(invocation.getArgument(0)));
-        when(patientRepository.findByUserId(any())).thenAnswer(invocation ->
+        when(patientRepository.findFirstByUserIdOrderByCreatedAtAsc(any())).thenAnswer(invocation ->
                 seededUserId.equals(invocation.getArgument(0))
                         ? Optional.of(existing)
                         : Optional.empty());

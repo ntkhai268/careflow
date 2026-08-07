@@ -215,7 +215,7 @@ public class DataInitializer implements CommandLineRunner {
     }
 
     private Patient existingOrSeed(Patient seed) {
-        return patientRepository.findByUserId(seed.getUserId()).orElse(seed);
+        return patientRepository.findFirstByUserIdOrderByCreatedAtAsc(seed.getUserId()).orElse(seed);
     }
 
     private void seedPatientAllergies(Patient patient, String name, String group, AllergySeverity severity, String reaction, String confirmedBy) {

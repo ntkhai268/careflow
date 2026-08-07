@@ -17,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,13 +75,46 @@ class PatientServiceSecurityTest {
         Patient saved = Patient.builder().userId(OTHER_USER_ID).fullName("Nguyen Van A").build();
         saved.setId(PATIENT_ID);
 
-        when(patientRepository.existsByUserId(OTHER_USER_ID)).thenReturn(false);
         when(patientRepository.save(any(Patient.class))).thenReturn(saved);
 
         PatientResponse response = patientService.createPatient(request, OWNER_USER_ID, "ADMIN");
 
         assertThat(response.getId()).isEqualTo(PATIENT_ID);
         verify(patientRepository).save(any(Patient.class));
+    }
+
+    @Test
+    void createAllowsMultipleProfilesForTheSamePatientAccount() {
+        CreatePatientRequest request = CreatePatientRequest.builder()
+                .userId(OWNER_USER_ID)
+                .fullName("Nguyen Thi B")
+                .build();
+        Patient saved = Patient.builder().userId(OWNER_USER_ID).fullName("Nguyen Thi B").build();
+        saved.setId(PATIENT_ID);
+
+        when(patientRepository.countByUserId(OWNER_USER_ID)).thenReturn(1L);
+        when(patientRepository.save(any(Patient.class))).thenReturn(saved);
+
+        PatientResponse response = patientService.createPatient(request, OWNER_USER_ID, "PATIENT");
+
+        assertThat(response.getId()).isEqualTo(PATIENT_ID);
+        verify(patientRepository).save(any(Patient.class));
+    }
+
+    @Test
+    void listProfilesAllowsTheOwningPatientAccountToReadEveryProfile() {
+        Patient first = Patient.builder().userId(OWNER_USER_ID).fullName("Nguyen Van A").build();
+        Patient second = Patient.builder().userId(OWNER_USER_ID).fullName("Nguyen Thi B").build();
+        first.setId(PATIENT_ID);
+        second.setId(UUID.fromString("44444444-4444-4444-4444-444444444444"));
+        when(patientRepository.findAllByUserIdOrderByCreatedAtAsc(OWNER_USER_ID))
+                .thenReturn(List.of(first, second));
+
+        List<PatientResponse> response = patientService.getPatientsByUserId(
+                OWNER_USER_ID, OWNER_USER_ID, "PATIENT");
+
+        assertThat(response).extracting(PatientResponse::getFullName)
+                .containsExactly("Nguyen Van A", "Nguyen Thi B");
     }
 
     @Test

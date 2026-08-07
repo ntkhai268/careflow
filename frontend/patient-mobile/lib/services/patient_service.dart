@@ -14,10 +14,7 @@ class PatientService {
 
   /// Create a new patient profile
   Future<Patient> createPatient(Map<String, dynamic> data) async {
-    final response = await _apiService.post(
-      ApiConfig.patients,
-      data: data,
-    );
+    final response = await _apiService.post(ApiConfig.patients, data: data);
     final apiResponse = response.data as Map<String, dynamic>;
     return Patient.fromJson(apiResponse['data'] as Map<String, dynamic>);
   }
@@ -32,8 +29,9 @@ class PatientService {
   /// Get patient by user ID
   Future<Patient?> getPatientByUserId(String userId) async {
     try {
-      final response =
-          await _apiService.get('${ApiConfig.patients}/user/$userId');
+      final response = await _apiService.get(
+        '${ApiConfig.patients}/user/$userId',
+      );
       final apiResponse = response.data as Map<String, dynamic>;
       if (apiResponse['data'] == null) return null;
       return Patient.fromJson(apiResponse['data'] as Map<String, dynamic>);
@@ -41,6 +39,18 @@ class PatientService {
       if (e.response?.statusCode == 404) return null;
       rethrow;
     }
+  }
+
+  /// Get all patient profiles owned by the authenticated account.
+  Future<List<Patient>> getPatientsByUserId(String userId) async {
+    final response = await _apiService.get(
+      '${ApiConfig.patients}/user/$userId/profiles',
+    );
+    final apiResponse = response.data as Map<String, dynamic>;
+    final data = apiResponse['data'] as List<dynamic>? ?? const [];
+    return data
+        .map((item) => Patient.fromJson(Map<String, dynamic>.from(item as Map)))
+        .toList();
   }
 
   /// Update patient profile

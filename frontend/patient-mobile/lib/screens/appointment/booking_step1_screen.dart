@@ -38,18 +38,11 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
         });
         return;
       }
-      final patient = await service.getPatientByUserId(userId);
-      if (patient != null) {
-        setState(() {
-          _patients = [patient];
-          _isLoading = false;
-        });
-      } else {
-        setState(() {
-          _patients = [];
-          _isLoading = false;
-        });
-      }
+      final patients = await service.getPatientsByUserId(userId);
+      setState(() {
+        _patients = patients;
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _patients = [];

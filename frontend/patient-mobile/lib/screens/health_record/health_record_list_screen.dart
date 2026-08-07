@@ -188,7 +188,43 @@ class HealthRecordListScreen extends ConsumerWidget {
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, st) => Center(child: Text('Lỗi: $e')),
+              error: (e, st) => Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(24),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.cloud_off_rounded,
+                        size: 64,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'Không thể tải thông tin sức khỏe',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Vui lòng kiểm tra kết nối và thử lại.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () =>
+                            ref.invalidate(healthRecordsProvider(patientId)),
+                        icon: const Icon(Icons.refresh_rounded),
+                        label: const Text('Thử lại'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -204,8 +240,9 @@ class HealthRecordListScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(8),
             ),
             child: ElevatedButton(
+              key: const Key('upload-health-record-button'),
               onPressed: () {
-                context.push('/health-records/$patientId/add');
+                context.push('/patient/$patientId/health-records/new');
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.transparent,
@@ -226,7 +263,7 @@ class HealthRecordListScreen extends ConsumerWidget {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-          context.push('/health-records/$patientId/add');
+          context.push('/patient/$patientId/health-records/new');
         },
         backgroundColor: const Color(0xFF26C6DA),
         child: const Icon(Icons.medical_information, color: Colors.white),

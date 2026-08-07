@@ -49,12 +49,12 @@ thống ngoài và tích hợp sau. Phiên bản báo cáo chỉ xét người b
    phí khám. Khi chưa có catalog dịch vụ, Mobile dùng fixture duy nhất
    `GENERAL_CONSULTATION` — “Khám thường”, giá demo `150.000 ₫`, thời lượng tham
    khảo 15 phút.
-9. Patient Mobile chỉ chọn `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL` cho phí khám.
-   Cả hai lựa chọn được lưu cùng lịch hẹn; tiền mặt hiển thị
-   `DUE_AT_HOSPITAL`, không được trình bày là đã thu. Appointment vẫn tự
-   `CONFIRMED` khi slot hợp lệ; Appointment Service chưa nhận payment/service
-   contract. Receipt của bước này được lưu qua local adapter và lỗi local không
-   làm hỏng lịch hẹn đã tạo thành công.
+9. Patient Mobile chỉ ghi nhận `ONLINE_MOCK` cho phí khám khi đặt lịch. Khoản
+   này được lưu thành `PAID` trong receipt local; `CASH_AT_HOSPITAL` không còn
+   được hiển thị trong booking vì người chưa trả trước sẽ làm thủ tục trực tiếp
+   tại bệnh viện. Appointment vẫn tự `CONFIRMED` khi slot hợp lệ; Appointment
+   Service chưa nhận payment/service contract. Receipt của bước này được lưu
+   qua local adapter và lỗi local không làm hỏng lịch hẹn đã tạo thành công.
 9a. Hành trình chỉ có hai giai đoạn thanh toán: trả trước phí khám khi đặt lịch
     và quyết toán một lần ở cuối lượt khám. Chi phí cận lâm sàng và thuốc được
     cộng vào tổng chi phí lượt khám, không tạo lần thanh toán riêng.
@@ -247,7 +247,7 @@ Trên Patient Mobile App:
 4. Chọn ngày và khung giờ.
 5. Chọn dịch vụ “Khám thường” (fixture hiện tại).
 6. Nhập lý do khám.
-7. Chọn `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL` cho phí khám.
+7. Thanh toán trực tuyến mô phỏng `ONLINE_MOCK` cho phí khám.
 8. Xác nhận đặt khám.
 
 ### 7.2. Hệ thống xử lý
@@ -1190,7 +1190,7 @@ Hệ thống được coi là hoàn thành luồng chính khi:
 
 1. Bệnh nhân đặt được lịch và nhận phiếu mà không cần duyệt thủ công.
 2. Mobile hiển thị dịch vụ `GENERAL_CONSULTATION`, phí demo `150.000 ₫` và
-   `ONLINE_MOCK`/`CASH_AT_HOSPITAL`; lỗi lưu receipt local không làm mất lịch.
+   bắt buộc ghi nhận `ONLINE_MOCK`; lỗi lưu receipt local không làm mất lịch.
 3. Quét QR đưa đúng bệnh nhân vào đúng làn `PRIORITY` hoặc `NORMAL`.
 4. Bệnh nhân chưa check-in không xuất hiện trong active queue.
 5. Doctor Web hiển thị ba làn, đề xuất đúng chu kỳ và chỉ gọi khi bác sĩ bấm nút.

@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -75,6 +76,17 @@ public class PatientController {
             @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
             @RequestHeader(value = "X-User-Role", required = false) String userRole) {
         PatientResponse response = patientService.getPatientByUserId(
+                userId, parseUserId(userIdHeader), userRole);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @GetMapping("/user/{userId}/profiles")
+    @Operation(summary = "List patient profiles owned by a user")
+    public ResponseEntity<ApiResponse<List<PatientResponse>>> getPatientsByUserId(
+            @PathVariable UUID userId,
+            @RequestHeader(value = "X-User-Id", required = false) String userIdHeader,
+            @RequestHeader(value = "X-User-Role", required = false) String userRole) {
+        List<PatientResponse> response = patientService.getPatientsByUserId(
                 userId, parseUserId(userIdHeader), userRole);
         return ResponseEntity.ok(ApiResponse.success(response));
     }

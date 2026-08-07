@@ -12,7 +12,9 @@ import 'profile/profile_screen.dart';
 
 /// Main shell with five task-oriented destinations.
 class MainShell extends ConsumerStatefulWidget {
-  const MainShell({super.key});
+  const MainShell({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
 
   @override
   ConsumerState<MainShell> createState() => _MainShellState();
@@ -20,6 +22,12 @@ class MainShell extends ConsumerStatefulWidget {
 
 class _MainShellState extends ConsumerState<MainShell> {
   int _currentIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex.clamp(0, 4);
+  }
 
   @override
   Widget build(BuildContext context) {

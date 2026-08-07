@@ -146,7 +146,7 @@ graph LR
 | **Tên** | Tạo hồ sơ bệnh nhân |
 | **Actor** | Bệnh nhân |
 | **Mô tả** | Sau khi đăng ký tài khoản thành công (qua Identity Service của A), bệnh nhân tạo hồ sơ cá nhân bao gồm thông tin y tế cơ bản. |
-| **Tiền điều kiện** | Bệnh nhân đã đăng ký tài khoản và đăng nhập thành công (có JWT token). Chưa có hồ sơ bệnh nhân trong hệ thống. |
+| **Tiền điều kiện** | Bệnh nhân đã đăng ký tài khoản và đăng nhập thành công (có JWT token). Tài khoản chưa đạt giới hạn 10 hồ sơ. |
 | **Hậu điều kiện** | Hồ sơ bệnh nhân được tạo trong DB, gắn với `user_id` từ Identity Service. |
 
 **Luồng chính (Main Flow):**
@@ -154,16 +154,16 @@ graph LR
 2. Hệ thống hiển thị form nhập thông tin cá nhân (họ tên, ngày sinh, giới tính, SĐT, CMND/CCCD, số BHYT, địa chỉ).
 3. Bệnh nhân điền thông tin và nhấn "Lưu".
 4. Hệ thống validate dữ liệu.
-5. Hệ thống tạo bản ghi `Patient` trong DB với `user_id` lấy từ JWT token.
+5. Hệ thống tạo bản ghi `Patient` trong DB với `user_id` lấy từ JWT token; một tài khoản có thể có nhiều hồ sơ cho người thân.
 6. Hệ thống hiển thị thông báo "Tạo hồ sơ thành công" và chuyển về Trang chủ.
 
 **Luồng thay thế (Alternative Flow):**
 - **4a.** Dữ liệu không hợp lệ (thiếu họ tên, SĐT sai định dạng...):
   - Hệ thống highlight trường bị lỗi và hiển thị thông báo lỗi cụ thể.
   - Quay lại bước 3.
-- **5a.** `user_id` đã tồn tại trong bảng `patients`:
-  - Hệ thống trả về lỗi "Hồ sơ đã tồn tại".
-  - Chuyển hướng tới màn hình xem hồ sơ (UC-P02).
+- **5a.** Tài khoản đã có đủ 10 hồ sơ:
+  - Hệ thống trả về lỗi "Tài khoản đã đạt tối đa 10 hồ sơ bệnh nhân".
+  - Người dùng cần quản lý hoặc xóa hồ sơ cũ trước khi tạo thêm.
 
 ---
 

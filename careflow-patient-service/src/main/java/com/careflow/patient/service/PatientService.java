@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -23,6 +24,7 @@ import java.util.UUID;
 @Slf4j
 public class PatientService {
 
+    private static final int MAX_PROFILES_PER_USER = 10;
     private final PatientRepository patientRepository;
     private final AssignmentClient assignmentClient;
     private static final PatientAccessPolicy ACCESS_POLICY = new PatientAccessPolicy();
@@ -34,9 +36,9 @@ public class PatientService {
     public PatientResponse createPatient(CreatePatientRequest request, UUID requesterId, String role) {
         ACCESS_POLICY.requireCreate(requesterId, role, request.getUserId());
 
-        // Kiểm tra userId đã tồn tại chưa
-        if (patientRepository.existsByUserId(request.getUserId())) {
-            throw new BusinessException(409, "Bệnh nhân với userId này đã tồn tại");
+        if (!"ADMIN".equalsIgnoreCase(role)
+                && patientRepository.countByUserId(request.getUserId()) >= MAX_PROFILES_PER_USER) {
+            throw new BusinessException(409, "Tài khoản đã đạt tối đa 10 hồ sơ bệnh nhân");
         }
 
         // Kiểm tra CMND/CCCD trùng
@@ -109,12 +111,22 @@ public class PatientService {
      */
     @Transactional(readOnly = true)
     public PatientResponse getPatientByUserId(UUID userId, UUID requesterId, String role) {
-        Patient patient = patientRepository.findByUserId(userId)
+        Patient patient = patientRepository.findFirstByUserIdOrderByCreatedAtAsc(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "userId", userId));
 
         ACCESS_POLICY.requireRead(requesterId, role, patient);
 
         return PatientMapper.toResponse(patient);
+    }
+
+    /**
+     * Lấy tất cả hồ sơ thuộc cùng tài khoản, theo thứ tự tạo.
+     */
+    @Transactional(readOnly = true)
+    public List<PatientResponse> getPatientsByUserId(UUID userId, UUID requesterId, String role) {
+        List<Patient> patients = patientRepository.findAllByUserIdOrderByCreatedAtAsc(userId);
+        patients.forEach(patient -> ACCESS_POLICY.requireRead(requesterId, role, patient));
+        return patients.stream().map(PatientMapper::toResponse).toList();
     }
 
     /**

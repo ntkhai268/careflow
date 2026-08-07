@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
-import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/patient_provider.dart';
@@ -75,31 +74,6 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
         _isLoading = false;
       });
     }
-  }
-
-  Future<void> _openJourney(Appointment appointment) async {
-    final patientId = _patientId;
-    if (!appointment.allowsActiveJourney ||
-        patientId == null ||
-        appointment.patientId != patientId) {
-      return;
-    }
-    final activeJourney = ref.read(activeJourneyProvider);
-    if (activeJourney?.appointmentId != appointment.id ||
-        activeJourney?.patientId != appointment.patientId) {
-      try {
-        await ref
-            .read(journeyControllerProvider.notifier)
-            .bootstrap(
-              appointment: appointment,
-              patientId: appointment.patientId,
-            );
-      } catch (_) {
-        // Navigate with the controller error intact so production displays
-        // backend-unavailable instead of manufacturing demo data.
-      }
-    }
-    if (mounted) context.push('/journey/${appointment.id}');
   }
 
   @override
@@ -257,26 +231,25 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
         final appt = _appointments[index];
         return _AppointmentCard(
           appointment: appt,
-          onTap: () => context.push('/appointment/${appt.id}'),
-          onJourneyTap: appt.allowsActiveJourney
-              ? () => _openJourney(appt)
-              : null,
+          onTap: () {
+            _openAppointment(appt.id);
+          },
         );
       },
     );
+  }
+
+  Future<void> _openAppointment(String appointmentId) async {
+    await context.push('/appointment/$appointmentId');
+    if (mounted) _tryLoadAppointments();
   }
 }
 
 class _AppointmentCard extends StatelessWidget {
   final Appointment appointment;
   final VoidCallback onTap;
-  final VoidCallback? onJourneyTap;
 
-  const _AppointmentCard({
-    required this.appointment,
-    required this.onTap,
-    required this.onJourneyTap,
-  });
+  const _AppointmentCard({required this.appointment, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -399,14 +372,6 @@ class _AppointmentCard extends StatelessWidget {
                         fontWeight: FontWeight.w500,
                         color: AppColors.textPrimary,
                       ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      key: Key('open-journey-${appointment.id}'),
-                      tooltip: 'Xem hành trình khám',
-                      onPressed: onJourneyTap,
-                      icon: const Icon(Icons.route_rounded),
-                      color: AppColors.primary,
                     ),
                   ],
                 ),

@@ -9,7 +9,7 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "patients", indexes = {
-        @Index(name = "idx_patient_user_id", columnList = "userId", unique = true),
+        @Index(name = "idx_patient_user_id", columnList = "userId"),
         @Index(name = "idx_patient_id_card", columnList = "idCardNumber", unique = true)
 })
 @Getter
@@ -19,7 +19,7 @@ import java.util.UUID;
 @Builder
 public class Patient extends BaseEntity {
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private UUID userId;
 
     @Column(nullable = false, length = 100)

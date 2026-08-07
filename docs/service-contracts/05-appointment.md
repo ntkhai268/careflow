@@ -42,11 +42,12 @@ price: 150.000 ₫ (demo)
 duration: 15 phút (tham khảo)
 ```
 
-Mobile cho phép chọn `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL`, sau đó lưu
-`AppointmentPaymentReceipt` qua local adapter. Tiền mặt chỉ hiển thị
-`DUE_AT_HOSPITAL`; receipt local không được đưa vào request hoặc event của
-Appointment. Nếu local storage lỗi, Mobile không được coi lịch đã tạo thành công
-là thất bại.
+Mobile bắt buộc ghi nhận `ONLINE_MOCK` cho phí khám trước khi hoàn tất flow đặt
+lịch, sau đó lưu `AppointmentPaymentReceipt` qua local adapter. `CASH_AT_HOSPITAL`
+không còn là lựa chọn trong flow đặt lịch; nếu cần thu thêm `amountDue` sau
+khám, đó là một phần của `VisitSettlement` cuối lượt. Receipt local không được
+đưa vào request hoặc event của Appointment. Nếu local storage lỗi, Mobile không
+được coi lịch đã tạo thành công là thất bại.
 
 Giá trị thực tế đã thu được lưu thành `prepaidAmount` để đối trừ khi tạo
 `VisitSettlement` cuối lượt khám. Chi phí cận lâm sàng không tạo lần thanh toán
