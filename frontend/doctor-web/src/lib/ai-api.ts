@@ -25,7 +25,7 @@ export interface ClinicalSuggestionResponse {
   suggestions: ClinicalSuggestionItem[];
   missingInformation: string[];
   warnings: string[];
-  disclaimer: String;
+  disclaimer: string;
   model: AiModelInfo;
   generatedAt: string;
 }

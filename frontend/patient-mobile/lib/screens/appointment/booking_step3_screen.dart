@@ -50,7 +50,10 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
     });
     try {
       final service = ref.read(appointmentServiceProvider);
-      final slots = await service.getTimeSlots();
+      final slots = await service.getTimeSlots(
+        department: widget.department.code,
+        date: _selectedDate,
+      );
       if (!mounted) return;
       setState(() {
         _timeSlots = slots;

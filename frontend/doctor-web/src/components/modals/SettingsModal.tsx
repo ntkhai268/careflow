@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -8,21 +8,18 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const [darkMode, setDarkMode] = useState(false);
-  const [reducedMotion, setReducedMotion] = useState(false);
-  const [soundNotify, setSoundNotify] = useState(true);
-  const [autoRefreshSecs, setAutoRefreshSecs] = useState("30");
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const savedTheme = localStorage.getItem("careflow_theme");
-      if (savedTheme === "dark") setDarkMode(true);
-      const savedMotion = localStorage.getItem("careflow_reduced_motion");
-      if (savedMotion === "true") setReducedMotion(true);
-      const savedSound = localStorage.getItem("careflow_sound_notify");
-      if (savedSound === "false") setSoundNotify(false);
-    }
-  }, []);
+  const [darkMode, setDarkMode] = useState(() =>
+    typeof window !== "undefined" && localStorage.getItem("careflow_theme") === "dark"
+  );
+  const [reducedMotion, setReducedMotion] = useState(() =>
+    typeof window !== "undefined" && localStorage.getItem("careflow_reduced_motion") === "true"
+  );
+  const [soundNotify, setSoundNotify] = useState(() =>
+    typeof window === "undefined" || localStorage.getItem("careflow_sound_notify") !== "false"
+  );
+  const [autoRefreshSecs, setAutoRefreshSecs] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("careflow_auto_refresh") || "30" : "30"
+  );
 
   const handleSave = () => {
     if (typeof window !== "undefined") {

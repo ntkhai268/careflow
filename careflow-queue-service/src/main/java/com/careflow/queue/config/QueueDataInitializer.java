@@ -14,11 +14,13 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.UUID;
 
 @Component
 @Slf4j
 public class QueueDataInitializer implements CommandLineRunner {
+    private static final ZoneId HOSPITAL_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 
     private final QueueConfigRepository configRepository;
     private final QueueEntryRepository entryRepository;
@@ -37,11 +39,11 @@ public class QueueDataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.now(HOSPITAL_ZONE);
         log.info("Checking Queue Service DataInitializer for today ({})", today);
 
         // 1. Cấu hình QueueConfig mặc định cho ROOM-01 (Nội tổng quát)
-        UUID deptId = UUID.fromString("10000000-0000-0000-0000-000000000001");
+        UUID deptId = UUID.fromString("de000001-0000-0000-0000-000000000001");
         QueueConfig config = configRepository.findByRoomCodeAndActiveTrue("ROOM-01")
                 .orElseGet(() -> {
                     QueueConfig cfg = new QueueConfig();
@@ -54,6 +56,11 @@ public class QueueDataInitializer implements CommandLineRunner {
                 });
 
         // 2. Clear các IdempotencyRecord và QueueEntry cũ để reset lại danh sách chờ khám sạch khi khởi động server
+        // Queue entries are runtime state. Preserve them across restarts.
+        if (entryRepository.count() > 0) {
+            log.info("Queue data already exists; preserving runtime entries and idempotency records");
+            return;
+        }
         log.info("Resetting/Seeding clean Active QueueEntries for date {}...", today);
         try {
             idempotencyRecordRepository.deleteAll();
@@ -65,6 +72,13 @@ public class QueueDataInitializer implements CommandLineRunner {
         }
 
         // 3. Seed 6 Bệnh nhân đã Check-in ở các làn khác nhau (Priority, Normal, Result Review) cho ROOM-01
+        // Queue entries are runtime state. Never delete them during a restart;
+        // doing so loses patients currently waiting or being served.
+        if (entryRepository.count() > 0) {
+            log.info("Queue data already exists; preserving runtime entries and idempotency records");
+            return;
+        }
+
         Instant now = Instant.now();
 
         // Patient 1 (Bệnh nhân A - Phạm Đức Anh): Lượt hẹn CHƯA CHECK-IN (WAITING) để Staff quét/nhập QR test luồng E2E

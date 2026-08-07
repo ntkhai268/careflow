@@ -29,6 +29,8 @@ abstract interface class JourneySnapshotRepository {
   Future<void> retireJourney(String patientId, String appointmentId);
 }
 
+abstract interface class DemoJourneySource {}
+
 class JourneyBackendUnavailable implements Exception {
   const JourneyBackendUnavailable();
 }

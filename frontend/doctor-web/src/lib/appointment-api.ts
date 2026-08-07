@@ -19,7 +19,31 @@ export interface AppointmentResponse {
   updatedAt?: string;
 }
 
+export interface ClinicalContextRoom {
+  roomId: string;
+  roomDisplayName: string;
+}
+
+export interface ClinicalContextResponse {
+  userId: string;
+  doctorId: string;
+  doctorName: string;
+  department: string;
+  departmentDisplayName?: string;
+  rooms: ClinicalContextRoom[];
+}
+
 export const appointmentApi = {
+  getClinicalContext: (date?: string, session?: string) => {
+    const params = new URLSearchParams();
+    if (date) params.set("date", date);
+    if (session) params.set("session", session);
+    const query = params.toString();
+    return api.get<ClinicalContextResponse>(
+      `/api/appointments/clinical-context/me${query ? `?${query}` : ""}`
+    );
+  },
+
   getAppointmentsByPatient: (patientId: string) => 
     api.get<AppointmentResponse[]>(`/api/appointments/patient/${patientId}`),
 

@@ -47,8 +47,8 @@ public class DataInitializer implements CommandLineRunner {
                 .medicalHistory("Tiền sử viêm dạ dày HP (+), trào ngược dạ dày K21.9")
                 .build();
         p1.setId(UUID.fromString("f0000001-0000-0000-0000-000000000001"));
-        jdbcTemplate.update("DELETE FROM patients WHERE user_id = ? AND id <> ?", p1.getUserId(), p1.getId());
-        if (!patientRepository.existsById(p1.getId())) {
+        if (!patientRepository.existsById(p1.getId())
+                && !patientRepository.existsByUserId(p1.getUserId())) {
             jdbcTemplate.update(
                     "INSERT INTO patients (id, user_id, full_name, date_of_birth, gender, phone, id_card_number, insurance_number, occupation, address, allergy_notes, medical_history, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     p1.getId(), p1.getUserId(), p1.getFullName(), p1.getDateOfBirth(), p1.getGender().name(),
@@ -57,8 +57,7 @@ public class DataInitializer implements CommandLineRunner {
                     java.sql.Timestamp.from(java.time.Instant.now()));
             log.info("Seeded patient: Nguyễn Thị Mai");
         } else {
-            jdbcTemplate.update("UPDATE patients SET allergy_notes = ?, medical_history = ? WHERE id = ?",
-                    p1.getAllergyNotes(), p1.getMedicalHistory(), p1.getId());
+            updateExistingProfile(p1);
         }
 
         Patient p2 = Patient.builder()
@@ -75,8 +74,8 @@ public class DataInitializer implements CommandLineRunner {
                 .medicalHistory("Tăng huyết áp 5 năm, Thoái hóa khớp gối M17.9")
                 .build();
         p2.setId(UUID.fromString("f0000001-0000-0000-0000-000000000002"));
-        jdbcTemplate.update("DELETE FROM patients WHERE user_id = ? AND id <> ?", p2.getUserId(), p2.getId());
-        if (!patientRepository.existsById(p2.getId())) {
+        if (!patientRepository.existsById(p2.getId())
+                && !patientRepository.existsByUserId(p2.getUserId())) {
             jdbcTemplate.update(
                     "INSERT INTO patients (id, user_id, full_name, date_of_birth, gender, phone, id_card_number, insurance_number, occupation, address, allergy_notes, medical_history, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     p2.getId(), p2.getUserId(), p2.getFullName(), p2.getDateOfBirth(), p2.getGender().name(),
@@ -85,8 +84,7 @@ public class DataInitializer implements CommandLineRunner {
                     java.sql.Timestamp.from(java.time.Instant.now()));
             log.info("Seeded patient: Trần Văn Hùng");
         } else {
-            jdbcTemplate.update("UPDATE patients SET allergy_notes = ?, medical_history = ? WHERE id = ?",
-                    p2.getAllergyNotes(), p2.getMedicalHistory(), p2.getId());
+            updateExistingProfile(p2);
         }
 
         Patient p3 = Patient.builder()
@@ -103,8 +101,8 @@ public class DataInitializer implements CommandLineRunner {
                 .medicalHistory("Đau dạ dày, ợ chua sau ăn K29.7")
                 .build();
         p3.setId(UUID.fromString("f0000001-0000-0000-0000-000000000003"));
-        jdbcTemplate.update("DELETE FROM patients WHERE user_id = ? AND id <> ?", p3.getUserId(), p3.getId());
-        if (!patientRepository.existsById(p3.getId())) {
+        if (!patientRepository.existsById(p3.getId())
+                && !patientRepository.existsByUserId(p3.getUserId())) {
             jdbcTemplate.update(
                     "INSERT INTO patients (id, user_id, full_name, date_of_birth, gender, phone, id_card_number, insurance_number, occupation, address, allergy_notes, medical_history, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     p3.getId(), p3.getUserId(), p3.getFullName(), p3.getDateOfBirth(), p3.getGender().name(),
@@ -113,8 +111,7 @@ public class DataInitializer implements CommandLineRunner {
                     java.sql.Timestamp.from(java.time.Instant.now()));
             log.info("Seeded patient: Lê Thị Hoa");
         } else {
-            jdbcTemplate.update("UPDATE patients SET allergy_notes = ?, medical_history = ? WHERE id = ?",
-                    p3.getAllergyNotes(), p3.getMedicalHistory(), p3.getId());
+            updateExistingProfile(p3);
         }
 
         Patient p4 = Patient.builder()
@@ -131,8 +128,8 @@ public class DataInitializer implements CommandLineRunner {
                 .medicalHistory("Tiền sử sốt co giật hồi 2 tuổi, viêm họng cấp J00 nhiều đợt")
                 .build();
         p4.setId(UUID.fromString("f0000001-0000-0000-0000-000000000004"));
-        jdbcTemplate.update("DELETE FROM patients WHERE user_id = ? AND id <> ?", p4.getUserId(), p4.getId());
-        if (!patientRepository.existsById(p4.getId())) {
+        if (!patientRepository.existsById(p4.getId())
+                && !patientRepository.existsByUserId(p4.getUserId())) {
             jdbcTemplate.update(
                     "INSERT INTO patients (id, user_id, full_name, date_of_birth, gender, phone, id_card_number, insurance_number, occupation, address, allergy_notes, medical_history, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     p4.getId(), p4.getUserId(), p4.getFullName(), p4.getDateOfBirth(), p4.getGender().name(),
@@ -141,8 +138,7 @@ public class DataInitializer implements CommandLineRunner {
                     java.sql.Timestamp.from(java.time.Instant.now()));
             log.info("Seeded patient: Phạm Đức Anh");
         } else {
-            jdbcTemplate.update("UPDATE patients SET allergy_notes = ?, medical_history = ? WHERE id = ?",
-                    p4.getAllergyNotes(), p4.getMedicalHistory(), p4.getId());
+            updateExistingProfile(p4);
         }
 
         Patient p5 = Patient.builder()
@@ -159,8 +155,8 @@ public class DataInitializer implements CommandLineRunner {
                 .medicalHistory("Đái tháo đường type 2 E11.9, kiểm tra định kỳ")
                 .build();
         p5.setId(UUID.fromString("f0000001-0000-0000-0000-000000000005"));
-        jdbcTemplate.update("DELETE FROM patients WHERE user_id = ? AND id <> ?", p5.getUserId(), p5.getId());
-        if (!patientRepository.existsById(p5.getId())) {
+        if (!patientRepository.existsById(p5.getId())
+                && !patientRepository.existsByUserId(p5.getUserId())) {
             jdbcTemplate.update(
                     "INSERT INTO patients (id, user_id, full_name, date_of_birth, gender, phone, id_card_number, insurance_number, occupation, address, allergy_notes, medical_history, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     p5.getId(), p5.getUserId(), p5.getFullName(), p5.getDateOfBirth(), p5.getGender().name(),
@@ -169,8 +165,7 @@ public class DataInitializer implements CommandLineRunner {
                     java.sql.Timestamp.from(java.time.Instant.now()));
             log.info("Seeded patient: Võ Thị Lan");
         } else {
-            jdbcTemplate.update("UPDATE patients SET allergy_notes = ?, medical_history = ? WHERE id = ?",
-                    p5.getAllergyNotes(), p5.getMedicalHistory(), p5.getId());
+            updateExistingProfile(p5);
         }
 
         Patient p6 = Patient.builder()
@@ -187,8 +182,8 @@ public class DataInitializer implements CommandLineRunner {
                 .medicalHistory("Chấn thương dây chằng cổ chân nhẹ 2024")
                 .build();
         p6.setId(UUID.fromString("f0000001-0000-0000-0000-000000000006"));
-        jdbcTemplate.update("DELETE FROM patients WHERE user_id = ? AND id <> ?", p6.getUserId(), p6.getId());
-        if (!patientRepository.existsById(p6.getId())) {
+        if (!patientRepository.existsById(p6.getId())
+                && !patientRepository.existsByUserId(p6.getUserId())) {
             jdbcTemplate.update(
                     "INSERT INTO patients (id, user_id, full_name, date_of_birth, gender, phone, id_card_number, insurance_number, occupation, address, allergy_notes, medical_history, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                     p6.getId(), p6.getUserId(), p6.getFullName(), p6.getDateOfBirth(), p6.getGender().name(),
@@ -197,11 +192,13 @@ public class DataInitializer implements CommandLineRunner {
                     java.sql.Timestamp.from(java.time.Instant.now()));
             log.info("Seeded patient: Đặng Hoàng Long");
         } else {
-            jdbcTemplate.update("UPDATE patients SET allergy_notes = ?, medical_history = ? WHERE id = ?",
-                    p6.getAllergyNotes(), p6.getMedicalHistory(), p6.getId());
+            updateExistingProfile(p6);
         }
 
         // --- Seed Structured Patient Allergy Records ---
+        p1 = existingOrSeed(p1);
+        p3 = existingOrSeed(p3);
+        p4 = existingOrSeed(p4);
         seedPatientAllergies(p4, "Penicillin", "Beta-lactam", AllergySeverity.CRITICAL, "Nổi mề đai, sưng môi, nguy cơ sốc phản vệ", "BS. Nguyễn Văn An");
         seedPatientAllergies(p4, "Phấn hoa", "Environment", AllergySeverity.WARNING, "Hắt hơi, ngứa mũi, chảy nước mắt", "Khai báo bệnh nhân");
 
@@ -209,6 +206,16 @@ public class DataInitializer implements CommandLineRunner {
         seedPatientAllergies(p1, "Hải sản (tôm, cua)", "Food", AllergySeverity.WARNING, "Mẩn ngứa da ngực", "Khai báo bệnh nhân");
 
         seedPatientAllergies(p3, "Aspirin / NSAID", "NSAID", AllergySeverity.CRITICAL, "Đau bụng cấp, sưng phù nếp mi", "BS. Lê Hoàng");
+    }
+
+    private void updateExistingProfile(Patient seed) {
+        Patient existing = existingOrSeed(seed);
+        jdbcTemplate.update("UPDATE patients SET allergy_notes = ?, medical_history = ? WHERE id = ?",
+                seed.getAllergyNotes(), seed.getMedicalHistory(), existing.getId());
+    }
+
+    private Patient existingOrSeed(Patient seed) {
+        return patientRepository.findByUserId(seed.getUserId()).orElse(seed);
     }
 
     private void seedPatientAllergies(Patient patient, String name, String group, AllergySeverity severity, String reaction, String confirmedBy) {

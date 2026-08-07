@@ -1,4 +1,3 @@
-import { api } from "./api";
 import { directoryApi } from "./directory-api";
 
 export interface DoctorProfileResponse {

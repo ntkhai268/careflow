@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.Duration;
@@ -15,7 +16,8 @@ import java.util.UUID;
 public class ConsultationClient {
 
     private final RestTemplate restTemplate;
-    private static final String CONSULTATION_SERVICE_URL = "http://localhost:8086/api/consultations/";
+    @Value("${app.consultation-service.url:http://careflow-consultation-service:8086}")
+    private String consultationServiceUrl;
 
     public ConsultationClient(RestTemplateBuilder builder) {
         this.restTemplate = builder
@@ -26,11 +28,11 @@ public class ConsultationClient {
 
     public String getConsultationStatus(UUID consultationId) {
         try {
-            String url = CONSULTATION_SERVICE_URL + consultationId;
+            String url = consultationServiceUrl + "/api/consultations/" + consultationId + "/status";
             log.info("Fetching consultation status from: {}", url);
             ResponseEntity<ConsultationApiResponse> response = restTemplate.getForEntity(url, ConsultationApiResponse.class);
             if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().getData() != null) {
-                return response.getBody().getData().getStatus();
+                return response.getBody().getData();
             }
         } catch (Exception e) {
             log.error("Failed to fetch consultation status for ID: {}. Error: {}", consultationId, e.getMessage());
@@ -42,12 +44,6 @@ public class ConsultationClient {
     @Data
     public static class ConsultationApiResponse {
         private String message;
-        private ConsultationDto data;
-    }
-
-    @Data
-    public static class ConsultationDto {
-        private UUID id;
-        private String status;
+        private String data;
     }
 }

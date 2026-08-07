@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getDefaultRouteForRole } from "@/lib/role-utils";
+import { getErrorMessage } from "@/lib/error-utils";
 
 interface User {
   id: string;
@@ -36,14 +37,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     const savedUser = localStorage.getItem("careflow_user");
-    if (savedUser) {
-      try {
-        setUser(JSON.parse(savedUser));
-      } catch {
-        setUser(null);
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      if (savedUser) {
+        try {
+          setUser(JSON.parse(savedUser) as User);
+        } catch {
+          setUser(null);
+        }
       }
-    }
-    setIsLoading(false);
+      setIsLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -85,8 +94,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       throw new Error("Không nhận được Access Token từ Identity Service");
-    } catch (err: any) {
-      console.error(`[AUTH DEBUG] Login Error:`, err);
+    } catch (err: unknown) {
+      console.error(`[AUTH DEBUG] Login Error:`, getErrorMessage(err));
       throw err;
     }
   }, [router]);

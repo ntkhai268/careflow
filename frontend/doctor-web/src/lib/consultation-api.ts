@@ -56,8 +56,17 @@ export const consultationApi = {
   updateStatus: (id: string, status: string) =>
     api.put<ConsultationResponse>(`/api/consultations/${id}/status`, { status }),
 
+  updateClinicalData: (id: string, data: UpdateConsultationRequest) =>
+    api.put<ConsultationResponse>(`/api/consultations/${id}/clinical-data`, data),
+
+  waitForResults: (id: string) =>
+    api.post<ConsultationResponse>(`/api/consultations/${id}/wait-for-results`, {}),
+
+  resume: (id: string) =>
+    api.post<ConsultationResponse>(`/api/consultations/${id}/resume`, {}),
+
   completeConsultation: (id: string) => 
-    api.put<ConsultationResponse>(`/api/consultations/${id}/complete`, {}),
+    api.post<ConsultationResponse>(`/api/consultations/${id}/complete`, {}),
     
   getByPatient: (patientId: string) => 
     api.get<ConsultationResponse[]>(`/api/consultations/patient/${patientId}`),

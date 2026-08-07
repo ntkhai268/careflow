@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
 import { aiApi } from "@/lib/ai-api";
 import { renderFormattedAiText } from "@/lib/format-ai-text";
@@ -175,9 +176,11 @@ export default function AiAssistantWidget() {
           <div className="p-3.5 bg-[#0D0F1E] text-white flex justify-between items-center border-b border-[#1E2340]">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full overflow-hidden border border-indigo-400/50 bg-[#161930] flex items-center justify-center flex-shrink-0">
-                <img
+                <Image
                   src="/ai-ferret-cutout.png"
                   alt="Bác sĩ Chồn AI"
+                  width={40}
+                  height={40}
                   className="w-10 h-10 object-contain translate-y-1 scale-125 animate-clinical-breathing"
                 />
               </div>
@@ -210,9 +213,11 @@ export default function AiAssistantWidget() {
               >
                 {msg.sender === "ai" && (
                   <div className="w-7 h-7 rounded-full overflow-hidden bg-indigo-950 border border-indigo-300 flex-shrink-0 flex items-center justify-center">
-                    <img
+                    <Image
                       src="/ai-ferret-cutout.png"
                       alt="Ferret AI"
+                      width={36}
+                      height={36}
                       className="w-9 h-9 object-contain translate-y-1 scale-125"
                     />
                   </div>
@@ -249,9 +254,11 @@ export default function AiAssistantWidget() {
             {isTyping && (
               <div className="flex gap-2 flex-row animate-in fade-in duration-200">
                 <div className="w-7 h-7 rounded-full overflow-hidden bg-indigo-950 border border-indigo-300 flex-shrink-0 flex items-center justify-center">
-                  <img
+                  <Image
                     src="/ai-ferret-cutout.png"
                     alt="Ferret AI"
+                    width={36}
+                    height={36}
                     className="w-9 h-9 object-contain translate-y-1 scale-125 animate-clinical-breathing"
                   />
                 </div>
@@ -355,9 +362,11 @@ export default function AiAssistantWidget() {
 
           {/* Mascot Image with Subtle Breathing */}
           <div className="w-full h-full rounded-full overflow-hidden flex items-center justify-center">
-            <img
+            <Image
               src="/ai-ferret-cutout.png"
               alt="Bác sĩ Chồn AI"
+              width={64}
+              height={64}
               className="w-16 h-16 object-contain scale-110 translate-y-1 animate-clinical-breathing"
             />
           </div>

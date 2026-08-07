@@ -380,6 +380,37 @@ class QueueManagementServiceTest {
     }
 
     @Test
+    void labOrderReadyCreatesQueuedLabExecutionEntryWithoutSecondCheckIn() {
+        UUID labOrderId = UUID.randomUUID();
+        UUID consultationId = UUID.randomUUID();
+        UUID patientId = UUID.randomUUID();
+        UUID patientUserId = UUID.randomUUID();
+        Instant orderedAt = Instant.parse("2026-08-18T05:00:00Z");
+        ServicePointSequence sequence = new ServicePointSequence();
+        sequence.setLastNumber(2);
+        QueueEntry previous = entry(PriorityLevel.APPOINTMENT, QueueStatus.COMPLETED, 1);
+        previous.setPatientId(patientId);
+        previous.setUserId(patientUserId);
+        when(entries.findByLabOrderIdAndServicePointId(labOrderId, "LAB-HEMATOLOGY-01"))
+                .thenReturn(Optional.empty());
+        when(entries.findFirstByPatientIdAndUserIdIsNotNullOrderByCreatedAtDesc(patientId))
+                .thenReturn(Optional.of(previous));
+        when(servicePointSequences.findByServicePointIdAndQueueDate("LAB-HEMATOLOGY-01",
+                LocalDate.of(2026, 8, 18))).thenReturn(Optional.of(sequence));
+
+        QueueEntry lab = service.createLabExecutionEntry(
+                labOrderId, consultationId, patientId, "lab-hematology-01", orderedAt);
+
+        assertThat(lab.getQueueType()).isEqualTo(QueueType.LAB_EXECUTION);
+        assertThat(lab.getConsultationPhase()).isNull();
+        assertThat(lab.getQueueClass()).isNull();
+        assertThat(lab.getStatus()).isEqualTo(QueueStatus.QUEUED);
+        assertThat(lab.getQueueNumber()).isEqualTo("LAB-003");
+        assertThat(lab.getUserId()).isEqualTo(patientUserId);
+        assertThat(lab.getEligibleSinceAt()).isEqualTo(orderedAt);
+    }
+
+    @Test
     void servicePointCallNextUsesStrictFifo() {
         UUID staffId = UUID.randomUUID();
         QueueEntry first = pharmacyEntry(1, QueueStatus.QUEUED);

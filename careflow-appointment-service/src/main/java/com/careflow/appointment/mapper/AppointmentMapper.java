@@ -26,6 +26,7 @@ public class AppointmentMapper {
                 .statusDisplayName(appointment.getStatus().getDisplayName())
                 .reason(appointment.getReason())
                 .notes(appointment.getNotes())
+                .sourceConsultationId(appointment.getSourceConsultationId())
                 .queueNumber(appointment.getQueueNumber())
                 .createdAt(appointment.getCreatedAt())
                 .updatedAt(appointment.getUpdatedAt())

@@ -10,5 +10,6 @@ import java.util.List;
 public interface RoomRepository extends JpaRepository<Room, String> {
     List<Room> findByIsActiveTrue();
     List<Room> findByDepartmentCodeAndIsActiveTrue(String departmentCode);
+    List<Room> findByDepartmentCodeAndRoomTypeAndIsActiveTrue(String departmentCode, String roomType);
     List<Room> findByRoomTypeAndIsActiveTrue(String roomType);
 }

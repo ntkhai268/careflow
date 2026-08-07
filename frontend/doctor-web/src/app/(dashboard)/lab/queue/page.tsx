@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { queueApi, QueueEntry } from "@/lib/queue-api";
-import { labApi, MOCK_LAB_SERVICES, LabOrderResponse } from "@/lib/lab-api";
-import { useAuth } from "@/contexts/AuthContext";
+import { labApi, LabOrderResponse } from "@/lib/lab-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmModal from "@/components/ConfirmModal";
+import { getErrorMessage } from "@/lib/error-utils";
 
 export default function LabQueuePage() {
-  const { user } = useAuth();
-
   const [selectedServicePoint, setSelectedServicePoint] = useState("LAB-HEMATOLOGY-01");
   const [entries, setEntries] = useState<QueueEntry[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -22,7 +20,6 @@ export default function LabQueuePage() {
   const [resultValues, setResultValues] = useState<{ [itemId: string]: string }>({});
   const [referenceRanges, setReferenceRanges] = useState<{ [itemId: string]: string }>({});
   const [units, setUnits] = useState<{ [itemId: string]: string }>({});
-  const [isFinalizing, setIsFinalizing] = useState(false);
 
   const [toast, setToast] = useState<{ message: string; type: "success" | "danger" | "warning" } | null>(null);
 
@@ -43,7 +40,7 @@ export default function LabQueuePage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const fetchQueue = async () => {
+  const fetchQueue = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -55,11 +52,14 @@ export default function LabQueuePage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [selectedServicePoint]);
 
   useEffect(() => {
-    fetchQueue();
-  }, [selectedServicePoint]);
+    const timer = window.setTimeout(() => {
+      void fetchQueue();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchQueue]);
 
   const notifyAi = (text: string) => {
     if (typeof window !== "undefined") {
@@ -93,22 +93,30 @@ export default function LabQueuePage() {
       notifyAi(`Mời số thứ tự ${num} vào phòng thực hiện ạ!`);
       showToast(`Đã gọi số ${num}`);
       await fetchQueue();
-    } catch (err: any) {
-      notifyAi(err.message || "Lỗi khi gọi lượt ạ!");
-      showToast(err.message || "Lỗi khi gọi lượt.", "danger");
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "Lỗi khi gọi lượt ạ!");
+      notifyAi(message);
+      showToast(message, "danger");
     }
   };
 
   const handleStartEntry = async (entry: QueueEntry) => {
     try {
+      if (!entry.labOrderId) {
+        throw new Error("Lượt xét nghiệm chưa liên kết với chỉ định xét nghiệm.");
+      }
+      const order = await labApi.getById(entry.labOrderId);
       await queueApi.startEntry(entry.entryId);
+      const started = await labApi.startOrder(entry.labOrderId);
       setActiveEntry(entry);
+      setActiveLabOrder(started.data ?? order.data);
       notifyAi(`Đã bắt đầu thực hiện ca Cận lâm sàng cho số thứ tự ${entry.queueNumber}!`);
       showToast(`Đã bắt đầu thực hiện cho lượt ${entry.queueNumber}`);
       await fetchQueue();
-    } catch (err: any) {
-      notifyAi(err.message || "Lỗi khi bắt đầu thực hiện ca Cận lâm sàng!");
-      showToast(err.message || "Lỗi khi bắt đầu thực hiện.", "danger");
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "Lỗi khi bắt đầu thực hiện ca Cận lâm sàng!");
+      notifyAi(message);
+      showToast(message, "danger");
     }
   };
 
@@ -122,9 +130,10 @@ export default function LabQueuePage() {
         setActiveLabOrder(null);
       }
       await fetchQueue();
-    } catch (err: any) {
-      notifyAi(err.message || "Lỗi khi đánh dấu vắng mặt ạ!");
-      showToast(err.message || "Lỗi khi đánh dấu vắng mặt.", "danger");
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "Lỗi khi đánh dấu vắng mặt ạ!");
+      notifyAi(message);
+      showToast(message, "danger");
     }
   };
 
@@ -134,9 +143,10 @@ export default function LabQueuePage() {
       notifyAi(`Đã gọi lại số thứ tự ${num}!`);
       showToast(`Đã gọi lại số ${num}`);
       await fetchQueue();
-    } catch (err: any) {
-      notifyAi(err.message || "Lỗi khi gọi lại ạ!");
-      showToast(err.message || "Lỗi khi gọi lại.", "danger");
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "Lỗi khi gọi lại ạ!");
+      notifyAi(message);
+      showToast(message, "danger");
     }
   };
 
@@ -273,7 +283,9 @@ export default function LabQueuePage() {
                           </div>
                         </div>
                         <p className="text-xs text-text-muted mt-0.5">
-                          Thời gian vào hàng: {new Date(entry.scheduledStartAt || Date.now()).toLocaleTimeString("vi-VN")}
+                          Thời gian vào hàng: {entry.scheduledStartAt
+                            ? new Date(entry.scheduledStartAt).toLocaleTimeString("vi-VN")
+                            : "—"}
                         </p>
                       </div>
                     </div>
@@ -333,41 +345,62 @@ export default function LabQueuePage() {
               </div>
 
               <div className="space-y-3">
-                <label className="block font-bold text-text">Nhập kết quả xét nghiệm / chẩn đoán:</label>
-                <div>
-                  <span className="text-text-muted">Giá trị kết quả:</span>
-                  <input
-                    type="text"
-                    placeholder="Ví dụ: 5.4 M/uL hoặc Bình thường"
-                    className="w-full mt-1 p-2 border border-card-border rounded-lg bg-card-bg text-text"
-                  />
-                </div>
-                <div>
-                  <span className="text-text-muted">Khoảng tham chiếu:</span>
-                  <input
-                    type="text"
-                    placeholder="Ví dụ: 4.0 - 5.5 M/uL"
-                    className="w-full mt-1 p-2 border border-card-border rounded-lg bg-card-bg text-text"
-                  />
-                </div>
-                <div>
-                  <span className="text-text-muted">Đơn vị đo:</span>
-                  <input
-                    type="text"
-                    placeholder="Ví dụ: mmol/L"
-                    className="w-full mt-1 p-2 border border-card-border rounded-lg bg-card-bg text-text"
-                  />
-                </div>
+                <label className="block font-bold text-text">Nhập kết quả xét nghiệm:</label>
+                {activeLabOrder?.items.map((item) => (
+                  <div key={item.id} className="space-y-2 border-b border-card-border pb-3 last:border-0">
+                    <p className="font-semibold text-text">{item.serviceName}</p>
+                    <input
+                      value={resultValues[item.id] ?? ""}
+                      onChange={(event) => setResultValues((current) => ({ ...current, [item.id]: event.target.value }))}
+                      type="text"
+                      placeholder="Giá trị kết quả"
+                      className="w-full p-2 border border-card-border rounded-lg bg-card-bg text-text"
+                    />
+                    <input
+                      value={referenceRanges[item.id] ?? ""}
+                      onChange={(event) => setReferenceRanges((current) => ({ ...current, [item.id]: event.target.value }))}
+                      type="text"
+                      placeholder="Khoảng tham chiếu"
+                      className="w-full p-2 border border-card-border rounded-lg bg-card-bg text-text"
+                    />
+                    <input
+                      value={units[item.id] ?? ""}
+                      onChange={(event) => setUnits((current) => ({ ...current, [item.id]: event.target.value }))}
+                      type="text"
+                      placeholder="Đơn vị đo"
+                      className="w-full p-2 border border-card-border rounded-lg bg-card-bg text-text"
+                    />
+                  </div>
+                ))}
 
                 <button
                   onClick={async () => {
                     try {
+                      if (!activeLabOrder) throw new Error("Chưa tải được chỉ định xét nghiệm.");
+                      for (const item of activeLabOrder.items) {
+                        const value = resultValues[item.id]?.trim();
+                        if (item.status !== "COMPLETED" && !value) {
+                          throw new Error(`Chưa nhập kết quả cho ${item.serviceName}.`);
+                        }
+                        if (item.status !== "COMPLETED") {
+                          await labApi.submitItemResult(activeLabOrder.id, item.id, {
+                            resultValue: value!,
+                            referenceRange: referenceRanges[item.id],
+                            unit: units[item.id],
+                          });
+                        }
+                      }
+                      await labApi.finalizeOrder(activeLabOrder.id);
                       await queueApi.completeEntry(activeEntry.entryId);
-                      showToast(`Hoàn tất xét nghiệm cho lượt ${activeEntry.queueNumber}. Đã phát event LabResultAvailable!`);
+                      showToast(`Hoàn tất xét nghiệm cho lượt ${activeEntry.queueNumber}.`);
                       setActiveEntry(null);
+                      setActiveLabOrder(null);
+                      setResultValues({});
+                      setReferenceRanges({});
+                      setUnits({});
                       await fetchQueue();
-                    } catch (err: any) {
-                      showToast(err.message || "Lỗi khi hoàn tất lượt.", "danger");
+                    } catch (err: unknown) {
+                      showToast(getErrorMessage(err, "Lỗi khi hoàn tất lượt."), "danger");
                     }
                   }}
                   className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-lg shadow-sm hover:from-purple-500 hover:to-indigo-500 cursor-pointer text-xs"
@@ -378,7 +411,7 @@ export default function LabQueuePage() {
             </div>
           ) : (
             <div className="py-8 text-center text-text-muted text-xs">
-              Vui lòng chọn hoặc bấm <b>"Bắt đầu thực hiện"</b> cho một bệnh nhân để nhập kết quả xét nghiệm.
+              Vui lòng chọn hoặc bấm <b>&quot;Bắt đầu thực hiện&quot;</b> cho một bệnh nhân để nhập kết quả xét nghiệm.
             </div>
           )}
         </div>

@@ -62,7 +62,8 @@ public class ConsultationService {
 
         // 1. Validate Appointment via Feign Client (if appointment exists in appointment-service)
         try {
-            ApiResponse<AppointmentResponse> apptRes = appointmentClient.getAppointmentById(appointmentId);
+            ApiResponse<AppointmentResponse> apptRes = appointmentClient.getAppointmentById(
+                    appointmentId, request.getDoctorId(), AppConstants.ROLE_DOCTOR);
             if (apptRes != null && apptRes.getData() != null) {
                 AppointmentResponse appointment = apptRes.getData();
                 String currentStatus = appointment.getStatus();
@@ -76,8 +77,9 @@ public class ConsultationService {
                 // 2. Cập nhật trạng thái Appointment sang IN_PROGRESS (nếu chưa phải IN_PROGRESS)
                 if (!"IN_PROGRESS".equalsIgnoreCase(currentStatus)) {
                     appointmentClient.updateAppointmentStatus(
-                            appointmentId,
-                            UpdateAppointmentStatusRequest.builder().status("IN_PROGRESS").build()
+                    appointmentId,
+                            UpdateAppointmentStatusRequest.builder().status("IN_PROGRESS").build(),
+                            request.getDoctorId(), AppConstants.ROLE_DOCTOR
                     );
                 }
             }
@@ -127,9 +129,87 @@ public class ConsultationService {
     /**
      * Lấy chi tiết phiên khám theo ID.
      */
-    public ConsultationResponse getConsultation(UUID id) {
+    @Transactional
+    public ConsultationResponse createConsultation(CreateConsultationRequest request,
+                                                    UUID actorUserId, String actorRole) {
+        requireDoctor(actorUserId, actorRole);
+        if (request.getDoctorId() != null && !actorUserId.equals(request.getDoctorId())) {
+            throw new BusinessException(403, "Doctor identity must come from the trusted gateway header");
+        }
+        request.setDoctorId(actorUserId);
+        return createConsultation(request);
+    }
+
+    @Transactional
+    public ConsultationResponse updateClinicalData(UUID id, UpdateConsultationRequest request,
+                                                   UUID actorUserId, String actorRole) {
         Consultation consultation = findConsultationOrThrow(id);
+        requireAssignedDoctor(consultation, actorUserId, actorRole);
+        return updateConsultation(id, request);
+    }
+
+    @Transactional
+    public ConsultationResponse waitForResults(UUID id, UUID actorUserId, String actorRole) {
+        Consultation consultation = findConsultationOrThrow(id);
+        requireAssignedDoctor(consultation, actorUserId, actorRole);
+        if (consultation.getStatus() == ConsultationStatus.AWAITING_CLS) {
+            return consultationMapper.toResponse(consultation);
+        }
+        if (consultation.getStatus() != ConsultationStatus.IN_PROGRESS) {
+            throw new BusinessException(409, "Consultation is not in progress");
+        }
+        consultation.setStatus(ConsultationStatus.AWAITING_CLS);
+        Consultation saved = consultationRepository.save(consultation);
+        return consultationMapper.toResponse(saved);
+    }
+
+    @Transactional
+    public ConsultationResponse resume(UUID id, UUID actorUserId, String actorRole) {
+        Consultation consultation = findConsultationOrThrow(id);
+        requireAssignedDoctor(consultation, actorUserId, actorRole);
+        if (consultation.getStatus() == ConsultationStatus.IN_PROGRESS) {
+            return consultationMapper.toResponse(consultation);
+        }
+        if (consultation.getStatus() != ConsultationStatus.AWAITING_REVIEW
+                && consultation.getStatus() != ConsultationStatus.AWAITING_CLS) {
+            throw new BusinessException(409, "Consultation is not waiting for review");
+        }
+        consultation.setStatus(ConsultationStatus.IN_PROGRESS);
+        return consultationMapper.toResponse(consultationRepository.save(consultation));
+    }
+
+    @Transactional
+    public ConsultationResponse completeConsultation(UUID id, UUID actorUserId, String actorRole) {
+        Consultation consultation = findConsultationOrThrow(id);
+        requireAssignedDoctor(consultation, actorUserId, actorRole);
+        if (consultation.getStatus() == ConsultationStatus.AWAITING_CLS
+                || consultation.getStatus() == ConsultationStatus.AWAITING_REVIEW) {
+            throw new BusinessException(409, "Required laboratory review is still pending");
+        }
+        return completeConsultation(id);
+    }
+
+    private void requireDoctor(UUID actorUserId, String actorRole) {
+        if (actorUserId == null || !AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole)) {
+            throw new BusinessException(403, "Assigned doctor access is required");
+        }
+    }
+
+    private void requireAssignedDoctor(Consultation consultation, UUID actorUserId, String actorRole) {
+        requireDoctor(actorUserId, actorRole);
+        if (!actorUserId.equals(consultation.getDoctorId())) {
+            throw new BusinessException(403, "Doctor is not assigned to this consultation");
+        }
+    }
+
+    public ConsultationResponse getConsultation(UUID id, UUID actorUserId, String actorRole) {
+        Consultation consultation = findConsultationOrThrow(id);
+        requireReadAccess(consultation, actorUserId, actorRole);
         return consultationMapper.toResponse(consultation);
+    }
+
+    public ConsultationResponse getConsultation(UUID id) {
+        return getConsultation(id, null, null);
     }
 
     /**
@@ -208,7 +288,8 @@ public class ConsultationService {
             try {
                 appointmentClient.updateAppointmentStatus(
                         saved.getAppointmentId(),
-                        UpdateAppointmentStatusRequest.builder().status("COMPLETED").build()
+                        UpdateAppointmentStatusRequest.builder().status("COMPLETED").build(),
+                        saved.getDoctorId(), AppConstants.ROLE_DOCTOR
                 );
             } catch (Exception e) {
                 log.warn("Failed to update appointment status to COMPLETED for appointment {}: {}",
@@ -241,27 +322,45 @@ public class ConsultationService {
     /**
      * Lịch sử khám của bệnh nhân.
      */
-    public List<ConsultationResponse> getConsultationsByPatient(UUID patientId) {
+    public List<ConsultationResponse> getConsultationsByPatient(
+            UUID patientId, UUID actorUserId, String actorRole) {
+        if (AppConstants.ROLE_PATIENT.equalsIgnoreCase(actorRole)
+                && actorUserId == null) {
+            throw new BusinessException(403, "Patient identity is required");
+        }
         return consultationRepository.findByPatientIdOrderByCreatedAtDesc(patientId)
                 .stream()
+                .peek(value -> requireReadAccess(value, actorUserId, actorRole))
                 .map(consultationMapper::toResponse)
                 .toList();
+    }
+
+    public List<ConsultationResponse> getConsultationsByPatient(UUID patientId) {
+        return getConsultationsByPatient(patientId, null, null);
     }
 
     /**
      * Danh sách phiên khám của bác sỹ.
      */
-    public List<ConsultationResponse> getConsultationsByDoctor(UUID doctorId) {
+    public List<ConsultationResponse> getConsultationsByDoctor(
+            UUID doctorId, UUID actorUserId, String actorRole) {
+        requireClinicalListAccess(doctorId, actorUserId, actorRole);
         return consultationRepository.findByDoctorIdOrderByCreatedAtDesc(doctorId)
                 .stream()
                 .map(consultationMapper::toResponse)
                 .toList();
     }
 
+    public List<ConsultationResponse> getConsultationsByDoctor(UUID doctorId) {
+        return getConsultationsByDoctor(doctorId, null, null);
+    }
+
     /**
      * Danh sách phiên khám hôm nay của bác sỹ.
      */
-    public List<ConsultationResponse> getTodayConsultationsByDoctor(UUID doctorId) {
+    public List<ConsultationResponse> getTodayConsultationsByDoctor(
+            UUID doctorId, UUID actorUserId, String actorRole) {
+        requireClinicalListAccess(doctorId, actorUserId, actorRole);
         java.time.Instant startOfDay = LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
         java.time.Instant endOfDay = LocalDate.now().atTime(LocalTime.MAX).atZone(java.time.ZoneId.systemDefault()).toInstant();
 
@@ -272,14 +371,67 @@ public class ConsultationService {
                 .toList();
     }
 
+    public List<ConsultationResponse> getTodayConsultationsByDoctor(UUID doctorId) {
+        return getTodayConsultationsByDoctor(doctorId, null, null);
+    }
+
     /**
      * Tra cứu phiên khám theo Appointment ID.
      */
-    public List<ConsultationResponse> getConsultationsByAppointment(UUID appointmentId) {
+    public List<ConsultationResponse> getConsultationsByAppointment(
+            UUID appointmentId, UUID actorUserId, String actorRole) {
         return consultationRepository.findByAppointmentId(appointmentId)
                 .stream()
+                .peek(value -> requireReadAccess(value, actorUserId, actorRole))
                 .map(consultationMapper::toResponse)
                 .toList();
+    }
+
+    public List<ConsultationResponse> getConsultationsByAppointment(UUID appointmentId) {
+        return getConsultationsByAppointment(appointmentId, null, null);
+    }
+
+    private void requireClinicalListAccess(UUID doctorId, UUID actorUserId, String actorRole) {
+        if (AppConstants.ROLE_ADMIN.equalsIgnoreCase(actorRole)
+                || AppConstants.ROLE_STAFF.equalsIgnoreCase(actorRole)) {
+            return;
+        }
+        if (!AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole)
+                || actorUserId == null || !actorUserId.equals(doctorId)) {
+            throw new BusinessException(403, "Clinical consultation access is not allowed");
+        }
+    }
+
+    private void requireReadAccess(Consultation consultation, UUID actorUserId, String actorRole) {
+        if (actorUserId == null || actorRole == null) {
+            throw new BusinessException(403, "Authenticated consultation access is required");
+        }
+        if (AppConstants.ROLE_ADMIN.equalsIgnoreCase(actorRole)
+                || AppConstants.ROLE_STAFF.equalsIgnoreCase(actorRole)) {
+            return;
+        }
+        if (AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole)) {
+            if (!actorUserId.equals(consultation.getDoctorId())) {
+                throw new BusinessException(403, "Doctor is not assigned to this consultation");
+            }
+            return;
+        }
+        if (!AppConstants.ROLE_PATIENT.equalsIgnoreCase(actorRole)
+                || consultation.getAppointmentId() == null) {
+            throw new BusinessException(403, "Patient consultation access is not allowed");
+        }
+        try {
+            ApiResponse<AppointmentResponse> appointment = appointmentClient.getAppointmentById(
+                    consultation.getAppointmentId(), actorUserId, actorRole);
+            if (appointment == null || appointment.getData() == null
+                    || !consultation.getPatientId().equals(appointment.getData().getPatientId())) {
+                throw new BusinessException(403, "Patient consultation access is not allowed");
+            }
+        } catch (BusinessException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new BusinessException(503, "Unable to verify consultation ownership");
+        }
     }
 
     private Consultation findConsultationOrThrow(UUID id) {

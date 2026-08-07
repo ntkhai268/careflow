@@ -5,14 +5,16 @@ import { prescriptionApi, PrescriptionResponse } from "@/lib/prescription-api";
 import { patientApi } from "@/lib/patient-api";
 import { useAuth } from "@/contexts/AuthContext";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { getErrorMessage } from "@/lib/error-utils";
 
 function PrescriptionStatusBadge({ status }: { status: string }) {
   const isDraft = status === "DRAFT";
+  const isCancelled = status === "CANCELLED" || status === "CANCELLED_BY_AMENDMENT";
   return (
     <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-      isDraft ? "bg-blue-50 text-blue-700" : "bg-emerald-50 text-emerald-700"
+      isCancelled ? "bg-rose-50 text-rose-700" : isDraft ? "bg-blue-50 text-blue-700" : "bg-emerald-50 text-emerald-700"
     }`}>
-      <span className={`w-1.5 h-1.5 rounded-full inline-block ${isDraft ? "bg-blue-400" : "bg-emerald-400"}`} />
+      <span className={`w-1.5 h-1.5 rounded-full inline-block ${isCancelled ? "bg-rose-400" : isDraft ? "bg-blue-400" : "bg-emerald-400"}`} />
       {isDraft ? "Đơn nháp" : "Đã ký"}
     </span>
   );
@@ -38,8 +40,8 @@ export default function DashboardPrescriptionsPage() {
           try {
             const res = await prescriptionApi.getByPatient(patientId);
             return res.data || [];
-          } catch (err: any) {
-            console.warn(`[Prescription API] Unable to fetch for patient ${patientId}:`, err?.message);
+          } catch (err: unknown) {
+            console.warn(`[Prescription API] Unable to fetch for patient ${patientId}:`, getErrorMessage(err));
             return [];
           }
         };
@@ -77,8 +79,8 @@ export default function DashboardPrescriptionsPage() {
           }
         }
         setPatientMap(map);
-      } catch (err: any) {
-        console.error("[Prescriptions Page] Error loading data:", err);
+      } catch (err: unknown) {
+        console.error("[Prescriptions Page] Error loading data:", getErrorMessage(err));
         setError("Không thể kết nối API đơn thuốc từ Prescription-Service.");
         setPrescriptions([]);
       } finally {

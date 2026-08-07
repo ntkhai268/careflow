@@ -11,16 +11,14 @@ interface ProfileModalProps {
 export default function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
   const { user } = useAuth();
   const [fullName, setFullName] = useState("");
-  const [title, setTitle] = useState("");
   const [phone, setPhone] = useState("0912 345 678");
   const [bio, setBio] = useState("Bác sĩ Chuyên khoa I với 8 năm kinh nghiệm khám và điều trị các bệnh lý lâm sàng.");
   const [saveSuccess, setSaveSuccess] = useState(false);
 
   useEffect(() => {
-    if (user) {
-      setFullName(user.fullName || "BS. Nguyễn Văn An");
-      setTitle(user.title || "BS. CKI - Khoa Nội tổng quát");
-    }
+    if (!user) return;
+    const nextFullName = user.fullName || "BS. Nguyễn Văn An";
+    queueMicrotask(() => setFullName(nextFullName));
   }, [user]);
 
   if (!isOpen) return null;

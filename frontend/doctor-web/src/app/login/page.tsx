@@ -31,10 +31,9 @@ export default function LoginPage() {
     e.preventDefault();
     setError(null);
 
-    // Validate email format
-    const emailRegex = /\S+@\S+\.\S+/;
-    if (!emailRegex.test(email)) {
-      setError({ message: "Định dạng email không hợp lệ (Ví dụ: bacsi@careflow.vn)", type: "danger" });
+    const identifier = email.trim();
+    if (!identifier) {
+      setError({ message: "Vui lòng nhập email hoặc tên đăng nhập.", type: "danger" });
       return;
     }
 
@@ -42,7 +41,7 @@ export default function LoginPage() {
 
     try {
       // Simulate account state testing
-      if (email === "locked@careflow.vn") {
+      if (identifier === "locked@careflow.vn") {
         await new Promise((resolve) => setTimeout(resolve, 800));
         setError({
           message: "Tài khoản của Bác sĩ đã bị khóa do nhập sai nhiều lần. Vui lòng liên hệ quản trị viên hệ thống.",
@@ -51,7 +50,7 @@ export default function LoginPage() {
         return;
       }
 
-      if (email === "expired@careflow.vn") {
+      if (identifier === "expired@careflow.vn") {
         await new Promise((resolve) => setTimeout(resolve, 800));
         setError({
           message: "Mật khẩu của Bác sĩ đã hết hạn sử dụng theo chính sách bảo mật định kỳ. Vui lòng đổi mật khẩu mới.",
@@ -61,7 +60,7 @@ export default function LoginPage() {
       }
 
       // Normal login
-      await login(email, password);
+      await login(identifier, password);
     } catch (err) {
       setError({
         message: err instanceof Error ? err.message : "Email hoặc mật khẩu không chính xác.",
@@ -169,17 +168,17 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleValidateAndSubmit} className="space-y-5">
-            {/* Email Input */}
+            {/* Email or username input */}
             <div>
               <label htmlFor="email" className="mb-1.5 block text-sm font-semibold text-foreground">
-                Email nhân viên
+                Email hoặc tên đăng nhập
               </label>
               <input
                 id="email"
                 type="text"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="an@careflow.vn"
+                placeholder="staff hoặc an@careflow.vn"
                 required
                 className="w-full border border-input-border bg-input-bg px-4 py-2.5 text-sm text-foreground placeholder:text-gray-400 focus:border-input-focus focus:outline-none focus:ring-1 focus:ring-input-focus transition-all"
               />

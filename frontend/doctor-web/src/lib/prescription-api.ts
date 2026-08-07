@@ -22,6 +22,13 @@ export interface CreatePrescriptionRequest {
   items: PrescriptionItemRequest[];
 }
 
+export interface AmendPrescriptionRequest {
+  diagnosis: string;
+  notes?: string;
+  followUpDate?: string;
+  items: PrescriptionItemRequest[];
+}
+
 export interface PrescriptionItemResponse {
   id: string;
   medicineName: string;
@@ -44,7 +51,15 @@ export interface PrescriptionResponse {
   diagnosis: string;
   notes?: string;
   followUpDate?: string;
-  status: "DRAFT" | "CONFIRMED" | "DISPENSED";
+  status: "DRAFT" | "CONFIRMED" | "DISPENSED" | "CANCELLED" | "CANCELLED_BY_AMENDMENT";
+  dispensingServicePointId?: string;
+  confirmedAt?: string;
+  dispensedAt?: string;
+  dispensedByUserId?: string;
+  replacesPrescriptionId?: string;
+  cancellationReason?: string;
+  cancelledAt?: string;
+  cancelledByUserId?: string;
   items: PrescriptionItemResponse[];
   createdAt: string;
   updatedAt: string;
@@ -67,8 +82,14 @@ export const prescriptionApi = {
   updatePrescription: (id: string, data: CreatePrescriptionRequest) => 
     api.put<PrescriptionResponse>(`/api/prescriptions/${id}`, data),
     
-  confirmPrescription: (id: string) => 
-    api.put<PrescriptionResponse>(`/api/prescriptions/${id}/confirm`, {}),
+  confirmPrescription: (id: string) =>
+    api.post<PrescriptionResponse>(`/api/prescriptions/${id}/confirm`, {}),
+
+  cancelPrescription: (id: string, reason: string) =>
+    api.post<PrescriptionResponse>(`/api/prescriptions/${id}/cancel`, { reason }),
+
+  amendPrescription: (id: string, data: AmendPrescriptionRequest) =>
+    api.post<PrescriptionResponse>(`/api/prescriptions/${id}/amendments`, data),
     
   getByConsultation: (consultationId: string) => 
     api.get<PrescriptionResponse[]>(`/api/prescriptions/consultation/${consultationId}`),

@@ -6,6 +6,7 @@ import com.careflow.consultation.repository.ConsultationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -17,19 +18,17 @@ import java.util.UUID;
 public class DataInitializer implements CommandLineRunner {
 
     private final ConsultationRepository consultationRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    public DataInitializer(ConsultationRepository consultationRepository) {
+    public DataInitializer(ConsultationRepository consultationRepository, JdbcTemplate jdbcTemplate) {
         this.consultationRepository = consultationRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public void run(String... args) {
         log.info("Checking historical consultation records for test patients...");
-
-        if (consultationRepository.count() > 2) {
-            consultationRepository.deleteAll();
-            log.info("Cleared duplicate historical consultations.");
-        }
+        alignStatusConstraint();
 
         UUID c1Id = UUID.fromString("c0000001-0000-0000-0000-000000000001");
         if (!consultationRepository.existsById(c1Id)) {
@@ -82,5 +81,24 @@ public class DataInitializer implements CommandLineRunner {
             consultationRepository.save(c2);
             log.info("Seeded historical completed consultation for Nguyễn Thị Mai (K21.9)");
         }
+    }
+
+    private void alignStatusConstraint() {
+        jdbcTemplate.execute("""
+                DO $$
+                BEGIN
+                    IF EXISTS (
+                        SELECT 1 FROM pg_constraint
+                        WHERE conrelid = 'consultations'::regclass
+                          AND conname = 'consultations_status_check'
+                    ) THEN
+                        ALTER TABLE consultations DROP CONSTRAINT consultations_status_check;
+                    END IF;
+                    ALTER TABLE consultations
+                        ADD CONSTRAINT consultations_status_check
+                        CHECK (status IN ('IN_PROGRESS', 'AWAITING_CLS', 'AWAITING_REVIEW',
+                                          'READY_TO_COMPLETE', 'COMPLETED', 'CANCELLED', 'TRANSFERRED'));
+                END $$;
+                """);
     }
 }

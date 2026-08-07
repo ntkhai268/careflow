@@ -28,7 +28,7 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
     required String patientId,
   }) async {
     final generation = ++_generation;
-    if (!_demoMode) {
+    if (!_demoMode && _repository is DemoJourneySource) {
       final error = const JourneyBackendUnavailable();
       _onActionError(null);
       state = AsyncError(error, StackTrace.current);

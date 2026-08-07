@@ -3,9 +3,11 @@ package com.careflow.directory.config;
 import com.careflow.directory.model.Department;
 import com.careflow.directory.model.DoctorProfile;
 import com.careflow.directory.model.Room;
+import com.careflow.directory.model.StaffAssignment;
 import com.careflow.directory.repository.DepartmentRepository;
 import com.careflow.directory.repository.DoctorProfileRepository;
 import com.careflow.directory.repository.RoomRepository;
+import com.careflow.directory.repository.StaffAssignmentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
@@ -22,12 +24,14 @@ public class DataInitializer implements CommandLineRunner {
     private final DepartmentRepository departmentRepository;
     private final RoomRepository roomRepository;
     private final DoctorProfileRepository doctorProfileRepository;
+    private final StaffAssignmentRepository staffAssignmentRepository;
 
     @Override
     public void run(String... args) {
         seedDepartments();
         seedRooms();
         seedDoctorProfiles();
+        seedStaffAssignments();
     }
 
     private void seedDepartments() {
@@ -65,6 +69,7 @@ public class DataInitializer implements CommandLineRunner {
                 Room.builder().id("ROOM-08").departmentCode("DA_LIEU").displayName("Phòng 08 - Da liễu").roomType("CONSULTATION").isActive(true).build(),
                 Room.builder().id("ROOM-10").departmentCode("TIM_MACH").displayName("Phòng 10 - Tim mạch").roomType("CONSULTATION").isActive(true).build(),
                 Room.builder().id("ROOM-11").departmentCode("CO_XUONG_KHOP").displayName("Phòng 11 - Cơ xương khớp").roomType("CONSULTATION").isActive(true).build(),
+                Room.builder().id("ROOM-21").departmentCode("THAN_KINH").displayName("Phòng 21 - Lầu 1 khu A").roomType("CONSULTATION").isActive(true).build(),
                 Room.builder().id("LAB-HEMATOLOGY-01").departmentCode("NOI_TONG_QUAT").displayName("Phòng Xét nghiệm Huyết học 101").roomType("LAB").isActive(true).build(),
                 Room.builder().id("PHARMACY-MAIN-01").departmentCode("NOI_TONG_QUAT").displayName("Quầy phát thuốc N-01").roomType("PHARMACY").isActive(true).build()
         );
@@ -74,6 +79,16 @@ public class DataInitializer implements CommandLineRunner {
                 roomRepository.save(room);
             }
         }
+        // PHARMACY-MAIN-01 is the canonical service point in Hospital Directory.
+        // Deactivate the legacy alias so downstream services never resolve two active
+        // pharmacy points for the same physical counter.
+        roomRepository.findById("PHARMACY-01").ifPresent(legacy -> {
+            if (roomRepository.existsById("PHARMACY-MAIN-01") && Boolean.TRUE.equals(legacy.getIsActive())) {
+                legacy.setIsActive(false);
+                roomRepository.save(legacy);
+                log.info("Deactivated legacy pharmacy service point PHARMACY-01");
+            }
+        });
         log.info("Idempotently verified hospital rooms.");
     }
 
@@ -95,8 +110,8 @@ public class DataInitializer implements CommandLineRunner {
                         .userId(UUID.fromString("11111111-1111-1111-1111-111111111111"))
                         .fullName("BS. Phạm Hoàng Nam")
                         .title("BS. CKI")
-                        .departmentCode("NOI_TONG_QUAT")
-                        .assignedRoomId("ROOM-01")
+                        .departmentCode("TAI_MUI_HONG")
+                        .assignedRoomId("ROOM-06")
                         .specialization("Nội tiêu hóa")
                         .licenseNumber("CCHN-005678/HCM")
                         .isActive(true)
@@ -152,6 +167,39 @@ public class DataInitializer implements CommandLineRunner {
                 doctorProfileRepository.save(doc);
             }
         }
+        reconcileLegacyDemoAssignment();
         log.info("Idempotently verified doctor profiles.");
+    }
+
+    private void seedStaffAssignments() {
+        UUID staffUserId = UUID.fromString("55555555-5555-5555-5555-555555555555");
+        UUID labTechnicianUserId = UUID.fromString("44444444-4444-4444-4444-444444444444");
+        ensureStaffAssignment(staffUserId, "ROOM-01", "NOI_TONG_QUAT");
+        ensureStaffAssignment(staffUserId, "PHARMACY-MAIN-01", "NOI_TONG_QUAT");
+        ensureStaffAssignment(labTechnicianUserId, "LAB-HEMATOLOGY-01", "NOI_TONG_QUAT");
+    }
+
+    private void ensureStaffAssignment(UUID userId, String roomId, String departmentCode) {
+        StaffAssignment assignment = staffAssignmentRepository.findByUserIdAndRoomId(userId, roomId)
+                .orElseGet(StaffAssignment::new);
+        assignment.setUserId(userId);
+        assignment.setRoomId(roomId);
+        assignment.setDepartmentCode(departmentCode);
+        assignment.setIsActive(true);
+        staffAssignmentRepository.save(assignment);
+        log.info("Verified staff assignment {} -> {}", userId, roomId);
+    }
+
+    private void reconcileLegacyDemoAssignment() {
+        UUID legacyDoctorUserId = UUID.fromString("11111111-1111-1111-1111-111111111111");
+        doctorProfileRepository.findByUserId(legacyDoctorUserId).ifPresent(profile -> {
+            if ("NOI_TONG_QUAT".equals(profile.getDepartmentCode())
+                    && "ROOM-01".equals(profile.getAssignedRoomId())) {
+                profile.setDepartmentCode("TAI_MUI_HONG");
+                profile.setAssignedRoomId("ROOM-06");
+                doctorProfileRepository.save(profile);
+                log.info("Reconciled legacy demo doctor assignment to TAI_MUI_HONG/ROOM-06");
+            }
+        });
     }
 }

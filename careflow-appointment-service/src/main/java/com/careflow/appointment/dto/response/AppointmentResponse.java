@@ -31,6 +31,7 @@ public class AppointmentResponse {
     private String statusDisplayName;
     private String reason;
     private String notes;
+    private UUID sourceConsultationId;
     private String queueNumber;
     private Instant createdAt;
     private Instant updatedAt;

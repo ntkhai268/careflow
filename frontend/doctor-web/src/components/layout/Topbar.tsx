@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { usePathname } from "next/navigation";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useSyncExternalStore } from "react";
 import ProfileModal from "../modals/ProfileModal";
 import SettingsModal from "../modals/SettingsModal";
 import HelpModal from "../modals/HelpModal";
@@ -24,7 +24,11 @@ const BREADCRUMB_MAP: Record<string, string> = {
 export default function Topbar() {
   const { user, logout } = useAuth();
   const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  );
   
   // Dropdown & Modal States
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -34,8 +38,6 @@ export default function Topbar() {
   const [doctorStatus, setDoctorStatus] = useState<"READY" | "PAUSED">("READY");
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => { setMounted(true); }, []);
 
   // Listen to custom events from Sidebar
   useEffect(() => {

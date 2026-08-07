@@ -107,7 +107,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [prescriptionItems, setPrescriptionItems] = useState<PrescriptionItemRequest[]>([]);
   const [prescriptionNotes, setPrescriptionNotes] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
-  const [prescriptionStatus, setPrescriptionStatus] = useState<"DRAFT" | "CONFIRMED" | "DISPENSED" | null>(null);
+  const [prescriptionStatus, setPrescriptionStatus] = useState<"DRAFT" | "CONFIRMED" | "DISPENSED" | "CANCELLED" | "CANCELLED_BY_AMENDMENT" | null>(null);
 
   // Progressive disclosure notes state
   const [showPrescriptionNotes, setShowPrescriptionNotes] = useState(false);
@@ -274,15 +274,17 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   }, [consultationId]);
 
   // Lazy load Clinical Summary data when tab "summary" is active
+  const summaryPatientId = consultation?.patientId;
   useEffect(() => {
-    if (activeTab !== "summary" || summaryLoaded || !consultation?.patientId) return;
+    if (activeTab !== "summary" || summaryLoaded || !summaryPatientId) return;
+    const patientId = summaryPatientId;
     async function loadSummary() {
       setSummaryLoading(true);
       try {
         const [consRes, prescRes, emrRes] = await Promise.all([
-          consultationApi.getByPatient(consultation!.patientId),
-          prescriptionApi.getByPatient(consultation!.patientId),
-          emrApi.getPatientSummary(consultation!.patientId).catch(() => null),
+          consultationApi.getByPatient(patientId),
+          prescriptionApi.getByPatient(patientId),
+          emrApi.getPatientSummary(patientId).catch(() => null),
         ]);
         setConsultationHistory((consRes.data ?? []).filter(c => c.id !== consultationId));
         setPrescriptionHistory(prescRes.data ?? []);
@@ -298,7 +300,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       }
     }
     loadSummary();
-  }, [activeTab, summaryLoaded, consultation?.patientId, consultationId]);
+  }, [activeTab, summaryLoaded, summaryPatientId, consultationId]);
 
   // Handle ICD-10 Search
   const filteredIcd10 = ICD10_CATALOG.filter(item => 
@@ -815,13 +817,13 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         <div className="border border-purple-300 bg-purple-50 p-4 text-purple-900 text-xs font-semibold flex items-center justify-between rounded-lg shadow-sm">
           <div className="flex items-center gap-2">
             <span className="font-bold text-purple-700 uppercase tracking-wider text-[11px]">Đã có kết quả CLS</span>
-            <span>· Kết quả Cận lâm sàng đã sẵn sàng. Bác sĩ bấm "Tiếp tục đọc kết quả" để xem và hoàn tất ca khám.</span>
+            <span>· Kết quả Cận lâm sàng đã sẵn sàng. Bác sĩ bấm &quot;Tiếp tục đọc kết quả&quot; để xem và hoàn tất ca khám.</span>
           </div>
           <button
             type="button"
             onClick={async () => {
               try {
-                await consultationApi.updateStatus(consultationId, "IN_PROGRESS");
+                await consultationApi.resume(consultationId);
                 setConsultation(prev => prev ? { ...prev, status: "IN_PROGRESS" } : null);
                 showToast("Đã chuyển sang đọc kết quả và tiếp tục phiên khám.", "success");
               } catch {
@@ -1188,15 +1190,15 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                           required: true,
                           preparationInstruction: s.preparationInstruction
                         }));
-                        const res = await labApi.createOrder({
+                        await labApi.createOrder({
                           consultationId,
                           patientId: consultation.patientId,
                           items,
                           clinicalNote: labClinicalNote || symptoms || "Chỉ định cận lâm sàng",
-                          paymentRequired: true
+                          paymentRequired: false
                         });
                         try {
-                          await consultationApi.updateStatus(consultationId, "AWAITING_CLS");
+                          await consultationApi.waitForResults(consultationId);
                           setConsultation(prev => prev ? { ...prev, status: "AWAITING_CLS" } : null);
                         } catch {
                           /* Ignore status update failure */

@@ -19,6 +19,8 @@ public class RabbitMqConfig {
     public static final String PRESCRIPTION_DLQ = "queue.prescription.events.dlq";
     public static final String LAB_RESULTS_QUEUE = "queue.lab.result-events";
     public static final String LAB_RESULTS_DLQ = "queue.lab.result-events.dlq";
+    public static final String LAB_READY_QUEUE = "queue.lab.ready-events";
+    public static final String LAB_READY_DLQ = "queue.lab.ready-events.dlq";
     private static final String NOTIFICATION_QUEUE = "notification.queue.events";
     private static final String NOTIFICATION_DLQ = "notification.queue.events.dlq";
     private static final String DLX = "careflow.dlx";
@@ -42,13 +44,17 @@ public class RabbitMqConfig {
                 .withArguments(Map.of("x-dead-letter-exchange", DLX,
                         "x-dead-letter-routing-key", LAB_RESULTS_DLQ)).build();
         Queue labResultsDead = QueueBuilder.durable(LAB_RESULTS_DLQ).build();
+        Queue labReadyInput = QueueBuilder.durable(LAB_READY_QUEUE)
+                .withArguments(Map.of("x-dead-letter-exchange", DLX,
+                        "x-dead-letter-routing-key", LAB_READY_DLQ)).build();
+        Queue labReadyDead = QueueBuilder.durable(LAB_READY_DLQ).build();
         Queue notification = QueueBuilder.durable(NOTIFICATION_QUEUE)
                 .withArguments(Map.of("x-dead-letter-exchange", DLX,
                         "x-dead-letter-routing-key", NOTIFICATION_DLQ)).build();
         Queue notificationDead = QueueBuilder.durable(NOTIFICATION_DLQ).build();
         return new Declarables(appointment, queue, prescription, lab, dlx, input, dead,
                 prescriptionInput, prescriptionDead, labResultsInput, labResultsDead,
-                notification, notificationDead,
+                labReadyInput, labReadyDead, notification, notificationDead,
                 BindingBuilder.bind(input).to(appointment).with("appointment.*"),
                 BindingBuilder.bind(dead).to(dlx).with(APPOINTMENT_DLQ),
                 BindingBuilder.bind(prescriptionInput).to(prescription).with("prescription.*"),
@@ -56,6 +62,8 @@ public class RabbitMqConfig {
                 BindingBuilder.bind(labResultsInput).to(lab)
                         .with(AppConstants.RK_LAB_ALL_REQUIRED_RESULTS_AVAILABLE),
                 BindingBuilder.bind(labResultsDead).to(dlx).with(LAB_RESULTS_DLQ),
+                BindingBuilder.bind(labReadyInput).to(lab).with(AppConstants.RK_LAB_ORDER_READY),
+                BindingBuilder.bind(labReadyDead).to(dlx).with(LAB_READY_DLQ),
                 BindingBuilder.bind(notification).to(queue).with("queue.#"),
                 BindingBuilder.bind(notificationDead).to(dlx).with(NOTIFICATION_DLQ));
     }

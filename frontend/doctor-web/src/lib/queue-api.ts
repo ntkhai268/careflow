@@ -23,6 +23,12 @@ export interface QueueEntry {
   startedAt: string | null;
   completedAt: string | null;
   missedAt: string | null;
+  type?: "CONSULTATION" | "LAB_EXECUTION" | "PHARMACY_DISPENSING";
+  consultationPhase?: "INITIAL" | "RESULT_REVIEW";
+  servicePointId?: string | null;
+  consultationId?: string | null;
+  labOrderId?: string | null;
+  prescriptionId?: string | null;
 }
 
 export interface QueueDashboardResponse {

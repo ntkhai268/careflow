@@ -23,7 +23,9 @@ import '../features/journey/presentation/journey_timeline_screen.dart';
 import '../features/journey/presentation/laboratory_screen.dart';
 import '../features/journey/presentation/result_review_screen.dart';
 import '../features/journey/presentation/visit_outcome_screen.dart';
+import '../features/journey/presentation/visit_results_screen.dart';
 import '../features/journey/presentation/visit_ticket_screen.dart';
+import '../features/journey/domain/journey_models.dart';
 import '../models/patient.dart';
 import '../models/appointment.dart';
 
@@ -43,6 +45,10 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const RegisterScreen(),
     ),
     GoRoute(path: '/', builder: (context, state) => const MainShell()),
+    GoRoute(
+      path: '/visit-results',
+      builder: (context, state) => const VisitResultsScreen(),
+    ),
     // Profile routes
     GoRoute(
       path: '/profile/create',
@@ -174,6 +180,9 @@ final GoRouter appRouter = GoRouter(
           path: 'outcome',
           builder: (context, state) => VisitOutcomeScreen(
             appointmentId: state.pathParameters['appointmentId']!,
+            initialJourney: state.extra is PatientJourney
+                ? state.extra as PatientJourney
+                : null,
           ),
         ),
         GoRoute(

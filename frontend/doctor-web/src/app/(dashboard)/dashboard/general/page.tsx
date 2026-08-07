@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { consultationApi, ConsultationResponse } from "@/lib/consultation-api";
 import { queueApi } from "@/lib/queue-api";
 import { patientApi } from "@/lib/patient-api";
+import { getErrorMessage } from "@/lib/error-utils";
 import Link from "next/link";
 
 interface DisplayQueuePatient {
@@ -57,7 +58,6 @@ export default function DashboardGeneralPage() {
   const isAdmin = user?.role?.toUpperCase().includes("ADMIN");
   const isLabTech = user?.role?.toUpperCase().includes("LAB");
   const isStaff = user?.role?.toUpperCase().includes("STAFF");
-  const isDoctor = !isAdmin && !isLabTech && !isStaff;
 
   useEffect(() => {
     if (isAdmin) {
@@ -208,8 +208,8 @@ export default function DashboardGeneralPage() {
 
       const res = await consultationApi.createConsultation({ appointmentId, patientId, doctorId: user.id });
       router.push(`/consultation/${res.data.id}`);
-    } catch (err: any) {
-      const msg = err?.message || "Bác sĩ hiện tại đang có một ca khám chưa hoàn tất.";
+    } catch (err: unknown) {
+      const msg = getErrorMessage(err, "Bác sĩ hiện tại đang có một ca khám chưa hoàn tất.");
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
           detail: { text: msg }

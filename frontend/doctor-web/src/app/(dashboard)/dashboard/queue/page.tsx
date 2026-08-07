@@ -1,11 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useRouter } from "next/navigation";
 import { queueApi, QueueEntry, QueueDashboardResponse } from "@/lib/queue-api";
 import { consultationApi } from "@/lib/consultation-api";
 import { patientApi } from "@/lib/patient-api";
+import { appointmentApi } from "@/lib/appointment-api";
+import { getErrorMessage } from "@/lib/error-utils";
 
 function StatusDot({ status }: { status: string }) {
   const config: Record<string, { color: string; label: string; textClass: string }> = {
@@ -72,23 +74,25 @@ export default function DashboardQueuePage() {
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const [patientNames, setPatientNames] = useState<Record<string, string>>({});
+  const patientNamesRef = useRef<Record<string, string>>({});
   const [isCallingNext, setIsCallingNext] = useState(false);
   const [callingEntryId, setCallingEntryId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
 
-  const roomId = "ROOM-01";
+  const [roomId, setRoomId] = useState<string | null>(null);
 
-  const loadQueue = async () => {
+  const loadQueue = useCallback(async (targetRoomId?: string) => {
+    if (!targetRoomId) return;
     setIsLoading(true);
     setFetchError(null);
     try {
-      const res = await queueApi.getRoomActive(roomId);
+      const res = await queueApi.getRoomActive(targetRoomId);
       const data = res.data ?? null;
       setDashboardData(data);
 
       // Fetch patient names asynchronously for entries
       if (data?.entries && data.entries.length > 0) {
-        const pMap: Record<string, string> = { ...patientNames };
+        const pMap: Record<string, string> = { ...patientNamesRef.current };
         for (const entry of data.entries) {
           if (entry.patientId && !pMap[entry.patientId]) {
             try {
@@ -101,6 +105,7 @@ export default function DashboardQueuePage() {
             }
           }
         }
+        patientNamesRef.current = pMap;
         setPatientNames(pMap);
       }
     } catch {
@@ -109,16 +114,36 @@ export default function DashboardQueuePage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    if (user) {
-      loadQueue();
-    }
-  }, [user]);
+    if (!user) return;
+    let active = true;
+    const loadClinicalContextAndQueue = async () => {
+      setIsLoading(true);
+      setFetchError(null);
+      try {
+        const contextRes = await appointmentApi.getClinicalContext();
+        const assignedRoom = contextRes.data?.rooms?.[0];
+        if (!assignedRoom) {
+          throw new Error("Bác sĩ chưa được phân công phòng khám.");
+        }
+        if (!active) return;
+        setRoomId(assignedRoom.roomId);
+        await loadQueue(assignedRoom.roomId);
+      } catch (err: unknown) {
+        if (!active) return;
+        setFetchError(getErrorMessage(err, "Không thể tải thông tin phân công phòng khám."));
+        setDashboardData(null);
+        setIsLoading(false);
+      }
+    };
+    loadClinicalContextAndQueue();
+    return () => { active = false; };
+  }, [user, loadQueue]);
 
   const handleCallNext = async () => {
-    if (!user) return;
+    if (!user || !roomId) return;
     setIsCallingNext(true);
     setErrorMessage("");
     try {
@@ -142,6 +167,9 @@ export default function DashboardQueuePage() {
       const nextEntry = callRes.data;
 
       if (nextEntry && nextEntry.queueNumber) {
+        // Move the queue entry to IN_PROGRESS before opening the consultation.
+        await queueApi.startEntry(nextEntry.entryId);
+
         // 2. Automatically create consultation and navigate to consultation page
         const res = await consultationApi.createConsultation({
           appointmentId: nextEntry.appointmentId,
@@ -155,7 +183,7 @@ export default function DashboardQueuePage() {
             detail: { text: "Bác sĩ ơi, hiện tại chưa có bệnh nhân nào đâu ạ!" }
           }));
         }
-        await loadQueue();
+        await loadQueue(roomId);
       }
     } catch {
       if (typeof window !== "undefined") {
@@ -169,7 +197,7 @@ export default function DashboardQueuePage() {
   };
 
   const handleCallEntry = async (entry: QueueEntry) => {
-    if (!user) return;
+    if (!user || !roomId) return;
     setCallingEntryId(entry.entryId);
     setErrorMessage("");
     try {
@@ -194,7 +222,11 @@ export default function DashboardQueuePage() {
 
       if (entry.queueStatus === "CHECKED_IN") {
         await queueApi.callEntry(entry.entryId);
-        await loadQueue();
+        await loadQueue(roomId);
+      }
+
+      if (entry.queueStatus === "CHECKED_IN" || entry.queueStatus === "CALLED") {
+        await queueApi.startEntry(entry.entryId);
       }
 
       const res = await consultationApi.createConsultation({
@@ -203,8 +235,8 @@ export default function DashboardQueuePage() {
         doctorId: user.id
       });
       router.push(`/consultation/${res.data.id}?entryId=${entry.entryId}`);
-    } catch (err: any) {
-      setErrorMessage(err?.message || "Không thể khởi tạo ca khám cho bệnh nhân.");
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, "Không thể khởi tạo ca khám cho bệnh nhân."));
     } finally {
       setCallingEntryId(null);
     }
@@ -218,8 +250,8 @@ export default function DashboardQueuePage() {
       {/* Header Bar */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-[20px] font-bold text-gray-900 tracking-tight">
-            Hàng đợi khám (Phòng {dashboardData?.roomCode || roomId})
+          <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+            Hàng đợi khám (Phòng {dashboardData?.roomCode || roomId || "—"})
           </h1>
           <p className="mt-0.5 text-[11px] text-gray-500">
             Danh sách bệnh nhân đã tiếp nhận sẵn sàng vào khám

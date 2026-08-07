@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import Link from "next/link";
 import { directoryApi, DepartmentItem } from "@/lib/directory-api";
 
 interface AccountItem {
@@ -28,7 +27,7 @@ const ROLE_OPTIONS: { value: AccountItem["role"]; label: string }[] = [
 ];
 
 export default function AdminAccountsPage() {
-  const [isLoading, setIsLoading] = useState(true);
+  const [, setIsLoading] = useState(true);
   const [accounts, setAccounts] = useState<AccountItem[] | null>(null);
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);

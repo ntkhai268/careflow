@@ -315,14 +315,14 @@ void main() {
     },
   );
 
-  test('uses an unavailable repository when demo mode is disabled', () {
+  test('uses the backend repository when demo mode is disabled', () {
     final container = ProviderContainer(
       overrides: [demoModeProvider.overrideWithValue(false)],
     );
 
     expect(
-      container.read(journeyRepositoryProvider),
-      isNot(isA<DemoJourneyRepository>()),
+      container.read(journeyRepositoryProvider).runtimeType.toString(),
+      'BackendJourneyRepository',
     );
     container.dispose();
   });

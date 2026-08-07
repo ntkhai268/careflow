@@ -78,8 +78,8 @@ public class DepartmentController {
     }
 
     private void checkAdminRole(String userRole) {
-        if (userRole != null && !userRole.isBlank() && !userRole.toUpperCase().contains("ADMIN")) {
-            throw new BusinessException(403, "Chỉ Quản trị viên (ADMIN) mới có quyền thực hiện thao tác này");
+        if (userRole == null || !"ADMIN".equalsIgnoreCase(userRole.trim())) {
+            throw new BusinessException(403, "Only ADMIN can modify hospital directory data");
         }
     }
 }

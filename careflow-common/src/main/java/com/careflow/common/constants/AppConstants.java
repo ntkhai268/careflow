@@ -15,6 +15,7 @@ public final class AppConstants {
     public static final String RK_APPOINTMENT_CREATED = "appointment.created";
     public static final String RK_APPOINTMENT_CONFIRMED = "appointment.confirmed";
     public static final String RK_APPOINTMENT_CANCELLED = "appointment.cancelled";
+    public static final String RK_APPOINTMENT_FOLLOW_UP_SCHEDULED = "appointment.follow-up.scheduled";
     public static final String RK_QUEUE_NUMBER_ASSIGNED = "queue.number.assigned";
     public static final String RK_QUEUE_CHECKED_IN = "queue.checked-in";
     public static final String RK_QUEUE_CALLED = "queue.called";
@@ -28,6 +29,7 @@ public final class AppConstants {
     public static final String RK_PRESCRIPTION_CANCELLED = "prescription.cancelled";
     public static final String RK_PRESCRIPTION_DISPENSED = "prescription.dispensed";
     public static final String RK_LAB_ALL_REQUIRED_RESULTS_AVAILABLE = "lab.results.all-required-available";
+    public static final String RK_LAB_ORDER_READY = "lab.order.ready";
     public static final String RK_NOTIFICATION_SEND = "notification.send";
 
     // Roles

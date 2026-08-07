@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { queueApi, QueueEntry } from "@/lib/queue-api";
-import { prescriptionApi, PrescriptionResponse } from "@/lib/prescription-api";
+import { PrescriptionResponse } from "@/lib/prescription-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { getErrorMessage } from "@/lib/error-utils";
 
 export default function StaffPharmacyPage() {
-  const [servicePointId, setServicePointId] = useState("PHARMACY-MAIN-01");
+  const servicePointId = "PHARMACY-MAIN-01";
   const [entries, setEntries] = useState<QueueEntry[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -22,7 +23,7 @@ export default function StaffPharmacyPage() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const fetchPharmacyQueue = async () => {
+  const fetchPharmacyQueue = useCallback(async () => {
     setIsLoading(true);
     setError(null);
     try {
@@ -34,11 +35,14 @@ export default function StaffPharmacyPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [servicePointId]);
 
   useEffect(() => {
-    fetchPharmacyQueue();
-  }, [servicePointId]);
+    const timer = window.setTimeout(() => {
+      void fetchPharmacyQueue();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [fetchPharmacyQueue]);
 
   const notifyAi = (text: string) => {
     if (typeof window !== "undefined") {
@@ -76,9 +80,10 @@ export default function StaffPharmacyPage() {
       setActiveEntry(null);
       setActivePrescription(null);
       await fetchPharmacyQueue();
-    } catch (err: any) {
-      notifyAi(err.message || "Đã xảy ra lỗi khi xác nhận phát thuốc rồi ạ!");
-      showToast(err.message || "Lỗi khi xác nhận cấp phát thuốc.", "danger");
+    } catch (err: unknown) {
+      const message = getErrorMessage(err, "Đã xảy ra lỗi khi xác nhận phát thuốc rồi ạ!");
+      notifyAi(message);
+      showToast(message, "danger");
     } finally {
       setIsDispensing(false);
     }

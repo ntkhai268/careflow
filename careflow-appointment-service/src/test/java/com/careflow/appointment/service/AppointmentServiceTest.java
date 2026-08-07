@@ -144,4 +144,92 @@ class AppointmentServiceTest {
                 .isInstanceOf(com.careflow.common.exception.BusinessException.class)
                 .extracting("status").isEqualTo(403);
     }
+
+    @Test
+    void assignmentAccessAllowsOnlyTheAssignedDoctor() {
+        UUID patientId = UUID.randomUUID();
+        UUID appointmentId = UUID.randomUUID();
+        UUID assignedDoctorUserId = UUID.randomUUID();
+        Appointment appointment = Appointment.builder()
+                .patientId(patientId)
+                .ownerUserId(UUID.randomUUID())
+                .doctorId(assignedDoctorUserId)
+                .department(Department.NOI_TONG_QUAT)
+                .departmentId(Department.NOI_TONG_QUAT.getId())
+                .roomId("ROOM-01")
+                .roomDisplayName("Phòng 01")
+                .appointmentDate(LocalDate.now().plusDays(1))
+                .timeSlot("10:00-10:30")
+                .status(AppointmentStatus.CONFIRMED)
+                .build();
+        appointment.setId(appointmentId);
+        when(appointmentRepository.findByPatientIdOrderByAppointmentDateDesc(patientId))
+                .thenReturn(java.util.List.of(appointment));
+
+        var allowed = appointmentService.getAssignmentAccess(
+                patientId, null, null, assignedDoctorUserId, "DOCTOR");
+        var denied = appointmentService.getAssignmentAccess(
+                patientId, null, null, UUID.randomUUID(), "DOCTOR");
+
+        assertThat(allowed.isAllowed()).isTrue();
+        assertThat(denied.isAllowed()).isFalse();
+    }
+
+    @Test
+    void staffAssignmentRequiresTheAppointmentAndRoomScope() {
+        UUID patientId = UUID.randomUUID();
+        UUID appointmentId = UUID.randomUUID();
+        Appointment appointment = Appointment.builder()
+                .patientId(patientId)
+                .ownerUserId(UUID.randomUUID())
+                .department(Department.NOI_TONG_QUAT)
+                .departmentId(Department.NOI_TONG_QUAT.getId())
+                .roomId("ROOM-01")
+                .roomDisplayName("Phòng 01")
+                .appointmentDate(LocalDate.now().plusDays(1))
+                .timeSlot("10:00-10:30")
+                .status(AppointmentStatus.CHECKED_IN)
+                .build();
+        appointment.setId(appointmentId);
+        when(appointmentRepository.findById(appointmentId)).thenReturn(java.util.Optional.of(appointment));
+
+        var allowed = appointmentService.getAssignmentAccess(
+                patientId, appointmentId, "ROOM-01", UUID.randomUUID(), "STAFF");
+        var denied = appointmentService.getAssignmentAccess(
+                patientId, appointmentId, "ROOM-02", UUID.randomUUID(), "STAFF");
+
+        assertThat(allowed.isAllowed()).isTrue();
+        assertThat(denied.isAllowed()).isFalse();
+    }
+
+    @Test
+    void departmentListingIsLimitedToAdminOrTheAssignedDoctor() {
+        UUID doctorUserId = UUID.randomUUID();
+        Appointment appointment = Appointment.builder()
+                .patientId(UUID.randomUUID())
+                .ownerUserId(UUID.randomUUID())
+                .doctorId(doctorUserId)
+                .department(Department.NOI_TONG_QUAT)
+                .departmentId(Department.NOI_TONG_QUAT.getId())
+                .roomId("ROOM-01")
+                .roomDisplayName("Phòng 01")
+                .appointmentDate(LocalDate.of(2026, 8, 7))
+                .timeSlot("10:00-10:30")
+                .status(AppointmentStatus.CONFIRMED)
+                .build();
+        when(appointmentRepository.findByDepartmentAndAppointmentDateOrderByTimeSlot(
+                Department.NOI_TONG_QUAT, appointment.getAppointmentDate()))
+                .thenReturn(java.util.List.of(appointment));
+
+        assertThat(appointmentService.getAppointmentsByDepartmentAndDate(
+                Department.NOI_TONG_QUAT.name(), appointment.getAppointmentDate(), doctorUserId, "DOCTOR"))
+                .hasSize(1);
+        assertThat(appointmentService.getAppointmentsByDepartmentAndDate(
+                Department.NOI_TONG_QUAT.name(), appointment.getAppointmentDate(), UUID.randomUUID(), "DOCTOR"))
+                .isEmpty();
+        assertThatThrownBy(() -> appointmentService.getAppointmentsByDepartmentAndDate(
+                Department.NOI_TONG_QUAT.name(), appointment.getAppointmentDate(), UUID.randomUUID(), "STAFF"))
+                .isInstanceOf(com.careflow.common.exception.BusinessException.class)
+                .extracting("status").isEqualTo(403);
+    }
 }

@@ -24,6 +24,14 @@ public class PrescriptionResponse {
     private String diagnosis;
     private String notes;
     private LocalDate followUpDate;
+    private String dispensingServicePointId;
+    private LocalDateTime confirmedAt;
+    private LocalDateTime dispensedAt;
+    private UUID dispensedByUserId;
+    private UUID replacesPrescriptionId;
+    private String cancellationReason;
+    private LocalDateTime cancelledAt;
+    private UUID cancelledByUserId;
     private PrescriptionStatus status;
     private List<PrescriptionItemResponse> items;
     private LocalDateTime createdAt;

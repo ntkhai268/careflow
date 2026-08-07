@@ -26,6 +26,13 @@ export interface PatientResponse {
   allergies?: PatientAllergyResponse[];
 }
 
+export interface PatientOperationalResponse {
+  id: string;
+  fullName: string;
+  dateOfBirth?: string;
+  gender?: string;
+}
+
 export interface EmrSummaryResponse {
   patient: PatientResponse;
   medicalRecord: {
@@ -35,14 +42,19 @@ export interface EmrSummaryResponse {
     medicalHistory: string;
   };
   allergies: PatientAllergyResponse[];
-  recentConsultations: any[];
-  recentPrescriptions: any[];
-  recentLabOrders: any[];
+  recentConsultations: unknown[];
+  recentPrescriptions: unknown[];
+  recentLabOrders: unknown[];
 }
 
 export const patientApi = {
   getPatientById: (id: string) => 
     api.get<PatientResponse>(`/api/patients/${id}`),
+
+  getOperationalSummary: (patientId: string, appointmentId: string, roomId: string) =>
+    api.get<PatientOperationalResponse>(
+      `/api/patients/${patientId}/operational-summary?appointmentId=${encodeURIComponent(appointmentId)}&roomId=${encodeURIComponent(roomId)}`
+    ),
 
   getPatientByUserId: (userId: string) => 
     api.get<PatientResponse>(`/api/patients/user/${userId}`),

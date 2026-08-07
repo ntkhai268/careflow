@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -77,7 +78,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
       >
         {!isCollapsed && (
           <div className="flex items-center gap-2.5">
-            <img src="/logo.svg" alt="CareFlow" className="w-8 h-8 object-contain" />
+            <Image src="/logo.svg" alt="CareFlow" width={32} height={32} className="w-8 h-8 object-contain" />
             <div>
               <h1 className="text-sm font-bold text-white tracking-tight">CareFlow</h1>
               <p className="text-[10px] font-medium tracking-widest uppercase" style={{ color: "#4B5677" }}>
@@ -87,7 +88,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
           </div>
         )}
         {isCollapsed && (
-          <img src="/logo.svg" alt="CareFlow" className="w-8 h-8 object-contain mx-auto" />
+          <Image src="/logo.svg" alt="CareFlow" width={32} height={32} className="w-8 h-8 object-contain mx-auto" />
         )}
         {!isCollapsed && (
           <button

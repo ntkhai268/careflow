@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { queueApi, QueueEntry } from "@/lib/queue-api";
-import { patientApi, PatientResponse } from "@/lib/patient-api";
+import { patientApi, PatientOperationalResponse } from "@/lib/patient-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const statusLabels: Record<string, string> = {
@@ -61,7 +61,7 @@ export default function StaffCheckinPage() {
   const [checkInResult, setCheckInResult] = useState<QueueEntry | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [roomEntries, setRoomEntries] = useState<QueueEntry[] | null>(null);
-  const [patientDetails, setPatientDetails] = useState<Record<string, PatientResponse | null>>({});
+  const [patientDetails, setPatientDetails] = useState<Record<string, PatientOperationalResponse | null>>({});
   const [isLoadingQueue, setIsLoadingQueue] = useState(false);
   const [processingEntryId, setProcessingEntryId] = useState<string | null>(null);
 
@@ -76,7 +76,12 @@ export default function StaffCheckinPage() {
       const patientResults = await Promise.all(
         uniquePatientIds.map(async (patientId) => {
           try {
-            const patientRes = await patientApi.getPatientById(patientId);
+            const entry = entries.find((item) => item.patientId === patientId);
+            if (!entry?.appointmentId || !entry.roomCode) {
+              return [patientId, null] as const;
+            }
+            const patientRes = await patientApi.getOperationalSummary(
+              patientId, entry.appointmentId, entry.roomCode);
             return [patientId, patientRes.data ?? null] as const;
           } catch {
             return [patientId, null] as const;

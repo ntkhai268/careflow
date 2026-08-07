@@ -35,6 +35,8 @@ export interface LabOrderItemResponse {
   resultValue?: string;
   referenceRange?: string;
   unit?: string;
+  resultFlag?: string;
+  comment?: string;
 }
 
 export interface LabOrderResponse {
@@ -46,6 +48,7 @@ export interface LabOrderResponse {
   clinicalNote?: string;
   items: LabOrderItemResponse[];
   createdAt: string;
+  updatedAt?: string;
 }
 
 // Catalog tĩnh dịch vụ Cận lâm sàng cho Doctor Web chọn
@@ -98,30 +101,18 @@ export const labApi = {
   getById: (orderId: string) =>
     api.get<LabOrderResponse>(`/api/labs/orders/${orderId}`),
 
-  startOrder: async (orderId: string) => {
-    try {
-      return await api.post<LabOrderResponse>(`/api/labs/orders/${orderId}/start`, {});
-    } catch {
-      // Mock fallback if lab service endpoint is not present
-      return { data: { id: orderId, status: "IN_PROGRESS" } as LabOrderResponse };
-    }
-  },
+  startOrder: (orderId: string) =>
+    api.post<LabOrderResponse>(`/api/labs/orders/${orderId}/start`, {}),
 
-  submitItemResult: async (orderId: string, itemId: string, data: { resultValue: string; referenceRange?: string; unit?: string }) => {
-    try {
-      return await api.put<LabOrderItemResponse>(`/api/labs/orders/${orderId}/items/${itemId}/result`, data);
-    } catch {
-      // Mock fallback
-      return { data: { id: itemId, ...data, status: "COMPLETED" } as LabOrderItemResponse };
-    }
-  },
+  submitItemResult: (orderId: string, itemId: string, data: {
+    resultValue: string;
+    referenceRange?: string;
+    unit?: string;
+    resultFlag?: string;
+    comment?: string;
+  }) =>
+    api.put<LabOrderItemResponse>(`/api/labs/orders/${orderId}/items/${itemId}/result`, data),
 
-  finalizeOrder: async (orderId: string) => {
-    try {
-      return await api.post<LabOrderResponse>(`/api/labs/orders/${orderId}/finalize`, {});
-    } catch {
-      // Mock fallback
-      return { data: { id: orderId, status: "RESULT_AVAILABLE" } as LabOrderResponse };
-    }
-  },
+  finalizeOrder: (orderId: string) =>
+    api.post<LabOrderResponse>(`/api/labs/orders/${orderId}/finalize`, {}),
 };

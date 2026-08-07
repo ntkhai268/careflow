@@ -37,9 +37,14 @@ public class DoctorController {
     public ResponseEntity<ApiResponse<DoctorProfileResponse>> getMyDoctorProfile(
             @RequestHeader(value = "X-User-Id", required = false) String userIdHeader) {
         if (userIdHeader == null || userIdHeader.isBlank()) {
-            throw new BusinessException(401, "Thiếu header X-User-Id xác thực người dùng");
+            throw new BusinessException(401, "Missing X-User-Id authentication header");
         }
-        UUID userId = UUID.fromString(userIdHeader);
+        UUID userId;
+        try {
+            userId = UUID.fromString(userIdHeader.trim());
+        } catch (IllegalArgumentException ex) {
+            throw new BusinessException(401, "Invalid X-User-Id authentication header");
+        }
         return ResponseEntity.ok(ApiResponse.success(directoryService.getDoctorByUserId(userId)));
     }
 
@@ -62,8 +67,8 @@ public class DoctorController {
     }
 
     private void checkAdminRole(String userRole) {
-        if (userRole != null && !userRole.isBlank() && !userRole.toUpperCase().contains("ADMIN")) {
-            throw new BusinessException(403, "Chỉ Quản trị viên (ADMIN) mới có quyền thực hiện thao tác này");
+        if (userRole == null || !"ADMIN".equalsIgnoreCase(userRole.trim())) {
+            throw new BusinessException(403, "Only ADMIN can modify hospital directory data");
         }
     }
 }

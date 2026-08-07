@@ -134,7 +134,7 @@ class FailingReferenceDataService extends AppointmentService {
       Future.error(StateError('gateway unavailable'));
 
   @override
-  Future<List<String>> getTimeSlots() =>
+  Future<List<String>> getTimeSlots({String? department, DateTime? date}) =>
       Future.error(StateError('gateway unavailable'));
 }
 
@@ -142,7 +142,7 @@ class AvailableReferenceDataService extends AppointmentService {
   AvailableReferenceDataService() : super(ApiService());
 
   @override
-  Future<List<String>> getTimeSlots() async => const [
+  Future<List<String>> getTimeSlots({String? department, DateTime? date}) async => const [
     '07:30-08:00',
     '14:30-15:00',
     '15:00-15:30',

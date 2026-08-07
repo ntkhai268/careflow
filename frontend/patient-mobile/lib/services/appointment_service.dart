@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:uuid/uuid.dart';
 import '../config/api_config.dart';
 import '../models/appointment.dart';
 import 'api_service.dart';
@@ -49,11 +50,18 @@ class AppointmentService {
   AppointmentService(this._apiService);
 
   /// Create a new appointment
-  Future<Appointment> createAppointment(Map<String, dynamic> data) async {
+  Future<Appointment> createAppointment(
+    Map<String, dynamic> data, {
+    String? idempotencyKey,
+  }) async {
     try {
+      final requestKey = idempotencyKey ?? const Uuid().v4();
       final response = await _apiService.post(
         ApiConfig.appointments,
         data: data,
+        options: Options(
+          headers: <String, String>{'Idempotency-Key': requestKey},
+        ),
       );
       final apiResponse = response.data as Map<String, dynamic>;
       return Appointment.fromJson(apiResponse['data'] as Map<String, dynamic>);
@@ -103,9 +111,17 @@ class AppointmentService {
   }
 
   /// Get available time slots
-  Future<List<String>> getTimeSlots() async {
+  Future<List<String>> getTimeSlots({String? department, DateTime? date}) async {
+    final queryParams = <String, dynamic>{};
+    if (department != null && department.isNotEmpty) {
+      queryParams['department'] = department;
+    }
+    if (date != null) {
+      queryParams['date'] = date.toIso8601String().split('T').first;
+    }
     final response = await _apiService.get(
       '${ApiConfig.appointments}/time-slots',
+      queryParams: queryParams.isEmpty ? null : queryParams,
     );
     final apiResponse = response.data as Map<String, dynamic>;
     final list = apiResponse['data'] as List<dynamic>;

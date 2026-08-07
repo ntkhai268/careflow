@@ -40,8 +40,26 @@ public class Prescription extends BaseEntity {
 
     private LocalDate followUpDate;
 
+    @Column(length = 80)
+    private String dispensingServicePointId;
+
+    private java.time.Instant confirmedAt;
+
+    private java.time.Instant dispensedAt;
+
+    private UUID dispensedByUserId;
+
+    private UUID replacesPrescriptionId;
+
+    @Column(length = 500)
+    private String cancellationReason;
+
+    private java.time.Instant cancelledAt;
+
+    private UUID cancelledByUserId;
+
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false, length = 30)
     @Builder.Default
     private PrescriptionStatus status = PrescriptionStatus.DRAFT;
 

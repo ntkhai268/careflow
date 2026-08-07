@@ -1,7 +1,15 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../models/appointment.dart';
 import '../../../providers/auth_provider.dart';
 import '../../../providers/patient_provider.dart';
+import '../../../services/appointment_service.dart';
+import '../../../services/consultation_service.dart';
+import '../../../services/lab_service.dart';
+import '../../../services/notification_service.dart';
+import '../../../services/prescription_service.dart';
+import '../../../services/queue_service.dart';
+import '../data/backend_journey_repository.dart';
 import '../data/demo_journey_repository.dart';
 import '../data/journey_repository.dart';
 import '../data/journey_store.dart';
@@ -27,7 +35,14 @@ final journeyStoreProvider = Provider<JourneyStore>(
 
 final journeyRepositoryProvider = Provider<JourneyRepository>((ref) {
   if (!ref.watch(demoModeProvider)) {
-    return const UnavailableJourneyRepository();
+    return BackendJourneyRepository(
+      appointmentService: ref.watch(appointmentServiceProvider),
+      queueService: ref.watch(queueServiceProvider),
+      consultationService: ref.watch(consultationServiceProvider),
+      labService: ref.watch(labServiceProvider),
+      prescriptionService: ref.watch(prescriptionServiceProvider),
+      notificationService: ref.watch(notificationServiceProvider),
+    );
   }
   return DemoJourneyRepository(store: ref.watch(journeyStoreProvider));
 });
@@ -93,6 +108,56 @@ final activeJourneyProvider = Provider<PatientJourney?>((ref) {
       ? journey
       : null;
 });
+
+/// Completed visit outcomes available to the signed-in patient.
+///
+/// The backend journey repository already composes consultation, laboratory,
+/// prescription, and follow-up data for one appointment. Reusing that
+/// composition here keeps the history screen aligned with the detail screen
+/// and prevents the mobile app from inventing a second result contract.
+final visitResultsProvider = FutureProvider.autoDispose<List<VisitResult>>((
+  ref,
+) async {
+  final scope = ref.watch(journeyAccountScopeProvider);
+  if (scope == null) return const [];
+
+  final appointments = await ref
+      .watch(appointmentServiceProvider)
+      .getAppointmentsByPatientId(scope.patientId);
+  final completedAppointments = appointments
+      .where(
+        (appointment) =>
+            appointment.patientId == scope.patientId &&
+            appointment.status.toUpperCase() == 'COMPLETED',
+      )
+      .toList(growable: false);
+  final repository = ref.watch(journeyRepositoryProvider);
+  final journeys = await Future.wait(
+    completedAppointments.map(
+      (appointment) async => VisitResult(
+        appointment: appointment,
+        journey: await repository.bootstrap(
+          appointment: appointment,
+          patientId: scope.patientId,
+        ),
+      ),
+    ),
+  );
+
+  journeys.sort((left, right) {
+    final leftDate = left.journey.updatedAt;
+    final rightDate = right.journey.updatedAt;
+    return rightDate.compareTo(leftDate);
+  });
+  return journeys;
+});
+
+class VisitResult {
+  const VisitResult({required this.appointment, required this.journey});
+
+  final Appointment appointment;
+  final PatientJourney journey;
+}
 
 final unreadJourneyNotificationCountProvider = Provider<int>(
   (ref) =>

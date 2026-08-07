@@ -17,6 +17,8 @@ public class CreateConsultationRequest {
     @NotNull(message = "Appointment ID is required")
     private UUID appointmentId;
 
+    private UUID queueEntryId;
+
     @NotNull(message = "Patient ID is required")
     private UUID patientId;
 

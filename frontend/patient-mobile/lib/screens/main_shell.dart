@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../config/theme.dart';
 import '../features/journey/application/journey_providers.dart';
@@ -28,6 +29,7 @@ class _MainShellState extends ConsumerState<MainShell> {
         onAppointmentsTap: () => _selectTab(1),
         onRecordsTap: () => _selectTab(2),
         onNotificationTap: () => _selectTab(3),
+        onResultsTap: () => context.push('/visit-results'),
       ),
       const AppointmentScreen(),
       const ProfileScreen(),
