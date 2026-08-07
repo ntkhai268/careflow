@@ -36,7 +36,6 @@ const getNavItems = (role?: string) => {
     { label: "Tổng quan", href: "/dashboard/general" },
     { label: "Hàng đợi khám", href: "/dashboard/queue" },
     { label: "Đơn thuốc", href: "/dashboard/prescriptions" },
-    { label: "Quản trị hệ thống", href: "/admin" },
   ];
 };
 

@@ -21,8 +21,8 @@ spring:
               - OPTIONS
             allowedHeaders: "*"
       httpclient:
-        connect-timeout: 3000
-        response-timeout: 5s
+        connect-timeout: 5000
+        response-timeout: 30s
       discovery:
         locator:
           enabled: true

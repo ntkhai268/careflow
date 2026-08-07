@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { aiApi } from "@/lib/ai-api";
+import { renderFormattedAiText } from "@/lib/format-ai-text";
 
 interface ChatMessage {
   id: string;
@@ -23,6 +25,7 @@ export default function AiAssistantWidget() {
   const [inputText, setInputText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
+  const [isTyping, setIsTyping] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "1",
@@ -64,12 +67,12 @@ export default function AiAssistantWidget() {
     return () => window.removeEventListener("careflow:ai-notify", handleAiNotify);
   }, [isOpen]);
 
-  // Auto scroll to bottom when new chat messages arrive
+  // Auto scroll to bottom when new chat messages arrive or typing status changes
   useEffect(() => {
     if (isOpen) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isTyping]);
 
   // Auto fade-out notification speech bubble after 8s
   useEffect(() => {
@@ -90,9 +93,37 @@ export default function AiAssistantWidget() {
     };
   }, [showSpeechBubble, speechBubbleText]);
 
-  const handleSendMessage = (e?: React.FormEvent) => {
+  // Dynamically capture live screen context for AI
+  const getScreenContext = () => {
+    const pageRoute = pathname || "/";
+    let pageTitle = "Hệ thống Quản lý Bệnh viện CareFlow";
+
+    if (pageRoute.startsWith("/consultation/")) {
+      pageTitle = "Trang Khám bệnh Chi tiết Bác sĩ";
+    } else if (pageRoute.includes("/dashboard/queue")) {
+      pageTitle = "Trang Hàng chờ Khám bệnh";
+    } else if (pageRoute.includes("/lab/queue")) {
+      pageTitle = "Trang Hàng chờ Xét nghiệm Cận lâm sàng (Lab Queue)";
+    } else if (pageRoute.includes("/staff/pharmacy")) {
+      pageTitle = "Trang Quầy phát thuốc";
+    } else if (pageRoute.includes("/dashboard/general")) {
+      pageTitle = "Trang Tổng quan Dashboard Bác sĩ";
+    }
+
+    let pageDataSnippet = "";
+    if (typeof document !== "undefined") {
+      const mainElement = document.querySelector("main") || document.body;
+      if (mainElement) {
+        pageDataSnippet = mainElement.innerText.replace(/\s+/g, " ").slice(0, 1500);
+      }
+    }
+
+    return { pageRoute, pageTitle, pageData: pageDataSnippet };
+  };
+
+  const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!inputText.trim()) return;
+    if (!inputText.trim() || isTyping) return;
 
     const userMsg: ChatMessage = {
       id: Date.now().toString(),
@@ -104,16 +135,33 @@ export default function AiAssistantWidget() {
     setMessages(prev => [...prev, userMsg]);
     const currentQuery = inputText;
     setInputText("");
+    setIsTyping(true);
 
-    setTimeout(() => {
+    try {
+      const activeConsultationId = speechConsultationId || "DEMO-CONSULTATION-01";
+      const screenContext = getScreenContext();
+      const res = await aiApi.sendClinicalChat(activeConsultationId, currentQuery, screenContext);
+      
+      const aiReplyText = res.data?.summary || `Bác sĩ Chồn AI 🐾: Đã ghi nhận câu hỏi "${currentQuery}".`;
+      
       const aiReply: ChatMessage = {
         id: (Date.now() + 1).toString(),
         sender: "ai",
-        text: `Bác sĩ Chồn AI 🐾: Đã ghi nhận câu hỏi "${currentQuery}". Em đang xử lý dữ liệu lâm sàng từ AI Microservice...`,
+        text: aiReplyText,
         timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
       };
       setMessages(prev => [...prev, aiReply]);
-    }, 600);
+    } catch {
+      const fallbackReply: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        sender: "ai",
+        text: `Bác sĩ Chồn AI 🐾: Xin lỗi Bác sĩ, không thể kết nối tới AI Service. Vui lòng kiểm tra lại dịch vụ careflow-ai-service.`,
+        timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+      };
+      setMessages(prev => [...prev, fallbackReply]);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   return (
@@ -177,7 +225,7 @@ export default function AiAssistantWidget() {
                         : "bg-white text-slate-800 border border-slate-200"
                     }`}
                   >
-                    <p>{msg.text}</p>
+                    <div>{renderFormattedAiText(msg.text)}</div>
                     {msg.consultationId && (
                       <button
                         onClick={() => {
@@ -197,6 +245,26 @@ export default function AiAssistantWidget() {
                 </div>
               </div>
             ))}
+
+            {isTyping && (
+              <div className="flex gap-2 flex-row animate-in fade-in duration-200">
+                <div className="w-7 h-7 rounded-full overflow-hidden bg-indigo-950 border border-indigo-300 flex-shrink-0 flex items-center justify-center">
+                  <img
+                    src="/ai-ferret-cutout.png"
+                    alt="Ferret AI"
+                    className="w-9 h-9 object-contain translate-y-1 scale-125 animate-clinical-breathing"
+                  />
+                </div>
+                <div className="bg-white text-slate-800 border border-slate-200 p-2.5 rounded-none shadow-xs flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-indigo-700">CareFlow AI đang phân tích</span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                    <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                    <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce" />
+                  </span>
+                </div>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </div>
 
