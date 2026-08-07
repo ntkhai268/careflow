@@ -73,11 +73,13 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
 
   List<AppointmentTimeSlot> _slotsFor() => _timeSlots;
 
-  bool _isPast(AppointmentTimeSlot slot) => !isAppointmentSlotAvailable(
-    selectedDate: _selectedDate,
-    slot: slot.timeSlot,
-    now: _now,
-  );
+  bool _isPast(AppointmentTimeSlot slot) =>
+      slot.unavailableReason == 'PAST' ||
+      !isAppointmentSlotAvailable(
+        selectedDate: _selectedDate,
+        slot: slot.timeSlot,
+        now: _now,
+      );
 
   bool _isSelectable(AppointmentTimeSlot slot) => !_isPast(slot) && slot.available;
 
