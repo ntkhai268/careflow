@@ -450,6 +450,23 @@ class QueueManagementServiceTest {
     }
 
     @Test
+    void patientCurrentAllowsQueuedServicePointEntryWithoutEstimatedWait() {
+        QueueEntry lab = pharmacyEntry(1, QueueStatus.QUEUED);
+        lab.setQueueType(QueueType.LAB_EXECUTION);
+        UUID patientId = lab.getPatientId();
+        UUID userId = UUID.randomUUID();
+        lab.setUserId(userId);
+        lab.setEstimatedWaitMinutes(null);
+        when(entries.findFirstByPatientIdAndUserIdAndQueueDateAndStatusInOrderByCreatedAtDesc(
+                eq(patientId), eq(userId), eq(today), anyCollection())).thenReturn(Optional.of(lab));
+
+        var response = service.patientCurrent(patientId, userId, false);
+
+        assertThat(response.entryId()).isEqualTo(lab.getId());
+        assertThat(response.estimatedWaitMinutes()).isNull();
+    }
+
+    @Test
     void pharmacyEntryCanOnlyCompleteFromDispensedEventWhileInProgress() {
         UUID prescriptionId = UUID.randomUUID();
         QueueEntry pharmacy = pharmacyEntry(1, QueueStatus.IN_PROGRESS);

@@ -46,7 +46,8 @@ public class DataInitializer implements CommandLineRunner {
                 Department.builder().code("DA_LIEU").id(UUID.fromString("de000001-0000-0000-0000-000000000008")).name("Da liễu").description("Khám và điều trị bệnh ngoài da").isActive(true).build(),
                 Department.builder().code("THAN_KINH").id(UUID.fromString("de000001-0000-0000-0000-000000000009")).name("Thần kinh").description("Chuyên khoa thần kinh").isActive(true).build(),
                 Department.builder().code("TIM_MACH").id(UUID.fromString("de000001-0000-0000-0000-000000000010")).name("Tim mạch").description("Chuyên khoa tim mạch và mạch máu").isActive(true).build(),
-                Department.builder().code("CO_XUONG_KHOP").id(UUID.fromString("de000001-0000-0000-0000-000000000011")).name("Cơ xương khớp").description("Khám các bệnh lý khớp và cơ").isActive(true).build()
+                Department.builder().code("CO_XUONG_KHOP").id(UUID.fromString("de000001-0000-0000-0000-000000000011")).name("Cơ xương khớp").description("Khám các bệnh lý khớp và cơ").isActive(true).build(),
+                Department.builder().code("CAN_LAM_SANG").id(UUID.fromString("de000001-0000-0000-0000-000000000012")).name("Cận lâm sàng").description("Xét nghiệm và chẩn đoán hình ảnh").isActive(true).build()
         );
 
         for (Department dept : departments) {
@@ -70,7 +71,10 @@ public class DataInitializer implements CommandLineRunner {
                 Room.builder().id("ROOM-10").departmentCode("TIM_MACH").displayName("Phòng 10 - Tim mạch").roomType("CONSULTATION").isActive(true).build(),
                 Room.builder().id("ROOM-11").departmentCode("CO_XUONG_KHOP").displayName("Phòng 11 - Cơ xương khớp").roomType("CONSULTATION").isActive(true).build(),
                 Room.builder().id("ROOM-21").departmentCode("THAN_KINH").displayName("Phòng 21 - Lầu 1 khu A").roomType("CONSULTATION").isActive(true).build(),
-                Room.builder().id("LAB-HEMATOLOGY-01").departmentCode("NOI_TONG_QUAT").displayName("Phòng Xét nghiệm Huyết học 101").roomType("LAB").isActive(true).build(),
+                Room.builder().id("LAB-HEMATOLOGY-01").departmentCode("CAN_LAM_SANG").displayName("Phòng Xét nghiệm Huyết học 101").roomType("LAB").isActive(true).build(),
+                Room.builder().id("LAB-BIOCHEM-01").departmentCode("CAN_LAM_SANG").displayName("Phòng Xét nghiệm Sinh hóa 102").roomType("LAB").isActive(true).build(),
+                Room.builder().id("US-ROOM-01").departmentCode("CAN_LAM_SANG").displayName("Phòng Siêu âm 201").roomType("IMAGING").isActive(true).build(),
+                Room.builder().id("XRAY-ROOM-01").departmentCode("CAN_LAM_SANG").displayName("Phòng X-Quang 202").roomType("IMAGING").isActive(true).build(),
                 Room.builder().id("PHARMACY-MAIN-01").departmentCode("NOI_TONG_QUAT").displayName("Quầy phát thuốc N-01").roomType("PHARMACY").isActive(true).build()
         );
 
@@ -79,6 +83,7 @@ public class DataInitializer implements CommandLineRunner {
                 roomRepository.save(room);
             }
         }
+        reconcileClinicalServicePoints();
         // PHARMACY-MAIN-01 is the canonical service point in Hospital Directory.
         // Deactivate the legacy alias so downstream services never resolve two active
         // pharmacy points for the same physical counter.
@@ -90,6 +95,32 @@ public class DataInitializer implements CommandLineRunner {
             }
         });
         log.info("Idempotently verified hospital rooms.");
+    }
+
+    private void reconcileClinicalServicePoints() {
+        List<Room> clinicalRooms = List.of(
+                room("LAB-HEMATOLOGY-01", "Phòng Xét nghiệm Huyết học 101", "LAB"),
+                room("LAB-BIOCHEM-01", "Phòng Xét nghiệm Sinh hóa 102", "LAB"),
+                room("US-ROOM-01", "Phòng Siêu âm 201", "IMAGING"),
+                room("XRAY-ROOM-01", "Phòng X-Quang 202", "IMAGING"));
+
+        clinicalRooms.forEach(expected -> roomRepository.findById(expected.getId()).ifPresent(actual -> {
+            actual.setDepartmentCode("CAN_LAM_SANG");
+            actual.setDisplayName(expected.getDisplayName());
+            actual.setRoomType(expected.getRoomType());
+            actual.setIsActive(true);
+            roomRepository.save(actual);
+        }));
+    }
+
+    private Room room(String id, String displayName, String roomType) {
+        return Room.builder()
+                .id(id)
+                .departmentCode("CAN_LAM_SANG")
+                .displayName(displayName)
+                .roomType(roomType)
+                .isActive(true)
+                .build();
     }
 
     private void seedDoctorProfiles() {
@@ -176,7 +207,10 @@ public class DataInitializer implements CommandLineRunner {
         UUID labTechnicianUserId = UUID.fromString("44444444-4444-4444-4444-444444444444");
         ensureStaffAssignment(staffUserId, "ROOM-01", "NOI_TONG_QUAT");
         ensureStaffAssignment(staffUserId, "PHARMACY-MAIN-01", "NOI_TONG_QUAT");
-        ensureStaffAssignment(labTechnicianUserId, "LAB-HEMATOLOGY-01", "NOI_TONG_QUAT");
+        ensureStaffAssignment(labTechnicianUserId, "LAB-HEMATOLOGY-01", "CAN_LAM_SANG");
+        ensureStaffAssignment(labTechnicianUserId, "LAB-BIOCHEM-01", "CAN_LAM_SANG");
+        ensureStaffAssignment(labTechnicianUserId, "US-ROOM-01", "CAN_LAM_SANG");
+        ensureStaffAssignment(labTechnicianUserId, "XRAY-ROOM-01", "CAN_LAM_SANG");
     }
 
     private void ensureStaffAssignment(UUID userId, String roomId, String departmentCode) {

@@ -526,9 +526,18 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     try {
       await saveDraft();
       await consultationApi.completeConsultation(consultationId);
-      if (entryId) {
+      let resolvedEntryId = entryId;
+      if (!resolvedEntryId && consultation?.appointmentId) {
         try {
-          await queueApi.completeEntry(entryId);
+          const ticketRes = await queueApi.getTicket(consultation.appointmentId);
+          resolvedEntryId = ticketRes.data?.ticketId ?? null;
+        } catch {
+          /* Older consultation links may not have a queue ticket. */
+        }
+      }
+      if (resolvedEntryId) {
+        try {
+          await queueApi.completeEntry(resolvedEntryId);
         } catch {
           /* Ignore secondary queue complete failure */
         }
@@ -2334,4 +2343,3 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
   );
 }
-

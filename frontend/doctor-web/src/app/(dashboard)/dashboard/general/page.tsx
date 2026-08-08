@@ -10,6 +10,7 @@ import { getErrorMessage } from "@/lib/error-utils";
 import Link from "next/link";
 
 interface DisplayQueuePatient {
+  entryId: string;
   queueNo: string;
   appointmentId: string;
   patientId: string;
@@ -76,6 +77,7 @@ export default function DashboardGeneralPage() {
             const activeEntries = labRes.data?.entries || [];
             setWaitingCount(activeEntries.length);
             setQueuePatients(activeEntries.map((e) => ({
+              entryId: e.entryId,
               queueNo: e.queueNumber,
               appointmentId: e.appointmentId,
               patientId: e.patientId,
@@ -96,6 +98,7 @@ export default function DashboardGeneralPage() {
             const activeEntries = staffRes.data?.entries || [];
             setWaitingCount(activeEntries.length);
             setQueuePatients(activeEntries.map((e) => ({
+              entryId: e.entryId,
               queueNo: e.queueNumber,
               appointmentId: e.appointmentId,
               patientId: e.patientId,
@@ -136,6 +139,7 @@ export default function DashboardGeneralPage() {
             }
 
             setQueuePatients(activeEntries.map((e) => ({
+              entryId: e.entryId,
               queueNo: e.queueNumber,
               appointmentId: e.appointmentId,
               patientId: e.patientId,
@@ -172,6 +176,12 @@ export default function DashboardGeneralPage() {
   const handleCallPatient = async (patientId: string, appointmentId: string) => {
     if (!user) return;
 
+    const queueEntry = (queuePatients ?? []).find(entry =>
+      entry.patientId === patientId && entry.appointmentId === appointmentId
+    );
+    const entryId = queueEntry?.entryId;
+    const entryQuery = entryId ? `?entryId=${encodeURIComponent(entryId)}` : "";
+
     if (isLabTech) {
       router.push("/lab/queue");
       return;
@@ -190,7 +200,7 @@ export default function DashboardGeneralPage() {
       const activeCons = (consRes.data || []).find(c => c.status === "IN_PROGRESS");
       if (activeCons) {
         if (activeCons.patientId === patientId || activeCons.appointmentId === appointmentId) {
-          router.push(`/consultation/${activeCons.id}`);
+          router.push(`/consultation/${activeCons.id}${entryQuery}`);
           return;
         }
 
@@ -206,8 +216,17 @@ export default function DashboardGeneralPage() {
         return;
       }
 
+      if (entryId) {
+        if (queueEntry.status === "CHECKED_IN") {
+          await queueApi.callEntry(entryId);
+        }
+        if (queueEntry.status === "CHECKED_IN" || queueEntry.status === "CALLED") {
+          await queueApi.startEntry(entryId);
+        }
+      }
+
       const res = await consultationApi.createConsultation({ appointmentId, patientId, doctorId: user.id });
-      router.push(`/consultation/${res.data.id}`);
+      router.push(`/consultation/${res.data.id}${entryQuery}`);
     } catch (err: unknown) {
       const msg = getErrorMessage(err, "Bác sĩ hiện tại đang có một ca khám chưa hoàn tất.");
       if (typeof window !== "undefined") {

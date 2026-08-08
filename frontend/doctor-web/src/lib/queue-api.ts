@@ -25,6 +25,8 @@ export interface QueueEntry {
   missedAt: string | null;
   type?: "CONSULTATION" | "LAB_EXECUTION" | "PHARMACY_DISPENSING";
   consultationPhase?: "INITIAL" | "RESULT_REVIEW";
+  schedulingLane?: "PRIORITY" | "NORMAL" | "RESULT_REVIEW" | null;
+  queueClass?: "NORMAL" | "PRIORITY" | null;
   servicePointId?: string | null;
   consultationId?: string | null;
   labOrderId?: string | null;
@@ -37,7 +39,12 @@ export interface QueueDashboardResponse {
   roomCode: string;
   queueDate: string;
   entries: QueueEntry[];
+  priorityQueue: QueueEntry[];
+  normalQueue: QueueEntry[];
+  resultReviewQueue: QueueEntry[];
   recommendedNext: QueueEntry | null;
+  lastServedLane: "PRIORITY" | "NORMAL" | "RESULT_REVIEW" | null;
+  schedulerVersion: number;
 }
 
 export interface ServicePointQueueResponse {
@@ -45,6 +52,11 @@ export interface ServicePointQueueResponse {
   queueDate: string;
   entries: QueueEntry[];
   recommendedNext: QueueEntry | null;
+}
+
+export interface VisitTicket {
+  ticketId: string;
+  status: string;
 }
 
 export interface CheckInRequest {
@@ -66,6 +78,9 @@ export const queueApi = {
     api.get<ServicePointQueueResponse>(
       `/api/queues/service-points/${servicePointId}/active${date ? `?date=${date}` : ""}`
     ),
+
+  getTicket: (appointmentId: string) =>
+    api.get<VisitTicket>(`/api/queues/tickets/appointment/${appointmentId}`),
 
   callNextAtServicePoint: (servicePointId: string) =>
     api.post<QueueEntry>(`/api/queues/service-points/${servicePointId}/call-next`, {}),
@@ -94,4 +109,3 @@ export const queueApi = {
   getQr: (appointmentId: string) =>
     api.get<{ qrToken: string }>(`/api/queues/appointments/${appointmentId}/qr`),
 };
-

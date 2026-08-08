@@ -992,8 +992,14 @@ public class QueueManagementService {
     private QueueEntryResponse response(QueueEntry entry, QueueConfig config) {
         if (config == null) {
             Integer position = entry.getStatus() == QueueStatus.QUEUED ? servicePointPosition(entry) : 0;
+            Integer wait;
+            if (entry.getStatus() == QueueStatus.QUEUED) {
+                wait = entry.getEstimatedWaitMinutes();
+            } else {
+                wait = 0;
+            }
             return QueueEntryResponse.fromServicePoint(entry, position,
-                    entry.getStatus() == QueueStatus.QUEUED ? entry.getEstimatedWaitMinutes() : 0);
+                    wait);
         }
         Integer position = null;
         Integer wait = entry.getEstimatedWaitMinutes();

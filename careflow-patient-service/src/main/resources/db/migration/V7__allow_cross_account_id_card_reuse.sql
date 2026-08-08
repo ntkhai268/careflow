@@ -2,6 +2,7 @@
 -- the original account. Keep the duplicate guard scoped to one account.
 ALTER TABLE patients DROP CONSTRAINT IF EXISTS patients_id_card_number_key;
 ALTER TABLE patients DROP CONSTRAINT IF EXISTS uk_patients_id_card_number;
+ALTER TABLE patients DROP CONSTRAINT IF EXISTS idx_patient_id_card;
 DROP INDEX IF EXISTS idx_patient_id_card;
 
 CREATE INDEX IF NOT EXISTS idx_patient_id_card ON patients (id_card_number);

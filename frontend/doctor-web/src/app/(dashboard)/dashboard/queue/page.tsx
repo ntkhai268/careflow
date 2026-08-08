@@ -51,19 +51,6 @@ function PriorityBadge({ level }: { level: string }) {
   );
 }
 
-function SkeletonRow() {
-  return (
-    <tr className="border-b border-gray-100">
-      <td className="px-4 py-3"><div className="h-3 w-10 bg-gray-100 rounded animate-pulse" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-28 bg-gray-100 rounded animate-pulse" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 bg-gray-100 rounded animate-pulse" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-24 bg-gray-100 rounded animate-pulse" /></td>
-      <td className="px-4 py-3"><div className="h-3 w-20 bg-gray-100 rounded animate-pulse" /></td>
-      <td className="px-4 py-3 text-right"><div className="h-6 w-16 bg-gray-100 rounded ml-auto animate-pulse" /></td>
-    </tr>
-  );
-}
-
 export default function DashboardQueuePage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -244,6 +231,39 @@ export default function DashboardQueuePage() {
 
   const safeEntries = dashboardData?.entries ?? [];
   const recommended = dashboardData?.recommendedNext;
+  const laneOf = (entry: QueueEntry) => entry.schedulingLane ?? (
+    entry.consultationPhase === "RESULT_REVIEW" || entry.priorityLevel === "RESULT_REVIEW"
+      ? "RESULT_REVIEW"
+      : entry.queueClass === "PRIORITY" || entry.priorityLevel === "PRIORITY" || entry.priorityLevel === "EMERGENCY"
+        ? "PRIORITY"
+        : "NORMAL"
+  );
+  const laneViews = [
+    {
+      key: "PRIORITY" as const,
+      title: "Làn ưu tiên",
+      description: "Ca cần được xử lý trước",
+      dotClass: "bg-rose-500",
+      headerClass: "bg-rose-50 border-rose-100",
+      entries: dashboardData?.priorityQueue ?? safeEntries.filter(entry => laneOf(entry) === "PRIORITY"),
+    },
+    {
+      key: "NORMAL" as const,
+      title: "Làn thông thường",
+      description: "FIFO theo thời điểm tiếp nhận",
+      dotClass: "bg-blue-500",
+      headerClass: "bg-blue-50 border-blue-100",
+      entries: dashboardData?.normalQueue ?? safeEntries.filter(entry => laneOf(entry) === "NORMAL"),
+    },
+    {
+      key: "RESULT_REVIEW" as const,
+      title: "Làn đọc kết quả CLS",
+      description: "Bệnh nhân quay lại đọc kết quả",
+      dotClass: "bg-purple-500",
+      headerClass: "bg-purple-50 border-purple-100",
+      entries: dashboardData?.resultReviewQueue ?? safeEntries.filter(entry => laneOf(entry) === "RESULT_REVIEW"),
+    },
+  ];
 
   return (
     <div className="space-y-4">
@@ -314,99 +334,86 @@ export default function DashboardQueuePage() {
         </p>
       )}
 
-      {/* Active Queue Table Card */}
+      {/* Three scheduling lanes */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-xs overflow-hidden">
         <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between flex-wrap gap-2 bg-gray-50/50">
           <h2 className="text-[13px] font-bold text-[#2B1D30] tracking-tight">
-            Hàng đợi ({isLoading ? "..." : (safeEntries).length} bệnh nhân)
+            Hàng đợi ({isLoading ? "..." : safeEntries.length} bệnh nhân)
           </h2>
-          <div className="flex items-center gap-3 text-[10px] font-medium flex-wrap">
-            <span className="inline-flex items-center gap-1 text-rose-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-rose-600" />
-              <span>Ưu tiên</span>
-            </span>
-            <span className="inline-flex items-center gap-1 text-blue-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-              <span>Khám thông thường</span>
-            </span>
-            <span className="inline-flex items-center gap-1 text-purple-600">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-600" />
-              <span>Đọc kết quả CLS</span>
-            </span>
-          </div>
+          <span className="text-[10px] text-gray-500">
+            Bác sĩ chọn bệnh nhân; hệ thống chỉ đề xuất thứ tự gọi
+          </span>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-[11px]">
-            <thead>
-              <tr className="border-b border-gray-200 bg-[#F8FAFC] text-gray-700">
-                <th className="px-4 py-2.5 font-semibold w-20 font-mono">Số STT</th>
-                <th className="px-4 py-2.5 font-semibold">Họ tên & Mã bệnh nhân</th>
-                <th className="px-4 py-2.5 font-semibold">Phòng khám</th>
-                <th className="px-4 py-2.5 font-semibold">Mức ưu tiên</th>
-                <th className="px-4 py-2.5 font-semibold w-32">Trạng thái</th>
-                <th className="px-4 py-2.5 font-semibold w-24 text-center">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-gray-800">
-              {isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => <SkeletonRow key={i} />)
-              ) : fetchError ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-6 text-center text-[11px] text-[#D9381E]">
-                    {fetchError}
-                  </td>
-                </tr>
-              ) : (safeEntries).length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-[11px] text-gray-400">
-                    Hiện chưa có bệnh nhân nào trong hàng đợi
-                  </td>
-                </tr>
-              ) : (
-                safeEntries.map(entry => (
-                  <tr key={entry.entryId} className="hover:bg-gray-50/80 transition-colors">
-                    <td className="px-4 py-3 font-bold text-[#6E2582] font-mono">
-                      #{entry.queueNumber}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="font-medium text-gray-900">
-                        {patientNames[entry.patientId] || "Đang tải..."}
+        {isLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div key={index} className="h-48 rounded-lg border border-gray-100 bg-gray-50 animate-pulse" />
+            ))}
+          </div>
+        ) : fetchError ? (
+          <p className="px-4 py-8 text-center text-[11px] text-[#D9381E]">{fetchError}</p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-3">
+            {laneViews.map(lane => (
+              <section key={lane.key} className="min-w-0 rounded-lg border border-gray-200 overflow-hidden bg-white">
+                <div className={`px-3 py-2.5 border-b ${lane.headerClass}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-2 h-2 rounded-full ${lane.dotClass} flex-shrink-0`} />
+                      <h3 className="text-[12px] font-bold text-[#2B1D30] truncate">{lane.title}</h3>
+                    </div>
+                    <span className="min-w-6 h-5 px-1.5 inline-flex items-center justify-center rounded-full bg-white/80 text-[10px] font-bold text-gray-700">
+                      {lane.entries.length}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[10px] text-gray-500 truncate">{lane.description}</p>
+                </div>
+
+                <div className="divide-y divide-gray-100">
+                  {lane.entries.length === 0 ? (
+                    <div className="px-3 py-10 text-center text-[11px] text-gray-400">
+                      Chưa có bệnh nhân
+                    </div>
+                  ) : (
+                    lane.entries.map(entry => (
+                      <div key={entry.entryId} className="px-3 py-3 hover:bg-gray-50/80 transition-colors">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="font-bold text-[#6E2582] font-mono text-[12px]">#{entry.queueNumber}</span>
+                              <StatusDot status={entry.queueStatus} />
+                            </div>
+                            <p className="mt-1 text-[11px] font-semibold text-gray-900 truncate">
+                              {patientNames[entry.patientId] || "Đang tải..."}
+                            </p>
+                            <p className="mt-0.5 text-[9px] text-gray-400 font-mono truncate">{entry.patientId}</p>
+                          </div>
+                          <button
+                            onClick={() => handleCallEntry(entry)}
+                            disabled={callingEntryId === entry.entryId}
+                            className="flex-shrink-0 px-2.5 py-1.5 bg-white hover:bg-purple-50 border border-gray-200 text-[#2B1D30] hover:text-[#6E2582] disabled:opacity-50 rounded text-[10px] font-semibold transition-all cursor-pointer"
+                          >
+                            {callingEntryId === entry.entryId
+                              ? "Đang gọi..."
+                              : entry.queueStatus === "CALLED" || entry.queueStatus === "IN_PROGRESS"
+                              ? "Vào khám"
+                              : "Gọi số"}
+                          </button>
+                        </div>
+                        <div className="mt-2 flex items-center justify-between text-[9px] text-gray-400">
+                          <span>{entry.roomCode || "Phòng khám"}</span>
+                          <PriorityBadge level={entry.priorityLevel} />
+                        </div>
                       </div>
-                      <div className="text-[10px] text-gray-400 font-mono">
-                        {entry.patientId}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">
-                      {entry.roomCode}
-                    </td>
-                    <td className="px-4 py-3">
-                      <PriorityBadge level={entry.priorityLevel} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusDot status={entry.queueStatus} />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        onClick={() => handleCallEntry(entry)}
-                        disabled={callingEntryId === entry.entryId}
-                        className="w-20 py-1 bg-white hover:bg-purple-50 border border-gray-200 text-[#2B1D30] hover:text-[#6E2582] disabled:opacity-50 rounded text-[11px] font-medium transition-all cursor-pointer text-center inline-block shadow-2xs"
-                      >
-                        {callingEntryId === entry.entryId
-                          ? "Đang gọi..."
-                          : entry.queueStatus === "CALLED"
-                          ? "Vào khám"
-                          : "Gọi số"}
-                      </button>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                    ))
+                  )}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
