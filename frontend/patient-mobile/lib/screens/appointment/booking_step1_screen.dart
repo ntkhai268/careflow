@@ -5,6 +5,7 @@ import '../../config/theme.dart';
 import '../../models/patient.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/patient_service.dart';
+import '../../utils/api_error_message.dart';
 
 /// Booking Step 1: Choose patient profile
 class BookingStep1Screen extends ConsumerStatefulWidget {
@@ -17,6 +18,7 @@ class BookingStep1Screen extends ConsumerStatefulWidget {
 class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
   List<Patient> _patients = [];
   bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
@@ -27,6 +29,7 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
   Future<void> _loadPatients() async {
     setState(() {
       _isLoading = true;
+      _error = null;
     });
     try {
       final service = ref.read(patientServiceProvider);
@@ -47,6 +50,10 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
       setState(() {
         _patients = [];
         _isLoading = false;
+        _error = ApiErrorMessage.from(
+          e,
+          fallback: 'Không thể tải hồ sơ bệnh nhân. Vui lòng thử lại.',
+        );
       });
     }
   }
@@ -70,7 +77,9 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
                 _buildStepIndicator(),
                 // Content
                 Expanded(
-                  child: _patients.isEmpty
+                  child: _error != null
+                      ? _buildErrorState()
+                      : _patients.isEmpty
                       ? _buildEmptyState()
                       : _buildPatientList(),
                 ),
@@ -174,6 +183,32 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
               onPressed: () => context.push('/profile/create'),
               icon: const Icon(Icons.add_rounded),
               label: const Text('Tạo hồ sơ mới'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AppSpacing.xxl),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.cloud_off_rounded,
+              size: 64,
+              color: AppColors.error,
+            ),
+            const SizedBox(height: AppSpacing.base),
+            Text(_error!, textAlign: TextAlign.center),
+            const SizedBox(height: AppSpacing.xl),
+            OutlinedButton.icon(
+              onPressed: _loadPatients,
+              icon: const Icon(Icons.refresh_rounded),
+              label: const Text('Thử lại'),
             ),
           ],
         ),

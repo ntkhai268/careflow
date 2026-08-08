@@ -757,12 +757,12 @@ classDiagram
 | Thuộc tính | Kiểu | Ràng buộc | Mô tả |
 |-----------|------|-----------|-------|
 | `id` | UUID | PK, auto-gen | Mã bệnh nhân |
-| `userId` | UUID | NOT NULL, UNIQUE | FK logic tới Identity Service (A) |
+| `userId` | UUID | NOT NULL | FK logic tới Identity Service (A); một tài khoản có thể có nhiều hồ sơ |
 | `fullName` | String(100) | NOT NULL | Họ và tên |
 | `dateOfBirth` | LocalDate | nullable | Ngày sinh |
 | `gender` | Gender (enum) | nullable | Giới tính |
 | `phone` | String(15) | nullable | Số điện thoại |
-| `idCardNumber` | String(20) | nullable, UNIQUE | CMND/CCCD |
+| `idCardNumber` | String(20) | nullable | CMND/CCCD; được phép dùng lại trên tài khoản khác, không trùng trong cùng tài khoản |
 | `insuranceNumber` | String(20) | nullable | Số thẻ BHYT |
 | `occupation` | String(100) | nullable | Nghề nghiệp (hỗ trợ chẩn đoán — bác sĩ biết môi trường tiếp xúc) |
 | `address` | String(500) | nullable | Địa chỉ |
@@ -1004,12 +1004,12 @@ CREATE TYPE gender_enum AS ENUM ('MALE', 'FEMALE', 'OTHER');
 
 CREATE TABLE patients (
     id                UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id           UUID NOT NULL UNIQUE,           -- Tham chiếu logic → Identity Service (A)
+    user_id           UUID NOT NULL,                  -- Tham chiếu logic → Identity Service (A)
     full_name         VARCHAR(100) NOT NULL,
     date_of_birth     DATE,
     gender            gender_enum,
     phone             VARCHAR(15),
-    id_card_number    VARCHAR(20) UNIQUE,             -- CMND/CCCD
+    id_card_number    VARCHAR(20),                    -- CMND/CCCD; unique theo từng user_id
     insurance_number  VARCHAR(20),                    -- Số thẻ BHYT
     address           VARCHAR(500),
     avatar_url        VARCHAR(255),
@@ -1021,6 +1021,9 @@ CREATE TABLE patients (
 CREATE INDEX idx_patients_user_id ON patients(user_id);
 CREATE INDEX idx_patients_phone ON patients(phone);
 CREATE INDEX idx_patients_id_card ON patients(id_card_number);
+CREATE UNIQUE INDEX uk_patient_user_id_card_number
+    ON patients(user_id, id_card_number)
+    WHERE id_card_number IS NOT NULL;
 ```
 
 ---

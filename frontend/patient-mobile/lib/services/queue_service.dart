@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../config/api_config.dart';
 import '../models/queue.dart';
+import '../utils/api_error_message.dart';
 import 'api_service.dart';
 
 class QueueServiceException implements Exception {
@@ -51,18 +52,14 @@ class QueueService {
     required String notFound,
   }) {
     final status = error.response?.statusCode;
-    final data = error.response?.data;
-    final serverMessage = data is Map
-        ? data['message']?.toString().trim()
-        : null;
     if (status == 404) {
       return QueueServiceException(notFound, statusCode: status);
     }
-    if (serverMessage != null && serverMessage.isNotEmpty) {
-      return QueueServiceException(serverMessage, statusCode: status);
-    }
     return QueueServiceException(
-      'Không thể kết nối hệ thống hàng đợi. Vui lòng thử lại.',
+      ApiErrorMessage.from(
+        error,
+        fallback: 'Không thể tải trạng thái hàng đợi. Vui lòng thử lại.',
+      ),
       statusCode: status,
     );
   }

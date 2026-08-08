@@ -14,12 +14,12 @@ Enum Gender {
 
 Table patients {
   id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
-  user_id uuid [not null, unique, note: 'Khóa ngoại tham chiếu tài khoản User (Identity Service)']
+  user_id uuid [not null, note: 'Khóa ngoại tham chiếu tài khoản User (Identity Service); một tài khoản có thể quản lý nhiều hồ sơ']
   full_name varchar(100) [not null, note: 'Họ và tên bệnh nhân']
   date_of_birth date [note: 'Ngày tháng năm sinh']
   gender Gender [note: 'Giới tính (MALE, FEMALE, OTHER)']
   phone varchar(15) [note: 'Số điện thoại liên lạc']
-  id_card_number varchar(20) [unique, note: 'Số CMND / CCCD']
+  id_card_number varchar(20) [note: 'Số CMND / CCCD; có thể được khai báo lại trên tài khoản khác']
   insurance_number varchar(20) [note: 'Số thẻ BHYT']
   occupation varchar(100) [note: 'Nghề nghiệp']
   address varchar(500) [note: 'Địa chỉ thường trú']
@@ -34,8 +34,9 @@ Table patients {
   updated_at timestamptz [not null, note: 'Thời điểm cập nhật gần nhất']
 
   indexes {
-    user_id [name: 'idx_patient_user_id', unique, note: 'Index tra cứu bệnh nhân theo userId']
-    id_card_number [name: 'idx_patient_id_card', unique, note: 'Index tra cứu theo CMND/CCCD']
+    user_id [name: 'idx_patient_user_id', note: 'Index tra cứu bệnh nhân theo userId']
+    id_card_number [name: 'idx_patient_id_card', note: 'Index tra cứu theo CMND/CCCD']
+    (user_id, id_card_number) [name: 'uk_patient_user_id_card_number', unique, note: 'Chỉ ngăn trùng CCCD trong cùng một tài khoản']
   }
 }
 

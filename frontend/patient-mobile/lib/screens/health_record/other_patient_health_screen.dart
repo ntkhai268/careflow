@@ -6,6 +6,7 @@ import '../../config/theme.dart';
 import '../../models/patient.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/patient_service.dart';
+import '../../utils/api_error_message.dart';
 
 class OtherPatientHealthScreen extends ConsumerWidget {
   const OtherPatientHealthScreen({super.key, this.excludePatientId});
@@ -37,7 +38,11 @@ class OtherPatientHealthScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.all(AppSpacing.xl),
                 child: Text(
-                  'Không thể tải danh sách hồ sơ bệnh nhân khác.',
+                  ApiErrorMessage.from(
+                    snapshot.error!,
+                    fallback:
+                        'Không thể tải danh sách hồ sơ bệnh nhân khác. Vui lòng thử lại.',
+                  ),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),

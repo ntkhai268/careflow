@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/health_record_provider.dart';
+import '../../utils/api_error_message.dart';
 
 class HealthRecordListScreen extends ConsumerWidget {
   final String patientId;
@@ -200,8 +201,12 @@ class HealthRecordListScreen extends ConsumerWidget {
                         color: Colors.grey,
                       ),
                       const SizedBox(height: 16),
-                      const Text(
-                        'Không thể tải thông tin sức khỏe',
+                      Text(
+                        ApiErrorMessage.from(
+                          e,
+                          fallback:
+                              'Không thể tải thông tin sức khỏe. Vui lòng thử lại.',
+                        ),
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           fontSize: 16,
@@ -209,11 +214,6 @@ class HealthRecordListScreen extends ConsumerWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Vui lòng kiểm tra kết nối và thử lại.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.grey),
-                      ),
                       const SizedBox(height: 16),
                       OutlinedButton.icon(
                         onPressed: () =>

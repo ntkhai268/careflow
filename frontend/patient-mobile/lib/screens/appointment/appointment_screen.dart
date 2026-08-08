@@ -6,6 +6,7 @@ import '../../models/appointment.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/patient_provider.dart';
 import '../../services/appointment_service.dart';
+import '../../utils/api_error_message.dart';
 import 'package:intl/intl.dart';
 
 /// Appointment list screen — tickets are shown within their appointment.
@@ -70,7 +71,10 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
     } catch (e) {
       if (!mounted || patientId != _patientId) return;
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorMessage.from(
+          e,
+          fallback: 'Không thể tải lịch khám. Vui lòng thử lại.',
+        );
         _isLoading = false;
       });
     }

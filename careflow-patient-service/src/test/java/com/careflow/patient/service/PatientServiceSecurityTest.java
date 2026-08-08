@@ -102,6 +102,48 @@ class PatientServiceSecurityTest {
     }
 
     @Test
+    void createAllowsSameIdCardOnAnotherAccount() {
+        CreatePatientRequest request = CreatePatientRequest.builder()
+                .userId(OTHER_USER_ID)
+                .fullName("Nguyen Van C")
+                .idCardNumber("079192000047")
+                .build();
+        Patient saved = Patient.builder()
+                .userId(OTHER_USER_ID)
+                .fullName("Nguyen Van C")
+                .idCardNumber("079192000047")
+                .build();
+        saved.setId(PATIENT_ID);
+
+        when(patientRepository.existsByUserIdAndIdCardNumber(OTHER_USER_ID, "079192000047"))
+                .thenReturn(false);
+        when(patientRepository.save(any(Patient.class))).thenReturn(saved);
+
+        PatientResponse response = patientService.createPatient(request, OTHER_USER_ID, "PATIENT");
+
+        assertThat(response.getId()).isEqualTo(PATIENT_ID);
+        verify(patientRepository).save(any(Patient.class));
+    }
+
+    @Test
+    void createRejectsDuplicateIdCardWithinTheSameAccount() {
+        CreatePatientRequest request = CreatePatientRequest.builder()
+                .userId(OWNER_USER_ID)
+                .fullName("Nguyen Van D")
+                .idCardNumber("079192000047")
+                .build();
+        when(patientRepository.existsByUserIdAndIdCardNumber(OWNER_USER_ID, "079192000047"))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> patientService.createPatient(request, OWNER_USER_ID, "PATIENT"))
+                .isInstanceOfSatisfying(BusinessException.class, ex -> {
+                    assertThat(ex.getStatus()).isEqualTo(409);
+                    assertThat(ex.getMessage()).contains("CCCD");
+                });
+        verify(patientRepository, never()).save(any(Patient.class));
+    }
+
+    @Test
     void listProfilesAllowsTheOwningPatientAccountToReadEveryProfile() {
         Patient first = Patient.builder().userId(OWNER_USER_ID).fullName("Nguyen Van A").build();
         Patient second = Patient.builder().userId(OWNER_USER_ID).fullName("Nguyen Thi B").build();
@@ -192,6 +234,31 @@ class PatientServiceSecurityTest {
         assertThatThrownBy(() -> patientService.updatePatient(
                         PATIENT_ID, new UpdatePatientRequest(), OTHER_USER_ID, "PATIENT"))
                 .isInstanceOfSatisfying(BusinessException.class, ex -> assertThat(ex.getStatus()).isEqualTo(403));
+        verify(patientRepository, never()).save(any(Patient.class));
+    }
+
+    @Test
+    void updateRejectsDuplicateIdCardWithinTheSameAccount() {
+        Patient patient = Patient.builder()
+                .userId(OWNER_USER_ID)
+                .fullName("Nguyen Van A")
+                .idCardNumber("079192000046")
+                .build();
+        patient.setId(PATIENT_ID);
+        when(patientRepository.findById(PATIENT_ID)).thenReturn(Optional.of(patient));
+        when(patientRepository.existsByUserIdAndIdCardNumberAndIdNot(
+                OWNER_USER_ID, "079192000047", PATIENT_ID)).thenReturn(true);
+
+        UpdatePatientRequest request = UpdatePatientRequest.builder()
+                .idCardNumber("079192000047")
+                .build();
+
+        assertThatThrownBy(() -> patientService.updatePatient(
+                PATIENT_ID, request, OWNER_USER_ID, "PATIENT"))
+                .isInstanceOfSatisfying(BusinessException.class, ex -> {
+                    assertThat(ex.getStatus()).isEqualTo(409);
+                    assertThat(ex.getMessage()).contains("CCCD");
+                });
         verify(patientRepository, never()).save(any(Patient.class));
     }
 }

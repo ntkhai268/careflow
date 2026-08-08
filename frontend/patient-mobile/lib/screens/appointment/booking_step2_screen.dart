@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:dio/dio.dart';
 import '../../config/theme.dart';
 import '../../models/appointment.dart';
 import '../../models/patient.dart';
@@ -40,11 +41,13 @@ class _BookingStep2ScreenState extends ConsumerState<BookingStep2Screen> {
         _departments = departments;
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
         _departments = [];
-        _error = 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.';
+        _error = error is DioException
+            ? appointmentBookingErrorMessage(error)
+            : 'Không thể tải danh sách chuyên khoa. Vui lòng thử lại.';
         _isLoading = false;
       });
     }

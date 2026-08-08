@@ -10,7 +10,8 @@ import java.util.UUID;
 @Entity
 @Table(name = "patients", indexes = {
         @Index(name = "idx_patient_user_id", columnList = "userId"),
-        @Index(name = "idx_patient_id_card", columnList = "idCardNumber", unique = true)
+        @Index(name = "idx_patient_id_card", columnList = "idCardNumber"),
+        @Index(name = "uk_patient_user_id_card_number", columnList = "userId, idCardNumber", unique = true)
 })
 @Getter
 @Setter
@@ -34,7 +35,7 @@ public class Patient extends BaseEntity {
     @Column(length = 15)
     private String phone;
 
-    @Column(length = 20, unique = true)
+    @Column(length = 20)
     private String idCardNumber;
 
     @Column(length = 20)

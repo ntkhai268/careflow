@@ -8,6 +8,7 @@ import '../../models/appointment.dart';
 import '../../models/appointment_payment.dart';
 import '../../services/appointment_service.dart';
 import '../../services/appointment_payment_store.dart';
+import '../../utils/api_error_message.dart';
 
 /// Appointment detail screen
 class AppointmentDetailScreen extends ConsumerStatefulWidget {
@@ -81,7 +82,10 @@ class _AppointmentDetailScreenState
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorMessage.from(
+          e,
+          fallback: 'Không thể tải thông tin lịch khám. Vui lòng thử lại.',
+        );
         _isLoading = false;
       });
     }
@@ -145,7 +149,12 @@ class _AppointmentDetailScreenState
       setState(() => _isCancelling = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi: ${e.toString()}'),
+          content: Text(
+            ApiErrorMessage.from(
+              e,
+              fallback: 'Không thể hủy lịch khám. Vui lòng thử lại.',
+            ),
+          ),
           backgroundColor: AppColors.error,
         ),
       );

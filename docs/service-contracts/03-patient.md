@@ -49,6 +49,8 @@ Create profile request:
 
 Profile response `data` phải có `id`, `userId`, các field trên, `avatarUrl`, `createdAt`, `updatedAt`.
 Một tài khoản có thể quản lý tối đa 10 profile cho bản thân và người thân; `userId` không còn là khóa duy nhất.
+`idCardNumber` không unique toàn hệ thống: cùng một số CCCD có thể được khai báo lại trên tài khoản khác
+khi người dùng mất quyền truy cập tài khoản cũ. Hệ thống chỉ từ chối số CCCD đã tồn tại trong cùng một tài khoản.
 
 Upload hồ sơ dùng `multipart/form-data`:
 
@@ -61,6 +63,8 @@ Upload hồ sơ dùng `multipart/form-data`:
 
 - Với role `PATIENT`, `X-User-Id` phải map đúng `patient.userId`.
 - Không cho bệnh nhân tạo profile bằng `userId` của người khác.
+- Khi tạo hoặc cập nhật profile, chỉ kiểm tra trùng `idCardNumber` trong phạm vi cùng `userId`; không dùng CCCD
+  làm định danh tài khoản toàn cục.
 - Doctor chỉ truy cập khi `Appointment.doctorId` (trusted Identity user ID) khớp với actor và appointment
   chưa bị hủy; Patient Service kiểm tra assignment với Appointment Service, không dựa vào UI hoặc role đơn lẻ.
 - Staff không đọc profile đầy đủ. Staff chỉ gọi `operational-summary` với đúng `appointmentId` và `roomId`

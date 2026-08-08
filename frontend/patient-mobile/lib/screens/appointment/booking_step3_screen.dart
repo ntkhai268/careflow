@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:dio/dio.dart';
 import '../../config/theme.dart';
 import '../../models/appointment.dart';
 import '../../models/patient.dart';
@@ -59,11 +60,13 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
         _timeSlots = slots;
         _isLoading = false;
       });
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
       setState(() {
         _timeSlots = [];
-        _error = 'Không thể tải danh sách ca khám. Vui lòng thử lại.';
+        _error = error is DioException
+            ? appointmentBookingErrorMessage(error)
+            : 'Không thể tải danh sách ca khám. Vui lòng thử lại.';
         _isLoading = false;
       });
     }
@@ -81,15 +84,14 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
         now: _now,
       );
 
-  bool _isSelectable(AppointmentTimeSlot slot) => !_isPast(slot) && slot.available;
+  bool _isSelectable(AppointmentTimeSlot slot) =>
+      !_isPast(slot) && slot.available;
 
-  List<AppointmentTimeSlot> get _morningSlots => _slotsFor()
-      .where((s) => s.timeSlot.compareTo('12:00') < 0)
-      .toList();
+  List<AppointmentTimeSlot> get _morningSlots =>
+      _slotsFor().where((s) => s.timeSlot.compareTo('12:00') < 0).toList();
 
-  List<AppointmentTimeSlot> get _afternoonSlots => _slotsFor()
-      .where((s) => s.timeSlot.compareTo('12:00') >= 0)
-      .toList();
+  List<AppointmentTimeSlot> get _afternoonSlots =>
+      _slotsFor().where((s) => s.timeSlot.compareTo('12:00') >= 0).toList();
 
   Future<void> _pickDate() async {
     final now = _now;
@@ -391,9 +393,9 @@ class _BookingStep3ScreenState extends ConsumerState<BookingStep3Screen> {
             padding: const EdgeInsets.only(bottom: AppSpacing.sm),
             child: Text(
               'Màu xám: đã qua giờ • màu đỏ: đã đủ người',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textHint,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: AppColors.textHint),
             ),
           ),
         if (slots.isEmpty)

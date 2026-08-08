@@ -41,10 +41,12 @@ public class PatientService {
             throw new BusinessException(409, "Tài khoản đã đạt tối đa 10 hồ sơ bệnh nhân");
         }
 
-        // Kiểm tra CMND/CCCD trùng
-        if (request.getIdCardNumber() != null &&
-                patientRepository.existsByIdCardNumber(request.getIdCardNumber())) {
-            throw new BusinessException(409, "CMND/CCCD đã được sử dụng bởi hồ sơ khác");
+        // Một CCCD có thể được khai báo lại trên tài khoản khác khi chủ tài khoản cũ
+        // mất quyền truy cập. Chỉ chặn bản ghi trùng trong cùng một tài khoản.
+        if (request.getIdCardNumber() != null
+                && patientRepository.existsByUserIdAndIdCardNumber(
+                        request.getUserId(), request.getIdCardNumber())) {
+            throw new BusinessException(409, "Tài khoản này đã có hồ sơ dùng số CCCD đã nhập");
         }
 
         Patient patient = Patient.builder()
@@ -139,11 +141,12 @@ public class PatientService {
 
         ACCESS_POLICY.requireUpdate(requesterId, role, patient);
 
-        // Kiểm tra CMND/CCCD trùng (nếu thay đổi)
-        if (request.getIdCardNumber() != null &&
-                !request.getIdCardNumber().equals(patient.getIdCardNumber()) &&
-                patientRepository.existsByIdCardNumber(request.getIdCardNumber())) {
-            throw new BusinessException(409, "CMND/CCCD đã được sử dụng bởi hồ sơ khác");
+        // Cho phép CCCD tồn tại trên tài khoản khác; chỉ chặn trùng trong cùng tài khoản.
+        if (request.getIdCardNumber() != null
+                && !request.getIdCardNumber().equals(patient.getIdCardNumber())
+                && patientRepository.existsByUserIdAndIdCardNumberAndIdNot(
+                        patient.getUserId(), request.getIdCardNumber(), patient.getId())) {
+            throw new BusinessException(409, "Tài khoản này đã có hồ sơ dùng số CCCD đã nhập");
         }
 
         // Partial update — chỉ cập nhật field non-null

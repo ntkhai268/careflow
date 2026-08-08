@@ -19,5 +19,9 @@ public interface PatientRepository extends JpaRepository<Patient, UUID> {
 
     List<Patient> findAllByUserIdOrderByCreatedAtAsc(UUID userId);
 
+    boolean existsByUserIdAndIdCardNumber(UUID userId, String idCardNumber);
+
+    boolean existsByUserIdAndIdCardNumberAndIdNot(UUID userId, String idCardNumber, UUID id);
+
     boolean existsByIdCardNumber(String idCardNumber);
 }
