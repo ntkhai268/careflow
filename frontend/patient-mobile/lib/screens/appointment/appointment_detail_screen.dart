@@ -349,6 +349,10 @@ class _AppointmentDetailScreenState
                   _buildPaymentCard(_paymentReceipt!),
                   const SizedBox(height: AppSpacing.base),
                 ],
+                if (_canOpenVisitTicket(appt)) ...[
+                  _buildVisitTicketAction(appt),
+                  const SizedBox(height: AppSpacing.base),
+                ],
                 // Status timeline
                 _buildTimeline(appt),
               ],
@@ -357,6 +361,55 @@ class _AppointmentDetailScreenState
         ),
         if (canCancel) _buildActionBar(),
       ],
+    );
+  }
+
+  bool _canOpenVisitTicket(Appointment appointment) =>
+      appointment.status == 'CONFIRMED' ||
+      appointment.status == 'CHECKED_IN' ||
+      appointment.status == 'IN_PROGRESS';
+
+  Widget _buildVisitTicketAction(Appointment appointment) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.primaryLight,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.confirmation_number_rounded, color: AppColors.primary),
+              const SizedBox(width: AppSpacing.md),
+              Expanded(
+                child: Text(
+                  'Phiếu khám của bạn',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const Text('Mở để xem mã phiếu, mã QR và thông tin phòng khám.'),
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              key: const Key('open-journey-detail'),
+              onPressed: () =>
+                  context.push('/journey/${appointment.id}/ticket'),
+              icon: const Icon(Icons.open_in_new_rounded),
+              label: const Text('Xem phiếu khám'),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
