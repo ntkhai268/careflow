@@ -8,59 +8,108 @@ import '../domain/journey_models.dart';
 import 'journey_date_formatter.dart';
 
 class JourneyNotificationScreen extends ConsumerWidget {
-  const JourneyNotificationScreen({super.key, required this.appointmentId});
+  const JourneyNotificationScreen({
+    super.key,
+    required this.appointmentId,
+    this.useInbox = false,
+  });
 
   final String appointmentId;
+  final bool useInbox;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    if (useInbox) {
+      return _NotificationScaffold(
+        notifications: ref.watch(patientNotificationInboxProvider),
+        appointmentId: appointmentId,
+        onRefresh: () => _refreshInbox(context, ref),
+        onMarkRead: (notification) => ref
+            .read(patientNotificationInboxProvider.notifier)
+            .markRead(notification.id),
+      );
+    }
+
     final journey = ref.watch(journeyForAppointmentProvider(appointmentId));
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Thông báo'),
-        actions: [
-          IconButton(
-            tooltip: 'Tải lại thông báo',
-            onPressed: journey.isLoading ? null : () => _refresh(context, ref),
-            icon: const Icon(Icons.refresh_rounded),
-          ),
-        ],
+    return _NotificationScaffold(
+      notifications: journey.whenData(
+        (value) => value?.notifications ?? const <PatientNotification>[],
       ),
-      body: RefreshIndicator(
-        onRefresh: () => _refresh(context, ref),
-        child: journey.when(
-          loading: () =>
-              const _RefreshableMessage(child: CircularProgressIndicator()),
-          error: (_, _) => const _RefreshableMessage(
-            child: Text('Không thể tải thông báo. Kéo xuống để thử lại.'),
-          ),
-          data: (value) => value == null
-              ? const _RefreshableMessage(
-                  child: Text('Bạn chưa có thông báo nào.'),
-                )
-              : _NotificationList(
-                  notifications: value.notifications,
-                  appointmentId: appointmentId,
-                ),
-        ),
-      ),
+      appointmentId: appointmentId,
+      onRefresh: () => _refreshJourney(context, ref),
     );
   }
 
-  Future<void> _refresh(BuildContext context, WidgetRef ref) async {
+  Future<void> _refreshInbox(BuildContext context, WidgetRef ref) async {
+    final refreshed = await ref
+        .read(patientNotificationInboxProvider.notifier)
+        .refresh();
+    if (!refreshed && context.mounted) _showRefreshError(context);
+  }
+
+  Future<void> _refreshJourney(BuildContext context, WidgetRef ref) async {
     final refreshed = await ref
         .read(journeyControllerProvider.notifier)
         .refreshCurrentJourney();
-    if (!refreshed && context.mounted) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          const SnackBar(
-            content: Text('Không thể tải thông báo mới. Vui lòng thử lại sau.'),
-          ),
-        );
-    }
+    if (!refreshed && context.mounted) _showRefreshError(context);
   }
+
+  void _showRefreshError(BuildContext context) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        const SnackBar(
+          content: Text('Không thể tải thông báo mới. Vui lòng thử lại sau.'),
+        ),
+      );
+  }
+}
+
+class _NotificationScaffold extends StatelessWidget {
+  const _NotificationScaffold({
+    required this.notifications,
+    required this.appointmentId,
+    required this.onRefresh,
+    this.onMarkRead,
+  });
+
+  final AsyncValue<List<PatientNotification>> notifications;
+  final String appointmentId;
+  final Future<void> Function() onRefresh;
+  final Future<bool> Function(PatientNotification notification)? onMarkRead;
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(
+      title: const Text('Thông báo'),
+      actions: [
+        IconButton(
+          tooltip: 'Tải lại thông báo',
+          onPressed: notifications.isLoading ? null : onRefresh,
+          icon: const Icon(Icons.refresh_rounded),
+        ),
+      ],
+    ),
+    body: RefreshIndicator(
+      onRefresh: onRefresh,
+      child: notifications.when(
+        loading: () =>
+            const _RefreshableMessage(child: CircularProgressIndicator()),
+        error: (_, _) => const _RefreshableMessage(
+          child: Text('Không thể tải thông báo. Kéo xuống để thử lại.'),
+        ),
+        data: (value) => value.isEmpty
+            ? const _RefreshableMessage(
+                child: Text('Bạn chưa có thông báo nào.'),
+              )
+            : _NotificationList(
+                notifications: value,
+                appointmentId: appointmentId,
+                onMarkRead: onMarkRead,
+              ),
+      ),
+    ),
+  );
 }
 
 class _RefreshableMessage extends StatelessWidget {
@@ -79,18 +128,17 @@ class _NotificationList extends ConsumerWidget {
   const _NotificationList({
     required this.notifications,
     required this.appointmentId,
+    this.onMarkRead,
   });
 
   final List<PatientNotification> notifications;
   final String appointmentId;
+  final Future<bool> Function(PatientNotification notification)? onMarkRead;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final newestFirst = [...notifications]
       ..sort((left, right) => right.createdAt.compareTo(left.createdAt));
-    if (newestFirst.isEmpty) {
-      return const Center(child: Text('Bạn chưa có thông báo nào.'));
-    }
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.base),
       physics: const AlwaysScrollableScrollPhysics(),
@@ -112,9 +160,13 @@ class _NotificationList extends ConsumerWidget {
     PatientNotification notification,
   ) async {
     if (!notification.isRead) {
-      await ref
-          .read(journeyControllerProvider.notifier)
-          .markNotificationRead(notification.id);
+      if (onMarkRead != null) {
+        await onMarkRead!(notification);
+      } else {
+        await ref
+            .read(journeyControllerProvider.notifier)
+            .markNotificationRead(notification.id);
+      }
     }
     if (!context.mounted) return;
     context.push(
@@ -182,10 +234,17 @@ String notificationDestination({
   required PatientNotification notification,
   required String appointmentId,
 }) {
+  final actionType = notification.actionType?.trim().toUpperCase();
+  if (actionType == 'OPEN_APPOINTMENT') {
+    final resourceId = notification.resourceId;
+    if (resourceId != null && resourceId.isNotEmpty) {
+      return '/appointment/$resourceId';
+    }
+  }
   if (appointmentId.isEmpty) return '/';
 
   final base = '/journey/$appointmentId';
-  switch (notification.actionType?.trim().toUpperCase()) {
+  switch (actionType) {
     case 'OPEN_APPOINTMENT':
       final resourceId = notification.resourceId;
       return resourceId == null || resourceId.isEmpty

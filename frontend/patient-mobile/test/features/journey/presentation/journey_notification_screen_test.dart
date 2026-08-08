@@ -112,6 +112,32 @@ void main() {
     expect(find.text('Bạn chưa có thông báo nào.'), findsOneWidget);
   });
 
+  testWidgets('loads the account inbox when there is no active journey', (
+    tester,
+  ) async {
+    final inbox = GlobalInboxTestController();
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authProvider.overrideWith((ref) => NotificationAuthNotifier()),
+          patientProvider.overrideWith(
+            (ref) => NotificationPatientNotifier(ref),
+          ),
+          patientNotificationInboxProvider.overrideWith(() => inbox),
+        ],
+        child: const MaterialApp(
+          home: JourneyNotificationScreen(appointmentId: '', useInbox: true),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Thông báo toàn tài khoản'), findsOneWidget);
+    await tester.tap(find.byTooltip('Tải lại thông báo'));
+    await tester.pumpAndSettle();
+    expect(inbox.refreshCalls, 1);
+  });
+
   testWidgets('opens an already-read notification without marking it again', (
     tester,
   ) async {
@@ -254,6 +280,27 @@ class NotificationRepository implements JourneyRepository {
   @override
   Future<void> reset(PatientJourney journey) =>
       Future<void>.error(UnimplementedError());
+}
+
+class GlobalInboxTestController extends PatientNotificationInboxController {
+  int refreshCalls = 0;
+
+  @override
+  Future<List<PatientNotification>> build() async => [
+    PatientNotification(
+      id: 'global',
+      title: 'Thông báo toàn tài khoản',
+      body: 'Nội dung thông báo.',
+      createdAt: DateTime.utc(2026, 7, 30, 10),
+      isRead: false,
+    ),
+  ];
+
+  @override
+  Future<bool> refresh() async {
+    refreshCalls++;
+    return true;
+  }
 }
 
 GoRouter notificationRouter() => GoRouter(

@@ -11,6 +11,9 @@ class NotificationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final appointmentId = ref.watch(activeJourneyProvider)?.appointmentId ?? '';
-    return JourneyNotificationScreen(appointmentId: appointmentId);
+    return JourneyNotificationScreen(
+      appointmentId: appointmentId,
+      useInbox: appointmentId.isEmpty,
+    );
   }
 }

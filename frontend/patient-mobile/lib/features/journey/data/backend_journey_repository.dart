@@ -194,6 +194,9 @@ class BackendJourneyMapper {
 
   final DateTime Function() _now;
 
+  PatientNotification? mapNotification(Map<String, dynamic> json) =>
+      _notification(json);
+
   PatientJourney mapResources(BackendJourneyResources resources) {
     final appointment = resources.appointment;
     if (appointment.patientId != resources.patientId) {
