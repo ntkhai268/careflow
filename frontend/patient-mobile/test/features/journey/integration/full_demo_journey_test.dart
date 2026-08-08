@@ -434,8 +434,29 @@ Finder _screenForPath(String path) {
 }
 
 Future<void> _returnToHub(WidgetTester tester, String hubPath) async {
-  await tester.pageBack();
-  await tester.pumpAndSettle();
+  final ticketBack = find.byTooltip('Quay lại lịch khám');
+  if (ticketBack.evaluate().isNotEmpty) {
+    await tester.tap(ticketBack);
+    // The appointment tab starts an async list load; one frame is enough to
+    // observe the route before returning to the in-memory demo hub.
+    await tester.pump();
+    expect(
+      appRouter
+          .routerDelegate
+          .currentConfiguration
+          .matches
+          .last
+          .matchedLocation,
+      '/appointments',
+    );
+    // The production back target is the appointment list. Return to the demo
+    // hub explicitly so the next state transition can continue in this test.
+    appRouter.go(hubPath);
+    await tester.pumpAndSettle();
+  } else {
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+  }
   expect(
     appRouter.routerDelegate.currentConfiguration.matches.last.matchedLocation,
     hubPath,

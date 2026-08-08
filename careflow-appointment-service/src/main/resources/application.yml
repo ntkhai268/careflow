@@ -56,3 +56,4 @@ springdoc:
 appointment:
   outbox-poll-ms: ${APPOINTMENT_OUTBOX_POLL_MS:1000}
   outbox-max-attempts: ${APPOINTMENT_OUTBOX_MAX_ATTEMPTS:12}
+  max-appointments-per-slot: ${APPOINTMENT_MAX_APPOINTMENTS_PER_SLOT:5}

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../services/health_record_service.dart';
+import '../../utils/api_error_message.dart';
 import '../../providers/health_record_provider.dart';
 import '../../config/theme.dart';
 
@@ -155,9 +156,16 @@ class _HealthRecordFormScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ApiErrorMessage.from(
+                e,
+                fallback: 'Không thể tạo hồ sơ sức khỏe. Vui lòng thử lại.',
+              ),
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) {

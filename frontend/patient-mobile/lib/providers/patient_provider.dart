@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/patient.dart';
 import '../providers/auth_provider.dart';
 import '../services/patient_service.dart';
+import '../utils/api_error_message.dart';
 
 /// State for patient data
 class PatientState {
@@ -68,7 +69,10 @@ class PatientNotifier extends StateNotifier<PatientState> {
       if (generation != _operationGeneration || _userId != userId) return;
       state = PatientState(
         isLoading: false,
-        errorMessage: 'Không thể tải hồ sơ: ${_parseError(e)}',
+        errorMessage: _parseError(
+          e,
+          fallback: 'Không thể tải hồ sơ bệnh nhân. Vui lòng thử lại.',
+        ),
       );
     }
   }
@@ -94,7 +98,10 @@ class PatientNotifier extends StateNotifier<PatientState> {
       }
       state = PatientState(
         isLoading: false,
-        errorMessage: 'Không thể tạo hồ sơ: ${_parseError(e)}',
+        errorMessage: _parseError(
+          e,
+          fallback: 'Không thể tạo hồ sơ bệnh nhân. Vui lòng thử lại.',
+        ),
       );
       return false;
     }
@@ -119,7 +126,10 @@ class PatientNotifier extends StateNotifier<PatientState> {
       }
       state = PatientState(
         isLoading: false,
-        errorMessage: 'Không thể cập nhật hồ sơ: ${_parseError(e)}',
+        errorMessage: _parseError(
+          e,
+          fallback: 'Không thể cập nhật hồ sơ bệnh nhân. Vui lòng thử lại.',
+        ),
       );
       return false;
     }
@@ -144,18 +154,17 @@ class PatientNotifier extends StateNotifier<PatientState> {
       }
       state = PatientState(
         isLoading: false,
-        errorMessage: 'Không thể xóa hồ sơ: ${_parseError(e)}',
+        errorMessage: _parseError(
+          e,
+          fallback: 'Không thể xóa hồ sơ bệnh nhân. Vui lòng thử lại.',
+        ),
       );
       return false;
     }
   }
 
-  String _parseError(dynamic e) {
-    if (e.toString().contains('Connection refused') ||
-        e.toString().contains('SocketException')) {
-      return 'Không thể kết nối server';
-    }
-    return e.toString();
+  String _parseError(Object error, {required String fallback}) {
+    return ApiErrorMessage.from(error, fallback: fallback);
   }
 }
 

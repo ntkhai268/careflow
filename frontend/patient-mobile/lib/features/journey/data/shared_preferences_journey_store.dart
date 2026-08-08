@@ -57,7 +57,8 @@ class SharedPreferencesJourneyStore implements JourneyStore {
       await _remove(persistence, key);
       return JourneyLoadResult(
         wasCorrupted: true,
-        errorMessage: error.toString(),
+        errorMessage:
+            'Dữ liệu hành trình cũ không còn hợp lệ và đã được tạo lại.',
       );
     }
   }

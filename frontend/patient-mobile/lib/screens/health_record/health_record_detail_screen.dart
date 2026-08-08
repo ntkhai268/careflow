@@ -5,6 +5,7 @@ import '../../services/health_record_service.dart';
 import '../../providers/health_record_provider.dart';
 import '../../models/health_record.dart';
 import '../../config/theme.dart';
+import '../../utils/api_error_message.dart';
 
 class HealthRecordDetailScreen extends ConsumerStatefulWidget {
   final String patientId;
@@ -148,9 +149,16 @@ class _HealthRecordDetailScreenState
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                ApiErrorMessage.from(
+                  e,
+                  fallback: 'Không thể xóa hồ sơ sức khỏe. Vui lòng thử lại.',
+                ),
+              ),
+            ),
+          );
         }
       }
     }
@@ -209,9 +217,17 @@ class _HealthRecordDetailScreenState
     } catch (e) {
       if (mounted) {
         setState(() => _isSaving = false);
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              ApiErrorMessage.from(
+                e,
+                fallback:
+                    'Không thể cập nhật hồ sơ sức khỏe. Vui lòng thử lại.',
+              ),
+            ),
+          ),
+        );
       }
     }
   }
@@ -248,7 +264,14 @@ class _HealthRecordDetailScreenState
             return const Center(child: CircularProgressIndicator());
           }
           if (snapshot.hasError) {
-            return Center(child: Text('Lỗi: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                ApiErrorMessage.from(
+                  snapshot.error!,
+                  fallback: 'Không thể tải hồ sơ sức khỏe. Vui lòng thử lại.',
+                ),
+              ),
+            );
           }
           if (!snapshot.hasData) {
             return const Center(child: Text('Không tìm thấy dữ liệu'));

@@ -158,10 +158,12 @@ Chúng vẫn phải build, có health check và không được chứa nghiệp 
 ### Ranh giới payment của MVP
 
 MVP không có Payment microservice độc lập. Phí khám trên Patient Mobile được
-trình bày bằng fixture `GENERAL_CONSULTATION` và lưu receipt qua local adapter;
-tiền mặt là `DUE_AT_HOSPITAL`. Cuối lượt, `VisitSettlement` local/demo cộng phí
-khám, cận lâm sàng và thuốc, đối trừ `prepaidAmount`, rồi trả `amountDue`,
-`refundDue` và trạng thái quyết toán. Laboratory Order không có payment contract
+trình bày bằng fixture `GENERAL_CONSULTATION`, bắt buộc thanh toán trực tuyến
+mô phỏng và lưu receipt qua local adapter. Thanh toán tiền mặt không thuộc flow
+đặt lịch; nếu cuối lượt phát sinh `amountDue`, `VisitSettlement` local/demo có
+thể ghi nhận khoản thu tại quầy. Cuối lượt, `VisitSettlement` cộng phí khám,
+cận lâm sàng và thuốc, đối trừ `prepaidAmount`, rồi trả `amountDue`, `refundDue`
+và trạng thái quyết toán. Laboratory Order không có payment contract
 riêng và order hợp lệ tạo `LAB_EXECUTION` ngay. Chỉ `PAYMENT_DUE` chặn dispense;
 `REFUND_PENDING` không chặn. Phạm vi nghiệp vụ chỉ xét người bệnh tự chi trả.
 

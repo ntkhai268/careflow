@@ -171,6 +171,38 @@ class Appointment {
   }
 }
 
+/// Availability returned by Appointment Service for a bookable time slot.
+class AppointmentTimeSlot {
+  final String timeSlot;
+  final int bookedCount;
+  final int capacity;
+  final int remaining;
+  final bool available;
+  final String? unavailableReason;
+
+  const AppointmentTimeSlot({
+    required this.timeSlot,
+    required this.bookedCount,
+    required this.capacity,
+    required this.remaining,
+    required this.available,
+    this.unavailableReason,
+  });
+
+  bool get isFull => unavailableReason == 'FULL' || remaining <= 0;
+
+  factory AppointmentTimeSlot.fromJson(Map<String, dynamic> json) {
+    return AppointmentTimeSlot(
+      timeSlot: json['timeSlot'] as String,
+      bookedCount: (json['bookedCount'] as num?)?.toInt() ?? 0,
+      capacity: (json['capacity'] as num?)?.toInt() ?? 0,
+      remaining: (json['remaining'] as num?)?.toInt() ?? 0,
+      available: json['available'] as bool? ?? false,
+      unavailableReason: json['unavailableReason'] as String?,
+    );
+  }
+}
+
 /// Department model from API
 class Department {
   final String code;

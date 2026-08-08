@@ -16,6 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -23,6 +24,7 @@ import java.util.UUID;
 @Slf4j
 public class PatientService {
 
+    private static final int MAX_PROFILES_PER_USER = 10;
     private final PatientRepository patientRepository;
     private final AssignmentClient assignmentClient;
     private static final PatientAccessPolicy ACCESS_POLICY = new PatientAccessPolicy();
@@ -34,15 +36,17 @@ public class PatientService {
     public PatientResponse createPatient(CreatePatientRequest request, UUID requesterId, String role) {
         ACCESS_POLICY.requireCreate(requesterId, role, request.getUserId());
 
-        // Kiểm tra userId đã tồn tại chưa
-        if (patientRepository.existsByUserId(request.getUserId())) {
-            throw new BusinessException(409, "Bệnh nhân với userId này đã tồn tại");
+        if (!"ADMIN".equalsIgnoreCase(role)
+                && patientRepository.countByUserId(request.getUserId()) >= MAX_PROFILES_PER_USER) {
+            throw new BusinessException(409, "Tài khoản đã đạt tối đa 10 hồ sơ bệnh nhân");
         }
 
-        // Kiểm tra CMND/CCCD trùng
-        if (request.getIdCardNumber() != null &&
-                patientRepository.existsByIdCardNumber(request.getIdCardNumber())) {
-            throw new BusinessException(409, "CMND/CCCD đã được sử dụng bởi hồ sơ khác");
+        // Một CCCD có thể được khai báo lại trên tài khoản khác khi chủ tài khoản cũ
+        // mất quyền truy cập. Chỉ chặn bản ghi trùng trong cùng một tài khoản.
+        if (request.getIdCardNumber() != null
+                && patientRepository.existsByUserIdAndIdCardNumber(
+                        request.getUserId(), request.getIdCardNumber())) {
+            throw new BusinessException(409, "Tài khoản này đã có hồ sơ dùng số CCCD đã nhập");
         }
 
         Patient patient = Patient.builder()
@@ -109,12 +113,22 @@ public class PatientService {
      */
     @Transactional(readOnly = true)
     public PatientResponse getPatientByUserId(UUID userId, UUID requesterId, String role) {
-        Patient patient = patientRepository.findByUserId(userId)
+        Patient patient = patientRepository.findFirstByUserIdOrderByCreatedAtAsc(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "userId", userId));
 
         ACCESS_POLICY.requireRead(requesterId, role, patient);
 
         return PatientMapper.toResponse(patient);
+    }
+
+    /**
+     * Lấy tất cả hồ sơ thuộc cùng tài khoản, theo thứ tự tạo.
+     */
+    @Transactional(readOnly = true)
+    public List<PatientResponse> getPatientsByUserId(UUID userId, UUID requesterId, String role) {
+        List<Patient> patients = patientRepository.findAllByUserIdOrderByCreatedAtAsc(userId);
+        patients.forEach(patient -> ACCESS_POLICY.requireRead(requesterId, role, patient));
+        return patients.stream().map(PatientMapper::toResponse).toList();
     }
 
     /**
@@ -127,11 +141,12 @@ public class PatientService {
 
         ACCESS_POLICY.requireUpdate(requesterId, role, patient);
 
-        // Kiểm tra CMND/CCCD trùng (nếu thay đổi)
-        if (request.getIdCardNumber() != null &&
-                !request.getIdCardNumber().equals(patient.getIdCardNumber()) &&
-                patientRepository.existsByIdCardNumber(request.getIdCardNumber())) {
-            throw new BusinessException(409, "CMND/CCCD đã được sử dụng bởi hồ sơ khác");
+        // Cho phép CCCD tồn tại trên tài khoản khác; chỉ chặn trùng trong cùng tài khoản.
+        if (request.getIdCardNumber() != null
+                && !request.getIdCardNumber().equals(patient.getIdCardNumber())
+                && patientRepository.existsByUserIdAndIdCardNumberAndIdNot(
+                        patient.getUserId(), request.getIdCardNumber(), patient.getId())) {
+            throw new BusinessException(409, "Tài khoản này đã có hồ sơ dùng số CCCD đã nhập");
         }
 
         // Partial update — chỉ cập nhật field non-null

@@ -126,8 +126,8 @@ Các đối tượng sử dụng trong phạm vi thực hiện gồm:
 ### 1.4.2. Phần mô phỏng
 
 Patient Mobile mô phỏng bước chọn và ghi nhận phí khám bằng fixture dịch vụ
-`GENERAL_CONSULTATION` cùng hai lựa chọn `ONLINE_MOCK` và
-`CASH_AT_HOSPITAL`. Ở cuối lượt, adapter demo tổng hợp phí khám, cận lâm sàng
+`GENERAL_CONSULTATION` với thanh toán bắt buộc `ONLINE_MOCK`. Ở cuối lượt,
+adapter demo tổng hợp phí khám, cận lâm sàng
 và thuốc, đối trừ khoản đã trả trước rồi trình bày `PAYMENT_DUE`, `SETTLED`,
 `REFUND_PENDING` hoặc `REFUNDED`. Phạm vi chỉ xét người bệnh tự chi trả. Các
 trạng thái này minh họa trải nghiệm nhưng không phải giao dịch production.

@@ -9,17 +9,19 @@ import com.careflow.appointment.dto.request.UpdateAppointmentStatusRequest;
 import com.careflow.appointment.dto.response.AppointmentResponse;
 import com.careflow.appointment.dto.response.ClinicalContextResponse;
 import com.careflow.appointment.dto.response.RoomAssignmentResponse;
+import com.careflow.appointment.dto.response.TimeSlotAvailabilityResponse;
 import com.careflow.appointment.mapper.AppointmentMapper;
 import com.careflow.appointment.model.Appointment;
 import com.careflow.appointment.model.AppointmentStatus;
 import com.careflow.appointment.model.Department;
 import com.careflow.appointment.repository.AppointmentRepository;
+import com.careflow.appointment.repository.AppointmentSlotLockRepository;
 import com.careflow.common.dto.ApiResponse;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.common.exception.ResourceNotFoundException;
 import com.careflow.common.constants.AppConstants;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,24 +29,58 @@ import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
-import java.time.format.DateTimeParseException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AppointmentService {
     private static final ZoneId HOSPITAL_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
+    private static final Pattern TIME_SLOT_PATTERN = Pattern.compile(
+            "^\\s*(\\d{1,2}):(\\d{2})\\s*-\\s*(\\d{1,2}):(\\d{2})\\s*$");
+    public static final List<String> DEFAULT_TIME_SLOTS = List.of(
+            "07:30-08:00", "08:00-08:30", "08:30-09:00", "09:00-09:30",
+            "09:30-10:00", "10:00-10:30", "10:30-11:00", "11:00-11:30",
+            "13:30-14:00", "14:00-14:30", "14:30-15:00", "15:00-15:30",
+            "15:30-16:00", "16:00-16:30");
 
 
     private final AppointmentRepository appointmentRepository;
     private final AppointmentEventService appointmentEvents;
     private final DirectoryClient directoryClient;
     private final PatientClient patientClient;
+    private final AppointmentSlotLockRepository appointmentSlotLockRepository;
+
+    @org.springframework.beans.factory.annotation.Value("${appointment.max-appointments-per-slot:5}")
+    private int maxAppointmentsPerSlot = 5;
 
     private final Map<String, AppointmentResponse> idempotencyStore = new java.util.concurrent.ConcurrentHashMap<>();
+
+    @Autowired
+    public AppointmentService(AppointmentRepository appointmentRepository,
+                              AppointmentEventService appointmentEvents,
+                              DirectoryClient directoryClient,
+                              PatientClient patientClient,
+                              AppointmentSlotLockRepository appointmentSlotLockRepository) {
+        this.appointmentRepository = appointmentRepository;
+        this.appointmentEvents = appointmentEvents;
+        this.directoryClient = directoryClient;
+        this.patientClient = patientClient;
+        this.appointmentSlotLockRepository = appointmentSlotLockRepository;
+    }
+
+    /** Backward-compatible constructor for focused unit tests that do not use DB locking. */
+    public AppointmentService(AppointmentRepository appointmentRepository,
+                              AppointmentEventService appointmentEvents,
+                              DirectoryClient directoryClient,
+                              PatientClient patientClient) {
+        this(appointmentRepository, appointmentEvents, directoryClient, patientClient, null);
+    }
 
     /**
      * Đặt lịch khám mới (hỗ trợ Idempotency-Key)
@@ -72,6 +108,7 @@ public class AppointmentService {
         }
 
         validateAppointmentTime(request, Clock.system(HOSPITAL_ZONE));
+        request.setTimeSlot(normalizeTimeSlot(request.getTimeSlot()));
 
         // Parse department
         Department department;
@@ -94,6 +131,7 @@ public class AppointmentService {
         if (assignedDoctorId != null && !assignedDoctorId.equals(assignment.doctorUserId())) {
             throw new BusinessException(409, "Bác sĩ tái khám không khớp phân công của khoa/phòng");
         }
+        enforceSlotCapacity(assignment.roomId(), request.getAppointmentDate(), request.getTimeSlot());
         Appointment appointment = Appointment.builder()
                 .patientId(request.getPatientId())
                 .ownerUserId(ownerUserId)
@@ -310,6 +348,44 @@ public class AppointmentService {
     }
 
     /**
+     * Returns every standard slot with its current capacity state. Past slots
+     * stay in the response so the patient can see why a slot cannot be chosen.
+     */
+    @Transactional(readOnly = true)
+    public List<TimeSlotAvailabilityResponse> getTimeSlotAvailability(
+            String departmentStr, LocalDate date) {
+        if (date == null) {
+            throw new BusinessException(400, "Ngày khám không được để trống");
+        }
+        Department department = parseDepartment(departmentStr);
+        DirectoryAssignment assignment = resolveDirectoryAssignment(department);
+        Map<String, Long> bookedBySlot = new HashMap<>();
+        appointmentRepository.findByRoomIdAndAppointmentDateAndStatusNot(
+                        assignment.roomId(), date, AppointmentStatus.CANCELLED)
+                .forEach(appointment -> bookedBySlot.merge(
+                        normalizeTimeSlot(appointment.getTimeSlot()), 1L, Long::sum));
+
+        Clock clock = Clock.system(HOSPITAL_ZONE);
+        int capacity = Math.max(1, maxAppointmentsPerSlot);
+        return DEFAULT_TIME_SLOTS.stream()
+                .map(slot -> {
+                    int booked = bookedBySlot.getOrDefault(slot, 0L).intValue();
+                    boolean past = isSlotStartInPast(date, slot, clock);
+                    boolean full = booked >= capacity;
+                    String reason = past ? "PAST" : full ? "FULL" : null;
+                    return TimeSlotAvailabilityResponse.builder()
+                            .timeSlot(slot)
+                            .bookedCount(booked)
+                            .capacity(capacity)
+                            .remaining(Math.max(0, capacity - booked))
+                            .available(!past && !full)
+                            .unavailableReason(reason)
+                            .build();
+                })
+                .toList();
+    }
+
+    /**
      * Cập nhật trạng thái lịch khám
      */
     @Transactional
@@ -469,6 +545,37 @@ public class AppointmentService {
     private record DirectoryAssignment(UUID departmentId, String roomId, String roomDisplayName,
                                        UUID doctorUserId, String doctorName) {}
 
+    private void enforceSlotCapacity(String roomId, LocalDate date, String timeSlot) {
+        // The lock repository is present in the Spring application. It is null
+        // only for older unit-test constructors that intentionally bypass DB locking.
+        if (appointmentSlotLockRepository == null) {
+            return;
+        }
+
+        String normalizedSlot = normalizeTimeSlot(timeSlot);
+        String slotKey = roomId + "|" + date + "|" + normalizedSlot;
+        appointmentSlotLockRepository.ensureSlotExists(slotKey);
+        appointmentSlotLockRepository.findBySlotKeyForUpdate(slotKey)
+                .orElseThrow(() -> new BusinessException(500, "Không khởi tạo được khóa khung giờ"));
+
+        long booked = appointmentRepository
+                .countByRoomIdAndAppointmentDateAndTimeSlotAndStatusNot(
+                        roomId, date, normalizedSlot, AppointmentStatus.CANCELLED);
+        int capacity = Math.max(1, maxAppointmentsPerSlot);
+        if (booked >= capacity) {
+            throw new BusinessException(409,
+                    "Khung giờ " + normalizedSlot + " đã đủ " + capacity + " người đặt khám");
+        }
+    }
+
+    private Department parseDepartment(String departmentStr) {
+        try {
+            return Department.fromCode(departmentStr);
+        } catch (IllegalArgumentException e) {
+            throw new BusinessException(400, "Chuyên khoa không hợp lệ: " + departmentStr);
+        }
+    }
+
     private void requireOwnerOrClinical(Appointment appointment, UUID requesterUserId, String role) {
         if (AppConstants.ROLE_ADMIN.equalsIgnoreCase(role)) return;
         if (AppConstants.ROLE_DOCTOR.equalsIgnoreCase(role)) {
@@ -495,13 +602,57 @@ public class AppointmentService {
 
         try {
             String startValue = request.getTimeSlot().split("-", 2)[0].trim();
-            LocalTime slotStart = LocalTime.parse(startValue);
+            LocalTime slotStart = parseClockValue(startValue);
             if (!LocalTime.now(clock).isBefore(slotStart)) {
                 throw new BusinessException(400, "Ca khám đã qua. Vui lòng chọn ca khác");
             }
-        } catch (DateTimeParseException e) {
+        } catch (IllegalArgumentException e) {
             throw new BusinessException(400, "Định dạng ca khám không hợp lệ");
         }
+    }
+
+    static String normalizeTimeSlot(String value) {
+        if (value == null) {
+            throw new BusinessException(400, "Định dạng ca khám không hợp lệ");
+        }
+        Matcher matcher = TIME_SLOT_PATTERN.matcher(value);
+        if (!matcher.matches()) {
+            throw new BusinessException(400, "Định dạng ca khám không hợp lệ");
+        }
+        LocalTime start = parseClockValue(matcher.group(1) + ":" + matcher.group(2));
+        LocalTime end = parseClockValue(matcher.group(3) + ":" + matcher.group(4));
+        if (!end.isAfter(start)) {
+            throw new BusinessException(400, "Giờ kết thúc ca khám phải sau giờ bắt đầu");
+        }
+        return String.format(Locale.ROOT, "%02d:%02d-%02d:%02d",
+                start.getHour(), start.getMinute(), end.getHour(), end.getMinute());
+    }
+
+    private static LocalTime parseClockValue(String value) {
+        try {
+            String[] parts = value.trim().split(":", -1);
+            if (parts.length != 2) {
+                throw new IllegalArgumentException("Invalid time");
+            }
+            return LocalTime.of(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]));
+        } catch (RuntimeException e) {
+            if (e instanceof IllegalArgumentException) {
+                throw (IllegalArgumentException) e;
+            }
+            throw new IllegalArgumentException("Invalid time", e);
+        }
+    }
+
+    private static boolean isSlotStartInPast(LocalDate date, String slot, Clock clock) {
+        LocalDate today = LocalDate.now(clock);
+        if (date.isBefore(today)) {
+            return true;
+        }
+        if (date.isAfter(today)) {
+            return false;
+        }
+        LocalTime start = parseClockValue(normalizeTimeSlot(slot).substring(0, 5));
+        return !LocalTime.now(clock).isBefore(start);
     }
 
     private void validateStatusTransition(AppointmentStatus current, AppointmentStatus next) {

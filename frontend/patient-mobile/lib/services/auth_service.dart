@@ -1,6 +1,6 @@
-import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/api_config.dart';
+import '../utils/api_error_message.dart';
 import 'api_service.dart';
 
 /// Auth response model — maps to Identity Service's LoginResponse.
@@ -91,7 +91,7 @@ class AuthService {
       }
       return authResponse;
     } catch (e) {
-      throw Exception(_messageFrom(e));
+      throw Exception(_messageFrom(e, login: true));
     }
   }
 
@@ -200,30 +200,16 @@ class AuthService {
     return mockResponse;
   }
 
-  String _messageFrom(Object error) {
-    if (error is DioException) {
-      final data = error.response?.data;
-      final statusCode = error.response?.statusCode;
-
-      // Try to extract server error message
-      if (data is Map<String, dynamic>) {
-        if (data['message'] is String) return data['message'] as String;
-        if (data['error'] is String) return data['error'] as String;
-        // Nested in 'data' field
-        if (data['data'] is Map && data['data']['message'] is String) {
-          return data['data']['message'] as String;
-        }
-      }
-
-      // Fallback by status code
-      if (statusCode == 401) return 'Sai tên đăng nhập hoặc mật khẩu';
-      if (statusCode == 400) return 'Thông tin không hợp lệ';
-      if (statusCode == 409) return 'Tài khoản đã tồn tại';
-      if (statusCode == 403) return 'Tài khoản bị khóa';
-
-      return 'Không thể kết nối server (${statusCode ?? 'timeout'})';
-    }
-    return error.toString();
+  String _messageFrom(Object error, {bool login = false}) {
+    return ApiErrorMessage.from(
+      error,
+      fallback: login
+          ? 'Đăng nhập thất bại. Vui lòng kiểm tra thông tin và thử lại.'
+          : 'Đăng ký thất bại. Vui lòng kiểm tra thông tin và thử lại.',
+      unauthorized: login
+          ? 'Tên đăng nhập hoặc mật khẩu không đúng.'
+          : 'Tài khoản chưa được phép thực hiện thao tác này.',
+    );
   }
 }
 

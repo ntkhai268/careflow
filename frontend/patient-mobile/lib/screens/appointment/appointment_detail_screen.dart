@@ -5,7 +5,10 @@ import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
+import '../../models/appointment_payment.dart';
 import '../../services/appointment_service.dart';
+import '../../services/appointment_payment_store.dart';
+import '../../utils/api_error_message.dart';
 
 /// Appointment detail screen
 class AppointmentDetailScreen extends ConsumerStatefulWidget {
@@ -23,6 +26,7 @@ class _AppointmentDetailScreenState
   static const _unauthorizedMessage = 'Bạn không có quyền xem phiếu khám này.';
 
   Appointment? _appointment;
+  AppointmentPaymentReceipt? _paymentReceipt;
   bool _isLoading = true;
   bool _isCancelling = false;
   String? _error;
@@ -61,14 +65,27 @@ class _AppointmentDetailScreenState
         });
         return;
       }
+      AppointmentPaymentReceipt? paymentReceipt;
+      try {
+        paymentReceipt = await ref
+            .read(appointmentPaymentStoreProvider)
+            .load(appointment.id);
+      } catch (_) {
+        // Payment receipt is local presentation data and must not hide a real
+        // appointment when local storage is unavailable.
+      }
       setState(() {
         _appointment = appointment;
+        _paymentReceipt = paymentReceipt;
         _isLoading = false;
       });
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = ApiErrorMessage.from(
+          e,
+          fallback: 'Không thể tải thông tin lịch khám. Vui lòng thử lại.',
+        );
         _isLoading = false;
       });
     }
@@ -132,7 +149,12 @@ class _AppointmentDetailScreenState
       setState(() => _isCancelling = false);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Lỗi: ${e.toString()}'),
+          content: Text(
+            ApiErrorMessage.from(
+              e,
+              fallback: 'Không thể hủy lịch khám. Vui lòng thử lại.',
+            ),
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -172,54 +194,6 @@ class _AppointmentDetailScreenState
     _showCancellationResult(appointment, retired: retired);
   }
 
-  Future<void> _openJourney() async {
-    final appointment = _appointment;
-    final scope = ref.read(journeyAccountScopeProvider);
-    if (appointment == null ||
-        scope == null ||
-        appointment.patientId != scope.patientId ||
-        !appointment.allowsActiveJourney) {
-      return;
-    }
-    final isCompleted = appointment.status == 'COMPLETED';
-    final needsJourneyBootstrap =
-        isCompleted || !ref.read(realQueueEnabledProvider);
-    if (needsJourneyBootstrap) {
-      final activeJourney = ref.read(activeJourneyProvider);
-      if (activeJourney?.appointmentId == appointment.id &&
-          activeJourney?.patientId == appointment.patientId) {
-        if (mounted) {
-          if (isCompleted && ref.read(realQueueEnabledProvider)) {
-            context.push('/journey/${appointment.id}/outcome');
-          } else if (ref.read(realQueueEnabledProvider)) {
-            context.push('/journey/${appointment.id}/ticket');
-          } else {
-            context.push('/journey/${appointment.id}');
-          }
-        }
-        return;
-      }
-      try {
-        await ref
-            .read(journeyControllerProvider.notifier)
-            .bootstrap(
-              appointment: appointment,
-              patientId: appointment.patientId,
-            );
-      } catch (_) {
-        // Preserve the real controller error for the journey screen.
-      }
-    }
-    if (!mounted) return;
-    if (isCompleted && ref.read(realQueueEnabledProvider)) {
-      context.push('/journey/${appointment.id}/outcome');
-    } else if (ref.read(realQueueEnabledProvider)) {
-      context.push('/journey/${appointment.id}/ticket');
-    } else {
-      context.push('/journey/${appointment.id}');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -228,7 +202,16 @@ class _AppointmentDetailScreenState
         title: const Text('Chi tiết phiếu khám'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_rounded),
-          onPressed: () => context.pop(),
+          onPressed: () {
+            // A post-booking `go` starts this screen without a previous
+            // appointment route. Re-enter the appointment tab so its list
+            // is rebuilt and fetched instead of showing stale state.
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/appointments');
+            }
+          },
         ),
       ),
       body: _isLoading
@@ -362,19 +345,78 @@ class _AppointmentDetailScreenState
                   ),
                 ),
                 const SizedBox(height: AppSpacing.base),
+                if (_paymentReceipt != null) ...[
+                  _buildPaymentCard(_paymentReceipt!),
+                  const SizedBox(height: AppSpacing.base),
+                ],
                 // Status timeline
                 _buildTimeline(appt),
               ],
             ),
           ),
         ),
-        _buildActionBar(
-          canCancel: canCancel,
-          canOpenJourney: appt.allowsActiveJourney,
-        ),
+        if (canCancel) _buildActionBar(),
       ],
     );
   }
+
+  Widget _buildPaymentCard(AppointmentPaymentReceipt receipt) {
+    final color = receipt.isPaid ? AppColors.success : AppColors.warning;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.card,
+        border: Border.all(color: AppColors.cardBorder, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Thanh toán',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: AppSpacing.base),
+          _buildDetailRow(
+            Icons.receipt_long_rounded,
+            'Dịch vụ',
+            receipt.serviceName,
+          ),
+          _buildDetailRow(
+            Icons.payments_rounded,
+            'Số tiền',
+            _formatCurrency(receipt.amount),
+          ),
+          _buildDetailRow(
+            Icons.account_balance_wallet_rounded,
+            'Phương thức',
+            receipt.method.displayName,
+          ),
+          Row(
+            children: [
+              Icon(Icons.verified_rounded, color: color, size: 20),
+              const SizedBox(width: AppSpacing.md),
+              Text(
+                receipt.status.displayName,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatCurrency(int amount) =>
+      '${NumberFormat('#,###', 'vi_VN').format(amount)} ₫';
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
     return Padding(
@@ -552,10 +594,7 @@ class _AppointmentDetailScreenState
     );
   }
 
-  Widget _buildActionBar({
-    required bool canCancel,
-    required bool canOpenJourney,
-  }) {
+  Widget _buildActionBar() {
     return Container(
       padding: const EdgeInsets.all(AppSpacing.base),
       decoration: BoxDecoration(
@@ -565,39 +604,22 @@ class _AppointmentDetailScreenState
       child: SafeArea(
         child: Row(
           children: [
-            if (canCancel) ...[
-              Expanded(
-                child: SizedBox(
-                  height: 52,
-                  child: OutlinedButton(
-                    onPressed: _isCancelling ? null : _cancelAppointment,
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: const BorderSide(
-                        color: AppColors.error,
-                        width: 1.5,
-                      ),
-                    ),
-                    child: _isCancelling
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Hủy lịch khám'),
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.sm),
-            ],
             Expanded(
               child: SizedBox(
                 height: 52,
-                child: ElevatedButton.icon(
-                  key: const Key('open-journey-detail'),
-                  onPressed: canOpenJourney ? _openJourney : null,
-                  icon: const Icon(Icons.route_rounded),
-                  label: const Text('Hành trình khám'),
+                child: OutlinedButton(
+                  onPressed: _isCancelling ? null : _cancelAppointment,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.error,
+                    side: const BorderSide(color: AppColors.error, width: 1.5),
+                  ),
+                  child: _isCancelling
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Hủy lịch khám'),
                 ),
               ),
             ),
