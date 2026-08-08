@@ -109,6 +109,55 @@ final activeJourneyProvider = Provider<PatientJourney?>((ref) {
       : null;
 });
 
+/// Restores the active backend journey after the app is restarted or the
+/// patient returns to the home tab. Booking currently bootstraps the journey
+/// in memory, so without this reconciliation the home card disappears even
+/// though the appointment and visit ticket still exist on the server.
+final activeJourneyBootstrapProvider = FutureProvider.autoDispose<void>((
+  ref,
+) async {
+  if (ref.watch(demoModeProvider)) return;
+
+  final scope = ref.watch(journeyAccountScopeProvider);
+  if (scope == null) return;
+
+  final current = ref.read(journeyControllerProvider).valueOrNull;
+  if (current != null && current.patientId == scope.patientId) return;
+
+  final appointments = await ref
+      .watch(appointmentServiceProvider)
+      .getAppointmentsByPatientId(scope.patientId);
+  final candidates = appointments
+      .where(
+        (appointment) =>
+            appointment.patientId == scope.patientId &&
+            appointment.allowsActiveJourney &&
+            appointment.status != 'COMPLETED' &&
+            appointment.status != 'CANCELLED',
+      )
+      .toList();
+  if (candidates.isEmpty) return;
+
+  candidates.sort((left, right) {
+    final leftPriority = _activeAppointmentPriority(left);
+    final rightPriority = _activeAppointmentPriority(right);
+    final priorityComparison = leftPriority.compareTo(rightPriority);
+    if (priorityComparison != 0) return priorityComparison;
+    return left.appointmentDate.compareTo(right.appointmentDate);
+  });
+
+  await ref
+      .read(journeyControllerProvider.notifier)
+      .bootstrap(appointment: candidates.first, patientId: scope.patientId);
+});
+
+int _activeAppointmentPriority(Appointment appointment) =>
+    switch (appointment.status.toUpperCase()) {
+      'CHECKED_IN' || 'IN_PROGRESS' => 0,
+      'CONFIRMED' => 1,
+      _ => 2,
+    };
+
 /// Completed visit outcomes available to the signed-in patient.
 ///
 /// The backend journey repository already composes consultation, laboratory,
