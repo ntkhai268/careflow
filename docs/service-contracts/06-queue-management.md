@@ -369,6 +369,19 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 - Các UI có fixture cho ticket, active queue phòng khám, lab queue, result review
   và pharmacy queue.
 
+## Check-in thủ công bằng mã phiếu
+
+Staff có thể thay `qrToken` bằng `ticketCode` khi bệnh nhân đọc mã phiếu khám cho
+quầy tiếp nhận. Mã phiếu chỉ được tra trong đúng phòng và ngày hiện tại; QR vẫn là
+luồng ưu tiên khi bệnh nhân có thể xuất trình mã QR.
+
+```json
+{
+  "ticketCode": "PK-2026-00125",
+  "roomId": "ROOM-21"
+}
+```
+
 ### `FUNCTIONAL_READY`
 
 - Migration/domain/API chạy; QR không chứa PII.

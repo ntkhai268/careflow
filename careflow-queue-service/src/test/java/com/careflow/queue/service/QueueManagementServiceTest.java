@@ -140,6 +140,24 @@ class QueueManagementServiceTest {
     }
 
     @Test
+    void staffCheckInActivatesTicketByManualCodeAtTheAssignedRoom() {
+        UUID staffId = UUID.randomUUID();
+        QueueEntry waiting = entry(PriorityLevel.APPOINTMENT, QueueStatus.WAITING, 7);
+        when(configs.findByRoomCodeAndActiveTrue("P101")).thenReturn(Optional.of(config));
+        when(entries.findFirstByQueueConfigIdAndQueueDateAndQueueNumber(
+                config.getId(), today, waiting.getQueueNumber())).thenReturn(Optional.of(waiting));
+
+        service.checkIn(new CheckInRequest(null, waiting.getQueueNumber(), "P101", QueueClass.NORMAL, null),
+                staffId, "trace-manual");
+
+        assertThat(waiting.getStatus()).isEqualTo(QueueStatus.CHECKED_IN);
+        assertThat(waiting.getCheckedInByUserId()).isEqualTo(staffId);
+        verify(events).append(eq(waiting), eq(config), eq("PatientCheckedIn"),
+                eq("queue.checked-in"), eq("trace-manual"), anyMap());
+        verifyNoInteractions(qrTokens);
+    }
+
+    @Test
     void patientCannotReadAnotherAccountsVisitTicket() {
         QueueEntry ticket = entry(PriorityLevel.APPOINTMENT, QueueStatus.WAITING, 8);
         ticket.setAppointmentId(UUID.randomUUID());

@@ -4,8 +4,13 @@ import jakarta.validation.constraints.NotBlank;
 import com.careflow.queue.domain.QueueClass;
 
 public record CheckInRequest(
-        @NotBlank String qrToken,
+        String qrToken,
+        String ticketCode,
         @NotBlank String roomId,
         QueueClass queueClass,
         String priorityReasonCode) {
+
+    public CheckInRequest(String qrToken, String roomId, QueueClass queueClass, String priorityReasonCode) {
+        this(qrToken, null, roomId, queueClass, priorityReasonCode);
+    }
 }

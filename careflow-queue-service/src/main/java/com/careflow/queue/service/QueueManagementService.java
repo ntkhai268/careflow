@@ -185,6 +185,13 @@ public class QueueManagementService {
 
     @Transactional
     public QueueEntryResponse checkIn(CheckInRequest request, UUID staffUserId, String correlationId) {
+        if ((request.qrToken() == null || request.qrToken().isBlank())
+                && (request.ticketCode() == null || request.ticketCode().isBlank())) {
+            throw new BusinessException(400, "Vui l\u00f2ng cung c\u1ea5p m\u00e3 QR ho\u1eb7c m\u00e3 phi\u1ebfu kh\u00e1m");
+        }
+        if (request.ticketCode() != null && !request.ticketCode().isBlank()) {
+            return checkInByTicketCode(request, staffUserId, correlationId);
+        }
         QrTokenService.QrClaims claims = qrTokens.verify(request.qrToken());
         if (!claims.queueDate().equals(businessDate())) throw new BusinessException(422, "QR không thuộc ngày hiện tại");
         QueueEntry entry = entries.findFirstByAppointmentId(claims.appointmentId())
@@ -196,9 +203,20 @@ public class QueueManagementService {
         if (!config.getRoomCode().equals(request.roomId())) {
             throw new BusinessException(409, "QR không thuộc phòng tiếp nhận này");
         }
+        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId);
+    }
+
+    private QueueEntryResponse activateCheckedInEntry(QueueEntry entry, QueueConfig config,
+                                                       CheckInRequest request, UUID staffUserId,
+                                                       String correlationId) {
         if (entry.getStatus() == QueueStatus.CHECKED_IN) return response(entry, config);
-        if (entry.getStatus() == QueueStatus.CANCELLED) throw new BusinessException(409, "Lịch hẹn đã bị hủy");
-        if (entry.getStatus() != QueueStatus.WAITING) throw new BusinessException(409, "Trạng thái lượt khám không cho phép check-in");
+        if (entry.getStatus() == QueueStatus.CANCELLED) {
+            throw new BusinessException(409, "Lịch hẹn đã bị hủy");
+        }
+        if (entry.getStatus() != QueueStatus.WAITING) {
+            throw new BusinessException(409, "Trạng thái lượt khám không cho phép check-in");
+        }
+
         Instant now = Instant.now();
         entry.setStatus(QueueStatus.CHECKED_IN);
         entry.setCheckedInAt(now);
@@ -223,6 +241,17 @@ public class QueueManagementService {
                         "queueClass", queueClass.name(),
                         "checkedInByUserId", staffUserId));
         return response(entry, config);
+    }
+
+    private QueueEntryResponse checkInByTicketCode(CheckInRequest request, UUID staffUserId,
+                                                    String correlationId) {
+        QueueConfig config = requireRoomConfig(request.roomId());
+        String ticketCode = request.ticketCode().trim();
+        QueueEntry entry = entries.findFirstByQueueConfigIdAndQueueDateAndQueueNumber(
+                        config.getId(), businessDate(), ticketCode)
+                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "ticketCode", ticketCode));
+
+        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId);
     }
 
     @Transactional(readOnly = true)

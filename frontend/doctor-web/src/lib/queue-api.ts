@@ -48,7 +48,8 @@ export interface ServicePointQueueResponse {
 }
 
 export interface CheckInRequest {
-  qrToken: string;
+  qrToken?: string;
+  ticketCode?: string;
   roomId: string;
   queueClass?: "INITIAL" | "RESULT_REVIEW" | "PRIORITY";
   priorityReasonCode?: string;
