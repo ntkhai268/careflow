@@ -582,12 +582,18 @@ class BackendJourneyMapper {
       return null;
     }
     final status = _statusText(json['status']);
+    final action = json['action'] is Map
+        ? Map<String, dynamic>.from(json['action'] as Map)
+        : null;
     return PatientNotification(
       id: id,
       title: title,
       body: body,
       createdAt: createdAt,
       isRead: status == 'READ' || json['readAt'] != null,
+      actionType: _nonEmpty(action?['type']) ?? _nonEmpty(json['actionType']),
+      resourceId:
+          _nonEmpty(action?['resourceId']) ?? _nonEmpty(json['resourceId']),
     );
   }
 

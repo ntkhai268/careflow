@@ -273,6 +273,10 @@ void main() {
               'title': 'Đã có kết quả xét nghiệm',
               'body': 'Vui lòng quay lại phòng khám',
               'status': 'READ',
+              'action': {
+                'type': 'OPEN_RESULT_REVIEW',
+                'resourceId': 'consult-1',
+              },
               'createdAt': '2026-08-18T03:30:00Z',
             },
           ],
@@ -280,6 +284,8 @@ void main() {
       );
 
       expect(journey.notifications.single.isRead, isTrue);
+      expect(journey.notifications.single.actionType, 'OPEN_RESULT_REVIEW');
+      expect(journey.notifications.single.resourceId, 'consult-1');
       expect(
         () => mapper.mapResources(
           BackendJourneyResources(

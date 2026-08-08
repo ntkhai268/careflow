@@ -106,6 +106,8 @@ void main() {
             body: 'Vui lòng đến Phòng xét nghiệm tầng 1',
             createdAt: DateTime.parse('2026-08-18T03:46:00Z'),
             isRead: false,
+            actionType: 'OPEN_LAB_ORDER',
+            resourceId: 'lab-order-1',
           ),
         ],
         updatedAt: DateTime.parse('2026-08-18T03:30:00Z'),

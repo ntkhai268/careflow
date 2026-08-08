@@ -14,6 +14,7 @@ import 'package:careflow_patient/services/patient_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 
 void main() {
   testWidgets('shows notifications newest first and marks an unread one read', (
@@ -27,12 +28,12 @@ void main() {
     );
     addTearDown(container.dispose);
 
+    final router = notificationRouter();
+    addTearDown(router.dispose);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(
-          home: JourneyNotificationScreen(appointmentId: 'apt-1'),
-        ),
+        child: MaterialApp.router(routerConfig: router),
       ),
     );
 
@@ -51,6 +52,7 @@ void main() {
     expect(repository.readNotificationIds, ['result']);
     expect(find.byKey(const Key('unread-marker-result')), findsNothing);
     expect(container.read(unreadJourneyNotificationCountProvider), 1);
+    expect(find.byKey(const Key('notification-destination')), findsOneWidget);
   });
 
   testWidgets('shows a neutral empty state without journey notifications', (
@@ -66,16 +68,51 @@ void main() {
     );
     addTearDown(container.dispose);
 
+    final router = notificationRouter();
+    addTearDown(router.dispose);
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(
-          home: JourneyNotificationScreen(appointmentId: 'apt-1'),
-        ),
+        child: MaterialApp.router(routerConfig: router),
       ),
     );
 
     expect(find.text('Bạn chưa có thông báo nào.'), findsOneWidget);
+  });
+
+  testWidgets('opens an already-read notification without marking it again', (
+    tester,
+  ) async {
+    final repository = NotificationRepository();
+    final source = notificationJourney();
+    final controller = JourneyController(repository: repository, demoMode: true)
+      ..state = AsyncData(
+        source.copyWith(
+          notifications: source.notifications
+              .map((notification) => notification.copyWith(isRead: true))
+              .toList(),
+        ),
+      );
+    final container = ProviderContainer(
+      overrides: authenticatedJourneyOverrides(controller),
+    );
+    addTearDown(container.dispose);
+    final router = notificationRouter();
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('notification-result')));
+    await tester.pumpAndSettle();
+
+    expect(repository.readNotificationIds, isEmpty);
+    expect(find.byKey(const Key('notification-destination')), findsOneWidget);
   });
 }
 
@@ -124,6 +161,8 @@ PatientJourney notificationJourney() => PatientJourney(
       body: 'Bác sĩ sẽ đọc kết quả cho bạn.',
       createdAt: DateTime.utc(2026, 7, 30, 9),
       isRead: false,
+      actionType: 'OPEN_LAB_RESULT',
+      resourceId: 'order-1',
     ),
   ],
   updatedAt: DateTime.utc(2026, 7, 30),
@@ -169,3 +208,21 @@ class NotificationRepository implements JourneyRepository {
   Future<void> reset(PatientJourney journey) =>
       Future<void>.error(UnimplementedError());
 }
+
+GoRouter notificationRouter() => GoRouter(
+  initialLocation: '/',
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (_, _) =>
+          const JourneyNotificationScreen(appointmentId: 'apt-1'),
+    ),
+    GoRoute(
+      path: '/journey/:appointmentId/laboratory',
+      builder: (_, _) => const Scaffold(
+        key: Key('notification-destination'),
+        body: Text('Laboratory destination'),
+      ),
+    ),
+  ],
+);

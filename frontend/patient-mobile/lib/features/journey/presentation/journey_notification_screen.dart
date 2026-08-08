@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../config/theme.dart';
 import '../application/journey_providers.dart';
@@ -21,16 +22,23 @@ class JourneyNotificationScreen extends ConsumerWidget {
         error: (_, _) => const Center(child: Text('Không thể tải thông báo.')),
         data: (value) => value == null
             ? const Center(child: Text('Bạn chưa có thông báo nào.'))
-            : _NotificationList(notifications: value.notifications),
+            : _NotificationList(
+                notifications: value.notifications,
+                appointmentId: appointmentId,
+              ),
       ),
     );
   }
 }
 
 class _NotificationList extends ConsumerWidget {
-  const _NotificationList({required this.notifications});
+  const _NotificationList({
+    required this.notifications,
+    required this.appointmentId,
+  });
 
   final List<PatientNotification> notifications;
+  final String appointmentId;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -43,11 +51,31 @@ class _NotificationList extends ConsumerWidget {
       padding: const EdgeInsets.all(AppSpacing.base),
       itemCount: newestFirst.length,
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
-      itemBuilder: (context, index) => _NotificationTile(
-        notification: newestFirst[index],
-        onTap: () => ref
-            .read(journeyControllerProvider.notifier)
-            .markNotificationRead(newestFirst[index].id),
+      itemBuilder: (context, index) {
+        final notification = newestFirst[index];
+        return _NotificationTile(
+          notification: notification,
+          onTap: () => _openNotification(context, ref, notification),
+        );
+      },
+    );
+  }
+
+  Future<void> _openNotification(
+    BuildContext context,
+    WidgetRef ref,
+    PatientNotification notification,
+  ) async {
+    if (!notification.isRead) {
+      await ref
+          .read(journeyControllerProvider.notifier)
+          .markNotificationRead(notification.id);
+    }
+    if (!context.mounted) return;
+    context.push(
+      notificationDestination(
+        notification: notification,
+        appointmentId: appointmentId,
       ),
     );
   }
@@ -64,7 +92,7 @@ class _NotificationTile extends StatelessWidget {
     color: notification.isRead ? null : AppColors.primarySurface,
     child: ListTile(
       key: Key('notification-${notification.id}'),
-      onTap: notification.isRead ? null : onTap,
+      onTap: onTap,
       contentPadding: const EdgeInsets.all(AppSpacing.base),
       leading: notification.isRead
           ? const Icon(Icons.notifications_none_rounded, color: AppColors.info)
@@ -100,6 +128,50 @@ class _NotificationTile extends StatelessWidget {
           ],
         ),
       ),
+      trailing: const Icon(Icons.chevron_right_rounded),
     ),
   );
+}
+
+String notificationDestination({
+  required PatientNotification notification,
+  required String appointmentId,
+}) {
+  if (appointmentId.isEmpty) return '/';
+
+  final base = '/journey/$appointmentId';
+  switch (notification.actionType?.trim().toUpperCase()) {
+    case 'OPEN_APPOINTMENT':
+      final resourceId = notification.resourceId;
+      return resourceId == null || resourceId.isEmpty
+          ? base
+          : '/appointment/$resourceId';
+    case 'OPEN_TICKET':
+      return '$base/ticket';
+    case 'OPEN_QUEUE':
+      return '$base/queue';
+    case 'OPEN_LAB_ORDER':
+    case 'OPEN_LAB_RESULT':
+      return '$base/laboratory';
+    case 'OPEN_RESULT_REVIEW':
+      return '$base/result-review';
+    case 'OPEN_PRESCRIPTION':
+      return '$base/outcome';
+  }
+
+  // Older locally-created notifications do not have an action object yet.
+  // Keep them useful by inferring the safest journey destination from copy.
+  final content = '${notification.title} ${notification.body}'.toLowerCase();
+  if (content.contains('phiếu')) return '$base/ticket';
+  if (content.contains('hàng đợi') || content.contains('gọi')) {
+    return '$base/queue';
+  }
+  if (content.contains('xét nghiệm') || content.contains('cận lâm sàng')) {
+    return '$base/laboratory';
+  }
+  if (content.contains('kết quả')) return '$base/result-review';
+  if (content.contains('toa thuốc') || content.contains('đơn thuốc')) {
+    return '$base/outcome';
+  }
+  return base;
 }
