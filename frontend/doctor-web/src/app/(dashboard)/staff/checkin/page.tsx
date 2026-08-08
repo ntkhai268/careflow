@@ -115,7 +115,11 @@ export default function StaffCheckinPage() {
     setCheckInResult(null);
 
     try {
-      const res = await queueApi.checkIn({ qrToken: qrInput.trim(), roomId });
+      const identifier = qrInput.trim();
+      const isQrToken = identifier.split(".").length === 3;
+      const res = await queueApi.checkIn(
+        isQrToken ? { qrToken: identifier, roomId } : { ticketCode: identifier, roomId },
+      );
       if (res.data) {
         setCheckInResult(res.data);
         setQrInput("");

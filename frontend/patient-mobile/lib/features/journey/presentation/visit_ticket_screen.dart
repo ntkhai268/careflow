@@ -154,7 +154,7 @@ class _RealTicketBody extends StatelessWidget {
               ),
               _DetailRow(label: 'Khung giờ', value: ticket.timeSlot),
               _DetailRow(label: 'Số thứ tự', value: ticket.queueNumber),
-              _DetailRow(label: 'Mã phiếu', value: ticket.ticketCode),
+              _DetailRow(label: 'Mã phiếu khám', value: ticket.ticketCode),
               const SizedBox(height: AppSpacing.lg),
               Center(
                 child: Semantics(
@@ -231,6 +231,7 @@ class _TicketBody extends StatelessWidget {
                   value: ticket.expectedWindow,
                 ),
                 _DetailRow(label: 'Số thứ tự', value: ticket.queueNumber),
+                _DetailRow(label: 'Mã phiếu khám', value: ticket.code),
                 const SizedBox(height: AppSpacing.lg),
                 Center(
                   child: Semantics(

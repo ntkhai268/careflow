@@ -57,6 +57,17 @@ Request check-in:
 }
 ```
 
+Nếu bệnh nhân không thể xuất trình QR, staff có thể nhập tay mã phiếu khám:
+
+```json
+{
+  "ticketCode": "PK-2026-00125",
+  "roomId": "ROOM-21"
+}
+```
+
+Mã phiếu chỉ được tra trong đúng phòng và ngày hiện tại.
+
 Lượt ưu tiên chỉ được staff xác nhận bằng `queueClass=PRIORITY` và bắt buộc có
 `priorityReasonCode`. Patient không có API tự khai ưu tiên hoặc tự check-in.
 

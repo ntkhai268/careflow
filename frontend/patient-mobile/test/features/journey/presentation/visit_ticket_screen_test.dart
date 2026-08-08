@@ -21,6 +21,8 @@ void main() {
     expect(find.text('Phòng 21'), findsOneWidget);
     expect(find.text('10:30 - 11:30'), findsOneWidget);
     expect(find.text('42'), findsOneWidget);
+    expect(find.text('Mã phiếu khám'), findsOneWidget);
+    expect(find.text('CF-APT-1'), findsOneWidget);
     expect(
       find.byWidgetPredicate(
         (widget) =>
