@@ -20,6 +20,7 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
   final bool _demoMode;
   final void Function(String? error) _onActionError;
   String? _activePatientId;
+  Appointment? _activeAppointment;
   int _generation = 0;
   final Set<String> _retiredJourneyKeys = {};
   final Map<String, PatientJourney> _retiredJourneySnapshots = {};
@@ -47,6 +48,7 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
       );
       if (generation != _generation) return journey;
       _activePatientId = patientId;
+      _activeAppointment = appointment;
       _retiredJourneyKeys.remove(_journeyKey(patientId, appointment.id));
       state = AsyncData(journey);
       return journey;
@@ -76,11 +78,22 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
     );
   }
 
+  /// Reloads the current journey from the backend so inbox notifications and
+  /// other journey resources reflect the latest server state.
+  Future<void> refreshCurrentJourney() async {
+    final journey = state.valueOrNull;
+    final appointment = _activeAppointment;
+    if (journey == null || appointment == null) return;
+    await bootstrap(appointment: appointment, patientId: journey.patientId);
+  }
+
   Future<void> resetCurrentJourney() async {
     final generation = ++_generation;
     final journey = state.valueOrNull;
+    final previousAppointment = _activeAppointment;
     if (journey == null) {
       _activePatientId = null;
+      _activeAppointment = null;
       _onActionError(null);
       state = const AsyncData(null);
       return;
@@ -88,6 +101,7 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
     final key = _journeyKey(journey.patientId, journey.appointmentId);
     _retiredJourneyKeys.add(key);
     _activePatientId = null;
+    _activeAppointment = null;
     _onActionError(null);
     state = const AsyncData(null);
     try {
@@ -99,6 +113,7 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
       _retiredJourneyKeys.remove(key);
       if (generation == _generation) {
         _activePatientId = journey.patientId;
+        _activeAppointment = previousAppointment;
         state = AsyncData(journey);
         _onActionError('Không thể đặt lại hành trình. Vui lòng thử lại.');
       }
@@ -111,6 +126,7 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
   }) async {
     final generation = ++_generation;
     final previous = state.valueOrNull;
+    final previousAppointment = _activeAppointment;
     final key = _journeyKey(patientId, appointmentId);
     final wasActive =
         previous?.patientId == patientId &&
@@ -120,6 +136,7 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
       _retiredJourneySnapshots[key] = previous!;
       state = const AsyncData(null);
       _activePatientId = null;
+      _activeAppointment = null;
     }
     _onActionError(null);
     try {
@@ -139,6 +156,9 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
       if (generation == _generation) {
         state = AsyncData(wasActive ? null : previous);
         _activePatientId = wasActive ? null : previous?.patientId;
+        _activeAppointment = wasActive
+            ? previousAppointment
+            : _activeAppointment;
         _onActionError(
           'Không thể dọn dữ liệu hành trình đã hủy. Vui lòng thử lại.',
         );
@@ -154,6 +174,7 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
   void invalidateAccountScope() {
     ++_generation;
     _activePatientId = null;
+    _activeAppointment = null;
     _onActionError(null);
     state = const AsyncData(null);
   }

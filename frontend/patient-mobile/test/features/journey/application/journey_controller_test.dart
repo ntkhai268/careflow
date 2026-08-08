@@ -53,6 +53,41 @@ class ControlledBootstrapRepository implements JourneyRepository {
       Future<void>.error(UnimplementedError());
 }
 
+class RefreshableRepository implements JourneyRepository {
+  int bootstrapCalls = 0;
+  Appointment? lastAppointment;
+
+  @override
+  Future<PatientJourney> bootstrap({
+    required Appointment appointment,
+    required String patientId,
+  }) async {
+    bootstrapCalls++;
+    lastAppointment = appointment;
+    return journeyForPatient(patientId, appointment.id);
+  }
+
+  @override
+  Future<PatientJourney> acknowledgePayment(
+    PatientJourney journey,
+    PaymentMethod method,
+  ) => Future<PatientJourney>.error(UnimplementedError());
+
+  @override
+  Future<PatientJourney> advance(PatientJourney journey, JourneyEvent event) =>
+      Future<PatientJourney>.error(UnimplementedError());
+
+  @override
+  Future<PatientJourney> markNotificationRead(
+    PatientJourney journey,
+    String notificationId,
+  ) => Future<PatientJourney>.error(UnimplementedError());
+
+  @override
+  Future<void> reset(PatientJourney journey) =>
+      Future<void>.error(UnimplementedError());
+}
+
 class ConfigurablePersistence implements JourneyPersistenceAdapter {
   bool setSucceeds = true;
   bool removeSucceeds = true;
@@ -97,6 +132,24 @@ class ControllableJourneyStore implements JourneyStore {
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+
+  test('refreshes the active journey using its latest appointment', () async {
+    final repository = RefreshableRepository();
+    final controller = JourneyController(
+      repository: repository,
+      demoMode: true,
+    );
+
+    await controller.bootstrap(
+      appointment: appointmentFor('apt-refresh'),
+      patientId: 'patient-a',
+    );
+    await controller.refreshCurrentJourney();
+
+    expect(repository.bootstrapCalls, 2);
+    expect(repository.lastAppointment?.id, 'apt-refresh');
+    controller.dispose();
+  });
 
   test(
     'switching patients clears memory and isolates namespaced journeys',

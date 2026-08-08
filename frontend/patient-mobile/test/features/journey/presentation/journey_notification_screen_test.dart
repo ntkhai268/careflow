@@ -55,6 +55,38 @@ void main() {
     expect(find.byKey(const Key('notification-destination')), findsOneWidget);
   });
 
+  testWidgets('reloads notifications from the server when refresh is tapped', (
+    tester,
+  ) async {
+    final repository = NotificationRepository();
+    final controller = JourneyController(
+      repository: repository,
+      demoMode: true,
+    );
+    await controller.bootstrap(
+      appointment: notificationAppointment(),
+      patientId: 'patient-1',
+    );
+    final container = ProviderContainer(
+      overrides: authenticatedJourneyOverrides(controller),
+    );
+    addTearDown(container.dispose);
+
+    final router = notificationRouter();
+    addTearDown(router.dispose);
+    await tester.pumpWidget(
+      UncontrolledProviderScope(
+        container: container,
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+
+    await tester.tap(find.byTooltip('Tải lại thông báo'));
+    await tester.pumpAndSettle();
+
+    expect(repository.bootstrapCalls, 2);
+  });
+
   testWidgets('shows a neutral empty state without journey notifications', (
     tester,
   ) async {
@@ -168,8 +200,29 @@ PatientJourney notificationJourney() => PatientJourney(
   updatedAt: DateTime.utc(2026, 7, 30),
 );
 
+Appointment notificationAppointment() => Appointment(
+  id: 'apt-1',
+  patientId: 'patient-1',
+  department: 'NOI_TONG_QUAT',
+  departmentDisplayName: 'Nội tổng quát',
+  appointmentDate: DateTime.utc(2026, 7, 30),
+  timeSlot: '08:00 - 09:00',
+  status: 'CONFIRMED',
+  statusDisplayName: 'Đã xác nhận',
+);
+
 class NotificationRepository implements JourneyRepository {
   final List<String> readNotificationIds = [];
+  int bootstrapCalls = 0;
+
+  @override
+  Future<PatientJourney> bootstrap({
+    required Appointment appointment,
+    required String patientId,
+  }) async {
+    bootstrapCalls++;
+    return notificationJourney();
+  }
 
   @override
   Future<PatientJourney> markNotificationRead(
@@ -197,12 +250,6 @@ class NotificationRepository implements JourneyRepository {
   @override
   Future<PatientJourney> advance(PatientJourney journey, JourneyEvent event) =>
       Future<PatientJourney>.error(UnimplementedError());
-
-  @override
-  Future<PatientJourney> bootstrap({
-    required Appointment appointment,
-    required String patientId,
-  }) => Future<PatientJourney>.error(UnimplementedError());
 
   @override
   Future<void> reset(PatientJourney journey) =>

@@ -16,19 +16,51 @@ class JourneyNotificationScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final journey = ref.watch(journeyForAppointmentProvider(appointmentId));
     return Scaffold(
-      appBar: AppBar(title: const Text('Thông báo')),
-      body: journey.when(
-        loading: () => const Center(child: Text('Đang tải thông báo...')),
-        error: (_, _) => const Center(child: Text('Không thể tải thông báo.')),
-        data: (value) => value == null
-            ? const Center(child: Text('Bạn chưa có thông báo nào.'))
-            : _NotificationList(
-                notifications: value.notifications,
-                appointmentId: appointmentId,
-              ),
+      appBar: AppBar(
+        title: const Text('Thông báo'),
+        actions: [
+          IconButton(
+            tooltip: 'Tải lại thông báo',
+            onPressed: journey.isLoading ? null : () => _refresh(ref),
+            icon: const Icon(Icons.refresh_rounded),
+          ),
+        ],
+      ),
+      body: RefreshIndicator(
+        onRefresh: () => _refresh(ref),
+        child: journey.when(
+          loading: () =>
+              const _RefreshableMessage(child: CircularProgressIndicator()),
+          error: (_, _) => const _RefreshableMessage(
+            child: Text('Không thể tải thông báo. Kéo xuống để thử lại.'),
+          ),
+          data: (value) => value == null
+              ? const _RefreshableMessage(
+                  child: Text('Bạn chưa có thông báo nào.'),
+                )
+              : _NotificationList(
+                  notifications: value.notifications,
+                  appointmentId: appointmentId,
+                ),
+        ),
       ),
     );
   }
+
+  Future<void> _refresh(WidgetRef ref) =>
+      ref.read(journeyControllerProvider.notifier).refreshCurrentJourney();
+}
+
+class _RefreshableMessage extends StatelessWidget {
+  const _RefreshableMessage({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) => ListView(
+    physics: const AlwaysScrollableScrollPhysics(),
+    children: [SizedBox(height: 280, child: Center(child: child))],
+  );
 }
 
 class _NotificationList extends ConsumerWidget {
@@ -49,6 +81,7 @@ class _NotificationList extends ConsumerWidget {
     }
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.base),
+      physics: const AlwaysScrollableScrollPhysics(),
       itemCount: newestFirst.length,
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
