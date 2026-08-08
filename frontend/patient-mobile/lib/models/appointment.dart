@@ -46,11 +46,10 @@ class Appointment {
     this.updatedAt,
   });
 
-  bool get allowsActiveJourney =>
-      status == 'CONFIRMED' ||
-      status == 'CHECKED_IN' ||
-      status == 'IN_PROGRESS' ||
-      status == 'COMPLETED';
+  bool get allowsActiveJourney => switch (status.toUpperCase()) {
+    'CONFIRMED' || 'CHECKED_IN' || 'IN_PROGRESS' || 'COMPLETED' => true,
+    _ => false,
+  };
 
   factory Appointment.fromJson(Map<String, dynamic> json) {
     return Appointment(

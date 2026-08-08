@@ -59,6 +59,8 @@ class PatientNotifier extends StateNotifier<PatientState> {
       return;
     }
 
+    if (state.isLoading) return;
+
     final generation = ++_operationGeneration;
     state = const PatientState(isLoading: true);
     try {

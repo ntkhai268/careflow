@@ -137,7 +137,8 @@ class BackendJourneyRepository implements JourneyRepository {
       appointment.id,
     );
     final consultation = _latest(consultations);
-    final consultationId = _string(consultation?['id']);
+    final consultationId =
+        _string(consultation?['id']) ?? appointment.sourceConsultationId;
     final labOrders = consultationId == null
         ? const <Map<String, dynamic>>[]
         : await _labService.getByConsultation(consultationId);
@@ -168,7 +169,12 @@ class BackendJourneyRepository implements JourneyRepository {
     try {
       return await load();
     } on QueueServiceException catch (error) {
-      if (error.statusCode == 404) return null;
+      // Queue state is supplementary to the appointment/clinical journey.
+      // A transient queue-service failure must not hide an otherwise valid
+      // active appointment from the patient.
+      if (error.statusCode == 404 || (error.statusCode ?? 0) >= 500) {
+        return null;
+      }
       rethrow;
     } on DioException catch (error) {
       if (error.response?.statusCode == 404) return null;
@@ -371,6 +377,7 @@ class BackendJourneyMapper {
       room:
           _nonEmpty(queue['roomCode']) ??
           _nonEmpty(queue['room']) ??
+          _nonEmpty(queue['servicePointId']) ??
           _nonEmpty(ticket?['roomDisplayName']) ??
           '',
       peopleAhead: position == null || position <= 0 ? 0 : position - 1,
@@ -665,6 +672,7 @@ Map<String, dynamic> _queueMap(queue_models.PatientQueueStatus queue) => {
   'estimatedWaitMinutes': queue.estimatedWaitMinutes,
   'type': queue.type,
   'consultationPhase': queue.consultationPhase,
+  'servicePointId': queue.servicePointId,
 };
 
 Map<String, dynamic>? _latest(List<Map<String, dynamic>> values) {

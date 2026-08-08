@@ -107,6 +107,36 @@ void main() {
     expect(journey.payment, isNull);
   });
 
+  test('maps a lab queue without a room code to its service point', () {
+    final journey = mapper.mapResources(
+      BackendJourneyResources(
+        appointment: appointment(status: 'IN_PROGRESS'),
+        patientId: 'patient-1',
+        ticket: ticket(),
+        consultation: consultation(status: 'AWAITING_CLS'),
+        clinicQueue: {
+          'queueStatus': 'QUEUED',
+          'servicePointId': 'LAB-HEMATOLOGY-01',
+        },
+        labOrders: [
+          labOrder(
+            status: 'ORDERED',
+            items: [
+              labItem(
+                status: 'ORDERED',
+                serviceName: 'Công thức máu',
+                servicePointId: 'LAB-HEMATOLOGY-01',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    expect(journey.clinicQueue!.room, 'LAB-HEMATOLOGY-01');
+    expect(journey.status, JourneyStatus.labOrdered);
+  });
+
   test('maps only released lab results and result review queue', () {
     final journey = mapper.mapResources(
       BackendJourneyResources(

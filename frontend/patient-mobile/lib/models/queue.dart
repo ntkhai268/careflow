@@ -57,6 +57,7 @@ class PatientQueueStatus {
     required this.estimatedWaitMinutes,
     this.type,
     this.consultationPhase,
+    this.servicePointId,
   });
 
   final String entryId;
@@ -68,17 +69,19 @@ class PatientQueueStatus {
   final int? estimatedWaitMinutes;
   final String? type;
   final String? consultationPhase;
+  final String? servicePointId;
 
   factory PatientQueueStatus.fromJson(Map<String, dynamic> json) =>
       PatientQueueStatus(
         entryId: json['entryId'] as String,
         patientId: json['patientId'] as String,
-        roomCode: json['roomCode'] as String,
+        roomCode: (json['roomCode'] ?? json['servicePointId'] ?? '').toString(),
         queueNumber: json['queueNumber'].toString(),
         status: (json['queueStatus'] ?? json['status']) as String,
         position: json['effectivePosition'] as int?,
         estimatedWaitMinutes: json['estimatedWaitMinutes'] as int?,
         type: json['type'] as String?,
         consultationPhase: json['consultationPhase'] as String?,
+        servicePointId: json['servicePointId'] as String?,
       );
 }
