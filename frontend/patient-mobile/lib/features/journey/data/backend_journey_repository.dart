@@ -261,6 +261,7 @@ class BackendJourneyMapper {
     final queueStatus = _statusText(
       clinicQueue?['queueStatus'] ?? clinicQueue?['status'],
     );
+    final ticketStatus = _statusText(ticket?['status']);
     final labStatus = _strongestLabStatus(labOrders);
     final appointmentStatus = _statusText(appointment.status);
 
@@ -283,6 +284,11 @@ class BackendJourneyMapper {
     }
     if (queueStatus == 'IN_PROGRESS') return JourneyStatus.inConsultation;
     if (queueStatus == 'CALLED') return JourneyStatus.called;
+    if (queueStatus == 'WAITING' &&
+        (ticketStatus == 'TICKET_ISSUED' ||
+            (ticketStatus.isEmpty && appointmentStatus == 'CONFIRMED'))) {
+      return JourneyStatus.ticketIssued;
+    }
     if (_isWaitingQueueStatus(queueStatus)) return JourneyStatus.waiting;
     if (appointmentStatus == 'IN_PROGRESS') return JourneyStatus.inConsultation;
     if (appointmentStatus == 'CHECKED_IN') return JourneyStatus.checkedIn;

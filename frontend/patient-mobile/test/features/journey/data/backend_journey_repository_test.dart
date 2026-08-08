@@ -60,6 +60,24 @@ void main() {
     expect(called.status, JourneyStatus.called);
   });
 
+  test('keeps a not-yet-checked-in ticket out of the clinic waiting state', () {
+    final journey = mapper.mapResources(
+      BackendJourneyResources(
+        appointment: appointment(status: 'CONFIRMED'),
+        patientId: 'patient-1',
+        ticket: {...ticket(), 'status': 'TICKET_ISSUED'},
+        clinicQueue: {
+          'queueStatus': 'WAITING',
+          'effectivePosition': 1,
+          'estimatedWaitMinutes': 10,
+          'roomCode': 'P21',
+        },
+      ),
+    );
+
+    expect(journey.status, JourneyStatus.ticketIssued);
+  });
+
   test('maps waiting lab state from consultation and paid lab order', () {
     final journey = mapper.mapResources(
       BackendJourneyResources(
