@@ -21,13 +21,13 @@ class JourneyNotificationScreen extends ConsumerWidget {
         actions: [
           IconButton(
             tooltip: 'Tải lại thông báo',
-            onPressed: journey.isLoading ? null : () => _refresh(ref),
+            onPressed: journey.isLoading ? null : () => _refresh(context, ref),
             icon: const Icon(Icons.refresh_rounded),
           ),
         ],
       ),
       body: RefreshIndicator(
-        onRefresh: () => _refresh(ref),
+        onRefresh: () => _refresh(context, ref),
         child: journey.when(
           loading: () =>
               const _RefreshableMessage(child: CircularProgressIndicator()),
@@ -47,8 +47,20 @@ class JourneyNotificationScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _refresh(WidgetRef ref) =>
-      ref.read(journeyControllerProvider.notifier).refreshCurrentJourney();
+  Future<void> _refresh(BuildContext context, WidgetRef ref) async {
+    final refreshed = await ref
+        .read(journeyControllerProvider.notifier)
+        .refreshCurrentJourney();
+    if (!refreshed && context.mounted) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            content: Text('Không thể tải thông báo mới. Vui lòng thử lại sau.'),
+          ),
+        );
+    }
+  }
 }
 
 class _RefreshableMessage extends StatelessWidget {

@@ -56,6 +56,7 @@ class ControlledBootstrapRepository implements JourneyRepository {
 class RefreshableRepository implements JourneyRepository {
   int bootstrapCalls = 0;
   Appointment? lastAppointment;
+  Object? nextBootstrapError;
 
   @override
   Future<PatientJourney> bootstrap({
@@ -64,6 +65,9 @@ class RefreshableRepository implements JourneyRepository {
   }) async {
     bootstrapCalls++;
     lastAppointment = appointment;
+    final error = nextBootstrapError;
+    nextBootstrapError = null;
+    if (error != null) throw error;
     return journeyForPatient(patientId, appointment.id);
   }
 
@@ -150,6 +154,27 @@ void main() {
     expect(repository.lastAppointment?.id, 'apt-refresh');
     controller.dispose();
   });
+
+  test(
+    'keeps the previous journey when refresh cannot load new data',
+    () async {
+      final repository = RefreshableRepository();
+      final controller = JourneyController(
+        repository: repository,
+        demoMode: true,
+      );
+      final initial = await controller.bootstrap(
+        appointment: appointmentFor('apt-refresh'),
+        patientId: 'patient-a',
+      );
+      repository.nextBootstrapError = StateError('temporary failure');
+
+      expect(await controller.refreshCurrentJourney(), isFalse);
+      expect(controller.state.valueOrNull, initial);
+      expect(controller.state.hasError, isFalse);
+      controller.dispose();
+    },
+  );
 
   test(
     'switching patients clears memory and isolates namespaced journeys',

@@ -28,8 +28,10 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
   Future<PatientJourney> bootstrap({
     required Appointment appointment,
     required String patientId,
+    bool preservePreviousOnError = false,
   }) async {
     final generation = ++_generation;
+    final previousJourney = state.valueOrNull;
     if (!_demoMode && _repository is DemoJourneySource) {
       final error = const JourneyBackendUnavailable();
       _onActionError(null);
@@ -54,7 +56,17 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
       return journey;
     } catch (error, stackTrace) {
       if (generation == _generation) {
-        state = AsyncError(error, stackTrace);
+        final canPreserve =
+            preservePreviousOnError &&
+            previousJourney != null &&
+            previousJourney.patientId == patientId &&
+            previousJourney.appointmentId == appointment.id;
+        if (canPreserve) {
+          state = AsyncData(previousJourney);
+          _onActionError('Không thể tải thông báo mới. Vui lòng thử lại sau.');
+        } else {
+          state = AsyncError(error, stackTrace);
+        }
       }
       rethrow;
     }
@@ -80,11 +92,20 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
 
   /// Reloads the current journey from the backend so inbox notifications and
   /// other journey resources reflect the latest server state.
-  Future<void> refreshCurrentJourney() async {
+  Future<bool> refreshCurrentJourney() async {
     final journey = state.valueOrNull;
     final appointment = _activeAppointment;
-    if (journey == null || appointment == null) return;
-    await bootstrap(appointment: appointment, patientId: journey.patientId);
+    if (journey == null || appointment == null) return false;
+    try {
+      await bootstrap(
+        appointment: appointment,
+        patientId: journey.patientId,
+        preservePreviousOnError: true,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
   }
 
   Future<void> resetCurrentJourney() async {
