@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { queueApi, QueueEntry } from "@/lib/queue-api";
-import { PrescriptionResponse } from "@/lib/prescription-api";
+import { prescriptionApi, PrescriptionResponse } from "@/lib/prescription-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { getErrorMessage } from "@/lib/error-utils";
 
@@ -14,6 +14,7 @@ export default function StaffPharmacyPage() {
 
   const [activeEntry, setActiveEntry] = useState<QueueEntry | null>(null);
   const [activePrescription, setActivePrescription] = useState<PrescriptionResponse | null>(null);
+  const [isLoadingPrescription, setIsLoadingPrescription] = useState(false);
   const [isDispensing, setIsDispensing] = useState(false);
 
   const [toast, setToast] = useState<{ message: string; type: "success" | "danger" | "warning" } | null>(null);
@@ -44,6 +45,25 @@ export default function StaffPharmacyPage() {
     return () => window.clearTimeout(timer);
   }, [fetchPharmacyQueue]);
 
+  const handleSelectEntry = async (entry: QueueEntry) => {
+    setActiveEntry(entry);
+    setActivePrescription(null);
+
+    if (entry.prescriptionId) {
+      setIsLoadingPrescription(true);
+      try {
+        const res = await prescriptionApi.getPrescription(entry.prescriptionId);
+        if (res.data) {
+          setActivePrescription(res.data);
+        }
+      } catch (err: unknown) {
+        showToast(getErrorMessage(err, "Không thể tải chi tiết đơn thuốc"), "warning");
+      } finally {
+        setIsLoadingPrescription(false);
+      }
+    }
+  };
+
   const notifyAi = (text: string) => {
     if (typeof window !== "undefined") {
       window.dispatchEvent(new CustomEvent("careflow:ai-notify", { detail: { text } }));
@@ -57,6 +77,9 @@ export default function StaffPharmacyPage() {
         notifyAi(`Mời số thứ tự ${res.data.queueNumber} tới quầy phát thuốc ạ!`);
         showToast(`Mời số thứ tự ${res.data.queueNumber} tới quầy phát thuốc!`);
         await fetchPharmacyQueue();
+        if (res.data.prescriptionId) {
+          handleSelectEntry(res.data);
+        }
       } else {
         notifyAi("Hiện tại chưa có bệnh nhân nào đâu ạ!");
         showToast("Hiện chưa có bệnh nhân nào trong hàng đợi.", "warning");
@@ -74,14 +97,18 @@ export default function StaffPharmacyPage() {
     }
     setIsDispensing(true);
     try {
-      await queueApi.completeEntry(activeEntry.entryId);
+      if (activeEntry.prescriptionId) {
+        await prescriptionApi.dispensePrescription(activeEntry.prescriptionId);
+      } else {
+        await queueApi.completeEntry(activeEntry.entryId);
+      }
       notifyAi(`Đã hoàn tất cấp phát thuốc cho bệnh nhân có số thứ tự ${activeEntry.queueNumber} rồi ạ! ✨`);
       showToast(`Đã hoàn tất phát thuốc cho số thứ tự ${activeEntry.queueNumber}!`);
       setActiveEntry(null);
       setActivePrescription(null);
       await fetchPharmacyQueue();
     } catch (err: unknown) {
-      const message = getErrorMessage(err, "Đã xảy ra lỗi khi xác nhận phát thuốc rồi ạ!");
+      const message = getErrorMessage(err, "Đã xảy ra lỗi khi xác nhận phát thuốc!");
       notifyAi(message);
       showToast(message, "danger");
     } finally {
@@ -174,7 +201,7 @@ export default function StaffPharmacyPage() {
                   </div>
 
                   <button
-                    onClick={() => setActiveEntry(entry)}
+                    onClick={() => handleSelectEntry(entry)}
                     className="w-24 py-1.5 bg-[#6E2582] text-white text-xs font-semibold rounded-md hover:bg-[#561A66] cursor-pointer text-center"
                   >
                     Phát thuốc
@@ -200,25 +227,28 @@ export default function StaffPharmacyPage() {
 
               <div className="space-y-2">
                 <p className="font-semibold text-text">Danh sách thuốc trong đơn:</p>
-                <div className="p-3 bg-gray-50 border border-card-border rounded-lg space-y-2 text-text">
-                  {activePrescription && activePrescription.items && activePrescription.items.length > 0 ? (
-                    activePrescription.items.map((item) => (
-                      <p key={item.id}>
-                        • {item.medicineName} — {item.quantity} {item.unit} ({item.dosage}, {item.frequency})
-                      </p>
-                    ))
-                  ) : (
-                    <>
-                      <p>• Paracetamol 500mg - 10 viên (Uống 2 lần / ngày)</p>
-                      <p>• Amoxicillin 500mg - 14 viên (Uống sau ăn)</p>
-                    </>
-                  )}
-                </div>
+                {isLoadingPrescription ? (
+                  <div className="py-6 flex justify-center">
+                    <LoadingSpinner size="sm" />
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-card-border rounded-lg space-y-2 text-text">
+                    {activePrescription && activePrescription.items && activePrescription.items.length > 0 ? (
+                      activePrescription.items.map((item) => (
+                        <p key={item.id}>
+                          • {item.medicineName} — {item.quantity} {item.unit} ({item.dosage}, {item.frequency})
+                        </p>
+                      ))
+                    ) : (
+                      <p className="text-text-muted italic">Không tìm thấy chi tiết thuốc trong đơn này.</p>
+                    )}
+                  </div>
+                )}
               </div>
 
               <button
                 onClick={handleDispenseMedicine}
-                disabled={isDispensing}
+                disabled={isDispensing || isLoadingPrescription}
                 className="w-full py-3 bg-[#6E2582] hover:bg-[#561A66] text-white font-bold rounded-lg shadow-sm transition-all text-xs cursor-pointer disabled:opacity-50"
               >
                 {isDispensing ? "Đang xác nhận..." : "Xác nhận phát thuốc"}

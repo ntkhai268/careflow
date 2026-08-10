@@ -97,6 +97,9 @@ export const prescriptionApi = {
   getByPatient: (patientId: string) => 
     api.get<PrescriptionResponse[]>(`/api/prescriptions/patient/${patientId}`),
     
+  dispensePrescription: (id: string) =>
+    api.post<PrescriptionResponse>(`/api/prescriptions/${id}/dispense`, {}),
+
   getMedicineCatalog: () => 
     api.get<MedicineCatalogItem[]>("/api/prescriptions/medicines"),
 };

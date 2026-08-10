@@ -12,19 +12,7 @@ public class RabbitMQConfig {
 
     @Bean
     public TopicExchange prescriptionExchange() {
-        return new TopicExchange(AppConstants.EXCHANGE_PRESCRIPTION);
-    }
-
-    @Bean
-    public Queue prescriptionQueue() {
-        return new Queue("prescription.created.queue", true);
-    }
-
-    @Bean
-    public Binding prescriptionBinding(Queue prescriptionQueue, TopicExchange prescriptionExchange) {
-        return BindingBuilder.bind(prescriptionQueue)
-                .to(prescriptionExchange)
-                .with(AppConstants.RK_PRESCRIPTION_CREATED);
+        return new TopicExchange(AppConstants.EXCHANGE_PRESCRIPTION, true, false);
     }
 
     @Bean
