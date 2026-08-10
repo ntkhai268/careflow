@@ -81,6 +81,32 @@ public class DataInitializer implements CommandLineRunner {
             consultationRepository.save(c2);
             log.info("Seeded historical completed consultation for Nguyễn Thị Mai (K21.9)");
         }
+
+        UUID c3Id = UUID.fromString("c0000001-0000-0000-0000-000000000003");
+        if (!consultationRepository.existsById(c3Id)) {
+            Consultation c3 = Consultation.builder()
+                    .patientId(UUID.fromString("f0000001-0000-0000-0000-000000000005")) // Võ Thị Lan
+                    .doctorId(UUID.fromString("d0000001-0000-0000-0000-000000000001"))
+                    .appointmentId(UUID.fromString("a0000001-0000-0000-0000-000000000002"))
+                    .temperature(new BigDecimal("36.8"))
+                    .bloodPressure("135/85")
+                    .heartRate(82)
+                    .spo2(98)
+                    .height(new BigDecimal("156.0"))
+                    .weight(new BigDecimal("58.0"))
+                    .symptoms("Tái khám đái tháo đường type 2, kiểm tra chỉ số đường huyết và đo huyết áp định kỳ")
+                    .clinicalNotes("Tiếp xúc tốt, da niêm mạc hồng, tim đều T1 T2 rõ, không phù")
+                    .icd10Code("E11.9")
+                    .icd10Name("Bệnh đái tháo đường không phụ thuộc insulin không có biến chứng")
+                    .diagnosis("Đái tháo đường type 2 / Tăng huyết áp độ 1")
+                    .status(ConsultationStatus.COMPLETED)
+                    .startedAt(LocalDateTime.now().minusMinutes(20))
+                    .completedAt(LocalDateTime.now().minusMinutes(5))
+                    .build();
+            c3.setId(c3Id);
+            consultationRepository.save(c3);
+            log.info("Seeded active IN_PROGRESS consultation for Võ Thị Lan (E11.9)");
+        }
     }
 
     private void alignStatusConstraint() {

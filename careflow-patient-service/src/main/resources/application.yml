@@ -9,7 +9,7 @@ spring:
   application:
     name: patient-service
   datasource:
-    url: ${PATIENT_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_patient}
+    url: ${PATIENT_DB_URL:jdbc:postgresql://localhost:5432/careflow_patient}
     username: ${PATIENT_DB_USERNAME:careflow}
     password: ${PATIENT_DB_PASSWORD:careflow}
   jpa:
@@ -27,10 +27,10 @@ spring:
     baseline-version: 0
     locations: classpath:db/migration
   rabbitmq:
-    host: ${RABBITMQ_HOST:100.116.233.60}
+    host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:${RABBITMQ_USER:careflow}}
-    password: ${RABBITMQ_PASSWORD:careflow}
+    username: ${RABBITMQ_USERNAME:${RABBITMQ_USER:admin}}
+    password: ${RABBITMQ_PASSWORD:admin123}
   threads:
     virtual:
       enabled: true

@@ -34,37 +34,37 @@ sleep 12
 run_service "api-gateway" "mvn -pl careflow-api-gateway spring-boot:run"
 
 # 5. Start Identity Service (Port 8081)
-run_service "identity-service" "mvn -pl careflow-identity-service spring-boot:run -Dspring-boot.run.profiles=remote"
+run_service "identity-service" "mvn -pl careflow-identity-service spring-boot:run"
 
 # 6. Start Patient Service (Port 8082)
-run_service "patient-service" "mvn -pl careflow-patient-service spring-boot:run -Dspring-boot.run.profiles=remote"
+run_service "patient-service" "mvn -pl careflow-patient-service spring-boot:run"
 
 # 7. Start Appointment Service (Port 8083)
-run_service "appointment-service" "mvn -pl careflow-appointment-service spring-boot:run -Dspring-boot.run.profiles=remote"
+run_service "appointment-service" "mvn -pl careflow-appointment-service spring-boot:run"
 
 # 8. Start Queue Service (Port 8084)
-run_service "queue-service" "mvn -pl careflow-queue-service spring-boot:run -Dspring-boot.run.profiles=remote"
+run_service "queue-service" "mvn -pl careflow-queue-service spring-boot:run"
 
 # 9. Start Notification Service (Port 8085)
-run_service "notification-service" "mvn -pl careflow-notification-service spring-boot:run -Dspring-boot.run.profiles=remote"
+run_service "notification-service" "mvn -pl careflow-notification-service spring-boot:run"
 
 # 10. Start Consultation Service (Port 8086)
-run_service "consultation-service" "mvn -pl careflow-consultation-service spring-boot:run -Dspring-boot.run.profiles=remote"
+run_service "consultation-service" "mvn -pl careflow-consultation-service spring-boot:run"
 
 # 11. Start Prescription Service (Port 8087)
-run_service "prescription-service" "mvn -pl careflow-prescription-service spring-boot:run -Dspring-boot.run.profiles=remote"
+run_service "prescription-service" "mvn -pl careflow-prescription-service spring-boot:run"
 
 # 12. Start EMR Service (Port 8088)
-run_service "emr-service" "mvn -pl careflow-emr-service spring-boot:run -Dspring-boot.run.profiles=remote"
+run_service "emr-service" "mvn -pl careflow-emr-service spring-boot:run"
 
 # 13. Start Lab Service (Port 8089)
-run_service "lab-service" "mvn -pl careflow-lab-service spring-boot:run -Dspring-boot.run.profiles=remote"
+run_service "lab-service" "mvn -pl careflow-lab-service spring-boot:run"
 
 # 14. Start Hospital Directory Service (Port 8090)
-run_service "hospital-directory-service" "mvn -pl careflow-hospital-directory-service spring-boot:run -Dspring-boot.run.profiles=remote"
+run_service "hospital-directory-service" "mvn -pl careflow-hospital-directory-service spring-boot:run"
 
 # 15. Start AI Service (Port 8091)
-run_service "ai-service" "mvn -pl careflow-ai-service spring-boot:run -Dspring-boot.run.profiles=remote"
+run_service "ai-service" "mvn -pl careflow-ai-service spring-boot:run"
 
 # 16. Start Doctor Web Frontend (Port 3000)
 echo "--> Launching Doctor Web Frontend..."

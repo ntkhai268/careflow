@@ -31,10 +31,8 @@ public class DataInitializer implements CommandLineRunner {
     public void run(String... args) {
         LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         // Seed only an empty database. Runtime appointments must never be deleted on restart.
-        long countToday = appointmentRepository.count();
-        if (countToday == 0) {
-            appointmentRepository.deleteAll();
-            log.info("Cleared old duplicate appointments. Seeding clean 6 distinct patients for today ({}) with status CHECKED_IN...", today);
+        if (!appointmentRepository.existsById(UUID.fromString("a0000001-0000-0000-0000-000000000001"))) {
+            log.info("Seeding clean 6 distinct patients for today ({}) with status CHECKED_IN...", today);
 
             Appointment a1 = Appointment.builder()
                     .patientId(UUID.fromString("f0000001-0000-0000-0000-000000000004"))
@@ -66,7 +64,7 @@ public class DataInitializer implements CommandLineRunner {
                     .doctorName("BS. Nguyễn Văn An")
                     .appointmentDate(today)
                     .timeSlot("08:30-09:00")
-                    .status(AppointmentStatus.CHECKED_IN)
+                    .status(AppointmentStatus.IN_PROGRESS)
                     .reason("Tái khám đái tháo đường, kiểm tra huyết áp (Đã thanh toán tạm ứng khám)")
                     .queueNumber("002")
                     .build();

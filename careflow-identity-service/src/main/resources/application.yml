@@ -7,7 +7,7 @@ spring:
   application:
     name: identity-service
   datasource:
-    url: ${SPRING_DATASOURCE_URL:${IDENTITY_DB_URL:jdbc:postgresql://${DB_HOST:100.116.233.60}:${DB_PORT:5432}/careflow_identity}}
+    url: ${SPRING_DATASOURCE_URL:${IDENTITY_DB_URL:jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/careflow_identity}}
     username: ${SPRING_DATASOURCE_USERNAME:${IDENTITY_DB_USERNAME:careflow}}
     password: ${SPRING_DATASOURCE_PASSWORD:${IDENTITY_DB_PASSWORD:careflow}}
     hikari:
@@ -20,6 +20,9 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: ${JPA_SHOW_SQL:false}
+  flyway:
+    baseline-on-migrate: true
+    out-of-order: true
   servlet:
     multipart:
       max-file-size: 5MB
@@ -29,8 +32,6 @@ spring:
   threads:
     virtual:
       enabled: true
-  flyway:
-    out-of-order: true
 
 eureka:
   client:

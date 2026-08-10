@@ -6,7 +6,7 @@ spring:
   application:
     name: notification-service
   datasource:
-    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_notification}
+    url: ${NOTIFICATION_DB_URL:jdbc:postgresql://localhost:5432/careflow_notification}
     username: ${NOTIFICATION_DB_USERNAME:careflow}
     password: ${NOTIFICATION_DB_PASSWORD:careflow}
   jpa:
@@ -16,7 +16,7 @@ spring:
   flyway:
     schemas: notification
   rabbitmq:
-    host: ${RABBITMQ_HOST:100.116.233.60}
+    host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:admin}
     password: ${RABBITMQ_PASSWORD:admin123}

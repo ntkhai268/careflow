@@ -67,6 +67,6 @@ public class QueueEntry {
     public boolean isWaitingForCall() {
         return queueType == QueueType.CONSULTATION && consultationPhase == ConsultationPhase.INITIAL
                 ? status == QueueStatus.CHECKED_IN
-                : status == QueueStatus.QUEUED;
+                : status == QueueStatus.QUEUED || status == QueueStatus.CHECKED_IN;
     }
 }

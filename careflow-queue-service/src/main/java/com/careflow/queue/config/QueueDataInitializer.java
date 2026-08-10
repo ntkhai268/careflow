@@ -55,12 +55,7 @@ public class QueueDataInitializer implements CommandLineRunner {
                     return configRepository.save(cfg);
                 });
 
-        // 2. Clear các IdempotencyRecord và QueueEntry cũ để reset lại danh sách chờ khám sạch khi khởi động server
-        // Queue entries are runtime state. Preserve them across restarts.
-        if (entryRepository.count() > 0) {
-            log.info("Queue data already exists; preserving runtime entries and idempotency records");
-            return;
-        }
+        // 2. Clear các IdempotencyRecord và QueueEntry cũ để reset lại danh sách chờ khám sạch cho ngày hiện tại khi khởi động server
         log.info("Resetting/Seeding clean Active QueueEntries for date {}...", today);
         try {
             idempotencyRecordRepository.deleteAll();
@@ -71,15 +66,8 @@ public class QueueDataInitializer implements CommandLineRunner {
             log.warn("Lỗi khi reset QueueEntries: {}", e.getMessage());
         }
 
-        // 3. Seed 6 Bệnh nhân đã Check-in ở các làn khác nhau (Priority, Normal, Result Review) cho ROOM-01
-        // Queue entries are runtime state. Never delete them during a restart;
-        // doing so loses patients currently waiting or being served.
-        if (entryRepository.count() > 0) {
-            log.info("Queue data already exists; preserving runtime entries and idempotency records");
-            return;
-        }
+        Instant now = today.atTime(java.time.LocalTime.of(9, 30)).atZone(HOSPITAL_ZONE).toInstant();
 
-        Instant now = Instant.now();
 
         // Patient 1 (Bệnh nhân A - Phạm Đức Anh): Lượt hẹn CHƯA CHECK-IN (WAITING) để Staff quét/nhập QR test luồng E2E
         createQueueEntry(config, deptId,
@@ -88,12 +76,12 @@ public class QueueDataInitializer implements CommandLineRunner {
                 UUID.fromString("00000001-0000-0000-0000-000000000004"),
                 today, 1, "NOI-001", PriorityLevel.PRIORITY, QueueStatus.WAITING, null);
 
-        // Patient 2: Làn Đọc kết quả CLS (PRIORITY)
+        // Patient 2 (Võ Thị Lan): Đang trong ca khám (IN_PROGRESS) để Bác sĩ vào khám test ngay
         createQueueEntry(config, deptId,
                 UUID.fromString("a0000001-0000-0000-0000-000000000002"),
                 UUID.fromString("f0000001-0000-0000-0000-000000000005"),
                 UUID.fromString("00000001-0000-0000-0000-000000000005"),
-                today, 2, "NOI-002", PriorityLevel.PRIORITY, QueueStatus.CHECKED_IN, now.minusSeconds(1500));
+                today, 2, "NOI-002", PriorityLevel.PRIORITY, QueueStatus.IN_PROGRESS, now.minusSeconds(1500));
 
         // Patient 3: Làn Khám thông thường (APPOINTMENT)
         createQueueEntry(config, deptId,
@@ -118,10 +106,12 @@ public class QueueDataInitializer implements CommandLineRunner {
 
         // 4. Seed Lab entries for LAB-HEMATOLOGY-01
         createServicePointEntry("LAB-HEMATOLOGY-01", QueueType.LAB_EXECUTION,
-                UUID.fromString("f0000001-0000-0000-0000-000000000004"),
-                today, 1, "XN-001", PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, now.minusSeconds(1400));
-        createServicePointEntry("LAB-HEMATOLOGY-01", QueueType.LAB_EXECUTION,
                 UUID.fromString("f0000001-0000-0000-0000-000000000005"),
+                today, 1, "XN-001", PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, now.minusSeconds(1400),
+                UUID.fromString("b0000001-0000-0000-0000-000000000001"),
+                UUID.fromString("c0000001-0000-0000-0000-000000000002"));
+        createServicePointEntry("LAB-HEMATOLOGY-01", QueueType.LAB_EXECUTION,
+                UUID.fromString("f0000001-0000-0000-0000-000000000004"),
                 today, 2, "XN-002", PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, now.minusSeconds(1100));
 
         // 5. Seed Pharmacy entries for PHARMACY-MAIN-01
@@ -161,11 +151,20 @@ public class QueueDataInitializer implements CommandLineRunner {
     private void createServicePointEntry(String spId, QueueType type, UUID patientId,
                                          LocalDate date, int seq, String queueNo, PriorityLevel priority,
                                          QueueStatus status, Instant checkInTime) {
+        createServicePointEntry(spId, type, patientId, date, seq, queueNo, priority, status, checkInTime, null, null);
+    }
+
+    private void createServicePointEntry(String spId, QueueType type, UUID patientId,
+                                         LocalDate date, int seq, String queueNo, PriorityLevel priority,
+                                         QueueStatus status, Instant checkInTime,
+                                         UUID labOrderId, UUID consultationId) {
         QueueEntry entry = new QueueEntry();
         entry.setServicePointId(spId);
         entry.setQueueType(type);
         entry.setConsultationPhase(null);
         entry.setPatientId(patientId);
+        entry.setLabOrderId(labOrderId);
+        entry.setConsultationId(consultationId);
         entry.setQueueDate(date);
         entry.setSequenceNumber(seq);
         entry.setQueueNumber(queueNo);

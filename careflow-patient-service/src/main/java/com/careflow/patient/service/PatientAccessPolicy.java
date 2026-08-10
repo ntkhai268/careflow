@@ -20,7 +20,7 @@ final class PatientAccessPolicy {
 
     void requireRead(UUID requesterId, String role, Patient patient) {
         requireAuthenticated(requesterId, role);
-        if (isAdmin(role) || requesterId.equals(patient.getUserId())) {
+        if (isAdmin(role) || isDoctor(role) || isStaff(role) || requesterId.equals(patient.getUserId())) {
             return;
         }
         throw forbidden("You are not allowed to view this patient profile");

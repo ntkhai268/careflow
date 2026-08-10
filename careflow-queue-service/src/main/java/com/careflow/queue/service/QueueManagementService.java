@@ -270,7 +270,7 @@ public class QueueManagementService {
         LocalDate date = requestedDate == null ? businessDate() : requestedDate;
         List<QueueEntry> active = entries
                 .findByServicePointIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
-                        normalized, date, EnumSet.of(QueueStatus.QUEUED, QueueStatus.CALLED, QueueStatus.IN_PROGRESS));
+                        normalized, date, EnumSet.of(QueueStatus.QUEUED, QueueStatus.CHECKED_IN, QueueStatus.CALLED, QueueStatus.IN_PROGRESS));
         List<QueueEntryResponse> response = new ArrayList<>();
         active.stream().filter(entry -> SERVING_STATUSES.contains(entry.getStatus()))
                 .sorted(Comparator.comparing(QueueEntry::getCalledAt, Comparator.nullsLast(Comparator.naturalOrder())))
@@ -278,7 +278,7 @@ public class QueueManagementService {
         int position = 1;
         QueueEntryResponse recommended = null;
         for (QueueEntry entry : active) {
-            if (entry.getStatus() != QueueStatus.QUEUED) continue;
+            if (entry.getStatus() != QueueStatus.QUEUED && entry.getStatus() != QueueStatus.CHECKED_IN) continue;
             QueueEntryResponse item = QueueEntryResponse.fromServicePoint(entry, position++, null);
             if (recommended == null) recommended = item;
             response.add(item);
@@ -312,7 +312,7 @@ public class QueueManagementService {
         }
         QueueEntry candidate = entries
                 .findByServicePointIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
-                        normalized, businessDate(), Set.of(QueueStatus.QUEUED))
+                        normalized, businessDate(), Set.of(QueueStatus.QUEUED, QueueStatus.CHECKED_IN))
                 .stream().findFirst().orElse(null);
         if (candidate == null) {
             recordEmptyCommand(COMMAND_CALL_NEXT_SERVICE_POINT, scopeId, normalizedKey, fingerprint);
@@ -634,6 +634,10 @@ public class QueueManagementService {
     @Transactional
     public QueueEntryResponse start(UUID entryId, String correlationId) {
         QueueEntry entry = requireEntryForUpdate(entryId);
+        if (entry.getStatus() == QueueStatus.IN_PROGRESS) {
+            QueueConfig config = configFor(entry);
+            return response(entry, config);
+        }
         if (entry.getStatus() != QueueStatus.CALLED) throw invalidTransition(entry, QueueStatus.IN_PROGRESS);
         QueueConfig config = configFor(entry);
         entry.setStatus(QueueStatus.IN_PROGRESS);

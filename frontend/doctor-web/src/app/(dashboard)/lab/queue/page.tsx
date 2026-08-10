@@ -45,7 +45,19 @@ export default function LabQueuePage() {
     setError(null);
     try {
       const res = await queueApi.getServicePointActive(selectedServicePoint);
-      setEntries(res.data?.entries ?? []);
+      const list = res.data?.entries ?? [];
+      setEntries(list);
+
+      const inProgress = list.find((e) => e.queueStatus === "IN_PROGRESS");
+      if (inProgress && inProgress.labOrderId) {
+        try {
+          const order = await labApi.getById(inProgress.labOrderId);
+          setActiveEntry(inProgress);
+          setActiveLabOrder(order.data);
+        } catch {
+          /* ignore background load */
+        }
+      }
     } catch {
       setError("Không thể tải danh sách hàng đợi Cận lâm sàng. Vui lòng thử lại.");
       setEntries([]);
@@ -106,10 +118,23 @@ export default function LabQueuePage() {
         throw new Error("Lượt xét nghiệm chưa liên kết với chỉ định xét nghiệm.");
       }
       const order = await labApi.getById(entry.labOrderId);
-      await queueApi.startEntry(entry.entryId);
-      const started = await labApi.startOrder(entry.labOrderId);
+      if (entry.queueStatus !== "IN_PROGRESS") {
+        try {
+          await queueApi.startEntry(entry.entryId);
+        } catch {
+          /* ignore if already in progress */
+        }
+      }
+      if (order.data && order.data.status === "ORDERED") {
+        try {
+          const started = await labApi.startOrder(entry.labOrderId);
+          if (started.data) order.data = started.data;
+        } catch {
+          /* ignore if already started */
+        }
+      }
       setActiveEntry(entry);
-      setActiveLabOrder(started.data ?? order.data);
+      setActiveLabOrder(order.data);
       notifyAi(`Đã bắt đầu thực hiện ca Cận lâm sàng cho số thứ tự ${entry.queueNumber}!`);
       showToast(`Đã bắt đầu thực hiện cho lượt ${entry.queueNumber}`);
       await fetchQueue();
@@ -316,6 +341,15 @@ export default function LabQueuePage() {
                             Vắng mặt
                           </button>
                         </>
+                      )}
+
+                      {isInProgress && (
+                        <button
+                          onClick={() => handleStartEntry(entry)}
+                          className="px-3 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-md hover:bg-emerald-700 cursor-pointer text-center"
+                        >
+                          Nhập KQ
+                        </button>
                       )}
 
                       {isMissed && (

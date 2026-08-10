@@ -527,19 +527,29 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       await saveDraft();
       await consultationApi.completeConsultation(consultationId);
       let resolvedEntryId = entryId;
-      if (!resolvedEntryId && consultation?.appointmentId) {
+      if (consultation?.appointmentId) {
         try {
           const ticketRes = await queueApi.getTicket(consultation.appointmentId);
-          resolvedEntryId = ticketRes.data?.ticketId ?? null;
+          if (ticketRes.data?.ticketId) {
+            resolvedEntryId = ticketRes.data.ticketId;
+          }
         } catch {
-          /* Older consultation links may not have a queue ticket. */
+          /* Fallback to URL entryId */
         }
       }
       if (resolvedEntryId) {
         try {
           await queueApi.completeEntry(resolvedEntryId);
-        } catch {
-          /* Ignore secondary queue complete failure */
+        } catch (err) {
+          console.warn("[QUEUE COMPLETE WARN] Failed to complete resolved entry, trying appointment ticket...", err);
+          if (consultation?.appointmentId) {
+            try {
+              const ticketRes = await queueApi.getTicket(consultation.appointmentId);
+              if (ticketRes.data?.ticketId && ticketRes.data.ticketId !== resolvedEntryId) {
+                await queueApi.completeEntry(ticketRes.data.ticketId);
+              }
+            } catch { /* ignore */ }
+          }
         }
       }
       if (consultation?.appointmentId) {

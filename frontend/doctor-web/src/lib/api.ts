@@ -15,8 +15,9 @@ export async function request<T>(path: string, options?: RequestInit): Promise<A
   // Retrieve token from localStorage if available
   const token = typeof window !== "undefined" ? localStorage.getItem("careflow_token") : null;
   
+  const isFormData = options?.body instanceof FormData;
   const headers: Record<string, string> = {
-    "Content-Type": "application/json",
+    ...(isFormData ? {} : { "Content-Type": "application/json" }),
     ...(options?.headers as Record<string, string> || {}),
   };
 
@@ -61,8 +62,11 @@ export async function request<T>(path: string, options?: RequestInit): Promise<A
 export const api = {
   get: <T>(path: string, options?: RequestInit) => request<T>(path, { ...options, method: "GET" }),
   post: <T>(path: string, body: unknown, options?: RequestInit) =>
-    request<T>(path, { ...options, method: "POST", body: JSON.stringify(body) }),
+    request<T>(path, { ...options, method: "POST", body: body instanceof FormData ? body : JSON.stringify(body) }),
+  upload: <T>(path: string, formData: FormData, options?: RequestInit) =>
+    request<T>(path, { ...options, method: "POST", body: formData }),
   put: <T>(path: string, body: unknown, options?: RequestInit) =>
     request<T>(path, { ...options, method: "PUT", body: JSON.stringify(body) }),
   delete: <T>(path: string, options?: RequestInit) => request<T>(path, { ...options, method: "DELETE" }),
 };
+

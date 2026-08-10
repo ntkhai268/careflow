@@ -5,7 +5,7 @@ spring:
   application:
     name: lab-service
   datasource:
-    url: ${LAB_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_lab}
+    url: ${LAB_DB_URL:jdbc:postgresql://localhost:5432/careflow_lab}
     username: ${LAB_DB_USERNAME:careflow}
     password: ${LAB_DB_PASSWORD:careflow}
   jpa:
@@ -19,8 +19,8 @@ spring:
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USERNAME:${RABBITMQ_USER:guest}}
-    password: ${RABBITMQ_PASSWORD:guest}
+    username: ${RABBITMQ_USERNAME:${RABBITMQ_USER:admin}}
+    password: ${RABBITMQ_PASSWORD:admin123}
     publisher-confirm-type: correlated
     publisher-returns: true
   flyway:

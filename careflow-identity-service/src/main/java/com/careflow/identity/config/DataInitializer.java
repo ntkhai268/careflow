@@ -30,7 +30,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        seedUser(UUID.fromString("d0000001-0000-0000-0000-000000000001"), "an@careflow.vn", "an@careflow.vn", UserRole.DOCTOR);
+        seedUser(UUID.fromString("d0000001-0000-0000-0000-000000000001"), "an_nguyen", "an@careflow.vn", UserRole.DOCTOR);
         seedUser(UUID.fromString("11111111-1111-1111-1111-111111111111"), "doctor", "doctor@careflow.com", UserRole.DOCTOR);
         seedUser(UUID.fromString("22222222-2222-2222-2222-222222222222"), "patient", "patient@careflow.com", UserRole.PATIENT);
         seedUser(UUID.fromString("44444444-4444-4444-4444-444444444444"), "lab", "lab@careflow.com", UserRole.LAB_TECHNICIAN);
