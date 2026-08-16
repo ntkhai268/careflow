@@ -1,0 +1,18 @@
+# DGM-STA-03 — Trạng thái Consultation
+
+```mermaid
+stateDiagram-v2
+    [*] --> NOT_STARTED
+    NOT_STARTED --> IN_PROGRESS: Bác sĩ bắt đầu khám
+    IN_PROGRESS --> COMPLETED: Kết luận không cần CLS
+    IN_PROGRESS --> WAITING_FOR_RESULTS: Tạo chỉ định CLS
+    WAITING_FOR_RESULTS --> WAITING_FOR_REVIEW: Đủ kết quả bắt buộc
+    WAITING_FOR_REVIEW --> IN_PROGRESS: Bắt đầu lượt đọc kết quả
+    IN_PROGRESS --> COMPLETED: Kết luận cuối cùng
+    COMPLETED --> [*]
+
+    note right of COMPLETED
+        Sửa sau hoàn tất phải tạo amendment
+        có lý do và audit.
+    end note
+```

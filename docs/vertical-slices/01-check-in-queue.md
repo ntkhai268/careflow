@@ -8,9 +8,10 @@ Patient đặt lịch
   → ghi AppointmentConfirmed vào transactional outbox
   → RabbitMQ chuyển EventEnvelope v1
   → Queue consume idempotent
-  → cấp Visit Ticket + số thứ tự + QR
+  → cấp Visit Ticket + số thứ tự
   → Mobile hiển thị phiếu thật
-  → STAFF/ADMIN quét QR tại đúng phòng
+  → Hospital Web hiển thị QR check-in theo phòng/phiên
+  → Patient Mobile quét QR và gửi latitude/longitude để kiểm tra geofence
   → Queue Entry chuyển CHECKED_IN và vào active queue
   → Doctor đọc active queue, xem recommendedNext và bấm Gọi tại một phần tử
   → Mobile tải lại và thấy CALLED
@@ -26,7 +27,7 @@ Slice check-in này chỉ đi qua `CONSULTATION` phase `INITIAL`. Domain Queue h
 | Dữ liệu | Service sở hữu |
 |---|---|
 | Appointment, khoa và phòng được phân | Appointment Service |
-| Visit Ticket, QR, số thứ tự và Queue Entry | Queue Service |
+| Visit Ticket, QR check-in theo phòng/phiên, số thứ tự và Queue Entry | Queue Service |
 | Tài khoản và role `PATIENT`, `STAFF`, `DOCTOR` | Identity Service |
 
 Appointment ghi event vào outbox cùng transaction tạo lịch. Queue ghi event
@@ -39,7 +40,8 @@ RabbitMQ redelivery không tạo phiếu trùng.
 | API | Role |
 |---|---|
 | `GET /api/queues/tickets/appointment/{appointmentId}` | Chính chủ, clinical staff |
-| `POST /api/queues/check-in` | `STAFF`, `ADMIN` |
+| `GET /api/queues/rooms/{roomId}/check-in-qr?date=&session=` | `STAFF`, `ADMIN` |
+| `POST /api/queues/check-in` | Chính chủ `PATIENT`; `STAFF`, `ADMIN` hỗ trợ tại quầy |
 | `GET /api/queues/patients/{patientId}/current` | Chính chủ, clinical staff |
 | `GET /api/queues/rooms/{roomId}/active` | `DOCTOR`, `STAFF`, `ADMIN` |
 | `POST /api/queues/entries/{entryId}/call` | `DOCTOR`, `ADMIN` |
@@ -51,12 +53,19 @@ Request check-in:
 
 ```json
 {
-  "qrToken": "<signed-token>",
-  "roomId": "ROOM-21",
-  "queueClass": "NORMAL"
+  "appointmentId": "<appointment-id>",
+  "checkInQrToken": "<hospital-session-signed-token>",
+  "latitude": 10.7769,
+  "longitude": 106.7009,
+  "accuracyMeters": 12.5
 }
 ```
 
+Server lấy bệnh nhân từ JWT, suy ra phòng từ token/Appointment và chỉ chuyển sang
+`CHECKED_IN` khi khoảng cách tới tâm Hospital Geofence không vượt quá bán kính
+cấu hình. Lượt ưu tiên chỉ được staff xác nhận bằng `queueClass=PRIORITY` và bắt
+buộc có `priorityReasonCode`; bệnh nhân không tự khai ưu tiên. Người không có
+Mobile được staff hỗ trợ bằng mã phiếu tại quầy.
 Nếu bệnh nhân không thể xuất trình QR, staff có thể nhập tay mã phiếu khám:
 
 ```json
@@ -69,7 +78,7 @@ Nếu bệnh nhân không thể xuất trình QR, staff có thể nhập tay mã
 Mã phiếu chỉ được tra trong đúng phòng và ngày hiện tại.
 
 Lượt ưu tiên chỉ được staff xác nhận bằng `queueClass=PRIORITY` và bắt buộc có
-`priorityReasonCode`. Patient không có API tự khai ưu tiên hoặc tự check-in.
+`priorityReasonCode`. Bệnh nhân không có API tự khai ưu tiên hoặc tự check-in.
 
 ## Chạy local
 
@@ -123,11 +132,13 @@ nhưng Consultation/Lab/Prescription vẫn mô phỏng — truyền thêm:
 
 - Appointment tạo thành công vẫn bền vững khi RabbitMQ tạm gián đoạn nhờ outbox.
 - Một `AppointmentConfirmed` chỉ tạo đúng một ticket.
-- QR dùng được từ lúc cấp phiếu đến hết ngày khám, không chứa PII/bệnh án.
-- QR sai ngày, sai chữ ký, sai ticket hoặc sai phòng bị từ chối.
-- Chỉ staff/admin check-in; active queue không chứa ticket chưa check-in.
+- QR check-in do bệnh viện hiển thị theo phòng/phiên trong thời hạn token, không
+  chứa PII/bệnh án.
+- QR sai ngày, sai chữ ký, sai ticket, sai phòng hoặc ngoài geofence bị từ chối.
+- Patient QR hợp lệ trong geofence mới check-in; staff/admin có luồng hỗ trợ tại quầy.
+- Active queue không chứa ticket chưa check-in.
 - Doctor Web hiển thị `recommendedNext`, nhưng bác sĩ có thể gọi bất kỳ lượt
   `CHECKED_IN` nào bằng nút **Gọi** trên từng hàng.
 - `call` và `call-next` yêu cầu idempotency key; không chặn gọi thêm khi phòng đã
   có lượt `CALLED` hoặc `IN_PROGRESS`.
-- Mobile production hiển thị ticket/QR và trạng thái Queue thật.
+- Hospital Web hiển thị QR phiên/phòng; Mobile hiển thị ticket và trạng thái Queue thật.

@@ -151,8 +151,10 @@ BOOKED
 The automatic transition `BOOKED -> TICKET_ISSUED` happens when an appointment
 is successfully created or when a confirmed appointment is first opened.
 
-The staff QR scan produces `CHECKED_IN`; queue admission immediately produces
-`WAITING`.
+The patient scans the room/session QR displayed by the hospital and sends the
+device location. CareFlow checks the QR, appointment and Hospital Geofence before
+producing `CHECKED_IN`; queue admission immediately produces `WAITING`. A staff
+member may use the staff-assisted fallback for patients without Mobile.
 
 ### 5.2 Direct completion path
 
@@ -311,7 +313,7 @@ The demo control is visible only when `DEMO_MODE=true`.
 It is visually separated from patient actions and labelled
 `Điều khiển mô phỏng`. It exposes only valid next external events:
 
-- simulate staff QR scan;
+- simulate patient scan of the hospital QR and geofence validation;
 - simulate doctor call;
 - simulate consultation start;
 - choose consultation outcome with or without laboratory orders;

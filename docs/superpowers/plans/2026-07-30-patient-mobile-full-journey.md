@@ -6,7 +6,7 @@
 
 **Architecture:** Add a self-contained `features/journey` vertical slice with immutable JSON domain models, a validated state machine, a persistence boundary, and Riverpod controllers. Existing Appointment responses bootstrap a journey; patient-facing widgets consume only journey providers, while `DEMO_MODE` selects deterministic local behavior for unfinished services.
 
-**Tech Stack:** Flutter 3.44.2, Dart 3.12.2, Riverpod 2.6.1, GoRouter 14.8.1, SharedPreferences 2.3.4, qr_flutter 4.1.0, flutter_test.
+**Tech Stack:** Flutter 3.44.2, Dart 3.12.2, Riverpod 2.6.1, GoRouter 14.8.1, SharedPreferences 2.3.4, mobile_scanner 5.0.0, flutter_test.
 
 > **Contract evolution — 2026-08-03:** Queue contract 1.2 adds
 > `PHARMACY_DISPENSING`, changes the consultation queue type to `CONSULTATION`,
@@ -65,7 +65,7 @@
 - `lib/features/journey/presentation/widgets/journey_status_card.dart`: reusable home/appointment status card.
 - `lib/features/journey/presentation/widgets/demo_control_sheet.dart`: demo-only external actor controls.
 - `lib/features/journey/presentation/journey_hub_screen.dart`: active journey instruction hub.
-- `lib/features/journey/presentation/visit_ticket_screen.dart`: ticket and QR.
+- `lib/features/journey/presentation/visit_ticket_screen.dart`: ticket and hospital QR scanner/check-in action.
 - `lib/features/journey/presentation/clinic_queue_screen.dart`: active clinic queue.
 - `lib/features/journey/presentation/consultation_screen.dart`: consultation state.
 - `lib/features/journey/presentation/laboratory_screen.dart`: orders, payment, lab queue, and results.
@@ -83,7 +83,7 @@
 - `lib/screens/appointment/appointment_detail_screen.dart`: journey entry point.
 - `lib/screens/appointment/booking_step4_screen.dart`: bootstrap after real booking.
 - `lib/screens/notification/notification_screen.dart`: replace placeholder with inbox.
-- `pubspec.yaml` and `pubspec.lock`: add `qr_flutter: ^4.1.0`.
+- `pubspec.yaml` and `pubspec.lock`: add `mobile_scanner: ^5.0.0`.
 
 ---
 
@@ -114,7 +114,7 @@ test('round-trips a laboratory patient journey without losing UTC instants', () 
     status: JourneyStatus.waitingLab,
     ticket: VisitTicket(
       code: 'CF-APT-47',
-      qrPayload: 'careflow://visit/apt-47',
+      checkInQrRequired: true,
       queueNumber: '47',
       room: 'Phòng 21 - Lầu 1 khu A',
       expectedWindow: '10:30 - 11:30',
@@ -206,7 +206,7 @@ Expected: FAIL because the transition engine does not exist.
 ```dart
 enum JourneyEvent {
   issueTicket,
-  staffScannedQr,
+  patientScannedHospitalQr,
   admittedToClinicQueue,
   doctorCalled,
   consultationStarted,
@@ -333,7 +333,7 @@ Use stable values derived from appointment ID rather than randomness:
 final suffix = appointmentId.codeUnits.fold<int>(0, (a, b) => a + b);
 final queueNumber = '${40 + (suffix % 20)}';
 final ticketCode = 'CF-${appointmentId.toUpperCase()}';
-final qrPayload = 'careflow://visit/$appointmentId';
+final checkInQrRequired = true;
 ```
 
 Generate one `Xét nghiệm công thức máu` and one `X-quang ngực thẳng` order for
@@ -414,17 +414,18 @@ flutter test test/features/journey/presentation/visit_ticket_screen_test.dart te
 
 Expected: FAIL because screens do not exist.
 
-- [ ] **Step 3: Add QR dependency and implement the three patient screens**
+- [ ] **Step 3: Add QR-scanner dependency and implement the three patient screens**
 
-Add:
+Add the QR-scanner dependency used by Patient Mobile to scan the QR displayed by
+Hospital Web. The Mobile app does not generate or display the check-in QR.
 
 ```yaml
-qr_flutter: ^4.1.0
+  mobile_scanner: ^5.0.0
 ```
 
-Render `QrImageView(data: ticket.qrPayload, size: 156)` inside a semantic label
-`Mã QR phiếu khám`. The journey hub chooses one primary destination from the
-current state and never exposes staff actions as normal patient buttons.
+Render a scanner action for the hospital room/session QR and request device
+location before submitting check-in. The journey hub shows the Visit Ticket and
+check-in status, but never exposes staff actions as normal patient buttons.
 
 - [ ] **Step 4: Run ticket/queue tests and verify GREEN**
 
@@ -434,7 +435,8 @@ Run the two widget test files and expect both to pass.
 
 Assert the control is absent when `demoModeProvider == false`, visible with the
 heading `Điều khiển mô phỏng` when true, and exposes only the next legal external
-event. Verify tapping `Mô phỏng nhân viên quét QR` invokes one controller event.
+event. Verify tapping `Mô phỏng bệnh nhân quét QR bệnh viện` invokes one
+controller event.
 
 - [ ] **Step 6: Run demo control test and verify RED**
 

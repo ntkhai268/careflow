@@ -29,34 +29,52 @@ trạng vì chúng thuộc giải pháp được đề xuất.
 
 ### 3.1.2. Quy trình khám ngoại trú hiện tại
 
-Một hành trình phổ biến diễn ra như sau:
-
-1. Bệnh nhân đăng ký khám hoặc đến quầy tiếp nhận.
-2. Nhân viên kiểm tra thông tin, đăng ký dịch vụ và cấp số/phiếu khám.
-3. Bệnh nhân chờ tại phòng khám; bác sĩ hoặc nhân viên gọi theo danh sách đang
-   được sử dụng.
-4. Bác sĩ khám và quyết định có cần cận lâm sàng hay không.
-5. Nếu có chỉ định, bệnh nhân đến khu cận lâm sàng, chờ thực hiện và chờ kết
-   quả; chi phí phát sinh được ghi nhận vào lượt khám.
-6. Bệnh nhân quay lại phòng khám để bác sĩ đọc kết quả, hoàn thiện chẩn đoán,
-   kê toa hoặc hẹn tái khám.
-7. Người bệnh quyết toán toàn bộ lượt khám, sau đó đến quầy thuốc chờ đối chiếu
-   và nhận thuốc nếu có.
+Quy trình khám ngoại trú hiện tại được khái quát như sau:
 
 ```mermaid
-flowchart LR
-    A["Bệnh nhân đăng ký hoặc đến tiếp nhận"] --> B["Kiểm tra thông tin và dịch vụ"]
-    B --> B1["Cấp số hoặc phiếu khám"]
-    B1 --> C["Chờ tại phòng khám"]
-    C --> D["Bác sĩ gọi và khám"]
-    D --> E{"Cần cận lâm sàng?"}
-    E -- "Không" --> F["Kết luận và kê toa"]
-    E -- "Có" --> G["Đến khu cận lâm sàng"]
-    G --> H["Thực hiện và nhận kết quả"]
-    H --> I["Quay lại bác sĩ"]
-    I --> F
-    F --> P3["Quyết toán toàn bộ lượt khám"]
-    P3 --> J["Chờ và nhận thuốc nếu có"]
+flowchart TB
+    subgraph intake ["Tiếp nhận"]
+        direction LR
+        A(["Đăng ký / tiếp nhận"]) --> B["Kiểm tra thông tin"] --> C["Cấp số / phiếu"]
+    end
+
+    subgraph clinic ["Khám ban đầu"]
+        direction LR
+        D["Chờ và gọi lượt"] --> E["Khám lâm sàng"]
+    end
+
+    subgraph lab ["Cận lâm sàng nếu có"]
+        direction LR
+        G["Cận lâm sàng / ghi nhận phí"] --> H["Nhận kết quả"] --> I["Quay lại bác sĩ"]
+    end
+
+    subgraph completion ["Hoàn tất lượt khám"]
+        direction LR
+        J["Chẩn đoán và kê toa"] --> K["Quyết toán lượt khám"] --> L(["Nhận thuốc nếu có"])
+    end
+
+    C --> D
+    E --> F{"Cần cận lâm sàng?"}
+    F -->|"Có"| G
+    F -->|"Không"| J
+    I --> J
+
+    classDef startEnd fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20
+    classDef process fill:#E3F2FD,stroke:#1976D2,color:#0D47A1
+    classDef lab fill:#F3E5F5,stroke:#7B1FA2,color:#4A148C
+    classDef decision fill:#FFF3E0,stroke:#EF6C00,color:#E65100
+    classDef finish fill:#E0F2F1,stroke:#00796B,color:#004D40
+
+    class A,L startEnd
+    class B,C,D,E,J process
+    class G,H,I lab
+    class F decision
+    class K finish
+
+    style intake fill:#F8FAFC,stroke:#CBD5E1
+    style clinic fill:#EFF6FF,stroke:#93C5FD
+    style lab fill:#FAF5FF,stroke:#C4B5FD
+    style completion fill:#ECFDF5,stroke:#6EE7B7
 ```
 
 Quy trình trên dùng giả định người bệnh tự chi trả và thanh toán tập trung ở
@@ -110,35 +128,84 @@ CareFlow được đưa vào quy trình như một công cụ chung để ghi nh
 nhiệm cho các quyết định chuyên môn và thao tác phục vụ.
 
 ```mermaid
-flowchart TD
-    A["Bệnh nhân chọn hồ sơ, khoa, ngày, ca và dịch vụ"] --> A1["Trả trước phí khám hoặc chọn trả tại bệnh viện"]
-    A1 --> B["CareFlow xác nhận lịch và cấp phiếu/QR"]
-    B --> C["Nhân viên xác nhận có mặt"]
-    C --> D["CareFlow hiển thị ba lane phòng khám"]
-    D --> E["Bác sĩ xem gợi ý và bấm gọi"]
-    E --> F["Bác sĩ khám"]
-    F --> G{"Có chỉ định?"}
-    G -- "Không" --> H["Kết luận, kê toa hoặc hẹn tái khám"]
-    G -- "Có" --> I["CareFlow ghi nhận chi phí và chuyển đến queue cận lâm sàng"]
-    I --> J["Kỹ thuật viên thực hiện và phát hành kết quả"]
-    J --> K["CareFlow tạo lượt RESULT_REVIEW"]
-    K --> L["Bác sĩ đọc kết quả"]
+flowchart TB
+    subgraph booking ["Đặt lịch"]
+        direction LR
+        A["Chọn hồ sơ, khoa, ca và dịch vụ"] --> A1["Trả trước hoặc trả tại viện"] --> B["Xác nhận lịch và cấp phiếu"]
+    end
+
+    subgraph checkin ["Tiếp nhận và xếp hàng"]
+        direction LR
+        C["Hiển thị QR phòng/phiên"] --> D["Bệnh nhân quét QR + geofence"] --> E["Bác sĩ xem gợi ý và gọi"]
+    end
+
+    subgraph consultation ["Khám ban đầu"]
+        direction LR
+        F["Khám bệnh"] --> G{"Có chỉ định?"}
+    end
+
+    subgraph lab ["Cận lâm sàng"]
+        direction LR
+        I["Ghi nhận phí và chuyển queue"] --> J["Thực hiện và phát hành kết quả"]
+    end
+
+    subgraph review ["Đọc kết quả"]
+        direction LR
+        K["Tạo lượt đọc kết quả"] --> L["Bác sĩ đọc kết quả"]
+    end
+
+    subgraph completion ["Hoàn tất khám"]
+        direction LR
+        H["Kết luận / kê toa / hẹn tái khám"] --> M["Tạo lượt phát thuốc nếu có"] --> M1["Quyết toán / khấu trừ trả trước"]
+    end
+
+    subgraph settlement ["Quyết toán và phát thuốc"]
+        direction LR
+        M2{"Kết quả quyết toán?"}
+        M3["Thanh toán thêm / SETTLED"]
+        M4["Hoàn phần dư / REFUND_PENDING"]
+        N(["Đối chiếu và phát thuốc"])
+        M2 -->|"Còn phải trả"| M3 --> N
+        M2 -->|"Vừa đủ"| N
+        M2 -->|"Dư"| M4 --> N
+    end
+
+    B --> C
+    E --> F
+    G -->|"Không"| H
+    G -->|"Có"| I
+    J --> K
     L --> H
-    H --> M["CareFlow tạo lượt PHARMACY_DISPENSING nếu có toa"]
-    M --> M1["Quyết toán cuối lượt và khấu trừ phí khám trả trước"]
-    M1 --> M2{"Kết quả quyết toán?"}
-    M2 -- "Còn phải trả" --> M3["Thanh toán thêm rồi chuyển SETTLED"]
-    M2 -- "Vừa đủ" --> N["Nhân viên đối chiếu và phát thuốc"]
-    M2 -- "Dư" --> M4["REFUND_PENDING; hoàn phần dư"]
-    M3 --> N
-    M4 --> N
+    M1 --> M2
+
+    classDef startEnd fill:#E8F5E9,stroke:#2E7D32,color:#1B5E20
+    classDef process fill:#E3F2FD,stroke:#1976D2,color:#0D47A1
+    classDef labStep fill:#F3E5F5,stroke:#7B1FA2,color:#4A148C
+    classDef decision fill:#FFF3E0,stroke:#EF6C00,color:#E65100
+    classDef payment fill:#FFF7ED,stroke:#EA580C,color:#9A3412
+    classDef finish fill:#E0F2F1,stroke:#00796B,color:#004D40
+
+    class A startEnd
+    class A1,B,C,D,E,F,H,M process
+    class I,J,K,L labStep
+    class G,M2 decision
+    class M1,M3,M4 payment
+    class N finish
+
+    style booking fill:#F8FAFC,stroke:#CBD5E1
+    style checkin fill:#EFF6FF,stroke:#93C5FD
+    style consultation fill:#F0FDF4,stroke:#86EFAC
+    style lab fill:#FAF5FF,stroke:#C4B5FD
+    style review fill:#FAF5FF,stroke:#C4B5FD
+    style completion fill:#ECFDF5,stroke:#6EE7B7
+    style settlement fill:#FFF7ED,stroke:#FDBA74
 ```
 
 ### 3.2.2. Vai trò của CareFlow
 
 CareFlow có năm vai trò chính trong mô hình mới:
 
-1. ghi nhận lịch, phiếu, QR và trạng thái có mặt;
+1. ghi nhận lịch, phiếu, QR phòng/phiên và trạng thái có mặt;
 2. duy trì queue theo phòng/điểm phục vụ và đề xuất lượt tiếp theo;
 3. liên kết Appointment, Consultation, Laboratory Order, Result và
    Prescription thành một hành trình;
@@ -160,7 +227,7 @@ production. Trong phạm vi MVP, phí khám trả trước, Visit Settlement và
 
 | Vấn đề hiện tại | Sự hỗ trợ của CareFlow | Thay đổi vận hành |
 |---|---|---|
-| Phiếu không phản ánh người đã đến | QR/check-in tách ticket và active queue | nhân viên xác nhận có mặt trước khi vào hàng |
+| Phiếu không phản ánh người đã đến | QR phòng/phiên, geofence và check-in tách ticket với active queue | bệnh nhân quét tại bệnh viện; nhân viên hỗ trợ khi cần |
 | Gọi ưu tiên tuyệt đối | ba lane FIFO và gợi ý Round Robin 1:1:1 | bác sĩ xem gợi ý rồi chủ động gọi |
 | Chuyển bước bằng hướng dẫn rời rạc | trạng thái hành trình và queue theo điểm phục vụ | mỗi bộ phận nhận đúng lượt liên quan |
 | Quay lại đọc kết quả khó theo dõi | tự tạo `RESULT_REVIEW` trong consultation cũ | không tạo Appointment giả hoặc check-in lần hai |
@@ -198,11 +265,12 @@ cốt lõi. `User`, actor kỹ thuật `Admin`, Gateway, RabbitMQ và database k
 
 ### 3.3.2. Biểu đồ Use Case tổng quát
 
-Nguồn PlantUML của các hình được giữ để render khi dàn trang:
+Nguồn Mermaid của các hình được giữ trong các file Markdown để có thể render
+trực tiếp trong trình soạn thảo hỗ trợ Mermaid:
 
-- [DGM-UC-01 — Use Case tổng quát](chapter-03/diagrams/use-case/dgm-uc-01-overall.puml)
-- [DGM-UC-02 — Phân hệ bệnh nhân](chapter-03/diagrams/use-case/dgm-uc-02-patient.puml)
-- [DGM-UC-03 — Phân hệ bệnh viện](chapter-03/diagrams/use-case/dgm-uc-03-hospital.puml)
+- [DGM-UC-01 — Use Case tổng quát](chapter-03/diagrams/use-case/dgm-uc-01-overall.md)
+- [DGM-UC-02 — Phân hệ bệnh nhân](chapter-03/diagrams/use-case/dgm-uc-02-patient.md)
+- [DGM-UC-03 — Phân hệ bệnh viện](chapter-03/diagrams/use-case/dgm-uc-03-hospital.md)
 
 Biểu đồ chỉ thể hiện mục tiêu nghiệp vụ. Những chức năng nền như xác thực được
 xem là tiền điều kiện; các component kỹ thuật được phân rã tại mục 3.5 và thiết
@@ -214,7 +282,7 @@ kế ở Chương 4.
 |---|---|---|---|
 | Đặt lịch khám | `include` | Chọn hồ sơ và kiểm tra lịch khả dụng | luôn cần xác định hồ sơ và slot |
 | `UC-PAY-01` Thanh toán và quyết toán | `extend` | Đặt lịch khám | ghi nhận phí khám trả trước hoặc còn phải nộp tại bệnh viện |
-| Check-in bằng QR | `include` | Kiểm tra phiếu khám | luôn phải xác minh ticket trước khi xác nhận có mặt |
+| Check-in bằng QR | `include` | Kiểm tra phiếu khám và geofence | luôn phải xác minh ticket, phòng/phiên và vị trí trước khi xác nhận có mặt |
 | Gọi lượt khám | `include` | Xem active queue và lượt đề xuất | cần biết queue trước khi bác sĩ chọn lượt |
 | Tạo chỉ định cận lâm sàng | `extend` | Thực hiện phiên khám | chỉ xảy ra khi bác sĩ thấy cần |
 | Đọc kết quả | `extend` | Thực hiện phiên khám | chỉ xảy ra khi có chỉ định và kết quả đầy đủ |
@@ -230,7 +298,7 @@ trò/luồng trừu tượng. Bộ Use Case cốt lõi hiện tại chưa cần 
 | Mã | Use Case | Actor chính | Kết quả nghiệp vụ |
 |---|---|---|---|
 | `UC-APT-02` | Đặt lịch khám | Bệnh nhân | Appointment `CONFIRMED`, có phòng và Visit Ticket |
-| `UC-QUE-02` | Check-in bằng QR | Nhân viên tiếp nhận | lượt khám ban đầu vào active queue |
+| `UC-QUE-02` | Check-in bằng QR tại bệnh viện | Bệnh nhân; Nhân viên tiếp nhận hỗ trợ | lượt khám ban đầu vào active queue khi QR và vị trí hợp lệ |
 | `UC-QUE-04` | Theo dõi, đề xuất và gọi lượt | Bác sĩ | entry được gọi có actor và audit |
 | `UC-CON-01` | Bắt đầu và thực hiện phiên khám | Bác sĩ | Consultation được ghi nhận hoặc chờ kết quả |
 | `UC-LAB-01` | Tạo chỉ định cận lâm sàng | Bác sĩ | Laboratory Order và item được tạo |
@@ -249,12 +317,17 @@ quyết toán cuối lượt.
 #### `UC-APT-02` — Đặt lịch khám
 
 - **Mục đích:** tạo lịch hợp lệ và cấp phiếu cho bệnh nhân.
+- Quy tắc cập nhật 08/08/2026: booking chỉ ghi nhận thanh toán trực tuyến
+  `ONLINE_MOCK`; thanh toán tiền mặt chỉ thuộc quyết toán cuối lượt nếu có
+  `amountDue`.
 - **Actor chính/liên quan:** Bệnh nhân; bộ phận quản lý cung cấp cấu hình khoa,
-  phòng và capacity; thu ngân tham gia nếu chọn trả tại bệnh viện.
+  phòng và capacity; thu ngân chỉ tham gia ở bước quyết toán cuối lượt nếu phát
+  sinh khoản phải thu.
 - **Tiền điều kiện:** hồ sơ thuộc bệnh nhân; khoa, ngày và ca còn khả dụng.
 - **Luồng chính:** chọn hồ sơ, khoa, ngày, ca và dịch vụ; trả trước phí khám bằng
-  `ONLINE_MOCK` hoặc chọn `CASH_AT_HOSPITAL`; CareFlow giữ capacity, suy ra phòng
-  và cấp phiếu/QR. Khoản phí khám được lưu để khấu trừ khi quyết toán cuối lượt.
+  `ONLINE_MOCK`; CareFlow giữ capacity, suy ra phòng và cấp phiếu/số. QR
+  check-in được Hospital Web hiển thị theo phòng/phiên khi bệnh nhân đến.
+  Khoản phí khám được lưu để khấu trừ khi quyết toán cuối lượt.
 - **Hậu điều kiện thành công:** Appointment `CONFIRMED`, có `roomId` và Visit
   Ticket; receipt Mobile được lưu riêng nếu có.
 - **Hậu điều kiện thất bại:** không tạo lịch hoặc giữ capacity; dữ liệu cũ không
@@ -264,15 +337,19 @@ quyết toán cuối lượt.
 
 #### `UC-QUE-02` — Check-in bằng QR
 
-- **Mục đích:** xác nhận người bệnh đã đến đúng phòng/ca.
-- **Actor chính/liên quan:** Nhân viên tiếp nhận; Bệnh nhân cung cấp phiếu.
-- **Tiền điều kiện:** ticket và QR còn hiệu lực.
-- **Luồng chính:** quét QR, kiểm tra phiếu/phòng/ca, xác nhận diện ưu tiên nếu
-  có và đưa lượt vào active queue.
-- **Hậu điều kiện thành công:** entry `CHECKED_IN`, có `checkedInAt` và lane.
+- **Mục đích:** xác nhận người bệnh đã đến bệnh viện và đủ điều kiện vào queue.
+- **Actor chính/liên quan:** Bệnh nhân; Nhân viên tiếp nhận hỗ trợ tại quầy.
+- **Tiền điều kiện:** Appointment/ticket còn hiệu lực; bệnh viện đang hiển thị
+  QR đúng phòng/phiên; Mobile có quyền lấy vị trí.
+- **Luồng chính:** bệnh nhân quét QR bệnh viện, gửi mã lịch và vị trí; CareFlow
+  kiểm tra token, lịch/phòng/phiên và khoảng cách tới Hospital Geofence, sau đó
+  đưa lượt vào active queue.
+- **Hậu điều kiện thành công:** entry `CHECKED_IN`, có `checkedInAt`, phương thức
+  check-in và lane.
 - **Hậu điều kiện thất bại:** ticket giữ nguyên, không có active entry mới.
-- **Ngoại lệ:** QR sai chữ ký, sai ngày/phòng, ticket đã dùng hoặc thiếu lý do
-  ưu tiên.
+- **Ngoại lệ:** QR sai/hết hạn, sai ngày/phòng/phiên, ticket đã dùng, vị trí ngoài
+  bán kính, không lấy được vị trí hoặc độ chính xác không đạt. `PRIORITY` chỉ do
+  nhân viên có quyền xác nhận cùng lý do.
 
 #### `UC-QUE-04` — Theo dõi, đề xuất và gọi lượt
 
@@ -387,7 +464,7 @@ sequenceDiagram
     CF-->>BN: Danh sách timeSlot, capacity và serviceCode khả dụng
     BN->>CF: Gửi patientProfileId, departmentId, visitDate, timeSlot, serviceCode, paymentChoice
     alt Hồ sơ/slot/phòng hợp lệ
-        CF-->>BN: appointmentId, roomId, ticketNumber, qrToken, paymentReceipt
+        CF-->>BN: appointmentId, roomId, ticketNumber, paymentReceipt
         opt CASH_AT_HOSPITAL
             BN->>TT: Xuất trình appointmentId/ticketNumber và nộp phí khám
             TT->>CF: Xác nhận khoản phí khám đã trả trước
@@ -405,14 +482,20 @@ sequenceDiagram
     actor BN as Bệnh nhân
     actor TN as Nhân viên tiếp nhận
     participant CF as CareFlow
-    BN->>TN: Xuất trình qrToken hoặc mã phiếu
-    TN->>CF: Gửi qrToken, roomId, queueClass, priorityReasonCode
-    alt QR và điều kiện check-in hợp lệ
-        CF-->>TN: ticketNumber, queueEntryId, lane, status CHECKED_IN
-        CF-->>BN: Xác nhận đã vào hàng và phòng chờ
-    else QR sai/hết hạn/đã dùng/sai phòng
-        CF-->>TN: Mã lỗi và trạng thái ticket hiện tại
-        TN-->>BN: Hướng dẫn xử lý tại quầy
+    participant HW as Hospital Web
+    CF-->>HW: QR check-in phòng/phiên có thời hạn
+    HW-->>BN: Hiển thị QR tại bệnh viện
+    BN->>CF: Gửi appointmentId, checkInQrToken, latitude, longitude, accuracyMeters
+    CF->>CF: Kiểm token, lịch/phòng/phiên và tính khoảng cách geofence
+    alt QR hợp lệ và vị trí trong bán kính
+        CF-->>BN: ticketNumber, queueEntryId, lane, status CHECKED_IN
+        CF-->>TN: Cập nhật lượt đã có mặt
+    else QR hoặc vị trí không hợp lệ
+        CF-->>BN: Từ chối và nêu lý do; ticket chưa CHECKED_IN
+    end
+    opt Bệnh nhân không dùng Mobile
+        TN->>CF: Xác nhận tại quầy sau khi đối chiếu phiếu
+        CF-->>TN: CHECKED_IN và lane mặc định NORMAL
     end
 ```
 
@@ -570,7 +653,7 @@ flowchart TD
     C -- "Có" --> D{"Có đúng phòng active theo chính sách MVP?"}
     D -- "Không" --> Z["Thông báo lỗi cấu hình phòng"]
     D -- "Có" --> E["Giữ capacity và tạo Appointment CONFIRMED"]
-    E --> F["Cấp Visit Ticket, số và QR"]
+    E --> F["Cấp Visit Ticket và số"]
     F --> G["Lưu receipt Mobile theo paymentChoice"]
     G --> H{"Lưu receipt local thành công?"}
     H -- "Có" --> H1{"CASH_AT_HOSPITAL?"}
@@ -584,19 +667,20 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-    A["Nhân viên quét QR hoặc nhập mã phiếu"] --> B{"QR đúng chữ ký, ngày, phòng?"}
-    B -- "Không" --> X["Từ chối và hiển thị lý do"]
-    B -- "Có" --> C{"Ticket đã check-in?"}
-    C -- "Có" --> Y["Trả trạng thái hiện tại; không tạo trùng"]
-    C -- "Không" --> D{"Xác nhận PRIORITY?"}
-    D -- "Có" --> E{"Có priorityReasonCode hợp lệ?"}
-    E -- "Không" --> Z["Yêu cầu bổ sung lý do"]
-    E -- "Có" --> F["Gán lane PRIORITY"]
-    D -- "Không" --> G["Gán lane NORMAL"]
-    F --> H["Chuyển entry sang CHECKED_IN"]
-    G --> H
-    H --> I["Ghi checkedInAt và audit"]
+    A["Bệnh viện hiển thị QR phòng/phiên"] --> B["Bệnh nhân quét bằng Mobile"]
+    B --> C["Gửi token, appointmentId và vị trí"]
+    C --> D{"QR, lịch và phòng hợp lệ?"}
+    D -- "Không" --> X["Từ chối và hiển thị lý do"]
+    D -- "Có" --> E{"Trong bán kính bệnh viện?"}
+    E -- "Không" --> Y["Từ chối; chưa tính là đã đến"]
+    E -- "Có" --> F{"Ticket đã check-in?"}
+    F -- "Có" --> Z["Trả trạng thái hiện tại; không tạo trùng"]
+    F -- "Không" --> G["Gán lane NORMAL mặc định"]
+    G --> H["Chuyển entry sang CHECKED_IN"]
+    H --> I["Ghi thời điểm, vị trí tối thiểu và audit"]
     I --> J["Hiển thị số, lane và phòng chờ"]
+    K["Nhân viên hỗ trợ tại quầy"] --> L["Đối chiếu phiếu và xác nhận"]
+    L --> H
 ```
 
 #### `UC-QUE-04` — Theo dõi, đề xuất và gọi lượt
@@ -765,7 +849,7 @@ các lớp tham gia được ánh xạ như sau:
 | Use Case | Lớp khái niệm chính | Quan hệ/trách nhiệm cần thể hiện |
 |---|---|---|
 | `UC-APT-02` | PatientProfile, Department, ClinicRoom, Appointment, AppointmentPaymentReceipt, VisitTicket | hồ sơ đặt lịch; khoa có nhiều phòng; ghi nhận phí khám trả trước; lịch cấp một phiếu |
-| `UC-QUE-02` | VisitTicket, QueueEntry | ticket hợp lệ được check-in thành entry active |
+| `UC-QUE-02` | VisitTicket, QueueEntry, HospitalCheckInConfig, QueueAudit | QR phòng/phiên và geofence hợp lệ đưa ticket vào entry active |
 | `UC-QUE-04` | ClinicRoom, QueueEntry | phòng chứa nhiều lượt; entry có lane, thời điểm và trạng thái |
 | `UC-CON-01` | Appointment, QueueEntry, Consultation | phiên khám bắt đầu từ đúng lịch và lượt đã gọi |
 | `UC-LAB-01` | Consultation, LaboratoryOrder | consultation tạo nhiều order/hạng mục khi cần |
@@ -777,12 +861,12 @@ các lớp tham gia được ánh xạ như sau:
 
 | Đối tượng | Use Case sử dụng | Nguồn biểu đồ | Quy tắc cần giữ |
 |---|---|---|---|
-| Appointment | `UC-APT-02`, `UC-PRE-01` | [DGM-STA-01](chapter-03/diagrams/state/dgm-sta-01-appointment.puml) | payment Mobile không thêm state backend |
-| Queue Entry | `UC-QUE-02`, `UC-QUE-04`, `UC-LAB-03`, `UC-PHA-01` | [DGM-STA-02](chapter-03/diagrams/state/dgm-sta-02-queue-entry.puml) | chỉ lượt đã check-in/đủ điều kiện mới active |
-| Consultation | `UC-CON-01`, `UC-LAB-01`, `UC-LAB-03`, `UC-PRE-01` | [DGM-STA-03](chapter-03/diagrams/state/dgm-sta-03-consultation.puml) | review kết quả thuộc phiên hiện tại |
-| Laboratory Order | `UC-LAB-01`, `UC-LAB-03` | [DGM-STA-04](chapter-03/diagrams/state/dgm-sta-04-laboratory-order.puml) | thiếu item bắt buộc thì chưa hoàn tất |
-| Prescription | `UC-PRE-01`, `UC-PHA-01` | [DGM-STA-05](chapter-03/diagrams/state/dgm-sta-05-prescription.puml) | toa xác nhận mới tạo lượt phát thuốc |
-| Visit Settlement (`DEMO_MOCK`) | `UC-PAY-01`, `UC-PHA-01` | [DGM-STA-06](chapter-03/diagrams/state/dgm-sta-06-visit-settlement.puml) | số tiền không âm; chỉ `PAYMENT_DUE` chặn dispense |
+| Appointment | `UC-APT-02`, `UC-PRE-01` | [DGM-STA-01](chapter-03/diagrams/state/dgm-sta-01-appointment.md) | payment Mobile không thêm state backend |
+| Queue Entry | `UC-QUE-02`, `UC-QUE-04`, `UC-LAB-03`, `UC-PHA-01` | [DGM-STA-02](chapter-03/diagrams/state/dgm-sta-02-queue-entry.md) | chỉ lượt đã check-in/đủ điều kiện mới active |
+| Consultation | `UC-CON-01`, `UC-LAB-01`, `UC-LAB-03`, `UC-PRE-01` | [DGM-STA-03](chapter-03/diagrams/state/dgm-sta-03-consultation.md) | review kết quả thuộc phiên hiện tại |
+| Laboratory Order | `UC-LAB-01`, `UC-LAB-03` | [DGM-STA-04](chapter-03/diagrams/state/dgm-sta-04-laboratory-order.md) | thiếu item bắt buộc thì chưa hoàn tất |
+| Prescription | `UC-PRE-01`, `UC-PHA-01` | [DGM-STA-05](chapter-03/diagrams/state/dgm-sta-05-prescription.md) | toa xác nhận mới tạo lượt phát thuốc |
+| Visit Settlement (`DEMO_MOCK`) | `UC-PAY-01`, `UC-PHA-01` | [DGM-STA-06](chapter-03/diagrams/state/dgm-sta-06-visit-settlement.md) | số tiền không âm; chỉ `PAYMENT_DUE` chặn dispense |
 
 ## 3.5. Định nghĩa yêu cầu cho các thành phần CareFlow
 
@@ -791,7 +875,7 @@ các lớp tham gia được ánh xạ như sau:
 | Use Case | Thành phần giao diện | Thành phần nghiệp vụ tham gia |
 |---|---|---|
 | UC-APT-02 | Patient Mobile | Patient, Appointment, Queue, Notification, Mobile local payment adapter |
-| UC-QUE-02 | Hospital Web | Queue, Appointment, Notification |
+| UC-QUE-02 | Patient Mobile và Hospital Web hiển thị QR | Queue, Appointment, Notification |
 | UC-QUE-04 | Hospital Web | Queue, Notification |
 | UC-CON-01 | Hospital Web | Consultation/EMR, Queue, Patient |
 | UC-LAB-01 | Hospital Web | Consultation, Laboratory Order, Queue |

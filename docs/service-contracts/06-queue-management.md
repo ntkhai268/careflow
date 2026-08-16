@@ -6,7 +6,9 @@
 
 Sở hữu:
 
-- Visit Ticket, QR token và số thứ tự;
+- Visit Ticket, QR token phòng/phiên và số thứ tự;
+- QR check-in do bệnh viện hiển thị theo phòng/phiên, geofence và check-in của
+  bệnh nhân hoặc nhân viên hỗ trợ;
 - check-in và active queue theo phòng/phiên;
 - phân ba làn logic `PRIORITY`, `NORMAL`, `RESULT_REVIEW`, đề xuất theo Round
   Robin `1:1:1` và giữ FIFO trong từng làn;
@@ -135,8 +137,9 @@ Round Robin `1:1:1` của phòng khám.
 
 | Method và path | Quyền | Mục đích |
 |---|---|---|
-| `GET /api/queues/tickets/appointment/{appointmentId}` | Chính chủ/Staff | Xem phiếu, QR, số |
-| `POST /api/queues/check-in` | `STAFF`, `ADMIN` | Quét QR và tiếp nhận |
+| `GET /api/queues/tickets/appointment/{appointmentId}` | Chính chủ/Staff | Xem phiếu, số và phòng |
+| `GET /api/queues/rooms/{roomId}/check-in-qr?date=&session=` | `STAFF`, `ADMIN` | Lấy QR phiên/phòng để hiển thị tại bệnh viện |
+| `POST /api/queues/check-in` | Chính chủ `PATIENT`, hoặc `STAFF`, `ADMIN` hỗ trợ | Quét QR bệnh viện và xác nhận có mặt |
 | `GET /api/queues/patients/{patientId}/current` | Chính chủ/clinical staff | Lượt hiện tại của bệnh nhân |
 | `GET /api/queues/rooms/{roomId}/active?date=&session=` | `DOCTOR`, `STAFF`, `ADMIN` | Active queue phòng; backend kiểm tra phạm vi phòng của actor |
 | `GET /api/queues/service-points/{servicePointId}/active?date=` | Staff được phân công, `ADMIN` | Active queue cận lâm sàng hoặc phát thuốc tại điểm phục vụ |
@@ -149,23 +152,47 @@ Round Robin `1:1:1` của phòng khám.
 | `POST /api/queues/entries/{entryId}/start` | Actor được phân công | Bắt đầu phục vụ |
 | `POST /api/queues/entries/{entryId}/complete` | Actor được phân công | Hoàn tất lượt; queue phát thuốc hoàn tất theo event `PrescriptionDispensed` |
 
-Check-in request:
+Request check-in của bệnh nhân:
 
 ```json
 {
-  "qrToken": "eyJ0aWNrZXRJZCI6IlBLLTIwMjYtMDAxMjUifQ.signed",
-  "roomId": "ROOM-21",
-  "queueClass": "PRIORITY",
-  "priorityReasonCode": "ELDERLY"
+  "appointmentId": "cf367b19-b946-41dc-969b-0d7958075b22",
+  "checkInQrToken": "eyJyb29tSWQiOiJST09NLTIxIiwic2Vzc2lvbiI6Ik1PUk5JTkciLCJleHAiOjE3...",
+  "latitude": 10.7769,
+  "longitude": 106.7009,
+  "accuracyMeters": 12.5
 }
 ```
 
-`queueClass` và `priorityReasonCode` chỉ được chấp nhận từ actor có quyền; nếu
-không gửi, Queue Service dùng `NORMAL`.
+Server lấy `patientId` từ JWT, kiểm tra `appointmentId` thuộc chính bệnh nhân,
+đối chiếu token với phòng/phiên/ngày và tính khoảng cách từ tọa độ thiết bị đến
+tâm Hospital Geofence. Chỉ khi khoảng cách không vượt quá `radiusMeters`, dữ
+liệu vị trí còn hiệu lực và độ chính xác đạt ngưỡng cấu hình thì mới chuyển entry
+sang `CHECKED_IN`.
 
-`roomId` trong check-in phải trùng phòng đã gắn với Visit Ticket. Giá trị trên
-request chỉ dùng để đối chiếu điểm tiếp nhận, không cho phép chuyển ticket sang
-phòng khác.
+Cấu hình geofence do bộ phận quản lý duy trì, không nhận từ Patient Mobile:
+
+```json
+{
+  "siteId": "HOSPITAL-MAIN",
+  "latitude": 10.7769,
+  "longitude": 106.7009,
+  "radiusMeters": 150,
+  "maxAccuracyMeters": 50
+}
+```
+
+Giá trị bán kính và ngưỡng độ chính xác là cấu hình nghiệp vụ, không phải dữ liệu
+do bệnh nhân tự chọn. Server tính khoảng cách bằng tọa độ cấu hình và tọa độ
+request trước khi cập nhật trạng thái.
+
+`queueClass` và `priorityReasonCode` chỉ được chấp nhận từ actor có quyền trong
+luồng nhân viên hỗ trợ; bệnh nhân không được tự khai `PRIORITY`. Luồng nhân viên
+có thể dùng mã phiếu để hỗ trợ người không có Mobile sau khi đối chiếu tại quầy.
+
+`roomId` không lấy từ request của bệnh nhân; server suy ra từ token QR và
+Appointment. Tọa độ và kết quả geofence được ghi vào audit tối thiểu cần thiết,
+không đưa dữ liệu vị trí vào nội dung QR.
 
 Queue là nguồn assignment vận hành cho Staff: request đọc hoặc mutate queue phải
 được giới hạn ở đúng room/service point mà actor đang xử lý. Với queue khám,
@@ -206,7 +233,7 @@ Ticket response `data`:
   "roomId": "ROOM-21",
   "roomDisplayName": "Phòng 21 - Lầu 1 khu A",
   "timeSlot": "10:30-11:30",
-  "qrToken": "<opaque-or-signed-token>",
+  "checkInQrRequired": true,
   "status": "TICKET_ISSUED"
 }
 ```
@@ -223,6 +250,8 @@ Active queue item:
   "queueNumber": 47,
   "status": "CHECKED_IN",
   "checkedInAt": "2026-08-18T03:20:00Z",
+  "checkInMethod": "PATIENT_QR_GEOFENCE",
+  "distanceMeters": 42.8,
   "position": 1
 }
 ```
@@ -294,7 +323,9 @@ Publish:
   "patientId": "9c613831-90c2-48f6-81c5-0105c20502a1",
   "roomId": "ROOM-21",
   "queueNumber": 47,
-  "checkedInAt": "2026-08-18T03:20:00Z"
+  "checkedInAt": "2026-08-18T03:20:00Z",
+  "checkInMethod": "PATIENT_QR_GEOFENCE",
+  "distanceMeters": 42.8
 }
 ```
 
@@ -316,7 +347,8 @@ Publish:
   hoạt động; event `AllRequiredResultsAvailable` gửi lại không tạo entry trùng.
 - Một prescription chỉ có tối đa một entry `PHARMACY_DISPENSING` đang hoạt động;
   event gửi lại không tạo lượt phát thuốc trùng.
-- QR hết hạn/sai phòng/sai ngày trả `400` hoặc `409`; ticket bị hủy trả `409`.
+- QR hết hạn/sai phòng/sai ngày, vị trí ngoài bán kính, không lấy được vị trí
+  hoặc độ chính xác không đạt trả `400`/`409`; ticket bị hủy trả `409`.
 - Action lặp lại cùng `Idempotency-Key` trả kết quả cũ.
 - State transition sai trả `409`, không âm thầm bỏ qua.
 
@@ -345,7 +377,8 @@ trợ nhiều phòng; chỉ dữ liệu MVP đang cấu hình một phòng activ
 ### Trạng thái triển khai 2026-08-03
 
 - `CONSULTATION + INITIAL` đã nối thật từ `AppointmentConfirmed` đến Visit Ticket,
-  QR, staff check-in, active queue, gọi theo entry/gợi ý, start/complete và Mobile production.
+  Hospital QR, geofence check-in, active queue, gọi theo entry/gợi ý, start/complete
+  và Mobile production.
 - Appointment producer và Queue producer đều dùng outbox; consumer Appointment
   của Queue có idempotency bằng `processed_events`.
 - Domain và API đã tách `QueueType`, `ConsultationPhase`, `QueueClass` và

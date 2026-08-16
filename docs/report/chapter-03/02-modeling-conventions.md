@@ -16,7 +16,7 @@ Domain dùng trong mã: `AUTH`, `PAT`, `APT`, `MOB`, `QUE`, `CON`, `LAB`, `PRE`,
 `MOB` chỉ dùng cho các yêu cầu/luồng trình diễn thuộc Patient
 Mobile, không đại diện cho một backend service. Tên file dùng chữ thường, dấu
 gạch ngang và mã Use Case, ví dụ
-`uc-apt-02-book-appointment.puml`.
+`uc-apt-02-book-appointment.md` với khối Mermaid bên trong.
 
 ## 2. Mẫu bảng đặc tả Use Case
 
@@ -65,27 +65,21 @@ class, method hoặc câu lệnh SQL.
 | ERD | Cấu trúc dữ liệu | Vẽ riêng theo service; không tạo khóa ngoại xuyên service |
 | Deployment | Môi trường triển khai | Vẽ container/node/network ở mức tổng quát, không chép Docker Compose |
 
-## 4. Quy ước PlantUML
+## 4. Quy ước Mermaid
 
-```plantuml
-@startuml
-title DGM-TYPE-DOMAIN-NN — Tên biểu đồ
-
-skinparam backgroundColor white
-skinparam shadowing false
-skinparam defaultFontName Arial
-skinparam defaultFontSize 13
-skinparam ArrowColor #334155
-skinparam activityBorderColor #334155
-skinparam activityBackgroundColor #F8FAFC
-
-' Nội dung biểu đồ
-
-legend bottom
-  Nguồn: Nhóm tác giả đề xuất dựa trên đặc tả CareFlow.
-endlegend
-@enduml
+```mermaid
+flowchart LR
+  actor([Actor])
+  subgraph System[Hệ thống]
+    usecase((Use Case))
+  end
+  actor --- usecase
 ```
+
+State Diagram dùng `stateDiagram-v2`; Use Case dùng `flowchart` với node actor
+dạng bo tròn, node Use Case dạng ellipse và `subgraph` làm biên hệ thống.
+Ghi chú nguồn dùng node riêng hoặc comment Mermaid vì Mermaid không có cú pháp
+`legend` tương đương PlantUML.
 
 Quy ước chung:
 

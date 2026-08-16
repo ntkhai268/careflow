@@ -353,8 +353,8 @@ Người B (Bệnh nhân)          Người A (Hệ thống)          Người C
 |---|------|--------|---------|
 | 1 | **Notification Service** - WebSocket/STOMP server | Real-time channel | 🔴 P0 |
 | 2 | Lắng nghe event từ Queue → push thông báo: "sắp đến lượt", "đến lượt", "lỡ lượt" | Push notifications | 🔴 P0 |
-| 3 | API **QR Code** generation cho mỗi appointment (để check-in) | QR API | 🔴 P0 |
-| 4 | API **Check-in** bằng QR: verify + cập nhật queue status → CHECKED_IN | Check-in flow | 🔴 P0 |
+| 3 | API **QR Code** generation theo phòng/phiên để bệnh viện hiển thị | Hospital QR API | 🔴 P0 |
+| 4 | API **Check-in** bằng QR + geofence: verify vị trí rồi cập nhật queue status → CHECKED_IN | Check-in flow | 🔴 P0 |
 | 5 | Implement **ước tính thời gian chờ** (moving average) | Wait time API | 🟡 P1 |
 | 6 | Cung cấp WebSocket endpoint cho B (mobile) và C (web) subscribe | WS integration guide | 🟡 P1 |
 
@@ -389,7 +389,7 @@ Người B (Bệnh nhân)          Người A (Hệ thống)          Người C
 
 **🤝 Điểm phối hợp tuần 3**:
 - Ngày 11: A cung cấp WebSocket endpoint + hướng dẫn subscribe → B, C tích hợp
-- Ngày 12: A cung cấp QR + Check-in API → B tích hợp trên Mobile
+- Ngày 12: A cung cấp QR phòng/phiên, geofence + Check-in API → B tích hợp quét QR trên Mobile
 - Ngày 13: C push event `PrescriptionCreated` → B test nhận được trên Mobile
 - Cuối tuần 3: **Demo nội bộ** toàn bộ luồng end-to-end
 
@@ -497,9 +497,9 @@ sequenceDiagram
     participant NS as Notification Svc
     participant D as Bác sỹ (Web)
 
-    P->>GW: Quét QR Code check-in
-    GW->>QS: Xác nhận check-in
-    QS->>QS: Cập nhật trạng thái → CHECKED_IN
+    P->>GW: Quét QR phòng/phiên + gửi vị trí
+    GW->>QS: Xác nhận QR, lịch hẹn và geofence
+    QS->>QS: Nếu trong bán kính → CHECKED_IN
     Note over QS: Thuật toán N:M xen kẽ<br/>tính toán thứ tự gọi
     QS->>NS: [RabbitMQ] Sắp đến lượt
     NS->>P: [WebSocket] "Còn 2 người trước bạn"

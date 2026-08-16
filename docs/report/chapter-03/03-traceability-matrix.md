@@ -8,7 +8,7 @@ Tài liệu này liên kết Use Case cốt lõi với yêu cầu, quy tắc, ag
 | Use Case | Yêu cầu chính | Quy tắc chính | Aggregate bị tác động | Service tham gia chính |
 |---|---|---|---|---|
 | `UC-APT-02` Đặt lịch | `FR-PAT-01`, `FR-APT-01..03`, `FR-APT-06`, `FR-MOB-01..03`, `FR-QUE-01` | `BR-APT-01`, `BR-APT-02`, `BR-APT-03`, `BR-APT-04`, `BR-MOB-01`, `BR-MOB-02`, `BR-PAT-01` | Patient, Department, ClinicRoom, Appointment, Visit Ticket, AppointmentPaymentReceipt | Patient, Appointment, Queue, Notification, Mobile local adapter |
-| `UC-QUE-02` Check-in QR | `FR-QUE-02`, `FR-QUE-03` | `BR-QUE-01`, `BR-QUE-04` | Appointment, Queue Entry | Queue, Appointment, Notification |
+| `UC-QUE-02` Check-in QR | `FR-QUE-02`, `FR-QUE-03` | `BR-QUE-01`, `BR-QUE-04` | Appointment, Visit Ticket, Queue Entry, HospitalCheckInConfig, QueueAudit | Queue, Appointment, Notification |
 | `UC-QUE-04` Theo dõi/đề xuất/gọi lượt | `FR-QUE-03..09`, `NFR-SEC-05` | `BR-QUE-02`, `BR-QUE-03`, `BR-QUE-05`, `BR-QUE-06`, `BR-QUE-07`, `BR-REV-02` | ClinicRoom reference, Queue Entry, Queue Scheduler | Appointment, Queue, Notification |
 | `UC-CON-01` Thực hiện phiên khám | `FR-CON-01..05`, `FR-PAT-03` | `BR-CON-01`, `BR-PAT-01` | Queue Entry, Consultation | Queue, Consultation, Patient, EMR |
 | `UC-LAB-01` Tạo chỉ định | `FR-LAB-01..03`, `FR-CON-03` | `BR-LAB-01`, `BR-CON-01` | Consultation, Laboratory Order, Queue Entry | Consultation, Laboratory Order, Queue, Notification |
@@ -27,7 +27,7 @@ Use Case nghiệp vụ riêng.
 
 | Tác nhân | Giao diện | Use Case chi tiết liên quan |
 |---|---|---|
-| Bệnh nhân | Patient Mobile | `UC-APT-02`; nhận trạng thái từ các Use Case queue/lâm sàng và xem quyết toán demo |
+| Bệnh nhân | Patient Mobile | `UC-APT-02`, `UC-QUE-02`; nhận trạng thái từ các Use Case queue/lâm sàng và xem quyết toán demo |
 | Bác sĩ | Hospital Web | `UC-QUE-04`, `UC-CON-01`, `UC-LAB-01`, `UC-LAB-03`, `UC-PRE-01` |
 | Nhân viên tiếp nhận | Hospital Web | `UC-QUE-02`, `UC-QUE-04` |
 | Kỹ thuật viên cận lâm sàng | Hospital Web | `UC-LAB-03` |

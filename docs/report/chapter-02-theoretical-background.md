@@ -21,13 +21,15 @@ Bệnh nhân đăng ký hồ sơ, lựa chọn khoa, ngày và ca khám. Lịch 
 khoa, capacity và phòng phục vụ. CareFlow mô hình hóa `Department 1:N
 ClinicRoom`; dữ liệu MVP chỉ có một phòng active cho mỗi khoa nhưng thiết kế
 không giới hạn quan hệ ở 1:1. Sau khi lịch được xác nhận, hệ thống cấp Visit
-Ticket, số thứ tự và QR.
+Ticket và số thứ tự. Bệnh viện hiển thị một QR check-in gắn với phòng và phiên
+khám.
 
-Khi đến bệnh viện, bệnh nhân hoặc nhân viên xuất trình phiếu tại quầy. Nhân viên
-kiểm tra QR và xác nhận bệnh nhân có mặt. Việc cấp phiếu trước không đồng nghĩa
-với việc bệnh nhân đã tham gia active queue; lượt khám ban đầu chỉ active sau
-`CHECKED_IN`. Người không sử dụng điện thoại vẫn được nhân viên tiếp nhận và
-tạo lượt bằng cùng quy trình nghiệp vụ.
+Khi đến nơi, bệnh nhân dùng Patient Mobile quét QR, gửi vị trí thiết bị và được
+xác nhận có mặt nếu mã QR hợp lệ, đúng lịch/phòng/phiên và nằm trong bán kính
+cho phép của bệnh viện. Việc cấp phiếu trước không đồng nghĩa với việc bệnh
+nhân đã tham gia active queue; lượt khám ban đầu chỉ active sau `CHECKED_IN`.
+Người không sử dụng điện thoại vẫn được nhân viên tiếp nhận hỗ trợ tại quầy
+theo cùng quy tắc kiểm tra phiếu.
 
 ### 2.1.2. Khám ban đầu và cận lâm sàng
 
@@ -55,6 +57,24 @@ bộ hành trình vẫn truy vết được từ lịch ban đầu đến kết 
 ## 2.2. Các quy tắc nghiệp vụ liên quan
 
 ### 2.2.1. Đối tượng ưu tiên
+
+Theo khoản 2 Điều 3 Luật Khám bệnh, chữa bệnh số 15/2023/QH15, cơ sở khám bệnh,
+chữa bệnh phải ưu tiên khám bệnh, chữa bệnh đối với các trường hợp sau:
+
+- người bệnh trong tình trạng cấp cứu;
+- trẻ em dưới 06 tuổi;
+- phụ nữ có thai;
+- người khuyết tật đặc biệt nặng;
+- người khuyết tật nặng;
+- người từ đủ 75 tuổi trở lên;
+- người có công với cách mạng, phù hợp với đặc thù của cơ sở khám bệnh, chữa bệnh.
+
+Danh sách trên là căn cứ để cơ sở khám bệnh, chữa bệnh xác định đối tượng được
+xem xét ưu tiên; luật không quy định các nhóm này phải có phòng khám hoặc bác sĩ
+riêng. Đối với CareFlow, trường hợp cấp cứu được chuyển sang quy trình cấp cứu
+và không đưa vào hàng đợi khám ngoại trú của MVP. Các trường hợp còn lại có thể
+được phục vụ cùng phòng với lượt thường và được đưa vào nhóm ưu tiên khi có đủ
+căn cứ xác nhận.
 
 Quyền ưu tiên phải được nhân viên có thẩm quyền xác nhận cùng lý do; bệnh nhân
 không tự khai ưu tiên trên Mobile. Ưu tiên không đồng nghĩa với phòng khám riêng
@@ -90,8 +110,9 @@ Trong phạm vi thiết kế CareFlow, các nguyên tắc này được cụ th�
 - Bệnh nhân chỉ xem hồ sơ thuộc quyền sở hữu của mình.
 - Bác sĩ, kỹ thuật viên và nhân viên chỉ truy cập dữ liệu trong phạm vi được
   phân công.
-- QR chỉ chứa token ký số và định danh cần thiết, không chứa bệnh án hoặc thông
-  tin nhạy cảm ở dạng đọc trực tiếp.
+- QR check-in chỉ chứa token ký số theo phòng/phiên, không chứa bệnh án hoặc
+  thông tin nhạy cảm ở dạng đọc trực tiếp. Tọa độ được kiểm tra ở phía máy chủ
+  với tâm và bán kính địa điểm bệnh viện.
 - Mọi thay đổi quan trọng phải có actor, thời điểm và correlation ID.
 - Message được giao lại không được tạo Appointment, Queue Entry, kết quả, toa
   hoặc Notification trùng.

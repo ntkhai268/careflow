@@ -259,5 +259,6 @@ của create vẫn là các gap riêng của Appointment Service.
 
 - Mobile chọn slot → server phân phòng duy nhất → nhận appointment confirmed có
   `roomId` và tên phòng.
-- Queue tự cấp phiếu/QR/số từ event, không cần admin duyệt.
+- Queue tự cấp phiếu/số từ event; Hospital Web lấy QR phòng/phiên để hiển thị,
+  không cần admin duyệt.
 - Doctor Web xem lịch dự kiến nhưng active queue chỉ lấy từ Queue Service.
