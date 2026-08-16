@@ -4,6 +4,7 @@ import '../../../models/appointment.dart';
 import '../data/journey_repository.dart';
 import '../domain/journey_models.dart';
 import '../domain/journey_transition.dart';
+import '../../../utils/api_error_message.dart';
 
 class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
   JourneyController({
@@ -28,7 +29,7 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
     required String patientId,
   }) async {
     final generation = ++_generation;
-    if (!_demoMode) {
+    if (!_demoMode && _repository is DemoJourneySource) {
       final error = const JourneyBackendUnavailable();
       _onActionError(null);
       state = AsyncError(error, StackTrace.current);
@@ -187,7 +188,13 @@ class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
       return true;
     } on InvalidJourneyTransition catch (error) {
       if (generation == _generation && reportInvalidTransition) {
-        _onActionError(error.toString());
+        _onActionError(
+          ApiErrorMessage.from(
+            error,
+            fallback:
+                'Bước này chưa thể thực hiện. Vui lòng kiểm tra trạng thái lượt khám.',
+          ),
+        );
       }
       return false;
     } catch (_) {

@@ -101,7 +101,7 @@ Exchange: `prescription.exchange`.
   "consultationId": "35df361e-f4b3-4113-ad0d-0ed853fe61fc",
   "patientId": "9c613831-90c2-48f6-81c5-0105c20502a1",
   "doctorId": "8c9153aa-7d79-489a-a98f-2b75dd33fb94",
-  "dispensingServicePointId": "PHARMACY-01",
+  "dispensingServicePointId": "PHARMACY-MAIN-01",
   "itemCount": 1,
   "issuedAt": "2026-08-18T05:05:00Z"
 }

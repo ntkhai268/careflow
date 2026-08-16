@@ -87,6 +87,10 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
     private boolean isPublic(HttpMethod method, String path) {
         return HttpMethod.OPTIONS.equals(method)
+                || (HttpMethod.GET.equals(method) && path.startsWith("/api/directory/") && !path.equals("/api/directory/doctors/me"))
+                || (HttpMethod.GET.equals(method) && path.equals("/api/directory/departments"))
+                || (HttpMethod.GET.equals(method) && path.equals("/api/directory/rooms"))
+                || (HttpMethod.GET.equals(method) && path.equals("/api/directory/doctors"))
                 || (HttpMethod.POST.equals(method) && Set.of(
                         "/api/auth/register", "/api/auth/login",
                         "/api/auth/refresh", "/api/auth/logout").contains(path))

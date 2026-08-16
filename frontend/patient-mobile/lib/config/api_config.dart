@@ -23,6 +23,8 @@ class ApiConfig {
   static const String patients = '/patients';
   static const String appointments = '/appointments';
   static const String queues = '/queues';
+  static const String consultations = '/consultations';
+  static const String labOrders = '/labs/orders';
   static const String emrRecords = '/emr/records';
   static const String prescriptions = '/prescriptions';
   static const String notifications = '/notifications';

@@ -9,8 +9,9 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "patients", indexes = {
-        @Index(name = "idx_patient_user_id", columnList = "userId", unique = true),
-        @Index(name = "idx_patient_id_card", columnList = "idCardNumber", unique = true)
+        @Index(name = "idx_patient_user_id", columnList = "userId"),
+        @Index(name = "idx_patient_id_card", columnList = "idCardNumber"),
+        @Index(name = "uk_patient_user_id_card_number", columnList = "userId, idCardNumber", unique = true)
 })
 @Getter
 @Setter
@@ -19,7 +20,7 @@ import java.util.UUID;
 @Builder
 public class Patient extends BaseEntity {
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false)
     private UUID userId;
 
     @Column(nullable = false, length = 100)
@@ -34,7 +35,7 @@ public class Patient extends BaseEntity {
     @Column(length = 15)
     private String phone;
 
-    @Column(length = 20, unique = true)
+    @Column(length = 20)
     private String idCardNumber;
 
     @Column(length = 20)
@@ -48,4 +49,14 @@ public class Patient extends BaseEntity {
 
     @Column(length = 255)
     private String avatarUrl;
+
+    @Column(length = 500)
+    private String allergyNotes;
+
+    @Column(length = 1000)
+    private String medicalHistory;
+
+    @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private java.util.List<PatientAllergy> allergies = new java.util.ArrayList<>();
 }

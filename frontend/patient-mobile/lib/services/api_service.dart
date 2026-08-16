@@ -105,12 +105,21 @@ class ApiService {
   Future<Response> get(
     String endpoint, {
     Map<String, dynamic>? queryParams,
+    Options? options,
   }) async {
-    return await _dio.get(endpoint, queryParameters: queryParams);
+    return await _dio.get(
+      endpoint,
+      queryParameters: queryParams,
+      options: options,
+    );
   }
 
-  Future<Response> post(String endpoint, {dynamic data}) async {
-    return await _dio.post(endpoint, data: data);
+  Future<Response> post(
+    String endpoint, {
+    dynamic data,
+    Options? options,
+  }) async {
+    return await _dio.post(endpoint, data: data, options: options);
   }
 
   Future<Response> put(String endpoint, {dynamic data}) async {

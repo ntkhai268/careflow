@@ -7,13 +7,18 @@ spring:
   application:
     name: identity-service
   datasource:
-    url: ${IDENTITY_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_identity}
-    username: ${IDENTITY_DB_USERNAME:careflow}
-    password: ${IDENTITY_DB_PASSWORD:careflow}
+    url: ${SPRING_DATASOURCE_URL:${IDENTITY_DB_URL:jdbc:postgresql://${DB_HOST:100.116.233.60}:${DB_PORT:5432}/careflow_identity}}
+    username: ${SPRING_DATASOURCE_USERNAME:${IDENTITY_DB_USERNAME:careflow}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${IDENTITY_DB_PASSWORD:careflow}}
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 30000
+      connection-timeout: 20000
   jpa:
     open-in-view: false
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update
     show-sql: ${JPA_SHOW_SQL:false}
   servlet:
     multipart:
@@ -24,6 +29,8 @@ spring:
   threads:
     virtual:
       enabled: true
+  flyway:
+    out-of-order: true
 
 eureka:
   client:
@@ -43,7 +50,7 @@ management:
         include: health,info
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:careflow_super_secret_jwt_key_2026_very_long_secret_key_minimum_256_bits}
   expiration: ${JWT_EXPIRATION_MS:86400000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS:2592000000}
   issuer: careflow-identity

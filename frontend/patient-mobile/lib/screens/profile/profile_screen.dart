@@ -80,8 +80,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
             const SizedBox(height: AppSpacing.xl),
             ElevatedButton.icon(
-              onPressed: () =>
-                  ref.read(patientProvider.notifier).loadPatient(),
+              onPressed: () => ref.read(patientProvider.notifier).loadPatient(),
               icon: const Icon(Icons.refresh),
               label: const Text('Thử lại'),
             ),
@@ -102,16 +101,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             color: AppColors.primarySurface,
             child: Row(
               children: [
-                Icon(Icons.info_outline,
-                    color: AppColors.primary, size: 20),
+                Icon(Icons.info_outline, color: AppColors.primary, size: 20),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     'Bạn chưa có hồ sơ bệnh nhân. Vui lòng tạo mới hồ sơ để được đặt khám.',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: AppColors.primary, fontSize: 13),
                   ),
                 ),
               ],
@@ -133,10 +128,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             child: Text(
               'Bạn được phép tạo tối đa 10 hồ sơ\n(cá nhân và người thân trong gia đình)',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: AppColors.textSecondary,
-              ),
+              style: TextStyle(fontSize: 14, color: AppColors.textSecondary),
             ),
           ),
           const SizedBox(height: AppSpacing.xxl),
@@ -189,16 +181,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             color: AppColors.primarySurface,
             child: Row(
               children: [
-                Icon(Icons.info_outline,
-                    color: AppColors.primary, size: 20),
+                Icon(Icons.info_outline, color: AppColors.primary, size: 20),
                 const SizedBox(width: AppSpacing.sm),
                 Expanded(
                   child: Text(
                     'Vui lòng chọn 1 trong các hồ sơ bên dưới, hoặc bấm vào biểu tượng ở trên để thêm hồ sơ người bệnh.',
-                    style: TextStyle(
-                      color: AppColors.primary,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: AppColors.primary, fontSize: 13),
                   ),
                 ),
               ],
@@ -221,8 +209,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   // Name
                   Row(
                     children: [
-                      Icon(Icons.person_outline,
-                          color: AppColors.primary, size: 22),
+                      Icon(
+                        Icons.person_outline,
+                        color: AppColors.primary,
+                        size: 22,
+                      ),
                       const SizedBox(width: AppSpacing.sm),
                       Expanded(
                         child: Text(
@@ -239,17 +230,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   const SizedBox(height: AppSpacing.md),
                   // Phone
                   if (patient.phone != null)
-                    _buildInfoRow(
-                        Icons.phone_outlined, patient.phone!),
+                    _buildInfoRow(Icons.phone_outlined, patient.phone!),
                   // Date of birth
                   if (patient.dateOfBirth != null)
-                    _buildInfoRow(Icons.cake_outlined,
-                        dateFormat.format(patient.dateOfBirth!)),
-                  // Address
-                  if (patient.address != null &&
-                      patient.address!.isNotEmpty)
                     _buildInfoRow(
-                        Icons.location_on_outlined, patient.address!),
+                      Icons.cake_outlined,
+                      dateFormat.format(patient.dateOfBirth!),
+                    ),
+                  // Address
+                  if (patient.address != null && patient.address!.isNotEmpty)
+                    _buildInfoRow(Icons.location_on_outlined, patient.address!),
                   const SizedBox(height: AppSpacing.base),
                   // Action buttons
                   Row(
@@ -270,11 +260,19 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               extra: {
                                 'patientName': patient.fullName,
                                 'patientGender': patient.genderDisplay,
-                                'patientBirthYear': patient.dateOfBirth?.year ?? 0,
+                                'patientBirthYear':
+                                    patient.dateOfBirth?.year ?? 0,
                               },
                             );
                           },
-                          child: const Text('Thông tin sức khỏe'),
+                          child: const FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'Thông tin sức khỏe',
+                              maxLines: 1,
+                              softWrap: false,
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -284,22 +282,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.base),
-          // Search more button
+          // Open the health records of another profile owned by this account.
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text(
-                          'Tính năng tìm kiếm thông tin sức khỏe sẽ được cập nhật sau'),
-                    ),
-                  );
-                },
+                onPressed: () => context.push(
+                  '/health-records/patients',
+                  extra: {'excludePatientId': patient.id},
+                ),
                 icon: const Icon(Icons.search),
-                label: const Text('Xem thêm thông tin sức khỏe khác'),
+                label: const Text('Xem sức khỏe bệnh nhân khác'),
               ),
             ),
           ),

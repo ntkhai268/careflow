@@ -17,6 +17,8 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         jdbc:
           time_zone: UTC
+  flyway:
+    out-of-order: true
   rabbitmq:
     host: ${RABBITMQ_HOST:localhost}
     port: ${RABBITMQ_PORT:5672}
@@ -50,11 +52,11 @@ management:
         include: health,info
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:careflow_jwt_secret_key_for_development_and_testing_2026_must_be_at_least_256_bits!}
 
 queue:
   business-zone: ${QUEUE_BUSINESS_ZONE:Asia/Ho_Chi_Minh}
-  qr-secret: ${QR_SECRET:${JWT_SECRET}}
+  qr-secret: ${QR_SECRET:careflow_jwt_secret_key_for_development_and_testing_2026_must_be_at_least_256_bits!}
   qr-expiration-minutes: ${QR_EXPIRATION_MINUTES:30}
   outbox-poll-ms: ${OUTBOX_POLL_MS:1000}
   outbox-max-attempts: ${OUTBOX_MAX_ATTEMPTS:12}

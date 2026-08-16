@@ -1,0 +1,77 @@
+// CareFlow - Queue Management Service Database Design (DBML)
+// Schema: careflow_queue
+
+Project CareFlow_Queue_Service {
+  database_type: 'PostgreSQL'
+  note: 'Database Schema cho dịch vụ Cấp phiếu & Xếp hàng Khám bệnh (CareFlow Queue Management Service)'
+}
+
+Enum QueueType {
+  INITIAL_CONSULTATION [note: 'Xếp hàng khám ban đầu tại phòng khám']
+  LAB_EXECUTION [note: 'Xếp hàng thực hiện cận lâm sàng (xét nghiệm / siêu âm / CĐHA)']
+  RESULT_REVIEW [note: 'Xếp hàng quay lại bác sĩ đọc kết quả (chèn sau lượt khám ban đầu kế tiếp)']
+}
+
+Enum QueueStatus {
+  TICKET_ISSUED [note: 'Đã cấp phiếu & QR, chưa đến bệnh viện check-in']
+  CHECKED_IN [note: 'Đã check-in thành công, đang nằm trong Active FIFO Queue']
+  QUEUED [note: 'Đang xếp hàng (dành cho Lab Execution & Result Review)']
+  CALLED [note: 'Đã được gọi tên vào phòng/khu phục vụ']
+  IN_PROGRESS [note: 'Đang thực hiện khám/xét nghiệm']
+  COMPLETED [note: 'Đã hoàn tất lượt phục vụ']
+  MISSED [note: 'Bị nhỡ lượt do không có mặt khi gọi']
+  CANCELLED [note: 'Lượt bị hủy']
+  NO_SHOW [note: 'Hết giờ check-in không đến']
+}
+
+Table visit_tickets {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  ticket_code varchar(30) [not null, unique, note: 'Mã phiếu điện tử (ví dụ: PK-2026-00125)']
+  appointment_id uuid [not null, unique, note: 'Khóa ngoại tham chiếu lịch hẹn (Appointment Service)']
+  patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bệnh nhân (Patient Service)']
+  queue_number int [not null, note: 'Số thứ tự cấp theo phòng/phiên']
+  department varchar(100) [not null, note: 'Mã khoa (ví dụ: NEUROLOGY)']
+  room_id varchar(50) [not null, note: 'Phòng khám (ví dụ: ROOM-21)']
+  time_slot varchar(50) [not null, note: 'Khung giờ dự kiến']
+  qr_token text [not null, note: 'Token QR signed opaque để check-in']
+  session_date date [not null, note: 'Ngày khám']
+  session_code varchar(20) [not null, note: 'Phiên khám (MORNING / AFTERNOON)']
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  indexes {
+    patient_id [name: 'idx_ticket_patient']
+    appointment_id [name: 'idx_ticket_appointment']
+    (room_id, session_date, session_code) [name: 'idx_ticket_room_session']
+  }
+}
+
+Table queue_entries {
+  id uuid [pk, note: 'Khóa chính UUID']
+  ticket_id uuid [note: 'Tham chiếu visit_tickets (null nếu là lab execution tự động)']
+  patient_id uuid [not null, note: 'Bệnh nhân']
+  room_id varchar(50) [not null, note: 'Mã phòng hoặc khu dịch vụ (ROOM-21, LAB-HEMATOLOGY-01)']
+  queue_type QueueType [not null, note: 'Loại queue (INITIAL_CONSULTATION, LAB_EXECUTION, RESULT_REVIEW)']
+  queue_number int [not null, note: 'Số thứ tự xếp hàng']
+  status QueueStatus [not null, default: 'TICKET_ISSUED', note: 'Trạng thái lượt xếp hàng']
+  session_date date [not null]
+  session_code varchar(20) [not null]
+  
+  // Tham chiếu liên quan
+  lab_order_id uuid [note: 'Tham chiếu chỉ định cận lâm sàng (nếu là LAB_EXECUTION)']
+  consultation_id uuid [note: 'Tham chiếu phiên khám (nếu là RESULT_REVIEW)']
+  
+  called_at timestamptz [note: 'Thời điểm gọi số']
+  started_at timestamptz [note: 'Thời điểm bắt đầu phục vụ']
+  completed_at timestamptz [note: 'Thời điểm hoàn thành']
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  indexes {
+    (room_id, session_date, status) [name: 'idx_queue_active_room']
+    patient_id [name: 'idx_queue_patient']
+  }
+}
+
+Ref: queue_entries.ticket_id > visit_tickets.id

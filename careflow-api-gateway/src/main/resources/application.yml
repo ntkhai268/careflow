@@ -8,15 +8,24 @@ spring:
     max-in-memory-size: 20MB
   cloud:
     gateway:
-      httpclient:
-        connect-timeout: 3000
-        response-timeout: 5s
       globalcors:
+        add-to-simple-url-handler-mapping: true
         cors-configurations:
           '[/**]':
-            allowedOrigins: "*"
-            allowedMethods: "*"
+            allowedOrigins:
+              - "http://localhost:3000"
+              - "http://127.0.0.1:3000"
+              - "https://careflow-demo.online"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
             allowedHeaders: "*"
+      httpclient:
+        connect-timeout: 5000
+        response-timeout: 30s
       discovery:
         locator:
           enabled: true
@@ -66,6 +75,10 @@ spring:
           uri: lb://ai-service
           predicates:
             - Path=/api/ai/**
+        - id: hospital-directory-service
+          uri: lb://hospital-directory-service
+          predicates:
+            - Path=/api/directory/**
 
 eureka:
   client:
@@ -81,5 +94,5 @@ management:
         include: health,info,gateway
 
 jwt:
-  secret: ${JWT_SECRET}
+  secret: ${JWT_SECRET:careflow_super_secret_jwt_key_2026_very_long_secret_key_minimum_256_bits}
   issuer: careflow-identity

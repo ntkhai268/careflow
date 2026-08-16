@@ -1,0 +1,66 @@
+// CareFlow - Patient Service Database Design (DBML)
+// Schema: careflow_patient
+
+Project CareFlow_Patient_Service {
+  database_type: 'PostgreSQL'
+  note: 'Database Schema cho dịch vụ Quản lý Hồ sơ Bệnh nhân (CareFlow Patient Service)'
+}
+
+Enum Gender {
+  MALE [note: 'Nam']
+  FEMALE [note: 'Nữ']
+  OTHER [note: 'Khác']
+}
+
+Table patients {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  user_id uuid [not null, note: 'Khóa ngoại tham chiếu tài khoản User (Identity Service); một tài khoản có thể quản lý nhiều hồ sơ']
+  full_name varchar(100) [not null, note: 'Họ và tên bệnh nhân']
+  date_of_birth date [note: 'Ngày tháng năm sinh']
+  gender Gender [note: 'Giới tính (MALE, FEMALE, OTHER)']
+  phone varchar(15) [note: 'Số điện thoại liên lạc']
+  id_card_number varchar(20) [note: 'Số CMND / CCCD; có thể được khai báo lại trên tài khoản khác']
+  insurance_number varchar(20) [note: 'Số thẻ BHYT']
+  occupation varchar(100) [note: 'Nghề nghiệp']
+  address varchar(500) [note: 'Địa chỉ thường trú']
+  avatar_url varchar(255) [note: 'URL ảnh đại diện']
+
+  // Tiền sử & Dị ứng (Clinical Background)
+  allergy_notes varchar(500) [note: 'Ghi chú dị ứng thuốc / thực phẩm (ví dụ: Dị ứng Penicillin, Aspirin)']
+  medical_history varchar(1000) [note: 'Tiền sử bệnh mạn tính / bệnh nền (ví dụ: Tăng huyết áp, Đái tháo đường týp 2)']
+
+  // Audit
+  created_at timestamptz [not null, note: 'Thời điểm tạo bản ghi']
+  updated_at timestamptz [not null, note: 'Thời điểm cập nhật gần nhất']
+
+  indexes {
+    user_id [name: 'idx_patient_user_id', note: 'Index tra cứu bệnh nhân theo userId']
+    id_card_number [name: 'idx_patient_id_card', note: 'Index tra cứu theo CMND/CCCD']
+    (user_id, id_card_number) [name: 'uk_patient_user_id_card_number', unique, note: 'Chỉ ngăn trùng CCCD trong cùng một tài khoản']
+  }
+}
+
+Enum AllergySeverity {
+  CRITICAL [note: 'Nguy hiểm cao: Sốc phản vệ, dị ứng nặng (Bắt buộc chặn kê đơn)']
+  WARNING [note: 'Cần lưu ý: Dị ứng nhẹ, tương tác nhẹ (Hiển thị cảnh báo inline)']
+  INFO [note: 'Thông tin: Tiền sử bệnh, ghi chú nền (Hiển thị dạng tham khảo)']
+}
+
+Table patient_allergies {
+  id uuid [pk, note: 'Khóa chính UUID']
+  patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bảng patients']
+  allergy_name varchar(100) [not null, note: 'Tên chất/thuốc dị ứng (ví dụ: Penicillin, Phấn hoa)']
+  allergy_group varchar(100) [note: 'Nhóm chất dị ứng (ví dụ: Beta-lactam, Food, Environment)']
+  severity AllergySeverity [not null, note: 'Mức độ nghiêm trọng (CRITICAL, WARNING, INFO)']
+  reaction varchar(255) [note: 'Biểu hiện/Phản ứng (ví dụ: Nổi mề đai, sốc phản vệ)']
+  confirmed_by varchar(100) [note: 'Tên bác sĩ hoặc nguồn xác nhận']
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  indexes {
+    patient_id [name: 'idx_patient_allergies_patient', note: 'Index tra cứu dị ứng theo bệnh nhân']
+  }
+}
+
+Ref: patient_allergies.patient_id > patients.id
+

@@ -73,6 +73,12 @@ _StatusPresentation _presentationFor(JourneyStatus status) => switch (status) {
     'Đang khám bệnh',
     'Bác sĩ đang khám cho bạn.',
   ),
+  JourneyStatus.completed => const _StatusPresentation(
+    Icons.check_circle_rounded,
+    AppColors.success,
+    'Lượt khám đã hoàn tất',
+    'Bạn có thể xem chẩn đoán, kết quả xét nghiệm và đơn thuốc.',
+  ),
   _ => const _StatusPresentation(
     Icons.info_outline_rounded,
     AppColors.info,

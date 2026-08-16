@@ -25,7 +25,8 @@ class InvalidJourneyTransition implements Exception {
   final JourneyEvent event;
 
   @override
-  String toString() => 'Không thể chuyển từ ${status.name} bằng ${event.name}.';
+  String toString() =>
+      'Không thể chuyển bước vì trạng thái lượt khám hiện tại chưa phù hợp.';
 }
 
 class JourneyTransition {

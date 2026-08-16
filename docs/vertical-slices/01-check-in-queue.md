@@ -66,6 +66,19 @@ Server lấy bệnh nhân từ JWT, suy ra phòng từ token/Appointment và ch�
 cấu hình. Lượt ưu tiên chỉ được staff xác nhận bằng `queueClass=PRIORITY` và bắt
 buộc có `priorityReasonCode`; bệnh nhân không tự khai ưu tiên. Người không có
 Mobile được staff hỗ trợ bằng mã phiếu tại quầy.
+Nếu bệnh nhân không thể xuất trình QR, staff có thể nhập tay mã phiếu khám:
+
+```json
+{
+  "ticketCode": "PK-2026-00125",
+  "roomId": "ROOM-21"
+}
+```
+
+Mã phiếu chỉ được tra trong đúng phòng và ngày hiện tại.
+
+Lượt ưu tiên chỉ được staff xác nhận bằng `queueClass=PRIORITY` và bắt buộc có
+`priorityReasonCode`. Bệnh nhân không có API tự khai ưu tiên hoặc tự check-in.
 
 ## Chạy local
 

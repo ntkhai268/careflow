@@ -19,6 +19,7 @@ class Appointment {
   final String statusDisplayName;
   final String? reason;
   final String? notes;
+  final String? sourceConsultationId;
   final String? queueNumber;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -39,6 +40,7 @@ class Appointment {
     required this.statusDisplayName,
     this.reason,
     this.notes,
+    this.sourceConsultationId,
     this.queueNumber,
     this.createdAt,
     this.updatedAt,
@@ -47,7 +49,8 @@ class Appointment {
   bool get allowsActiveJourney =>
       status == 'CONFIRMED' ||
       status == 'CHECKED_IN' ||
-      status == 'IN_PROGRESS';
+      status == 'IN_PROGRESS' ||
+      status == 'COMPLETED';
 
   factory Appointment.fromJson(Map<String, dynamic> json) {
     return Appointment(
@@ -66,6 +69,7 @@ class Appointment {
       statusDisplayName: json['statusDisplayName'] as String? ?? '',
       reason: json['reason'] as String?,
       notes: json['notes'] as String?,
+      sourceConsultationId: json['sourceConsultationId'] as String?,
       queueNumber: json['queueNumber'] as String?,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -164,6 +168,38 @@ class Appointment {
       default:
         return Icons.medical_services_rounded;
     }
+  }
+}
+
+/// Availability returned by Appointment Service for a bookable time slot.
+class AppointmentTimeSlot {
+  final String timeSlot;
+  final int bookedCount;
+  final int capacity;
+  final int remaining;
+  final bool available;
+  final String? unavailableReason;
+
+  const AppointmentTimeSlot({
+    required this.timeSlot,
+    required this.bookedCount,
+    required this.capacity,
+    required this.remaining,
+    required this.available,
+    this.unavailableReason,
+  });
+
+  bool get isFull => unavailableReason == 'FULL' || remaining <= 0;
+
+  factory AppointmentTimeSlot.fromJson(Map<String, dynamic> json) {
+    return AppointmentTimeSlot(
+      timeSlot: json['timeSlot'] as String,
+      bookedCount: (json['bookedCount'] as num?)?.toInt() ?? 0,
+      capacity: (json['capacity'] as num?)?.toInt() ?? 0,
+      remaining: (json['remaining'] as num?)?.toInt() ?? 0,
+      available: json['available'] as bool? ?? false,
+      unavailableReason: json['unavailableReason'] as String?,
+    );
   }
 }
 

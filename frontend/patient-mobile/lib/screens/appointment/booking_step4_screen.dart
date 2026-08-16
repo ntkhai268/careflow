@@ -5,8 +5,11 @@ import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
+import '../../models/appointment_payment.dart';
+import '../../models/appointment_service_option.dart';
 import '../../models/patient.dart';
 import '../../services/appointment_service.dart';
+import '../../services/appointment_payment_store.dart';
 
 /// Booking Step 4: Confirm and submit
 class BookingStep4Screen extends ConsumerStatefulWidget {
@@ -29,6 +32,7 @@ class BookingStep4Screen extends ConsumerStatefulWidget {
 
 class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
   final _reasonController = TextEditingController();
+  final _service = AppointmentServiceOption.generalConsultation;
   bool _isSubmitting = false;
 
   @override
@@ -55,6 +59,23 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
             : null,
       });
 
+      final receipt = AppointmentPaymentReceipt(
+        appointmentId: appointment.id,
+        serviceCode: _service.code,
+        serviceName: _service.name,
+        amount: _service.price,
+        method: AppointmentPaymentMethod.onlineMock,
+        status: AppointmentPaymentStatus.paid,
+        createdAt: DateTime.now().toUtc(),
+      );
+      var receiptSaved = true;
+      try {
+        await ref.read(appointmentPaymentStoreProvider).save(receipt);
+      } catch (_) {
+        // A local receipt failure must not roll back a successful appointment.
+        receiptSaved = false;
+      }
+
       if (appointment.allowsActiveJourney) {
         try {
           await ref
@@ -70,7 +91,11 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
       }
 
       if (mounted) {
-        _showSuccessDialog(appointment);
+        _showSuccessDialog(
+          appointment,
+          receipt: receipt,
+          receiptSaved: receiptSaved,
+        );
       }
     } catch (e) {
       if (mounted) {
@@ -85,7 +110,11 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
     }
   }
 
-  void _showSuccessDialog(Appointment appointment) {
+  void _showSuccessDialog(
+    Appointment appointment, {
+    required AppointmentPaymentReceipt receipt,
+    required bool receiptSaved,
+  }) {
     final canOpenJourney = appointment.allowsActiveJourney;
     showDialog(
       context: context,
@@ -129,6 +158,12 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                 textAlign: TextAlign.center,
                 style: Theme.of(ctx).textTheme.bodyMedium,
               ),
+              const SizedBox(height: AppSpacing.md),
+              _buildPaymentReceiptSummary(
+                ctx,
+                receipt: receipt,
+                receiptSaved: receiptSaved,
+              ),
               const SizedBox(height: AppSpacing.xl),
               SizedBox(
                 width: double.infinity,
@@ -136,7 +171,11 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                   onPressed: () {
                     Navigator.of(ctx).pop();
                     if (canOpenJourney) {
-                      context.go('/journey/${appointment.id}/ticket');
+                      // Keep the booking result in the appointment flow. The
+                      // ticket route is nested under JourneyHubScreen, so
+                      // navigating there makes the system Back button reveal
+                      // the Journey screen again.
+                      context.go('/appointment/${appointment.id}');
                     }
                   },
                   child: Text(canOpenJourney ? 'Xem phiếu khám' : 'Hoàn tất'),
@@ -145,6 +184,47 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildPaymentReceiptSummary(
+    BuildContext context, {
+    required AppointmentPaymentReceipt receipt,
+    required bool receiptSaved,
+  }) {
+    final color = receipt.isPaid ? AppColors.success : AppColors.warning;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.md),
+      decoration: BoxDecoration(
+        color: receipt.isPaid ? AppColors.successLight : AppColors.warningLight,
+        borderRadius: BorderRadius.circular(AppRadius.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            receipt.serviceName,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 4),
+          Text(_formatCurrency(receipt.amount)),
+          const SizedBox(height: 4),
+          Text(
+            '${receipt.status.displayName} • ${receipt.method.displayName}',
+            style: TextStyle(color: color, fontWeight: FontWeight.w600),
+          ),
+          if (!receiptSaved) ...[
+            const SizedBox(height: 6),
+            const Text(
+              'Lịch đã tạo nhưng chưa lưu được biên lai trên thiết bị.',
+              style: TextStyle(color: AppColors.error, fontSize: 12),
+            ),
+          ],
+        ],
       ),
     );
   }
@@ -236,6 +316,8 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
+                  _buildPaymentSection(),
+                  const SizedBox(height: AppSpacing.lg),
                   // Note
                   Container(
                     padding: const EdgeInsets.all(AppSpacing.md),
@@ -268,6 +350,57 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
             ),
           ),
           _buildBottomBar(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaymentSection() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(AppSpacing.lg),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(AppRadius.lg),
+        boxShadow: AppShadows.card,
+        border: Border.all(color: AppColors.cardBorder, width: 0.5),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Thanh toán phí khám',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Row(
+            children: [
+              Expanded(child: Text(_service.name)),
+              Text(
+                _formatCurrency(_service.price),
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ],
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          Text(
+            _service.description,
+            style: TextStyle(
+              color: AppColors.textSecondary,
+              fontSize: 12,
+              height: 1.35,
+            ),
+          ),
+          const SizedBox(height: AppSpacing.sm),
+          const ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: Icon(Icons.account_balance_wallet_rounded),
+            title: Text('Thanh toán trực tuyến'),
+            subtitle: Text('Mô phỏng thành công trước khi nhận phiếu khám'),
+            trailing: Icon(Icons.check_circle_rounded),
+          ),
         ],
       ),
     );
@@ -424,5 +557,10 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
         ),
       ),
     );
+  }
+
+  String _formatCurrency(int amount) {
+    final formatted = NumberFormat('#,###', 'vi_VN').format(amount);
+    return '$formatted ₫';
   }
 }

@@ -20,48 +20,79 @@ class VisitTicketScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     if (ref.watch(realQueueEnabledProvider)) {
       final ticket = ref.watch(queueTicketProvider(appointmentId));
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Phiếu khám'),
-          actions: [
-            IconButton(
-              tooltip: 'Tải lại',
-              onPressed: () =>
-                  ref.invalidate(queueTicketProvider(appointmentId)),
-              icon: const Icon(Icons.refresh_rounded),
+      return _backToAppointmentsOnSystemBack(
+        context,
+        Scaffold(
+          appBar: AppBar(
+            title: const Text('Phiếu khám'),
+            leading: IconButton(
+              tooltip: 'Quay lại lịch khám',
+              onPressed: () => _goToAppointments(context),
+              icon: const Icon(Icons.arrow_back_rounded),
             ),
-          ],
-        ),
-        body: ticket.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => _JourneyMessage(
-            icon: Icons.cloud_off_rounded,
-            message: error is QueueServiceException
-                ? error.message
-                : 'Không thể tải phiếu khám.',
+            actions: [
+              IconButton(
+                tooltip: 'Tải lại',
+                onPressed: () =>
+                    ref.invalidate(queueTicketProvider(appointmentId)),
+                icon: const Icon(Icons.refresh_rounded),
+              ),
+            ],
           ),
-          data: (value) => _RealTicketBody(ticket: value),
+          body: ticket.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => _JourneyMessage(
+              icon: Icons.cloud_off_rounded,
+              message: error is QueueServiceException
+                  ? error.message
+                  : 'Không thể tải phiếu khám.',
+            ),
+            data: (value) => _RealTicketBody(ticket: value),
+          ),
         ),
       );
     }
     final journey = ref.watch(journeyForAppointmentProvider(appointmentId));
-    return Scaffold(
-      appBar: AppBar(title: const Text('Phiếu khám')),
-      body: journey.when(
-        loading: () => const _JourneyMessage(
-          icon: Icons.hourglass_top_rounded,
-          message: 'Đang tải phiếu khám...',
+    return _backToAppointmentsOnSystemBack(
+      context,
+      Scaffold(
+        appBar: AppBar(
+          title: const Text('Phiếu khám'),
+          leading: IconButton(
+            tooltip: 'Quay lại lịch khám',
+            onPressed: () => _goToAppointments(context),
+            icon: const Icon(Icons.arrow_back_rounded),
+          ),
         ),
-        error: (error, _) => _JourneyMessage(
-          icon: Icons.cloud_off_rounded,
-          message: error is JourneyBackendUnavailable
-              ? 'Hành trình khám đang chờ backend triển khai.'
-              : 'Không thể tải phiếu khám.',
+        body: journey.when(
+          loading: () => const _JourneyMessage(
+            icon: Icons.hourglass_top_rounded,
+            message: 'Đang tải phiếu khám...',
+          ),
+          error: (error, _) => _JourneyMessage(
+            icon: Icons.cloud_off_rounded,
+            message: error is JourneyBackendUnavailable
+                ? 'Hành trình khám đang chờ backend triển khai.'
+                : 'Không thể tải phiếu khám.',
+          ),
+          data: (value) => _TicketBody(journey: value),
         ),
-        data: (value) => _TicketBody(journey: value),
       ),
     );
   }
+
+  void _goToAppointments(BuildContext context) {
+    context.go('/appointments');
+  }
+
+  Widget _backToAppointmentsOnSystemBack(BuildContext context, Widget child) =>
+      PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (didPop, _) {
+          if (!didPop) _goToAppointments(context);
+        },
+        child: child,
+      );
 }
 
 class _RealTicketBody extends StatelessWidget {
@@ -123,7 +154,7 @@ class _RealTicketBody extends StatelessWidget {
               ),
               _DetailRow(label: 'Khung giờ', value: ticket.timeSlot),
               _DetailRow(label: 'Số thứ tự', value: ticket.queueNumber),
-              _DetailRow(label: 'Mã phiếu', value: ticket.ticketCode),
+              _DetailRow(label: 'Mã phiếu khám', value: ticket.ticketCode),
               const SizedBox(height: AppSpacing.lg),
               Center(
                 child: Semantics(
@@ -200,6 +231,7 @@ class _TicketBody extends StatelessWidget {
                   value: ticket.expectedWindow,
                 ),
                 _DetailRow(label: 'Số thứ tự', value: ticket.queueNumber),
+                _DetailRow(label: 'Mã phiếu khám', value: ticket.code),
                 const SizedBox(height: AppSpacing.lg),
                 Center(
                   child: Semantics(

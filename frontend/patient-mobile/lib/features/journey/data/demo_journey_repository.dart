@@ -5,7 +5,7 @@ import 'journey_repository.dart';
 import 'journey_store.dart';
 
 class DemoJourneyRepository
-    implements JourneyRepository, JourneySnapshotRepository {
+    implements JourneyRepository, JourneySnapshotRepository, DemoJourneySource {
   DemoJourneyRepository({required JourneyStore store, DateTime Function()? now})
     : _store = store,
       _now = now ?? DateTime.now;

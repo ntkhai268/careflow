@@ -140,6 +140,24 @@ class QueueManagementServiceTest {
     }
 
     @Test
+    void staffCheckInActivatesTicketByManualCodeAtTheAssignedRoom() {
+        UUID staffId = UUID.randomUUID();
+        QueueEntry waiting = entry(PriorityLevel.APPOINTMENT, QueueStatus.WAITING, 7);
+        when(configs.findByRoomCodeAndActiveTrue("P101")).thenReturn(Optional.of(config));
+        when(entries.findFirstByQueueConfigIdAndQueueDateAndQueueNumber(
+                config.getId(), today, waiting.getQueueNumber())).thenReturn(Optional.of(waiting));
+
+        service.checkIn(new CheckInRequest(null, waiting.getQueueNumber(), "P101", QueueClass.NORMAL, null),
+                staffId, "trace-manual");
+
+        assertThat(waiting.getStatus()).isEqualTo(QueueStatus.CHECKED_IN);
+        assertThat(waiting.getCheckedInByUserId()).isEqualTo(staffId);
+        verify(events).append(eq(waiting), eq(config), eq("PatientCheckedIn"),
+                eq("queue.checked-in"), eq("trace-manual"), anyMap());
+        verifyNoInteractions(qrTokens);
+    }
+
+    @Test
     void patientCannotReadAnotherAccountsVisitTicket() {
         QueueEntry ticket = entry(PriorityLevel.APPOINTMENT, QueueStatus.WAITING, 8);
         ticket.setAppointmentId(UUID.randomUUID());
@@ -380,6 +398,37 @@ class QueueManagementServiceTest {
     }
 
     @Test
+    void labOrderReadyCreatesQueuedLabExecutionEntryWithoutSecondCheckIn() {
+        UUID labOrderId = UUID.randomUUID();
+        UUID consultationId = UUID.randomUUID();
+        UUID patientId = UUID.randomUUID();
+        UUID patientUserId = UUID.randomUUID();
+        Instant orderedAt = Instant.parse("2026-08-18T05:00:00Z");
+        ServicePointSequence sequence = new ServicePointSequence();
+        sequence.setLastNumber(2);
+        QueueEntry previous = entry(PriorityLevel.APPOINTMENT, QueueStatus.COMPLETED, 1);
+        previous.setPatientId(patientId);
+        previous.setUserId(patientUserId);
+        when(entries.findByLabOrderIdAndServicePointId(labOrderId, "LAB-HEMATOLOGY-01"))
+                .thenReturn(Optional.empty());
+        when(entries.findFirstByPatientIdAndUserIdIsNotNullOrderByCreatedAtDesc(patientId))
+                .thenReturn(Optional.of(previous));
+        when(servicePointSequences.findByServicePointIdAndQueueDate("LAB-HEMATOLOGY-01",
+                LocalDate.of(2026, 8, 18))).thenReturn(Optional.of(sequence));
+
+        QueueEntry lab = service.createLabExecutionEntry(
+                labOrderId, consultationId, patientId, "lab-hematology-01", orderedAt);
+
+        assertThat(lab.getQueueType()).isEqualTo(QueueType.LAB_EXECUTION);
+        assertThat(lab.getConsultationPhase()).isNull();
+        assertThat(lab.getQueueClass()).isNull();
+        assertThat(lab.getStatus()).isEqualTo(QueueStatus.QUEUED);
+        assertThat(lab.getQueueNumber()).isEqualTo("LAB-003");
+        assertThat(lab.getUserId()).isEqualTo(patientUserId);
+        assertThat(lab.getEligibleSinceAt()).isEqualTo(orderedAt);
+    }
+
+    @Test
     void servicePointCallNextUsesStrictFifo() {
         UUID staffId = UUID.randomUUID();
         QueueEntry first = pharmacyEntry(1, QueueStatus.QUEUED);
@@ -398,6 +447,23 @@ class QueueManagementServiceTest {
         assertThat(first.getStatus()).isEqualTo(QueueStatus.CALLED);
         assertThat(second.getStatus()).isEqualTo(QueueStatus.QUEUED);
         assertThat(first.getCalledByUserId()).isEqualTo(staffId);
+    }
+
+    @Test
+    void patientCurrentAllowsQueuedServicePointEntryWithoutEstimatedWait() {
+        QueueEntry lab = pharmacyEntry(1, QueueStatus.QUEUED);
+        lab.setQueueType(QueueType.LAB_EXECUTION);
+        UUID patientId = lab.getPatientId();
+        UUID userId = UUID.randomUUID();
+        lab.setUserId(userId);
+        lab.setEstimatedWaitMinutes(null);
+        when(entries.findFirstByPatientIdAndUserIdAndQueueDateAndStatusInOrderByCreatedAtDesc(
+                eq(patientId), eq(userId), eq(today), anyCollection())).thenReturn(Optional.of(lab));
+
+        var response = service.patientCurrent(patientId, userId, false);
+
+        assertThat(response.entryId()).isEqualTo(lab.getId());
+        assertThat(response.estimatedWaitMinutes()).isNull();
     }
 
     @Test

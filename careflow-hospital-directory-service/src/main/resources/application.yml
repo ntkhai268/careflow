@@ -1,0 +1,33 @@
+server:
+  port: 8090
+
+spring:
+  application:
+    name: hospital-directory-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/careflow_hospital_directory
+    username: careflow
+    password: careflow
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  threads:
+    virtual:
+      enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

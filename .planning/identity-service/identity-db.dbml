@@ -1,0 +1,77 @@
+// Database Markup Language (DBML) cho CareFlow Identity Service
+// Schema: identity
+
+Project CareFlow_Identity_Service {
+  database_type: 'PostgreSQL'
+  note: 'Database Schema cho dịch vụ Quản lý Định danh & Xác thực (CareFlow Identity Service)'
+}
+
+Enum UserRole {
+  PATIENT [note: 'Bệnh nhân']
+  DOCTOR [note: 'Bác sĩ']
+  STAFF [note: 'Nhân viên tiếp nhận / Dược']
+  LAB_TECHNICIAN [note: 'Kỹ thuật viên cận lâm sàng']
+  ADMIN [note: 'Quản trị viên']
+}
+
+Enum UserStatus {
+  ACTIVE [note: 'Đang hoạt động']
+  LOCKED [note: 'Tạm khóa (do đăng nhập thất bại nhiều lần)']
+  DISABLED [note: 'Vô hiệu hóa']
+}
+
+Table identity.users {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  username varchar(50) [not null, unique, note: 'Tên đăng nhập']
+  email varchar(255) [not null, unique, note: 'Địa chỉ Email']
+  password_hash varchar(255) [not null, note: 'Mật khẩu đã được mã hóa BCrypt']
+  role UserRole [not null, default: 'PATIENT', note: 'Vai trò trong hệ thống (PATIENT, DOCTOR, STAFF, LAB_TECHNICIAN, ADMIN)']
+  title varchar(100) [note: 'Chức danh / Học hàm (ví dụ: Bác sĩ Chuyên khoa I)']
+  status UserStatus [not null, default: 'ACTIVE', note: 'Trạng thái tài khoản (ACTIVE, LOCKED, DISABLED)']
+  failed_login_attempts int [not null, default: 0, note: 'Số lần đăng nhập sai liên tiếp']
+  locked_until timestamptz [note: 'Thời gian hết hiệu lực tạm khóa tài khoản']
+  last_login_at timestamptz [note: 'Thời gian đăng nhập gần nhất']
+  version bigint [not null, default: 0, note: 'Phiên bản Optimistic Locking']
+  created_at timestamptz [not null, note: 'Thời gian tạo tài khoản']
+  updated_at timestamptz [not null, note: 'Thời gian cập nhật gần nhất']
+
+  Indexes {
+    (username) [name: 'uk_users_username_ci', unique, note: 'Index hỗ trợ tìm kiếm Username']
+    (email) [name: 'uk_users_email_ci', unique, note: 'Index hỗ trợ tìm kiếm Email']
+    (role, status) [name: 'idx_users_role_status', note: 'Index hỗ trợ lọc người dùng theo Role và Status']
+  }
+}
+
+Table identity.refresh_tokens {
+  id uuid [pk, note: 'Khóa chính Refresh Token UUID']
+  user_id uuid [not null, ref: > identity.users.id, note: 'Khóa ngoại tham chiếu đến identity.users(id)']
+  token_hash varchar(64) [not null, unique, note: 'Mã hash SHA-256 của Refresh Token']
+  expires_at timestamptz [not null, note: 'Thời điểm Refresh Token hết hạn']
+  revoked_at timestamptz [note: 'Thời điểm bị thu hồi/vô hiệu hóa']
+  replaced_by_token_hash varchar(64) [note: 'Mã hash của token mới nếu đã xoay vòng (Token Rotation)']
+  created_at timestamptz [not null, note: 'Thời điểm cấp Refresh Token']
+
+  Indexes {
+    (user_id, revoked_at) [name: 'idx_refresh_tokens_user_active', note: 'Index tra cứu token đang active của user']
+    (expires_at) [name: 'idx_refresh_tokens_expires_at', note: 'Index phục vụ dọn dẹp token hết hạn']
+  }
+}
+
+Table identity.doctor_profiles {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  user_id uuid [not null, unique, ref: - identity.users.id, note: 'Khóa ngoại 1:1 tham chiếu tới identity.users(id)']
+  full_name varchar(200) [not null, note: 'Họ và tên bác sĩ']
+  license_number varchar(50) [unique, note: 'Số giấy phép hành nghề']
+  specialization varchar(100) [note: 'Chuyên khoa']
+  department varchar(100) [note: 'Khoa làm việc (ví dụ: NOI_TONG_QUAT, NHI)']
+  phone_number varchar(20) [note: 'Số điện thoại liên hệ']
+  bio text [note: 'Tiểu sử / Giới thiệu bác sĩ']
+  avatar_url varchar(500) [note: 'Đường dẫn ảnh đại diện']
+  years_of_experience int [note: 'Số năm kinh nghiệm']
+  created_at timestamptz [not null, note: 'Thời gian tạo hồ sơ']
+  updated_at timestamptz [not null, note: 'Thời gian cập nhật hồ sơ gần nhất']
+
+  Indexes {
+    (user_id) [name: 'idx_doctor_profiles_user_id', note: 'Index hỗ trợ tra cứu hồ sơ bác sĩ theo user_id']
+  }
+}

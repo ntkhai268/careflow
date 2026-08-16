@@ -25,6 +25,9 @@ Appointment N ─── 1 ClinicRoom
 `ClinicRoom` thuộc cấu hình lịch khám của Appointment Service. Trong MVP, mỗi
 khoa chỉ có đúng một phòng active. Đây là invariant của
 dữ liệu/cấu hình MVP, không phải ràng buộc 1:1 trong schema.
+Hospital Directory cũng phải có đúng một doctor đang active được gán vào phòng
+consultation của khoa trong MVP. Appointment Service lưu doctor user ID vào
+`appointments.doctor_id`; client không được chọn hoặc ghi đè assignment này.
 
 ### Ranh giới payment của Patient Mobile
 
@@ -73,11 +76,13 @@ MVP tự động xác nhận khi slot còn capacity; không có bước duyệt 
 | `GET /api/appointments/departments/{department}/rooms?active=true` | Clinical staff/Admin | Danh sách phòng thuộc khoa |
 | `GET /api/appointments/clinical-context/me?date=&session=` | `DOCTOR` | Lấy khoa và các phòng bác sĩ được phân công từ trusted user ID |
 | `GET /api/appointments/time-slots?department=&date=` | Authenticated | Slot và capacity còn lại |
-| `POST /api/appointments` | `PATIENT` chính chủ hoặc `STAFF` | Đặt lịch, tự xác nhận |
-| `GET /api/appointments/{appointmentId}` | Chính chủ/assigned staff/doctor | Chi tiết |
-| `GET /api/appointments/patient/{patientId}` | Chính chủ/clinical staff | Lịch của bệnh nhân |
-| `GET /api/appointments/department/{department}?date=` | `DOCTOR`, `STAFF`, `ADMIN` | Lịch dự kiến |
-| `PUT /api/appointments/{appointmentId}/cancel` | Chính chủ hoặc `STAFF` | Hủy lịch |
+| `POST /api/appointments` | `PATIENT` chính chủ hoặc `ADMIN` | Đặt lịch, tự xác nhận |
+| `GET /api/appointments/{appointmentId}` | Chính chủ, assigned doctor hoặc `ADMIN` | Chi tiết |
+| `GET /api/appointments/patient/{patientId}` | Chính chủ, assigned doctor hoặc `ADMIN` | Lịch của bệnh nhân |
+| `GET /api/appointments/access/patient/{patientId}` | Internal trusted service call | Kiểm tra assignment doctor hoặc appointment/room scope của staff |
+| `GET /api/appointments/department/{department}?date=` | `DOCTOR` được phân công hoặc `ADMIN` | Lịch dự kiến; bác sĩ chỉ thấy appointment gắn với user ID của mình |
+| `PUT /api/appointments/{appointmentId}/status` | Assigned doctor hoặc `ADMIN` | Cập nhật trạng thái lâm sàng |
+| `PUT /api/appointments/{appointmentId}/cancel` | Chính chủ, assigned doctor hoặc `ADMIN` | Hủy lịch |
 | `POST /api/appointments/follow-ups` | `DOCTOR` | Hẹn tái khám từ consultation |
 
 Create request giữ tương thích API hiện tại:
@@ -99,6 +104,7 @@ theo `department`:
 1. Không có phòng: trả lỗi cấu hình, không tạo Appointment.
 2. Có đúng một phòng: lưu `roomId` vào Appointment và tiếp tục giữ capacity.
 3. Có nhiều phòng: MVP trả lỗi cấu hình, không dùng `findFirst()` hoặc random.
+4. Không có hoặc có nhiều doctor active gán vào phòng: trả lỗi cấu hình, không tự chọn doctor.
 
 Phiên bản mở rộng sẽ thay bước 3 bằng `RoomAssignmentPolicy`; request, schema
 Appointment, event và Queue API không cần đổi.
@@ -151,6 +157,8 @@ Follow-up request:
 - Hết capacity trả `409`, không âm thầm chuyển slot.
 - Không có hoặc có nhiều hơn một phòng active của khoa trong MVP trả
   `409 ROOM_CONFIGURATION_INVALID`; không phân phòng ngẫu nhiên.
+- Không có hoặc có nhiều hơn một doctor active trong phòng consultation trả
+  `409 DOCTOR_CONFIGURATION_INVALID`; không phân doctor ngẫu nhiên.
 - Nếu ngày là hôm nay, `timeSlot` phải có giờ bắt đầu lớn hơn thời điểm server
   nhận request. Ca đã bắt đầu hoặc đã qua trả `400` với thông báo tiếng Việt.
 
@@ -197,6 +205,8 @@ Exchange: `appointment.exchange`.
 
 `roomId` là phòng đã được Appointment Service xác định và lưu trong Appointment,
 không phải giá trị do Queue Service hoặc client tự sinh.
+`doctorId` là `userId` của doctor trong Hospital Directory, dùng làm assignment
+authority cho các service lâm sàng; không phải ID kỹ thuật của `DoctorProfile`.
 `userId` là owner đã được xác thực khi tạo Appointment; Queue và Notification
 dùng field này làm recipient, không nhận giá trị tùy ý từ Mobile.
 

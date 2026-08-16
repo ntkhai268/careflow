@@ -11,6 +11,7 @@ import '../screens/profile/edit_profile_screen.dart';
 import '../screens/health_record/health_record_list_screen.dart';
 import '../screens/health_record/health_record_form_screen.dart';
 import '../screens/health_record/health_record_detail_screen.dart';
+import '../screens/health_record/other_patient_health_screen.dart';
 import '../screens/appointment/booking_step1_screen.dart';
 import '../screens/appointment/booking_step2_screen.dart';
 import '../screens/appointment/booking_step3_screen.dart';
@@ -23,7 +24,9 @@ import '../features/journey/presentation/journey_timeline_screen.dart';
 import '../features/journey/presentation/laboratory_screen.dart';
 import '../features/journey/presentation/result_review_screen.dart';
 import '../features/journey/presentation/visit_outcome_screen.dart';
+import '../features/journey/presentation/visit_results_screen.dart';
 import '../features/journey/presentation/visit_ticket_screen.dart';
+import '../features/journey/domain/journey_models.dart';
 import '../models/patient.dart';
 import '../models/appointment.dart';
 
@@ -43,6 +46,14 @@ final GoRouter appRouter = GoRouter(
       builder: (context, state) => const RegisterScreen(),
     ),
     GoRoute(path: '/', builder: (context, state) => const MainShell()),
+    GoRoute(
+      path: '/appointments',
+      builder: (context, state) => const MainShell(initialIndex: 1),
+    ),
+    GoRoute(
+      path: '/visit-results',
+      builder: (context, state) => const VisitResultsScreen(),
+    ),
     // Profile routes
     GoRoute(
       path: '/profile/create',
@@ -71,6 +82,15 @@ final GoRouter appRouter = GoRouter(
           patientName: extra['patientName']?.toString() ?? '',
           patientGender: extra['patientGender']?.toString() ?? '',
           patientBirthYear: birthYear,
+        );
+      },
+    ),
+    GoRoute(
+      path: '/health-records/patients',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>? ?? {};
+        return OtherPatientHealthScreen(
+          excludePatientId: extra['excludePatientId']?.toString(),
         );
       },
     ),
@@ -174,6 +194,9 @@ final GoRouter appRouter = GoRouter(
           path: 'outcome',
           builder: (context, state) => VisitOutcomeScreen(
             appointmentId: state.pathParameters['appointmentId']!,
+            initialJourney: state.extra is PatientJourney
+                ? state.extra as PatientJourney
+                : null,
           ),
         ),
         GoRoute(

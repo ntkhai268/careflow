@@ -1,12 +1,16 @@
 package com.careflow.queue.service;
 
 import com.careflow.common.constants.AppConstants;
+import com.careflow.common.dto.ApiResponse;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.common.exception.ResourceNotFoundException;
 import com.careflow.queue.domain.*;
 import com.careflow.queue.dto.*;
+import com.careflow.queue.client.DirectoryClient;
+import com.careflow.queue.client.dto.DoctorAssignmentResponse;
 import com.careflow.queue.repository.*;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,12 +44,24 @@ public class QueueManagementService {
     private final QueueEventService events;
     private final QrTokenService qrTokens;
     private final ZoneId businessZone;
+    private final DirectoryClient directoryClient;
 
     public QueueManagementService(QueueConfigRepository configs, QueueNumberSequenceRepository sequences,
                                   ServicePointSequenceRepository servicePointSequences,
                                   QueueEntryRepository entries, IdempotencyRecordRepository idempotencyRecords,
                                   QueueEventService events, QrTokenService qrTokens,
                                   @Value("${queue.business-zone:Asia/Ho_Chi_Minh}") String businessZone) {
+        this(configs, sequences, servicePointSequences, entries, idempotencyRecords, events, qrTokens,
+                businessZone, null);
+    }
+
+    @Autowired
+    public QueueManagementService(QueueConfigRepository configs, QueueNumberSequenceRepository sequences,
+                                  ServicePointSequenceRepository servicePointSequences,
+                                  QueueEntryRepository entries, IdempotencyRecordRepository idempotencyRecords,
+                                  QueueEventService events, QrTokenService qrTokens,
+                                  @Value("${queue.business-zone:Asia/Ho_Chi_Minh}") String businessZone,
+                                  DirectoryClient directoryClient) {
         this.configs = configs;
         this.sequences = sequences;
         this.servicePointSequences = servicePointSequences;
@@ -54,6 +70,7 @@ public class QueueManagementService {
         this.events = events;
         this.qrTokens = qrTokens;
         this.businessZone = ZoneId.of(businessZone);
+        this.directoryClient = directoryClient;
     }
 
     public LocalDate businessDate() {
@@ -168,6 +185,13 @@ public class QueueManagementService {
 
     @Transactional
     public QueueEntryResponse checkIn(CheckInRequest request, UUID staffUserId, String correlationId) {
+        if ((request.qrToken() == null || request.qrToken().isBlank())
+                && (request.ticketCode() == null || request.ticketCode().isBlank())) {
+            throw new BusinessException(400, "Vui l\u00f2ng cung c\u1ea5p m\u00e3 QR ho\u1eb7c m\u00e3 phi\u1ebfu kh\u00e1m");
+        }
+        if (request.ticketCode() != null && !request.ticketCode().isBlank()) {
+            return checkInByTicketCode(request, staffUserId, correlationId);
+        }
         QrTokenService.QrClaims claims = qrTokens.verify(request.qrToken());
         if (!claims.queueDate().equals(businessDate())) throw new BusinessException(422, "QR không thuộc ngày hiện tại");
         QueueEntry entry = entries.findFirstByAppointmentId(claims.appointmentId())
@@ -179,9 +203,20 @@ public class QueueManagementService {
         if (!config.getRoomCode().equals(request.roomId())) {
             throw new BusinessException(409, "QR không thuộc phòng tiếp nhận này");
         }
+        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId);
+    }
+
+    private QueueEntryResponse activateCheckedInEntry(QueueEntry entry, QueueConfig config,
+                                                       CheckInRequest request, UUID staffUserId,
+                                                       String correlationId) {
         if (entry.getStatus() == QueueStatus.CHECKED_IN) return response(entry, config);
-        if (entry.getStatus() == QueueStatus.CANCELLED) throw new BusinessException(409, "Lịch hẹn đã bị hủy");
-        if (entry.getStatus() != QueueStatus.WAITING) throw new BusinessException(409, "Trạng thái lượt khám không cho phép check-in");
+        if (entry.getStatus() == QueueStatus.CANCELLED) {
+            throw new BusinessException(409, "Lịch hẹn đã bị hủy");
+        }
+        if (entry.getStatus() != QueueStatus.WAITING) {
+            throw new BusinessException(409, "Trạng thái lượt khám không cho phép check-in");
+        }
+
         Instant now = Instant.now();
         entry.setStatus(QueueStatus.CHECKED_IN);
         entry.setCheckedInAt(now);
@@ -208,9 +243,25 @@ public class QueueManagementService {
         return response(entry, config);
     }
 
+    private QueueEntryResponse checkInByTicketCode(CheckInRequest request, UUID staffUserId,
+                                                    String correlationId) {
+        QueueConfig config = requireRoomConfig(request.roomId());
+        String ticketCode = request.ticketCode().trim();
+        QueueEntry entry = entries.findFirstByQueueConfigIdAndQueueDateAndQueueNumber(
+                        config.getId(), businessDate(), ticketCode)
+                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "ticketCode", ticketCode));
+
+        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId);
+    }
+
     @Transactional(readOnly = true)
     public QueueDashboardResponse roomDashboard(String roomId) {
         return dashboard(requireRoomConfig(roomId).getDepartmentId());
+    }
+
+    public QueueDashboardResponse roomDashboard(String roomId, UUID requesterUserId, String role) {
+        requireRoomAccess(roomId, requesterUserId, role);
+        return roomDashboard(roomId);
     }
 
     @Transactional(readOnly = true)
@@ -233,6 +284,13 @@ public class QueueManagementService {
             response.add(item);
         }
         return new ServicePointQueueResponse(normalized, date, response, recommended);
+    }
+
+    @Transactional(readOnly = true)
+    public ServicePointQueueResponse servicePointDashboard(String servicePointId, LocalDate requestedDate,
+                                                           UUID requesterUserId, String role) {
+        requireServicePointAccess(servicePointId, requesterUserId, role);
+        return servicePointDashboard(servicePointId, requestedDate);
     }
 
     @Transactional
@@ -275,10 +333,74 @@ public class QueueManagementService {
     }
 
     @Transactional
+    public Optional<QueueEntryResponse> callNextAtServicePoint(
+            String servicePointId, UUID calledByUserId, String role,
+            String idempotencyKey, String correlationId) {
+        requireServicePointAccess(servicePointId, calledByUserId, role);
+        return callNextAtServicePoint(servicePointId, calledByUserId, idempotencyKey, correlationId);
+    }
+
+    @Transactional
     public Optional<QueueEntryResponse> callNextInRoom(
             String roomId, UUID calledByUserId, String idempotencyKey, String correlationId) {
         return callNext(requireRoomConfig(roomId).getDepartmentId(), calledByUserId,
                 idempotencyKey, correlationId);
+    }
+
+    public Optional<QueueEntryResponse> callNextInRoom(
+            String roomId, UUID calledByUserId, String role, String idempotencyKey, String correlationId) {
+        requireRoomAccess(roomId, calledByUserId, role);
+        return callNextInRoom(roomId, calledByUserId, idempotencyKey, correlationId);
+    }
+
+    private void requireRoomAccess(String roomId, UUID userId, String role) {
+        if (AppConstants.ROLE_ADMIN.equalsIgnoreCase(role)) {
+            return;
+        }
+        if (directoryClient == null) {
+            return;
+        }
+        boolean allowed = false;
+        try {
+            if (AppConstants.ROLE_DOCTOR.equalsIgnoreCase(role)) {
+                ApiResponse<DoctorAssignmentResponse> response = directoryClient.getDoctorByUserId(userId);
+                DoctorAssignmentResponse doctor = response == null ? null : response.getData();
+                allowed = doctor != null && Boolean.TRUE.equals(doctor.getIsActive())
+                        && roomId.equals(doctor.getAssignedRoomId());
+            } else if (AppConstants.ROLE_STAFF.equalsIgnoreCase(role)) {
+                ApiResponse<Boolean> response = directoryClient.hasStaffRoomAccess(userId, roomId);
+                allowed = response != null && Boolean.TRUE.equals(response.getData());
+            }
+        } catch (RuntimeException ex) {
+            throw new BusinessException(403, "Không thể xác minh assignment của actor với phòng");
+        }
+        if (!allowed) {
+            throw new BusinessException(403, "Actor chưa được phân công vào phòng này");
+        }
+    }
+
+    private void requireServicePointAccess(String servicePointId, UUID userId, String role) {
+        String normalizedServicePointId = normalizeServicePointId(servicePointId);
+        if (AppConstants.ROLE_ADMIN.equalsIgnoreCase(role)) {
+            return;
+        }
+        if (directoryClient == null) {
+            return;
+        }
+        boolean allowed = false;
+        try {
+            if (AppConstants.ROLE_STAFF.equalsIgnoreCase(role)
+                    || AppConstants.ROLE_LAB_TECHNICIAN.equalsIgnoreCase(role)) {
+                ApiResponse<Boolean> response = directoryClient.hasStaffRoomAccess(
+                        userId, normalizedServicePointId);
+                allowed = response != null && Boolean.TRUE.equals(response.getData());
+            }
+        } catch (RuntimeException ex) {
+            throw new BusinessException(403, "Không thể xác minh assignment của actor với service point");
+        }
+        if (!allowed) {
+            throw new BusinessException(403, "Actor chưa được phân công vào service point này");
+        }
     }
 
     @Transactional(readOnly = true)
@@ -404,6 +526,13 @@ public class QueueManagementService {
     }
 
     @Transactional
+    public QueueEntryResponse call(UUID entryId, UUID calledByUserId, String role,
+                                   String idempotencyKey, String correlationId) {
+        requireEntryAssignmentAccess(entryId, calledByUserId, role);
+        return call(entryId, calledByUserId, idempotencyKey, correlationId);
+    }
+
+    @Transactional
     public QueueEntryResponse recall(UUID entryId, UUID calledByUserId, String correlationId) {
         QueueEntry entry = requireEntryForUpdate(entryId);
         if (entry.getStatus() != QueueStatus.CALLED) throw invalidTransition(entry, QueueStatus.CALLED);
@@ -424,6 +553,12 @@ public class QueueManagementService {
     }
 
     @Transactional
+    public QueueEntryResponse recall(UUID entryId, UUID calledByUserId, String role, String correlationId) {
+        requireEntryAssignmentAccess(entryId, calledByUserId, role);
+        return recall(entryId, calledByUserId, correlationId);
+    }
+
+    @Transactional
     public QueueEntryResponse miss(UUID entryId, String correlationId) {
         QueueEntry entry = requireEntryForUpdate(entryId);
         if (entry.getStatus() != QueueStatus.CALLED) throw invalidTransition(entry, QueueStatus.MISSED);
@@ -439,6 +574,12 @@ public class QueueManagementService {
         events.append(entry, config, "QueueEntryMissed", AppConstants.RK_QUEUE_MISSED, correlationId,
                 Map.of("missedCount", entry.getMissedCount()));
         return response(entry, config);
+    }
+
+    @Transactional
+    public QueueEntryResponse miss(UUID entryId, UUID requesterUserId, String role, String correlationId) {
+        requireEntryAssignmentAccess(entryId, requesterUserId, role);
+        return miss(entryId, correlationId);
     }
 
     @Transactional
@@ -484,6 +625,13 @@ public class QueueManagementService {
     }
 
     @Transactional
+    public QueueEntryResponse requeue(UUID entryId, RequeueRequest request, UUID requesterUserId,
+                                      String role, String correlationId) {
+        requireEntryAssignmentAccess(entryId, requesterUserId, role);
+        return requeue(entryId, request, correlationId);
+    }
+
+    @Transactional
     public QueueEntryResponse start(UUID entryId, String correlationId) {
         QueueEntry entry = requireEntryForUpdate(entryId);
         if (entry.getStatus() != QueueStatus.CALLED) throw invalidTransition(entry, QueueStatus.IN_PROGRESS);
@@ -493,6 +641,12 @@ public class QueueManagementService {
         entries.saveAndFlush(entry);
         events.append(entry, config, "QueueEntryStarted", AppConstants.RK_QUEUE_STARTED, correlationId, Map.of());
         return response(entry, config);
+    }
+
+    @Transactional
+    public QueueEntryResponse start(UUID entryId, UUID requesterUserId, String role, String correlationId) {
+        requireEntryAssignmentAccess(entryId, requesterUserId, role);
+        return start(entryId, correlationId);
     }
 
     @Transactional
@@ -512,6 +666,30 @@ public class QueueManagementService {
         events.append(entry, config, "QueueEntryCompleted", AppConstants.RK_QUEUE_COMPLETED, correlationId,
                 Map.of("serviceMinutes", consultationMinutes(entry)));
         return response(entry, config);
+    }
+
+    @Transactional
+    public QueueEntryResponse complete(UUID entryId, UUID requesterUserId, String role, String correlationId) {
+        requireEntryAssignmentAccess(entryId, requesterUserId, role);
+        return complete(entryId, correlationId);
+    }
+
+    private void requireEntryAssignmentAccess(UUID entryId, UUID requesterUserId, String role) {
+        QueueEntry entry = entries.findById(entryId)
+                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "id", entryId));
+        if (entry.getQueueType() != QueueType.CONSULTATION) {
+            if ((entry.getQueueType() == QueueType.LAB_EXECUTION
+                    || entry.getQueueType() == QueueType.PHARMACY_DISPENSING)
+                    && entry.getServicePointId() != null) {
+                requireServicePointAccess(entry.getServicePointId(), requesterUserId, role);
+            }
+            return;
+        }
+        QueueConfig config = configFor(entry);
+        if (config == null) {
+            throw new BusinessException(403, "Lượt khám không có phòng assignment hợp lệ");
+        }
+        requireRoomAccess(config.getRoomCode(), requesterUserId, role);
     }
 
     private QueueEntry newEntry(QueueConfig config, LocalDate date, UUID patientId, UUID userId,
@@ -590,6 +768,63 @@ public class QueueManagementService {
         entry.setQueueDate(date);
         entry.setSequenceNumber(sequence.getLastNumber());
         entry.setQueueNumber("RX-" + String.format("%03d", sequence.getLastNumber()));
+        entry.setPriorityLevel(PriorityLevel.WALK_IN);
+        entry.setStatus(QueueStatus.QUEUED);
+        entry.setEligibleSinceAt(queuedAt);
+        return entry;
+    }
+
+    @Transactional(readOnly = true)
+    public QueueEntryResponse currentLabExecution(UUID labOrderId) {
+        QueueEntry entry = entries.findFirstByLabOrderIdOrderByCreatedAtDesc(labOrderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lab queue entry", "labOrderId", labOrderId));
+        return QueueEntryResponse.fromServicePoint(entry, null, null);
+    }
+
+    @Transactional(readOnly = true)
+    public QueueEntryResponse currentLabExecution(UUID labOrderId, UUID requesterUserId, String role) {
+        QueueEntry entry = entries.findFirstByLabOrderIdOrderByCreatedAtDesc(labOrderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Lab queue entry", "labOrderId", labOrderId));
+        requireServicePointAccess(entry.getServicePointId(), requesterUserId, role);
+        return currentLabExecution(labOrderId);
+    }
+
+    @Transactional
+    public QueueEntry createLabExecutionEntry(UUID labOrderId, UUID consultationId, UUID patientId,
+                                               String servicePointId, Instant queuedAt) {
+        Optional<QueueEntry> existing = entries.findByLabOrderIdAndServicePointId(
+                labOrderId, normalizeServicePointId(servicePointId));
+        if (existing.isPresent()) return existing.get();
+
+        String normalizedServicePoint = normalizeServicePointId(servicePointId);
+        LocalDate date = LocalDate.ofInstant(queuedAt, businessZone);
+        ServicePointSequence sequence = servicePointSequences
+                .findByServicePointIdAndQueueDate(normalizedServicePoint, date)
+                .orElseGet(() -> {
+                    ServicePointSequence created = new ServicePointSequence();
+                    created.setServicePointId(normalizedServicePoint);
+                    created.setQueueDate(date);
+                    return servicePointSequences.saveAndFlush(created);
+                });
+        sequence.setLastNumber(sequence.getLastNumber() + 1);
+        servicePointSequences.save(sequence);
+
+        QueueEntry entry = new QueueEntry();
+        entry.setQueueConfigId(null);
+        entry.setDepartmentId(null);
+        entry.setDepartmentCode(null);
+        entry.setLabOrderId(labOrderId);
+        entry.setConsultationId(consultationId);
+        entry.setPatientId(patientId);
+        entry.setUserId(entries.findFirstByPatientIdAndUserIdIsNotNullOrderByCreatedAtDesc(patientId)
+                .map(QueueEntry::getUserId).orElse(null));
+        entry.setQueueType(QueueType.LAB_EXECUTION);
+        entry.setConsultationPhase(null);
+        entry.setQueueClass(null);
+        entry.setServicePointId(normalizedServicePoint);
+        entry.setQueueDate(date);
+        entry.setSequenceNumber(sequence.getLastNumber());
+        entry.setQueueNumber("LAB-" + String.format("%03d", sequence.getLastNumber()));
         entry.setPriorityLevel(PriorityLevel.WALK_IN);
         entry.setStatus(QueueStatus.QUEUED);
         entry.setEligibleSinceAt(queuedAt);
@@ -694,6 +929,34 @@ public class QueueManagementService {
                 correlationId, Map.of("prescriptionId", prescriptionId, "dispensed", true));
     }
 
+    @Transactional
+    public void completePharmacyEntry(UUID prescriptionId, UUID requesterUserId, String role,
+                                      Instant dispensedAt, String correlationId) {
+        QueueEntry entry = entries.findByPrescriptionId(prescriptionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pharmacy QueueEntry", "prescriptionId", prescriptionId));
+        requireServicePointAccess(entry.getServicePointId(), requesterUserId, role);
+        completePharmacyEntry(prescriptionId, dispensedAt, correlationId);
+    }
+
+    @Transactional(readOnly = true)
+    public QueueEntryResponse currentPharmacyEntry(UUID prescriptionId) {
+        QueueEntry entry = entries.findByPrescriptionId(prescriptionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pharmacy QueueEntry", "prescriptionId", prescriptionId));
+        if (entry.getQueueType() != QueueType.PHARMACY_DISPENSING) {
+            throw new BusinessException(422, "Queue entry is not a pharmacy dispensing entry");
+        }
+        Integer position = entry.getStatus() == QueueStatus.QUEUED ? 1 : 0;
+        return QueueEntryResponse.fromServicePoint(entry, position, position == 0 ? 0 : null);
+    }
+
+    @Transactional(readOnly = true)
+    public QueueEntryResponse currentPharmacyEntry(UUID prescriptionId, UUID requesterUserId, String role) {
+        QueueEntry entry = entries.findByPrescriptionId(prescriptionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pharmacy QueueEntry", "prescriptionId", prescriptionId));
+        requireServicePointAccess(entry.getServicePointId(), requesterUserId, role);
+        return currentPharmacyEntry(prescriptionId);
+    }
+
     public QueueConfig requireLockedConfig(UUID departmentId) {
         return configs.findFirstByDepartmentIdAndActiveTrue(departmentId)
                 .orElseThrow(() -> new ResourceNotFoundException("Active QueueConfig", "departmentId", departmentId));
@@ -729,8 +992,14 @@ public class QueueManagementService {
     private QueueEntryResponse response(QueueEntry entry, QueueConfig config) {
         if (config == null) {
             Integer position = entry.getStatus() == QueueStatus.QUEUED ? servicePointPosition(entry) : 0;
+            Integer wait;
+            if (entry.getStatus() == QueueStatus.QUEUED) {
+                wait = entry.getEstimatedWaitMinutes();
+            } else {
+                wait = 0;
+            }
             return QueueEntryResponse.fromServicePoint(entry, position,
-                    entry.getStatus() == QueueStatus.QUEUED ? entry.getEstimatedWaitMinutes() : 0);
+                    wait);
         }
         Integer position = null;
         Integer wait = entry.getEstimatedWaitMinutes();

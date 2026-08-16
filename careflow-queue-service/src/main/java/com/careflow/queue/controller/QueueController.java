@@ -86,9 +86,10 @@ public class QueueController {
     @GetMapping("/rooms/{roomId}/active")
     public ApiResponse<QueueDashboardResponse> roomDashboard(
             @PathVariable String roomId,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
             @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
         requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
-        return ApiResponse.success(queueService.roomDashboard(roomId));
+        return ApiResponse.success(queueService.roomDashboard(roomId, userId, role));
     }
 
     @PostMapping("/rooms/{roomId}/call-next")
@@ -100,7 +101,7 @@ public class QueueController {
             @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
         requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
         Optional<QueueEntryResponse> result = queueService.callNextInRoom(
-                roomId, userId, idempotencyKey, correlationId);
+                roomId, userId, role, idempotencyKey, correlationId);
         return result.map(entry -> ResponseEntity.ok(ApiResponse.success("Đã gọi bệnh nhân tiếp theo", entry)))
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
@@ -115,16 +116,17 @@ public class QueueController {
         requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
                 AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
         return ApiResponse.success("Đã gọi bệnh nhân", queueService.call(
-                entryId, userId, idempotencyKey, correlationId));
+                entryId, userId, role, idempotencyKey, correlationId));
     }
 
     @GetMapping("/service-points/{servicePointId}/active")
     public ApiResponse<ServicePointQueueResponse> servicePointDashboard(
             @PathVariable String servicePointId,
             @RequestParam(required = false) LocalDate date,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
             @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
         requireAnyRole(role, AppConstants.ROLE_STAFF, AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
-        return ApiResponse.success(queueService.servicePointDashboard(servicePointId, date));
+        return ApiResponse.success(queueService.servicePointDashboard(servicePointId, date, userId, role));
     }
 
     @PostMapping("/service-points/{servicePointId}/call-next")
@@ -136,7 +138,7 @@ public class QueueController {
             @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
         requireAnyRole(role, AppConstants.ROLE_STAFF, AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
         Optional<QueueEntryResponse> result = queueService.callNextAtServicePoint(
-                servicePointId, userId, idempotencyKey, correlationId);
+                servicePointId, userId, role, idempotencyKey, correlationId);
         return result.map(entry -> ResponseEntity.ok(ApiResponse.success("Đã gọi lượt tiếp theo", entry)))
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
@@ -168,44 +170,78 @@ public class QueueController {
                                                   @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
         requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
                 AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
-        return ApiResponse.success(queueService.recall(entryId, userId, correlationId));
+        return ApiResponse.success(queueService.recall(entryId, userId, role, correlationId));
     }
 
     @PostMapping("/entries/{entryId}/miss")
     public ApiResponse<QueueEntryResponse> miss(@PathVariable UUID entryId,
+                                                @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
                                                 @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                 @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
         requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
                 AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
-        return ApiResponse.success(queueService.miss(entryId, correlationId));
+        return ApiResponse.success(queueService.miss(entryId, userId, role, correlationId));
     }
 
     @PostMapping("/entries/{entryId}/requeue")
     public ApiResponse<QueueEntryResponse> requeue(@PathVariable UUID entryId,
                                                    @RequestBody(required = false) RequeueRequest request,
+                                                   @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
                                                    @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                    @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
         requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
                 AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
-        return ApiResponse.success(queueService.requeue(entryId, request, correlationId));
+        return ApiResponse.success(queueService.requeue(entryId, request, userId, role, correlationId));
     }
 
     @PostMapping("/entries/{entryId}/start")
     public ApiResponse<QueueEntryResponse> start(@PathVariable UUID entryId,
+                                                 @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
                                                  @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                  @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
         requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
                 AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
-        return ApiResponse.success(queueService.start(entryId, correlationId));
+        return ApiResponse.success(queueService.start(entryId, userId, role, correlationId));
     }
 
     @PostMapping("/entries/{entryId}/complete")
     public ApiResponse<QueueEntryResponse> complete(@PathVariable UUID entryId,
+                                                    @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
                                                     @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                     @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
         requireAnyRole(role, AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF,
                 AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_ADMIN);
-        return ApiResponse.success(queueService.complete(entryId, correlationId));
+        return ApiResponse.success(queueService.complete(entryId, userId, role, correlationId));
+    }
+
+    @GetMapping("/prescriptions/{prescriptionId}/current")
+    public ApiResponse<QueueEntryResponse> currentPharmacyEntry(
+            @PathVariable UUID prescriptionId,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        requireAnyRole(role, AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success(queueService.currentPharmacyEntry(prescriptionId, userId, role));
+    }
+
+    @PostMapping("/prescriptions/{prescriptionId}/complete")
+    public ApiResponse<Void> completePharmacyEntry(
+            @PathVariable UUID prescriptionId,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
+            @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
+        requireAnyRole(role, AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
+        queueService.completePharmacyEntry(prescriptionId, userId, role, java.time.Instant.now(), correlationId);
+        return ApiResponse.success("Đã xác nhận phát thuốc", null);
+    }
+
+    @GetMapping("/lab-orders/{labOrderId}/current")
+    public ApiResponse<QueueEntryResponse> currentLabExecution(
+            @PathVariable UUID labOrderId,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        requireAnyRole(role, AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_STAFF,
+                AppConstants.ROLE_ADMIN);
+        return ApiResponse.success(queueService.currentLabExecution(labOrderId, userId, role));
     }
 
     @GetMapping("/configs/{departmentId}")

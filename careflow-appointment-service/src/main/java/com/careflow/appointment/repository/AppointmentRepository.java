@@ -25,6 +25,12 @@ public interface AppointmentRepository extends JpaRepository<Appointment, UUID> 
     List<Appointment> findByAppointmentDateAndStatusOrderByTimeSlot(
             LocalDate appointmentDate, AppointmentStatus status);
 
+    List<Appointment> findByRoomIdAndAppointmentDateAndStatusNot(
+            String roomId, LocalDate appointmentDate, AppointmentStatus status);
+
+    long countByRoomIdAndAppointmentDateAndTimeSlotAndStatusNot(
+            String roomId, LocalDate appointmentDate, String timeSlot, AppointmentStatus status);
+
     boolean existsByPatientIdAndAppointmentDateAndTimeSlotAndStatusNot(
             UUID patientId, LocalDate appointmentDate, String timeSlot, AppointmentStatus status);
 }

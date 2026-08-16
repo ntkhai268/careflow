@@ -107,11 +107,12 @@ phòng hoạt động cho mỗi khoa trong quá trình minh họa.
 
 ### 1.4.2. Phần mô phỏng
 
-Đề tài chỉ xét người bệnh tự chi trả. Các khoản phí và việc thanh toán được mô
-phỏng để minh họa cách hệ thống ghi nhận khoản đã trả, tổng hợp chi phí và xác
-định tình trạng thanh toán ở các thời điểm phù hợp trong hành trình. Đây không
-phải là kết nối với cổng thanh toán hoặc quy trình quyết toán thực tế của bệnh
-viện.
+Patient Mobile mô phỏng bước chọn và ghi nhận phí khám bằng fixture dịch vụ
+`GENERAL_CONSULTATION` với thanh toán bắt buộc `ONLINE_MOCK`. Ở cuối lượt,
+adapter demo tổng hợp phí khám, cận lâm sàng
+và thuốc, đối trừ khoản đã trả trước rồi trình bày `PAYMENT_DUE`, `SETTLED`,
+`REFUND_PENDING` hoặc `REFUNDED`. Phạm vi chỉ xét người bệnh tự chi trả. Các
+trạng thái này minh họa trải nghiệm nhưng không phải giao dịch production.
 
 ### 1.4.3. Phần ngoài phạm vi
 

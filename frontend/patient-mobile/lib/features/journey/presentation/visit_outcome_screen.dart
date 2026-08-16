@@ -7,13 +7,20 @@ import '../domain/journey_models.dart';
 import 'journey_date_formatter.dart';
 
 class VisitOutcomeScreen extends ConsumerWidget {
-  const VisitOutcomeScreen({super.key, required this.appointmentId});
+  const VisitOutcomeScreen({
+    super.key,
+    required this.appointmentId,
+    this.initialJourney,
+  });
 
   final String appointmentId;
+  final PatientJourney? initialJourney;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final journey = ref.watch(journeyForAppointmentProvider(appointmentId));
+    final journey = initialJourney == null
+        ? ref.watch(journeyForAppointmentProvider(appointmentId))
+        : AsyncData<PatientJourney?>(initialJourney);
     return Scaffold(
       appBar: AppBar(title: const Text('Kết quả lượt khám')),
       body: journey.when(

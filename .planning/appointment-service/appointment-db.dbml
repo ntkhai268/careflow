@@ -1,0 +1,59 @@
+// CareFlow - Appointment Service Database Design (DBML)
+// Schema: careflow_appointment
+
+Project CareFlow_Appointment_Service {
+  database_type: 'PostgreSQL'
+  note: 'Database Schema cho dịch vụ Đặt lịch khám & Quản lý Lịch hẹn (CareFlow Appointment Service)'
+}
+
+Enum AppointmentStatus {
+  CONFIRMED [note: 'Đã đặt & tự động xác nhận khi slot hợp lệ']
+  CANCELLED [note: 'Bệnh nhân hoặc nhân viên hủy']
+  FULFILLED [note: 'Đã hoàn tất khám (Consultation Completed)']
+  NO_SHOW [note: 'Quá giờ check-in không đến']
+}
+
+Table appointments {
+  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
+  patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bệnh nhân (Patient Service)']
+  department varchar(100) [not null, note: 'Mã khoa khám (ví dụ: NEUROLOGY, CARDIOLOGY)']
+  doctor_id uuid [note: 'Bác sĩ được chỉ định (nếu có)']
+  room_id varchar(50) [note: 'Mã phòng khám (ví dụ: ROOM-21)']
+  appointment_date date [not null, note: 'Ngày khám (YYYY-MM-DD)']
+  time_slot varchar(50) [not null, note: 'Khung giờ khám (ví dụ: 10:30-11:30)']
+  status AppointmentStatus [not null, default: 'CONFIRMED', note: 'Trạng thái lịch hẹn (CONFIRMED, CANCELLED, FULFILLED, NO_SHOW)']
+  reason text [note: 'Lý do khám bệnh']
+  parent_appointment_id uuid [note: 'Tham chiếu lịch khám trước (nếu là lịch tái khám/follow-up)']
+  
+  // Audit
+  created_at timestamptz [not null, note: 'Thời điểm tạo bản ghi']
+  updated_at timestamptz [not null, note: 'Thời điểm cập nhật']
+
+  indexes {
+    patient_id [name: 'idx_appointment_patient', note: 'Index tra cứu lịch hẹn theo bệnh nhân']
+    (department, appointment_date, time_slot) [name: 'idx_appointment_slot', note: 'Index quản lý capacity khung giờ']
+    status [name: 'idx_appointment_status', note: 'Index lọc theo trạng thái']
+  }
+}
+
+Table doctor_schedules {
+  id uuid [pk, note: 'Khóa chính UUID']
+  doctor_id uuid [not null, note: 'Bác sĩ']
+  department varchar(100) [not null, note: 'Khoa']
+  room_id varchar(50) [not null, note: 'Phòng khám gắn với bác sĩ']
+  work_date date [not null, note: 'Ngày làm việc']
+  time_slot varchar(50) [not null, note: 'Khung giờ']
+  max_capacity int [not null, default: 10, note: 'Số lượng bệnh nhân tối đa']
+  booked_count int [not null, default: 0, note: 'Số lượng đã đặt']
+  is_active boolean [not null, default: true, note: 'Trạng thái hoạt động']
+
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+
+  indexes {
+    (doctor_id, work_date) [name: 'idx_schedule_doctor_date']
+    (department, work_date, time_slot) [name: 'idx_schedule_capacity']
+  }
+}
+
+Ref: appointments.parent_appointment_id > appointments.id

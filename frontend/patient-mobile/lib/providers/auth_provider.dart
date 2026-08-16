@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/auth_service.dart';
 import '../services/push_notification_service.dart';
+import '../utils/api_error_message.dart';
 
 /// Authentication state
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
@@ -102,7 +103,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: ApiErrorMessage.from(
+          e,
+          fallback:
+              'Đăng nhập thất bại. Vui lòng kiểm tra thông tin và thử lại.',
+          unauthorized: 'Tên đăng nhập hoặc mật khẩu không đúng.',
+        ),
       );
     }
   }
@@ -131,7 +137,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(
         status: AuthStatus.error,
-        errorMessage: e.toString(),
+        errorMessage: ApiErrorMessage.from(
+          e,
+          fallback: 'Đăng ký thất bại. Vui lòng kiểm tra thông tin và thử lại.',
+        ),
       );
     }
   }
