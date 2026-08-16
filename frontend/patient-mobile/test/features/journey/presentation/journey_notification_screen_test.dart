@@ -114,7 +114,7 @@ PatientJourney notificationJourney() => PatientJourney(
     PatientNotification(
       id: 'checkin',
       title: 'Đã xác nhận check-in',
-      body: 'Nhân viên đã xác nhận bạn đến khám.',
+      body: 'Bệnh nhân đã được xác nhận trong vùng geofence.',
       createdAt: DateTime.utc(2026, 7, 30, 8),
       isRead: false,
     ),

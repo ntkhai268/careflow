@@ -35,20 +35,20 @@ void main() {
 
       _expectStatus(controller, JourneyStatus.ticketIssued);
       expect(
-        find.text('Vui lòng đưa mã QR cho nhân viên để xác nhận đến khám.'),
+        find.text('Đến bệnh viện và quét mã QR đang được hiển thị tại phòng khám.'),
         findsOneWidget,
       );
       await _openDestination(
         tester,
         label: 'Xem phiếu khám',
         path: '$hubPath/ticket',
-        instruction: 'Vui lòng đưa mã QR cho nhân viên để xác nhận đến khám.',
+        instruction: 'Khi đến bệnh viện, hãy mở chức năng quét QR để quét mã đang được hiển thị tại phòng khám. Vị trí thiết bị sẽ được kiểm tra trong lúc check-in.',
       );
 
       await _tapDemoEvent(
         tester,
         controller,
-        label: 'Mô phỏng nhân viên quét QR',
+        label: 'Mô phỏng bệnh nhân quét QR',
         status: JourneyStatus.waiting,
       );
       await _openDestination(
@@ -220,7 +220,7 @@ void main() {
       _expectStatus(controller, JourneyStatus.ticketIssued);
       expect(find.text('Phiếu khám đã sẵn sàng'), findsOneWidget);
       expect(
-        find.text('Vui lòng đưa mã QR cho nhân viên để xác nhận đến khám.'),
+        find.text('Đến bệnh viện và quét mã QR đang được hiển thị tại phòng khám.'),
         findsOneWidget,
       );
       expect(
@@ -593,6 +593,6 @@ const _expectedNotificationsNewestFirst = <(String, String)>[
   ('Đã đến lượt bạn', 'Vui lòng đến phòng khám khi được gọi.'),
   ('Sắp đến lượt khám', 'Còn 3 người phía trước. Vui lòng theo dõi hàng đợi.'),
   ('Đã vào hàng đợi khám', 'Bạn đã được thêm vào hàng đợi của phòng khám.'),
-  ('Đã xác nhận check-in', 'Nhân viên đã quét mã QR và xác nhận bạn đến khám.'),
+  ('Đã xác nhận check-in', 'Bệnh nhân đã quét QR bệnh viện và được xác nhận trong vùng geofence.'),
   ('Phiếu khám đã sẵn sàng', 'Phiếu khám điện tử của bạn đã sẵn sàng.'),
 ];

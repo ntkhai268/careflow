@@ -5,10 +5,9 @@ import 'package:careflow_patient/features/journey/presentation/visit_ticket_scre
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 void main() {
-  testWidgets('shows the issued ticket details and QR code', (tester) async {
+  testWidgets('shows the issued ticket details and hospital QR check-in action', (tester) async {
     await tester.pumpWidget(
       journeyApp(
         AsyncData(ticketJourney),
@@ -23,16 +22,7 @@ void main() {
     expect(find.text('42'), findsOneWidget);
     expect(find.text('Mã phiếu khám'), findsOneWidget);
     expect(find.text('CF-APT-1'), findsOneWidget);
-    expect(
-      find.byWidgetPredicate(
-        (widget) =>
-            widget is Semantics &&
-            widget.properties.label == 'Mã QR phiếu khám',
-      ),
-      findsOneWidget,
-    );
-    final qrCode = tester.widget<QrImageView>(find.byType(QrImageView));
-    expect(qrCode.size, 156);
+    expect(find.textContaining('Khi đến bệnh viện'), findsOneWidget);
   });
 
   testWidgets('asks ticket holders to present QR before they are queued', (
@@ -46,7 +36,7 @@ void main() {
     );
 
     expect(
-      find.text('Vui lòng đưa mã QR cho nhân viên để xác nhận đến khám.'),
+      find.text('Đến bệnh viện và quét mã QR đang được hiển thị tại phòng khám.'),
       findsOneWidget,
     );
     expect(find.textContaining('đang trong hàng đợi'), findsNothing);

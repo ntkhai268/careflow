@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { QRCodeSVG } from "qrcode.react";
 import { queueApi, QueueEntry } from "@/lib/queue-api";
 import { patientApi, PatientOperationalResponse } from "@/lib/patient-api";
+import { directoryApi, RoomItem } from "@/lib/directory-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 
 const statusLabels: Record<string, string> = {
@@ -54,6 +56,57 @@ function notifyAi(text: string) {
   }
 }
 
+function RoomPicker({
+  rooms,
+  value,
+  onChange,
+}: {
+  rooms: RoomItem[];
+  value: string;
+  onChange: (roomId: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const selected = rooms.find((room) => room.id === value);
+
+  useEffect(() => {
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!containerRef.current?.contains(event.target as Node)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen((open) => !open)}
+        className="flex h-11 w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 text-left text-[11px] text-slate-800 shadow-sm outline-none hover:bg-[#F3E8F5] focus:border-[#7B4B94] focus:ring-2 focus:ring-[#F3E8F5]"
+      >
+        <span>{selected ? `${selected.id} · ${selected.displayName}` : value}</span>
+        <span className="text-slate-400">⌄</span>
+      </button>
+      {isOpen && (
+        <div className="absolute z-20 mt-2 max-h-56 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+          {rooms.length === 0 ? (
+            <p className="px-3 py-2 text-[10px] text-slate-500">Chưa tải được phòng khám.</p>
+          ) : rooms.map((room) => (
+            <button
+              key={room.id}
+              type="button"
+              onClick={() => { onChange(room.id); setIsOpen(false); }}
+              className={`block w-full rounded-md px-3 py-2 text-left text-[11px] hover:bg-[#F3E8F5] ${room.id === value ? "bg-[#F3E8F5] font-semibold text-[#6E2582]" : "text-slate-700"}`}
+            >
+              {room.id} · {room.displayName}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function StaffCheckinPage() {
   const [qrInput, setQrInput] = useState("");
   const [roomId, setRoomId] = useState("ROOM-01");
@@ -64,6 +117,49 @@ export default function StaffCheckinPage() {
   const [patientDetails, setPatientDetails] = useState<Record<string, PatientOperationalResponse | null>>({});
   const [isLoadingQueue, setIsLoadingQueue] = useState(false);
   const [processingEntryId, setProcessingEntryId] = useState<string | null>(null);
+  const [rooms, setRooms] = useState<RoomItem[]>([]);
+  const [hospitalQr, setHospitalQr] = useState<{ qrToken: string; sessionCode: string; sessionDate: string; expiresAt: string } | null>(null);
+  const [isLoadingQr, setIsLoadingQr] = useState(false);
+  const [qrError, setQrError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadRooms = window.setTimeout(() => {
+      void directoryApi.getRooms("", "CONSULTATION")
+        .then((items) => {
+          const consultationRooms = items.filter(
+            (room) => room.roomType === "CONSULTATION" && room.isActive !== false,
+          );
+          setRooms(consultationRooms);
+          if (consultationRooms.length > 0) {
+            setRoomId((currentRoomId) => consultationRooms.some((room) => room.id === currentRoomId)
+              ? currentRoomId
+              : consultationRooms[0].id);
+          }
+        })
+        .catch(() => setRooms([]));
+    }, 0);
+    return () => window.clearTimeout(loadRooms);
+  }, []);
+
+  const fetchHospitalQr = useCallback(async () => {
+    if (!roomId) return;
+    setIsLoadingQr(true);
+    setQrError(null);
+    try {
+      const res = await queueApi.getHospitalCheckInQr(roomId);
+      setHospitalQr(res.data ?? null);
+    } catch (err: unknown) {
+      setHospitalQr(null);
+      setQrError(getErrorMessage(err, "Không thể tạo QR check-in cho phòng này."));
+    } finally {
+      setIsLoadingQr(false);
+    }
+  }, [roomId]);
+
+  useEffect(() => {
+    const loadQr = window.setTimeout(() => void fetchHospitalQr(), 0);
+    return () => window.clearTimeout(loadQr);
+  }, [fetchHospitalQr]);
 
   const fetchRoomQueue = useCallback(async () => {
     setIsLoadingQueue(true);
@@ -105,8 +201,8 @@ export default function StaffCheckinPage() {
   const handleCheckIn = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!qrInput.trim()) {
-      setError("Vui lòng nhập hoặc quét mã QR phiếu khám.");
-      notifyAi("Nhân viên vui lòng nhập hoặc quét mã QR trên phiếu khám trước khi xác nhận.");
+      setError("Vui lòng nhập mã phiếu khám khi hỗ trợ bệnh nhân.");
+      notifyAi("Nhân viên vui lòng nhập mã phiếu khám để hỗ trợ check-in tại quầy.");
       return;
     }
 
@@ -138,15 +234,7 @@ export default function StaffCheckinPage() {
   const handleCheckInEntry = async (entry: QueueEntry) => {
     setProcessingEntryId(entry.entryId);
     try {
-      let token = entry.appointmentId;
-      try {
-        const qrRes = await queueApi.getQr(entry.appointmentId);
-        if (qrRes.data?.qrToken) token = qrRes.data.qrToken;
-      } catch {
-        token = entry.appointmentId;
-      }
-
-      const res = await queueApi.checkIn({ qrToken: token, roomId });
+      const res = await queueApi.checkIn({ ticketCode: entry.queueNumber, roomId });
       if (res.data) {
         setCheckInResult(res.data);
         notifyAi(`Tiếp nhận thành công bệnh nhân. Số thứ tự ${res.data.queueNumber}.`);
@@ -195,7 +283,7 @@ export default function StaffCheckinPage() {
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7B4B94]">Quầy tiếp nhận</p>
           <h1 className="mt-1 text-xl font-bold tracking-tight text-[#2B1D30]">Check-in bệnh nhân</h1>
-          <p className="mt-1 text-[11px] text-slate-500">Quét mã trên phiếu khám để đưa bệnh nhân vào đúng hàng đợi.</p>
+          <p className="mt-1 text-[11px] text-slate-500">Hiển thị QR theo phòng/phiên để bệnh nhân tự quét và xác minh geofence.</p>
         </div>
         <div className="flex items-center gap-4 text-[10px] text-slate-500">
           <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Hệ thống sẵn sàng</span>
@@ -207,36 +295,55 @@ export default function StaffCheckinPage() {
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)]">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-[15px] font-semibold text-[#2B1D30]">Tiếp nhận lượt khám</h2>
-              <p className="mt-1 text-[10px] text-slate-500">Chọn phòng và nhập mã phiếu khám điện tử.</p>
+              <h2 className="text-[15px] font-semibold text-[#2B1D30]">QR check-in bệnh viện</h2>
+              <p className="mt-1 text-[10px] text-slate-500">Bệnh nhân dùng Patient Mobile quét mã này tại bệnh viện.</p>
             </div>
-            <span className="text-[10px] font-medium text-slate-400">Bước 1 / 1</span>
+            <button
+              type="button"
+              onClick={() => void fetchHospitalQr()}
+              className="text-[10px] font-semibold text-[#7B4B94] hover:underline"
+            >
+              Tạo mã mới
+            </button>
           </div>
 
-          <form onSubmit={handleCheckIn} className="space-y-4">
+          <div className="mb-5">
             <div>
-              <label htmlFor="room" className="mb-1.5 block text-[10px] font-semibold text-slate-700">Phòng khám</label>
-              <select
-                id="room"
-                value={roomId}
-                onChange={(e) => setRoomId(e.target.value)}
-                className="h-11 w-full rounded-md border border-slate-200 bg-slate-50 px-3 text-[11px] text-slate-800 outline-none focus:border-[#7B4B94] focus:ring-2 focus:ring-[#F3E8F5]"
-              >
-                <option value="ROOM-01">Phòng khám Nội 01</option>
-                <option value="ROOM-02">Phòng khám Nội 02</option>
-                <option value="ROOM-03">Phòng khám Nhi 01</option>
-                <option value="ROOM-04">Phòng khám Ngoại 01</option>
-              </select>
+              <label className="mb-1.5 block text-[10px] font-semibold text-slate-700">Phòng khám</label>
+              <RoomPicker rooms={rooms} value={roomId} onChange={setRoomId} />
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-dashed border-[#C7A6D1] bg-[#FCF8FD] p-4 text-center">
+            {isLoadingQr ? (
+              <div className="flex min-h-[230px] items-center justify-center"><LoadingSpinner size="md" /></div>
+            ) : hospitalQr ? (
+              <>
+                <div className="mx-auto w-fit rounded-xl bg-white p-3 shadow-sm">
+                  <QRCodeSVG value={hospitalQr.qrToken} size={210} level="M" includeMargin />
+                </div>
+                <p className="mt-3 text-[11px] font-semibold text-[#2B1D30]">{roomId} · {hospitalQr.sessionCode}</p>
+                <p className="mt-1 text-[10px] text-slate-500">Có hiệu lực đến {new Date(hospitalQr.expiresAt).toLocaleTimeString("vi-VN")}</p>
+              </>
+            ) : (
+              <p className="min-h-[230px] content-center text-[11px] text-slate-500">{qrError || "Chưa có QR check-in cho phòng này."}</p>
+            )}
+          </div>
+
+          <form onSubmit={handleCheckIn} className="mt-5 space-y-4 border-t border-slate-100 pt-5">
+            <div>
+              <h3 className="text-[12px] font-semibold text-[#2B1D30]">Hỗ trợ tại quầy</h3>
+              <p className="mt-1 text-[10px] text-slate-500">Dùng mã phiếu khám khi bệnh nhân không thể dùng Mobile.</p>
             </div>
 
             <div>
-              <label htmlFor="qr-input" className="mb-1.5 block text-[10px] font-semibold text-slate-700">Mã QR hoặc mã phiếu khám</label>
+              <label htmlFor="qr-input" className="mb-1.5 block text-[10px] font-semibold text-slate-700">Mã phiếu khám</label>
               <input
                 id="qr-input"
                 type="text"
                 value={qrInput}
                 onChange={(e) => setQrInput(e.target.value)}
-                placeholder="Quét mã hoặc nhập mã phiếu khám"
+                placeholder="Nhập mã phiếu khám"
                 autoComplete="off"
                 className="h-12 w-full rounded-md border border-slate-200 bg-white px-3 font-mono text-xs text-slate-800 outline-none placeholder:font-sans placeholder:text-slate-400 focus:border-[#7B4B94] focus:ring-2 focus:ring-[#F3E8F5]"
               />
@@ -248,7 +355,7 @@ export default function StaffCheckinPage() {
               disabled={isSubmitting}
               className="h-11 w-full rounded-md bg-[#6E2582] px-4 text-[11px] font-semibold text-white transition-colors hover:bg-[#561A66] disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {isSubmitting ? "Đang tiếp nhận..." : "Xác nhận check-in"}
+              {isSubmitting ? "Đang tiếp nhận..." : "Hỗ trợ check-in"}
             </button>
           </form>
         </div>

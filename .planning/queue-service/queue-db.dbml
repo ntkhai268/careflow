@@ -33,7 +33,7 @@ Table visit_tickets {
   department varchar(100) [not null, note: 'Mã khoa (ví dụ: NEUROLOGY)']
   room_id varchar(50) [not null, note: 'Phòng khám (ví dụ: ROOM-21)']
   time_slot varchar(50) [not null, note: 'Khung giờ dự kiến']
-  qr_token text [not null, note: 'Token QR signed opaque để check-in']
+  qr_token text [note: 'Không còn phát cho bệnh nhân; Hospital Check-in QR nằm ở phiên/phòng']
   session_date date [not null, note: 'Ngày khám']
   session_code varchar(20) [not null, note: 'Phiên khám (MORNING / AFTERNOON)']
 
@@ -63,6 +63,12 @@ Table queue_entries {
   consultation_id uuid [note: 'Tham chiếu phiên khám (nếu là RESULT_REVIEW)']
   
   called_at timestamptz [note: 'Thời điểm gọi số']
+  checked_in_by_user_id uuid [note: 'Actor xác nhận; patient user khi tự check-in']
+  check_in_method varchar(40) [note: 'PATIENT_QR_GEOFENCE hoặc STAFF_MANUAL/STAFF_QR']
+  check_in_distance_meters double [note: 'Khoảng cách tới tâm Hospital Geofence']
+  check_in_accuracy_meters double [note: 'Độ chính xác vị trí thiết bị tại thời điểm check-in']
+  check_in_latitude double [note: 'Tọa độ audit tối thiểu tại thời điểm check-in']
+  check_in_longitude double [note: 'Tọa độ audit tối thiểu tại thời điểm check-in']
   started_at timestamptz [note: 'Thời điểm bắt đầu phục vụ']
   completed_at timestamptz [note: 'Thời điểm hoàn thành']
   created_at timestamptz [not null]

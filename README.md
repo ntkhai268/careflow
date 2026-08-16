@@ -79,8 +79,8 @@ Tất cả JSON response dùng envelope:
 |---|---|---|
 | `GET` | `/api/queues/me/status` | PATIENT |
 | `POST` | `/api/queues/entries` | ADMIN |
-| `GET` | `/api/queues/appointments/{id}/qr` | PATIENT |
-| `POST` | `/api/queues/check-in` | PATIENT |
+| `GET` | `/api/queues/rooms/{roomId}/check-in-qr?session=MORNING` | STAFF, ADMIN — Hospital Web lấy QR để hiển thị |
+| `POST` | `/api/queues/check-in` | PATIENT — gửi `appointmentId`, `checkInQrToken` và vị trí thiết bị |
 | `GET` | `/api/queues/departments/{id}/dashboard` | DOCTOR, ADMIN |
 | `POST` | `/api/queues/departments/{id}/next` | DOCTOR, ADMIN |
 | `POST` | `/api/queues/entries/{id}/miss` | DOCTOR, ADMIN |

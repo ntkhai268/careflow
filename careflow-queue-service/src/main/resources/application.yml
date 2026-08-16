@@ -58,5 +58,11 @@ queue:
   business-zone: ${QUEUE_BUSINESS_ZONE:Asia/Ho_Chi_Minh}
   qr-secret: ${QR_SECRET:careflow_jwt_secret_key_for_development_and_testing_2026_must_be_at_least_256_bits!}
   qr-expiration-minutes: ${QR_EXPIRATION_MINUTES:30}
+  geofence:
+    site-id: ${HOSPITAL_GEOFENCE_SITE_ID:HOSPITAL-MAIN}
+    latitude: ${HOSPITAL_GEOFENCE_LATITUDE:10.7769}
+    longitude: ${HOSPITAL_GEOFENCE_LONGITUDE:106.7009}
+    radius-meters: ${HOSPITAL_GEOFENCE_RADIUS_METERS:150}
+    max-accuracy-meters: ${HOSPITAL_GEOFENCE_MAX_ACCURACY_METERS:50}
   outbox-poll-ms: ${OUTBOX_POLL_MS:1000}
   outbox-max-attempts: ${OUTBOX_MAX_ATTEMPTS:12}

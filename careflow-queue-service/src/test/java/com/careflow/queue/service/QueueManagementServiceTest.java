@@ -123,6 +123,45 @@ class QueueManagementServiceTest {
     }
 
     @Test
+    void patientCheckInUsesHospitalQrAndGeofence() {
+        QueueEntry waiting = entry(PriorityLevel.APPOINTMENT, QueueStatus.WAITING, 7);
+        waiting.setAppointmentId(UUID.randomUUID());
+        UUID patientUserId = waiting.getUserId();
+        when(qrTokens.verifyHospitalQr("hospital-qr")).thenReturn(
+                new QrTokenService.HospitalQrClaims("P101", "MORNING", today));
+        when(entries.findFirstByAppointmentId(waiting.getAppointmentId())).thenReturn(Optional.of(waiting));
+        when(configs.findByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
+
+        service.checkIn(new CheckInRequest(null, null, null, null, null,
+                        waiting.getAppointmentId(), "hospital-qr", 10.7769, 106.7009, 8.0),
+                patientUserId, "PATIENT", "trace-patient");
+
+        assertThat(waiting.getStatus()).isEqualTo(QueueStatus.CHECKED_IN);
+        assertThat(waiting.getCheckInMethod()).isEqualTo("PATIENT_QR_GEOFENCE");
+        assertThat(waiting.getCheckInDistanceMeters()).isZero();
+        verify(events).append(eq(waiting), eq(config), eq("PatientCheckedIn"),
+                eq("queue.checked-in"), eq("trace-patient"), anyMap());
+    }
+
+    @Test
+    void patientCheckInRejectsDeviceOutsideHospitalGeofence() {
+        QueueEntry waiting = entry(PriorityLevel.APPOINTMENT, QueueStatus.WAITING, 7);
+        waiting.setAppointmentId(UUID.randomUUID());
+        when(qrTokens.verifyHospitalQr("hospital-qr")).thenReturn(
+                new QrTokenService.HospitalQrClaims("P101", "MORNING", today));
+        when(entries.findFirstByAppointmentId(waiting.getAppointmentId())).thenReturn(Optional.of(waiting));
+        when(configs.findByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
+
+        assertThatThrownBy(() -> service.checkIn(
+                new CheckInRequest(null, null, null, null, null,
+                        waiting.getAppointmentId(), "hospital-qr", 21.0278, 105.8342, 8.0),
+                waiting.getUserId(), "PATIENT", "trace-outside"))
+                .isInstanceOf(BusinessException.class)
+                .extracting("status").isEqualTo(422);
+        verify(entries, never()).saveAndFlush(waiting);
+    }
+
+    @Test
     void staffCheckInRejectsQrAtAnotherRoom() {
         QueueEntry waiting = entry(PriorityLevel.APPOINTMENT, QueueStatus.WAITING, 7);
         waiting.setAppointmentId(UUID.randomUUID());

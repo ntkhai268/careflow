@@ -5,6 +5,7 @@ import com.careflow.queue.domain.QueueEntry;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.Instant;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
@@ -35,5 +36,19 @@ class QrTokenServiceTest {
         assertThatThrownBy(() -> service.verify("not.a.valid-token"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(401);
+    }
+
+    @Test
+    void hospitalQrRoundTripsRoomAndSessionWithoutPatientIdentity() {
+        QrTokenService service = new QrTokenService(SECRET, "Asia/Ho_Chi_Minh", 30);
+
+        QrTokenService.IssuedHospitalQr issued = service.issueHospitalQr(
+                "ROOM-01", LocalDate.now(), "MORNING");
+        QrTokenService.HospitalQrClaims claims = service.verifyHospitalQr(issued.token());
+
+        assertThat(claims.roomId()).isEqualTo("ROOM-01");
+        assertThat(claims.sessionCode()).isEqualTo("MORNING");
+        assertThat(claims.sessionDate()).isEqualTo(LocalDate.now());
+        assertThat(issued.expiresAt()).isAfter(Instant.now());
     }
 }

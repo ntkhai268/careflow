@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 import '../../../config/theme.dart';
 import '../../../models/queue.dart';
@@ -47,7 +46,18 @@ class VisitTicketScreen extends ConsumerWidget {
                   ? error.message
                   : 'Không thể tải phiếu khám.',
             ),
-            data: (value) => _RealTicketBody(ticket: value),
+            data: (value) => _RealTicketBody(
+              ticket: value,
+              onCheckIn: () async {
+                final didCheckIn = await context.push<bool>(
+                  '/journey/${value.appointmentId}/check-in',
+                );
+                if (didCheckIn == true) {
+                  ref.invalidate(queueTicketProvider(appointmentId));
+                  ref.invalidate(appointmentQueueStatusProvider(appointmentId));
+                }
+              },
+            ),
           ),
         ),
       );
@@ -96,9 +106,10 @@ class VisitTicketScreen extends ConsumerWidget {
 }
 
 class _RealTicketBody extends StatelessWidget {
-  const _RealTicketBody({required this.ticket});
+  const _RealTicketBody({required this.ticket, required this.onCheckIn});
 
   final VisitTicket ticket;
+  final VoidCallback onCheckIn;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -124,7 +135,7 @@ class _RealTicketBody extends StatelessWidget {
               const SizedBox(height: AppSpacing.sm),
               Text(
                 ticket.status == 'TICKET_ISSUED'
-                    ? 'Xuất trình QR tại phòng khám để check-in'
+                    ? 'Quét QR tại bệnh viện để check-in'
                     : 'Đã check-in tại phòng khám',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium,
@@ -155,21 +166,22 @@ class _RealTicketBody extends StatelessWidget {
               _DetailRow(label: 'Khung giờ', value: ticket.timeSlot),
               _DetailRow(label: 'Số thứ tự', value: ticket.queueNumber),
               _DetailRow(label: 'Mã phiếu khám', value: ticket.ticketCode),
-              const SizedBox(height: AppSpacing.lg),
-              Center(
-                child: Semantics(
-                  label: 'Mã QR phiếu khám',
-                  child: ExcludeSemantics(
-                    child: QrImageView(data: ticket.qrToken, size: 180),
+              if (ticket.status == 'TICKET_ISSUED') ...[
+                const SizedBox(height: AppSpacing.lg),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: onCheckIn,
+                    icon: const Icon(Icons.qr_code_scanner_rounded),
+                    label: const Text('Quét QR check-in tại bệnh viện'),
                   ),
                 ),
-              ),
-              const SizedBox(height: AppSpacing.sm),
-              const Text(
-                'Nhân viên hoặc kiosk tại đúng phòng khám sẽ quét mã này. QR không chứa thông tin bệnh án.',
-                textAlign: TextAlign.center,
-              ),
-              if (ticket.status != 'TICKET_ISSUED') ...[
+                const SizedBox(height: AppSpacing.sm),
+                const Text(
+                  'Bệnh viện sẽ hiển thị QR theo phòng và phiên khám. Bạn cần bật quyền camera và vị trí để hoàn tất check-in.',
+                  textAlign: TextAlign.center,
+                ),
+              ] else ...[
                 const SizedBox(height: AppSpacing.lg),
                 SizedBox(
                   width: double.infinity,
@@ -233,13 +245,10 @@ class _TicketBody extends StatelessWidget {
                 _DetailRow(label: 'Số thứ tự', value: ticket.queueNumber),
                 _DetailRow(label: 'Mã phiếu khám', value: ticket.code),
                 const SizedBox(height: AppSpacing.lg),
-                Center(
-                  child: Semantics(
-                    label: 'Mã QR phiếu khám',
-                    child: ExcludeSemantics(
-                      child: QrImageView(data: ticket.qrPayload, size: 156),
-                    ),
-                  ),
+                const SizedBox(height: AppSpacing.lg),
+                const Text(
+                  'Khi đến bệnh viện, hãy mở chức năng quét QR để quét mã đang được hiển thị tại phòng khám. Vị trí thiết bị sẽ được kiểm tra trong lúc check-in.',
+                  textAlign: TextAlign.center,
                 ),
               ],
             ),

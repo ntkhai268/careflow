@@ -23,6 +23,12 @@ import java.util.*;
 
 @Service
 public class QueueManagementService {
+    private static final String DEFAULT_HOSPITAL_SITE_ID = "HOSPITAL-MAIN";
+    private static final String DEFAULT_SESSION_CODE = "MORNING";
+    private static final double DEFAULT_GEOFENCE_LATITUDE = 10.7769;
+    private static final double DEFAULT_GEOFENCE_LONGITUDE = 106.7009;
+    private static final double DEFAULT_GEOFENCE_RADIUS_METERS = 150;
+    private static final double DEFAULT_GEOFENCE_MAX_ACCURACY_METERS = 50;
     private static final String COMMAND_MANUAL_INTAKE = "MANUAL_INTAKE";
     private static final String COMMAND_CALL_NEXT = "CALL_NEXT";
     private static final String COMMAND_CALL_ENTRY = "CALL_ENTRY";
@@ -45,6 +51,11 @@ public class QueueManagementService {
     private final QrTokenService qrTokens;
     private final ZoneId businessZone;
     private final DirectoryClient directoryClient;
+    private final String geofenceSiteId;
+    private final double geofenceLatitude;
+    private final double geofenceLongitude;
+    private final double geofenceRadiusMeters;
+    private final double geofenceMaxAccuracyMeters;
 
     public QueueManagementService(QueueConfigRepository configs, QueueNumberSequenceRepository sequences,
                                   ServicePointSequenceRepository servicePointSequences,
@@ -52,7 +63,20 @@ public class QueueManagementService {
                                   QueueEventService events, QrTokenService qrTokens,
                                   @Value("${queue.business-zone:Asia/Ho_Chi_Minh}") String businessZone) {
         this(configs, sequences, servicePointSequences, entries, idempotencyRecords, events, qrTokens,
-                businessZone, null);
+                businessZone, null, DEFAULT_HOSPITAL_SITE_ID, DEFAULT_GEOFENCE_LATITUDE,
+                DEFAULT_GEOFENCE_LONGITUDE, DEFAULT_GEOFENCE_RADIUS_METERS,
+                DEFAULT_GEOFENCE_MAX_ACCURACY_METERS);
+    }
+
+    public QueueManagementService(QueueConfigRepository configs, QueueNumberSequenceRepository sequences,
+                                  ServicePointSequenceRepository servicePointSequences,
+                                  QueueEntryRepository entries, IdempotencyRecordRepository idempotencyRecords,
+                                  QueueEventService events, QrTokenService qrTokens,
+                                  String businessZone, DirectoryClient directoryClient) {
+        this(configs, sequences, servicePointSequences, entries, idempotencyRecords, events, qrTokens,
+                businessZone, directoryClient, DEFAULT_HOSPITAL_SITE_ID, DEFAULT_GEOFENCE_LATITUDE,
+                DEFAULT_GEOFENCE_LONGITUDE, DEFAULT_GEOFENCE_RADIUS_METERS,
+                DEFAULT_GEOFENCE_MAX_ACCURACY_METERS);
     }
 
     @Autowired
@@ -61,7 +85,12 @@ public class QueueManagementService {
                                   QueueEntryRepository entries, IdempotencyRecordRepository idempotencyRecords,
                                   QueueEventService events, QrTokenService qrTokens,
                                   @Value("${queue.business-zone:Asia/Ho_Chi_Minh}") String businessZone,
-                                  DirectoryClient directoryClient) {
+                                  DirectoryClient directoryClient,
+                                  @Value("${queue.geofence.site-id:HOSPITAL-MAIN}") String geofenceSiteId,
+                                  @Value("${queue.geofence.latitude:10.7769}") double geofenceLatitude,
+                                  @Value("${queue.geofence.longitude:106.7009}") double geofenceLongitude,
+                                  @Value("${queue.geofence.radius-meters:150}") double geofenceRadiusMeters,
+                                  @Value("${queue.geofence.max-accuracy-meters:50}") double geofenceMaxAccuracyMeters) {
         this.configs = configs;
         this.sequences = sequences;
         this.servicePointSequences = servicePointSequences;
@@ -71,6 +100,14 @@ public class QueueManagementService {
         this.qrTokens = qrTokens;
         this.businessZone = ZoneId.of(businessZone);
         this.directoryClient = directoryClient;
+        this.geofenceSiteId = geofenceSiteId;
+        this.geofenceLatitude = geofenceLatitude;
+        this.geofenceLongitude = geofenceLongitude;
+        if (geofenceRadiusMeters <= 0 || geofenceMaxAccuracyMeters <= 0) {
+            throw new IllegalArgumentException("Geofence radius and accuracy must be positive");
+        }
+        this.geofenceRadiusMeters = geofenceRadiusMeters;
+        this.geofenceMaxAccuracyMeters = geofenceMaxAccuracyMeters;
     }
 
     public LocalDate businessDate() {
@@ -168,23 +205,77 @@ public class QueueManagementService {
                 entry.getDepartmentCode(), config.getDepartmentNameSnapshot(), config.getRoomCode(),
                 entry.getRoomDisplayNameSnapshot() == null
                         ? config.getRoomCode() : entry.getRoomDisplayNameSnapshot(),
-                entry.getQueueDate(), entry.getTimeSlot(), qrTokens.issue(entry),
+                entry.getQueueDate(), entry.getTimeSlot(), null,
                 entry.getStatus() == QueueStatus.WAITING
                         ? "TICKET_ISSUED" : entry.getStatus().name());
     }
 
     @Transactional(readOnly = true)
-    public String issueQr(UUID appointmentId, UUID userId) {
-        QueueEntry entry = entries.findByAppointmentIdAndUserId(appointmentId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "appointmentId", appointmentId));
-        if (entry.getStatus() != QueueStatus.WAITING && entry.getStatus() != QueueStatus.CHECKED_IN) {
-            throw new BusinessException(409, "Trạng thái lượt khám không cho phép sinh QR");
+    public CheckInQrResponse issueHospitalCheckInQr(String roomId, LocalDate date, String session,
+                                                    UUID requesterUserId, String role) {
+        requireRoomAccess(roomId, requesterUserId, role);
+        requireRoomConfig(roomId);
+        LocalDate sessionDate = date == null ? businessDate() : date;
+        if (!businessDate().equals(sessionDate)) {
+            throw new BusinessException(422, "Chỉ có thể hiển thị QR check-in của ngày hiện tại");
         }
-        return qrTokens.issue(entry);
+        String sessionCode = session == null || session.isBlank()
+                ? DEFAULT_SESSION_CODE : session.trim().toUpperCase(Locale.ROOT);
+        QrTokenService.IssuedHospitalQr issued = qrTokens.issueHospitalQr(roomId, sessionDate, sessionCode);
+        return new CheckInQrResponse(geofenceSiteId, roomId, sessionCode, sessionDate,
+                issued.token(), issued.expiresAt());
     }
 
     @Transactional
-    public QueueEntryResponse checkIn(CheckInRequest request, UUID staffUserId, String correlationId) {
+    public QueueEntryResponse checkIn(CheckInRequest request, UUID actorUserId, String correlationId) {
+        return checkIn(request, actorUserId, AppConstants.ROLE_STAFF, correlationId);
+    }
+
+    @Transactional
+    public QueueEntryResponse checkIn(CheckInRequest request, UUID actorUserId, String role,
+                                      String correlationId) {
+        if (AppConstants.ROLE_PATIENT.equalsIgnoreCase(role)) {
+            return checkInAsPatient(request, actorUserId, correlationId);
+        }
+        return checkInAsStaff(request, actorUserId, correlationId);
+    }
+
+    private QueueEntryResponse checkInAsPatient(CheckInRequest request, UUID patientUserId,
+                                                String correlationId) {
+        if (request.appointmentId() == null || request.checkInQrToken() == null
+                || request.checkInQrToken().isBlank()) {
+            throw new BusinessException(400, "Vui lòng quét QR check-in của bệnh viện");
+        }
+        QrTokenService.HospitalQrClaims claims = qrTokens.verifyHospitalQr(request.checkInQrToken());
+        if (!claims.sessionDate().equals(businessDate())) {
+            throw new BusinessException(422, "QR không thuộc ngày hiện tại");
+        }
+        QueueEntry entry = entries.findFirstByAppointmentId(request.appointmentId())
+                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "appointmentId", request.appointmentId()));
+        if (entry.getUserId() == null || !entry.getUserId().equals(patientUserId)) {
+            throw new BusinessException(403, "Lịch hẹn không thuộc tài khoản bệnh nhân này");
+        }
+        if (!entry.getQueueDate().equals(claims.sessionDate())) {
+            throw new BusinessException(409, "QR không khớp ngày khám của lịch hẹn");
+        }
+        QueueConfig config = requireConfig(entry.getDepartmentId());
+        if (!config.getRoomCode().equals(claims.roomId())) {
+            throw new BusinessException(409, "QR không thuộc phòng khám của lịch hẹn");
+        }
+        if (entry.getStatus() == QueueStatus.CHECKED_IN) return response(entry, config);
+
+        validateCoordinates(request);
+        double distanceMeters = distanceMeters(request.latitude(), request.longitude(),
+                geofenceLatitude, geofenceLongitude);
+        if (distanceMeters > geofenceRadiusMeters) {
+            throw new BusinessException(422, "Bạn đang ở ngoài khu vực bệnh viện, chưa thể check-in");
+        }
+        return activateCheckedInEntry(entry, config, request, patientUserId, correlationId,
+                "PATIENT_QR_GEOFENCE", distanceMeters);
+    }
+
+    private QueueEntryResponse checkInAsStaff(CheckInRequest request, UUID staffUserId,
+                                              String correlationId) {
         if ((request.qrToken() == null || request.qrToken().isBlank())
                 && (request.ticketCode() == null || request.ticketCode().isBlank())) {
             throw new BusinessException(400, "Vui l\u00f2ng cung c\u1ea5p m\u00e3 QR ho\u1eb7c m\u00e3 phi\u1ebfu kh\u00e1m");
@@ -203,12 +294,21 @@ public class QueueManagementService {
         if (!config.getRoomCode().equals(request.roomId())) {
             throw new BusinessException(409, "QR không thuộc phòng tiếp nhận này");
         }
-        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId);
+        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId,
+                "STAFF_QR", null);
     }
 
     private QueueEntryResponse activateCheckedInEntry(QueueEntry entry, QueueConfig config,
                                                        CheckInRequest request, UUID staffUserId,
                                                        String correlationId) {
+        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId,
+                "STAFF_MANUAL", null);
+    }
+
+    private QueueEntryResponse activateCheckedInEntry(QueueEntry entry, QueueConfig config,
+                                                       CheckInRequest request, UUID actorUserId,
+                                                       String correlationId, String checkInMethod,
+                                                       Double distanceMeters) {
         if (entry.getStatus() == QueueStatus.CHECKED_IN) return response(entry, config);
         if (entry.getStatus() == QueueStatus.CANCELLED) {
             throw new BusinessException(409, "Lịch hẹn đã bị hủy");
@@ -220,7 +320,12 @@ public class QueueManagementService {
         Instant now = Instant.now();
         entry.setStatus(QueueStatus.CHECKED_IN);
         entry.setCheckedInAt(now);
-        entry.setCheckedInByUserId(staffUserId);
+        entry.setCheckedInByUserId(actorUserId);
+        entry.setCheckInMethod(checkInMethod);
+        entry.setCheckInDistanceMeters(distanceMeters);
+        entry.setCheckInAccuracyMeters(request.accuracyMeters());
+        entry.setCheckInLatitude(request.latitude());
+        entry.setCheckInLongitude(request.longitude());
         QueueClass queueClass = request.queueClass() == null ? QueueClass.NORMAL : request.queueClass();
         if (queueClass == QueueClass.PRIORITY) {
             if (request.priorityReasonCode() == null || request.priorityReasonCode().isBlank()) {
@@ -236,10 +341,13 @@ public class QueueManagementService {
         }
         entry.setEligibleSinceAt(now);
         entries.saveAndFlush(entry);
+        Map<String, Object> eventData = new LinkedHashMap<>();
+        eventData.put("queueClass", queueClass.name());
+        eventData.put("checkedInByUserId", actorUserId);
+        eventData.put("checkInMethod", checkInMethod);
+        if (distanceMeters != null) eventData.put("distanceMeters", distanceMeters);
         events.append(entry, config, "PatientCheckedIn", AppConstants.RK_QUEUE_CHECKED_IN,
-                correlationId, Map.of(
-                        "queueClass", queueClass.name(),
-                        "checkedInByUserId", staffUserId));
+                correlationId, eventData);
         return response(entry, config);
     }
 
@@ -251,7 +359,32 @@ public class QueueManagementService {
                         config.getId(), businessDate(), ticketCode)
                 .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "ticketCode", ticketCode));
 
-        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId);
+        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId,
+                "STAFF_MANUAL", null);
+    }
+
+    private void validateCoordinates(CheckInRequest request) {
+        if (request.latitude() == null || request.longitude() == null || request.accuracyMeters() == null) {
+            throw new BusinessException(422, "Không thể xác định vị trí hiện tại của thiết bị");
+        }
+        if (request.latitude() < -90 || request.latitude() > 90
+                || request.longitude() < -180 || request.longitude() > 180) {
+            throw new BusinessException(422, "Tọa độ vị trí không hợp lệ");
+        }
+        if (request.accuracyMeters() <= 0 || request.accuracyMeters() > geofenceMaxAccuracyMeters) {
+            throw new BusinessException(422, "Độ chính xác vị trí chưa đạt yêu cầu");
+        }
+    }
+
+    private double distanceMeters(double latitude1, double longitude1,
+                                  double latitude2, double longitude2) {
+        double earthRadiusMeters = 6_371_000;
+        double latDistance = Math.toRadians(latitude2 - latitude1);
+        double lonDistance = Math.toRadians(longitude2 - longitude1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(latitude1)) * Math.cos(Math.toRadians(latitude2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        return earthRadiusMeters * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     }
 
     @Transactional(readOnly = true)
