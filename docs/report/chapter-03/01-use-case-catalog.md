@@ -15,8 +15,8 @@
 | `UC-APT-03` | Xem danh sách và chi tiết lịch | Bệnh nhân | Tóm tắt |
 | `UC-APT-04` | Hủy lịch khám | Bệnh nhân/Nhân viên tiếp nhận | Mở rộng |
 | `UC-APT-05` | Tạo lịch tái khám | Bác sĩ | Gộp vào `UC-PRE-01` |
-| `UC-QUE-01` | Xem phiếu khám và mã QR | Bệnh nhân | Gộp vào `UC-APT-02` |
-| `UC-QUE-02` | Check-in bằng QR | Nhân viên tiếp nhận | **Chi tiết** |
+| `UC-QUE-01` | Xem phiếu khám và thông tin check-in | Bệnh nhân | Gộp vào `UC-APT-02` |
+| `UC-QUE-02` | Check-in bằng QR tại bệnh viện | Bệnh nhân/Nhân viên hỗ trợ | **Chi tiết** |
 | `UC-QUE-03` | Theo dõi lượt chờ | Bệnh nhân | Gộp vào `UC-QUE-04` |
 | `UC-QUE-04` | Theo dõi, đề xuất và gọi lượt khám | Bác sĩ | **Chi tiết** |
 | `UC-QUE-05` | Gọi lại, đánh dấu lỡ lượt và xếp lại | Bác sĩ/Nhân viên tiếp nhận | Gộp vào `UC-QUE-04` |
@@ -42,7 +42,7 @@ vụ cốt lõi.
 | Thứ tự | Mã | Use Case | Đặc tả | Activity | Sequence |
 |---:|---|---|:---:|:---:|:---:|
 | 1 | `UC-APT-02` | Đặt lịch khám | Có | Có | Có |
-| 2 | `UC-QUE-02` | Check-in bằng QR | Có | Có | Có |
+| 2 | `UC-QUE-02` | Check-in bằng QR tại bệnh viện | Có | Có | Có |
 | 3 | `UC-QUE-04` | Theo dõi, đề xuất và gọi lượt khám | Có | Có | Có |
 | 4 | `UC-CON-01` | Bắt đầu và thực hiện phiên khám | Có | Có | Có |
 | 5 | `UC-LAB-01` | Tạo chỉ định cận lâm sàng | Có | Có | Có |
@@ -65,10 +65,10 @@ trạng thái; Use Case này không làm tăng số Use Case cốt lõi cần v�
 
 - Bao gồm chọn hồ sơ, khoa, ngày, slot, dịch vụ, lý do và xác nhận.
 - Trên Patient Mobile, bệnh nhân chọn fixture `GENERAL_CONSULTATION`/“Khám
-  thường” giá demo `150.000 ₫`, sau đó chọn `ONLINE_MOCK` hoặc
-  `CASH_AT_HOSPITAL`. Tiền mặt chỉ hiển thị `DUE_AT_HOSPITAL`.
-- Nếu chọn `CASH_AT_HOSPITAL`, thu ngân xác nhận khoản phí khám đã thu trước khi
-  check-in; chỉ số tiền thực tế đã thu mới được cộng vào `prepaidAmount`.
+  thường” giá demo `150.000 ₫` và ghi nhận `ONLINE_MOCK` trước khi hoàn tất đặt
+  lịch.
+- Nếu sau khám còn `amountDue`, thu ngân xác nhận khoản quyết toán cuối lượt;
+  khoản này không phải lựa chọn thanh toán trong booking.
 - Bệnh nhân không chọn phòng. Appointment Service truy vấn `ClinicRoom` active
   của khoa và, theo chính sách MVP, chỉ tiếp tục khi có đúng một phòng phù hợp.
 - Kết thúc: Appointment lưu `roomId`, chuyển `CONFIRMED`, sau đó phát sự kiện cấp
@@ -81,9 +81,13 @@ trạng thái; Use Case này không làm tăng số Use Case cốt lõi cần v�
 
 ### `UC-QUE-02` — Check-in bằng QR
 
-- Bắt đầu: nhân viên quét QR tại đúng điểm tiếp nhận.
+- Bắt đầu: bệnh viện hiển thị QR phòng/phiên và bệnh nhân quét bằng Patient Mobile.
 - Kết thúc: Queue Entry từ `TICKET_ISSUED` sang `CHECKED_IN`.
-- Ngoại lệ: QR sai/hết hạn, lịch bị hủy, sai phòng hoặc đã check-in.
+- Điều kiện thành công: token QR, Appointment/ticket và phòng/phiên hợp lệ; vị trí
+  thiết bị nằm trong Hospital Geofence.
+- Ngoại lệ: QR sai/hết hạn, lịch bị hủy, sai phòng/phiên, ngoài bán kính, không
+  lấy được vị trí hoặc đã check-in. Nhân viên có thể hỗ trợ tại quầy cho bệnh
+  nhân không dùng Mobile.
 
 ### `UC-QUE-04` — Theo dõi, đề xuất và gọi lượt khám
 

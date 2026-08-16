@@ -8,6 +8,10 @@
 > khám ngoại trú; đồng thời xác định Mobile App, Hospital Web App và các
 > microservice tham gia ở từng giai đoạn.
 
+> Cập nhật 08/08/2026: quy tắc hiện hành thay đổi thành booking Mobile chỉ thanh
+> toán trực tuyến `ONLINE_MOCK`. `CASH_AT_HOSPITAL` không còn là lựa chọn khi đặt
+> lịch; tiền mặt chỉ thuộc bước quyết toán cuối lượt nếu phát sinh `amountDue`.
+
 ## 1. Mục tiêu
 
 CareFlow là hệ thống hỗ trợ và điều phối hành trình khám ngoại trú tại bệnh viện
@@ -30,14 +34,18 @@ thống ngoài và tích hợp sau. Phiên bản báo cáo chỉ xét người b
 
 1. Appointment được hệ thống tự động xác nhận nếu slot còn khả dụng; không cần
    nhân viên duyệt thủ công.
-2. Khi đặt khám thành công, bệnh nhân nhận phiếu khám, số thứ tự, khung giờ,
-   phòng khám và QR.
+2. Khi đặt khám thành công, bệnh nhân nhận phiếu khám, số thứ tự, khung giờ và
+   phòng khám. QR check-in được bệnh viện hiển thị theo phòng/phiên khi bệnh nhân
+   đến nơi.
 3. Một khoa có thể có nhiều phòng khám (`Department 1:N ClinicRoom`). Trong MVP,
    dữ liệu chỉ cấu hình đúng một phòng active cho mỗi khoa;
    Appointment Service suy ra phòng từ khoa, không chọn ngẫu nhiên và bệnh nhân
    không truyền `roomId` khi đặt lịch.
-4. QR thuộc phiếu khám của bệnh nhân. Nhân viên hoặc kiosk tại phòng khám quét
-   QR để xác nhận tiếp nhận.
+4. Bệnh viện hiển thị QR check-in theo phòng/phiên khám. Bệnh nhân dùng Patient
+   Mobile quét QR này khi đến nơi; hệ thống lấy vị trí hiện tại của thiết bị để
+   kiểm tra bệnh nhân đang ở trong bán kính cho phép của bệnh viện trước khi
+   xác nhận có mặt. Nhân viên tiếp nhận vẫn có thể hỗ trợ người không dùng điện
+   thoại bằng quy trình tại quầy.
 5. Active queue của phòng khám chỉ chứa bệnh nhân khám ban đầu đã `CHECKED_IN`
    hoặc lượt đọc kết quả được tự động tạo khi đủ kết quả bắt buộc.
 6. Mỗi phòng và phiên khám có ba làn điều phối logic: `PRIORITY`, `NORMAL` và
@@ -49,12 +57,12 @@ thống ngoài và tích hợp sau. Phiên bản báo cáo chỉ xét người b
    phí khám. Khi chưa có catalog dịch vụ, Mobile dùng fixture duy nhất
    `GENERAL_CONSULTATION` — “Khám thường”, giá demo `150.000 ₫`, thời lượng tham
    khảo 15 phút.
-9. Patient Mobile chỉ chọn `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL` cho phí khám.
-   Cả hai lựa chọn được lưu cùng lịch hẹn; tiền mặt hiển thị
-   `DUE_AT_HOSPITAL`, không được trình bày là đã thu. Appointment vẫn tự
-   `CONFIRMED` khi slot hợp lệ; Appointment Service chưa nhận payment/service
-   contract. Receipt của bước này được lưu qua local adapter và lỗi local không
-   làm hỏng lịch hẹn đã tạo thành công.
+9. Patient Mobile chỉ ghi nhận `ONLINE_MOCK` cho phí khám khi đặt lịch. Khoản
+   này được lưu thành `PAID` trong receipt local; `CASH_AT_HOSPITAL` không còn
+   được hiển thị trong booking vì người chưa trả trước sẽ làm thủ tục trực tiếp
+   tại bệnh viện. Appointment vẫn tự `CONFIRMED` khi slot hợp lệ; Appointment
+   Service chưa nhận payment/service contract. Receipt của bước này được lưu
+   qua local adapter và lỗi local không làm hỏng lịch hẹn đã tạo thành công.
 9a. Hành trình chỉ có hai giai đoạn thanh toán: trả trước phí khám khi đặt lịch
     và quyết toán một lần ở cuối lượt khám. Chi phí cận lâm sàng và thuốc được
     cộng vào tổng chi phí lượt khám, không tạo lần thanh toán riêng.
@@ -80,7 +88,7 @@ thống ngoài và tích hợp sau. Phiên bản báo cáo chỉ xét người b
 |---|---|---|
 | Bệnh nhân | Patient Mobile App | Đặt khám, xem phiếu, theo dõi lượt, nhận chỉ định, kết quả, toa và lịch tái khám |
 | Bác sĩ | Hospital Web App | Theo dõi queue, khám, nhập sinh hiệu, chẩn đoán, tạo chỉ định, kê toa |
-| Nhân viên tiếp nhận | Hospital Web App | Quét phiếu, xác nhận bệnh nhân đã đến, hỗ trợ lỡ lượt |
+| Nhân viên tiếp nhận | Hospital Web App | Hiển thị QR phiên/phòng, hỗ trợ check-in tại quầy và xử lý lỡ lượt |
 | Kỹ thuật viên cận lâm sàng | Hospital Web App | Theo dõi order, gọi số, thực hiện kỹ thuật và nhập kết quả |
 | Nhân viên cấp phát thuốc | Hospital Web App | Theo dõi queue FIFO, gọi số, đối chiếu toa và xác nhận đã phát thuốc |
 | Thu ngân | Hospital Web App hoặc hệ thống ngoài | Ghi nhận phí khám trả trước, quyết toán cuối lượt và xử lý hoàn tiền; adapter demo không được xem là chứng từ production |
@@ -117,7 +125,7 @@ Phiếu khám điện tử do Queue Management Service cấp sau khi nhận sự
 - Số thứ tự.
 - Khung giờ dự kiến.
 - Khoa và phòng.
-- QR tham chiếu phiếu.
+- Thông tin phiên/phòng để bệnh nhân quét QR check-in tại bệnh viện.
 - Trạng thái phí khám trả trước nếu có.
 
 ### 4.4. Queue Entry
@@ -165,11 +173,12 @@ flowchart TD
     A["Chọn hồ sơ/khoa/ngày/ca"] --> A1["Chọn dịch vụ"]
     A1 --> A2["Chọn hình thức phí khám trên Mobile"]
     A2 --> B["Hệ thống kiểm tra slot và tự xác nhận"]
-    B --> C["Cấp phiếu, số thứ tự và QR"]
-    C --> D["Bệnh nhân đến phòng khám"]
-    D --> D1["Xác nhận phí khám/tạm ứng tại tiếp nhận nếu cần"]
-    D1 --> E["Nhân viên hoặc kiosk quét QR"]
-    E --> F["CHECKED_IN và vào làn PRIORITY hoặc NORMAL"]
+    B --> C["Cấp phiếu và số thứ tự"]
+    C --> D["Bệnh nhân đến bệnh viện"]
+    D --> D1["Màn hình bệnh viện hiển thị QR phòng/phiên"]
+    D1 --> E["Bệnh nhân quét QR bằng Mobile"]
+    E --> E1["Gửi vị trí và kiểm tra bán kính bệnh viện"]
+    E1 --> F["CHECKED_IN và vào làn PRIORITY hoặc NORMAL"]
     F --> G["Hệ thống đề xuất theo Round Robin; bác sĩ bấm gọi"]
     G --> H["Bác sĩ nhập sinh hiệu và khám"]
     H --> I{"Cần cận lâm sàng?"}
@@ -247,7 +256,7 @@ Trên Patient Mobile App:
 4. Chọn ngày và khung giờ.
 5. Chọn dịch vụ “Khám thường” (fixture hiện tại).
 6. Nhập lý do khám.
-7. Chọn `ONLINE_MOCK` hoặc `CASH_AT_HOSPITAL` cho phí khám.
+7. Thanh toán trực tuyến mô phỏng `ONLINE_MOCK` cho phí khám.
 8. Xác nhận đặt khám.
 
 ### 7.2. Hệ thống xử lý
@@ -318,35 +327,39 @@ Số thứ tự: 47
 Khoa: Thần kinh
 Phòng: 21
 Khung giờ: 10:30-11:30
-QR: careflow:ticket:<opaque-token>
 ```
 
-QR chỉ chứa token tham chiếu hoặc token đã ký. Không nhúng trực tiếp họ tên,
-CCCD, ngày sinh, chẩn đoán hoặc thông tin y tế.
+QR check-in của bệnh viện chỉ chứa token phiên/phòng có thời hạn, được ký để
+không thể tự sửa. Không nhúng trực tiếp họ tên, CCCD, ngày sinh, chẩn đoán hoặc
+thông tin y tế.
 
 Patient Mobile hiển thị:
 
 - Phiếu khám.
 - Số thứ tự.
-- QR.
 - Bản đồ hoặc hướng dẫn đến phòng.
 - Hướng dẫn đến trước giờ dự kiến.
 - Nút hủy lịch.
 - Trạng thái thanh toán.
+
+Hospital Web hiển thị QR check-in theo phòng/phiên khi bệnh nhân đến bệnh viện;
+Patient Mobile dùng camera để quét QR này ở giai đoạn check-in.
 
 Queue Entry có thể được tạo trước ở trạng thái `TICKET_ISSUED`, nhưng chưa xuất
 hiện trong active queue.
 
 ## 9. Giai đoạn 3: Đến bệnh viện và check-in
 
-Bệnh nhân tới đúng phòng khám và xuất trình phiếu.
+Bệnh viện hiển thị QR check-in gắn với phòng và phiên khám. Bệnh nhân tới bệnh
+viện, mở Patient Mobile và quét QR đang hiển thị. Mobile gửi mã QR cùng vị trí
+thiết bị; CareFlow đối chiếu lịch/phiếu của bệnh nhân, phòng/phiên và khoảng cách
+giữa vị trí hiện tại với tâm địa điểm bệnh viện.
 
-Nhân viên hoặc kiosk:
-
-1. Quét QR.
-2. Mở đúng phiếu.
-3. Đối chiếu thông tin tối thiểu.
-4. Xác nhận tiếp nhận.
+Chỉ khi mã QR hợp lệ và vị trí nằm trong bán kính cấu hình, hệ thống mới xác nhận
+`CHECKED_IN`. Vị trí nằm ngoài bán kính, không lấy được vị trí hoặc độ chính xác
+không đạt yêu cầu thì không được tính là đã đến. Nhân viên tiếp nhận vẫn có thể
+xác nhận tại quầy cho bệnh nhân không sử dụng điện thoại, sau khi đối chiếu
+thông tin theo quy trình nội bộ.
 
 Hệ thống chuyển:
 
@@ -980,7 +993,7 @@ CALLED → MISSED → QUEUED
 | Identity & eKYC Service | Tài khoản, đăng nhập, role và định danh |
 | Patient Service | Hồ sơ bệnh nhân, dị ứng, tiền sử và hồ sơ bệnh nhân upload |
 | Appointment Service | Slot, capacity, đặt/hủy lịch và lịch tái khám |
-| Queue Management Service | Phiếu khám, QR, số thứ tự; ba làn phòng khám; queue FIFO cận lâm sàng/phát thuốc; gọi số và missed/requeue |
+| Queue Management Service | Phiếu khám, QR check-in theo phòng/phiên, số thứ tự; ba làn phòng khám; queue FIFO cận lâm sàng/phát thuốc; gọi số và missed/requeue |
 | Notification Service | Thông báo realtime cho Mobile và Web |
 | Doctor Consultation Service | Phiên khám, sinh hiệu, triệu chứng, chẩn đoán và trạng thái chờ kết quả |
 | Laboratory Order Service | Chỉ định, hạng mục, trạng thái thực hiện và kết quả |
@@ -999,8 +1012,8 @@ không được xem là contract production.
 |---|---|---|---|
 | Cấu hình | Không | Xem lịch cá nhân | Admin cấu hình khoa, phòng, lịch và capacity |
 | Đặt khám | Chọn lịch, hồ sơ, dịch vụ, hình thức thanh toán; lưu receipt local | Không | Chỉ hỗ trợ ngoại lệ |
-| Phiếu khám | Xem số, QR, phòng và khung giờ | Xem lịch sắp tới | Xem lịch hôm nay |
-| Đến bệnh viện | Xuất trình QR | Thấy trạng thái đã đến | Quét QR và tiếp nhận |
+| Phiếu khám | Xem số, phòng và khung giờ; mở camera quét QR tại bệnh viện | Xem lịch sắp tới | Hiển thị QR phiên/phòng và hỗ trợ tiếp nhận |
+| Đến bệnh viện | Quét QR và gửi vị trí | Thấy trạng thái đã đến | Hiển thị QR, hỗ trợ người không dùng Mobile |
 | Chờ khám | Xem trạng thái và thông báo | Xem active queue | Recall, missed và hỗ trợ bệnh nhân |
 | Khám ban đầu | Không cần thao tác | Nhập sinh hiệu, triệu chứng và chẩn đoán | Không bắt buộc |
 | Chỉ định | Xem danh sách việc cần làm và chi phí phát sinh | Tạo order | Không thu tiền riêng tại bước này |
@@ -1147,7 +1160,7 @@ payload
 → chọn hình thức thanh toán phí khám
 → đặt lịch tự động xác nhận
 → nhận phiếu và số
-→ quét QR tại phòng
+→ quét QR bệnh viện và xác minh vị trí
 → vào làn PRIORITY hoặc NORMAL
 → bác sĩ gọi lượt được đề xuất
 → khám và nhập sinh hiệu
@@ -1190,8 +1203,9 @@ Hệ thống được coi là hoàn thành luồng chính khi:
 
 1. Bệnh nhân đặt được lịch và nhận phiếu mà không cần duyệt thủ công.
 2. Mobile hiển thị dịch vụ `GENERAL_CONSULTATION`, phí demo `150.000 ₫` và
-   `ONLINE_MOCK`/`CASH_AT_HOSPITAL`; lỗi lưu receipt local không làm mất lịch.
-3. Quét QR đưa đúng bệnh nhân vào đúng làn `PRIORITY` hoặc `NORMAL`.
+   bắt buộc ghi nhận `ONLINE_MOCK`; lỗi lưu receipt local không làm mất lịch.
+3. Bệnh nhân quét QR bệnh viện trong bán kính hợp lệ được đưa vào đúng làn
+   `PRIORITY` hoặc `NORMAL`; vị trí ngoài bán kính bị từ chối.
 4. Bệnh nhân chưa check-in không xuất hiện trong active queue.
 5. Doctor Web hiển thị ba làn, đề xuất đúng chu kỳ và chỉ gọi khi bác sĩ bấm nút.
 6. Bác sĩ nhập được sinh hiệu, chẩn đoán và chỉ định.

@@ -38,6 +38,8 @@ tra bằng client Hospital Web và Patient Mobile giả lập.
 Bộ dữ liệu có tối thiểu:
 
 - hai bệnh nhân có hồ sơ hợp lệ, một bệnh nhân không có Mobile;
+- một Hospital Geofence với tọa độ tâm, bán kính hợp lệ, tọa độ trong/ngoài vùng
+  và trường hợp không cấp quyền vị trí;
 - một khoa và một `ClinicRoom` active trong dữ liệu MVP, đồng thời có fixture
   thứ hai để kiểm tra quan hệ `Department 1:N ClinicRoom`;
 - ba lane có nhiều entry, có cả lane rỗng và entry bị bỏ lỡ;
@@ -73,11 +75,13 @@ thống. Các quy tắc miền được kiểm tra bằng dữ liệu biên và 
 | Mã | Nguồn | Tiền điều kiện | Dữ liệu vào/thao tác | Kết quả mong đợi | Kết quả thực tế | Trạng thái |
 |---|---|---|---|---|---|---|
 | FT-APT-01 | UC-APT-02 | hồ sơ và slot hợp lệ | `GENERAL_CONSULTATION`, `ONLINE_MOCK` | Appointment `CONFIRMED`, có `roomId`, receipt `PAID` local | Đúng như mong đợi | Đạt |
-| FT-APT-02 | UC-APT-02 | hồ sơ và slot hợp lệ | `CASH_AT_HOSPITAL` | Appointment `CONFIRMED`, receipt `DUE_AT_HOSPITAL` | Đúng như mong đợi | Đạt |
+| FT-APT-02 | UC-APT-02 | hồ sơ và slot hợp lệ | không hiển thị lựa chọn tiền mặt khi đặt lịch | Booking chỉ có `ONLINE_MOCK`; receipt `PAID` local | Đúng như mong đợi | Đạt |
 | FT-APT-03 | UC-APT-02/luồng lỗi | slot đã đủ capacity | gửi yêu cầu đặt lịch | không tạo lịch, hiển thị slot không khả dụng | Không có aggregate mới | Đạt |
-| FT-QUE-01 | UC-QUE-02 | ticket hợp lệ, đúng phòng/ca | quét QR và xác nhận | ticket check-in đúng session và lane | Entry `CHECKED_IN` | Đạt |
-| FT-QUE-02 | UC-QUE-02/luồng thay thế | bệnh nhân không có Mobile | nhân viên tìm và xác nhận ticket | ticket vẫn được active trên Hospital Web | Active queue có đúng entry | Đạt |
-| FT-QUE-03 | UC-QUE-02/luồng lỗi | ticket đã check-in | quét lại cùng QR | không tạo entry trùng, trả trạng thái hiện tại | Một entry duy nhất | Đạt |
+| FT-QUE-01 | UC-QUE-02 | QR phòng/phiên hợp lệ, vị trí trong bán kính | bệnh nhân quét QR bằng Mobile và gửi tọa độ | ticket check-in đúng session và lane | Entry `CHECKED_IN`, có `PATIENT_QR_GEOFENCE` | Đạt |
+| FT-QUE-02 | UC-QUE-02/luồng lỗi | QR hợp lệ nhưng vị trí ngoài bán kính | quét QR và gửi tọa độ ngoài geofence | từ chối check-in, ticket vẫn `TICKET_ISSUED` | Không tạo active entry | Đạt |
+| FT-QUE-03 | UC-QUE-02/luồng lỗi | không cấp được vị trí hoặc độ chính xác không đạt | gửi request thiếu/không hợp lệ location | từ chối và hướng dẫn thử lại hoặc đến quầy | Không tạo active entry | Đạt |
+| FT-QUE-04 | UC-QUE-02/luồng thay thế | bệnh nhân không có Mobile | nhân viên đối chiếu và xác nhận tại quầy | ticket vẫn được active bằng `STAFF_ASSISTED` | Active queue có đúng entry | Đạt |
+| FT-QUE-05 | UC-QUE-02/luồng lỗi | ticket đã check-in | quét lại cùng QR | không tạo entry trùng, trả trạng thái hiện tại | Một entry duy nhất | Đạt |
 
 ### 6.4.2. Gọi lượt và hành trình khám
 
@@ -224,7 +228,7 @@ và không mất event.
 | FR-PRE-01..03 | Prescription aggregate, issued/dispensed event và quyết toán cuối lượt | UT-PRE-01, FT-PRE-01, FT-PHA-01..03 |
 | FR-MOB-01..04 | Mobile journey và local adapters | UT-MOB-01/02, FT-MOB-01/02, FT-APT-01/02 |
 | FR-NOT-01..03 | Inbox, WebSocket, recipient resolution | FT-NOT-01..03, INT-01 |
-| QR-BUS-01..05 | JWT, ownership, outbox, idempotency, audit | API-01..05, NFR, CON-01 |
+| QR-BUS-01..05 | JWT, ownership, QR phòng/phiên, geofence, outbox, idempotency, audit | API-01..05, NFR, CON-01 |
 
 Ma trận cho phép truy ngược từ một yêu cầu đến thiết kế, ca kiểm thử và kết quả.
 Nếu thay đổi một trạng thái hoặc contract, các ca liên quan phải được cập nhật
@@ -260,7 +264,7 @@ idempotency, observability và contract test để kiểm soát độ phức t�
 | Nhóm yêu cầu | Mức đáp ứng | Đánh giá |
 |---|---|---|
 | Đặt lịch, capacity và phân phòng | Đáp ứng | lịch xác nhận, suy ra room theo khoa, không chọn ngẫu nhiên |
-| Check-in và queue | Đáp ứng | hỗ trợ QR/người không dùng Mobile, FIFO và Round Robin 1:1:1 |
+| Check-in và queue | Đáp ứng | QR phòng/phiên, kiểm tra geofence, hỗ trợ người không dùng Mobile, FIFO và Round Robin 1:1:1 |
 | Khám, cận lâm sàng và review | Đáp ứng | cùng một hành trình, tự tạo `RESULT_REVIEW` khi đủ kết quả |
 | Kê toa và phát thuốc | Đáp ứng | toa xác nhận tạo queue, đối chiếu và chống phát hai lần |
 | Notification và truy vết | Đáp ứng MVP | inbox bền vững, WebSocket, audit và correlation |
@@ -280,7 +284,8 @@ nhắc AI sau khi có dữ liệu đủ chất lượng.
 
 ## 6.11. Kết luận chương
 
-Chương 6 đã kiểm thử CareFlow theo toàn bộ chuỗi từ đặt lịch, check-in, điều
+Chương 6 đã kiểm thử CareFlow theo toàn bộ chuỗi từ đặt lịch, QR check-in và
+geofence, điều
 phối, khám, cận lâm sàng, review kết quả, kê toa đến phát thuốc. Kết quả được
 truy vết về yêu cầu và thiết kế, đồng thời kiểm tra các rủi ro đặc thù của hệ
 thống phân tán như redelivery, race condition, mất WebSocket và giới hạn quyền.

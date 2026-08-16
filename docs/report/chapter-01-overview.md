@@ -2,142 +2,120 @@
 
 ## 1.1. Mục đích
 
-Khám bệnh ngoại trú tại bệnh viện công thường có sự tham gia của nhiều bộ phận,
-từ tiếp nhận, phòng khám, khu cận lâm sàng đến nhà thuốc. Thông tin của một
-lượt khám vì vậy được tạo ra và cập nhật ở nhiều thời điểm khác nhau. Nếu thiếu
-một công cụ điều phối thống nhất, bệnh nhân khó biết bước tiếp theo, nhân viên
-khó theo dõi tình trạng phục vụ, còn bác sĩ phải xử lý nhiều thao tác phối hợp
-ngoài hoạt động chuyên môn.
+Khám bệnh ngoại trú tại bệnh viện công là một quy trình có nhiều bước nối tiếp
+nhau. Một người bệnh có thể bắt đầu từ việc đăng ký hoặc đặt lịch, sau đó làm
+thủ tục tiếp nhận, chờ khám, thực hiện cận lâm sàng, quay lại gặp bác sĩ, nhận
+toa thuốc và đến nhà thuốc. Mỗi bước thường do một bộ phận phụ trách và diễn ra
+ở một khu vực khác nhau.
 
-Đề tài nhằm xây dựng CareFlow — hệ thống phần mềm hỗ trợ và điều phối hành trình
-khám ngoại trú tại bệnh viện công. Bệnh nhân, bác sĩ, nhân viên tiếp nhận, kỹ
-thuật viên cận lâm sàng và nhân viên cấp phát thuốc cùng được hưởng lợi từ một
-quy trình có trạng thái rõ ràng và thông tin liên tục. CareFlow hỗ trợ hành trình từ
-đặt khám, cấp phiếu và mã QR, check-in, xếp hàng, khám lâm sàng, cận lâm sàng,
-đọc kết quả, kê toa, phát thuốc đến lưu lại kết quả và lịch tái khám.
+Trong thực tế, người bệnh thường khó nắm được mình đang ở bước nào, cần đến đâu
+và phải chờ bao lâu. Khi số lượng người đến khám tăng, việc gọi lượt và cập nhật
+tình trạng phục vụ cũng trở nên khó theo dõi. Nhân viên phải trao đổi qua nhiều
+kênh, còn bác sĩ phải dành thời gian xử lý các công việc điều phối bên cạnh hoạt
+động chuyên môn. Thông tin của một lượt khám vì vậy có thể bị phân tán giữa các
+bộ phận.
 
-Mục đích của đề tài không phải thay thế toàn bộ hệ thống thông tin bệnh viện,
-mà xây dựng một mô hình có thể minh họa cách số hóa và liên kết các công đoạn
-khám ngoại trú. Luồng tự chi trả trên Patient Mobile được trình bày ở mức MVP
-qua trả trước phí khám và quyết toán cuối lượt; thanh toán và hoàn tiền
-production không thuộc phạm vi đề tài.
+Từ thực tế đó, đề tài đề xuất CareFlow — một hệ thống hỗ trợ theo dõi và điều
+phối hành trình khám ngoại trú. Hệ thống cung cấp cho bệnh nhân một nơi để xem
+lịch khám, phiếu khám, trạng thái chờ và các kết quả liên quan. Ở phía bệnh viện,
+bác sĩ và nhân viên có thể theo dõi các lượt đang chờ, thực hiện công việc của
+mình và chuyển người bệnh sang bước tiếp theo.
+
+Giá trị chính của CareFlow là tạo ra sự liên tục trong hành trình khám. Bệnh
+nhân được hướng dẫn rõ ràng hơn, bệnh viện giảm bớt việc phối hợp thủ công và
+các bộ phận có thể nhìn thấy thông tin cần thiết của cùng một lượt khám. Đề tài
+không nhằm thay thế toàn bộ hệ thống thông tin bệnh viện mà tập trung minh họa
+cách số hóa và liên kết các công đoạn chính của quy trình ngoại trú.
 
 ## 1.2. Mục tiêu
 
-### 1.2.1. Mục tiêu tổng quát
+Mục tiêu tổng quát của đề tài là phân tích, thiết kế và xây dựng một phiên bản
+CareFlow hỗ trợ bệnh nhân và bệnh viện quản lý hành trình khám ngoại trú một
+cách rõ ràng, thống nhất và thuận tiện hơn.
 
-Phân tích, thiết kế và xây dựng hệ thống CareFlow hỗ trợ số hóa hành trình khám
-ngoại trú tại bệnh viện công theo kiến trúc Microservices. Hệ thống hướng đến
-việc làm cho trạng thái phục vụ minh bạch hơn đối với bệnh nhân, đồng thời hỗ
-trợ bác sĩ và nhân viên y tế phối hợp các bước nghiệp vụ trên cùng một quy trình.
+Các mục tiêu cụ thể gồm:
 
-### 1.2.2. Mục tiêu cụ thể
-
-1. Khảo sát và mô hình hóa quy trình khám ngoại trú, các vai trò tham gia và
-   những vấn đề phát sinh trong cách vận hành hiện tại.
-2. Xác định mô hình vận hành đề xuất có CareFlow tham gia, bao gồm các quy tắc
-   về lịch khám, phòng khám, phiếu khám, mã QR và các điểm phục vụ.
-3. Xây dựng chức năng quản lý hồ sơ bệnh nhân, đặt lịch, chọn dịch vụ khám,
-   hiển thị lựa chọn thanh toán MVP và cấp phiếu khám điện tử.
-4. Xây dựng cơ chế quản lý hàng đợi gồm các làn `PRIORITY`, `NORMAL` và
-   `RESULT_REVIEW`, giữ FIFO trong từng làn và đề xuất lượt theo Round Robin
-   `1:1:1`; bác sĩ là người chủ động bấm gọi.
-5. Hỗ trợ các giai đoạn khám lâm sàng, tạo và thực hiện chỉ định cận lâm sàng,
-   phát hành kết quả, đưa bệnh nhân quay lại đọc kết quả, kê toa, hẹn tái khám
-   và phát thuốc theo hàng đợi FIFO.
-6. Tích hợp các miền nghiệp vụ thông qua REST API, sự kiện bất đồng bộ và cập
-   nhật thời gian thực; bảo đảm phân quyền, quyền sở hữu dữ liệu,
-   idempotency, audit và xử lý lỗi phù hợp với hệ thống phân tán.
-7. Xây dựng giao diện Patient Mobile và Hospital Web theo hành động tiếp theo
-   của từng vai trò, đồng thời hỗ trợ thông báo và theo dõi timeline của lượt
-   khám.
-8. Kiểm thử các Use Case, trạng thái, API, sự kiện, dữ liệu và yêu cầu phi chức
-   năng; đánh giá mức đáp ứng mục tiêu và nêu các giới hạn của phiên bản MVP.
+1. Khảo sát quy trình khám ngoại trú, xác định các bên tham gia và nhận diện
+   những khó khăn thường gặp trong quá trình phục vụ.
+2. Mô tả hành trình đề xuất từ lúc đăng ký hoặc đặt lịch đến khi người bệnh hoàn
+   tất khám, nhận thuốc và được lưu lại thông tin cần thiết.
+3. Hỗ trợ bệnh nhân quản lý thông tin cá nhân, đặt lịch, nhận phiếu khám, theo
+   dõi lượt chờ và xem các thông tin sau khám trên Patient Mobile.
+4. Hỗ trợ bác sĩ và nhân viên tiếp nhận, cận lâm sàng, phát thuốc thực hiện công
+   việc tương ứng trên Hospital Web.
+5. Điều phối các nhóm bệnh nhân có nhu cầu phục vụ khác nhau, bảo đảm việc gọi
+   lượt được thực hiện tuần tự và có sự cân bằng giữa các nhóm.
+6. Liên kết các bước khám lâm sàng, cận lâm sàng, đọc kết quả, kê toa và phát
+   thuốc để hạn chế việc thông tin bị đứt quãng giữa các bộ phận.
+7. Bảo đảm người dùng chỉ được thực hiện những công việc phù hợp với vai trò,
+   đồng thời lưu lại các thay đổi quan trọng trong quá trình phục vụ.
+8. Kiểm thử và đánh giá phiên bản MVP, từ đó xác định mức độ đáp ứng mục tiêu
+   cũng như những giới hạn còn lại của đề tài.
 
 ## 1.3. Phương pháp tiến hành
 
 ### 1.3.1. Khảo sát hiện trạng
 
-Đề tài bắt đầu bằng việc khảo sát quy trình khám ngoại trú và xác định các vai
-trò nghiệp vụ thực tế như bệnh nhân, bác sĩ, nhân viên tiếp nhận, kỹ thuật viên
-cận lâm sàng, nhân viên cấp phát thuốc và bộ phận quản lý bệnh viện. Quy trình hiện tại được
-mô tả theo dòng công việc và các tương tác giữa các vai trò, tập trung vào các
-vấn đề như chờ đợi, cập nhật trạng thái chậm, phối hợp giữa các điểm phục vụ và
-khó theo dõi kết quả của một lượt khám.
+Đề tài bắt đầu bằng việc tìm hiểu hành trình khám ngoại trú tại bệnh viện công,
+tập trung vào các bước người bệnh phải thực hiện và cách các bộ phận phối hợp
+với nhau. Những vấn đề như thời gian chờ, cách gọi lượt, việc chuyển người bệnh
+giữa các khu vực và khả năng theo dõi kết quả được ghi nhận làm cơ sở cho việc
+xác định nhu cầu của hệ thống.
 
 ### 1.3.2. Tìm hiểu nghiệp vụ và quy định
 
-Các quy tắc nghiệp vụ được tổng hợp từ hành trình khám đã thống nhất và các
-contract của service. Nội dung tìm hiểu gồm điều kiện đặt và hủy lịch, quan hệ
-`Department 1:N ClinicRoom`, cấp phiếu và check-in, điều phối ba làn queue,
-chuyển tiếp sang cận lâm sàng, tự động tạo lượt `RESULT_REVIEW`, tạo lượt phát
-thuốc, quyền truy cập hồ sơ và quy tắc xử lý các trạng thái `MISSED` hoặc
-`CANCELLED`.
+Các vai trò tham gia, điều kiện phục vụ và quy tắc xử lý trong hành trình khám
+được tổng hợp thành các yêu cầu nghiệp vụ. Nội dung này bao gồm việc đặt và hủy
+lịch, tiếp nhận, cấp phiếu, gọi lượt, thực hiện cận lâm sàng, quay lại đọc kết
+quả, kê toa, phát thuốc và xử lý các trường hợp người bệnh vắng mặt hoặc hủy
+lượt.
 
 ### 1.3.3. Nghiên cứu mô hình, phương pháp, giải thuật và công nghệ
 
-Đề tài áp dụng phân tích và thiết kế hướng đối tượng với UML để biểu diễn tác
-nhân, Use Case, tương tác, trạng thái và các thành phần của hệ thống. Kiến trúc
-Microservices được nghiên cứu theo ranh giới nghiệp vụ và quyền sở hữu dữ liệu.
-REST API, RabbitMQ, WebSocket, PostgreSQL, Java/Spring Boot, Flutter và các
-công cụ container hóa được lựa chọn dựa trên vai trò cụ thể trong CareFlow; cơ sở
-triết lý và lý do lựa chọn được trình bày ở Chương 2.
+Đề tài sử dụng cách tiếp cận hướng đối tượng và các biểu đồ UML để mô tả yêu
+cầu, hành vi và cấu trúc của hệ thống. Mô hình phát triển được lựa chọn nhằm
+phân chia các nhóm nghiệp vụ, giúp các bộ phận có thể phối hợp nhưng vẫn giữ
+được ranh giới xử lý riêng. Các công nghệ được sử dụng và lý do lựa chọn sẽ
+được trình bày cụ thể ở Chương 2.
 
 ### 1.3.4. Phân tích, thiết kế, hiện thực, kiểm thử và đánh giá
 
-Sau khi xác định phạm vi và quy tắc, đề tài lập danh mục yêu cầu, mô tả các
-tình huống phần mềm tham gia giải quyết và xây dựng các biểu đồ phân tích. Từ
-đó, hệ thống được thiết kế theo lớp giao diện, xử lý/API và thực thể/dữ liệu;
-kiến trúc, cơ sở dữ liệu, giao tiếp và các cơ chế đáp ứng yêu cầu chất lượng
-được xác định trước khi hiện thực. Phiên bản phần mềm được trình bày theo các
-Use Case đã phân tích, sau đó được kiểm thử theo ma trận truy vết và đánh giá
-trên các tiêu chí chức năng, tin cậy, bảo mật, hiệu năng và khả năng bảo trì.
+Sau khi xác định nhu cầu và phạm vi, đề tài lập danh sách yêu cầu, mô tả các
+Use Case và xây dựng các biểu đồ phân tích. Từ kết quả phân tích, hệ thống được
+thiết kế, hiện thực trên hai hướng sử dụng là Patient Mobile và Hospital Web.
+Các chức năng được kiểm thử theo những tình huống đã xác định, sau đó đánh giá
+dựa trên mức độ đúng đắn, tính thuận tiện và khả năng đáp ứng quy trình.
 
 ## 1.4. Phạm vi đề tài
 
 ### 1.4.1. Phạm vi thực hiện
 
-Phạm vi của CareFlow là hành trình khám ngoại trú tại bệnh viện công, bắt đầu
-từ đăng ký và quản lý hồ sơ, tra cứu khoa và khung giờ, chọn dịch vụ, đặt lịch,
-nhận phiếu khám và mã QR. Hành trình tiếp tục qua check-in, quản lý queue tại
-phòng khám, khám lâm sàng, chỉ định và thực hiện cận lâm sàng, phát hành kết
-quả, quay lại bác sĩ đọc kết quả, kê toa, hẹn tái khám và phát thuốc.
+Đề tài tập trung vào hành trình khám ngoại trú, gồm các nhóm chức năng chính:
 
-Các điểm phục vụ được mô hình hóa đủ để một khoa có thể có nhiều phòng, trong
-khi dữ liệu MVP chỉ cấu hình một phòng active cho mỗi khoa. Queue phòng khám
-gồm ba làn logic `PRIORITY`, `NORMAL` và `RESULT_REVIEW`; queue cận lâm sàng và
-phát thuốc giữ FIFO riêng theo điểm phục vụ.
+- đăng ký, quản lý hồ sơ và đặt lịch khám;
+- tiếp nhận người bệnh, cấp phiếu và xác nhận có mặt;
+- theo dõi và điều phối lượt chờ tại phòng khám, khu cận lâm sàng và nhà thuốc;
+- thực hiện khám, tạo chỉ định và phát hành kết quả cận lâm sàng;
+- đưa người bệnh quay lại gặp bác sĩ để đọc kết quả, kê toa và hẹn tái khám;
+- đối chiếu toa, phát thuốc và hoàn tất lượt khám.
 
-Các đối tượng sử dụng trong phạm vi thực hiện gồm:
-
-- **Bệnh nhân:** sử dụng Patient Mobile để quản lý hồ sơ, đặt khám, xem phiếu,
-  theo dõi queue, nhận hướng dẫn, xem kết quả, toa và lịch tái khám.
-- **Bác sĩ:** sử dụng Hospital Web để xem queue, gọi lượt, thực hiện phiên khám,
-  tạo chỉ định, đọc kết quả, kê toa và hoàn tất lượt khám.
-- **Nhân viên tiếp nhận:** quét QR, xác nhận bệnh nhân có mặt và hỗ trợ các
-  trường hợp lỡ lượt.
-- **Kỹ thuật viên cận lâm sàng:** theo dõi order, gọi lượt, thực hiện kỹ thuật
-  và phát hành kết quả.
-- **Nhân viên cấp phát thuốc:** theo dõi queue FIFO, đối chiếu toa và xác nhận
-  đã phát thuốc.
-- **Bộ phận quản lý bệnh viện:** duy trì khoa, phòng, lịch làm việc, capacity
-  và điểm phục vụ ở mức nghiệp vụ.
+Bệnh nhân sử dụng Patient Mobile để theo dõi hành trình và nhận thông tin cần
+thiết. Bác sĩ, nhân viên tiếp nhận, kỹ thuật viên cận lâm sàng và nhân viên phát
+thuốc sử dụng Hospital Web để thực hiện công việc theo vai trò. Phiên bản MVP
+mô hình hóa khả năng mở rộng cho nhiều phòng phục vụ, nhưng chỉ cần cấu hình một
+phòng hoạt động cho mỗi khoa trong quá trình minh họa.
 
 ### 1.4.2. Phần mô phỏng
 
-Patient Mobile mô phỏng bước chọn và ghi nhận phí khám bằng fixture dịch vụ
-`GENERAL_CONSULTATION` cùng hai lựa chọn `ONLINE_MOCK` và
-`CASH_AT_HOSPITAL`. Ở cuối lượt, adapter demo tổng hợp phí khám, cận lâm sàng
-và thuốc, đối trừ khoản đã trả trước rồi trình bày `PAYMENT_DUE`, `SETTLED`,
-`REFUND_PENDING` hoặc `REFUNDED`. Phạm vi chỉ xét người bệnh tự chi trả. Các
-trạng thái này minh họa trải nghiệm nhưng không phải giao dịch production.
+Đề tài chỉ xét người bệnh tự chi trả. Các khoản phí và việc thanh toán được mô
+phỏng để minh họa cách hệ thống ghi nhận khoản đã trả, tổng hợp chi phí và xác
+định tình trạng thanh toán ở các thời điểm phù hợp trong hành trình. Đây không
+phải là kết nối với cổng thanh toán hoặc quy trình quyết toán thực tế của bệnh
+viện.
 
 ### 1.4.3. Phần ngoài phạm vi
 
-Phiên bản báo cáo không triển khai đầy đủ cấp cứu, điều trị nội trú, quản lý
-giường bệnh, kho dược và tồn kho, PACS/DICOM, cổng thanh toán/hoàn tiền
-production, catalog giá production, SMS và email.
-
-Trong báo cáo, các chức năng thuộc phạm vi MVP được xem là phiên bản hoàn chỉnh
-theo thiết kế và contract đã chốt. Các giới hạn nêu trên là giới hạn phạm vi
-nghiệp vụ, không phải lỗi thiếu sót của quá trình hiện thực.
+Đề tài chưa triển khai cấp cứu, điều trị nội trú, quản lý giường bệnh, quản lý
+kho và tồn dược, tích hợp thiết bị y tế hoặc chuẩn PACS/DICOM. Các dịch vụ thanh
+toán và hoàn tiền production, danh mục giá thực tế, cũng như việc gửi SMS và
+email tự động cũng nằm ngoài phạm vi của phiên bản này.

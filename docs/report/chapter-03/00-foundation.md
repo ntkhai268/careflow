@@ -37,7 +37,7 @@ không được gọi là production.
 - Quản lý hồ sơ bệnh nhân và hồ sơ cũ do bệnh nhân tải lên.
 - Tra cứu khoa, khung giờ, đặt và hủy lịch khám.
 - Hiển thị dịch vụ khám và fixture thanh toán phí khám trên Patient Mobile.
-- Cấp phiếu khám điện tử, số thứ tự và QR.
+- Cấp phiếu khám điện tử, số thứ tự và QR check-in theo phòng/phiên để bệnh viện hiển thị.
 - Check-in tại phòng khám và quản lý ba làn active queue `PRIORITY`, `NORMAL`,
   `RESULT_REVIEW`.
 - Đề xuất Round Robin `1:1:1`; bác sĩ chủ động gọi, gọi lại, đánh dấu lỡ lượt và
@@ -105,9 +105,9 @@ phiên bản hoàn chỉnh theo quyết định của tác giả. Chỉ `DEMO_MO
 
 | Mã | Tác nhân | Vai trò chính |
 |---|---|---|
-| `ACT-PATIENT` | Bệnh nhân | Quản lý hồ sơ, đặt khám, xem phiếu, theo dõi hành trình và kết quả |
+| `ACT-PATIENT` | Bệnh nhân | Quản lý hồ sơ, đặt khám, quét QR tại bệnh viện, theo dõi hành trình và kết quả |
 | `ACT-DOCTOR` | Bác sĩ | Theo dõi queue, khám, chỉ định, đọc kết quả, kê toa và hẹn tái khám |
-| `ACT-RECEPTION` | Nhân viên tiếp nhận | Quét QR, check-in và hỗ trợ trường hợp lỡ lượt |
+| `ACT-RECEPTION` | Nhân viên tiếp nhận | Hiển thị QR check-in, hỗ trợ check-in tại quầy và xử lý trường hợp lỡ lượt |
 | `ACT-LAB` | Kỹ thuật viên cận lâm sàng | Nhận order, gọi lượt, thực hiện và phát hành kết quả |
 | `ACT-PHARMACY` | Nhân viên cấp phát thuốc | Theo dõi queue tại điểm cấp phát, gọi lượt, đối chiếu và xác nhận đã phát thuốc |
 | `ACT-MANAGEMENT` | Bộ phận quản lý bệnh viện | Duy trì khoa, phòng, lịch, capacity và điểm phục vụ ở mức nghiệp vụ |
@@ -117,8 +117,9 @@ phiên bản hoàn chỉnh theo quyết định của tác giả. Chỉ `DEMO_MO
 thành phần của hệ thống, không phải tác nhân con người trong Use Case Diagram.
 Xác thực và phân quyền là tiền điều kiện/yêu cầu vận hành; không biểu diễn
 `User`, actor kỹ thuật `Admin`, Đăng nhập hoặc Phân quyền như Use Case nghiệp vụ.
-Kiosk chỉ được biểu diễn là tác nhân phụ nếu xác định nó là hệ thống bên ngoài
-CareFlow; trong MVP, check-in chính do nhân viên tiếp nhận thực hiện.
+Màn hình hiển thị QR là một phần của Hospital Web/CareFlow, không phải tác nhân
+nghiệp vụ độc lập. Trong MVP, check-in chính do bệnh nhân quét QR tại bệnh viện;
+nhân viên tiếp nhận là luồng hỗ trợ cho người không dùng Mobile.
 `ACT-PHARMACY` được ánh xạ vào role kỹ thuật `STAFF` trong MVP; việc tách role
 `PHARMACY_STAFF` là khả năng mở rộng, không phải điều kiện để triển khai queue.
 
@@ -129,7 +130,9 @@ CareFlow; trong MVP, check-in chính do nhân viên tiếp nhận thực hiện.
 | Appointment | Lịch khám trong tương lai; giữ slot nhưng không chứng minh bệnh nhân đã có mặt |
 | Department | Khoa chuyên môn; một khoa có thể quản lý nhiều phòng khám |
 | ClinicRoom | Phòng khám vật lý thuộc một Department; là đích của Appointment và queue phòng khám |
-| Visit Ticket | Phiếu khám điện tử gồm số thứ tự, phòng, khung giờ và QR |
+| Visit Ticket | Phiếu khám điện tử gồm số thứ tự, phòng và khung giờ; không phải QR check-in dùng chung tại bệnh viện |
+| Hospital Check-in QR | QR do bệnh viện hiển thị theo phòng/phiên, chứa token ký số có thời hạn để bệnh nhân quét khi đến nơi |
+| Hospital Geofence | Cấu hình tâm vị trí và bán kính cho phép dùng để xác nhận thiết bị của bệnh nhân đang ở bệnh viện |
 | Queue Entry | Một lượt chờ tại một điểm phục vụ cụ thể |
 | Active Queue | Danh sách lượt đủ điều kiện được gọi tại thời điểm hiện tại |
 | Queue Type | Công đoạn phục vụ: `CONSULTATION`, `LAB_EXECUTION` hoặc `PHARMACY_DISPENSING` |
@@ -141,7 +144,7 @@ CareFlow; trong MVP, check-in chính do nhân viên tiếp nhận thực hiện.
 | Result Review | Lượt quay lại bác sĩ đọc kết quả trong cùng consultation |
 | Prescription | Toa thuốc do bác sĩ tạo và xác nhận |
 | AppointmentServiceOption | Dịch vụ Mobile hiển thị trong bước đặt khám; MVP dùng `GENERAL_CONSULTATION` |
-| AppointmentPaymentReceipt | Receipt local mô tả lựa chọn `ONLINE_MOCK`/`CASH_AT_HOSPITAL`; tiền mặt là `DUE_AT_HOSPITAL` |
+| AppointmentPaymentReceipt | Receipt local ghi nhận `ONLINE_MOCK` đã trả trước; receipt tiền mặt cũ chỉ được đọc tương thích |
 | VisitSettlement | Bản quyết toán cuối lượt gồm tổng chi phí, khoản trả trước, số phải trả thêm, số phải hoàn và trạng thái |
 | Follow-up | Lịch tái khám được tạo từ kết luận của consultation |
 | Service Point | Phòng khám, khu lấy mẫu, quầy phát thuốc hoặc vị trí cung cấp một dịch vụ |
@@ -261,13 +264,17 @@ thái Prescription hoặc Queue. Chỉ trạng thái còn `PAYMENT_DUE` mới ch
    ra và lưu phòng, không nhận `roomId` từ bệnh nhân và không chọn random.
 4. Nếu truy vấn phòng active trả 0 hoặc nhiều hơn 1 kết quả, MVP báo lỗi cấu hình
    thay vì âm thầm dùng `findFirst()`.
-5. Phiếu có thể được cấp trước nhưng lượt khám ban đầu chỉ vào active queue sau
-   khi bệnh nhân check-in.
+5. Bệnh viện hiển thị QR check-in theo phòng/phiên. Lượt khám ban đầu chỉ vào
+   active queue sau khi bệnh nhân quét QR hợp lệ và vị trí thiết bị nằm trong
+   Hospital Geofence; người không dùng Mobile được nhân viên hỗ trợ tại quầy.
 6. Mỗi phòng và phiên có ba làn `PRIORITY`, `NORMAL`, `RESULT_REVIEW`; đề xuất
    theo Round Robin `1:1:1`, bỏ qua làn rỗng và giữ FIFO trong từng làn.
 7. Lượt khám ban đầu mặc định thuộc `NORMAL`; chỉ nhân viên có quyền xác nhận
    `PRIORITY` theo diện đã kiểm tra và phải lưu lý do/audit.
-8. QR chỉ chứa token tham chiếu hoặc token đã ký, không chứa dữ liệu y tế trực tiếp.
+8. QR check-in chỉ chứa token phiên/phòng ký số có thời hạn, không chứa dữ liệu y
+   tế trực tiếp. Server không tin tọa độ do client tự khai báo nếu thiếu dữ liệu
+   vị trí hợp lệ; khoảng cách được tính từ tâm và bán kính cấu hình của bệnh viện.
+   Ứng dụng chỉ lấy vị trí tại thời điểm check-in, không theo dõi liên tục.
 9. Bệnh nhân lỡ lượt không được giữ ở đầu queue.
 10. Order đủ điều kiện tự tạo lượt cận lâm sàng; bệnh nhân không check-in lại.
 10a. Laboratory Order hợp lệ tạo lượt `LAB_EXECUTION` ngay; chi phí được cộng vào

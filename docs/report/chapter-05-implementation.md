@@ -75,8 +75,8 @@ hoạt động của khoa và trả về appointment `CONFIRMED` cùng `roomId`.
 khám được lưu qua `AppointmentPaymentReceipt` local:
 
 - `ONLINE_MOCK` chuyển receipt sang `PAID` trong môi trường demo.
-- `CASH_AT_HOSPITAL` chuyển receipt sang `DUE_AT_HOSPITAL` và hướng dẫn thanh
-  toán tại bệnh viện.
+- Receipt cũ có `CASH_AT_HOSPITAL`/`DUE_AT_HOSPITAL` vẫn được đọc để tương thích
+  dữ liệu local, nhưng không còn được tạo từ giao diện booking mới.
 
 Receipt local không làm thay đổi trạng thái Appointment và lỗi lưu receipt
 không hủy một lịch hẹn đã tạo thành công. Giá trị thực tế đã thu được dùng làm
@@ -89,19 +89,26 @@ không có phòng active được trả về ngay trên form.
 
 ### 5.4.2. `UC-QUE-02` — Check-in bằng QR
 
-Màn hình vé hiển thị mã QR, số thứ tự, khoa, phòng và trạng thái hiện tại.
-Nhân viên có thể quét QR hoặc tìm theo mã; bệnh nhân không có điện thoại vẫn
-được tạo ticket trực tiếp tại quầy với cùng API. Queue Service kiểm tra ticket
-chưa check-in, ghi `checkedInAt`, xác định session và đưa entry vào lane phù hợp.
+Hospital Web hiển thị QR check-in theo phòng và phiên khám. Bệnh nhân dùng Patient
+Mobile quét QR, chọn lịch đang đến và cấp quyền vị trí; Mobile gửi token QR,
+`appointmentId`, `latitude`, `longitude` và `accuracyMeters`. Queue Service kiểm
+tra token, lịch/phòng/phiên và khoảng cách tới Hospital Geofence trước khi ghi
+`checkedInAt`, xác định session và đưa entry vào lane phù hợp.
+
+Nếu vị trí nằm ngoài bán kính, không lấy được vị trí hoặc QR đã hết hạn, hệ thống
+không xác nhận có mặt. Bệnh nhân không có điện thoại vẫn được nhân viên hỗ trợ
+tại quầy bằng mã phiếu và quy trình staff-assisted.
 
 Queue entry của lượt khám ban đầu thuộc `PRIORITY` hoặc `NORMAL`; lượt quay lại
 đọc kết quả thuộc phase `RESULT_REVIEW`; lượt quầy thuốc dùng queue type
 `PHARMACY_DISPENSING`. Giao diện Mobile đọc snapshot qua REST và nhận thay đổi
 qua WebSocket, nhưng mọi trạng thái quan trọng vẫn được lưu trong Queue Service.
 
-Hospital Web gọi `POST /api/queues/check-in`. Queue Service lưu Queue Entry,
-`checkedInAt`, audit và event `PatientCheckedIn`; QR sai ngày/chữ ký/phòng,
-ticket đã dùng hoặc thiếu lý do ưu tiên đều bị từ chối mà không tạo entry trùng.
+Patient Mobile gọi `POST /api/queues/check-in`; Hospital Web gọi endpoint hiển
+thị QR và dùng luồng hỗ trợ khi cần. Queue Service lưu Queue Entry, `checkedInAt`,
+phương thức check-in, kết quả geofence, audit và event `PatientCheckedIn`; QR sai
+ngày/chữ ký/phòng, ticket đã dùng, ngoài bán kính hoặc thiếu lý do ưu tiên đều bị
+từ chối mà không tạo entry trùng.
 
 ### 5.4.3. `UC-QUE-04` — Theo dõi, đề xuất và gọi lượt
 

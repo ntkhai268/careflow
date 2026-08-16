@@ -229,8 +229,8 @@ Mô tả các đối tượng nghiệp vụ xuất hiện trong Use Case.
 
 #### 3.4.4. State Diagram
 
-Mô tả vòng đời của Appointment, Queue Entry, Consultation, Laboratory Order và
-Prescription.
+Mô tả vòng đời của Appointment, Queue Entry, Consultation, Laboratory Order,
+Prescription và `VisitSettlement` (`DEMO_MOCK`).
 
 ### 3.5. Định nghĩa yêu cầu cho các thành phần CareFlow
 
@@ -317,13 +317,19 @@ Repository và database; khác Sequence Diagram hộp đen ở Chương 3.
 
 #### 4.3.2. ERD hoặc Class-to-Table
 
-#### 4.3.3. Chuẩn hóa và mô tả bảng
+#### 4.3.3. Từ điển dữ liệu
 
-#### 4.3.4. Repository và truy vấn dữ liệu
+Trình bày từng bảng theo mẫu `ID | Attribute | Type | Constraint | Note`; phân
+biệt rõ khóa ngoại cùng database với tham chiếu logic xuyên service và ghi trạng
+thái đã có migration hay mới là mô hình logic đích.
 
-#### 4.3.5. Stored Procedure nếu thực tế có sử dụng
+#### 4.3.4. Chuẩn hóa và mô tả bảng
 
-#### 4.3.6. Trigger, constraint và migration
+#### 4.3.5. Repository và truy vấn dữ liệu
+
+#### 4.3.6. Stored Procedure nếu thực tế có sử dụng
+
+#### 4.3.7. Trigger, constraint và migration
 
 Không tự tạo Stored Procedure hoặc Trigger chỉ để đủ đề mục. Nếu CareFlow dùng
 JPA Repository và Flyway thì trình bày đúng giải pháp đó.
