@@ -17,7 +17,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   "/admin/facility": "Cấu hình Cơ sở Y tế",
   "/admin/schedule": "Cấu hình Lịch & Khung giờ",
   "/lab/queue": "Hàng đợi Cận lâm sàng",
-  "/staff/checkin": "Quét QR Check-in",
+  "/staff/checkin": "QR Check-in bệnh viện",
   "/staff/pharmacy": "Hàng đợi Phát thuốc",
 };
 

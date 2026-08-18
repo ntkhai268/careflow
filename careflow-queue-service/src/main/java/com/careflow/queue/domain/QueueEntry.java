@@ -39,6 +39,11 @@ public class QueueEntry {
     @Column(name = "room_display_name_snapshot", length = 150) private String roomDisplayNameSnapshot;
     @Column(name = "checked_in_at") private Instant checkedInAt;
     @Column(name = "checked_in_by_user_id") private UUID checkedInByUserId;
+    @Column(name = "check_in_method", length = 40) private String checkInMethod;
+    @Column(name = "check_in_distance_meters") private Double checkInDistanceMeters;
+    @Column(name = "check_in_accuracy_meters") private Double checkInAccuracyMeters;
+    @Column(name = "check_in_latitude") private Double checkInLatitude;
+    @Column(name = "check_in_longitude") private Double checkInLongitude;
     @Column(name = "priority_reason_code", length = 50) private String priorityReasonCode;
     @Column(name = "eligible_since_at") private Instant eligibleSinceAt;
     @Column(name = "called_at") private Instant calledAt;

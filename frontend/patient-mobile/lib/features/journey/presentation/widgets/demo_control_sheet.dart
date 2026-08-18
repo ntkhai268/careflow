@@ -81,7 +81,7 @@ class DemoControlSheet extends ConsumerWidget {
 
 List<_DemoEvent> _eventsFor(JourneyStatus status) => switch (status) {
   JourneyStatus.ticketIssued => const [
-    _DemoEvent(JourneyEvent.staffScannedQr, 'Mô phỏng nhân viên quét QR'),
+    _DemoEvent(JourneyEvent.staffScannedQr, 'Mô phỏng bệnh nhân quét QR'),
   ],
   JourneyStatus.checkedIn => const [
     _DemoEvent(

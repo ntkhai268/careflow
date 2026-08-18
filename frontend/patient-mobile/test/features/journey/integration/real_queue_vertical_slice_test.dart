@@ -7,10 +7,9 @@ import 'package:careflow_patient/services/queue_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:qr_flutter/qr_flutter.dart';
 
 void main() {
-  testWidgets('production ticket renders Queue Service QR and assigned room', (
+  testWidgets('production ticket renders hospital QR check-in action and assigned room', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -22,10 +21,10 @@ void main() {
     expect(find.text('TK-047'), findsNWidgets(2));
     expect(find.text('Phòng 21 - Lầu 1 khu A'), findsOneWidget);
     expect(
-      find.text('Xuất trình QR tại phòng khám để check-in'),
+      find.text('Quét QR tại bệnh viện để check-in'),
       findsOneWidget,
     );
-    expect(find.byType(QrImageView), findsOneWidget);
+    expect(find.text('Quét QR check-in tại bệnh viện'), findsOneWidget);
   });
 
   testWidgets('production queue renders live called state', (tester) async {

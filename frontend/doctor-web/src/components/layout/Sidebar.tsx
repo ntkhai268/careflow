@@ -27,7 +27,7 @@ const getNavItems = (role?: string) => {
   if (normalizedRole.includes("STAFF")) {
     return [
       { label: "Tổng quan", href: "/dashboard/general" },
-      { label: "Quét QR Check-in", href: "/staff/checkin" },
+      { label: "QR Check-in bệnh viện", href: "/staff/checkin" },
       { label: "Hàng đợi phát thuốc", href: "/staff/pharmacy" },
     ];
   }

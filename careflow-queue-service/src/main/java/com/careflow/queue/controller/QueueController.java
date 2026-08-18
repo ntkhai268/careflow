@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
@@ -66,12 +65,15 @@ public class QueueController {
                 .status(201).message("Tiếp nhận thành công").data(entry).build());
     }
 
-    @GetMapping("/appointments/{appointmentId}/qr")
-    public ApiResponse<Map<String, String>> qr(@PathVariable UUID appointmentId,
-                                               @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
-                                               @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
-        requireRole(role, AppConstants.ROLE_PATIENT);
-        return ApiResponse.success(Map.of("qrToken", queueService.issueQr(appointmentId, userId)));
+    @GetMapping("/rooms/{roomId}/check-in-qr")
+    public ApiResponse<CheckInQrResponse> checkInQr(
+            @PathVariable String roomId,
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) String session,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        requireAnyRole(role, AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success(queueService.issueHospitalCheckInQr(roomId, date, session, userId, role));
     }
 
     @PostMapping("/check-in")
@@ -79,8 +81,8 @@ public class QueueController {
                                                    @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
                                                    @RequestHeader(AppConstants.HEADER_USER_ROLE) String role,
                                                    @RequestHeader(value = AppConstants.HEADER_CORRELATION_ID, required = false) String correlationId) {
-        requireAnyRole(role, AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
-        return ApiResponse.success("Check-in thành công", queueService.checkIn(request, userId, correlationId));
+        requireAnyRole(role, AppConstants.ROLE_PATIENT, AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success("Check-in thành công", queueService.checkIn(request, userId, role, correlationId));
     }
 
     @GetMapping("/rooms/{roomId}/active")

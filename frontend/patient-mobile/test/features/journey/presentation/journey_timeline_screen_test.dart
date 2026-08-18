@@ -15,7 +15,7 @@ void main() {
     final consultation = tester.getTopLeft(find.text('Bác sĩ đang khám'));
 
     expect(checkIn.dy, lessThan(consultation.dy));
-    expect(find.text('Nhân viên đã quét mã QR.'), findsOneWidget);
+    expect(find.text('Bệnh nhân đã quét QR bệnh viện.'), findsOneWidget);
     expect(find.text('Bác sĩ đã bắt đầu buổi khám của bạn.'), findsOneWidget);
     expect(find.text('15:00 • 30/07/2026'), findsOneWidget);
   });
@@ -45,7 +45,7 @@ PatientJourney timelineJourney() => PatientJourney(
     JourneyTimelineEvent(
       id: 'check-in',
       title: 'Đã xác nhận check-in',
-      detail: 'Nhân viên đã quét mã QR.',
+      detail: 'Bệnh nhân đã quét QR bệnh viện.',
       occurredAt: DateTime.utc(2026, 7, 30, 8),
     ),
   ],

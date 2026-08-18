@@ -47,13 +47,13 @@ _StatusPresentation _presentationFor(JourneyStatus status) => switch (status) {
     Icons.qr_code_scanner_rounded,
     AppColors.info,
     'Phiếu khám đã sẵn sàng',
-    'Vui lòng đưa mã QR cho nhân viên để xác nhận đến khám.',
+    'Đến bệnh viện và quét mã QR đang được hiển thị tại phòng khám.',
   ),
   JourneyStatus.checkedIn => const _StatusPresentation(
     Icons.verified_user_rounded,
     AppColors.info,
     'Đã xác nhận đến khám',
-    'Nhân viên đang đưa bạn vào hàng đợi phòng khám.',
+    'Hệ thống đã xác nhận vị trí và đưa bạn vào hàng đợi phòng khám.',
   ),
   JourneyStatus.waiting => const _StatusPresentation(
     Icons.people_alt_rounded,

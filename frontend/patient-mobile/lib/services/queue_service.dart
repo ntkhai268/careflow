@@ -47,9 +47,37 @@ class QueueService {
     }
   }
 
+  Future<void> checkInAtHospital({
+    required String appointmentId,
+    required String checkInQrToken,
+    required double latitude,
+    required double longitude,
+    required double accuracyMeters,
+  }) async {
+    try {
+      await _api.post(
+        '${ApiConfig.queues}/check-in',
+        data: {
+          'appointmentId': appointmentId,
+          'checkInQrToken': checkInQrToken,
+          'latitude': latitude,
+          'longitude': longitude,
+          'accuracyMeters': accuracyMeters,
+        },
+      );
+    } on DioException catch (error) {
+      throw _mapError(
+        error,
+        notFound: 'Không tìm thấy lịch hẹn để check-in.',
+        fallback: 'Không thể check-in. Hãy đảm bảo bạn đang ở trong khuôn viên bệnh viện.',
+      );
+    }
+  }
+
   QueueServiceException _mapError(
     DioException error, {
     required String notFound,
+    String fallback = 'Không thể tải trạng thái hàng đợi. Vui lòng thử lại.',
   }) {
     final status = error.response?.statusCode;
     if (status == 404) {
@@ -58,7 +86,7 @@ class QueueService {
     return QueueServiceException(
       ApiErrorMessage.from(
         error,
-        fallback: 'Không thể tải trạng thái hàng đợi. Vui lòng thử lại.',
+        fallback: fallback,
       ),
       statusCode: status,
     );

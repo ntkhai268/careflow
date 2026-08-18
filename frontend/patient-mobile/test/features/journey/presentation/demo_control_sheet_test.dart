@@ -31,7 +31,7 @@ void main() {
     await tester.pumpWidget(hubApp(demoMode: true));
 
     expect(find.text('Điều khiển mô phỏng'), findsOneWidget);
-    expect(find.text('Mô phỏng nhân viên quét QR'), findsOneWidget);
+    expect(find.text('Mô phỏng bệnh nhân quét QR'), findsOneWidget);
     expect(find.text('Mô phỏng nhân viên đưa vào hàng đợi'), findsNothing);
   });
 
@@ -39,7 +39,7 @@ void main() {
     tester,
   ) async {
     const cases = [
-      (JourneyStatus.ticketIssued, ['Mô phỏng nhân viên quét QR']),
+      (JourneyStatus.ticketIssued, ['Mô phỏng bệnh nhân quét QR']),
       (JourneyStatus.checkedIn, ['Mô phỏng nhân viên đưa vào hàng đợi']),
       (JourneyStatus.waiting, ['Mô phỏng bác sĩ gọi']),
       (JourneyStatus.called, ['Mô phỏng bác sĩ bắt đầu khám']),
@@ -116,13 +116,13 @@ void main() {
     }
   });
 
-  testWidgets('sends the staff QR scan event to the controller', (
+  testWidgets('sends the patient QR scan event to the controller', (
     tester,
   ) async {
     final controller = RecordingJourneyController();
     await tester.pumpWidget(hubApp(demoMode: true, controller: controller));
 
-    await tester.tap(find.text('Mô phỏng nhân viên quét QR'));
+    await tester.tap(find.text('Mô phỏng bệnh nhân quét QR'));
 
     expect(controller.receivedEvents, [JourneyEvent.staffScannedQr]);
   });

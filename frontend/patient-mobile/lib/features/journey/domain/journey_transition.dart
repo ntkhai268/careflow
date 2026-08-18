@@ -123,7 +123,7 @@ const Map<JourneyEvent, _JourneyMessage> _messages = {
   JourneyEvent.staffScannedQr: _JourneyMessage(
     'Đã xác nhận check-in',
     'Đã xác nhận check-in',
-    'Nhân viên đã quét mã QR và xác nhận bạn đến khám.',
+    'Bệnh nhân đã quét QR bệnh viện và được xác nhận trong vùng geofence.',
   ),
   JourneyEvent.admittedToClinicQueue: _JourneyMessage(
     'Đã vào hàng đợi khám',

@@ -26,6 +26,7 @@ import '../features/journey/presentation/result_review_screen.dart';
 import '../features/journey/presentation/visit_outcome_screen.dart';
 import '../features/journey/presentation/visit_results_screen.dart';
 import '../features/journey/presentation/visit_ticket_screen.dart';
+import '../features/journey/presentation/hospital_qr_check_in_screen.dart';
 import '../features/journey/domain/journey_models.dart';
 import '../models/patient.dart';
 import '../models/appointment.dart';
@@ -163,6 +164,12 @@ final GoRouter appRouter = GoRouter(
         GoRoute(
           path: 'ticket',
           builder: (context, state) => VisitTicketScreen(
+            appointmentId: state.pathParameters['appointmentId']!,
+          ),
+        ),
+        GoRoute(
+          path: 'check-in',
+          builder: (context, state) => HospitalQrCheckInScreen(
             appointmentId: state.pathParameters['appointmentId']!,
           ),
         ),

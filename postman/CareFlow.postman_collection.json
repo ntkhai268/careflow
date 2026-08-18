@@ -885,7 +885,7 @@
           ]
         },
         {
-          "name": "02 - QR legacy theo appointment",
+          "name": "02 - Lấy QR check-in bệnh viện theo phòng",
           "request": {
             "method": "GET",
             "header": [],
@@ -894,13 +894,13 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{patientToken}}",
+                  "value": "{{staffToken}}",
                   "type": "string"
                 }
               ]
             },
-            "url": "{{baseUrl}}/api/queues/appointments/{{appointmentId}}/qr",
-            "description": ""
+            "url": "{{baseUrl}}/api/queues/rooms/{{roomId}}/check-in-qr?session=MORNING",
+            "description": "STAFF hoặc ADMIN lấy QR để hiển thị tại bệnh viện; bệnh nhân dùng Patient Mobile quét mã này."
           },
           "event": [
             {
@@ -911,7 +911,7 @@
                   "pm.test('HTTP thành công', () => pm.expect(pm.response.code).to.be.oneOf([200, 201, 204]));",
                   "if (pm.response.code !== 204) {",
                   "  const json = pm.response.json();",
-                  "  if (json.data) pm.environment.set('qrToken', json.data);",
+                  "  if (json.data && json.data.qrToken) pm.environment.set('hospitalQrToken', json.data.qrToken);",
                   "}"
                 ]
               }
@@ -919,7 +919,7 @@
           ]
         },
         {
-          "name": "03 - Staff check-in QR",
+          "name": "03 - Patient check-in QR + geofence",
           "request": {
             "method": "POST",
             "header": [
@@ -933,14 +933,14 @@
               "bearer": [
                 {
                   "key": "token",
-                  "value": "{{staffToken}}",
+                  "value": "{{patientToken}}",
                   "type": "string"
                 }
               ]
             },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"qrToken\": \"{{qrToken}}\",\n  \"roomId\": \"{{roomId}}\",\n  \"queueClass\": \"NORMAL\",\n  \"priorityReasonCode\": null\n}",
+              "raw": "{\n  \"appointmentId\": \"{{appointmentId}}\",\n  \"checkInQrToken\": \"{{hospitalQrToken}}\",\n  \"latitude\": 10.7769,\n  \"longitude\": 106.7009,\n  \"accuracyMeters\": 12.5\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -948,7 +948,7 @@
               }
             },
             "url": "{{baseUrl}}/api/queues/check-in",
-            "description": "Bắt buộc token STAFF hoặc ADMIN. Active queue chỉ nhận bệnh nhân sau bước này."
+            "description": "Patient Mobile gửi QR bệnh viện cùng vị trí hiện tại; server kiểm tra ownership, ngày/phòng, accuracy và geofence trước khi active queue."
           },
           "event": [
             {

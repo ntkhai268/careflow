@@ -11,7 +11,7 @@ class VisitTicket {
     required this.roomDisplayName,
     required this.appointmentDate,
     required this.timeSlot,
-    required this.qrToken,
+    this.qrToken,
     required this.status,
   });
 
@@ -26,7 +26,7 @@ class VisitTicket {
   final String roomDisplayName;
   final DateTime appointmentDate;
   final String timeSlot;
-  final String qrToken;
+  final String? qrToken;
   final String status;
 
   factory VisitTicket.fromJson(Map<String, dynamic> json) => VisitTicket(
@@ -41,7 +41,7 @@ class VisitTicket {
     roomDisplayName: json['roomDisplayName'] as String,
     appointmentDate: DateTime.parse(json['appointmentDate'] as String),
     timeSlot: json['timeSlot'] as String,
-    qrToken: json['qrToken'] as String,
+    qrToken: json['qrToken'] as String?,
     status: json['status'] as String,
   );
 }

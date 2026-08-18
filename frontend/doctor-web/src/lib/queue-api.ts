@@ -62,9 +62,18 @@ export interface VisitTicket {
 export interface CheckInRequest {
   qrToken?: string;
   ticketCode?: string;
-  roomId: string;
+  roomId?: string;
   queueClass?: "INITIAL" | "RESULT_REVIEW" | "PRIORITY";
   priorityReasonCode?: string;
+}
+
+export interface HospitalCheckInQr {
+  siteId: string;
+  roomId: string;
+  sessionCode: string;
+  sessionDate: string;
+  qrToken: string;
+  expiresAt: string;
 }
 
 export const queueApi = {
@@ -106,6 +115,8 @@ export const queueApi = {
   requeueEntry: (entryId: string, reason?: string) =>
     api.post<QueueEntry>(`/api/queues/entries/${entryId}/requeue`, { reason }),
 
-  getQr: (appointmentId: string) =>
-    api.get<{ qrToken: string }>(`/api/queues/appointments/${appointmentId}/qr`),
+  getHospitalCheckInQr: (roomId: string, session = "MORNING") =>
+    api.get<HospitalCheckInQr>(
+      `/api/queues/rooms/${encodeURIComponent(roomId)}/check-in-qr?session=${encodeURIComponent(session)}`,
+    ),
 };
