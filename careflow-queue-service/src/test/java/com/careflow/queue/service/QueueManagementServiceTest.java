@@ -38,6 +38,7 @@ class QueueManagementServiceTest {
     @Mock IdempotencyRecordRepository idempotencyRecords;
     @Mock QueueEventService events;
     @Mock QrTokenService qrTokens;
+    @Mock HospitalCheckInConfigService hospitalCheckInConfigService;
 
     private QueueManagementService service;
     private QueueConfig config;
@@ -120,6 +121,25 @@ class QueueManagementServiceTest {
         assertThat(waiting.getEligibleSinceAt()).isNotNull();
         verify(events).append(eq(waiting), eq(config), eq("PatientCheckedIn"),
                 eq("queue.checked-in"), eq("trace-1"), anyMap());
+    }
+
+    @Test
+    void hospitalQrUsesTheCurrentAdminGeofenceConfiguration() {
+        when(configs.findByRoomCodeAndActiveTrue("P101")).thenReturn(Optional.of(config));
+        when(hospitalCheckInConfigService.current()).thenReturn(
+                new HospitalCheckInConfigService.GeofenceSettings(
+                        "HOSPITAL-CUSTOM", 10.777, 106.701, 250, 30));
+        when(qrTokens.issueHospitalQr("P101", today, "MORNING"))
+                .thenReturn(new QrTokenService.IssuedHospitalQr(
+                        "hospital-token", Instant.now().plusSeconds(900)));
+
+        QueueManagementService configuredService = new QueueManagementService(
+                configs, sequences, servicePointSequences, entries, idempotencyRecords, events, qrTokens,
+                "Asia/Ho_Chi_Minh", null, hospitalCheckInConfigService);
+
+        assertThat(configuredService.issueHospitalCheckInQr(
+                "P101", today, "MORNING", doctorUserId, "ADMIN").siteId())
+                .isEqualTo("HOSPITAL-CUSTOM");
     }
 
     @Test

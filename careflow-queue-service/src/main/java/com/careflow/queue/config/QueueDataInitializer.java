@@ -8,6 +8,7 @@ import com.careflow.queue.domain.QueueType;
 import com.careflow.queue.repository.IdempotencyRecordRepository;
 import com.careflow.queue.repository.QueueConfigRepository;
 import com.careflow.queue.repository.QueueEntryRepository;
+import com.careflow.queue.service.HospitalCheckInConfigService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -26,21 +27,25 @@ public class QueueDataInitializer implements CommandLineRunner {
     private final QueueEntryRepository entryRepository;
     private final IdempotencyRecordRepository idempotencyRecordRepository;
     private final com.careflow.queue.service.QrTokenService qrTokenService;
+    private final HospitalCheckInConfigService hospitalCheckInConfigService;
 
     public QueueDataInitializer(QueueConfigRepository configRepository,
                                 QueueEntryRepository entryRepository,
                                 IdempotencyRecordRepository idempotencyRecordRepository,
-                                com.careflow.queue.service.QrTokenService qrTokenService) {
+                                com.careflow.queue.service.QrTokenService qrTokenService,
+                                HospitalCheckInConfigService hospitalCheckInConfigService) {
         this.configRepository = configRepository;
         this.entryRepository = entryRepository;
         this.idempotencyRecordRepository = idempotencyRecordRepository;
         this.qrTokenService = qrTokenService;
+        this.hospitalCheckInConfigService = hospitalCheckInConfigService;
     }
 
     @Override
     public void run(String... args) {
         LocalDate today = LocalDate.now(HOSPITAL_ZONE);
         log.info("Checking Queue Service DataInitializer for today ({})", today);
+        hospitalCheckInConfigService.ensureSeeded();
 
         // 1. Cấu hình QueueConfig mặc định cho ROOM-01 (Nội tổng quát)
         UUID deptId = UUID.fromString("de000001-0000-0000-0000-000000000001");

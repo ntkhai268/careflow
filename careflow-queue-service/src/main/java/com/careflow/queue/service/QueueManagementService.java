@@ -49,6 +49,7 @@ public class QueueManagementService {
     private final IdempotencyRecordRepository idempotencyRecords;
     private final QueueEventService events;
     private final QrTokenService qrTokens;
+    private final HospitalCheckInConfigService hospitalCheckInConfigService;
     private final ZoneId businessZone;
     private final DirectoryClient directoryClient;
     private final String geofenceSiteId;
@@ -63,7 +64,7 @@ public class QueueManagementService {
                                   QueueEventService events, QrTokenService qrTokens,
                                   @Value("${queue.business-zone:Asia/Ho_Chi_Minh}") String businessZone) {
         this(configs, sequences, servicePointSequences, entries, idempotencyRecords, events, qrTokens,
-                businessZone, null, DEFAULT_HOSPITAL_SITE_ID, DEFAULT_GEOFENCE_LATITUDE,
+                businessZone, null, null, DEFAULT_HOSPITAL_SITE_ID, DEFAULT_GEOFENCE_LATITUDE,
                 DEFAULT_GEOFENCE_LONGITUDE, DEFAULT_GEOFENCE_RADIUS_METERS,
                 DEFAULT_GEOFENCE_MAX_ACCURACY_METERS);
     }
@@ -74,8 +75,20 @@ public class QueueManagementService {
                                   QueueEventService events, QrTokenService qrTokens,
                                   String businessZone, DirectoryClient directoryClient) {
         this(configs, sequences, servicePointSequences, entries, idempotencyRecords, events, qrTokens,
-                businessZone, directoryClient, DEFAULT_HOSPITAL_SITE_ID, DEFAULT_GEOFENCE_LATITUDE,
+                businessZone, directoryClient, null, DEFAULT_HOSPITAL_SITE_ID, DEFAULT_GEOFENCE_LATITUDE,
                 DEFAULT_GEOFENCE_LONGITUDE, DEFAULT_GEOFENCE_RADIUS_METERS,
+                DEFAULT_GEOFENCE_MAX_ACCURACY_METERS);
+    }
+
+    public QueueManagementService(QueueConfigRepository configs, QueueNumberSequenceRepository sequences,
+                                  ServicePointSequenceRepository servicePointSequences,
+                                  QueueEntryRepository entries, IdempotencyRecordRepository idempotencyRecords,
+                                  QueueEventService events, QrTokenService qrTokens,
+                                  String businessZone, DirectoryClient directoryClient,
+                                  HospitalCheckInConfigService hospitalCheckInConfigService) {
+        this(configs, sequences, servicePointSequences, entries, idempotencyRecords, events, qrTokens,
+                businessZone, directoryClient, hospitalCheckInConfigService, DEFAULT_HOSPITAL_SITE_ID,
+                DEFAULT_GEOFENCE_LATITUDE, DEFAULT_GEOFENCE_LONGITUDE, DEFAULT_GEOFENCE_RADIUS_METERS,
                 DEFAULT_GEOFENCE_MAX_ACCURACY_METERS);
     }
 
@@ -86,6 +99,7 @@ public class QueueManagementService {
                                   QueueEventService events, QrTokenService qrTokens,
                                   @Value("${queue.business-zone:Asia/Ho_Chi_Minh}") String businessZone,
                                   DirectoryClient directoryClient,
+                                  HospitalCheckInConfigService hospitalCheckInConfigService,
                                   @Value("${queue.geofence.site-id:HOSPITAL-MAIN}") String geofenceSiteId,
                                   @Value("${queue.geofence.latitude:10.7769}") double geofenceLatitude,
                                   @Value("${queue.geofence.longitude:106.7009}") double geofenceLongitude,
@@ -98,6 +112,7 @@ public class QueueManagementService {
         this.idempotencyRecords = idempotencyRecords;
         this.events = events;
         this.qrTokens = qrTokens;
+        this.hospitalCheckInConfigService = hospitalCheckInConfigService;
         this.businessZone = ZoneId.of(businessZone);
         this.directoryClient = directoryClient;
         this.geofenceSiteId = geofenceSiteId;
@@ -222,7 +237,7 @@ public class QueueManagementService {
         String sessionCode = session == null || session.isBlank()
                 ? DEFAULT_SESSION_CODE : session.trim().toUpperCase(Locale.ROOT);
         QrTokenService.IssuedHospitalQr issued = qrTokens.issueHospitalQr(roomId, sessionDate, sessionCode);
-        return new CheckInQrResponse(geofenceSiteId, roomId, sessionCode, sessionDate,
+        return new CheckInQrResponse(currentGeofence().siteId(), roomId, sessionCode, sessionDate,
                 issued.token(), issued.expiresAt());
     }
 
@@ -264,10 +279,11 @@ public class QueueManagementService {
         }
         if (entry.getStatus() == QueueStatus.CHECKED_IN) return response(entry, config);
 
-        validateCoordinates(request);
+        HospitalCheckInConfigService.GeofenceSettings geofence = currentGeofence();
+        validateCoordinates(request, geofence.maxAccuracyMeters());
         double distanceMeters = distanceMeters(request.latitude(), request.longitude(),
-                geofenceLatitude, geofenceLongitude);
-        if (distanceMeters > geofenceRadiusMeters) {
+                geofence.latitude(), geofence.longitude());
+        if (distanceMeters > geofence.radiusMeters()) {
             throw new BusinessException(422, "Bạn đang ở ngoài khu vực bệnh viện, chưa thể check-in");
         }
         return activateCheckedInEntry(entry, config, request, patientUserId, correlationId,
@@ -363,7 +379,7 @@ public class QueueManagementService {
                 "STAFF_MANUAL", null);
     }
 
-    private void validateCoordinates(CheckInRequest request) {
+    private void validateCoordinates(CheckInRequest request, double maxAccuracyMeters) {
         if (request.latitude() == null || request.longitude() == null || request.accuracyMeters() == null) {
             throw new BusinessException(422, "Không thể xác định vị trí hiện tại của thiết bị");
         }
@@ -371,9 +387,16 @@ public class QueueManagementService {
                 || request.longitude() < -180 || request.longitude() > 180) {
             throw new BusinessException(422, "Tọa độ vị trí không hợp lệ");
         }
-        if (request.accuracyMeters() <= 0 || request.accuracyMeters() > geofenceMaxAccuracyMeters) {
+        if (request.accuracyMeters() <= 0 || request.accuracyMeters() > maxAccuracyMeters) {
             throw new BusinessException(422, "Độ chính xác vị trí chưa đạt yêu cầu");
         }
+    }
+
+    private HospitalCheckInConfigService.GeofenceSettings currentGeofence() {
+        if (hospitalCheckInConfigService != null) return hospitalCheckInConfigService.current();
+        return new HospitalCheckInConfigService.GeofenceSettings(
+                geofenceSiteId, geofenceLatitude, geofenceLongitude,
+                geofenceRadiusMeters, geofenceMaxAccuracyMeters);
     }
 
     private double distanceMeters(double latitude1, double longitude1,

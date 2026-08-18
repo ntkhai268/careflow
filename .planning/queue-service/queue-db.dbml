@@ -81,3 +81,16 @@ Table queue_entries {
 }
 
 Ref: queue_entries.ticket_id > visit_tickets.id
+
+Table hospital_check_in_configs {
+  id uuid [pk]
+  facility_code varchar(50) [not null, unique, note: 'Mã cơ sở được Admin quản lý']
+  facility_name varchar(160) [not null]
+  latitude decimal(9,6) [not null, note: 'Vĩ độ tâm geofence']
+  longitude decimal(9,6) [not null, note: 'Kinh độ tâm geofence']
+  allowed_radius_meters decimal(10,2) [not null, note: 'Bán kính cho phép bệnh nhân check-in']
+  max_accuracy_meters decimal(10,2) [not null, note: 'Sai số GPS tối đa chấp nhận']
+  version bigint [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+}
