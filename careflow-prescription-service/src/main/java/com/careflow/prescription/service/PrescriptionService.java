@@ -396,7 +396,12 @@ public class PrescriptionService {
 
         QueueExecutionClient.QueueEntryState entry = queueExecutionClient
                 .getPharmacyEntry(id, actorUserId, actorRole);
-        if (!"PHARMACY_DISPENSING".equalsIgnoreCase(entry.getType())
+        if (entry.getPatientId() == null || !prescription.getPatientId().equals(entry.getPatientId())) {
+            throw new BusinessException(409,
+                    "Hồ sơ bệnh nhân trong hàng đợi không khớp với toa thuốc");
+        }
+        if (!id.equals(entry.getPrescriptionId())
+                || !"PHARMACY_DISPENSING".equalsIgnoreCase(entry.getType())
                 || !"IN_PROGRESS".equalsIgnoreCase(entry.getQueueStatus())
                 || !prescription.getDispensingServicePointId().equalsIgnoreCase(entry.getServicePointId())) {
             throw new BusinessException(409,

@@ -11,7 +11,7 @@ export interface QueueEntry {
   queueDate: string;
   queueNumber: string;
   priorityLevel: "APPOINTMENT" | "PRIORITY" | "EMERGENCY" | "WALK_IN" | "RESULT_REVIEW";
-  queueStatus: "WAITING" | "TICKET_ISSUED" | "CHECKED_IN" | "CALLED" | "IN_PROGRESS" | "COMPLETED" | "MISSED" | "CANCELLED";
+  queueStatus: "WAITING" | "TICKET_ISSUED" | "QUEUED" | "CHECKED_IN" | "CALLED" | "IN_PROGRESS" | "COMPLETED" | "MISSED" | "CANCELLED";
   effectivePosition: number | null;
   estimatedWaitMinutes: number | null;
   callAttempts: number;

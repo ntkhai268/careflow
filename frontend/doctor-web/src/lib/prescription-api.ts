@@ -85,6 +85,9 @@ export const prescriptionApi = {
   confirmPrescription: (id: string) =>
     api.post<PrescriptionResponse>(`/api/prescriptions/${id}/confirm`, {}),
 
+  dispensePrescription: (id: string) =>
+    api.post<PrescriptionResponse>(`/api/prescriptions/${id}/dispense`, {}),
+
   cancelPrescription: (id: string, reason: string) =>
     api.post<PrescriptionResponse>(`/api/prescriptions/${id}/cancel`, { reason }),
 

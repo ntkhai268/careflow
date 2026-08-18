@@ -81,6 +81,7 @@ public class QueueExecutionClient {
     @Data
     public static class QueueEntryState {
         private UUID entryId;
+        private UUID patientId;
         private String queueStatus;
         private String type;
         private String servicePointId;
