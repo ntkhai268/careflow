@@ -380,7 +380,7 @@ sequenceDiagram
 | Identity DB (`identity`) | `users`, `refresh_tokens` | Đã có migration | hồ sơ bệnh nhân, lịch khám |
 | Patient DB | `patients`, `health_records`, `health_record_files` | Đã có migration | appointment, kết quả khám phát sinh tại service khác |
 | Appointment DB | `appointments`, `appointment_outbox_events` | Đã có migration | trạng thái hàng đợi, clinical note |
-| Queue DB (`queue`) | `queue_configs`, `queue_entries`, `queue_number_sequences`, `service_point_sequences`, `idempotency_records`, `outbox_events`, `processed_events`; dự kiến thêm `hospital_check_in_configs`, `queue_check_in_audits` | Các bảng Queue chính đã có; cấu hình geofence/audit check-in chưa có migration | diagnosis, prescription item |
+| Queue DB (`queue`) | `queue_configs`, `queue_entries`, `queue_number_sequences`, `service_point_sequences`, `idempotency_records`, `hospital_check_in_configs`, `outbox_events`, `processed_events` | Cấu hình geofence đã có migration và được Admin quản lý; audit check-in tối thiểu lưu trên `queue_entries` | diagnosis, prescription item |
 | Consultation DB | `consultations`, `clinical_notes`, `diagnoses`, `amendments` | Mô hình logic đích, chưa có migration | slot/capacity, queue scheduler |
 | Laboratory DB | `lab_orders`, `lab_order_items`, `lab_results`, `result_corrections` | Mô hình logic đích, chưa có migration | consultation note đầy đủ |
 | Prescription DB | `prescriptions`, `prescription_items`, `dispense_records`, `follow_ups` | Mô hình logic đích, chưa có migration | queue ordering |

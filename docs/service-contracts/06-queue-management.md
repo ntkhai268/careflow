@@ -139,6 +139,8 @@ Round Robin `1:1:1` của phòng khám.
 |---|---|---|
 | `GET /api/queues/tickets/appointment/{appointmentId}` | Chính chủ/Staff | Xem phiếu, số và phòng |
 | `GET /api/queues/rooms/{roomId}/check-in-qr?date=&session=` | `STAFF`, `ADMIN` | Lấy QR phiên/phòng để hiển thị tại bệnh viện |
+| `GET /api/queues/hospital-check-in-config` | `ADMIN` | Xem cấu hình tâm, bán kính và ngưỡng accuracy geofence |
+| `PUT /api/queues/hospital-check-in-config` | `ADMIN` | Cập nhật cấu hình geofence áp dụng cho toàn bệnh viện |
 | `POST /api/queues/check-in` | Chính chủ `PATIENT`, hoặc `STAFF`, `ADMIN` hỗ trợ | Quét QR bệnh viện và xác nhận có mặt |
 | `GET /api/queues/patients/{patientId}/current` | Chính chủ/clinical staff | Lượt hiện tại của bệnh nhân |
 | `GET /api/queues/rooms/{roomId}/active?date=&session=` | `DOCTOR`, `STAFF`, `ADMIN` | Active queue phòng; backend kiểm tra phạm vi phòng của actor |

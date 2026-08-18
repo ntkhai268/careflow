@@ -76,6 +76,26 @@ export interface HospitalCheckInQr {
   expiresAt: string;
 }
 
+export interface HospitalCheckInConfig {
+  id: string;
+  siteId: string;
+  facilityName: string;
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  maxAccuracyMeters: number;
+  updatedAt: string | null;
+}
+
+export interface HospitalCheckInConfigRequest {
+  siteId: string;
+  facilityName: string;
+  latitude: number;
+  longitude: number;
+  radiusMeters: number;
+  maxAccuracyMeters: number;
+}
+
 export const queueApi = {
   getRoomActive: (roomId: string) =>
     api.get<QueueDashboardResponse>(`/api/queues/rooms/${roomId}/active`),
@@ -119,4 +139,10 @@ export const queueApi = {
     api.get<HospitalCheckInQr>(
       `/api/queues/rooms/${encodeURIComponent(roomId)}/check-in-qr?session=${encodeURIComponent(session)}`,
     ),
+
+  getHospitalCheckInConfig: () =>
+    api.get<HospitalCheckInConfig>("/api/queues/hospital-check-in-config"),
+
+  updateHospitalCheckInConfig: (data: HospitalCheckInConfigRequest) =>
+    api.put<HospitalCheckInConfig>("/api/queues/hospital-check-in-config", data),
 };

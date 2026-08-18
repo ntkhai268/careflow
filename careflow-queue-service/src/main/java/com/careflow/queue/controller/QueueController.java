@@ -4,8 +4,10 @@ import com.careflow.common.constants.AppConstants;
 import com.careflow.common.dto.ApiResponse;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.queue.dto.*;
+import com.careflow.queue.service.HospitalCheckInConfigService;
 import com.careflow.queue.service.QueueManagementService;
 import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,9 +21,17 @@ import java.util.UUID;
 @RequestMapping("/api/queues")
 public class QueueController {
     private final QueueManagementService queueService;
+    private final HospitalCheckInConfigService hospitalCheckInConfigService;
 
     public QueueController(QueueManagementService queueService) {
+        this(queueService, null);
+    }
+
+    @Autowired
+    public QueueController(QueueManagementService queueService,
+                           HospitalCheckInConfigService hospitalCheckInConfigService) {
         this.queueService = queueService;
+        this.hospitalCheckInConfigService = hospitalCheckInConfigService;
     }
 
     @GetMapping("/me/status")
@@ -259,6 +269,22 @@ public class QueueController {
                                                        @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
         requireRole(role, AppConstants.ROLE_ADMIN);
         return ApiResponse.success(queueService.saveConfig(departmentId, request));
+    }
+
+    @GetMapping("/hospital-check-in-config")
+    public ApiResponse<HospitalCheckInConfigResponse> getHospitalCheckInConfig(
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        requireRole(role, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success(hospitalCheckInConfigService.get());
+    }
+
+    @PutMapping("/hospital-check-in-config")
+    public ApiResponse<HospitalCheckInConfigResponse> saveHospitalCheckInConfig(
+            @Valid @RequestBody HospitalCheckInConfigRequest request,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        requireRole(role, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success("Đã cập nhật cấu hình geofence bệnh viện",
+                hospitalCheckInConfigService.save(request));
     }
 
     private void requireRole(String actual, String expected) {

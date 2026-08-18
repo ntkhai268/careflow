@@ -81,6 +81,7 @@ Tất cả JSON response dùng envelope:
 | `POST` | `/api/queues/entries` | ADMIN |
 | `GET` | `/api/queues/rooms/{roomId}/check-in-qr?session=MORNING` | STAFF, ADMIN — Hospital Web lấy QR để hiển thị |
 | `POST` | `/api/queues/check-in` | PATIENT — gửi `appointmentId`, `checkInQrToken` và vị trí thiết bị |
+| `GET`, `PUT` | `/api/queues/hospital-check-in-config` | ADMIN — xem/cập nhật tâm, bán kính và ngưỡng accuracy geofence |
 | `GET` | `/api/queues/departments/{id}/dashboard` | DOCTOR, ADMIN |
 | `POST` | `/api/queues/departments/{id}/next` | DOCTOR, ADMIN |
 | `POST` | `/api/queues/entries/{id}/miss` | DOCTOR, ADMIN |

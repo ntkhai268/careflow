@@ -60,6 +60,7 @@ queue:
   qr-expiration-minutes: ${QR_EXPIRATION_MINUTES:30}
   geofence:
     site-id: ${HOSPITAL_GEOFENCE_SITE_ID:HOSPITAL-MAIN}
+    facility-name: ${HOSPITAL_GEOFENCE_FACILITY_NAME:Bệnh viện CareFlow}
     latitude: ${HOSPITAL_GEOFENCE_LATITUDE:10.7769}
     longitude: ${HOSPITAL_GEOFENCE_LONGITUDE:106.7009}
     radius-meters: ${HOSPITAL_GEOFENCE_RADIUS_METERS:150}
