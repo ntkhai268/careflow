@@ -125,11 +125,10 @@ class QueueManagementServiceTest {
 
     @Test
     void hospitalQrUsesTheCurrentAdminGeofenceConfiguration() {
-        when(configs.findByRoomCodeAndActiveTrue("P101")).thenReturn(Optional.of(config));
         when(hospitalCheckInConfigService.current()).thenReturn(
                 new HospitalCheckInConfigService.GeofenceSettings(
                         "HOSPITAL-CUSTOM", 10.777, 106.701, 250, 30));
-        when(qrTokens.issueHospitalQr("P101", today, "MORNING"))
+        when(qrTokens.issueHospitalQr("HOSPITAL-CUSTOM", today, "MORNING"))
                 .thenReturn(new QrTokenService.IssuedHospitalQr(
                         "hospital-token", Instant.now().plusSeconds(900)));
 
@@ -148,7 +147,7 @@ class QueueManagementServiceTest {
         waiting.setAppointmentId(UUID.randomUUID());
         UUID patientUserId = waiting.getUserId();
         when(qrTokens.verifyHospitalQr("hospital-qr")).thenReturn(
-                new QrTokenService.HospitalQrClaims("P101", "MORNING", today));
+                new QrTokenService.HospitalQrClaims("HOSPITAL-MAIN", "MORNING", today));
         when(entries.findFirstByAppointmentId(waiting.getAppointmentId())).thenReturn(Optional.of(waiting));
         when(configs.findByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
 
@@ -168,7 +167,7 @@ class QueueManagementServiceTest {
         QueueEntry waiting = entry(PriorityLevel.APPOINTMENT, QueueStatus.WAITING, 7);
         waiting.setAppointmentId(UUID.randomUUID());
         when(qrTokens.verifyHospitalQr("hospital-qr")).thenReturn(
-                new QrTokenService.HospitalQrClaims("P101", "MORNING", today));
+                new QrTokenService.HospitalQrClaims("HOSPITAL-MAIN", "MORNING", today));
         when(entries.findFirstByAppointmentId(waiting.getAppointmentId())).thenReturn(Optional.of(waiting));
         when(configs.findByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
 

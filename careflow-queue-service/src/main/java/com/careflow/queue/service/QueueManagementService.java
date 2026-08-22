@@ -228,16 +228,21 @@ public class QueueManagementService {
     @Transactional(readOnly = true)
     public CheckInQrResponse issueHospitalCheckInQr(String roomId, LocalDate date, String session,
                                                     UUID requesterUserId, String role) {
-        requireRoomAccess(roomId, requesterUserId, role);
-        requireRoomConfig(roomId);
+        return issueHospitalCheckInQr(date, session, requesterUserId, role);
+    }
+
+    @Transactional(readOnly = true)
+    public CheckInQrResponse issueHospitalCheckInQr(LocalDate date, String session,
+                                                    UUID requesterUserId, String role) {
         LocalDate sessionDate = date == null ? businessDate() : date;
         if (!businessDate().equals(sessionDate)) {
             throw new BusinessException(422, "Chỉ có thể hiển thị QR check-in của ngày hiện tại");
         }
         String sessionCode = session == null || session.isBlank()
                 ? DEFAULT_SESSION_CODE : session.trim().toUpperCase(Locale.ROOT);
-        QrTokenService.IssuedHospitalQr issued = qrTokens.issueHospitalQr(roomId, sessionDate, sessionCode);
-        return new CheckInQrResponse(currentGeofence().siteId(), roomId, sessionCode, sessionDate,
+        String siteId = currentGeofence().siteId();
+        QrTokenService.IssuedHospitalQr issued = qrTokens.issueHospitalQr(siteId, sessionDate, sessionCode);
+        return new CheckInQrResponse(siteId, sessionCode, sessionDate,
                 issued.token(), issued.expiresAt());
     }
 
@@ -274,8 +279,8 @@ public class QueueManagementService {
             throw new BusinessException(409, "QR không khớp ngày khám của lịch hẹn");
         }
         QueueConfig config = requireConfig(entry.getDepartmentId());
-        if (!config.getRoomCode().equals(claims.roomId())) {
-            throw new BusinessException(409, "QR không thuộc phòng khám của lịch hẹn");
+        if (!currentGeofence().siteId().equals(claims.siteId())) {
+            throw new BusinessException(409, "QR không thuộc bệnh viện này");
         }
         if (entry.getStatus() == QueueStatus.CHECKED_IN) return response(entry, config);
 

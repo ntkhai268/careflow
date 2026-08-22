@@ -84,6 +84,46 @@ void main() {
     },
   );
 
+  testWidgets('production booking does not store a mock payment receipt', (
+    tester,
+  ) async {
+    final service = FakeAppointmentService(createdAppointment: appointment);
+    final repository = RecordingJourneyRepository();
+    final paymentStore = InMemoryAppointmentPaymentStore();
+    final router = testRouter(
+      BookingStep4Screen(
+        patient: patient,
+        department: Department(code: 'NOI_TONG_QUAT', name: 'Nội tổng quát'),
+        date: appointment.appointmentDate,
+        timeSlot: appointment.timeSlot,
+      ),
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      integrationApp(
+        router: router,
+        service: service,
+        repository: repository,
+        paymentStore: paymentStore,
+        demoMode: false,
+      ),
+    );
+
+    expect(find.text('Chi phí khám dự kiến'), findsOneWidget);
+    expect(find.text('Thanh toán trực tuyến'), findsNothing);
+
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Xác nhận đặt khám'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 500));
+
+    expect(paymentStore.receipts, isEmpty);
+    expect(
+      find.textContaining('Chưa có giao dịch nào được ghi nhận'),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('appointment list no longer exposes a journey action', (
     tester,
   ) async {
@@ -509,13 +549,15 @@ Widget integrationApp({
   JourneyController? controller,
   Patient? patientOverride,
   AppointmentPaymentStore? paymentStore,
+  bool demoMode = true,
 }) {
   final journeyController =
-      controller ?? JourneyController(repository: repository, demoMode: true);
+      controller ??
+      JourneyController(repository: repository, demoMode: demoMode);
   final scopedPatient = patientOverride ?? patient;
   return ProviderScope(
     overrides: [
-      demoModeProvider.overrideWithValue(true),
+      demoModeProvider.overrideWithValue(demoMode),
       realQueueEnabledProvider.overrideWithValue(false),
       authProvider.overrideWith(
         (ref) => SeededAuthNotifier(scopedPatient.userId),

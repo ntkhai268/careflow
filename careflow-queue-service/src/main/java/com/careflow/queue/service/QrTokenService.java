@@ -69,11 +69,11 @@ public class QrTokenService {
         }
     }
 
-    public IssuedHospitalQr issueHospitalQr(String roomId, LocalDate sessionDate, String sessionCode) {
+    public IssuedHospitalQr issueHospitalQr(String siteId, LocalDate sessionDate, String sessionCode) {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(hospitalQrExpirationMinutes * 60);
-        String token = Jwts.builder().subject(roomId)
-                .claim("roomId", roomId)
+        String token = Jwts.builder().subject(siteId)
+                .claim("siteId", siteId)
                 .claim("session", sessionCode)
                 .claim("queueDate", sessionDate.toString())
                 .claim("purpose", HOSPITAL_PURPOSE)
@@ -89,10 +89,10 @@ public class QrTokenService {
             if (!HOSPITAL_PURPOSE.equals(claims.get("purpose", String.class))) {
                 throw new JwtException("Wrong purpose");
             }
-            String roomId = claims.get("roomId", String.class);
-            if (roomId == null || roomId.isBlank()) throw new JwtException("Missing room");
+            String siteId = claims.get("siteId", String.class);
+            if (siteId == null || siteId.isBlank()) throw new JwtException("Missing site");
             return new HospitalQrClaims(
-                    roomId,
+                    siteId,
                     claims.get("session", String.class),
                     LocalDate.parse(claims.get("queueDate", String.class)));
         } catch (ExpiredJwtException exception) {
@@ -104,7 +104,7 @@ public class QrTokenService {
 
     public record QrClaims(UUID ticketId, UUID appointmentId, UUID userId, LocalDate queueDate) {}
 
-    public record HospitalQrClaims(String roomId, String sessionCode, LocalDate sessionDate) {}
+    public record HospitalQrClaims(String siteId, String sessionCode, LocalDate sessionDate) {}
 
     public record IssuedHospitalQr(String token, Instant expiresAt) {}
 }

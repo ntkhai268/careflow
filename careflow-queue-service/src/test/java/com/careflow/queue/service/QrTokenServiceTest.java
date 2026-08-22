@@ -39,14 +39,14 @@ class QrTokenServiceTest {
     }
 
     @Test
-    void hospitalQrRoundTripsRoomAndSessionWithoutPatientIdentity() {
+    void hospitalQrRoundTripsSiteAndSessionWithoutPatientIdentity() {
         QrTokenService service = new QrTokenService(SECRET, "Asia/Ho_Chi_Minh", 30);
 
         QrTokenService.IssuedHospitalQr issued = service.issueHospitalQr(
-                "ROOM-01", LocalDate.now(), "MORNING");
+                "HOSPITAL-MAIN", LocalDate.now(), "MORNING");
         QrTokenService.HospitalQrClaims claims = service.verifyHospitalQr(issued.token());
 
-        assertThat(claims.roomId()).isEqualTo("ROOM-01");
+        assertThat(claims.siteId()).isEqualTo("HOSPITAL-MAIN");
         assertThat(claims.sessionCode()).isEqualTo("MORNING");
         assertThat(claims.sessionDate()).isEqualTo(LocalDate.now());
         assertThat(issued.expiresAt()).isAfter(Instant.now());

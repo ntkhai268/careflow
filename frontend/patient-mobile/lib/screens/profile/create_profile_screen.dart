@@ -6,7 +6,7 @@ import '../../config/theme.dart';
 import '../../providers/patient_provider.dart';
 
 /// Screen for creating a new patient profile.
-/// Form with QR scan placeholder + manual input fields.
+/// Manual patient profile form.
 class CreateProfileScreen extends ConsumerStatefulWidget {
   const CreateProfileScreen({super.key});
 
@@ -59,12 +59,6 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // QR Scan section
-              _buildQrScanSection(),
-              const SizedBox(height: AppSpacing.xl),
-              // Divider with text
-              _buildDividerWithText('Hoặc nhập thủ công'),
-              const SizedBox(height: AppSpacing.xl),
               // Manual input section
               _buildSectionTitle('Thông tin chung'),
               const SizedBox(height: AppSpacing.base),
@@ -100,7 +94,10 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
                   ),
                   child: Text(
                     state.errorMessage!,
-                    style: const TextStyle(color: AppColors.error, fontSize: 13),
+                    style: const TextStyle(
+                      color: AppColors.error,
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               // Submit button
@@ -125,72 +122,6 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildQrScanSection() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(AppRadius.lg),
-        border: Border.all(color: AppColors.cardBorder),
-      ),
-      child: Column(
-        children: [
-          Icon(Icons.qr_code_scanner, size: 48, color: AppColors.primary),
-          const SizedBox(height: AppSpacing.md),
-          const Text(
-            'Quét mã BHYT hoặc CCCD',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          const Text(
-            'Tự động điền thông tin từ mã QR',
-            style: TextStyle(
-              fontSize: 13,
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.base),
-          OutlinedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content:
-                      Text('Tính năng quét QR sẽ được tích hợp sau'),
-                ),
-              );
-            },
-            icon: const Icon(Icons.camera_alt_outlined),
-            label: const Text('MỞ CAMERA QUÉT'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDividerWithText(String text) {
-    return Row(
-      children: [
-        const Expanded(child: Divider(color: AppColors.cardBorder)),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: AppSpacing.base),
-          child: Text(
-            text,
-            style: const TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 13,
-            ),
-          ),
-        ),
-        const Expanded(child: Divider(color: AppColors.cardBorder)),
-      ],
     );
   }
 
@@ -303,8 +234,7 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
           child: DropdownButtonFormField<String>(
             initialValue: _idCardType,
             decoration: const InputDecoration(
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+              contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 16),
             ),
             isExpanded: true,
             items: const [
@@ -424,8 +354,9 @@ class _CreateProfileScreenState extends ConsumerState<CreateProfileScreen> {
       data['address'] = _addressController.text.trim();
     }
 
-    final success =
-        await ref.read(patientProvider.notifier).createPatient(data);
+    final success = await ref
+        .read(patientProvider.notifier)
+        .createPatient(data);
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(

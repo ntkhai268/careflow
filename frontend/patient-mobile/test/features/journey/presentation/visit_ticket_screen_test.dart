@@ -7,23 +7,26 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('shows the issued ticket details and hospital QR check-in action', (tester) async {
-    await tester.pumpWidget(
-      journeyApp(
-        AsyncData(ticketJourney),
-        const VisitTicketScreen(appointmentId: 'apt-1'),
-      ),
-    );
+  testWidgets(
+    'shows the issued ticket details and hospital QR check-in action',
+    (tester) async {
+      await tester.pumpWidget(
+        journeyApp(
+          AsyncData(ticketJourney),
+          const VisitTicketScreen(appointmentId: 'apt-1'),
+        ),
+      );
 
-    expect(find.text('Bệnh viện Minh Khai'), findsOneWidget);
-    expect(find.text('Nội thần kinh'), findsOneWidget);
-    expect(find.text('Phòng 21'), findsOneWidget);
-    expect(find.text('10:30 - 11:30'), findsOneWidget);
-    expect(find.text('42'), findsOneWidget);
-    expect(find.text('Mã phiếu khám'), findsOneWidget);
-    expect(find.text('CF-APT-1'), findsOneWidget);
-    expect(find.textContaining('Khi đến bệnh viện'), findsOneWidget);
-  });
+      expect(find.text('Bệnh viện Minh Khai'), findsOneWidget);
+      expect(find.text('Nội thần kinh'), findsOneWidget);
+      expect(find.text('Phòng 21'), findsOneWidget);
+      expect(find.text('10:30 - 11:30'), findsOneWidget);
+      expect(find.text('42'), findsOneWidget);
+      expect(find.text('Mã phiếu khám'), findsOneWidget);
+      expect(find.text('CF-APT-1'), findsOneWidget);
+      expect(find.textContaining('Khi đến bệnh viện'), findsOneWidget);
+    },
+  );
 
   testWidgets('asks ticket holders to present QR before they are queued', (
     tester,
@@ -37,7 +40,7 @@ void main() {
 
     expect(
       find.text(
-        'Khi đến bệnh viện, hãy mở chức năng quét QR để quét mã đang được hiển thị tại phòng khám. Vị trí thiết bị sẽ được kiểm tra trong lúc check-in.',
+        'Khi đến bệnh viện, hãy quét QR chung đang được hiển thị tại quầy hoặc khu vực tiếp nhận. Vị trí thiết bị sẽ được kiểm tra trong lúc check-in.',
       ),
       findsOneWidget,
     );

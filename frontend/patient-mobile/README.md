@@ -25,7 +25,8 @@ qua gateway, kể cả khi `DEMO_MODE=true`. Chỉ phần hành trình sau khi l
 
 ## Luồng thanh toán Mobile MVP
 
-Mobile dùng hai thời điểm thanh toán theo quyết định mới nhất trên `develop`:
+Trong `DEMO_MODE=true`, Mobile mô phỏng hai thời điểm thanh toán theo quyết định
+mới nhất trên `develop`:
 
 1. Khi đặt lịch, bệnh nhân trả trước phí khám thường (fixture hiện tại:
    150.000 VND) bằng online mock hoặc chọn tiền mặt tại bệnh viện.
@@ -38,8 +39,10 @@ tiền thuốc riêng. Chỉ trạng thái `PAYMENT_DUE` chặn phát thuốc; `
 `REFUND_PENDING` và `REFUNDED` đều cho phép phát thuốc.
 
 Trong demo, màn hình **Quyết toán lượt khám** mô phỏng số tiền còn phải trả,
-online mock/tiền mặt, hoàn khoản dư và xác nhận đã nhận thuốc. Adapter này sẽ
-được thay bằng Visit Settlement Service khi backend hoàn thiện.
+online mock/tiền mặt, hoàn khoản dư và xác nhận đã nhận thuốc. Khi
+`DEMO_MODE=false`, ứng dụng không ghi biên lai thanh toán giả trên thiết bị và
+chỉ hiển thị hướng dẫn thanh toán theo bệnh viện cho đến khi Visit Settlement
+Service được kết nối.
 
 ## Chạy hành trình khám đầy đủ
 

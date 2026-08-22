@@ -144,24 +144,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ),
           const SizedBox(height: AppSpacing.base),
-          // Scan QR button
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: AppSpacing.xl),
-            child: SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Tính năng quét QR sẽ được cập nhật sau'),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.qr_code_scanner),
-                label: const Text('QUÉT MÃ BHYT/CCCD'),
-              ),
-            ),
-          ),
         ],
       ),
     );

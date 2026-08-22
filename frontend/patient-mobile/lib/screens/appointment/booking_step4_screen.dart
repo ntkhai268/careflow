@@ -59,21 +59,26 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
             : null,
       });
 
-      final receipt = AppointmentPaymentReceipt(
-        appointmentId: appointment.id,
-        serviceCode: _service.code,
-        serviceName: _service.name,
-        amount: _service.price,
-        method: AppointmentPaymentMethod.onlineMock,
-        status: AppointmentPaymentStatus.paid,
-        createdAt: DateTime.now().toUtc(),
-      );
-      var receiptSaved = true;
-      try {
-        await ref.read(appointmentPaymentStoreProvider).save(receipt);
-      } catch (_) {
-        // A local receipt failure must not roll back a successful appointment.
-        receiptSaved = false;
+      final demoMode = ref.read(demoModeProvider);
+      AppointmentPaymentReceipt? receipt;
+      var receiptSaved = false;
+      if (demoMode) {
+        receipt = AppointmentPaymentReceipt(
+          appointmentId: appointment.id,
+          serviceCode: _service.code,
+          serviceName: _service.name,
+          amount: _service.price,
+          method: AppointmentPaymentMethod.onlineMock,
+          status: AppointmentPaymentStatus.paid,
+          createdAt: DateTime.now().toUtc(),
+        );
+        receiptSaved = true;
+        try {
+          await ref.read(appointmentPaymentStoreProvider).save(receipt);
+        } catch (_) {
+          // A local receipt failure must not roll back a successful appointment.
+          receiptSaved = false;
+        }
       }
 
       if (appointment.allowsActiveJourney) {
@@ -95,6 +100,7 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
           appointment,
           receipt: receipt,
           receiptSaved: receiptSaved,
+          demoMode: demoMode,
         );
       }
     } catch (e) {
@@ -112,8 +118,9 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
 
   void _showSuccessDialog(
     Appointment appointment, {
-    required AppointmentPaymentReceipt receipt,
+    required AppointmentPaymentReceipt? receipt,
     required bool receiptSaved,
+    required bool demoMode,
   }) {
     final canOpenJourney = appointment.allowsActiveJourney;
     showDialog(
@@ -159,11 +166,14 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                 style: Theme.of(ctx).textTheme.bodyMedium,
               ),
               const SizedBox(height: AppSpacing.md),
-              _buildPaymentReceiptSummary(
-                ctx,
-                receipt: receipt,
-                receiptSaved: receiptSaved,
-              ),
+              if (demoMode && receipt != null)
+                _buildPaymentReceiptSummary(
+                  ctx,
+                  receipt: receipt,
+                  receiptSaved: receiptSaved,
+                )
+              else
+                _buildPaymentPendingSummary(ctx),
               const SizedBox(height: AppSpacing.xl),
               SizedBox(
                 width: double.infinity,
@@ -200,6 +210,19 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
       ),
     );
   }
+
+  Widget _buildPaymentPendingSummary(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(AppSpacing.md),
+    decoration: BoxDecoration(
+      color: AppColors.warningLight,
+      borderRadius: BorderRadius.circular(AppRadius.md),
+    ),
+    child: const Text(
+      'Chi phí khám sẽ được thanh toán theo hướng dẫn của bệnh viện. Chưa có giao dịch nào được ghi nhận trên ứng dụng.',
+      textAlign: TextAlign.center,
+    ),
+  );
 
   Widget _buildPaymentReceiptSummary(
     BuildContext context, {
@@ -245,6 +268,7 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
   @override
   Widget build(BuildContext context) {
     final dateStr = DateFormat('EEEE, dd/MM/yyyy', 'vi').format(widget.date);
+    final demoMode = ref.watch(demoModeProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -329,7 +353,7 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildPaymentSection(),
+                  _buildPaymentSection(demoMode),
                   const SizedBox(height: AppSpacing.lg),
                   // Note
                   Container(
@@ -368,7 +392,7 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
     );
   }
 
-  Widget _buildPaymentSection() {
+  Widget _buildPaymentSection(bool demoMode) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
@@ -382,7 +406,7 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Thanh toán phí khám',
+            demoMode ? 'Thanh toán phí khám (demo)' : 'Chi phí khám dự kiến',
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
@@ -407,12 +431,20 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
             ),
           ),
           const SizedBox(height: AppSpacing.sm),
-          const ListTile(
+          ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: Icon(Icons.account_balance_wallet_rounded),
-            title: Text('Thanh toán trực tuyến'),
-            subtitle: Text('Mô phỏng thành công trước khi nhận phiếu khám'),
-            trailing: Icon(Icons.check_circle_rounded),
+            leading: const Icon(Icons.account_balance_wallet_rounded),
+            title: Text(
+              demoMode ? 'Thanh toán trực tuyến' : 'Thanh toán tại bệnh viện',
+            ),
+            subtitle: Text(
+              demoMode
+                  ? 'Chỉ là mô phỏng, không phát sinh giao dịch thật'
+                  : 'Thực hiện theo hướng dẫn của bệnh viện sau khi đặt lịch',
+            ),
+            trailing: Icon(
+              demoMode ? Icons.science_outlined : Icons.info_outline_rounded,
+            ),
           ),
         ],
       ),

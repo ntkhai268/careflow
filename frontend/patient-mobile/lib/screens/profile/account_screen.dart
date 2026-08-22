@@ -59,11 +59,15 @@ class AccountScreen extends ConsumerWidget {
                         color: Colors.white,
                         shape: BoxShape.circle,
                         border: Border.all(
-                            color: Colors.white.withValues(alpha: 0.5),
-                            width: 3),
+                          color: Colors.white.withValues(alpha: 0.5),
+                          width: 3,
+                        ),
                       ),
-                      child: Icon(Icons.person,
-                          size: 44, color: AppColors.textHint),
+                      child: Icon(
+                        Icons.person,
+                        size: 44,
+                        color: AppColors.textHint,
+                      ),
                     ),
                     const SizedBox(height: 12),
                     Text(
@@ -87,17 +91,17 @@ class AccountScreen extends ConsumerWidget {
                         foregroundColor: Colors.white,
                         side: const BorderSide(color: Colors.white, width: 1),
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 8),
+                          horizontal: 20,
+                          vertical: 8,
+                        ),
                         shape: RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.circular(AppRadius.full),
+                          borderRadius: BorderRadius.circular(AppRadius.full),
                         ),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('Đăng xuất',
-                              style: TextStyle(fontSize: 13)),
+                          Text('Đăng xuất', style: TextStyle(fontSize: 13)),
                           SizedBox(width: 4),
                           Icon(Icons.chevron_right, size: 18),
                         ],
@@ -115,48 +119,25 @@ class AccountScreen extends ConsumerWidget {
               padding: const EdgeInsets.all(16),
               children: [
                 const SizedBox(height: 8),
-                _buildSectionTitle('Điều khoản và quy định'),
+                _buildSectionTitle('Truy cập nhanh'),
                 const SizedBox(height: 8),
                 _buildMenuItem(
-                  icon: Icons.shield_outlined,
-                  iconColor: AppColors.accent,
-                  title: 'Quy định sử dụng',
-                  onTap: () {},
-                ),
-                _buildMenuItem(
-                  icon: Icons.lock_outline,
-                  iconColor: AppColors.warning,
-                  title: 'Chính sách bảo mật',
-                  onTap: () {},
-                ),
-                _buildMenuItem(
-                  icon: Icons.description_outlined,
-                  iconColor: AppColors.error,
-                  title: 'Điều khoản dịch vụ',
-                  onTap: () {},
-                ),
-
-                const SizedBox(height: 16),
-                const Divider(),
-                const SizedBox(height: 8),
-
-                _buildMenuItem(
-                  icon: Icons.medical_information_outlined,
+                  icon: Icons.person_outline,
                   iconColor: AppColors.primary,
-                  title: 'Xem/Lưu thông tin sức khỏe',
-                  onTap: () {},
+                  title: 'Hồ sơ bệnh nhân',
+                  onTap: () => context.go('/?tab=2'),
                 ),
                 _buildMenuItem(
-                  icon: Icons.phone_outlined,
+                  icon: Icons.assignment_outlined,
                   iconColor: AppColors.accent,
-                  title: 'Hỗ trợ tư vấn/đặt khám',
-                  onTap: () {},
+                  title: 'Kết quả khám và toa thuốc',
+                  onTap: () => context.push('/visit-results'),
                 ),
                 _buildMenuItem(
-                  icon: Icons.thumb_up_outlined,
+                  icon: Icons.notifications_none_rounded,
                   iconColor: AppColors.warning,
-                  title: 'Đánh giá ứng dụng',
-                  onTap: () {},
+                  title: 'Thông báo',
+                  onTap: () => context.go('/?tab=3'),
                 ),
               ],
             ),
@@ -205,8 +186,11 @@ class AccountScreen extends ConsumerWidget {
             color: AppColors.textPrimary,
           ),
         ),
-        trailing: const Icon(Icons.chevron_right,
-            color: AppColors.textHint, size: 20),
+        trailing: const Icon(
+          Icons.chevron_right,
+          color: AppColors.textHint,
+          size: 20,
+        ),
       ),
     );
   }

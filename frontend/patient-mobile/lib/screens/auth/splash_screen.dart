@@ -48,7 +48,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
   }
 
   Future<void> _navigate() async {
-    await Future.delayed(const Duration(seconds: 2));
+    // Keep the branded splash visible briefly without adding a fixed delay to
+    // every launch.
+    await Future<void>.delayed(const Duration(milliseconds: 250));
 
     if (!mounted) return;
 
@@ -87,9 +89,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen>
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: AppColors.primaryGradient,
-        ),
+        decoration: const BoxDecoration(gradient: AppColors.primaryGradient),
         child: Center(
           child: FadeTransition(
             opacity: _fadeAnimation,

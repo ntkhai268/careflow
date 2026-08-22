@@ -19,14 +19,27 @@ class HospitalQrCheckInScreen extends ConsumerStatefulWidget {
 
 class _HospitalQrCheckInScreenState
     extends ConsumerState<HospitalQrCheckInScreen> {
-  final MobileScannerController _scannerController = MobileScannerController();
+  final MobileScannerController _scannerController = MobileScannerController(
+    autoStart: false,
+  );
   bool _isProcessing = false;
+  bool _isScannerStarted = false;
   String? _errorMessage;
+  bool _locationRequiresSettings = false;
 
   @override
   void dispose() {
     _scannerController.dispose();
     super.dispose();
+  }
+
+  Future<void> _startScanner() async {
+    if (_isProcessing) return;
+    setState(() {
+      _isScannerStarted = true;
+      _errorMessage = null;
+    });
+    await _scannerController.start();
   }
 
   Future<void> _onDetect(BarcodeCapture capture) async {
@@ -49,7 +62,9 @@ class _HospitalQrCheckInScreenState
 
     try {
       final position = await _currentPosition();
-      await ref.read(queueServiceProvider).checkInAtHospital(
+      await ref
+          .read(queueServiceProvider)
+          .checkInAtHospital(
             appointmentId: widget.appointmentId,
             checkInQrToken: token,
             latitude: position.latitude,
@@ -58,13 +73,18 @@ class _HospitalQrCheckInScreenState
           );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Đã xác nhận bạn đang có mặt tại bệnh viện.')),
+        const SnackBar(
+          content: Text('Đã xác nhận bạn đang có mặt tại bệnh viện.'),
+        ),
       );
       context.pop(true);
     } catch (error) {
       if (!mounted) return;
+      final locationPermission = await Geolocator.checkPermission();
       setState(() {
         _isProcessing = false;
+        _locationRequiresSettings =
+            locationPermission == LocationPermission.deniedForever;
         _errorMessage = error is QueueServiceException
             ? error.message
             : 'Không thể lấy vị trí hoặc xác nhận check-in. Vui lòng thử lại.';
@@ -75,7 +95,9 @@ class _HospitalQrCheckInScreenState
 
   Future<Position> _currentPosition() async {
     if (!await Geolocator.isLocationServiceEnabled()) {
-      throw const QueueServiceException('Vui lòng bật dịch vụ định vị để check-in.');
+      throw const QueueServiceException(
+        'Vui lòng bật dịch vụ định vị để check-in.',
+      );
     }
 
     var permission = await Geolocator.checkPermission();
@@ -118,7 +140,35 @@ class _HospitalQrCheckInScreenState
                   MobileScanner(
                     controller: _scannerController,
                     onDetect: _onDetect,
+                    errorBuilder: (context, error) =>
+                        _ScannerError(error: error, onRetry: _startScanner),
                   ),
+                  if (!_isScannerStarted)
+                    Container(
+                      color: AppColors.surface,
+                      padding: const EdgeInsets.all(AppSpacing.xl),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.camera_alt_outlined,
+                            color: AppColors.primary,
+                            size: 48,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          const Text(
+                            'CareFlow cần camera để quét QR check-in.',
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: AppSpacing.md),
+                          ElevatedButton.icon(
+                            onPressed: _startScanner,
+                            icon: const Icon(Icons.camera_alt_rounded),
+                            label: const Text('Bắt đầu quét QR'),
+                          ),
+                        ],
+                      ),
+                    ),
                   Center(
                     child: Container(
                       width: 230,
@@ -133,7 +183,9 @@ class _HospitalQrCheckInScreenState
                     Container(
                       color: Colors.black54,
                       alignment: Alignment.center,
-                      child: const CircularProgressIndicator(color: Colors.white),
+                      child: const CircularProgressIndicator(
+                        color: Colors.white,
+                      ),
                     ),
                 ],
               ),
@@ -147,7 +199,7 @@ class _HospitalQrCheckInScreenState
           ),
           const SizedBox(height: AppSpacing.sm),
           const Text(
-            'Sau khi quét, CareFlow sẽ lấy vị trí một lần để kiểm tra bạn đang ở trong khu vực bệnh viện. Ứng dụng không theo dõi vị trí liên tục.',
+            'Sau khi quét, CareFlow sẽ xin quyền vị trí một lần để kiểm tra bạn đang ở bệnh viện. Ứng dụng không theo dõi vị trí liên tục.',
             textAlign: TextAlign.center,
           ),
           if (_errorMessage != null) ...[
@@ -163,9 +215,61 @@ class _HospitalQrCheckInScreenState
                 ),
               ),
             ),
+            if (_locationRequiresSettings) ...[
+              const SizedBox(height: AppSpacing.sm),
+              OutlinedButton.icon(
+                onPressed: Geolocator.openAppSettings,
+                icon: const Icon(Icons.settings_outlined),
+                label: const Text('Mở Cài đặt quyền vị trí'),
+              ),
+            ],
           ],
         ],
       ),
     );
   }
+}
+
+class _ScannerError extends StatelessWidget {
+  const _ScannerError({required this.error, required this.onRetry});
+
+  final MobileScannerException error;
+  final Future<void> Function() onRetry;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    color: AppColors.surface,
+    padding: const EdgeInsets.all(AppSpacing.xl),
+    child: Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          error.errorCode == MobileScannerErrorCode.permissionDenied
+              ? Icons.no_photography_outlined
+              : Icons.camera_alt_outlined,
+          color: AppColors.error,
+          size: 48,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        Text(
+          error.errorCode == MobileScannerErrorCode.permissionDenied
+              ? 'Chưa có quyền camera. Hãy cho phép camera để quét QR.'
+              : 'Không thể mở camera. Vui lòng thử lại.',
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        OutlinedButton.icon(
+          onPressed: error.errorCode == MobileScannerErrorCode.permissionDenied
+              ? () => Geolocator.openAppSettings()
+              : onRetry,
+          icon: const Icon(Icons.refresh_rounded),
+          label: Text(
+            error.errorCode == MobileScannerErrorCode.permissionDenied
+                ? 'Mở Cài đặt quyền camera'
+                : 'Thử mở camera lại',
+          ),
+        ),
+      ],
+    ),
+  );
 }

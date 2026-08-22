@@ -66,13 +66,15 @@ class _AppointmentDetailScreenState
         return;
       }
       AppointmentPaymentReceipt? paymentReceipt;
-      try {
-        paymentReceipt = await ref
-            .read(appointmentPaymentStoreProvider)
-            .load(appointment.id);
-      } catch (_) {
-        // Payment receipt is local presentation data and must not hide a real
-        // appointment when local storage is unavailable.
+      if (ref.read(demoModeProvider)) {
+        try {
+          paymentReceipt = await ref
+              .read(appointmentPaymentStoreProvider)
+              .load(appointment.id);
+        } catch (_) {
+          // Payment receipt is local demo presentation data and must not hide
+          // a real appointment when local storage is unavailable.
+        }
       }
       setState(() {
         _appointment = appointment;
@@ -250,7 +252,7 @@ class _AppointmentDetailScreenState
       'EEEE, dd/MM/yyyy',
       'vi',
     ).format(appt.appointmentDate);
-    final canCancel = appt.status != 'COMPLETED' && appt.status != 'CANCELLED';
+    final canCancel = appt.status == 'PENDING' || appt.status == 'CONFIRMED';
 
     return Column(
       children: [
@@ -396,7 +398,9 @@ class _AppointmentDetailScreenState
             ],
           ),
           const SizedBox(height: AppSpacing.sm),
-          const Text('Mở để xem mã phiếu, mã QR và thông tin phòng khám.'),
+          const Text(
+            'Mở để xem phiếu khám và quét QR chung khi bạn đến bệnh viện.',
+          ),
           const SizedBox(height: AppSpacing.md),
           SizedBox(
             width: double.infinity,

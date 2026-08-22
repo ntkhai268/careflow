@@ -136,7 +136,7 @@ class _RealTicketBody extends StatelessWidget {
               Text(
                 ticket.status == 'TICKET_ISSUED'
                     ? 'Quét QR tại bệnh viện để check-in'
-                    : 'Đã check-in tại phòng khám',
+                    : 'Đã check-in tại bệnh viện',
                 textAlign: TextAlign.center,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
@@ -178,7 +178,7 @@ class _RealTicketBody extends StatelessWidget {
                 ),
                 const SizedBox(height: AppSpacing.sm),
                 const Text(
-                  'Bệnh viện sẽ hiển thị QR theo phòng và phiên khám. Bạn cần bật quyền camera và vị trí để hoàn tất check-in.',
+                  'Bệnh viện sẽ hiển thị một QR chung. Bạn cần bật quyền camera và vị trí để hoàn tất check-in.',
                   textAlign: TextAlign.center,
                 ),
               ] else ...[
@@ -245,9 +245,8 @@ class _TicketBody extends StatelessWidget {
                 _DetailRow(label: 'Số thứ tự', value: ticket.queueNumber),
                 _DetailRow(label: 'Mã phiếu khám', value: ticket.code),
                 const SizedBox(height: AppSpacing.lg),
-                const SizedBox(height: AppSpacing.lg),
                 const Text(
-                  'Khi đến bệnh viện, hãy mở chức năng quét QR để quét mã đang được hiển thị tại phòng khám. Vị trí thiết bị sẽ được kiểm tra trong lúc check-in.',
+                  'Khi đến bệnh viện, hãy quét QR chung đang được hiển thị tại quầy hoặc khu vực tiếp nhận. Vị trí thiết bị sẽ được kiểm tra trong lúc check-in.',
                   textAlign: TextAlign.center,
                 ),
               ],

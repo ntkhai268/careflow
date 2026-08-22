@@ -86,6 +86,16 @@ public class QueueController {
         return ApiResponse.success(queueService.issueHospitalCheckInQr(roomId, date, session, userId, role));
     }
 
+    @GetMapping("/hospital-check-in-qr")
+    public ApiResponse<CheckInQrResponse> hospitalCheckInQr(
+            @RequestParam(required = false) LocalDate date,
+            @RequestParam(required = false) String session,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role) {
+        requireAnyRole(role, AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
+        return ApiResponse.success(queueService.issueHospitalCheckInQr(date, session, userId, role));
+    }
+
     @PostMapping("/check-in")
     public ApiResponse<QueueEntryResponse> checkIn(@Valid @RequestBody CheckInRequest request,
                                                    @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,

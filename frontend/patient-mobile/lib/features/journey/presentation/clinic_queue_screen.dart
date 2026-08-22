@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,23 +11,49 @@ import '../data/journey_repository.dart';
 import '../domain/journey_models.dart';
 import 'widgets/journey_status_card.dart';
 
-class ClinicQueueScreen extends ConsumerWidget {
+class ClinicQueueScreen extends ConsumerStatefulWidget {
   const ClinicQueueScreen({super.key, required this.appointmentId});
 
   final String appointmentId;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ClinicQueueScreen> createState() => _ClinicQueueScreenState();
+}
+
+class _ClinicQueueScreenState extends ConsumerState<ClinicQueueScreen> {
+  Timer? _refreshTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
+      if (mounted && ref.read(realQueueEnabledProvider)) {
+        ref.invalidate(appointmentQueueStatusProvider(widget.appointmentId));
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     if (ref.watch(realQueueEnabledProvider)) {
-      final queue = ref.watch(appointmentQueueStatusProvider(appointmentId));
+      final queue = ref.watch(
+        appointmentQueueStatusProvider(widget.appointmentId),
+      );
       return Scaffold(
         appBar: AppBar(
           title: const Text('Hàng đợi phòng khám'),
           actions: [
             IconButton(
               tooltip: 'Cập nhật',
-              onPressed: () =>
-                  ref.invalidate(appointmentQueueStatusProvider(appointmentId)),
+              onPressed: () => ref.invalidate(
+                appointmentQueueStatusProvider(widget.appointmentId),
+              ),
               icon: const Icon(Icons.refresh_rounded),
             ),
           ],
@@ -40,16 +68,20 @@ class ClinicQueueScreen extends ConsumerWidget {
           data: (value) => _RealQueueBody(
             queue: value,
             onRefresh: () async {
-              ref.invalidate(appointmentQueueStatusProvider(appointmentId));
+              ref.invalidate(
+                appointmentQueueStatusProvider(widget.appointmentId),
+              );
               await ref.read(
-                appointmentQueueStatusProvider(appointmentId).future,
+                appointmentQueueStatusProvider(widget.appointmentId).future,
               );
             },
           ),
         ),
       );
     }
-    final journey = ref.watch(journeyForAppointmentProvider(appointmentId));
+    final journey = ref.watch(
+      journeyForAppointmentProvider(widget.appointmentId),
+    );
     return Scaffold(
       appBar: AppBar(title: const Text('Hàng đợi phòng khám')),
       body: journey.when(
@@ -129,7 +161,7 @@ class _RealQueueBody extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.md),
           const Text(
-            'Trạng thái được lấy trực tiếp từ Queue Service. Kéo xuống hoặc bấm nút cập nhật để tải lại.',
+            'Hàng đợi tự cập nhật khoảng mỗi 20 giây. Bạn cũng có thể kéo xuống để cập nhật ngay.',
             textAlign: TextAlign.center,
           ),
         ],

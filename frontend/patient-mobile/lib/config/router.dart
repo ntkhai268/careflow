@@ -36,7 +36,7 @@ import '../models/appointment.dart';
 /// GoRouter configuration for CareFlow app.
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
-  debugLogDiagnostics: true,
+  debugLogDiagnostics: false,
   routes: [
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(
@@ -247,7 +247,7 @@ final GoRouter appRouter = GoRouter(
             style: Theme.of(context).textTheme.headlineSmall,
           ),
           const SizedBox(height: 8),
-          Text('Đường dẫn: ${state.uri}'),
+          const Text('Trang này không khả dụng. Bạn có thể quay về trang chủ.'),
           const SizedBox(height: 24),
           ElevatedButton(
             onPressed: () => context.go('/'),

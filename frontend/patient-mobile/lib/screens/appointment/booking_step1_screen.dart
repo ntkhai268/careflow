@@ -180,7 +180,10 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
             ),
             const SizedBox(height: AppSpacing.xl),
             ElevatedButton.icon(
-              onPressed: () => context.push('/profile/create'),
+              onPressed: () async {
+                await context.push('/profile/create');
+                if (mounted) _loadPatients();
+              },
               icon: const Icon(Icons.add_rounded),
               label: const Text('Tạo hồ sơ mới'),
             ),
@@ -243,7 +246,10 @@ class _BookingStep1ScreenState extends ConsumerState<BookingStep1Screen> {
         ),
         const SizedBox(height: AppSpacing.md),
         OutlinedButton.icon(
-          onPressed: () => context.push('/profile/create'),
+          onPressed: () async {
+            await context.push('/profile/create');
+            if (mounted) _loadPatients();
+          },
           icon: const Icon(Icons.person_add_rounded),
           label: const Text('Thêm hồ sơ mới'),
         ),
@@ -310,7 +316,7 @@ class _PatientSelectCard extends StatelessWidget {
                         ),
                       if (patient.idCardNumber != null)
                         Text(
-                          'CCCD: ${patient.idCardNumber}',
+                          'CCCD: ${_maskIdCard(patient.idCardNumber!)}',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                     ],
@@ -324,4 +330,10 @@ class _PatientSelectCard extends StatelessWidget {
       ),
     );
   }
+}
+
+String _maskIdCard(String value) {
+  final normalized = value.trim();
+  if (normalized.length <= 4) return '****';
+  return '${'*' * (normalized.length - 4)}${normalized.substring(normalized.length - 4)}';
 }

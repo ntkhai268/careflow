@@ -118,7 +118,7 @@ export default function StaffCheckinPage() {
   const [isLoadingQueue, setIsLoadingQueue] = useState(false);
   const [processingEntryId, setProcessingEntryId] = useState<string | null>(null);
   const [rooms, setRooms] = useState<RoomItem[]>([]);
-  const [hospitalQr, setHospitalQr] = useState<{ qrToken: string; sessionCode: string; sessionDate: string; expiresAt: string } | null>(null);
+  const [hospitalQr, setHospitalQr] = useState<{ siteId: string; qrToken: string; sessionCode: string; sessionDate: string; expiresAt: string } | null>(null);
   const [isLoadingQr, setIsLoadingQr] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
 
@@ -142,19 +142,18 @@ export default function StaffCheckinPage() {
   }, []);
 
   const fetchHospitalQr = useCallback(async () => {
-    if (!roomId) return;
     setIsLoadingQr(true);
     setQrError(null);
     try {
-      const res = await queueApi.getHospitalCheckInQr(roomId);
+      const res = await queueApi.getHospitalCheckInQr();
       setHospitalQr(res.data ?? null);
     } catch (err: unknown) {
       setHospitalQr(null);
-      setQrError(getErrorMessage(err, "Không thể tạo QR check-in cho phòng này."));
+      setQrError(getErrorMessage(err, "Không thể tạo QR check-in bệnh viện."));
     } finally {
       setIsLoadingQr(false);
     }
-  }, [roomId]);
+  }, []);
 
   useEffect(() => {
     const loadQr = window.setTimeout(() => void fetchHospitalQr(), 0);
@@ -283,7 +282,7 @@ export default function StaffCheckinPage() {
         <div>
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7B4B94]">Quầy tiếp nhận</p>
           <h1 className="mt-1 text-xl font-bold tracking-tight text-[#2B1D30]">Check-in bệnh nhân</h1>
-          <p className="mt-1 text-[11px] text-slate-500">Hiển thị QR theo phòng/phiên để bệnh nhân tự quét và xác minh geofence.</p>
+          <p className="mt-1 text-[11px] text-slate-500">Hiển thị một QR chung cho bệnh nhân tự check-in tại bệnh viện và xác minh geofence.</p>
         </div>
         <div className="flex items-center gap-4 text-[10px] text-slate-500">
           <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Hệ thống sẵn sàng</span>
@@ -307,13 +306,6 @@ export default function StaffCheckinPage() {
             </button>
           </div>
 
-          <div className="mb-5">
-            <div>
-              <label className="mb-1.5 block text-[10px] font-semibold text-slate-700">Phòng khám</label>
-              <RoomPicker rooms={rooms} value={roomId} onChange={setRoomId} />
-            </div>
-          </div>
-
           <div className="rounded-lg border border-dashed border-[#C7A6D1] bg-[#FCF8FD] p-4 text-center">
             {isLoadingQr ? (
               <div className="flex min-h-[230px] items-center justify-center"><LoadingSpinner size="md" /></div>
@@ -322,11 +314,11 @@ export default function StaffCheckinPage() {
                 <div className="mx-auto w-fit rounded-xl bg-white p-3 shadow-sm">
                   <QRCodeSVG value={hospitalQr.qrToken} size={210} level="M" includeMargin />
                 </div>
-                <p className="mt-3 text-[11px] font-semibold text-[#2B1D30]">{roomId} · {hospitalQr.sessionCode}</p>
+                <p className="mt-3 text-[11px] font-semibold text-[#2B1D30]">{hospitalQr.siteId} · {hospitalQr.sessionCode}</p>
                 <p className="mt-1 text-[10px] text-slate-500">Có hiệu lực đến {new Date(hospitalQr.expiresAt).toLocaleTimeString("vi-VN")}</p>
               </>
             ) : (
-              <p className="min-h-[230px] content-center text-[11px] text-slate-500">{qrError || "Chưa có QR check-in cho phòng này."}</p>
+              <p className="min-h-[230px] content-center text-[11px] text-slate-500">{qrError || "Chưa có QR check-in bệnh viện."}</p>
             )}
           </div>
 
@@ -401,7 +393,10 @@ export default function StaffCheckinPage() {
             <h2 className="text-[15px] font-semibold text-[#2B1D30]">Hàng đợi phòng khám</h2>
             <p className="mt-1 text-[10px] text-slate-500">Phòng đang chọn: <span className="font-medium text-slate-700">{roomId}</span></p>
           </div>
-          <button onClick={() => void fetchRoomQueue()} className="h-9 rounded-md border border-slate-200 px-3 text-[10px] font-semibold text-[#7B4B94] hover:bg-[#F3E8F5]">Tải lại</button>
+          <div className="flex w-full flex-col gap-2 sm:w-[280px] sm:flex-row sm:items-center">
+            <RoomPicker rooms={rooms} value={roomId} onChange={setRoomId} />
+            <button onClick={() => void fetchRoomQueue()} className="h-9 shrink-0 rounded-md border border-slate-200 px-3 text-[10px] font-semibold text-[#7B4B94] hover:bg-[#F3E8F5]">Tải lại</button>
+          </div>
         </div>
 
         {isLoadingQueue ? (

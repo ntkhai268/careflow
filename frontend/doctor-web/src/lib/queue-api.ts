@@ -69,7 +69,6 @@ export interface CheckInRequest {
 
 export interface HospitalCheckInQr {
   siteId: string;
-  roomId: string;
   sessionCode: string;
   sessionDate: string;
   qrToken: string;
@@ -135,9 +134,9 @@ export const queueApi = {
   requeueEntry: (entryId: string, reason?: string) =>
     api.post<QueueEntry>(`/api/queues/entries/${entryId}/requeue`, { reason }),
 
-  getHospitalCheckInQr: (roomId: string, session = "MORNING") =>
+  getHospitalCheckInQr: (session = "MORNING") =>
     api.get<HospitalCheckInQr>(
-      `/api/queues/rooms/${encodeURIComponent(roomId)}/check-in-qr?session=${encodeURIComponent(session)}`,
+      `/api/queues/hospital-check-in-qr?session=${encodeURIComponent(session)}`,
     ),
 
   getHospitalCheckInConfig: () =>
