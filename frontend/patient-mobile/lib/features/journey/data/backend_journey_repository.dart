@@ -464,7 +464,6 @@ class BackendJourneyMapper {
       final method = switch (paymentStatus) {
         'PAID_ONLINE_MOCK' || 'PAID_ONLINE' => PaymentMethod.online,
         'PAID_CASH' => PaymentMethod.cash,
-        'COVERED_BY_INSURANCE' => PaymentMethod.insurance,
         _ => null,
       };
       if (method == null) continue;

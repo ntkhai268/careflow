@@ -21,6 +21,10 @@ deepseek:
   api-key: ${DEEPSEEK_API_KEY:}
   model: ${DEEPSEEK_MODEL:deepseek-chat}
 
+elevenlabs:
+  api-key: ${ELEVENLABS_API_KEY:}
+  model-id: ${ELEVENLABS_MODEL_ID:scribe_v1}
+
 eureka:
   client:
     service-url:

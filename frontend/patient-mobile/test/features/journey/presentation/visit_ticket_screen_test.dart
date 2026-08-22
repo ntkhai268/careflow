@@ -36,7 +36,9 @@ void main() {
     );
 
     expect(
-      find.text('Đến bệnh viện và quét mã QR đang được hiển thị tại phòng khám.'),
+      find.text(
+        'Khi đến bệnh viện, hãy mở chức năng quét QR để quét mã đang được hiển thị tại phòng khám. Vị trí thiết bị sẽ được kiểm tra trong lúc check-in.',
+      ),
       findsOneWidget,
     );
     expect(find.textContaining('đang trong hàng đợi'), findsNothing);

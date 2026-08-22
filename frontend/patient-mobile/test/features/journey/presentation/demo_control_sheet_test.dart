@@ -26,7 +26,7 @@ void main() {
   testWidgets('shows the next legal event in demo mode', (tester) async {
     await tester.pumpWidget(hubApp(demoMode: true));
     expect(find.text('Điều khiển mô phỏng'), findsOneWidget);
-    expect(find.text('Mô phỏng nhân viên quét QR'), findsOneWidget);
+    expect(find.text('Mô phỏng bệnh nhân quét QR'), findsOneWidget);
     expect(find.text('Mô phỏng đưa vào hàng đợi khám'), findsNothing);
   });
 
@@ -51,7 +51,7 @@ void main() {
   testWidgets('sends the staff QR scan event to the controller', (tester) async {
     final controller = RecordingJourneyController();
     await tester.pumpWidget(hubApp(demoMode: true, controller: controller));
-    await tester.tap(find.text('Mô phỏng nhân viên quét QR'));
+    await tester.tap(find.text('Mô phỏng bệnh nhân quét QR'));
     expect(controller.receivedEvents, [JourneyEvent.staffScannedQr]);
   });
 
