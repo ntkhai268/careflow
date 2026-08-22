@@ -137,7 +137,8 @@ class BackendJourneyRepository implements JourneyRepository {
       appointment.id,
     );
     final consultation = _latest(consultations);
-    final consultationId = _string(consultation?['id']);
+    final consultationId =
+        _string(consultation?['id']) ?? appointment.sourceConsultationId;
     final labOrders = consultationId == null
         ? const <Map<String, dynamic>>[]
         : await _labService.getByConsultation(consultationId);
@@ -168,7 +169,12 @@ class BackendJourneyRepository implements JourneyRepository {
     try {
       return await load();
     } on QueueServiceException catch (error) {
-      if (error.statusCode == 404) return null;
+      // Queue state is supplementary to the appointment/clinical journey.
+      // A transient queue-service failure must not hide an otherwise valid
+      // active appointment from the patient.
+      if (error.statusCode == 404 || (error.statusCode ?? 0) >= 500) {
+        return null;
+      }
       rethrow;
     } on DioException catch (error) {
       if (error.response?.statusCode == 404) return null;
@@ -187,6 +193,9 @@ class BackendJourneyMapper {
   BackendJourneyMapper({DateTime Function()? now}) : _now = now ?? DateTime.now;
 
   final DateTime Function() _now;
+
+  PatientNotification? mapNotification(Map<String, dynamic> json) =>
+      _notification(json);
 
   PatientJourney mapResources(BackendJourneyResources resources) {
     final appointment = resources.appointment;
@@ -261,6 +270,7 @@ class BackendJourneyMapper {
     final queueStatus = _statusText(
       clinicQueue?['queueStatus'] ?? clinicQueue?['status'],
     );
+    final ticketStatus = _statusText(ticket?['status']);
     final labStatus = _strongestLabStatus(labOrders);
     final appointmentStatus = _statusText(appointment.status);
 
@@ -283,6 +293,11 @@ class BackendJourneyMapper {
     }
     if (queueStatus == 'IN_PROGRESS') return JourneyStatus.inConsultation;
     if (queueStatus == 'CALLED') return JourneyStatus.called;
+    if (queueStatus == 'WAITING' &&
+        (ticketStatus == 'TICKET_ISSUED' ||
+            (ticketStatus.isEmpty && appointmentStatus == 'CONFIRMED'))) {
+      return JourneyStatus.ticketIssued;
+    }
     if (_isWaitingQueueStatus(queueStatus)) return JourneyStatus.waiting;
     if (appointmentStatus == 'IN_PROGRESS') return JourneyStatus.inConsultation;
     if (appointmentStatus == 'CHECKED_IN') return JourneyStatus.checkedIn;
@@ -365,6 +380,7 @@ class BackendJourneyMapper {
       room:
           _nonEmpty(queue['roomCode']) ??
           _nonEmpty(queue['room']) ??
+          _nonEmpty(queue['servicePointId']) ??
           _nonEmpty(ticket?['roomDisplayName']) ??
           '',
       peopleAhead: position == null || position <= 0 ? 0 : position - 1,
@@ -569,12 +585,18 @@ class BackendJourneyMapper {
       return null;
     }
     final status = _statusText(json['status']);
+    final action = json['action'] is Map
+        ? Map<String, dynamic>.from(json['action'] as Map)
+        : null;
     return PatientNotification(
       id: id,
       title: title,
       body: body,
       createdAt: createdAt,
       isRead: status == 'READ' || json['readAt'] != null,
+      actionType: _nonEmpty(action?['type']) ?? _nonEmpty(json['actionType']),
+      resourceId:
+          _nonEmpty(action?['resourceId']) ?? _nonEmpty(json['resourceId']),
     );
   }
 
@@ -659,6 +681,7 @@ Map<String, dynamic> _queueMap(queue_models.PatientQueueStatus queue) => {
   'estimatedWaitMinutes': queue.estimatedWaitMinutes,
   'type': queue.type,
   'consultationPhase': queue.consultationPhase,
+  'servicePointId': queue.servicePointId,
 };
 
 Map<String, dynamic>? _latest(List<Map<String, dynamic>> values) {

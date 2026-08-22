@@ -141,7 +141,7 @@ void main() {
     },
   );
 
-  testWidgets('appointment detail no longer exposes a journey action', (
+  testWidgets('appointment detail opens the visit ticket screen', (
     tester,
   ) async {
     final service = FakeAppointmentService(detailAppointment: appointment);
@@ -156,7 +156,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.byKey(const Key('open-journey-detail')), findsNothing);
+    expect(find.byKey(const Key('open-journey-detail')), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('open-journey-detail')));
+    await tester.tap(find.byKey(const Key('open-journey-detail')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('ticket apt-1'), findsOneWidget);
     expect(repository.bootstrapAppointments, isEmpty);
   });
 

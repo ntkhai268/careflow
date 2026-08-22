@@ -2,6 +2,7 @@ import 'package:careflow_patient/features/journey/application/journey_controller
 import 'package:careflow_patient/features/journey/application/journey_providers.dart';
 import 'package:careflow_patient/features/journey/data/journey_repository.dart';
 import 'package:careflow_patient/features/journey/domain/journey_models.dart';
+import 'package:careflow_patient/features/journey/domain/journey_transition.dart';
 import 'package:careflow_patient/features/journey/presentation/journey_notification_screen.dart';
 import 'package:careflow_patient/models/appointment.dart';
 import 'package:careflow_patient/models/patient.dart';
@@ -61,6 +62,37 @@ void main() {
       await tester.tap(find.byKey(const Key('home-notification-button')));
       await tester.pumpAndSettle();
       expect(find.byType(JourneyNotificationScreen), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    'fresh shell loads the patient before restoring an in-progress journey',
+    (tester) async {
+      final auth = SeededAuthNotifier()..authenticate('user-a');
+      late RestoringPatientNotifier patient;
+      final appointmentService = InProgressAppointmentService();
+      final controller = JourneyController(
+        repository: InProgressJourneyRepository(),
+        demoMode: false,
+      );
+
+      await tester.pumpWidget(
+        ProviderScope(
+          overrides: [
+            authProvider.overrideWith((ref) => auth),
+            patientProvider.overrideWith(
+              (ref) => patient = RestoringPatientNotifier(patientA, ref),
+            ),
+            appointmentServiceProvider.overrideWithValue(appointmentService),
+            journeyControllerProvider.overrideWith((ref) => controller),
+          ],
+          child: const MaterialApp(home: MainShell()),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(patient.loadCalls, 1);
+      expect(find.byKey(const Key('active-journey-card')), findsOneWidget);
     },
   );
 
@@ -170,4 +202,77 @@ class EmptyAppointmentService extends AppointmentService {
   Future<List<Appointment>> getAppointmentsByPatientId(String patientId) async {
     return const [];
   }
+}
+
+class InProgressAppointmentService extends AppointmentService {
+  InProgressAppointmentService() : super(ApiService());
+
+  @override
+  Future<List<Appointment>> getAppointmentsByPatientId(
+    String patientId,
+  ) async => [
+    Appointment(
+      id: 'apt-in-progress',
+      patientId: patientId,
+      department: 'NOI_TONG_QUAT',
+      departmentDisplayName: 'General Medicine',
+      appointmentDate: DateTime.utc(2026, 8, 8),
+      timeSlot: '08:00 - 08:30',
+      status: 'IN_PROGRESS',
+      statusDisplayName: 'IN_PROGRESS',
+    ),
+  ];
+}
+
+class RestoringPatientNotifier extends PatientNotifier {
+  RestoringPatientNotifier(this.patient, Ref ref)
+    : super(PatientService(ApiService()), ref);
+
+  final Patient patient;
+  int loadCalls = 0;
+
+  @override
+  Future<void> loadPatient() async {
+    if (state.isLoading) return;
+    loadCalls++;
+    state = const PatientState(isLoading: true);
+    await Future<void>.value();
+    state = PatientState(patient: patient);
+  }
+}
+
+class InProgressJourneyRepository implements JourneyRepository {
+  @override
+  Future<PatientJourney> bootstrap({
+    required Appointment appointment,
+    required String patientId,
+  }) async => PatientJourney(
+    appointmentId: appointment.id,
+    patientId: patientId,
+    status: JourneyStatus.inConsultation,
+    doctorName: 'BS. Minh Anh',
+    laboratoryOrders: const [],
+    timeline: const [],
+    notifications: const [],
+    updatedAt: DateTime.utc(2026, 8, 8),
+  );
+
+  @override
+  Future<PatientJourney> acknowledgePayment(
+    PatientJourney journey,
+    PaymentMethod method,
+  ) => throw UnimplementedError();
+
+  @override
+  Future<PatientJourney> advance(PatientJourney journey, JourneyEvent event) =>
+      throw UnimplementedError();
+
+  @override
+  Future<PatientJourney> markNotificationRead(
+    PatientJourney journey,
+    String notificationId,
+  ) => throw UnimplementedError();
+
+  @override
+  Future<void> reset(PatientJourney journey) => throw UnimplementedError();
 }

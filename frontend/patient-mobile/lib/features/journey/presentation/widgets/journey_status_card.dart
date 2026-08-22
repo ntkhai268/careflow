@@ -43,6 +43,12 @@ class JourneyStatusCard extends StatelessWidget {
 }
 
 _StatusPresentation _presentationFor(JourneyStatus status) => switch (status) {
+  JourneyStatus.booked => const _StatusPresentation(
+    Icons.event_available_rounded,
+    AppColors.info,
+    'Lịch khám đã được xác nhận',
+    'Hệ thống sẽ cập nhật phiếu khám khi lịch của bạn được tiếp nhận.',
+  ),
   JourneyStatus.ticketIssued => const _StatusPresentation(
     Icons.qr_code_scanner_rounded,
     AppColors.info,
@@ -73,17 +79,59 @@ _StatusPresentation _presentationFor(JourneyStatus status) => switch (status) {
     'Đang khám bệnh',
     'Bác sĩ đang khám cho bạn.',
   ),
+  JourneyStatus.labOrdered => const _StatusPresentation(
+    Icons.biotech_rounded,
+    AppColors.info,
+    'Bác sĩ đã chỉ định xét nghiệm',
+    'Mở hành trình để xem chỉ định và điểm thực hiện.',
+  ),
+  JourneyStatus.paymentPending => const _StatusPresentation(
+    Icons.payments_rounded,
+    AppColors.warning,
+    'Đang chờ thanh toán xét nghiệm',
+    'Hoàn tất thanh toán trực tuyến để tiếp tục.',
+  ),
+  JourneyStatus.waitingLab => const _StatusPresentation(
+    Icons.hourglass_top_rounded,
+    AppColors.warning,
+    'Đang chờ thực hiện xét nghiệm',
+    'Vui lòng đến điểm cận lâm sàng được hướng dẫn.',
+  ),
+  JourneyStatus.labInProgress => const _StatusPresentation(
+    Icons.science_rounded,
+    AppColors.success,
+    'Đang thực hiện xét nghiệm',
+    'Nhân viên xét nghiệm đang xử lý chỉ định của bạn.',
+  ),
+  JourneyStatus.labResultReady => const _StatusPresentation(
+    Icons.assignment_turned_in_rounded,
+    AppColors.success,
+    'Đã có kết quả xét nghiệm',
+    'Kết quả đang chờ bác sĩ xem và kết luận.',
+  ),
+  JourneyStatus.waitingResultReview => const _StatusPresentation(
+    Icons.rate_review_rounded,
+    AppColors.warning,
+    'Đang chờ bác sĩ đọc kết quả',
+    'Bác sĩ sẽ xem kết quả xét nghiệm của bạn.',
+  ),
+  JourneyStatus.resultReview => const _StatusPresentation(
+    Icons.rate_review_rounded,
+    AppColors.success,
+    'Bác sĩ đang xem kết quả',
+    'Vui lòng chờ bác sĩ hoàn tất kết luận.',
+  ),
+  JourneyStatus.prescribed => const _StatusPresentation(
+    Icons.medication_rounded,
+    AppColors.success,
+    'Đã có toa thuốc',
+    'Mở hành trình để xem kết quả khám và toa thuốc.',
+  ),
   JourneyStatus.completed => const _StatusPresentation(
     Icons.check_circle_rounded,
     AppColors.success,
     'Lượt khám đã hoàn tất',
     'Bạn có thể xem chẩn đoán, kết quả xét nghiệm và đơn thuốc.',
-  ),
-  _ => const _StatusPresentation(
-    Icons.info_outline_rounded,
-    AppColors.info,
-    'Hành trình khám',
-    'Thông tin hành trình sẽ được cập nhật tại đây.',
   ),
 };
 

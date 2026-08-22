@@ -84,6 +84,72 @@ final journeyAccountScopeProvider = Provider<JourneyAccountScope?>((ref) {
   return (userId: auth.userId!, patientId: patient.id);
 });
 
+/// The notification tab is a user inbox, so it remains available even when
+/// there is no active appointment journey on the home screen.
+final patientNotificationInboxProvider =
+    AsyncNotifierProvider.autoDispose<
+      PatientNotificationInboxController,
+      List<PatientNotification>
+    >(PatientNotificationInboxController.new);
+
+class PatientNotificationInboxController
+    extends AutoDisposeAsyncNotifier<List<PatientNotification>> {
+  bool _refreshing = false;
+
+  @override
+  Future<List<PatientNotification>> build() async {
+    if (ref.watch(journeyAccountScopeProvider) == null) return const [];
+    return _fetch();
+  }
+
+  Future<bool> refresh() async {
+    if (_refreshing) return false;
+    _refreshing = true;
+    try {
+      state = AsyncData(await _fetch());
+      return true;
+    } catch (error, stackTrace) {
+      final previous = state.valueOrNull;
+      state = previous == null
+          ? AsyncError(error, stackTrace)
+          : AsyncData(previous);
+      return false;
+    } finally {
+      _refreshing = false;
+    }
+  }
+
+  Future<bool> markRead(String notificationId) async {
+    try {
+      await ref.read(notificationServiceProvider).markRead(notificationId);
+      final current = state.valueOrNull;
+      if (current != null) {
+        state = AsyncData(
+          current
+              .map(
+                (notification) => notification.id == notificationId
+                    ? notification.copyWith(isRead: true)
+                    : notification,
+              )
+              .toList(growable: false),
+        );
+      }
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<List<PatientNotification>> _fetch() async {
+    final raw = await ref.read(notificationServiceProvider).inbox();
+    final mapper = BackendJourneyMapper();
+    return raw
+        .map(mapper.mapNotification)
+        .whereType<PatientNotification>()
+        .toList(growable: false);
+  }
+}
+
 final journeyForAppointmentProvider =
     Provider.family<AsyncValue<PatientJourney?>, String>((ref, appointmentId) {
       final scope = ref.watch(journeyAccountScopeProvider);
@@ -108,6 +174,55 @@ final activeJourneyProvider = Provider<PatientJourney?>((ref) {
       ? journey
       : null;
 });
+
+/// Restores the active backend journey after the app is restarted or the
+/// patient returns to the home tab. Booking currently bootstraps the journey
+/// in memory, so without this reconciliation the home card disappears even
+/// though the appointment and visit ticket still exist on the server.
+final activeJourneyBootstrapProvider = FutureProvider.autoDispose<void>((
+  ref,
+) async {
+  if (ref.watch(demoModeProvider)) return;
+
+  final scope = ref.watch(journeyAccountScopeProvider);
+  if (scope == null) return;
+
+  final current = ref.read(journeyControllerProvider).valueOrNull;
+  if (current != null && current.patientId == scope.patientId) return;
+
+  final appointments = await ref
+      .watch(appointmentServiceProvider)
+      .getAppointmentsByPatientId(scope.patientId);
+  final candidates = appointments
+      .where(
+        (appointment) =>
+            appointment.patientId == scope.patientId &&
+            appointment.allowsActiveJourney &&
+            appointment.status != 'COMPLETED' &&
+            appointment.status != 'CANCELLED',
+      )
+      .toList();
+  if (candidates.isEmpty) return;
+
+  candidates.sort((left, right) {
+    final leftPriority = _activeAppointmentPriority(left);
+    final rightPriority = _activeAppointmentPriority(right);
+    final priorityComparison = leftPriority.compareTo(rightPriority);
+    if (priorityComparison != 0) return priorityComparison;
+    return left.appointmentDate.compareTo(right.appointmentDate);
+  });
+
+  await ref
+      .read(journeyControllerProvider.notifier)
+      .bootstrap(appointment: candidates.first, patientId: scope.patientId);
+});
+
+int _activeAppointmentPriority(Appointment appointment) =>
+    switch (appointment.status.toUpperCase()) {
+      'CHECKED_IN' || 'IN_PROGRESS' => 0,
+      'CONFIRMED' => 1,
+      _ => 2,
+    };
 
 /// Completed visit outcomes available to the signed-in patient.
 ///

@@ -28,6 +28,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final authState = ref.watch(authProvider);
     final activeJourney = ref.watch(activeJourneyProvider);
+    final activeJourneyRestore = ref.watch(activeJourneyBootstrapProvider);
     final unreadCount = ref.watch(unreadJourneyNotificationCountProvider);
 
     return Scaffold(
@@ -46,7 +47,14 @@ class HomeScreen extends ConsumerWidget {
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
               sliver: SliverList.list(
                 children: [
-                  _JourneySection(journey: activeJourney),
+                  _JourneySection(
+                    journey: activeJourney,
+                    isRestoring: activeJourneyRestore.isLoading,
+                    hasRestoreError: activeJourneyRestore.hasError,
+                    onRetryRestore: activeJourneyRestore.hasError
+                        ? () => ref.invalidate(activeJourneyBootstrapProvider)
+                        : null,
+                  ),
                   const SizedBox(height: AppSpacing.xl),
                   SizedBox(
                     width: double.infinity,
@@ -202,9 +210,17 @@ class _Header extends StatelessWidget {
 }
 
 class _JourneySection extends StatelessWidget {
-  const _JourneySection({required this.journey});
+  const _JourneySection({
+    required this.journey,
+    this.isRestoring = false,
+    this.hasRestoreError = false,
+    this.onRetryRestore,
+  });
 
   final PatientJourney? journey;
+  final bool isRestoring;
+  final bool hasRestoreError;
+  final VoidCallback? onRetryRestore;
 
   @override
   Widget build(BuildContext context) => Column(
@@ -216,7 +232,11 @@ class _JourneySection extends StatelessWidget {
       ),
       const SizedBox(height: AppSpacing.md),
       if (journey == null)
-        const _NoActiveJourney()
+        isRestoring
+            ? const _RestoringJourney()
+            : hasRestoreError
+            ? _JourneyRestoreError(onRetry: onRetryRestore)
+            : const _NoActiveJourney()
       else
         Semantics(
           button: true,
@@ -229,6 +249,74 @@ class _JourneySection extends StatelessWidget {
           ),
         ),
     ],
+  );
+}
+
+class _JourneyRestoreError extends StatelessWidget {
+  const _JourneyRestoreError({required this.onRetry});
+
+  final VoidCallback? onRetry;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(AppSpacing.lg),
+    decoration: BoxDecoration(
+      color: AppColors.errorLight,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      border: Border.all(color: AppColors.error.withValues(alpha: 0.25)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Icons.cloud_off_rounded, color: AppColors.error),
+            const SizedBox(width: AppSpacing.sm),
+            Expanded(
+              child: Text(
+                'Không thể tải hành trình khám.',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: AppSpacing.xs),
+        const Text('Kiểm tra kết nối rồi thử tải lại.'),
+        const SizedBox(height: AppSpacing.md),
+        OutlinedButton.icon(
+          onPressed: onRetry,
+          icon: const Icon(Icons.refresh_rounded),
+          label: const Text('Thử lại'),
+        ),
+      ],
+    ),
+  );
+}
+
+class _RestoringJourney extends StatelessWidget {
+  const _RestoringJourney();
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    padding: const EdgeInsets.all(AppSpacing.lg),
+    decoration: BoxDecoration(
+      color: AppColors.primarySurface,
+      borderRadius: BorderRadius.circular(AppRadius.lg),
+      border: Border.all(color: AppColors.primaryLight),
+    ),
+    child: const Row(
+      children: [
+        SizedBox(
+          width: 22,
+          height: 22,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+        SizedBox(width: AppSpacing.md),
+        Expanded(child: Text('Đang tải hành trình và phiếu khám...')),
+      ],
+    ),
   );
 }
 

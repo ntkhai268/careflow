@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../config/theme.dart';
 import '../features/journey/application/journey_providers.dart';
+import '../providers/patient_provider.dart';
 import 'appointment/appointment_screen.dart';
 import 'home/home_screen.dart';
 import 'notification/notification_screen.dart';
@@ -27,6 +28,13 @@ class _MainShellState extends ConsumerState<MainShell> {
   void initState() {
     super.initState();
     _currentIndex = widget.initialIndex.clamp(0, 4);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final patientState = ref.read(patientProvider);
+      if (!patientState.isLoading && patientState.patient == null) {
+        ref.read(patientProvider.notifier).loadPatient();
+      }
+    });
   }
 
   @override

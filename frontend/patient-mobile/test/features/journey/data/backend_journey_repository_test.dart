@@ -60,6 +60,24 @@ void main() {
     expect(called.status, JourneyStatus.called);
   });
 
+  test('keeps a not-yet-checked-in ticket out of the clinic waiting state', () {
+    final journey = mapper.mapResources(
+      BackendJourneyResources(
+        appointment: appointment(status: 'CONFIRMED'),
+        patientId: 'patient-1',
+        ticket: {...ticket(), 'status': 'TICKET_ISSUED'},
+        clinicQueue: {
+          'queueStatus': 'WAITING',
+          'effectivePosition': 1,
+          'estimatedWaitMinutes': 10,
+          'roomCode': 'P21',
+        },
+      ),
+    );
+
+    expect(journey.status, JourneyStatus.ticketIssued);
+  });
+
   test('maps waiting lab state from consultation and paid lab order', () {
     final journey = mapper.mapResources(
       BackendJourneyResources(
@@ -87,6 +105,36 @@ void main() {
     expect(journey.laboratoryOrders.single.name, 'Công thức máu');
     expect(journey.laboratoryOrders.single.result, isNull);
     expect(journey.payment, isNull);
+  });
+
+  test('maps a lab queue without a room code to its service point', () {
+    final journey = mapper.mapResources(
+      BackendJourneyResources(
+        appointment: appointment(status: 'IN_PROGRESS'),
+        patientId: 'patient-1',
+        ticket: ticket(),
+        consultation: consultation(status: 'AWAITING_CLS'),
+        clinicQueue: {
+          'queueStatus': 'QUEUED',
+          'servicePointId': 'LAB-HEMATOLOGY-01',
+        },
+        labOrders: [
+          labOrder(
+            status: 'ORDERED',
+            items: [
+              labItem(
+                status: 'ORDERED',
+                serviceName: 'Công thức máu',
+                servicePointId: 'LAB-HEMATOLOGY-01',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+
+    expect(journey.clinicQueue!.room, 'LAB-HEMATOLOGY-01');
+    expect(journey.status, JourneyStatus.labOrdered);
   });
 
   test('maps only released lab results and result review queue', () {
@@ -225,6 +273,10 @@ void main() {
               'title': 'Đã có kết quả xét nghiệm',
               'body': 'Vui lòng quay lại phòng khám',
               'status': 'READ',
+              'action': {
+                'type': 'OPEN_RESULT_REVIEW',
+                'resourceId': 'consult-1',
+              },
               'createdAt': '2026-08-18T03:30:00Z',
             },
           ],
@@ -232,6 +284,8 @@ void main() {
       );
 
       expect(journey.notifications.single.isRead, isTrue);
+      expect(journey.notifications.single.actionType, 'OPEN_RESULT_REVIEW');
+      expect(journey.notifications.single.resourceId, 'consult-1');
       expect(
         () => mapper.mapResources(
           BackendJourneyResources(

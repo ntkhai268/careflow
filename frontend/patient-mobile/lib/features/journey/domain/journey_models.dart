@@ -489,6 +489,8 @@ class PatientNotification {
     required this.body,
     required DateTime createdAt,
     required this.isRead,
+    this.actionType,
+    this.resourceId,
   }) : createdAt = createdAt.toUtc();
 
   final String id;
@@ -496,6 +498,8 @@ class PatientNotification {
   final String body;
   final DateTime createdAt;
   final bool isRead;
+  final String? actionType;
+  final String? resourceId;
 
   PatientNotification copyWith({bool? isRead}) => PatientNotification(
     id: id,
@@ -503,6 +507,8 @@ class PatientNotification {
     body: body,
     createdAt: createdAt,
     isRead: isRead ?? this.isRead,
+    actionType: actionType,
+    resourceId: resourceId,
   );
 
   Map<String, dynamic> toJson() => {
@@ -511,6 +517,8 @@ class PatientNotification {
     'body': body,
     'createdAt': _iso(createdAt),
     'isRead': isRead,
+    if (actionType != null) 'actionType': actionType,
+    if (resourceId != null) 'resourceId': resourceId,
   };
 
   factory PatientNotification.fromJson(Map<String, dynamic> json) =>
@@ -520,6 +528,8 @@ class PatientNotification {
         body: json['body'] as String,
         createdAt: _utc(json['createdAt'] as String),
         isRead: json['isRead'] as bool,
+        actionType: json['actionType'] as String?,
+        resourceId: json['resourceId'] as String?,
       );
 
   @override
@@ -529,10 +539,13 @@ class PatientNotification {
       title == other.title &&
       body == other.body &&
       createdAt == other.createdAt &&
-      isRead == other.isRead;
+      isRead == other.isRead &&
+      actionType == other.actionType &&
+      resourceId == other.resourceId;
 
   @override
-  int get hashCode => Object.hash(id, title, body, createdAt, isRead);
+  int get hashCode =>
+      Object.hash(id, title, body, createdAt, isRead, actionType, resourceId);
 }
 
 class PatientJourney {
