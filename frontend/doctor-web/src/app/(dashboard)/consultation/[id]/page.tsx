@@ -641,7 +641,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
   // Complete Consultation trigger
   const completeConsultation = () => {
-    if (prescriptionId && prescriptionStatus !== "CONFIRMED") {
+    if (prescriptionItems.length > 0 && prescriptionStatus !== "CONFIRMED") {
       showToast("Vui lòng KÝ và XÁC NHẬN đơn thuốc trước khi hoàn tất phiên khám.", "warning");
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
