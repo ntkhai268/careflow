@@ -42,6 +42,7 @@ class PrescriptionServiceTest {
     private static final UUID DOCTOR_ID = UUID.fromString("33333333-3333-3333-3333-333333333333");
     private static final UUID PATIENT_ID = UUID.fromString("44444444-4444-4444-4444-444444444444");
     private static final UUID CONSULTATION_ID = UUID.fromString("55555555-5555-5555-5555-555555555555");
+    private static final UUID STAFF_ID = UUID.fromString("66666666-6666-6666-6666-666666666666");
 
     @Mock private PrescriptionRepository prescriptionRepository;
     @Mock private DrugRepository drugRepository;
@@ -119,6 +120,46 @@ class PrescriptionServiceTest {
                 AppConstants.ROLE_DOCTOR))
                 .hasMessageContaining("assigned");
         verify(prescriptionRepository, never()).save(any());
+    }
+
+    @Test
+    void pharmacyStaffCanReadPrescriptionAssignedToTheirQueue() {
+        Prescription confirmed = prescription(PrescriptionStatus.CONFIRMED);
+        confirmed.setDispensingServicePointId("PHARMACY-MAIN-01");
+        QueueExecutionClient.QueueEntryState entry = pharmacyEntry(PRESCRIPTION_ID, PATIENT_ID);
+        PrescriptionResponse response = new PrescriptionResponse();
+        when(prescriptionRepository.findById(PRESCRIPTION_ID)).thenReturn(Optional.of(confirmed));
+        when(queueExecutionClient.getPharmacyEntry(PRESCRIPTION_ID, STAFF_ID, AppConstants.ROLE_STAFF))
+                .thenReturn(entry);
+        when(prescriptionMapper.toResponse(confirmed)).thenReturn(response);
+
+        assertThat(prescriptionService.getPrescription(
+                PRESCRIPTION_ID, STAFF_ID, AppConstants.ROLE_STAFF)).isSameAs(response);
+    }
+
+    @Test
+    void pharmacyStaffCannotReadPrescriptionFromMismatchedQueueEntry() {
+        Prescription confirmed = prescription(PrescriptionStatus.CONFIRMED);
+        confirmed.setDispensingServicePointId("PHARMACY-MAIN-01");
+        QueueExecutionClient.QueueEntryState entry = pharmacyEntry(
+                PRESCRIPTION_ID, UUID.fromString("77777777-7777-7777-7777-777777777777"));
+        when(prescriptionRepository.findById(PRESCRIPTION_ID)).thenReturn(Optional.of(confirmed));
+        when(queueExecutionClient.getPharmacyEntry(PRESCRIPTION_ID, STAFF_ID, AppConstants.ROLE_STAFF))
+                .thenReturn(entry);
+
+        assertThatThrownBy(() -> prescriptionService.getPrescription(
+                PRESCRIPTION_ID, STAFF_ID, AppConstants.ROLE_STAFF))
+                .hasMessageContaining("not allowed");
+    }
+
+    private QueueExecutionClient.QueueEntryState pharmacyEntry(UUID prescriptionId, UUID patientId) {
+        QueueExecutionClient.QueueEntryState entry = new QueueExecutionClient.QueueEntryState();
+        entry.setPrescriptionId(prescriptionId);
+        entry.setPatientId(patientId);
+        entry.setType("PHARMACY_DISPENSING");
+        entry.setServicePointId("PHARMACY-MAIN-01");
+        entry.setQueueStatus("QUEUED");
+        return entry;
     }
 
     private Prescription prescription(PrescriptionStatus status) {

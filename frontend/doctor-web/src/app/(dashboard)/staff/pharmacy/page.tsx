@@ -52,8 +52,8 @@ export default function StaffPharmacyPage() {
     setActiveEntry(current => current?.entryId === updated.entryId ? updated : current);
   }, []);
 
-  const fetchPharmacyQueue = useCallback(async () => {
-    setIsLoading(true);
+  const fetchPharmacyQueue = useCallback(async (showLoading = true) => {
+    if (showLoading) setIsLoading(true);
     setError(null);
     try {
       const response = await queueApi.getServicePointActive(PHARMACY_SERVICE_POINT);
@@ -69,13 +69,17 @@ export default function StaffPharmacyPage() {
       setError(getErrorMessage(err, "Không thể tải danh sách hàng đợi phát thuốc."));
       setEntries([]);
     } finally {
-      setIsLoading(false);
+      if (showLoading) setIsLoading(false);
     }
   }, []);
 
   useEffect(() => {
     const timer = window.setTimeout(() => void fetchPharmacyQueue(), 0);
-    return () => window.clearTimeout(timer);
+    const pollingTimer = window.setInterval(() => void fetchPharmacyQueue(false), 10_000);
+    return () => {
+      window.clearTimeout(timer);
+      window.clearInterval(pollingTimer);
+    };
   }, [fetchPharmacyQueue]);
 
   useEffect(() => {

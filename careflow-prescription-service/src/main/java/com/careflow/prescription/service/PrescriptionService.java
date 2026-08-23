@@ -525,6 +525,16 @@ public class PrescriptionService {
     }
 
     private void requireReadAccess(Prescription prescription, UUID actorUserId, String actorRole) {
+        if (actorUserId != null && AppConstants.ROLE_STAFF.equalsIgnoreCase(actorRole)) {
+            QueueExecutionClient.QueueEntryState entry = queueExecutionClient
+                    .getPharmacyEntry(prescription.getId(), actorUserId, actorRole);
+            boolean assignedToPharmacy = prescription.getId().equals(entry.getPrescriptionId())
+                    && prescription.getPatientId().equals(entry.getPatientId())
+                    && "PHARMACY_DISPENSING".equalsIgnoreCase(entry.getType())
+                    && prescription.getDispensingServicePointId() != null
+                    && prescription.getDispensingServicePointId().equalsIgnoreCase(entry.getServicePointId());
+            if (assignedToPharmacy) return;
+        }
         if (!canRead(prescription, actorUserId, actorRole)) {
             throw new BusinessException(403, "You are not allowed to view this prescription");
         }
