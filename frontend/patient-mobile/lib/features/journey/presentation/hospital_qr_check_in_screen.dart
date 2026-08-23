@@ -169,13 +169,15 @@ class _HospitalQrCheckInScreenState
                         ],
                       ),
                     ),
-                  Center(
-                    child: Container(
-                      width: 230,
-                      height: 230,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.white, width: 3),
-                        borderRadius: BorderRadius.circular(AppSpacing.md),
+                  IgnorePointer(
+                    child: Center(
+                      child: Container(
+                        width: 230,
+                        height: 230,
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.white, width: 3),
+                          borderRadius: BorderRadius.circular(AppSpacing.md),
+                        ),
                       ),
                     ),
                   ),
