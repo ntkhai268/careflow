@@ -55,6 +55,9 @@ class PatientQueueStatus {
     required this.status,
     required this.position,
     required this.estimatedWaitMinutes,
+    this.checkedInAt,
+    this.calledAt,
+    this.startedAt,
     this.type,
     this.consultationPhase,
     this.servicePointId,
@@ -67,6 +70,9 @@ class PatientQueueStatus {
   final String status;
   final int? position;
   final int? estimatedWaitMinutes;
+  final DateTime? checkedInAt;
+  final DateTime? calledAt;
+  final DateTime? startedAt;
   final String? type;
   final String? consultationPhase;
   final String? servicePointId;
@@ -80,8 +86,16 @@ class PatientQueueStatus {
         status: (json['queueStatus'] ?? json['status']) as String,
         position: json['effectivePosition'] as int?,
         estimatedWaitMinutes: json['estimatedWaitMinutes'] as int?,
+        checkedInAt: _optionalDateTime(json['checkedInAt']),
+        calledAt: _optionalDateTime(json['calledAt']),
+        startedAt: _optionalDateTime(json['startedAt']),
         type: json['type'] as String?,
         consultationPhase: json['consultationPhase'] as String?,
         servicePointId: json['servicePointId'] as String?,
       );
+}
+
+DateTime? _optionalDateTime(Object? value) {
+  if (value == null) return null;
+  return DateTime.tryParse(value.toString());
 }

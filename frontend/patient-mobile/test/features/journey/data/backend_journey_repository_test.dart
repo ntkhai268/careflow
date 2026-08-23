@@ -60,6 +60,28 @@ void main() {
     expect(called.status, JourneyStatus.called);
   });
 
+  test('keeps check-in visible in status and journey timeline', () {
+    final journey = mapper.mapResources(
+      BackendJourneyResources(
+        appointment: appointment(status: 'CONFIRMED'),
+        patientId: 'patient-1',
+        ticket: {...ticket(), 'status': 'CHECKED_IN'},
+        clinicQueue: {
+          'entryId': 'queue-1',
+          'queueStatus': 'CHECKED_IN',
+          'checkedInAt': '2026-08-18T03:20:00Z',
+          'roomCode': 'P21',
+        },
+      ),
+    );
+
+    expect(journey.status, JourneyStatus.checkedIn);
+    expect(
+      journey.timeline.map((event) => event.title),
+      contains('Đã xác nhận check-in'),
+    );
+  });
+
   test('keeps a not-yet-checked-in ticket out of the clinic waiting state', () {
     final journey = mapper.mapResources(
       BackendJourneyResources(

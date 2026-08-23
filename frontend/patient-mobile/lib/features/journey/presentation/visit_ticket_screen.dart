@@ -55,6 +55,9 @@ class VisitTicketScreen extends ConsumerWidget {
                 if (didCheckIn == true) {
                   ref.invalidate(queueTicketProvider(appointmentId));
                   ref.invalidate(appointmentQueueStatusProvider(appointmentId));
+                  await ref
+                      .read(journeyControllerProvider.notifier)
+                      .refreshCurrentJourney();
                 }
               },
             ),

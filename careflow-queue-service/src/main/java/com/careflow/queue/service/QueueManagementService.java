@@ -508,6 +508,7 @@ public class QueueManagementService {
                 idempotencyKey, correlationId);
     }
 
+    @Transactional
     public Optional<QueueEntryResponse> callNextInRoom(
             String roomId, UUID calledByUserId, String role, String idempotencyKey, String correlationId) {
         requireRoomAccess(roomId, calledByUserId, role);

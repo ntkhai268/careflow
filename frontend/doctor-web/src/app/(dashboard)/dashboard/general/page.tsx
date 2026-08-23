@@ -25,7 +25,9 @@ function StatusDot({ status }: { status: string }) {
   const config: Record<string, { color: string; label: string; textClass: string }> = {
     WAITING:     { color: "#F59E0B", label: "Chờ khám", textClass: "text-amber-600 font-medium" },
     PENDING:     { color: "#F59E0B", label: "Chờ khám", textClass: "text-amber-600 font-medium" },
-    CHECKED_IN:  { color: "#3B82F6", label: "Đã tiếp nhận", textClass: "text-blue-600 font-medium" },
+    CHECKED_IN:  { color: "#3B82F6", label: "Đã check-in", textClass: "text-blue-600 font-medium" },
+    QUEUED:      { color: "#3B82F6", label: "Đang chờ gọi", textClass: "text-blue-600 font-medium" },
+    CALLED:      { color: "#F59E0B", label: "Đã gọi số", textClass: "text-amber-600 font-semibold" },
     IN_PROGRESS: { color: "#8B5CF6", label: "Đang khám", textClass: "text-purple-600 font-semibold" },
     CONFIRMED:   { color: "#3B82F6", label: "Đã tiếp nhận", textClass: "text-blue-600 font-medium" },
     COMPLETED:   { color: "#10B981", label: "Hoàn tất", textClass: "text-emerald-600 font-medium" },
@@ -196,14 +198,17 @@ export default function DashboardGeneralPage() {
     setActiveNotice({ show: false, message: "" });
 
     try {
-      const consRes = await consultationApi.getTodayByDoctor(user.id);
-      const activeCons = (consRes.data || []).find(c => c.status === "IN_PROGRESS");
-      if (activeCons) {
-        if (activeCons.patientId === patientId || activeCons.appointmentId === appointmentId) {
-          router.push(`/consultation/${activeCons.id}${entryQuery}`);
-          return;
-        }
+      if (!queueEntry || !entryId) {
+        throw new Error("Không tìm thấy lượt hàng đợi của bệnh nhân.");
+      }
 
+      const consRes = await consultationApi.getByDoctor(user.id);
+      const activeCons = (consRes.data || []).find(c => c.status === "IN_PROGRESS");
+      const isSameConsultation = activeCons && (
+        activeCons.patientId === patientId || activeCons.appointmentId === appointmentId
+      );
+
+      if (activeCons && !isSameConsultation) {
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
             detail: {
@@ -216,17 +221,29 @@ export default function DashboardGeneralPage() {
         return;
       }
 
-      if (entryId) {
-        if (queueEntry.status === "CHECKED_IN") {
-          await queueApi.callEntry(entryId);
-        }
-        if (queueEntry.status === "CHECKED_IN" || queueEntry.status === "CALLED") {
-          await queueApi.startEntry(entryId);
-        }
+      if (queueEntry.status === "CHECKED_IN" || queueEntry.status === "QUEUED") {
+        await queueApi.callEntry(entryId);
+        setQueuePatients(current => current?.map(entry =>
+          entry.entryId === entryId ? { ...entry, status: "CALLED" } : entry
+        ) ?? null);
+        return;
       }
 
-      const res = await consultationApi.createConsultation({ appointmentId, patientId, doctorId: user.id });
-      router.push(`/consultation/${res.data.id}${entryQuery}`);
+      if (queueEntry.status === "IN_PROGRESS" && isSameConsultation) {
+        router.push(`/consultation/${activeCons.id}${entryQuery}`);
+        return;
+      }
+
+      const appointmentConsultations = await consultationApi.getByAppointment(appointmentId);
+      let consultation = (appointmentConsultations.data ?? []).find(c => c.status === "IN_PROGRESS");
+      if (!consultation) {
+        const res = await consultationApi.createConsultation({ appointmentId, patientId, doctorId: user.id });
+        consultation = res.data;
+      }
+      if (queueEntry.status === "CALLED") {
+        await queueApi.startEntry(entryId);
+      }
+      router.push(`/consultation/${consultation.id}${entryQuery}`);
     } catch (err: unknown) {
       const msg = getErrorMessage(err, "Bác sĩ hiện tại đang có một ca khám chưa hoàn tất.");
       if (typeof window !== "undefined") {
@@ -241,6 +258,14 @@ export default function DashboardGeneralPage() {
   const filteredQueuePatients = safeQueuePatients.filter(p => 
     !searchQuery.trim() || p.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
   );
+  const nextCallablePatient = filteredQueuePatients.find(patient =>
+    patient.status === "CHECKED_IN" || patient.status === "QUEUED"
+  );
+  const actionLabel = (status: string) => {
+    if (status === "CALLED") return "Bắt đầu khám";
+    if (status === "IN_PROGRESS") return "Vào khám";
+    return "Gọi số";
+  };
 
   return (
     <div className="space-y-5">
@@ -401,13 +426,14 @@ export default function DashboardGeneralPage() {
                   <th className="px-5 py-3 font-semibold text-gray-600 w-20">Tuổi</th>
                   <th className="px-5 py-3 font-semibold text-gray-600 w-24">Giờ vào</th>
                   <th className="px-5 py-3 font-semibold text-gray-600 w-32">Trạng thái</th>
+                  <th className="px-5 py-3 font-semibold text-gray-600 w-28 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50">
                 {isLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
                     <tr key={i} className="border-b border-gray-50">
-                      {["w-10", "w-36", "w-10", "w-16", "w-20"].map((w, j) => (
+                      {["w-10", "w-36", "w-10", "w-16", "w-20", "w-16"].map((w, j) => (
                         <td key={j} className="px-5 py-3.5">
                           <div className={`h-3 ${w} rounded bg-gray-100 animate-pulse`} />
                         </td>
@@ -416,7 +442,7 @@ export default function DashboardGeneralPage() {
                   ))
                 ) : filteredQueuePatients.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-5 py-12 text-center text-gray-400 text-xs italic">
+                    <td colSpan={6} className="px-5 py-12 text-center text-gray-400 text-xs italic">
                       {searchQuery ? `Không tìm thấy bệnh nhân nào khớp với "${searchQuery}"` : "Hiện chưa có bệnh nhân nào trong hàng đợi khám"}
                     </td>
                   </tr>
@@ -438,6 +464,19 @@ export default function DashboardGeneralPage() {
                       <td className="px-5 py-3 text-gray-500">{patient.age}</td>
                       <td className="px-5 py-3 text-gray-500 font-mono">{patient.time}</td>
                       <td className="px-5 py-3"><StatusDot status={patient.status} /></td>
+                      <td className="px-5 py-3 text-right">
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            handleCallPatient(patient.patientId, patient.appointmentId);
+                          }}
+                          disabled={isCalling}
+                          className="whitespace-nowrap rounded border border-gray-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-[#2B1D30] hover:border-purple-200 hover:bg-purple-50 hover:text-[#6E2582] disabled:opacity-50"
+                        >
+                          {actionLabel(patient.status)}
+                        </button>
+                      </td>
                     </tr>
                   ))
                 )}
@@ -449,10 +488,10 @@ export default function DashboardGeneralPage() {
           <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/80 rounded-b-xl flex justify-end flex-shrink-0">
             <button
               onClick={() => {
-                if (filteredQueuePatients.length > 0) handleCallPatient(filteredQueuePatients[0].patientId, filteredQueuePatients[0].appointmentId);
+                if (nextCallablePatient) handleCallPatient(nextCallablePatient.patientId, nextCallablePatient.appointmentId);
                 else setErrorMessage("Hàng đợi khám hiện tại rỗng.");
               }}
-              disabled={isCalling || isLoading || filteredQueuePatients.length === 0}
+              disabled={isCalling || isLoading || !nextCallablePatient}
               className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50 shadow-sm hover:shadow-md cursor-pointer"
               style={{ background: "linear-gradient(135deg, #6366F1 0%, #3B82F6 100%)" }}
             >

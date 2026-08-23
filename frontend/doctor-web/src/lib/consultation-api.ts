@@ -73,6 +73,9 @@ export const consultationApi = {
     
   getByDoctor: (doctorId: string) => 
     api.get<ConsultationResponse[]>(`/api/consultations/doctor/${doctorId}`),
+
+  getByAppointment: (appointmentId: string) =>
+    api.get<ConsultationResponse[]>(`/api/consultations/appointment/${appointmentId}`),
     
   getTodayByDoctor: (doctorId: string) => 
     api.get<ConsultationResponse[]>(`/api/consultations/doctor/${doctorId}/today`),

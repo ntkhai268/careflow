@@ -11,7 +11,7 @@ import { getErrorMessage } from "@/lib/error-utils";
 
 function StatusDot({ status }: { status: string }) {
   const config: Record<string, { color: string; label: string; textClass: string }> = {
-    CHECKED_IN:  { color: "#3B82F6", label: "Đã tiếp nhận", textClass: "text-blue-600 font-medium" },
+    CHECKED_IN:  { color: "#3B82F6", label: "Đã check-in",  textClass: "text-blue-600 font-medium" },
     CALLED:      { color: "#F59E0B", label: "Đã gọi số",    textClass: "text-amber-600 font-semibold" },
     IN_PROGRESS: { color: "#8B5CF6", label: "Đang khám",    textClass: "text-purple-600 font-semibold" },
     COMPLETED:   { color: "#10B981", label: "Hoàn tất",     textClass: "text-emerald-600 font-medium" },
@@ -134,7 +134,7 @@ export default function DashboardQueuePage() {
     setIsCallingNext(true);
     setErrorMessage("");
     try {
-      const consRes = await consultationApi.getTodayByDoctor(user.id);
+      const consRes = await consultationApi.getByDoctor(user.id);
       const activeCons = (consRes.data ?? []).find(c => c.status === "IN_PROGRESS");
       if (activeCons) {
         if (typeof window !== "undefined") {
@@ -149,21 +149,11 @@ export default function DashboardQueuePage() {
         return;
       }
 
-      // 1. Trigger callNextInRoom on queue-service
       const callRes = await queueApi.callNextInRoom(roomId);
       const nextEntry = callRes.data;
 
       if (nextEntry && nextEntry.queueNumber) {
-        // Move the queue entry to IN_PROGRESS before opening the consultation.
-        await queueApi.startEntry(nextEntry.entryId);
-
-        // 2. Automatically create consultation and navigate to consultation page
-        const res = await consultationApi.createConsultation({
-          appointmentId: nextEntry.appointmentId,
-          patientId: nextEntry.patientId,
-          doctorId: user.id
-        });
-        router.push(`/consultation/${res.data.id}?entryId=${nextEntry.entryId}`);
+        await loadQueue(roomId);
       } else {
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
@@ -172,12 +162,8 @@ export default function DashboardQueuePage() {
         }
         await loadQueue(roomId);
       }
-    } catch {
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
-          detail: { text: "Bác sĩ ơi, hiện tại chưa có bệnh nhân nào đâu ạ!" }
-        }));
-      }
+    } catch (err: unknown) {
+      setErrorMessage(getErrorMessage(err, "Không thể gọi bệnh nhân tiếp theo."));
     } finally {
       setIsCallingNext(false);
     }
@@ -188,13 +174,13 @@ export default function DashboardQueuePage() {
     setCallingEntryId(entry.entryId);
     setErrorMessage("");
     try {
-      const consRes = await consultationApi.getTodayByDoctor(user.id);
+      const consRes = await consultationApi.getByDoctor(user.id);
       const activeCons = (consRes.data ?? []).find(c => c.status === "IN_PROGRESS");
-      if (activeCons) {
-        if (activeCons.patientId === entry.patientId || activeCons.appointmentId === entry.appointmentId) {
-          router.push(`/consultation/${activeCons.id}?entryId=${entry.entryId}`);
-          return;
-        }
+      const isSameConsultation = activeCons && (
+        activeCons.patientId === entry.patientId || activeCons.appointmentId === entry.appointmentId
+      );
+
+      if (activeCons && !isSameConsultation) {
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
             detail: {
@@ -207,21 +193,32 @@ export default function DashboardQueuePage() {
         return;
       }
 
-      if (entry.queueStatus === "CHECKED_IN") {
+      if (entry.queueStatus === "CHECKED_IN" || entry.queueStatus === "QUEUED") {
         await queueApi.callEntry(entry.entryId);
         await loadQueue(roomId);
+        return;
       }
 
-      if (entry.queueStatus === "CHECKED_IN" || entry.queueStatus === "CALLED") {
+      if (entry.queueStatus === "IN_PROGRESS" && isSameConsultation) {
+        router.push(`/consultation/${activeCons.id}?entryId=${entry.entryId}`);
+        return;
+      }
+
+      const appointmentConsultations = await consultationApi.getByAppointment(entry.appointmentId);
+      let consultation = (appointmentConsultations.data ?? []).find(c => c.status === "IN_PROGRESS");
+      if (!consultation) {
+        const res = await consultationApi.createConsultation({
+          appointmentId: entry.appointmentId,
+          patientId: entry.patientId,
+          doctorId: user.id
+        });
+        consultation = res.data;
+      }
+
+      if (entry.queueStatus === "CALLED") {
         await queueApi.startEntry(entry.entryId);
       }
-
-      const res = await consultationApi.createConsultation({
-        appointmentId: entry.appointmentId,
-        patientId: entry.patientId,
-        doctorId: user.id
-      });
-      router.push(`/consultation/${res.data.id}?entryId=${entry.entryId}`);
+      router.push(`/consultation/${consultation.id}?entryId=${entry.entryId}`);
     } catch (err: unknown) {
       setErrorMessage(getErrorMessage(err, "Không thể khởi tạo ca khám cho bệnh nhân."));
     } finally {
@@ -231,6 +228,14 @@ export default function DashboardQueuePage() {
 
   const safeEntries = dashboardData?.entries ?? [];
   const recommended = dashboardData?.recommendedNext;
+  const hasCallableEntry = safeEntries.some(entry =>
+    entry.queueStatus === "CHECKED_IN" || entry.queueStatus === "QUEUED"
+  );
+  const actionLabel = (status: QueueEntry["queueStatus"]) => {
+    if (status === "CALLED") return "Bắt đầu khám";
+    if (status === "IN_PROGRESS") return "Vào khám";
+    return "Gọi số";
+  };
   const laneOf = (entry: QueueEntry) => entry.schedulingLane ?? (
     entry.consultationPhase === "RESULT_REVIEW" || entry.priorityLevel === "RESULT_REVIEW"
       ? "RESULT_REVIEW"
@@ -279,7 +284,7 @@ export default function DashboardQueuePage() {
         </div>
         <button
           onClick={handleCallNext}
-          disabled={isCallingNext || isLoading || (safeEntries).length === 0}
+          disabled={isCallingNext || isLoading || !hasCallableEntry}
           className="px-4 py-2 bg-[#6E2582] hover:bg-[#581c69] disabled:opacity-50 text-white rounded-md text-[11px] font-bold shadow-xs flex items-center gap-1.5 transition-all cursor-pointer"
         >
           {isCallingNext ? (
@@ -322,7 +327,7 @@ export default function DashboardQueuePage() {
             disabled={callingEntryId === recommended.entryId}
             className="px-3.5 py-1.5 bg-[#6E2582] hover:bg-[#581c69] disabled:opacity-50 text-white font-semibold text-[11px] rounded-md shadow-xs transition-colors cursor-pointer"
           >
-            {callingEntryId === recommended.entryId ? "Đang gọi..." : "Gọi số"}
+            {callingEntryId === recommended.entryId ? "Đang xử lý..." : actionLabel(recommended.queueStatus)}
           </button>
         </div>
       )}
@@ -395,10 +400,8 @@ export default function DashboardQueuePage() {
                             className="flex-shrink-0 px-2.5 py-1.5 bg-white hover:bg-purple-50 border border-gray-200 text-[#2B1D30] hover:text-[#6E2582] disabled:opacity-50 rounded text-[10px] font-semibold transition-all cursor-pointer"
                           >
                             {callingEntryId === entry.entryId
-                              ? "Đang gọi..."
-                              : entry.queueStatus === "CALLED" || entry.queueStatus === "IN_PROGRESS"
-                              ? "Vào khám"
-                              : "Gọi số"}
+                              ? "Đang xử lý..."
+                              : actionLabel(entry.queueStatus)}
                           </button>
                         </div>
                         <div className="mt-2 flex items-center justify-between text-[9px] text-gray-400">

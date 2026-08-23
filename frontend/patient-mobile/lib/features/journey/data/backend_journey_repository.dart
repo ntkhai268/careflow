@@ -249,7 +249,12 @@ class BackendJourneyMapper {
         consultationId: _string(consultation?['id']),
         patientAppointments: resources.patientAppointments,
       ),
-      timeline: _timeline(appointment, consultation, resources.labOrders),
+      timeline: _timeline(
+        appointment,
+        resources.clinicQueue,
+        consultation,
+        resources.labOrders,
+      ),
       notifications: resources.notifications
           .map(_notification)
           .whereType<PatientNotification>()
@@ -293,6 +298,7 @@ class BackendJourneyMapper {
     }
     if (queueStatus == 'IN_PROGRESS') return JourneyStatus.inConsultation;
     if (queueStatus == 'CALLED') return JourneyStatus.called;
+    if (queueStatus == 'CHECKED_IN') return JourneyStatus.checkedIn;
     if (queueStatus == 'WAITING' &&
         (ticketStatus == 'TICKET_ISSUED' ||
             (ticketStatus.isEmpty && appointmentStatus == 'CONFIRMED'))) {
@@ -601,6 +607,7 @@ class BackendJourneyMapper {
 
   List<JourneyTimelineEvent> _timeline(
     Appointment appointment,
+    Map<String, dynamic>? clinicQueue,
     Map<String, dynamic>? consultation,
     List<Map<String, dynamic>> labOrders,
   ) {
@@ -612,6 +619,17 @@ class BackendJourneyMapper {
         occurredAt: appointment.createdAt ?? appointment.appointmentDate,
       ),
     ];
+    final checkedInAt = _dateTime(clinicQueue?['checkedInAt']);
+    if (checkedInAt != null) {
+      events.add(
+        JourneyTimelineEvent(
+          id: 'checked-in-${clinicQueue?['entryId'] ?? appointment.id}',
+          title: 'Đã xác nhận check-in',
+          detail: 'Bạn đã có mặt tại bệnh viện và được đưa vào hàng đợi.',
+          occurredAt: checkedInAt,
+        ),
+      );
+    }
     final startedAt = _dateTime(consultation?['startedAt']);
     if (startedAt != null) {
       events.add(
@@ -678,6 +696,9 @@ Map<String, dynamic> _queueMap(queue_models.PatientQueueStatus queue) => {
   'queueStatus': queue.status,
   'effectivePosition': queue.position,
   'estimatedWaitMinutes': queue.estimatedWaitMinutes,
+  'checkedInAt': queue.checkedInAt?.toIso8601String(),
+  'calledAt': queue.calledAt?.toIso8601String(),
+  'startedAt': queue.startedAt?.toIso8601String(),
   'type': queue.type,
   'consultationPhase': queue.consultationPhase,
   'servicePointId': queue.servicePointId,
