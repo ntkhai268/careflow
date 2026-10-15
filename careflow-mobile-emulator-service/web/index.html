@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CareFlow · Bàn điều khiển bệnh nhân</title>
+<meta name="description" content="Nhiều điện thoại CareFlow, tài khoản độc lập, luôn kết nối API thật.">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="/" aria-label="CareFlow Bàn điều khiển"><span class="brand-mark">✚</span><span>CareFlow<span class="brand-sub">BÀN ĐIỀU KHIỂN BỆNH NHÂN</span></span></a>
+  <div class="top-meta"><span class="real-badge"><span class="local-dot"></span> API thật</span><button id="show-connection" type="button"><span id="health-badge" class="badge muted">Đang kiểm tra Gateway</span> <span aria-hidden="true">⚙</span></button><span class="branch">dangkhoii</span></div>
+</header>
+<main class="workspace" aria-label="Quản lý nhiều điện thoại">
+  <div class="workspace-heading"><div><h1>Điện thoại của bạn <span id="device-count">3 / 8 máy</span></h1><p>Mỗi máy dùng một tài khoản riêng, cùng kết nối hệ thống CareFlow.</p></div><div class="heading-actions"><button id="show-activity" type="button">Nhật ký API</button><button id="add-device" class="primary" type="button">＋ Thêm điện thoại</button></div></div>
+  <div class="fleet-toolbar">
+    <div class="selection-group"><label class="select-all"><input id="select-all" type="checkbox" checked> <span id="selection-count">Đã chọn 3 máy</span></label><div class="batch-actions" role="group" aria-label="Thao tác các máy đã chọn"><button data-command="home" type="button">Trang chủ</button><button data-command="appointments" type="button">Lịch khám</button><button id="reload-selected" type="button">Tải lại máy đã chọn</button></div></div>
+    <div class="display-controls"><div class="layout-control" role="group" aria-label="Số cột hiển thị"><span>Bố cục</span><button type="button" data-layout="auto" class="selected" aria-pressed="true">Tự động</button><button type="button" data-layout="2">2 cột</button><button type="button" data-layout="3">3 cột</button></div><div class="zoom-control"><label for="card-scale">Cỡ khung</label><span>50%</span><input id="card-scale" type="range" min="50" max="100" step="1" value="75" aria-describedby="card-scale-value"><span>100%</span><output id="card-scale-value" for="card-scale">75%</output></div></div>
+    <button id="exit-focus" type="button" hidden>← Xem tất cả máy</button>
+  </div>
+  <div class="workspace-status"><p id="workspace-note" role="status">Đăng nhập trên từng máy để bắt đầu. Chọn máy bằng ô đánh dấu trước khi dùng thao tác nhóm.</p><span id="running-count">3 máy đang mở</span></div>
+  <div id="device-grid" class="device-grid"></div>
+  <p id="build-note" class="build-note" hidden>Ứng dụng chưa sẵn sàng. Cần build Flutter Web rồi tải lại trang.</p>
+  <div class="workspace-bottom"><span><span class="local-dot"></span> Luôn dùng API thật · Phiên độc lập từng máy</span><button id="show-help" type="button">Cách sử dụng</button></div>
+</main>
+<dialog id="connection-dialog" class="connection-dialog">
+  <div class="drawer-heading"><div><h2>Kết nối hệ thống</h2><p>Áp dụng cho tất cả điện thoại.</p></div><button id="close-connection" type="button" aria-label="Đóng cấu hình kết nối">✕</button></div>
+  <form id="gateway-form"><label for="gateway">Địa chỉ API Gateway</label><input id="gateway" name="gateway" type="url" placeholder="http://127.0.0.1:18080" required spellcheck="false"><div class="actions"><button class="primary" type="submit">Lưu và kết nối</button><button id="check-health" type="button">Kiểm tra Gateway</button></div></form>
+  <p id="connection-note" class="helper" role="status">Đang đọc cấu hình…</p>
+  <p id="dataset-note" class="helper" hidden></p>
+  <div class="connection-info"><strong>Chỉ kết nối API thật</strong><p>Đăng nhập, hồ sơ, đặt lịch, check-in và hàng đợi được xử lý bởi backend CareFlow. Khi dịch vụ chưa hoạt động, ứng dụng sẽ hiển thị lỗi hoặc trạng thái chưa khả dụng.</p></div>
+</dialog>
+<dialog id="activity-dialog" class="activity-dialog">
+  <div class="drawer-heading"><div><h2>Nhật ký API</h2><p>Theo dõi kết nối của từng điện thoại.</p></div><button id="close-activity" type="button" aria-label="Đóng nhật ký">✕</button></div>
+  <p class="helper">Chỉ hiển thị đường dẫn và trạng thái. Token, mật khẩu và nội dung hồ sơ không được ghi lại.</p><div id="activity-filters" class="activity-filters" role="group" aria-label="Lọc nhật ký theo máy"></div>
+  <div class="traffic-head"><span>ĐIỆN THOẠI / REQUEST</span><span>TRẠNG THÁI</span></div><div id="activity" class="activity"></div>
+</dialog>
+<dialog id="help-dialog" class="help-dialog"><div class="drawer-heading"><h2>Sử dụng bàn điều khiển</h2><button id="close-help" type="button" aria-label="Đóng hướng dẫn">✕</button></div><ol><li><strong>Đăng nhập riêng trên mỗi máy.</strong> Dùng các tài khoản bệnh nhân khác nhau để kiểm thử nhiều người cùng lúc.</li><li><strong>Bấm “Phóng to” khi cần thao tác.</strong> Trở về tất cả máy bằng nút phía trên.</li><li><strong>Chọn máy trước khi dùng nút nhóm.</strong> Trang chủ, Lịch khám và Tải lại chỉ tác động các máy được đánh dấu.</li><li><strong>Tạm dừng máy chưa dùng.</strong> Phiên của máy vẫn được giữ để tiếp tục sau.</li><li><strong>Mở Nhật ký API khi gặp lỗi.</strong> Trạng thái Gateway chỉ xác nhận kết nối Gateway; từng dịch vụ vẫn có thể chưa khả dụng.</li></ol></dialog>
+<dialog id="confirm-dialog" class="confirm-dialog"><h2 id="confirm-title"></h2><p id="confirm-description"></p><div class="actions"><button id="confirm-cancel" type="button">Hủy</button><button id="confirm-accept" class="danger" type="button">Gỡ máy</button></div></dialog>
+<footer><span>CareFlow · Patient Mobile</span><span>Workspace độc lập · Giữ nguyên mã nguồn và nhánh CareFlow</span></footer>
+<script type="module" src="/app.js"></script>
+</body>
+</html>

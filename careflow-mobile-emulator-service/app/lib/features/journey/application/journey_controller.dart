@@ -1,0 +1,298 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../../models/appointment.dart';
+import '../data/journey_repository.dart';
+import '../domain/journey_models.dart';
+import '../domain/journey_transition.dart';
+import '../../../utils/api_error_message.dart';
+
+class JourneyController extends StateNotifier<AsyncValue<PatientJourney?>> {
+  JourneyController({
+    required JourneyRepository repository,
+    required bool demoMode,
+    void Function(String? error)? onActionError,
+  }) : _repository = repository,
+       _demoMode = demoMode,
+       _onActionError = onActionError ?? _ignoreActionError,
+       super(const AsyncData(null));
+
+  final JourneyRepository _repository;
+  final bool _demoMode;
+  final void Function(String? error) _onActionError;
+  String? _activePatientId;
+  Appointment? _activeAppointment;
+  int _generation = 0;
+  final Set<String> _retiredJourneyKeys = {};
+  final Map<String, PatientJourney> _retiredJourneySnapshots = {};
+
+  Future<PatientJourney> bootstrap({
+    required Appointment appointment,
+    required String patientId,
+    bool preservePreviousOnError = false,
+  }) async {
+    final generation = ++_generation;
+    final previousJourney = state.valueOrNull;
+    if (!_demoMode && _repository is DemoJourneySource) {
+      final error = const JourneyBackendUnavailable();
+      _onActionError(null);
+      state = AsyncError(error, StackTrace.current);
+      throw error;
+    }
+    if (_activePatientId != null && _activePatientId != patientId) {
+      state = const AsyncData(null);
+    }
+    state = const AsyncLoading();
+    _onActionError(null);
+    try {
+      final journey = await _repository.bootstrap(
+        appointment: appointment,
+        patientId: patientId,
+      );
+      if (generation != _generation) return journey;
+      _activePatientId = patientId;
+      _activeAppointment = appointment;
+      _retiredJourneyKeys.remove(_journeyKey(patientId, appointment.id));
+      state = AsyncData(journey);
+      return journey;
+    } catch (error, stackTrace) {
+      if (generation == _generation) {
+        final canPreserve =
+            preservePreviousOnError &&
+            previousJourney != null &&
+            previousJourney.patientId == patientId &&
+            previousJourney.appointmentId == appointment.id;
+        if (canPreserve) {
+          state = AsyncData(previousJourney);
+          _onActionError('Không thể tải thông báo mới. Vui lòng thử lại sau.');
+        } else {
+          state = AsyncError(error, stackTrace);
+        }
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> advance(JourneyEvent event) async {
+    await _runDemoAction((journey) => _repository.advance(journey, event));
+  }
+
+  Future<bool> acknowledgePayment(PaymentMethod method) => _runDemoAction(
+    (journey) => _repository.acknowledgePayment(journey, method),
+  );
+
+  Future<bool> acknowledgePrescriptionPayment(PaymentMethod method) {
+    final repository = _repository;
+    if (repository is! PrescriptionPaymentRepository) {
+      _onActionError('Tính năng thanh toán tiền thuốc đang chờ backend triển khai');
+      return Future.value(false);
+    }
+    final capability = repository as PrescriptionPaymentRepository;
+    return _runDemoAction(
+      (journey) => capability.acknowledgePrescriptionPayment(journey, method),
+    );
+  }
+
+  Future<bool> acknowledgeSettlement(PaymentMethod method) {
+    final repository = _repository;
+    if (repository is! VisitSettlementRepository) {
+      _onActionError('TĂ­nh nÄƒng quyáº¿t toĂ¡n Ä‘ang chá» backend triá»ƒn khai');
+      return Future.value(false);
+    }
+    final capability = repository as VisitSettlementRepository;
+    return _runDemoAction(
+      (journey) => capability.acknowledgeSettlement(journey, method),
+    );
+  }
+
+  Future<void> markNotificationRead(String notificationId) async {
+    final journey = state.valueOrNull;
+    if (journey == null) return;
+    await _runMutation(
+      journey,
+      (value) => _repository.markNotificationRead(value, notificationId),
+      reportInvalidTransition: false,
+    );
+  }
+
+  /// Reloads the current journey from the backend so inbox notifications and
+  /// other journey resources reflect the latest server state.
+  Future<bool> refreshCurrentJourney() async {
+    final journey = state.valueOrNull;
+    final appointment = _activeAppointment;
+    if (journey == null || appointment == null) return false;
+    try {
+      await bootstrap(
+        appointment: appointment,
+        patientId: journey.patientId,
+        preservePreviousOnError: true,
+      );
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Future<void> resetCurrentJourney() async {
+    final generation = ++_generation;
+    final journey = state.valueOrNull;
+    final previousAppointment = _activeAppointment;
+    if (journey == null) {
+      _activePatientId = null;
+      _activeAppointment = null;
+      _onActionError(null);
+      state = const AsyncData(null);
+      return;
+    }
+    final key = _journeyKey(journey.patientId, journey.appointmentId);
+    _retiredJourneyKeys.add(key);
+    _activePatientId = null;
+    _activeAppointment = null;
+    _onActionError(null);
+    state = const AsyncData(null);
+    try {
+      await _repository.reset(journey);
+      if (generation == _generation) {
+        state = const AsyncData(null);
+      }
+    } catch (_) {
+      _retiredJourneyKeys.remove(key);
+      if (generation == _generation) {
+        _activePatientId = journey.patientId;
+        _activeAppointment = previousAppointment;
+        state = AsyncData(journey);
+        _onActionError('Không thể đặt lại hành trình. Vui lòng thử lại.');
+      }
+    }
+  }
+
+  Future<bool> retireAppointment({
+    required String patientId,
+    required String appointmentId,
+  }) async {
+    final generation = ++_generation;
+    final previous = state.valueOrNull;
+    final previousAppointment = _activeAppointment;
+    final key = _journeyKey(patientId, appointmentId);
+    final wasActive =
+        previous?.patientId == patientId &&
+        previous?.appointmentId == appointmentId;
+    _retiredJourneyKeys.add(key);
+    if (wasActive) {
+      _retiredJourneySnapshots[key] = previous!;
+      state = const AsyncData(null);
+      _activePatientId = null;
+      _activeAppointment = null;
+    }
+    _onActionError(null);
+    try {
+      final repository = _repository;
+      if (repository is JourneySnapshotRepository) {
+        await (repository as JourneySnapshotRepository).retireJourney(
+          patientId,
+          appointmentId,
+        );
+      } else {
+        final snapshot = _retiredJourneySnapshots[key];
+        if (snapshot != null) await repository.reset(snapshot);
+      }
+      _retiredJourneySnapshots.remove(key);
+      return generation == _generation;
+    } catch (_) {
+      if (generation == _generation) {
+        state = AsyncData(wasActive ? null : previous);
+        _activePatientId = wasActive ? null : previous?.patientId;
+        _activeAppointment = wasActive
+            ? previousAppointment
+            : _activeAppointment;
+        _onActionError(
+          'Không thể dọn dữ liệu hành trình đã hủy. Vui lòng thử lại.',
+        );
+      }
+      return false;
+    }
+  }
+
+  /// Drops in-memory journey state without deleting persisted patient data.
+  ///
+  /// Auth identity changes call this synchronously so an old account's pending
+  /// bootstrap cannot publish after logout or account switch.
+  void invalidateAccountScope() {
+    ++_generation;
+    _activePatientId = null;
+    _activeAppointment = null;
+    _onActionError(null);
+    state = const AsyncData(null);
+  }
+
+  Future<bool> _runDemoAction(
+    Future<PatientJourney> Function(PatientJourney journey) action,
+  ) async {
+    if (!_demoMode) {
+      _onActionError('Tính năng đang chờ backend triển khai');
+      return false;
+    }
+    final journey = state.valueOrNull;
+    if (journey == null) return false;
+    return _runMutation(journey, action, reportInvalidTransition: true);
+  }
+
+  Future<bool> _runMutation(
+    PatientJourney journey,
+    Future<PatientJourney> Function(PatientJourney journey) action, {
+    required bool reportInvalidTransition,
+  }) async {
+    final generation = ++_generation;
+    _onActionError(null);
+    try {
+      final next = await action(journey);
+      if (generation != _generation) {
+        await _rollbackStaleMutation(journey);
+        return false;
+      }
+      _activePatientId = next.patientId;
+      state = AsyncData(next);
+      return true;
+    } on InvalidJourneyTransition catch (error) {
+      if (generation == _generation && reportInvalidTransition) {
+        _onActionError(
+          ApiErrorMessage.from(
+            error,
+            fallback:
+                'Bước này chưa thể thực hiện. Vui lòng kiểm tra trạng thái lượt khám.',
+          ),
+        );
+      }
+      return false;
+    } catch (_) {
+      if (generation == _generation) {
+        state = AsyncData(journey);
+        _onActionError('Không thể cập nhật hành trình. Vui lòng thử lại.');
+      }
+      return false;
+    }
+  }
+
+  Future<void> _rollbackStaleMutation(PatientJourney snapshot) async {
+    final repository = _repository;
+    if (repository is! JourneySnapshotRepository) return;
+    final snapshotRepository = repository as JourneySnapshotRepository;
+    final key = _journeyKey(snapshot.patientId, snapshot.appointmentId);
+    final current = state.valueOrNull;
+    if (current?.patientId == snapshot.patientId &&
+        current?.appointmentId == snapshot.appointmentId) {
+      await snapshotRepository.restoreSnapshot(current!);
+    } else if (_retiredJourneyKeys.contains(key)) {
+      await snapshotRepository.retireJourney(
+        snapshot.patientId,
+        snapshot.appointmentId,
+      );
+    } else {
+      await snapshotRepository.restoreSnapshot(snapshot);
+    }
+  }
+
+  String _journeyKey(String patientId, String appointmentId) =>
+      '$patientId::$appointmentId';
+
+  static void _ignoreActionError(String? _) {}
+}
