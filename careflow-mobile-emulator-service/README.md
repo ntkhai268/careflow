@@ -1,5 +1,9 @@
 # CareFlow Mobile Emulator Service
 
+## Hướng dẫn sử dụng end-to-end
+
+Xem [hướng dẫn Mobile Emulator và các luồng end-to-end](docs/END-TO-END-GUIDE.md): địa chỉ/tài khoản demo trên Mac, tách phiên các vai trò, đăng nhập/MFA, đặt lịch, check-in, khám, xét nghiệm, cấp phát thuốc, hồ sơ sau khám và cách đọc lỗi API. Tài liệu ghi rõ runtime tích hợp hiện dùng HTTPS Gateway và phân biệt các chặng đã kiểm chứng với các phần còn cần hoàn thiện; đọc phần phạm vi trước khi dùng cùng hướng dẫn snapshot bên dưới.
+
 Service giả lập nhiều điện thoại, dùng snapshot **Flutter Patient Mobile** từ `frontend/patient-mobile` (`develop@8bf77e2`) với adapter trình duyệt. Mã nguồn nằm trong `careflow-mobile-emulator-service/`, theo quy ước tên service của CareFlow. Đây là service Node.js phục vụ Flutter Web và proxy API/WebSocket thật đến Gateway; chạy riêng bằng npm, không thuộc các module Maven Java.
 
 Thư mục trước đây mang tên `gia_lap_mobile`. Khi chuyển vào repository, giữ nguyên source, bộ dữ liệu cục bộ và các ca kiểm thử. Thay đổi ở service này không tự cập nhật snapshot `frontend/patient-mobile` hay các service backend.
