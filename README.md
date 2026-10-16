@@ -1,5 +1,9 @@
 # CareFlow — Healthcare Platform
 
+## Hướng dẫn sử dụng
+
+Mở [huong-dan-su-dung/README.md](huong-dan-su-dung/README.md) để xem hướng dẫn từng bước cho toàn hệ thống: khởi động Mac, tài khoản, MFA, đặt lịch/check-in, khám, CLS, toa/cấp phát, bàn giao và xử lý lỗi. Đây là nguồn hướng dẫn duy nhất; trang chuẩn ghi rõ runtime và phạm vi đã kiểm chứng.
+
 ## Tổng quan
 
 CareFlow là hệ thống quản lý khám chữa bệnh tại bệnh viện, gồm nhiều microservices.

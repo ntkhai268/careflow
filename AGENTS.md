@@ -149,3 +149,11 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+## Hướng dẫn sử dụng — nguồn duy nhất
+
+- Mọi hướng dẫn thao tác người dùng và các luồng end-to-end phải đặt trong `huong-dan-su-dung/` ở gốc repo; mục lục là `huong-dan-su-dung/README.md`.
+- Khi sửa chức năng/UI/API/quyền/trạng thái/dữ liệu demo, bắt buộc rà soát và cập nhật các bước, điều kiện, kết quả mong đợi và cách lặp lại liên quan trong cùng commit/PR; ghi mốc thay đổi ở `huong-dan-su-dung/CHANGELOG.md`. Không để code và hướng dẫn lệch nhau.
+- Tài khoản/mật khẩu demo công khai chỉ quản lý tại `huong-dan-su-dung/01-tai-khoan-va-du-lieu.md`; không đưa token, secret MFA, recovery code, cấu hình private hoặc thông tin người thật lên Git.
+- Không tạo/copy thêm hướng dẫn sử dụng trong service, `docs/` hoặc `.planning/`; README/đường dẫn cũ chỉ dẫn tới trang chuẩn. Contract thiết kế và báo cáo kiểm thử vẫn giữ đúng thư mục chuyên môn, không coi chúng là bản hướng dẫn thay thế.
+- Khi chưa kiểm tra đầy đủ một nhánh E2E hoặc code runtime chưa được phát hành cùng tài liệu, phải ghi rõ phạm vi, phiên bản và phần còn chưa nghiệm thu.

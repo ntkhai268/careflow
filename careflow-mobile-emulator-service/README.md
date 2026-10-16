@@ -2,13 +2,13 @@
 
 ## Hướng dẫn sử dụng end-to-end
 
-Xem [hướng dẫn Mobile Emulator và các luồng end-to-end](docs/END-TO-END-GUIDE.md): địa chỉ/tài khoản demo trên Mac, tách phiên các vai trò, đăng nhập/MFA, đặt lịch, check-in, khám, xét nghiệm, cấp phát thuốc, hồ sơ sau khám và cách đọc lỗi API. Tài liệu ghi rõ runtime tích hợp hiện dùng HTTPS Gateway và phân biệt các chặng đã kiểm chứng với các phần còn cần hoàn thiện; đọc phần phạm vi trước khi dùng cùng hướng dẫn snapshot bên dưới.
+Xem [hướng dẫn sử dụng chung tại thư mục gốc](../huong-dan-su-dung/README.md). Tài khoản, điều khiển điện thoại, các bước nghiệp vụ và xử lý lỗi chỉ quản lý tại đó. README này giữ thông tin phát triển/build và kiểm thử service.
 
 Service giả lập nhiều điện thoại, dùng snapshot **Flutter Patient Mobile** từ `frontend/patient-mobile` (`develop@8bf77e2`) với adapter trình duyệt. Mã nguồn nằm trong `careflow-mobile-emulator-service/`, theo quy ước tên service của CareFlow. Đây là service Node.js phục vụ Flutter Web và proxy API/WebSocket thật đến Gateway; chạy riêng bằng npm, không thuộc các module Maven Java.
 
 Thư mục trước đây mang tên `gia_lap_mobile`. Khi chuyển vào repository, giữ nguyên source, bộ dữ liệu cục bộ và các ca kiểm thử. Thay đổi ở service này không tự cập nhật snapshot `frontend/patient-mobile` hay các service backend.
 
-## Chạy ngay
+## Chạy service khi phát triển
 
 Cần Node.js 20 trở lên. Trên máy hiện tại đã có bản Flutter Web tại `app/build/web`, có thể mở ngay. Khi clone Git trên máy mới, cần Flutter 3.41+ để build trước; thư mục build và cache không được đưa lên Git.
 
@@ -19,7 +19,7 @@ npm start
 
 Mở **http://localhost:3000** (dùng đúng hostname `localhost` để khớp allowed origins của cả Gateway và Notification). Có thể nhấp đúp `start.command` trên macOS.
 
-Gateway mặc định là **`http://127.0.0.1:18080`**, môi trường audit riêng đang chạy trên máy này. Cổng `8080` hiện không có Gateway lắng nghe, nên cấu hình cũ không kết nối được. Ứng dụng luôn gửi request thật qua proxy của giả lập; không cần thiết bị hoặc Android emulator.
+Snapshot source của service mặc định **`http://127.0.0.1:18080`**; runtime tích hợp trên Mac hiện dùng HTTPS và CA riêng theo [chuẩn bị môi trường](../huong-dan-su-dung/00-chuan-bi.md). Cấu hình Gateway phải khớp backend được cấp. Ứng dụng luôn gửi request thật qua proxy của giả lập; không cần thiết bị hoặc Android emulator.
 
 Nhấn **Gateway / Kết nối hệ thống** ở góc trên, nhập Gateway khác rồi chọn **Lưu và kết nối**. Không tự chuyển sang máy chủ khác khi kết nối thất bại. Đổi Gateway sẽ chuyển sang namespace phiên riêng theo môi trường; token của Gateway cũ không được nạp cho Gateway mới. Khởi động lại bằng `npm start` hoặc `start.command` dùng cổng `18080`, trừ khi đặt biến môi trường bên dưới.
 
@@ -31,24 +31,11 @@ CAREFLOW_GATEWAY=http://127.0.0.1:18080 npm start
 
 Nếu cổng 3000 đã dùng, chạy `PORT=5173 npm start` và mở `http://localhost:5173`. Gateway hiện chỉ cho phép một số origin, nên cần cấu hình allowed origins tại **môi trường backend test riêng** khi đổi cổng. Notification hiện cho `http://localhost:5173`; Gateway trên snapshot chỉ có `http://localhost:3000`, `http://127.0.0.1:3000` và domain demo. Không chỉnh source backend/nhánh khác chỉ để chạy giả lập này.
 
-## Dùng nhiều điện thoại cùng lúc
+## Sử dụng và dữ liệu demo
 
-Mở `http://localhost:3000` rồi đăng nhập tài khoản PATIENT khác nhau trên từng máy. Không cần điện thoại vật lý. Đây là nhiều phiên Flutter Web trên một workspace; bộ nhớ và phiên độc lập, cùng gọi Gateway đã chọn.
-
-- **Thêm điện thoại**: tạo máy có phiên mới. Các máy cũ tiếp tục hoạt động.
-- Nhấp tên để đổi nhãn máy; bấm **Phóng to** để thao tác lớn hơn, **Gỡ** để đóng máy. Các nút Quay lại, Trang chủ, Tải lại, Tạm dừng và Đăng xuất nằm ngay trên màn hình máy.
-- **Tạm dừng** giải phóng ứng dụng đang chạy, giữ phiên để tiếp tục sau.
-- Checkbox trên máy chọn đối tượng cho các nút **Trang chủ / Lịch khám / Tải lại** ở thanh phía trên. Nhấp/chạm, nhập văn bản trên một máy vẫn chỉ áp dụng máy đó.
-- **Nhật ký API** mở bảng theo dõi; chọn tên máy để lọc request của máy đó.
-- Tất cả máy dùng **API THẬT**. Cấu hình Demo cũ được chuyển về API thật khi tải workspace.
-
-## Tài khoản và ca mẫu
-
-Đã tạo 3 ca trên DB audit riêng: `mobile_case01` (chưa đặt lịch), `mobile_case02` (đã đặt lịch/có phiếu), `mobile_case03` (đã hủy lịch). Mật khẩu chung **`Password123@`**. Tài khoản và hướng dẫn hiển thị dưới từng điện thoại; xem [dataset và cách kiểm tra](docs/MOBILE-DATASET.md).
-
-Chạy `npm run dataset:seed -- --audit-db` để tạo/kiểm tra dữ liệu; chạy `npm run test:dataset` để kiểm tra cả ba điện thoại bằng Chrome và API thật, không chặn request hoặc dùng fixture.
-
-Namespace tách trạng thái ứng dụng trong cùng trình duyệt, không phải sandbox bảo mật cho người dùng máy tính khác nhau. Nếu dùng **cùng một tài khoản** trên nhiều máy, chính sách phiên của Identity có thể thu hồi phiên cũ; dùng nhiều tài khoản test khác nhau để kiểm thử đồng thời.
+- [Chuẩn bị, tách phiên và điều khiển điện thoại](../huong-dan-su-dung/00-chuan-bi.md).
+- [Tài khoản và dữ liệu demo hiện hành](../huong-dan-su-dung/01-tai-khoan-va-du-lieu.md).
+- [Các luồng end-to-end theo từng bước](../huong-dan-su-dung/README.md).
 
 ## Các chức năng
 
@@ -65,17 +52,9 @@ Namespace tách trạng thái ứng dụng trong cùng trình duyệt, không ph
 
 Màu, bố cục và các màn hình nghiệp vụ được giữ từ Flutter. Font Be Vietnam Pro cần tải từ Internet được thay bằng Roboto đóng gói cục bộ để app không phụ thuộc Google Fonts/CDN. Đây là Flutter Web với adapter thiết bị, không phải Android emulator.
 
-## Kiểm thử phần A
+## Kiểm tra thao tác nghiệp vụ
 
-1. Khởi động backend test của bạn (Gateway, Identity, Patient, Appointment, Queue, Notification cùng các dependency cần thiết). `npm start` chỉ chạy frontend/proxy, không khởi động/reset/seed backend hoặc database.
-2. Kết nối Gateway. Đăng nhập bằng tài khoản `PATIENT` của môi trường test. Seed mặc định trong source là username `patient`, password `Password123@`; chỉ đúng nếu seed chưa được đổi.
-3. Tạo/chọn hồ sơ bệnh nhân, đặt lịch bằng khoa/slot thật từ API. Mở chi tiết → phiếu khám.
-4. Lấy QR đang hiệu lực từ Hospital Web bằng tài khoản STAFF/ADMIN đúng quyền; dán **giá trị QR**, không phải appointment QR hoặc ID phiếu. Nhập tọa độ test hợp lệ theo cấu hình server.
-5. Snapshot Queue mặc định có tâm `10.7769, 106.7009`, bán kính `150m`; cấu hình runtime có thể khác. Chỉ dùng giá trị này nếu đúng backend test của bạn. Có thể kiểm thử ca ngoài vùng/sai accuracy bằng thay đổi tọa độ.
-6. Từ Hospital/Doctor Web test, gọi bệnh nhân để kiểm tra hàng đợi và thông báo. Web giả lập không giả danh bác sĩ hoặc tự cấp quyền nhân viên. Màn hình hàng đợi gốc cũng tự cập nhật mỗi 20 giây.
-7. Trong tab Thông báo, kiểm tra inbox/đọc tin; ở Tài khoản, thử eKYC và đăng xuất. Đăng nhập tài khoản khác để xác nhận dữ liệu được tách theo tài khoản/hồ sơ.
-
-Thao tác ở **API thật** có ghi dữ liệu vào Gateway bạn đã chọn. Frontend không sửa Git, nhưng đặt lịch/check-in/eKYC vẫn là thao tác thật trên môi trường backend đó.
+Dùng [kịch bản trình diễn/nghiệm thu](../huong-dan-su-dung/10-trinh-dien-va-nghiem-thu.md), [đặt lịch/check-in](../huong-dan-su-dung/03-dat-lich-check-in.md) và [xử lý lỗi](../huong-dan-su-dung/09-ngoai-le-va-xu-ly-loi.md). Mọi thao tác gửi API thật tới môi trường đã chọn.
 
 ## Sửa source và build lại
 
@@ -111,7 +90,7 @@ Chi tiết contract: [docs/API-MAP.md](docs/API-MAP.md). Phạm vi thay đổi v
 
 ## Kiểm tra API audit qua chính giả lập
 
-Gateway audit hiện ở `127.0.0.1:18080`; giả lập đang phục vụ tại **http://localhost:3000**. Đăng nhập trên điện thoại trong trang bằng tài khoản seed `patient` / `Password123@` nếu seed chưa đổi. Ứng dụng luôn dùng API thật. Không cần mở cổng 8080, cài điện thoại hoặc Android emulator.
+Địa chỉ runtime và tài khoản hiện hành ở [hướng dẫn sử dụng](../huong-dan-su-dung/README.md). Ứng dụng dùng API thật; script bên dưới chỉ phù hợp môi trường audit đã được cấu hình.
 
 Có thể kiểm tra tự động đường đi `giả lập:3000 → Gateway:18080 → service → DB audit`:
 
