@@ -1,0 +1,46 @@
+/**
+ * CareFlow - AI Service Database Design (DBML)
+ * Service: careflow-ai-service
+ * Database Engine: PostgreSQL 16 + pgvector Extension
+ * Remote Host: 100.116.233.60:5432
+ * Database Name: careflow_ai
+ */
+
+Project CareFlow_AI_Service {
+  database_type: 'PostgreSQL 16 + pgvector'
+  note: 'Clinical AI Assistant & Clinical RAG Knowledge Base. Manages MOH Treatment Guidelines, National Drug Formulary, ICD-10 embeddings, and hybrid vector search for doctor clinical decision support.'
+}
+
+Table clinical_guideline_documents {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Khóa chính tài liệu phác đồ']
+  code varchar(100) [unique, not null, note: 'Mã phác đồ/Quyết định, vd: BYT-QD-4800-HOHAP']
+  title varchar(500) [not null, note: 'Tên hướng dẫn/phác đồ của Bộ Y Tế hoặc Dược thư']
+  issuer varchar(255) [not null, note: 'Cơ quan ban hành, vd: Bộ Y Tế Việt Nam']
+  published_year int [not null, note: 'Năm ban hành']
+  specialty varchar(100) [not null, note: 'Chuyên khoa, vd: Hô hấp, Tim mạch, Đái tháo đường']
+  source_url varchar(1000) [null, note: 'Đường dẫn tài liệu văn bản gốc']
+  created_at timestamp [default: `now()`, note: 'Thời điểm nạp vào hệ thống']
+
+  indexes {
+    code [unique]
+    specialty
+  }
+}
+
+Table clinical_guideline_chunks {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Khóa chính đoạn trích']
+  document_id uuid [not null, ref: > clinical_guideline_documents.id, note: 'Khóa ngoại trỏ đến tài liệu gốc']
+  section_title varchar(300) [null, note: 'Tiêu đề đề mục phân cấp, vd: Tiêu chuẩn chẩn đoán Viêm phổi']
+  content text [not null, note: 'Nội dung chi tiết của đoạn phác đồ']
+  metadata jsonb [not null, note: 'Metadata phân loại: mã icd10, hoạt chất thuốc, phân độ nặng, ngưỡng sinh hiệu']
+  embedding vector(1024) [null, note: 'Dense Vector Embedding (1024 chiều cho BGE-M3 hoặc 768 chiều cho Google text-embedding-004)']
+  tsv_content tsvector [null, note: 'Sparse Full-Text Token Vector cho tìm kiếm từ khóa chính xác BM25']
+  created_at timestamp [default: `now()`, note: 'Thời điểm tạo chunk']
+
+  indexes {
+    document_id
+    embedding [type: 'hnsw', note: 'HNSW vector index for cosine similarity']
+    tsv_content [type: 'gin', note: 'GIN index for full-text search']
+    metadata [type: 'gin', note: 'GIN index for JSONB metadata filtering']
+  }
+}

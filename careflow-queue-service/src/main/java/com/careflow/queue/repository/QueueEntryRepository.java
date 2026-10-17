@@ -49,4 +49,6 @@ public interface QueueEntryRepository extends JpaRepository<QueueEntry, UUID> {
 
     List<QueueEntry> findByQueueConfigIdAndQueueDateAndStatusAndStartedAtIsNotNullAndCompletedAtIsNotNullOrderByCompletedAtDesc(
             UUID configId, LocalDate date, QueueStatus status, Pageable pageable);
+
+    long countByQueueDate(LocalDate queueDate);
 }

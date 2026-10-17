@@ -166,12 +166,12 @@ export default function AiAssistantWidget() {
   };
 
   return (
-    <div className={`fixed right-6 z-50 flex flex-col items-end pointer-events-none transition-all duration-300 ease-in-out ${
+    <div className={`fixed right-3 sm:right-6 z-50 flex flex-col items-end pointer-events-none transition-all duration-300 ease-in-out ${
       isConsultationPage ? "bottom-20" : "bottom-5"
     }`}>
       {/* Popover Chat Window — Morph / Expand smoothly from bottom-right anchor */}
       {isOpen && (
-        <div className="mb-3 w-80 sm:w-96 bg-white border border-slate-200 shadow-2xl rounded-none flex flex-col h-[440px] origin-bottom-right animate-in fade-in zoom-in-95 duration-200 ease-out pointer-events-auto">
+        <div className="mb-3 w-[calc(100vw-1.5rem)] max-w-sm sm:w-96 bg-white border border-slate-200 shadow-2xl rounded-none flex flex-col h-[440px] origin-bottom-right animate-in fade-in zoom-in-95 duration-200 ease-out pointer-events-auto">
           {/* Header */}
           <div className="p-3.5 bg-[#0D0F1E] text-white flex justify-between items-center border-b border-[#1E2340]">
             <div className="flex items-center gap-2.5">

@@ -187,23 +187,15 @@ public class AiClinicalAssistantService {
     }
 
     private ClinicalSuggestionResponse buildRuleBasedSuggestions(String interactionId, String consultationId, String question) {
-        List<ClinicalSuggestionItem> suggestions = List.of(
-                ClinicalSuggestionItem.builder()
-                        .type("DIFFERENTIAL_DIAGNOSIS")
-                        .text("Cân nhắc Cơn đau thắt ngực không ổn định hoặc Viêm màng ngoài tim cấp")
-                        .evidenceRefs(List.of(EvidenceRef.builder().sourceType("CONSULTATION").sourceId(consultationId).field("symptoms").build()))
-                        .build()
-        );
-
         ClinicalSuggestionResponse response = ClinicalSuggestionResponse.builder()
                 .interactionId(interactionId)
-                .mode("MOCK_RULE_BASED")
-                .summary("Tóm tắt ca khám: Đã ghi nhận các triệu chứng lâm sàng và chỉ số sinh tồn của ca khám " + consultationId)
-                .suggestions(suggestions)
-                .missingInformation(List.of("Kết quả Điện tâm đồ (ECG)", "Định lượng Enzyme tim Troponin"))
-                .warnings(List.of("Lưu ý tiền sử dị ứng thuốc nhóm Beta-lactam"))
+                .mode("SERVICE_UNAVAILABLE")
+                .summary("Bác sĩ Chồn AI 🐾: Hiện tại dịch vụ AI đang tạm thời chưa khả dụng. Rất mong Bác sĩ thông cảm và vui lòng sử dụng lại sau.")
+                .suggestions(List.of())
+                .missingInformation(List.of())
+                .warnings(List.of())
                 .disclaimer(MEDICAL_DISCLAIMER)
-                .model(AiModelInfo.builder().provider("CareFlow Rule Engine").name("careflow-clinical-v1").version("1.0.0").build())
+                .model(AiModelInfo.builder().provider("CareFlow AI").name("careflow-clinical-assistant").version("1.0.0").build())
                 .generatedAt(Instant.now().toString())
                 .build();
 
@@ -212,18 +204,17 @@ public class AiClinicalAssistantService {
     }
 
     private ClinicalSuggestionResponse buildRuleBasedChat(String interactionId, String consultationId, String message) {
-        String replySummary = String.format("Bác sĩ Chồn AI 🐾: Đã ghi nhận câu hỏi '%s'. Em đang xử lý dữ liệu lâm sàng cho ca khám %s.",
-                message != null ? message : "", consultationId);
+        String replySummary = "Bác sĩ Chồn AI 🐾: Hiện tại dịch vụ AI đang tạm thời chưa khả dụng. Rất mong Bác sĩ thông cảm và vui lòng sử dụng lại sau.";
 
         ClinicalSuggestionResponse response = ClinicalSuggestionResponse.builder()
                 .interactionId(interactionId)
-                .mode("MOCK_RULE_BASED")
+                .mode("SERVICE_UNAVAILABLE")
                 .summary(replySummary)
                 .suggestions(List.of())
                 .missingInformation(List.of())
                 .warnings(List.of())
                 .disclaimer(MEDICAL_DISCLAIMER)
-                .model(AiModelInfo.builder().provider("CareFlow Rule Engine").name("careflow-clinical-v1").version("1.0.0").build())
+                .model(AiModelInfo.builder().provider("CareFlow AI").name("careflow-clinical-assistant").version("1.0.0").build())
                 .generatedAt(Instant.now().toString())
                 .build();
 

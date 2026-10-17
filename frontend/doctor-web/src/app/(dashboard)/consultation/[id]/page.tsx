@@ -9,10 +9,12 @@ import { prescriptionApi, PrescriptionResponse, PrescriptionItemRequest, Medicin
 import { patientApi, emrApi, PatientAllergyResponse } from "@/lib/patient-api";
 import { labApi, MOCK_LAB_SERVICES, LabCatalogItem, LabOrderResponse } from "@/lib/lab-api";
 import { queueApi } from "@/lib/queue-api";
-import { aiApi, ClinicalSuggestionResponse } from "@/lib/ai-api";
+import { aiApi, ClinicalSuggestionResponse, VoiceExtractedFields } from "@/lib/ai-api";
 import { renderFormattedAiText } from "@/lib/format-ai-text";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmModal from "@/components/ConfirmModal";
+import VoiceRecorderButton from "@/components/VoiceRecorderButton";
+import VoicePreviewModal from "@/components/VoicePreviewModal";
 
 const ICD10_CATALOG = [
   { code: "K21.9", name: "Bệnh trào ngược dạ dày - thực quản không có viêm thực quản" },
@@ -40,6 +42,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [aiResponse, setAiResponse] = useState<ClinicalSuggestionResponse | null>(null);
   const [aiChatInput, setAiChatInput] = useState("");
   const [aiChatHistory, setAiChatHistory] = useState<{ sender: "user" | "ai"; text: string; time: string; responseObj?: ClinicalSuggestionResponse }[]>([]);
+
+  // AI Voice-to-Clinical-Fields state
+  const [isVoiceProcessing, setIsVoiceProcessing] = useState(false);
+  const [voicePreview, setVoicePreview] = useState<{ transcript: string; fields: VoiceExtractedFields } | null>(null);
 
   // Lab Orders state
   const [selectedLabServices, setSelectedLabServices] = useState<LabCatalogItem[]>([]);
@@ -639,6 +645,78 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     }
   };
 
+  // Voice STT Recording and Field Extraction Handlers
+  const handleVoiceRecorded = async (audioBlob: Blob) => {
+    setIsVoiceProcessing(true);
+    try {
+      const res = await aiApi.processVoiceToFields(audioBlob);
+      if (res && res.data) {
+        setVoicePreview({
+          transcript: res.data.transcriptText,
+          fields: res.data.extractedFields || {},
+        });
+      } else {
+        showToast("AI không nhận diện được nội dung từ bản ghi âm.", "warning");
+      }
+    } catch (err) {
+      console.error("Voice STT error:", err);
+      showToast("Không thể xử lý âm thanh từ AI Service.", "danger");
+    } finally {
+      setIsVoiceProcessing(false);
+    }
+  };
+
+  const applyVoiceFields = (selectedFields: Partial<VoiceExtractedFields>) => {
+    let appliedCount = 0;
+    if (selectedFields.heartRate) {
+      setHeartRate(selectedFields.heartRate);
+      appliedCount++;
+    }
+    if (selectedFields.bloodPressure) {
+      setBloodPressure(selectedFields.bloodPressure);
+      appliedCount++;
+    }
+    if (selectedFields.temperature) {
+      setTemperature(selectedFields.temperature);
+      appliedCount++;
+    }
+    if (selectedFields.spo2) {
+      setSpo2(selectedFields.spo2);
+      appliedCount++;
+    }
+    if (selectedFields.height) {
+      setHeight(selectedFields.height);
+      appliedCount++;
+    }
+    if (selectedFields.weight) {
+      setWeight(selectedFields.weight);
+      appliedCount++;
+    }
+    if (selectedFields.symptoms) {
+      setSymptoms((prev) => (prev ? `${prev}\n${selectedFields.symptoms}` : selectedFields.symptoms || ""));
+      appliedCount++;
+    }
+    if (selectedFields.clinicalNotes) {
+      setClinicalNotes((prev) => (prev ? `${prev}\n${selectedFields.clinicalNotes}` : selectedFields.clinicalNotes || ""));
+      appliedCount++;
+    }
+    if (selectedFields.diagnosis) {
+      setDiagnosis(selectedFields.diagnosis);
+      appliedCount++;
+    }
+    if (selectedFields.icd10Code) {
+      setIcd10Code(selectedFields.icd10Code);
+      appliedCount++;
+    }
+    if (selectedFields.icd10Name) {
+      setIcd10Name(selectedFields.icd10Name);
+      appliedCount++;
+    }
+
+    setVoicePreview(null);
+    showToast(`Đã áp dụng thành công ${appliedCount} trường thông tin vào ca khám.`, "success");
+  };
+
   // Complete Consultation trigger
   const completeConsultation = () => {
     if (prescriptionItems.length > 0 && prescriptionStatus !== "CONFIRMED") {
@@ -862,6 +940,27 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         {/* Left Column (3/5): Tabbed Clinical & Diagnostic Data */}
         <div className="lg:col-span-3 space-y-4">
           
+          {/* AI Voice Dictation Bar */}
+          {!isConsultationLocked && (
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-gradient-to-r from-purple-50/90 via-purple-50/50 to-white border border-purple-200/80 rounded-lg shadow-[0_1px_3px_rgba(110,37,130,0.06)]">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🎙️</span>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-bold text-[#6E2582]">Ghi âm lời khám rảnh tay (STT)</span>
+                    <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-black border border-purple-200">AI</span>
+                  </div>
+                  <p className="text-[11px] text-[#6A5C70]">Đọc các chỉ số sinh hiệu, triệu chứng hoặc chẩn đoán để AI tự động điền</p>
+                </div>
+              </div>
+              <VoiceRecorderButton
+                onAudioReady={handleVoiceRecorded}
+                disabled={isConsultationLocked}
+                isProcessing={isVoiceProcessing}
+              />
+            </div>
+          )}
+
           {/* Navigation Tabs */}
           <div className="border-b border-card-border flex bg-card-bg rounded-t-lg">
             <button
@@ -1145,8 +1244,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 </div>
               )}
 
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-1">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-1">
                   <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Mã ICD-10 đã chọn</label>
                   <input
                     type="text"
@@ -1156,7 +1255,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     className="w-full border border-card-border bg-gray-50 px-3 py-2 text-sm text-[#2B1D30] font-mono font-bold focus:outline-none rounded-md"
                   />
                 </div>
-                <div className="col-span-2">
+                <div className="sm:col-span-2">
                   <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Tên bệnh theo ICD</label>
                   <input
                     type="text"
@@ -2349,7 +2448,16 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         </div>
       )}
 
-    </div>
+      {/* AI Voice-to-Clinical-Fields Review & Apply Modal */}
+      {voicePreview && (
+        <VoicePreviewModal
+          transcript={voicePreview.transcript}
+          fields={voicePreview.fields}
+          onApply={applyVoiceFields}
+          onClose={() => setVoicePreview(null)}
+        />
+      )}
 
+    </div>
   );
 }

@@ -111,13 +111,35 @@ Refresh token đã được triển khai theo cơ chế rotation:
 
 ## Khởi chạy
 
-Yêu cầu: JDK 21, Maven 3.9+, PostgreSQL 16, Docker Engine có Compose v2.
+Yêu cầu: JDK 21, Maven 3.9+, PostgreSQL 16, Docker Engine có Compose v2, Node.js 18+.
+
+### 1. Khởi chạy Hạ tầng (Postgres & RabbitMQ)
 
 ```bash
-# Infrastructure
 docker compose -f docker-compose.infra.yml up -d
+```
 
-# Build & Run
+### 2. Khởi chạy Hệ thống Microservices & Frontend (Tối ưu hóa RAM/CPU)
+
+Sử dụng script `./start-local.sh` đã được cấu hình tối ưu tài nguyên (giới hạn JVM heap, chống nghẽn CPU và hỗ trợ chạy theo cụm phân hệ):
+
+```bash
+# Menu tương tác (tự động chọn chế độ ALL sau 5 giây)
+./start-local.sh
+
+# Hoặc khởi chạy theo cụm phân hệ mong muốn để tiết kiệm tài nguyên:
+./start-local.sh prescription   # Cụm Kê đơn thuốc (Consultation, Prescription, Patient, Gateway, Frontend...)
+./start-local.sh appointment    # Cụm Đặt khám & Hàng đợi (Appointment, Queue, AI, Gateway, Frontend...)
+./start-local.sh emr-lab        # Cụm Bệnh án & Xét nghiệm (EMR, Lab, Consultation, Gateway, Frontend...)
+./start-local.sh core           # Cụm Dịch vụ Cốt lõi (Eureka, Gateway, Identity, Patient, Frontend)
+./start-local.sh all            # Toàn bộ 13 services + Frontend
+```
+
+> 📖 Xem hướng dẫn vận hành và danh sách port chi tiết tại **[docs/manual.md](docs/manual.md)**.
+
+### 3. Khởi chạy thủ công từng Service (Tùy chọn)
+
+```bash
 export JWT_SECRET="$(openssl rand -base64 48)"
 mvn clean package -DskipTests
 java -jar careflow-identity-service/target/careflow-identity-service-1.0.0-SNAPSHOT.jar
@@ -138,5 +160,7 @@ flutter test --no-test-assets
 
 ## Tài liệu liên quan
 
+- [Hướng dẫn vận hành & Khởi chạy (Manual)](docs/manual.md)
 - [Implementation plan](docs/implementation_plan.md)
+- [Hành trình bệnh nhân & System workflow](docs/patient-journey-and-system-workflow.md)
 - [Tài liệu trong thư mục docs](docs/)

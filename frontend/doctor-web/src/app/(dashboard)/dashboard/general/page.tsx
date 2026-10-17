@@ -417,8 +417,8 @@ export default function DashboardGeneralPage() {
           </div>
 
           {/* Table Container with Mouse Scroll Wheel */}
-          <div className="overflow-y-auto flex-1 custom-scrollbar">
-            <table className="w-full text-left text-xs">
+          <div className="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar">
+            <table className="w-full min-w-[600px] text-left text-xs">
               <thead className="sticky top-0 z-10 bg-indigo-50 border-b border-gray-100 shadow-xs">
                 <tr>
                   <th className="px-5 py-3 font-semibold text-gray-600 w-14">STT</th>

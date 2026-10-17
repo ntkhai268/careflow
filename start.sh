@@ -8,6 +8,14 @@ echo "================================================================="
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd "$SCRIPT_DIR" || exit 1
 
+# Load environment variables from .env if present
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    echo "--> Loading environment variables from .env..."
+    set -a
+    source "$SCRIPT_DIR/.env"
+    set +a
+fi
+
 echo "--> Infrastructure checks: assuming Postgres & RabbitMQ are running..."
 
 # Array to keep track of background service PIDs

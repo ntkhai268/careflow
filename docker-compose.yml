@@ -255,6 +255,9 @@ services:
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD:-admin123}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://careflow-eureka-server:8761/eureka/
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      ELEVENLABS_API_KEY: ${ELEVENLABS_API_KEY:-}
     depends_on:
       careflow-eureka-server:
         condition: service_healthy

@@ -43,9 +43,16 @@ const getNavItems = (role?: string) => {
 interface SidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  isMobileOpen?: boolean;
+  onCloseMobile?: () => void;
 }
 
-export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps) {
+export default function Sidebar({
+  isCollapsed,
+  onToggleCollapse,
+  isMobileOpen = false,
+  onCloseMobile,
+}: SidebarProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const navItems = getNavItems(user?.role);
@@ -56,11 +63,20 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
     : "BS";
 
   return (
-    <aside
-      className={`fixed left-0 top-0 z-40 flex h-screen flex-col transition-all duration-200 ${
-        isCollapsed ? "w-16" : "w-64"
-      }`}
-      style={{
+    <>
+      {/* Mobile Backdrop */}
+      {isMobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-xs md:hidden"
+          onClick={onCloseMobile}
+        />
+      )}
+
+      <aside
+        className={`fixed left-0 top-0 z-50 flex h-screen flex-col transition-all duration-300 md:z-40 ${
+          isMobileOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        } ${isCollapsed ? "w-64 md:w-16" : "w-64"}`}
+        style={{
         background: "linear-gradient(180deg, #0D0F1E 0%, #111427 100%)",
         borderRight: "1px solid #1E2340",
         backgroundImage: `
@@ -124,6 +140,7 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
             <Link
               key={item.href}
               href={item.href}
+              onClick={onCloseMobile}
               title={isCollapsed ? item.label : undefined}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150"
               style={
@@ -259,5 +276,6 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
         </div>
       </div>
     </aside>
+    </>
   );
 }

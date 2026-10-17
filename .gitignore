@@ -25,7 +25,10 @@ node_modules/
 dist/
 build/
 .env
+.env.*
 .env.local
+**/.env
+**/.env.*
 
 # Flutter / Dart
 .dart_tool/

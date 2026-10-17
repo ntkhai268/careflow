@@ -1,5 +1,8 @@
 # Project Rules - CareFlow
 
+## Language & Communication Rule
+- **Always Answer in Vietnamese**: **LUÔN LUÔN trả lời người dùng bằng TIẾNG VIỆT** trong mọi phản hồi, giải thích và trao đổi (trừ commit message bằng tiếng Anh).
+
 ## Git & Work Branch Strategy
 - **Prescription Feat Scope:** Only code and edit features related to Prescription on the `feature/vi/prescription-service` branch. 
 - **Isolation of Features:** Keep consultation-service and prescription-service cleanly implemented. Do not implement Lab Orders or EMR logic directly on this branch. Mock external dependencies when necessary, and document them clearly.
