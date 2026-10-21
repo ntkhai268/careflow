@@ -2,7 +2,8 @@ import { api } from "./api";
 
 export interface QueueEntry {
   entryId: string;
-  appointmentId: string;
+  appointmentId: string | null;
+  patientName?: string | null;
   patientId: string;
   userId: string;
   departmentId: string;
@@ -45,6 +46,9 @@ export interface QueueDashboardResponse {
   recommendedNext: QueueEntry | null;
   lastServedLane: "PRIORITY" | "NORMAL" | "RESULT_REVIEW" | null;
   schedulerVersion: number;
+  missedPolicy: "REQUEUE_FRONT" | "REQUEUE_BACK" | "REQUIRE_MANUAL";
+  maxCallAttempts: number;
+  receptionActive: boolean;
 }
 
 export interface ServicePointQueueResponse {
@@ -96,6 +100,9 @@ export interface HospitalCheckInConfigRequest {
 }
 
 export const queueApi = {
+  getRoomReception: (roomId: string) =>
+    api.get<QueueDashboardResponse>(`/api/queues/rooms/${roomId}/reception`),
+
   getRoomActive: (roomId: string) =>
     api.get<QueueDashboardResponse>(`/api/queues/rooms/${roomId}/active`),
 
@@ -131,8 +138,8 @@ export const queueApi = {
   completeEntry: (entryId: string) =>
     api.post<QueueEntry>(`/api/queues/entries/${entryId}/complete`, {}),
 
-  requeueEntry: (entryId: string, reason?: string) =>
-    api.post<QueueEntry>(`/api/queues/entries/${entryId}/requeue`, { reason }),
+  requeueEntry: (entryId: string, position?: "FRONT" | "BACK") =>
+    api.post<QueueEntry>(`/api/queues/entries/${entryId}/requeue`, { position }),
 
   getHospitalCheckInQr: (session = "MORNING") =>
     api.get<HospitalCheckInQr>(

@@ -127,6 +127,11 @@ class AppointmentAuthNotifier extends AuthNotifier {
 class SwitchingPatientService extends PatientService {
   SwitchingPatientService() : super(ApiService());
 
+  @override
+  Future<List<Patient>> getPatientsByUserId(String userId) async => [
+    Patient(id: 'patient-a', userId: userId, fullName: 'Former Patient'),
+  ];
+
   final requestedUserIds = <String>[];
   final currentLoadStarted = Completer<void>();
   final currentLoad = Completer<Patient?>();

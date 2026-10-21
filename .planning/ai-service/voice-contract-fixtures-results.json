@@ -1,0 +1,32 @@
+{
+  "evaluationKind": "synthetic_contract_fixtures_not_clinical_benchmark",
+  "samples": 6,
+  "passed": 6,
+  "results": [
+    {
+      "id": "vp-1",
+      "passed": true
+    },
+    {
+      "id": "vp-2",
+      "passed": true
+    },
+    {
+      "id": "vp-3",
+      "passed": true
+    },
+    {
+      "id": "vp-4",
+      "passed": true
+    },
+    {
+      "id": "vp-5",
+      "passed": true
+    },
+    {
+      "id": "vp-6",
+      "passed": true
+    }
+  ],
+  "humanTestSamples": 0
+}

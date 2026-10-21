@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "Admin saves and reloads real room schedule with API-backed searchable pickers",
+      "status": "PASS"
+    },
+    {
+      "name": "Reception searches real minimal profiles and closes the searchable picker on outside click",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong web role sees AccessDenied instead of administration controls",
+      "status": "PASS"
+    },
+    {
+      "name": "Doctor queue includes the real missed-visit panel",
+      "status": "PASS"
+    }
+  ]
+}

@@ -43,6 +43,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     // Navigate on success
     ref.listen<AuthState>(authProvider, (prev, next) {
       if (next.status == AuthStatus.authenticated) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         context.go('/');
       }
       if (next.status == AuthStatus.error && next.errorMessage != null) {
@@ -70,50 +71,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 60),
-
-                // Logo
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    gradient: AppColors.primaryGradient,
-                    borderRadius: BorderRadius.circular(AppRadius.xl),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                        blurRadius: 16,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
-                  ),
-                  child: const Icon(
-                    Icons.local_hospital_rounded,
-                    size: 42,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 20),
-
-                // App name
-                const Text(
-                  'CareFlow',
-                  style: TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Đặt lịch khám bệnh',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
+                Row(children: [
+                  Container(width: 48, height: 48,
+                    decoration: BoxDecoration(color: AppColors.primarySurface, borderRadius: BorderRadius.circular(16)),
+                    child: const Icon(Icons.local_hospital_rounded, size: 28, color: AppColors.primary)),
+                  const SizedBox(width: 12),
+                  const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                    Text('CareFlow', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                    Text('Đồng hành cùng sức khỏe', style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+                  ]),
+                ]),
+                const SizedBox(height: 32),
 
                 // Title
                 const Align(
@@ -131,7 +100,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Chào mừng bạn trở lại!',
+                    'Tiếp tục hành trình chăm sóc của bạn.',
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,
@@ -180,18 +149,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
                 const SizedBox(height: 12),
 
-                // Forgot password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      // TODO: Forgot password flow
-                    },
-                    child: const Text('Quên mật khẩu?'),
-                  ),
-                ),
-                const SizedBox(height: 24),
-
                 // Login button
                 CareFlowButton(
                   text: 'Đăng nhập',
@@ -199,6 +156,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   isLoading: authState.status == AuthStatus.loading,
                   onPressed: _handleLogin,
                 ),
+                const SizedBox(height: 24),
+
+                const Divider(),
+                const SizedBox(height: 8),
+                ListTile(contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  leading: const Icon(Icons.login_rounded, color: AppColors.primary, size: 22),
+                  title: const Text('Đổi hình thức đăng nhập', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                  onTap: authState.status == AuthStatus.loading ? null : () => context.go('/login/methods')),
+                const SizedBox(height: 8),
+                ListTile(contentPadding: const EdgeInsets.symmetric(horizontal: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  leading: const Icon(Icons.lock_reset_rounded, color: AppColors.primary, size: 22),
+                  title: const Text('Quên mật khẩu', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                  trailing: const Icon(Icons.chevron_right_rounded, size: 20),
+                  onTap: authState.status == AuthStatus.loading ? null : () => context.go('/forgot-password')),
                 const SizedBox(height: 24),
 
                 // Register link

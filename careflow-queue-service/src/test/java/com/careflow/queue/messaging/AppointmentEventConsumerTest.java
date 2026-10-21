@@ -54,7 +54,7 @@ class AppointmentEventConsumerTest {
         QueueEntry entry = new QueueEntry();
         entry.setId(UUID.randomUUID());
         entry.setScheduledStartAt(Instant.parse("2026-07-28T01:00:00Z"));
-        when(queueService.requireLockedConfig(departmentId)).thenReturn(config);
+        when(queueService.requireScheduledRoom("ROOM-21",departmentId)).thenReturn(config);
         when(entries.findByAppointmentId(appointmentId)).thenReturn(Optional.empty());
         when(queueService.createAppointmentEntry(
                 config, date, LocalTime.of(8, 0), "08:00-08:30", "THAN_KINH", "Phòng 21",

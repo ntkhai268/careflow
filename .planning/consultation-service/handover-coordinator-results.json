@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-10-16T06:13:56.035Z",
+  "mock": false,
+  "checks": [
+    {
+      "name": "Scoped coordinator sees a pending request initiated by another doctor in the same room",
+      "status": "PASS"
+    },
+    {
+      "name": "Real changed-room receiver is rejected against authoritative Queue; current responsibility is unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "Dedicated fixture doctor assignment and primary booking flag restored through authorized Directory API",
+      "status": "PASS"
+    },
+    {
+      "name": "Coordinator cancels the stalled request with own actor/reason, without transferring or signing for the receiver",
+      "status": "PASS"
+    },
+    {
+      "name": "Valid acknowledged handover prepares the same real visit for final browser regression",
+      "status": "PASS"
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../screens/auth/splash_screen.dart';
 import '../screens/auth/onboarding_screen.dart';
 import '../screens/auth/login_screen.dart';
+import '../screens/auth/login_methods_screen.dart';
 import '../screens/auth/ekyc_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/main_shell.dart';
@@ -44,8 +45,11 @@ final GoRouter appRouter = GoRouter(
       path: '/onboarding',
       builder: (context, state) => const OnboardingScreen(),
     ),
+    GoRoute(path: '/security', builder: (context, state) => const LoginMethodsScreen(configure: true)),
     GoRoute(path: '/ekyc', builder: (context, state) => const EkycScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(path: '/login/methods', builder: (context, state) => const LoginMethodsScreen()),
+    GoRoute(path: '/forgot-password', builder: (context, state) => const LoginMethodsScreen(recovery: true)),
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),

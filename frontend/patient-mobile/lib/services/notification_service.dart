@@ -34,6 +34,14 @@ class NotificationService implements NotificationGateway {
     return _dataList(response.data);
   }
 
+  Future<List<Map<String, dynamic>>> older(String before) async {
+    final response = await _api.get(
+      '${ApiConfig.notifications}/history',
+      queryParams: {'before': before, 'limit': 50},
+    );
+    return _dataList(response.data);
+  }
+
   @override
   Future<Map<String, dynamic>?> markRead(String notificationId) async {
     final response = await _api.post(
@@ -71,8 +79,10 @@ class NotificationService implements NotificationGateway {
     }
     return switch (error.response?.statusCode) {
       401 => 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
-      500 || 502 || 503 || 504 =>
-        'Hệ thống thông báo đang bận. Vui lòng thử lại sau.',
+      500 ||
+      502 ||
+      503 ||
+      504 => 'Hệ thống thông báo đang bận. Vui lòng thử lại sau.',
       _ => 'Không thể tải thông báo. Vui lòng thử lại.',
     };
   }
@@ -84,7 +94,9 @@ final notificationServiceProvider = Provider<NotificationService>(
 
 List<Map<String, dynamic>> _dataList(Object? responseData) {
   final data = responseData is Map ? responseData['data'] : responseData;
-  if (data is! List) return const [];
+  if (data is! List || data.any((item) => item is! Map)) {
+    throw const FormatException('Dữ liệu thông báo không hợp lệ.');
+  }
   return data
       .whereType<Map>()
       .map((item) => Map<String, dynamic>.from(item))

@@ -1,0 +1,40 @@
+// Voice Prescription v1; AI owns jobs/audit only. No clinical master/prescription writes.
+Table voice_prescription_capacity {
+  id integer [pk, note: 'Singleton id=1; transactional quota lock']
+}
+Table voice_prescription_jobs {
+  id uuid [pk]
+  consultation_id uuid [not null, note: 'External Consultation reference, authorized on every operation']
+  actor_id uuid [not null, note: 'Verified Identity user, never client header']
+  version bigint [not null, default: 1]
+  transcript_revision integer [not null, default: 1]
+  state varchar(20) [not null, note: 'QUEUED/RUNNING/SUCCEEDED/FAILED/CANCELLED/EXPIRED']
+  idempotency_key varchar(128) [not null]
+  request_hash varchar(64) [not null]
+  input_json text [note: 'Temporary text/base64 audio, removed at terminal/expiry']
+  result_json text [note: 'Evidence/model/catalog metadata + proposal; content TTL 900 seconds']
+  error_code varchar(80)
+  correlation_id varchar(36) [not null]
+  lease_owner uuid
+  lease_until timestamptz
+  created_at timestamptz [not null]
+  expires_at timestamptz [not null]
+  indexes {
+    (actor_id, idempotency_key) [unique]
+    (state, expires_at)
+  }
+}
+Table voice_prescription_audit {
+  id bigint [pk, increment]
+  job_id uuid [not null, note: 'Metadata retained at most 30 days; no public audit route']
+  actor_id uuid [not null]
+  action varchar(40) [not null]
+  version bigint [not null]
+  correlation_id varchar(36) [not null]
+  input_hash varchar(64) [not null]
+  schema_version varchar(80) [not null]
+  catalog_version varchar(64)
+  model_info_json text [note: 'Release/model metadata only; no transcript/audio/credentials']
+  created_at timestamptz [not null]
+  indexes { (job_id, id) }
+}

@@ -6,6 +6,7 @@ import '../../models/appointment.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/patient_provider.dart';
 import '../../services/appointment_service.dart';
+import '../../services/notification_refresh.dart';
 import '../../utils/api_error_message.dart';
 import 'package:intl/intl.dart';
 
@@ -21,6 +22,7 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
   List<Appointment> _appointments = [];
   bool _isLoading = false;
   String? _error;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -44,24 +46,29 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
   }
 
   /// Try loading appointments if patient profile is available.
-  void _tryLoadAppointments() {
+  void _tryLoadAppointments({bool quiet = false}) {
     final patientId = _patientId;
     if (patientId != null && patientId.isNotEmpty) {
-      _loadAppointments(patientId);
+      _loadAppointments(patientId, quiet: quiet);
     }
   }
 
-  Future<void> _loadAppointments(String patientId) async {
+  Future<void> _loadAppointments(String patientId, {bool quiet = false}) async {
+    final generation = ++_loadGeneration;
     if (patientId.isEmpty) return;
     setState(() {
-      _isLoading = true;
+      _isLoading = !quiet || _appointments.isEmpty;
       _error = null;
-      _appointments = [];
+      if (!quiet) _appointments = [];
     });
     try {
       final service = ref.read(appointmentServiceProvider);
       final appointments = await service.getAppointmentsByPatientId(patientId);
-      if (!mounted || patientId != _patientId) return;
+      if (!mounted ||
+          generation != _loadGeneration ||
+          patientId != _patientId) {
+        return;
+      }
       setState(() {
         _appointments = appointments
             .where((appointment) => appointment.patientId == patientId)
@@ -69,7 +76,11 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      if (!mounted || patientId != _patientId) return;
+      if (!mounted ||
+          generation != _loadGeneration ||
+          patientId != _patientId) {
+        return;
+      }
       setState(() {
         _error = ApiErrorMessage.from(
           e,
@@ -82,6 +93,10 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(
+      notificationRefreshRevisionProvider,
+      (_, _) => _tryLoadAppointments(quiet: true),
+    );
     // Watch patient state to re-load appointments when patient changes
     final authState = ref.watch(authProvider);
     final patientState = ref.watch(patientProvider);
@@ -96,6 +111,7 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
       next,
     ) {
       if (previous == next) return;
+      ++_loadGeneration;
       setState(() {
         _appointments = [];
         _error = null;
@@ -107,6 +123,7 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
       next,
     ) {
       if (previous == next) return;
+      ++_loadGeneration;
       setState(() {
         _appointments = [];
         _error = null;

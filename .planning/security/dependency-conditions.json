@@ -1,0 +1,22 @@
+{
+  "review_date": "2026-10-19",
+  "expires": "2026-11-18",
+  "classification": "Conditional features absent; not a blanket vulnerability waiver",
+  "advisories": {
+    "GHSA-j9f9-w8pj-32f8": {
+      "official_severity": "LOW",
+      "source": "https://spring.io/security/cve-2026-47890/",
+      "condition": "No SSE with rendered view fragments; enforced by check_backend_surface.py"
+    },
+    "GHSA-pc63-qcmh-9cmg": {
+      "official_severity": "MEDIUM",
+      "source": "https://spring.io/security/cve-2026-47884/",
+      "condition": "No XsltView or view resolver; REST controllers only; enforced by check_backend_surface.py"
+    },
+    "GHSA-9qf2-26p9-2q2q": {
+      "official_severity": "MEDIUM",
+      "source": "https://spring.io/security/cve-2026-47892/",
+      "condition": "No application-defined WebFlux functional endpoints/DispatcherServlet routing; enforced by check_backend_surface.py"
+    }
+  }
+}

@@ -27,4 +27,6 @@ public class CreateDoctorProfileRequest {
 
     @Builder.Default
     private Boolean isActive = true;
+
+    private Boolean primaryForBooking;
 }

@@ -6,6 +6,11 @@ import { queueApi, QueueEntry } from "@/lib/queue-api";
 import { patientApi, PatientOperationalResponse } from "@/lib/patient-api";
 import { directoryApi, RoomItem } from "@/lib/directory-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { useAuth } from "@/contexts/AuthContext";
+import HandoverPicker from "@/components/ui/HandoverPicker";
+import WalkInReception from "@/components/WalkInReception";
+import { receptionApi } from "@/lib/reception-api";
+import { api } from "@/lib/api";
 
 const statusLabels: Record<string, string> = {
   WAITING: "Đang chờ",
@@ -65,51 +70,16 @@ function RoomPicker({
   value: string;
   onChange: (roomId: string) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const selected = rooms.find((room) => room.id === value);
-
-  useEffect(() => {
-    const handleOutsideClick = (event: MouseEvent) => {
-      if (!containerRef.current?.contains(event.target as Node)) setIsOpen(false);
-    };
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
-  }, []);
-
-  return (
-    <div ref={containerRef} className="relative">
-      <button
-        type="button"
-        onClick={() => setIsOpen((open) => !open)}
-        className="flex h-11 w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 text-left text-[11px] text-slate-800 shadow-sm outline-none hover:bg-[#F3E8F5] focus:border-[#7B4B94] focus:ring-2 focus:ring-[#F3E8F5]"
-      >
-        <span>{selected ? `${selected.id} · ${selected.displayName}` : value}</span>
-        <span className="text-slate-400">⌄</span>
-      </button>
-      {isOpen && (
-        <div className="absolute z-20 mt-2 max-h-56 w-full overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
-          {rooms.length === 0 ? (
-            <p className="px-3 py-2 text-[10px] text-slate-500">Chưa tải được phòng khám.</p>
-          ) : rooms.map((room) => (
-            <button
-              key={room.id}
-              type="button"
-              onClick={() => { onChange(room.id); setIsOpen(false); }}
-              className={`block w-full rounded-md px-3 py-2 text-left text-[11px] hover:bg-[#F3E8F5] ${room.id === value ? "bg-[#F3E8F5] font-semibold text-[#6E2582]" : "text-slate-700"}`}
-            >
-              {room.id} · {room.displayName}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
+  return <HandoverPicker label="Phòng tiếp nhận" value={value} options={rooms.map(room=>({value:room.id,label:`${room.id} · ${room.displayName}`}))} onChange={onChange} />;
 }
 
 export default function StaffCheckinPage() {
+  const { user } = useAuth();
   const [qrInput, setQrInput] = useState("");
-  const [roomId, setRoomId] = useState("ROOM-01");
+  const [roomId, setRoomId] = useState("");
+  const [queueError, setQueueError] = useState<string | null>(null);
+  const [roomError, setRoomError] = useState<string | null>(null);
+  const queueRequest = useRef(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [checkInResult, setCheckInResult] = useState<QueueEntry | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -121,25 +91,45 @@ export default function StaffCheckinPage() {
   const [hospitalQr, setHospitalQr] = useState<{ siteId: string; qrToken: string; sessionCode: string; sessionDate: string; expiresAt: string } | null>(null);
   const [isLoadingQr, setIsLoadingQr] = useState(false);
   const [qrError, setQrError] = useState<string | null>(null);
+  const [copiedQr, setCopiedQr] = useState<string | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!user) return;
+    let active = true;
     const loadRooms = window.setTimeout(() => {
       void directoryApi.getRooms("", "CONSULTATION")
-        .then((items) => {
+        .then(async (items) => {
           const consultationRooms = items.filter(
             (room) => room.roomType === "CONSULTATION" && room.isActive !== false,
           );
-          setRooms(consultationRooms);
-          if (consultationRooms.length > 0) {
-            setRoomId((currentRoomId) => consultationRooms.some((room) => room.id === currentRoomId)
+          const permittedRooms = user.role === "ADMIN" ? consultationRooms :
+            (await Promise.all(consultationRooms.map(async (room) => {
+              const access = await api.get<boolean>(
+                `/api/directory/staff/${user.id}/room-access?roomId=${encodeURIComponent(room.id)}`,
+              );
+              return access.data === true ? room : null;
+            }))).filter((room): room is RoomItem => room !== null);
+          if (!active) return;
+          setRooms(permittedRooms);
+          setRoomError(permittedRooms.length ? null : "Bạn chưa được phân công phòng tiếp nhận. Liên hệ quản trị để kiểm tra phân công.");
+          if (permittedRooms.length > 0) {
+            setRoomId((currentRoomId) => permittedRooms.some((room) => room.id === currentRoomId)
               ? currentRoomId
-              : consultationRooms[0].id);
+              : permittedRooms[0].id);
+          } else {
+            setRoomId("");
           }
         })
-        .catch(() => setRooms([]));
+        .catch((err: unknown) => {
+          if (!active) return;
+          setRooms([]);
+          setRoomId("");
+          setRoomError(getErrorMessage(err, "Không thể tải phân công phòng tiếp nhận. Vui lòng tải lại trang."));
+        });
     }, 0);
-    return () => window.clearTimeout(loadRooms);
-  }, []);
+    return () => { active = false; window.clearTimeout(loadRooms); };
+  }, [user]);
 
   const fetchHospitalQr = useCallback(async () => {
     setIsLoadingQr(true);
@@ -160,20 +150,27 @@ export default function StaffCheckinPage() {
     return () => window.clearTimeout(loadQr);
   }, [fetchHospitalQr]);
 
-  const fetchRoomQueue = useCallback(async () => {
-    setIsLoadingQueue(true);
+  const fetchRoomQueue = useCallback(async (background = false) => {
+    if (!roomId) return;
+    const request = ++queueRequest.current;
+    if (!background) setIsLoadingQueue(true);
     try {
-      const res = await queueApi.getRoomActive(roomId);
+      const res = await queueApi.getRoomReception(roomId);
+      if (request !== queueRequest.current) return;
       const entries = res.data?.entries ?? [];
       setRoomEntries(entries);
+      setQueueError(null);
 
       const uniquePatientIds = [...new Set(entries.map((entry) => entry.patientId).filter(Boolean))];
       const patientResults = await Promise.all(
         uniquePatientIds.map(async (patientId) => {
           try {
             const entry = entries.find((item) => item.patientId === patientId);
-            if (!entry?.appointmentId || !entry.roomCode) {
-              return [patientId, null] as const;
+            if(!entry?.roomCode)return [patientId,null] as const;
+            if(!entry.appointmentId){
+              const minimum=await receptionApi.minimum(patientId,entry.roomCode);
+              const profile=minimum.data;
+              return [patientId,{id:profile.id,fullName:profile.fullName,dateOfBirth:profile.dateOfBirth??undefined,gender:profile.gender??undefined}] as const;
             }
             const patientRes = await patientApi.getOperationalSummary(
               patientId, entry.appointmentId, entry.roomCode);
@@ -183,18 +180,27 @@ export default function StaffCheckinPage() {
           }
         }),
       );
-      setPatientDetails(Object.fromEntries(patientResults));
-    } catch {
-      setRoomEntries([]);
-      notifyAi("Không thể tải hàng đợi phòng khám. Vui lòng thử lại.");
+      if (request === queueRequest.current) setPatientDetails(Object.fromEntries(patientResults));
+    } catch (err: unknown) {
+      if (request !== queueRequest.current) return;
+      setRoomEntries(null);
+      setQueueError(getErrorMessage(err, "Không thể tải danh sách tiếp nhận. Vui lòng thử lại."));
     } finally {
-      setIsLoadingQueue(false);
+      if (request === queueRequest.current) setIsLoadingQueue(false);
     }
   }, [roomId]);
 
   useEffect(() => {
     const loadQueue = window.setTimeout(() => void fetchRoomQueue(), 0);
-    return () => window.clearTimeout(loadQueue);
+    const refresh = () => { if (document.visibilityState === "visible") void fetchRoomQueue(true); };
+    const timer = window.setInterval(refresh, 10000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      ++queueRequest.current;
+      window.clearTimeout(loadQueue);
+      window.clearInterval(timer);
+      window.removeEventListener("focus", refresh);
+    };
   }, [fetchRoomQueue]);
 
   const handleCheckIn = async (e: React.FormEvent) => {
@@ -249,11 +255,19 @@ export default function StaffCheckinPage() {
   const handleRecall = async (entry: QueueEntry) => {
     setProcessingEntryId(entry.entryId);
     try {
-      await queueApi.recallEntry(entry.entryId);
-      notifyAi(`Đã gọi lại số thứ tự ${entry.queueNumber}.`);
+      if (entry.queueStatus === "CHECKED_IN" || entry.queueStatus === "QUEUED") {
+        await queueApi.callEntry(entry.entryId);
+        notifyAi(`Đã gọi số thứ tự ${entry.queueNumber}.`);
+      } else if (entry.queueStatus === "CALLED") {
+        await queueApi.recallEntry(entry.entryId);
+        notifyAi(`Đã gọi lại số thứ tự ${entry.queueNumber}.`);
+      } else {
+        return;
+      }
       await fetchRoomQueue();
     } catch (err: unknown) {
       notifyAi(getErrorMessage(err, "Không thể gọi lại lượt khám."));
+      await fetchRoomQueue();
     } finally {
       setProcessingEntryId(null);
     }
@@ -289,6 +303,8 @@ export default function StaffCheckinPage() {
           <span>{waitingCount} lượt đang chờ</span>
         </div>
       </header>
+      <div className="max-w-md"><RoomPicker rooms={rooms} value={roomId} onChange={setRoomId} /></div>
+      <WalkInReception key={roomId} roomId={roomId} departmentCode={rooms.find(r=>r.id===roomId)?.departmentCode || ""} onIssued={()=>void fetchRoomQueue()} />
 
       <section className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)]">
@@ -316,6 +332,28 @@ export default function StaffCheckinPage() {
                 </div>
                 <p className="mt-3 text-[11px] font-semibold text-[#2B1D30]">{hospitalQr.siteId} · {hospitalQr.sessionCode}</p>
                 <p className="mt-1 text-[10px] text-slate-500">Có hiệu lực đến {new Date(hospitalQr.expiresAt).toLocaleTimeString("vi-VN")}</p>
+                <div className="mt-4 text-left">
+                  <button type="button" className="w-full rounded-lg border border-[#C7A6D1] bg-white px-3 py-2 text-[11px] font-semibold text-[#6E2582] hover:bg-[#F3E8F5]"
+                    onClick={async () => {
+                      setCopyError(null);
+                      try {
+                        await navigator.clipboard.writeText(hospitalQr.qrToken);
+                        setCopiedQr(hospitalQr.qrToken);
+                      } catch {
+                        setCopyError("Không thể truy cập clipboard. Mở nội dung QR bên dưới để chọn và sao chép thủ công.");
+                      }
+                    }}>
+                    {copiedQr === hospitalQr.qrToken ? "Đã sao chép nội dung QR" : "Sao chép nội dung QR"}
+                  </button>
+                  {copyError && <p role="status" className="mt-2 text-[11px] text-amber-700">{copyError}</p>}
+                  <details className="mt-3 text-[11px] text-slate-600">
+                    <summary className="cursor-pointer font-medium">Nội dung QR để nhập trên web giả lập</summary>
+                    <p className="mt-2">Dán mã này vào màn hình check-in trên điện thoại giả lập. Nhập vị trí kiểm thử theo cấu hình bệnh viện; máy chủ vẫn kiểm tra đầy đủ điều kiện.</p>
+                    <textarea aria-label="Nội dung QR bệnh viện" value={hospitalQr.qrToken} readOnly rows={4}
+                      onFocus={(event) => event.currentTarget.select()}
+                      className="mt-2 w-full resize-y rounded-lg border border-slate-200 bg-white p-2 font-mono text-[10px] outline-none focus:border-[#7B4B94]" />
+                  </details>
+                </div>
               </>
             ) : (
               <p className="min-h-[230px] content-center text-[11px] text-slate-500">{qrError || "Chưa có QR check-in bệnh viện."}</p>
@@ -344,7 +382,7 @@ export default function StaffCheckinPage() {
 
             <button
               type="submit"
-              disabled={isSubmitting}
+              disabled={isSubmitting || !roomId}
               className="h-11 w-full rounded-md bg-[#6E2582] px-4 text-[11px] font-semibold text-white transition-colors hover:bg-[#561A66] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isSubmitting ? "Đang tiếp nhận..." : "Hỗ trợ check-in"}
@@ -390,19 +428,20 @@ export default function StaffCheckinPage() {
       <section className="rounded-lg border border-slate-200 bg-white shadow-[0_1px_3px_rgba(110,37,130,0.06)]">
         <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h2 className="text-[15px] font-semibold text-[#2B1D30]">Hàng đợi phòng khám</h2>
-            <p className="mt-1 text-[10px] text-slate-500">Phòng đang chọn: <span className="font-medium text-slate-700">{roomId}</span></p>
+            <h2 className="text-[15px] font-semibold text-[#2B1D30]">Danh sách tiếp nhận trong ngày</h2>
+            <p className="mt-1 text-[10px] text-slate-500">Phòng đang chọn: <span className="font-medium text-slate-700">{roomId || "Đang tải phân công"}</span>. Gồm phiếu chờ tiếp nhận và lượt đã check-in, tự cập nhật mỗi 10 giây.</p>
           </div>
           <div className="flex w-full flex-col gap-2 sm:w-[280px] sm:flex-row sm:items-center">
-            <RoomPicker rooms={rooms} value={roomId} onChange={setRoomId} />
             <button onClick={() => void fetchRoomQueue()} className="h-9 shrink-0 rounded-md border border-slate-200 px-3 text-[10px] font-semibold text-[#7B4B94] hover:bg-[#F3E8F5]">Tải lại</button>
           </div>
         </div>
 
-        {isLoadingQueue ? (
+        {roomError || queueError ? (
+          <div role="alert" className="p-5 text-sm text-red-700">{roomError || queueError}</div>
+        ) : isLoadingQueue || !roomId ? (
           <div className="flex min-h-[180px] items-center justify-center"><LoadingSpinner size="md" /></div>
         ) : (roomEntries ?? []).length === 0 ? (
-          <div className="flex min-h-[180px] items-center justify-center px-5 text-center text-[11px] text-slate-500">Chưa có lượt khám trong hàng đợi của phòng này.</div>
+          <div className="flex min-h-[180px] items-center justify-center px-5 text-center text-[11px] text-slate-500">Chưa có phiếu chờ tiếp nhận hoặc lượt đang khám tại phòng này hôm nay.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[760px] border-collapse text-left">
@@ -412,6 +451,7 @@ export default function StaffCheckinPage() {
                   <th className="px-4 py-3">Bệnh nhân</th>
                   <th className="px-4 py-3">Loại lượt</th>
                   <th className="px-4 py-3">Trạng thái</th>
+                  <th className="px-4 py-3">Khung giờ hẹn</th>
                   <th className="px-4 py-3">Thời gian tiếp nhận</th>
                   <th className="px-5 py-3 text-right">Thao tác</th>
                 </tr>
@@ -421,6 +461,9 @@ export default function StaffCheckinPage() {
                   const patient = patientDetails[entry.patientId];
                   const isProcessing = processingEntryId === entry.entryId;
                   const canCheckIn = entry.queueStatus === "WAITING" || entry.queueStatus === "TICKET_ISSUED";
+                  const canRecall = entry.queueStatus === "CHECKED_IN" || entry.queueStatus === "QUEUED"
+                    || (entry.queueStatus === "CALLED" && entry.callAttempts < 3);
+                  const canMiss = entry.queueStatus === "CALLED";
                   return (
                     <tr key={entry.entryId} className="min-h-[44px] border-b border-slate-100 last:border-0 hover:bg-slate-50">
                       <td className="px-5 py-3.5"><span className="font-mono text-sm font-bold text-[#2B1D30]">{entry.queueNumber}</span></td>
@@ -442,12 +485,17 @@ export default function StaffCheckinPage() {
                       </td>
                       <td className="px-4 py-3.5 text-[10px] text-slate-600">{priorityLabels[entry.priorityLevel] || entry.priorityLevel}</td>
                       <td className="px-4 py-3.5"><StatusText status={entry.queueStatus} /></td>
+                      <td className="px-4 py-3.5 text-[10px] text-slate-500">{new Date(entry.scheduledStartAt).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })}</td>
                       <td className="px-4 py-3.5 text-[10px] text-slate-500">{entry.checkedInAt ? new Date(entry.checkedInAt).toLocaleTimeString("vi-VN") : "Chưa tiếp nhận"}</td>
                       <td className="px-5 py-3.5">
                         <div className="flex justify-end gap-2">
                           {canCheckIn && <button onClick={() => void handleCheckInEntry(entry)} disabled={isProcessing} className="h-8 w-24 rounded-md text-[10px] font-semibold text-[#7B4B94] hover:bg-[#F3E8F5] disabled:opacity-50">{isProcessing ? "Đang xử lý" : "Duyệt vào"}</button>}
-                          <button onClick={() => void handleRecall(entry)} disabled={isProcessing} className="h-8 w-20 rounded-md border border-slate-200 text-[10px] font-semibold text-slate-600 hover:border-[#7B4B94] hover:text-[#7B4B94] disabled:opacity-50">Gọi lại</button>
-                          <button onClick={() => void handleMiss(entry)} disabled={isProcessing} className="h-8 w-20 rounded-md text-[10px] font-medium text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50">Vắng mặt</button>
+                          <button onClick={() => void handleRecall(entry)} disabled={isProcessing || !canRecall}
+                            title={entry.queueStatus === "CALLED" && entry.callAttempts >= 3
+                              ? "Đã gọi đủ 3 lần; hãy đánh dấu vắng mặt nếu bệnh nhân không đến."
+                              : !canRecall ? "Chỉ gọi lượt đã tiếp nhận hoặc đang được gọi." : "Gọi bệnh nhân"}
+                            className="h-8 w-20 rounded-md border border-slate-200 text-[10px] font-semibold text-slate-600 hover:border-[#7B4B94] hover:text-[#7B4B94] disabled:cursor-not-allowed disabled:opacity-50">Gọi lại</button>
+                          <button onClick={() => void handleMiss(entry)} disabled={isProcessing || !canMiss} className="h-8 w-20 rounded-md text-[10px] font-medium text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50">Vắng mặt</button>
                         </div>
                       </td>
                     </tr>

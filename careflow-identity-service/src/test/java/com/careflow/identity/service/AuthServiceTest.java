@@ -34,28 +34,17 @@ class AuthServiceTest {
 
     @Test
     void publicRegistrationAlwaysCreatesNormalizedPatient() {
-        when(passwordEncoder.encode("StrongPassword1!")).thenReturn("hash");
-        when(users.saveAndFlush(any(User.class))).thenAnswer(invocation -> {
-            User user = invocation.getArgument(0);
-            user.setId(UUID.randomUUID());
-            return user;
-        });
-
-        UserResponse response = service.register(new RegisterRequest(
-                "NguyenVanA", "VANA@EXAMPLE.COM", "StrongPassword1!"));
-
-        assertThat(response.role()).isEqualTo(UserRole.PATIENT);
-        assertThat(response.username()).isEqualTo("nguyenvana");
-        assertThat(response.email()).isEqualTo("vana@example.com");
+        assertThatThrownBy(() -> service.register(new RegisterRequest(
+                "NguyenVanA", "VANA@EXAMPLE.COM", "StrongPassword1!")))
+                .isInstanceOf(BusinessException.class).extracting("status").isEqualTo(410);
+        verify(users, never()).saveAndFlush(any());
     }
 
     @Test
     void duplicateRegistrationReturnsConflict() {
-        when(users.existsByUsernameIgnoreCase("nguyenvana")).thenReturn(true);
         assertThatThrownBy(() -> service.register(new RegisterRequest(
                 "NguyenVanA", "vana@example.com", "StrongPassword1!")))
-                .isInstanceOf(BusinessException.class)
-                .extracting("status").isEqualTo(409);
+                .isInstanceOf(BusinessException.class).extracting("status").isEqualTo(410);
     }
 
     @Test
@@ -65,7 +54,7 @@ class AuthServiceTest {
         when(users.findByUsernameIgnoreCaseOrEmailIgnoreCase("patient", "patient")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong", "hash")).thenReturn(false);
 
-        assertThatThrownBy(() -> service.login(new LoginRequest("patient", "wrong")))
+        assertThatThrownBy(() -> service.login(new LoginRequest("patient", "wrong"), "test-binding"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(401);
         assertThat(user.getStatus()).isEqualTo(UserStatus.LOCKED);
@@ -79,12 +68,13 @@ class AuthServiceTest {
         user.setFailedLoginAttempts(3);
         when(users.findByUsernameIgnoreCaseOrEmailIgnoreCase("patient", "patient")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("correct", "hash")).thenReturn(true);
-        when(jwtService.issue(user)).thenReturn("jwt");
+        UUID sessionId = UUID.randomUUID();
+        when(jwtService.issue(user, sessionId)).thenReturn("jwt");
         when(jwtService.expirationSeconds()).thenReturn(86400L);
-        when(refreshTokens.issue(user))
-                .thenReturn(new RefreshTokenService.IssuedRefreshToken("refresh", 2592000L));
+        when(refreshTokens.issue(user, "test-binding"))
+                .thenReturn(new RefreshTokenService.IssuedRefreshToken("refresh", 2592000L, sessionId));
 
-        LoginResponse response = service.login(new LoginRequest("patient", "correct"));
+        LoginResponse response = service.login(new LoginRequest("patient", "correct"), "test-binding");
 
         assertThat(response.accessToken()).isEqualTo("jwt");
         assertThat(response.refreshToken()).isEqualTo("refresh");
@@ -96,23 +86,24 @@ class AuthServiceTest {
     @Test
     void refreshRotatesTokenAndReturnsNewTokenPair() {
         User user = activeUser();
-        when(refreshTokens.rotate("old-refresh"))
-                .thenReturn(new RefreshTokenService.RotatedRefreshToken(user, "new-refresh", 2592000L));
-        when(jwtService.issue(user)).thenReturn("new-jwt");
+        UUID sessionId = UUID.randomUUID();
+        when(refreshTokens.rotate("old-refresh", "test-binding"))
+                .thenReturn(new RefreshTokenService.RotatedRefreshToken(user, "new-refresh", 2592000L, sessionId));
+        when(jwtService.issue(user, sessionId)).thenReturn("new-jwt");
         when(jwtService.expirationSeconds()).thenReturn(86400L);
 
-        LoginResponse response = service.refresh(new RefreshTokenRequest("old-refresh"));
+        LoginResponse response = service.refresh(new RefreshTokenRequest("old-refresh"), "test-binding");
 
         assertThat(response.accessToken()).isEqualTo("new-jwt");
         assertThat(response.refreshToken()).isEqualTo("new-refresh");
-        verify(refreshTokens).rotate("old-refresh");
+        verify(refreshTokens).rotate("old-refresh", "test-binding");
     }
 
     @Test
     void logoutRevokesRefreshToken() {
-        service.logout(new RefreshTokenRequest("refresh"));
+        service.logout(new RefreshTokenRequest("refresh"), "test-binding");
 
-        verify(refreshTokens).revoke("refresh");
+        verify(refreshTokens).revoke("refresh", "test-binding");
     }
 
     private User activeUser() {
@@ -123,6 +114,7 @@ class AuthServiceTest {
         user.setPasswordHash("hash");
         user.setRole(UserRole.PATIENT);
         user.setStatus(UserStatus.ACTIVE);
+        lenient().when(users.findByIdForUpdate(user.getId())).thenReturn(Optional.of(user));
         return user;
     }
 }

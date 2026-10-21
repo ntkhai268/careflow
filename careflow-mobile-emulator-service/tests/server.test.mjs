@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {Readable,Writable} from 'node:stream';
 import http from 'node:http';
+import https from 'node:https';
 import {once} from 'node:events';
 import {createEmulator, normalizeGateway} from '../server.mjs';
 
@@ -23,7 +24,7 @@ async function request(server,path='/',{method='GET',headers={},body=''}={}){
 }
 function proxyBackend(t,{status=200,response='{"data":{}}',responseHeaders={}}={}){
   let captured;
-  t.mock.method(http,'request',(options,callback)=>{
+  const transport=(options,callback)=>{
     const chunks=[];
     const outgoing=new Writable({
       write(chunk,encoding,done){chunks.push(Buffer.from(chunk));done();},
@@ -35,7 +36,9 @@ function proxyBackend(t,{status=200,response='{"data":{}}',responseHeaders={}}={
       },
     });
     return outgoing;
-  });
+  };
+  t.mock.method(http,'request',transport);
+  t.mock.method(https,'request',transport);
   return ()=>captured;
 }
 
@@ -105,7 +108,7 @@ test('validates gateway update, clears activity, and retains actual browser orig
 });
 
 test('connection failures produce actionable 502 and redact upstream errors',async t=>{
-  t.mock.method(http,'request',()=>{
+  t.mock.method(https,'request',()=>{
     const outgoing=new Writable({write(chunk,encoding,done){done();},final(done){done();queueMicrotask(()=>outgoing.emit('error',new Error('sensitive internal address')));}});return outgoing;
   });
   const result=await request(createEmulator(),'/api/auth/me');assert.equal(result.statusCode,502);assert.match(result.json.message,/Gateway/);assert.ok(!result.text.includes('sensitive'));

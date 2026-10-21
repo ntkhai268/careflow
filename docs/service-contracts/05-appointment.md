@@ -1,5 +1,8 @@
 # Appointment Service Contract
 
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Các đoạn MVP/mock cũ phải đọc theo giới hạn và thay đổi tại R0; không loại Analytics/AI khỏi yêu cầu cuối.
+
+
 > Contract ID: `CF-SVC-05` | Version: `1.2` | Module: `careflow-appointment-service`
 
 ## 1. Trách nhiệm và ranh giới
@@ -262,3 +265,9 @@ của create vẫn là các gap riêng của Appointment Service.
 - Queue tự cấp phiếu/số từ event; Hospital Web lấy QR phòng/phiên để hiển thị,
   không cần admin duyệt.
 - Doctor Web xem lịch dự kiến nhưng active queue chỉ lấy từ Queue Service.
+
+## Handover integration — 2026-10-16
+
+Multiple active doctors may share a consultation room. When exactly one is active, existing resolution is unchanged. With multiple, exactly one must have Directory `primaryForBooking=true`; it receives new booking snapshots. Ambiguous/missing default returns 409, never random assignment. Directory enforces a partial unique index for active primary per room. Admin configures the flag on the doctor's profile; deselect the old primary before selecting a replacement.
+
+The original appointment doctor remains unchanged after handover. Current responsible doctors gain Patient/EMR clinical assignment through Consultation's minimal patient-access authority; superseded appointments do not independently grant the former doctor clinical access. Authority outage fails closed. A receiver completing an existing appointment is checked against current Consultation authority, restricted to completion rather than arbitrary reassign/update rights.

@@ -1,33 +1,115 @@
-// CareFlow - Notification Service Database Design (DBML)
-// Schema: careflow_notification
-
-Project CareFlow_Notification_Service {
+// CareFlow notification — physical schema verified against isolated PostgreSQL migrations, 2026-10-20.
+// Partial indexes and CHECK/FK constraints are retained as SQL notes below each table.
+Project CareFlow_Notification {
   database_type: 'PostgreSQL'
-  note: 'Database Schema cho dịch vụ Thông báo Realtime (CareFlow Notification Service)'
 }
 
-Enum NotificationStatus {
-  PENDING [note: 'Đang chờ gửi']
-  DELIVERED [note: 'Đã gửi thành công qua WebSocket / Push']
-  READ [note: 'Bệnh nhân / Người dùng đã xem']
-  FAILED [note: 'Gửi thất bại']
-}
-
-Table notifications {
-  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
-  recipient_user_id uuid [not null, note: 'Tài khoản người nhận (Identity Service)']
-  notification_type varchar(50) [not null, note: 'Loại thông báo (APPOINTMENT_CONFIRMED, QUEUE_CALLED, LAB_READY, v.v.)']
-  title varchar(255) [not null, note: 'Tiêu đề thông báo']
-  body text [not null, note: 'Nội dung hiển thị']
-  action_type varchar(50) [note: 'Hành động khi nhấn (OPEN_QUEUE, OPEN_LAB_RESULT, OPEN_PRESCRIPTION)']
-  resource_id varchar(100) [note: 'ID tài nguyên liên quan']
-  status NotificationStatus [not null, default: 'DELIVERED', note: 'Trạng thái thông báo']
-  
+Table notification.device_installations {
+  id uuid [pk]
+  user_id uuid [not null]
+  device_id varchar(160) [not null]
+  registration_token varchar(512) [not null]
+  platform varchar(20) [not null]
+  app_version varchar(40)
+  enabled bool [not null]
   created_at timestamptz [not null]
-  read_at timestamptz [note: 'Thời điểm người dùng đọc thông báo']
-
-  indexes {
-    (recipient_user_id, status) [name: 'idx_notification_user_status']
-    created_at [name: 'idx_notification_created']
-  }
+  updated_at timestamptz [not null]
+  last_seen_at timestamptz [not null]
+  session_id uuid
+  binding_id uuid
+  version bigint [not null]
+  note: '''
+CHECK (((platform)::text = ANY ((ARRAY['ANDROID'::character varying, 'IOS'::character varying, 'WEB'::character varying])::text[])))
+UNIQUE (registration_token)
+UNIQUE (user_id, device_id)
+CREATE UNIQUE INDEX device_installations_registration_token_key ON notification.device_installations USING btree (registration_token)
+CREATE UNIQUE INDEX device_installations_pkey ON notification.device_installations USING btree (id)
+CREATE UNIQUE INDEX uk_device_installation_user_device ON notification.device_installations USING btree (user_id, device_id)
+CREATE INDEX idx_device_installation_recipient ON notification.device_installations USING btree (user_id, enabled)
+'''
 }
+
+Table notification.notifications {
+  id uuid [pk]
+  recipient_user_id uuid [not null]
+  source_event_id uuid [not null]
+  source_event_type varchar(100) [not null]
+  notification_type varchar(50) [not null]
+  title varchar(160) [not null]
+  body varchar(500) [not null]
+  action_type varchar(50)
+  resource_id varchar(100)
+  status varchar(20) [not null]
+  created_at timestamptz [not null]
+  read_at timestamptz
+  patient_id uuid
+  note: '''
+CHECK (((notification_type)::text = ANY ((ARRAY['APPOINTMENT_CONFIRMED'::character varying, 'VISIT_TICKET_ISSUED'::character varying, 'CHECK_IN_SUCCESS'::character varying, 'QUEUE_NEAR_TURN'::character varying, 'QUEUE_CALLED'::character varying, 'QUEUE_MISSED'::character varying, 'LAB_ORDER_CREATED'::character varying, 'LAB_READY'::character varying, 'LAB_RESULT_AVAILABLE'::character varying, 'RETURN_FOR_REVIEW'::character varying, 'PRESCRIPTION_AVAILABLE'::character varying, 'FOLLOW_UP_SCHEDULED'::character varying])::text[])))
+CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'DELIVERED'::character varying, 'READ'::character varying, 'FAILED'::character varying])::text[])))
+UNIQUE (source_event_id, recipient_user_id, notification_type)
+CREATE UNIQUE INDEX notifications_pkey ON notification.notifications USING btree (id)
+CREATE UNIQUE INDEX uk_notification_source_recipient_type ON notification.notifications USING btree (source_event_id, recipient_user_id, notification_type)
+CREATE INDEX idx_notification_inbox ON notification.notifications USING btree (recipient_user_id, created_at DESC)
+CREATE INDEX idx_notification_unread ON notification.notifications USING btree (recipient_user_id, status, created_at DESC)
+'''
+}
+
+Table notification.outbox_events {
+  event_id uuid [pk]
+  aggregate_id uuid [not null]
+  event_type varchar(100) [not null]
+  exchange_name varchar(100) [not null]
+  routing_key varchar(100) [not null]
+  payload jsonb [not null]
+  status varchar(20) [not null]
+  attempts integer [not null]
+  occurred_at timestamptz [not null]
+  next_attempt_at timestamptz [not null]
+  published_at timestamptz
+  last_error text
+  created_at timestamptz [not null]
+  note: '''
+CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'PUBLISHED'::character varying, 'FAILED'::character varying, 'DEAD'::character varying])::text[])))
+CHECK ((attempts >= 0))
+CREATE UNIQUE INDEX outbox_events_pkey ON notification.outbox_events USING btree (event_id)
+CREATE INDEX idx_notification_outbox_pending ON notification.outbox_events USING btree (status, next_attempt_at, created_at)
+'''
+}
+
+Table notification.patient_recipients {
+  patient_id uuid [pk]
+  user_id uuid [not null]
+  updated_at timestamptz [not null]
+  note: '''
+CREATE UNIQUE INDEX patient_recipients_pkey ON notification.patient_recipients USING btree (patient_id)
+CREATE INDEX idx_patient_recipients_user_id ON notification.patient_recipients USING btree (user_id)
+'''
+}
+
+Table notification.push_deliveries {
+  id uuid [pk]
+  notification_id uuid [not null]
+  device_installation_id uuid [not null]
+  registration_token varchar(512) [not null]
+  status varchar(20) [not null]
+  attempts integer [not null]
+  next_attempt_at timestamptz [not null]
+  created_at timestamptz [not null]
+  sent_at timestamptz
+  last_error text
+  binding_id uuid
+  expires_at timestamptz [not null]
+  note: '''
+CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'SENT'::character varying, 'FAILED'::character varying, 'DEAD'::character varying])::text[])))
+CHECK ((attempts >= 0))
+UNIQUE (notification_id, device_installation_id)
+FOREIGN KEY (notification_id) REFERENCES notification.notifications(id) ON DELETE CASCADE
+FOREIGN KEY (device_installation_id) REFERENCES notification.device_installations(id) ON DELETE CASCADE
+CREATE UNIQUE INDEX push_deliveries_pkey ON notification.push_deliveries USING btree (id)
+CREATE UNIQUE INDEX uk_push_delivery_notification_device ON notification.push_deliveries USING btree (notification_id, device_installation_id)
+CREATE INDEX idx_push_delivery_pending ON notification.push_deliveries USING btree (status, next_attempt_at, created_at)
+'''
+}
+
+Ref: notification.push_deliveries.notification_id > notification.notifications.id
+Ref: notification.push_deliveries.device_installation_id > notification.device_installations.id

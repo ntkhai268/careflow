@@ -4,6 +4,12 @@
 
 Đã kiểm tra API thật và **28 bước UI trên Chrome ngày 16/10/2026**. Bàn giao đổi người chịu trách nhiệm trên **cùng ca**, giữ bệnh nhân, lịch hẹn, phiếu, số thứ tự và tác giả toa/chỉ định. Phạm vi hiện tại là **cùng khoa/phòng**, không phải chuyển khoa hoặc bàn giao hàng loạt ca trực.
 
+## Bộ kiểm tra mới ngày 17/10/2026
+
+Bộ ROOM-11 tại trang 01 đã kiểm tra gửi/từ chối/hủy, C cấp/thu hồi quyền điều phối, C khởi tạo ngoại lệ nhưng B tự tiếp nhận, B → C → B. Trước nhận, người nhận chỉ xem tóm tắt; sau nhận, A bị chặn 403. A vẫn là tác giả chỉ định/toa cũ; B không ký được toa A (403), B lập và ký toa riêng. Sau đó LAB phát hành CBC, B đọc kết quả trên cùng ca và hoàn tất, STAFF phát thuốc thật.
+
+Ca CXK-002 hiện COMPLETED nên không dùng lại để gửi bàn giao. Muốn chạy mới, chuẩn bị ca đang mở tại ROOM-11 và dùng A/B/C mới ở trang 01. Kịch bản DAL dưới đây là dữ liệu lịch sử riêng ngày 16/10, không trộn hai bộ.
+
 ## Chuẩn bị
 
 1. Mở đúng runtime tích hợp theo trang 00; dùng các tài khoản bộ bàn giao tại trang 01.
@@ -71,4 +77,6 @@
 
 Trang bàn giao dùng **Tải lại thủ công**, chưa gửi thông báo đẩy. Khi 409, kiểm tra ca đã đóng/đổi chủ, yêu cầu đang chờ, người nhận bận hoặc phân công/quyền điều phối đã thay đổi. 503 nghĩa là chưa xác minh được authority/Directory/Queue; không cho đi tiếp bằng cách bỏ kiểm tra. Xem thêm [trang xử lý lỗi](09-ngoai-le-va-xu-ly-loi.md).
 
-Hoàn tất Appointment sau commit Consultation có retry idempotent nhưng chưa có durable outbox tự khôi phục mọi lỗi liên dịch vụ. Ca bàn giao này không đại diện nghiệm thu toàn bộ thực hiện xét nghiệm, thanh toán và phát thuốc.
+Hoàn tất Appointment sau commit Consultation có retry idempotent nhưng chưa có durable outbox tự khôi phục mọi lỗi liên dịch vụ. Ca DAL lịch sử này không đại diện bộ E2E CXK mới; CLS/phát thuốc của CXK đã kiểm tra, thanh toán thật vẫn chưa nghiệm thu.
+
+**R3:** bàn giao hỗ trợ cả ca không hẹn đang mở/chờ CLS, đối chiếu phòng từ phiếu gốc. Bác sĩ nhận vẫn phải cùng khoa/phòng và tự chấp nhận. Tác giả toa/chỉ định giữ nguyên; toa nháp của người giao chỉ đọc, bác sĩ nhận lập toa của mình. Không cần tạo Appointment để bàn giao. Xem [trang20](20-ho-so-va-hanh-trinh-lam-sang-r3.md).

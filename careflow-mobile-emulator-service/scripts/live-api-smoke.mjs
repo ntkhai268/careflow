@@ -1,3 +1,4 @@
+import {auditFetch as fetch} from './bound-http.mjs';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -19,7 +20,7 @@ async function call(name,path,{status=200,token,method='GET',body,headers={}}={}
   return path.startsWith('/__emulator/') ? payload : payload.data;
 }
 const config = await call('simulator-config','/__emulator/config');
-assert.equal(config.gateway,'http://127.0.0.1:18080','Chỉ cho phép Gateway audit 127.0.0.1:18080');
+assert.equal(config.gateway,'https://localhost:18080','Chỉ cho phép Gateway audit 127.0.0.1:18080');
 const health = await call('gateway-health','/__emulator/health');
 assert.ok(health.reachable && health.status===200,'Gateway audit phải hoạt động');
 const suffix = randomUUID().replaceAll('-','').slice(0,12);

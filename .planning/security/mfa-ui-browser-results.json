@@ -1,0 +1,233 @@
+{
+  "checkedAt": "2026-10-16T04:38:52.881Z",
+  "mock": false,
+  "accounts": {
+    "mobile": "mfa_mobile_75989dc0",
+    "web": "mfa_web_5ab4c40e"
+  },
+  "checks": [
+    {
+      "name": "mobile initial login contains only username and password",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile wrong password cannot open MFA",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile correct password opens distinct MFA step without granting protected access",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile pending password absent from URL and persistent browser storage",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile wrong OTP stays unauthenticated on second step",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile genuine TOTP completes proof-bound login",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile cancel returns to the credential step",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile real document reload clears pending credentials and restores device readiness",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile separate recovery mode completes real login",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile consumed recovery code is refused; unused code succeeds",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital Web initial login has no MFA field",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital Web wrong password cannot open MFA",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital Web password step opens MFA with no stored token or password",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital Web wrong OTP stays on MFA without a session",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital Web cancel clears the second step",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital Web reload requires credentials again",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital Web genuine TOTP establishes a live verified STAFF session",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital Web recovery mode completes proof-bound login",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital Web pending step expires at five minutes under browser clock advancement",
+      "status": "PASS"
+    },
+    {
+      "name": "both MFA interfaces have no uncaught JavaScript errors",
+      "status": "PASS"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 401
+    }
+  ],
+  "errors": []
+}

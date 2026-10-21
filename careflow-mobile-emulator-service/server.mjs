@@ -1,19 +1,20 @@
 import http from 'node:http';
 import https from 'node:https';
+import {rootCertificates} from 'node:tls';
 import {createHash} from 'node:crypto';
 import {readFile, stat} from 'node:fs/promises';
 import {resolve, extname, dirname, sep} from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
-export const DEFAULT_GATEWAY = 'http://127.0.0.1:18080';
+export const DEFAULT_GATEWAY = 'https://localhost:18080';
 const types = {'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.json':'application/json','.wasm':'application/wasm','.png':'image/png','.svg':'image/svg+xml','.ttf':'font/ttf','.otf':'font/otf','.ico':'image/x-icon','.woff2':'font/woff2'};
 export function normalizeGateway(value) {
   const url = new URL(value);
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash || !['', '/', '/api', '/api/'].includes(url.pathname)) throw new Error('Nhập địa chỉ gốc của Gateway, ví dụ http://127.0.0.1:18080.');
   return url.origin;
 }
-export function createEmulator({gateway = process.env.CAREFLOW_GATEWAY || DEFAULT_GATEWAY, staticRoot = root} = {}) {
+export function createEmulator({gateway = process.env.CAREFLOW_GATEWAY || DEFAULT_GATEWAY, staticRoot = root, httpsAgent} = {}) {
   let upstream = normalizeGateway(gateway);
   let nextId = 0;
   const activity = [], tunnels = new Set();
@@ -29,7 +30,7 @@ export function createEmulator({gateway = process.env.CAREFLOW_GATEWAY || DEFAUL
   }
   function headers(req, target) {
     const result = {...req.headers, host: target.host};
-    for (const key of ['x-user-id','x-user-role','x-internal-token','x-forwarded-for','x-forwarded-host','x-forwarded-proto','proxy-authorization','cookie','x-emulator-device']) delete result[key];
+    for (const key of ['x-user-id','x-user-role','x-internal-token','x-forwarded-for','x-forwarded-host','x-forwarded-proto','proxy-authorization','cookie','x-emulator-device','x-careflow-caller','x-careflow-caller-key','x-careflow-request-method','x-careflow-request-path','x-careflow-delegated-caller','x-careflow-delegated-key']) delete result[key];
     // Browser Origin is retained. Gateway and Notification must authorize this
     // actual local origin; this proxy never bypasses their origin checks.
     return result;
@@ -75,7 +76,7 @@ export function createEmulator({gateway = process.env.CAREFLOW_GATEWAY || DEFAUL
       if (path === '/__emulator/health' && req.method === 'GET') {
         const target = new URL('/actuator/health', upstream);
         const started = Date.now();
-        const check = (target.protocol === 'https:' ? https : http).get(target, {timeout:5000}, response => {
+        const check = (target.protocol === 'https:' ? https : http).get(target, {timeout:5000,...(target.protocol === 'https:' ? {agent:httpsAgent} : {})}, response => {
           response.resume();
           json(res, 200, {reachable: true, status: response.statusCode, ms: Date.now()-started});
         });
@@ -90,7 +91,7 @@ export function createEmulator({gateway = process.env.CAREFLOW_GATEWAY || DEFAUL
       const started = Date.now();
       const suppliedDevice = req.headers['x-emulator-device'];
       const device = typeof suppliedDevice === 'string' && /^[a-z0-9-]{1,64}$/.test(suppliedDevice) ? suppliedDevice : null;
-      const proxy = (target.protocol === 'https:' ? https : http).request({hostname:target.hostname, port:target.port, path:req.url, method:req.method, headers:headers(req,target), timeout:25000}, response => {
+      const proxy = (target.protocol === 'https:' ? https : http).request({hostname:target.hostname, port:target.port, path:req.url, method:req.method, headers:headers(req,target), timeout:25000,...(target.protocol === 'https:' ? {agent:httpsAgent} : {})}, response => {
         const responseHeaders = {...response.headers, 'cache-control':'no-store'};
         delete responseHeaders['set-cookie'];
         res.writeHead(response.statusCode, responseHeaders);
@@ -132,7 +133,7 @@ export function createEmulator({gateway = process.env.CAREFLOW_GATEWAY || DEFAUL
   server.on('upgrade', (req, socket, head) => {
     if (req.url !== '/ws/notifications' || !trustedBrowser(req)) return socket.destroy();
     const target = new URL(upstream);
-    const proxy = (target.protocol === 'https:' ? https : http).request({hostname:target.hostname,port:target.port,path:req.url,headers:headers(req,target),timeout:10000});
+    const proxy = (target.protocol === 'https:' ? https : http).request({hostname:target.hostname,port:target.port,path:req.url,headers:headers(req,target),timeout:10000,...(target.protocol === 'https:' ? {agent:httpsAgent} : {})});
     proxy.on('upgrade', (response, remote, upstreamHead) => {
       tunnels.add(socket);
       socket.write(`HTTP/1.1 ${response.statusCode} ${response.statusMessage}\r\n`);
@@ -159,7 +160,13 @@ export function createEmulator({gateway = process.env.CAREFLOW_GATEWAY || DEFAUL
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const port = Number(process.env.PORT || 3000);
-  const server = createEmulator();
-  server.listen(port,'127.0.0.1', () => console.log(`CareFlow Mobile: http://localhost:${port}\nGateway: ${process.env.CAREFLOW_GATEWAY || DEFAULT_GATEWAY}\nChỉ chạy cục bộ. Ctrl+C để dừng.`));
+  let launch = {};
+  try { launch = JSON.parse(await readFile(resolve(root,'.runtime/launch.json'),'utf8')); }
+  catch(error) { if(error.code !== 'ENOENT') throw error; }
+  const gateway = process.env.CAREFLOW_GATEWAY || launch.gateway || DEFAULT_GATEWAY;
+  const caFile = process.env.CAREFLOW_CA_FILE || launch.caFile;
+  const httpsAgent = caFile ? new https.Agent({ca:[...rootCertificates,await readFile(caFile)],keepAlive:true}) : undefined;
+  const server = createEmulator({gateway,httpsAgent});
+  server.listen(port,'127.0.0.1', () => console.log(`CareFlow Mobile: http://localhost:${port}\nGateway: ${gateway}\nChỉ chạy cục bộ. Ctrl+C để dừng.`));
   server.on('error', error => { console.error(error.code === 'EADDRINUSE' ? `Cổng ${port} đang được dùng. Chạy PORT=5173 npm start và cấu hình allowed origins của Gateway/Notification cho cổng này.` : error.message); process.exitCode=1; });
 }

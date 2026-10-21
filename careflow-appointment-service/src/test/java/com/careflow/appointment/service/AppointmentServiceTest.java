@@ -34,8 +34,19 @@ class AppointmentServiceTest {
     @Mock
     private AppointmentEventService appointmentEvents;
 
-    @InjectMocks
+    @Mock
+    private com.careflow.appointment.client.AppointmentConsultationClient consultations;
+
     private AppointmentService appointmentService;
+
+    @org.junit.jupiter.api.BeforeEach
+    void setUpPricing() {
+        var directory = AppointmentPricingFixture.priced(null);
+        org.mockito.Mockito.lenient().when(directory.hasStaffRoomAccess(org.mockito.ArgumentMatchers.any(),org.mockito.ArgumentMatchers.eq("ROOM-01")))
+                .thenReturn(com.careflow.common.dto.ApiResponse.success(true));
+        appointmentService = new AppointmentService(appointmentRepository,appointmentEvents,
+                directory,null,null,consultations);
+    }
 
     @Test
     void onlineBookingIsConfirmedImmediately() {
@@ -148,6 +159,8 @@ class AppointmentServiceTest {
     @Test
     void assignmentAccessAllowsOnlyTheAssignedDoctor() {
         UUID patientId = UUID.randomUUID();
+        when(consultations.patientAccess(patientId)).thenReturn(com.careflow.common.dto.ApiResponse.success(
+                new com.careflow.appointment.client.AppointmentConsultationClient.PatientResponsibility(false, java.util.List.of())));
         UUID appointmentId = UUID.randomUUID();
         UUID assignedDoctorUserId = UUID.randomUUID();
         Appointment appointment = Appointment.builder()

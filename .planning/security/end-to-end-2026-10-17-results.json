@@ -1,0 +1,78 @@
+{
+  "at": "2026-10-17T05:07:38.533Z",
+  "environment": "Local real PostgreSQL / Gateway mTLS; no intercepted API responses",
+  "visits": {
+    "no_cls": {
+      "appointmentId": "984f2ea3-500c-4968-8018-022b58065433",
+      "appointment": "COMPLETED",
+      "consultationId": "05d09b0d-77ba-453d-8e49-b5c4cb7e2bd8",
+      "consultation": "COMPLETED",
+      "prescriptionId": "b2684058-4d87-4222-a1f2-cbfd38d6198d",
+      "prescription": "DISPENSED",
+      "ticket": "COMPLETED",
+      "labs": [],
+      "doctorId": "78da2fc2-fcea-45ac-abab-68ddacd19315",
+      "authoredByDoctorId": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+    },
+    "cls": {
+      "appointmentId": "d415b1c9-0336-4d81-9b53-497540794946",
+      "appointment": "COMPLETED",
+      "consultationId": "7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "consultation": "COMPLETED",
+      "prescriptionId": "adaf37f7-9654-449d-b29c-43d3a9c605b5",
+      "prescription": "DISPENSED",
+      "ticket": "COMPLETED",
+      "labs": [
+        {
+          "id": "a1fe4147-eab1-4f8f-8354-633334eaae7c",
+          "status": "REVIEWED",
+          "orderedByDoctorId": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+        }
+      ],
+      "doctorId": "78da2fc2-fcea-45ac-abab-68ddacd19315",
+      "authoredByDoctorId": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+    },
+    "handover": {
+      "appointmentId": "c19a296b-58a6-4da5-a7a7-d5280a9a96fa",
+      "appointment": "COMPLETED",
+      "consultationId": "931caa7c-c5ec-4e45-ad82-51762674d622",
+      "consultation": "COMPLETED",
+      "prescriptionId": "96966cc3-1d82-475b-936c-7ad7ffc73a73",
+      "prescription": "DISPENSED",
+      "ticket": "COMPLETED",
+      "labs": [
+        {
+          "id": "4470563b-22fe-4ec0-ad66-3f3d370f7ff0",
+          "status": "REVIEWED",
+          "orderedByDoctorId": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+        }
+      ],
+      "doctorId": "210e2263-0a37-4c1a-9d1e-f6701ad6e1fc",
+      "authoredByDoctorId": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+    },
+    "finalize_regression": {
+      "appointmentId": "e8b34ca9-31f2-4c5c-906a-4924a0880337",
+      "appointment": "COMPLETED",
+      "consultationId": "f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+      "consultation": "COMPLETED",
+      "prescriptionId": "3ba91901-f338-4f09-8e9a-42b19d0cdeaf",
+      "prescription": "DISPENSED",
+      "ticket": "COMPLETED",
+      "labs": [],
+      "doctorId": "78da2fc2-fcea-45ac-abab-68ddacd19315",
+      "authoredByDoctorId": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+    }
+  },
+  "checks": [
+    "Transferred case keeps A authorship; B cannot sign A draft; A clinical access denied",
+    "Cancelled appointment and ticket both CANCELLED",
+    "Real future follow-up created by current responsible doctor; former doctor rejected403; patient can read source link",
+    "Two real owned family profiles; uploaded health record survives reload"
+  ],
+  "followup": {
+    "id": "03c184b8-f43d-46b5-96d7-9f623b021e54",
+    "date": "2026-10-19",
+    "sourceConsultationId": "931caa7c-c5ec-4e45-ad82-51762674d622",
+    "status": "CONFIRMED"
+  }
+}

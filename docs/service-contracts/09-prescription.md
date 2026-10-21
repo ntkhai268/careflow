@@ -1,5 +1,8 @@
 # Prescription Service Contract
 
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Các đoạn MVP/mock cũ phải đọc theo giới hạn và thay đổi tại R0; không loại Analytics/AI khỏi yêu cầu cuối.
+
+
 > Contract ID: `CF-SVC-09` | Version: `1.2` | Module: `careflow-prescription-service`
 
 ## 1. Trách nhiệm và ranh giới
@@ -149,3 +152,7 @@ projection consumer được cấp đúng payload version.
   sang `REFUNDED` độc lập.
 - Toa xuất hiện trong EMR.
 - Demo cancel/replacement không làm mất lịch sử toa cũ.
+
+## Accepted clinical handover — 2026-10-16
+
+DOCTOR reads verify current Consultation responsibility and matching patient; this permits the accepted receiver to view earlier prescriptions while preserving their author/signature. Former doctors cannot use the original prescription doctorId alone to retain clinical access. Draft update/confirm/amend remain author-restricted plus current Consultation authority; the receiver creates their own draft, never signs an inherited draft as its original author. Doctor cancellation also requires current responsibility. Patient and assigned pharmacy access retain their existing policies.

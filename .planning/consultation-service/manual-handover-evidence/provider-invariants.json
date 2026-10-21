@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "checkedAt": "2026-10-16T08:54:09.199Z",
+  "sameTicket": true,
+  "sameTicketCode": true,
+  "sameAppointment": true,
+  "samePatient": true,
+  "originalPrescriptionAuthor": "A",
+  "newPrescriptionAuthor": "C",
+  "labAuthor": "A"
+}

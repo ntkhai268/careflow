@@ -139,6 +139,10 @@ public class PatientService {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
 
+        if (patient.getUserId() == null && "STAFF".equalsIgnoreCase(role)) {
+            throw new BusinessException(403, "Hồ sơ không tài khoản chỉ được sửa qua quy trình tiếp nhận có kiểm tra phân công");
+        }
+
         ACCESS_POLICY.requireUpdate(requesterId, role, patient);
 
         // Cho phép CCCD tồn tại trên tài khoản khác; chỉ chặn trùng trong cùng tài khoản.

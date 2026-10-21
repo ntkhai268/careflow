@@ -1,0 +1,15 @@
+{
+  "head": "5a8c6e5",
+  "uncommitted": true,
+  "webBuildId": "IQQfj5rf7yiQPEP5UEcdO",
+  "flutterMainSha256": "5e549a2988d1943f339fa434cfe47e5267f1352c6a13a2eb8817bc62091360b0",
+  "flutterTests": {
+    "passed": 186,
+    "skipped": 1
+  },
+  "references": [
+    "https://developers.google.com/identity/passkeys/ux/user-interface-design",
+    "https://fidoalliance.org/design-guidelines/"
+  ],
+  "webLoginLayout": "Original hospital frame shared across login, methods, recovery and security; banner remains fixed on desktop scroll"
+}

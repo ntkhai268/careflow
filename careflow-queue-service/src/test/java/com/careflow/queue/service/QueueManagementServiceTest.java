@@ -40,6 +40,7 @@ class QueueManagementServiceTest {
     @Mock QrTokenService qrTokens;
     @Mock HospitalCheckInConfigService hospitalCheckInConfigService;
 
+    @Mock private com.careflow.queue.client.DirectoryClient directory;
     private QueueManagementService service;
     private QueueConfig config;
     private UUID departmentId;
@@ -49,7 +50,8 @@ class QueueManagementServiceTest {
     @BeforeEach
     void setUp() {
         service = new QueueManagementService(configs, sequences, servicePointSequences, entries, idempotencyRecords,
-                events, qrTokens, "Asia/Ho_Chi_Minh");
+                events, qrTokens, "Asia/Ho_Chi_Minh", directory);
+        org.mockito.Mockito.lenient().when(directory.hasStaffRoomAccess(any(), anyString())).thenReturn(com.careflow.common.dto.ApiResponse.success(true));
         today = service.businessDate();
         departmentId = UUID.randomUUID();
         doctorUserId = UUID.randomUUID();
@@ -75,7 +77,7 @@ class QueueManagementServiceTest {
         QueueEntry next = entry(PriorityLevel.APPOINTMENT, QueueStatus.CHECKED_IN, 2);
         when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
         when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
-                "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.empty());
+                "CALL_NEXT", config.getId(), "request-1")).thenReturn(Optional.empty());
         when(entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                 eq(config.getId()), eq(today), anyCollection())).thenReturn(List.of(inProgress, next));
 
@@ -233,7 +235,7 @@ class QueueManagementServiceTest {
         QueueEntry priority = entry(PriorityLevel.PRIORITY, QueueStatus.CHECKED_IN, 1);
         when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
         when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
-                "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.empty());
+                "CALL_NEXT", config.getId(), "request-1")).thenReturn(Optional.empty());
         when(entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                 eq(config.getId()), eq(today), anyCollection())).thenReturn(List.of(priority));
 
@@ -255,7 +257,7 @@ class QueueManagementServiceTest {
         QueueEntry priority = entry(PriorityLevel.PRIORITY, QueueStatus.CHECKED_IN, 2);
         when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
         when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
-                "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.empty());
+                "CALL_NEXT", config.getId(), "request-1")).thenReturn(Optional.empty());
         when(entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                 eq(config.getId()), eq(today), anyCollection())).thenReturn(List.of(priority, appointment));
 
@@ -273,7 +275,7 @@ class QueueManagementServiceTest {
         record.setRequestFingerprint(fingerprint(departmentId, doctorUserId));
         when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
         when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
-                "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.of(record));
+                "CALL_NEXT", config.getId(), "request-1")).thenReturn(Optional.of(record));
         when(entries.findById(called.getId())).thenReturn(Optional.of(called));
 
         assertThat(service.callNext(departmentId, doctorUserId, "request-1", "trace-1"))
@@ -288,7 +290,7 @@ class QueueManagementServiceTest {
         record.setRequestFingerprint(fingerprint(UUID.randomUUID()));
         when(configs.findFirstByDepartmentIdAndActiveTrue(departmentId)).thenReturn(Optional.of(config));
         when(idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(
-                "CALL_NEXT", departmentId, "request-1")).thenReturn(Optional.of(record));
+                "CALL_NEXT", config.getId(), "request-1")).thenReturn(Optional.of(record));
 
         assertThatThrownBy(() -> service.callNext(
                 departmentId, doctorUserId, "request-1", "trace-1"))

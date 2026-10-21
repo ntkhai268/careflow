@@ -2,7 +2,7 @@
   "source": "frontend/patient-mobile",
   "branch": "develop",
   "commit": "8bf77e2ffb6ab85fe53cb43b959188191e965084",
-  "unchangedDartFiles": 63,
+  "unchangedDartFiles": 61,
   "adaptedOrAddedDartFiles": [
     "app/lib/config/api_config.dart",
     "app/lib/config/device_config.dart",
@@ -15,8 +15,11 @@
     "app/lib/platform/browser_bridge.dart",
     "app/lib/platform/browser_bridge_stub.dart",
     "app/lib/platform/browser_bridge_web.dart",
+    "app/lib/providers/auth_provider.dart",
     "app/lib/screens/appointment/booking_step4_screen.dart",
     "app/lib/screens/auth/ekyc_screen.dart",
+    "app/lib/screens/auth/login_screen.dart",
+    "app/lib/screens/auth/mfa_screen.dart",
     "app/lib/screens/health_record/health_record_form_screen.dart",
     "app/lib/screens/home/home_screen.dart",
     "app/lib/screens/main_shell.dart",
@@ -26,6 +29,7 @@
     "app/lib/services/health_record_service.dart",
     "app/lib/services/push_notification_service.dart"
   ],
-  "note": "Standalone copy; source repository and branches are never written by build/run scripts.",
-  "sourcePathBase": "CareFlow repository root"
+  "note": "Standalone Flutter snapshot with browser, MFA and DPoP adapters; build/run scripts do not modify frontend/patient-mobile. Security changes are uncommitted on the integration branch.",
+  "sourcePathBase": "CareFlow repository root",
+  "securityIntegrationBranch": "feature/dangkhoii/security-integration"
 }

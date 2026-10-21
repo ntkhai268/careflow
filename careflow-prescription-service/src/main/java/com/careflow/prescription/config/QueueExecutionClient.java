@@ -72,9 +72,11 @@ public class QueueExecutionClient {
     }
 
     private HttpHeaders headers(UUID actorUserId, String actorRole) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-User-Id", actorUserId.toString());
-        headers.set("X-User-Role", actorRole);
+        HttpHeaders headers = PrescriptionRequestHeaders.current();
+        if (actorUserId == null || !actorUserId.toString().equals(headers.getFirst("X-User-Id"))
+                || actorRole == null || !actorRole.equals(headers.getFirst("X-User-Role"))) {
+            throw new BusinessException(403, "Queue actor must match the authenticated user");
+        }
         return headers;
     }
 

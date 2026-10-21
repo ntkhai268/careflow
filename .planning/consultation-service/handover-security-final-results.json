@@ -1,0 +1,30 @@
+{
+  "checkedAt": "2026-10-16T06:19:00.473Z",
+  "mock": false,
+  "checks": [
+    {
+      "name": "Patient spoofed doctor headers rejected http://localhost:3000",
+      "status": "PASS"
+    },
+    {
+      "name": "Patient spoofed doctor headers rejected https://localhost:18080",
+      "status": "PASS"
+    },
+    {
+      "name": "Patient spoofed doctor headers rejected https://localhost:18086",
+      "status": "PASS"
+    },
+    {
+      "name": "Unauthenticated workspace rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Server-only clinical snapshot excluded from workspace JSON",
+      "status": "PASS"
+    },
+    {
+      "name": "Original patient still sees unchanged NOI-010 IN_PROGRESS",
+      "status": "PASS"
+    }
+  ]
+}

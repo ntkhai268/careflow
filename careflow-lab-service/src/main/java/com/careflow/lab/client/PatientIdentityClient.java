@@ -12,9 +12,9 @@ import java.util.UUID;
 @FeignClient(name = "patient-service")
 public interface PatientIdentityClient {
 
-    @GetMapping("/api/patients/user/{userId}")
-    ApiResponse<Map<String, Object>> getByUserId(
-            @PathVariable("userId") UUID userId,
+    @GetMapping("/api/patients/{patientId}")
+    ApiResponse<Map<String, Object>> getById(
+            @PathVariable("patientId") UUID patientId,
             @RequestHeader("X-User-Id") UUID requesterId,
             @RequestHeader("X-User-Role") String role);
 }

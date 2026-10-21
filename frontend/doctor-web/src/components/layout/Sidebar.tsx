@@ -11,9 +11,13 @@ const getNavItems = (role?: string) => {
   if (normalizedRole.includes("ADMIN")) {
     return [
       { label: "Tổng quan Quản trị", href: "/admin" },
+      { label: "Thống kê lượt khám", href: "/admin/analytics" },
       { label: "Quản lý Tài khoản", href: "/admin/accounts" },
+      { label: "Bảo mật nhân viên", href: "/admin/security" },
+      { label: "Đối chiếu danh tính", href: "/admin/identity" },
       { label: "Cấu hình Cơ sở Y tế", href: "/admin/facility" },
       { label: "Cấu hình khung giờ", href: "/admin/schedule" },
+      { label: "Quyền điều phối bàn giao", href: "/admin/handovers" },
     ];
   }
 
@@ -28,6 +32,7 @@ const getNavItems = (role?: string) => {
     return [
       { label: "Tổng quan", href: "/dashboard/general" },
       { label: "QR Check-in bệnh viện", href: "/staff/checkin" },
+      { label: "Đối chiếu danh tính", href: "/staff/identity" },
       { label: "Hàng đợi phát thuốc", href: "/staff/pharmacy" },
     ];
   }
@@ -36,6 +41,7 @@ const getNavItems = (role?: string) => {
   return [
     { label: "Tổng quan", href: "/dashboard/general" },
     { label: "Hàng đợi khám", href: "/dashboard/queue" },
+    { label: "Bàn giao ca khám", href: "/dashboard/handovers" },
     { label: "Đơn thuốc", href: "/dashboard/prescriptions" },
   ];
 };
@@ -236,8 +242,8 @@ export default function Sidebar({ isCollapsed, onToggleCollapse }: SidebarProps)
 
             {!isCollapsed && (
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold text-white">{user?.fullName || "BS. Nguyễn Văn An"}</p>
-                <p className="truncate text-[10px]" style={{ color: "#475569" }}>{user?.department || "Khoa Nội tổng quát"}</p>
+                <p className="truncate text-xs font-semibold text-white">{user?.fullName || user?.username || user?.email || "Tài khoản"}</p>
+                <p className="truncate text-[10px]" style={{ color: "#475569" }}>{user?.department || user?.role || ""}</p>
               </div>
             )}
 

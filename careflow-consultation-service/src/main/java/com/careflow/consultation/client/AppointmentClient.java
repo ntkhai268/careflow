@@ -16,6 +16,10 @@ import java.util.UUID;
 @FeignClient(name = "appointment-service", path = "/api/appointments")
 public interface AppointmentClient {
 
+    record ClinicalCompletion(UUID appointmentId,UUID consultationId){}
+    @org.springframework.web.bind.annotation.PostMapping("/clinical-completion")
+    ApiResponse<AppointmentResponse> completeClinical(@RequestBody ClinicalCompletion request);
+
     @GetMapping("/{id}")
     ApiResponse<AppointmentResponse> getAppointmentById(
             @PathVariable("id") UUID id,

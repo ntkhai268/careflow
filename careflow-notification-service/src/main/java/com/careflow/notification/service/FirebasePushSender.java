@@ -20,19 +20,19 @@ public class FirebasePushSender implements PushSender {
     }
 
     @Override
-    public void send(String registrationToken, Notification notification) {
+    public void send(String registrationToken, Notification notification, java.util.UUID bindingId) {
         Message.Builder builder = Message.builder()
                 .setToken(registrationToken)
                 .setNotification(com.google.firebase.messaging.Notification.builder()
-                        .setTitle(notification.getTitle())
-                        .setBody(notification.getBody())
+                        .setTitle("CareFlow")
+                        .setBody("Bạn có thông báo mới. Mở CareFlow để xem chi tiết.")
                         .build())
                 .putData("notificationId", notification.getId().toString())
-                .putData("type", notification.getType().name())
-                .putData("actionType", value(notification.getActionType()))
-                .putData("resourceId", value(notification.getResourceId()))
+                .putData("bindingId", bindingId.toString())
+                .setApnsConfig(com.google.firebase.messaging.ApnsConfig.builder().setAps(com.google.firebase.messaging.Aps.builder().setSound("default").build()).putHeader("apns-expiration",String.valueOf(java.time.Instant.now().plusSeconds(300).getEpochSecond())).build())
                 .setAndroidConfig(AndroidConfig.builder()
                         .setPriority(AndroidConfig.Priority.HIGH)
+                        .setTtl(300_000L)
                         .setNotification(AndroidNotification.builder()
                                 .setChannelId("careflow_notifications")
                                 .setClickAction("FLUTTER_NOTIFICATION_CLICK")
@@ -42,14 +42,9 @@ public class FirebasePushSender implements PushSender {
             messaging.send(builder.build());
         } catch (FirebaseMessagingException exception) {
             MessagingErrorCode code = exception.getMessagingErrorCode();
-            boolean permanent = code == MessagingErrorCode.UNREGISTERED
-                    || code == MessagingErrorCode.INVALID_ARGUMENT
-                    || code == MessagingErrorCode.SENDER_ID_MISMATCH;
-            throw new PushSendException("FCM rejected push: " + exception.getMessage(), permanent, exception);
+            boolean permanent = code == MessagingErrorCode.UNREGISTERED;
+            throw new PushSendException("FCM_" + (code==null?"UNKNOWN":code.name()), permanent, exception);
         }
     }
 
-    private String value(String value) {
-        return value == null ? "" : value;
-    }
 }

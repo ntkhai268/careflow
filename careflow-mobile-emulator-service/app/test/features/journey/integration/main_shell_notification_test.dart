@@ -31,6 +31,7 @@ void main() {
         ProviderScope(
           overrides: [
             authProvider.overrideWith((ref) => auth),
+            patientServiceProvider.overrideWithValue(ShellProfiles()),
             patientProvider.overrideWith(
               (ref) => SwitchablePatientNotifier(patientA, ref),
             ),
@@ -80,6 +81,7 @@ void main() {
         ProviderScope(
           overrides: [
             authProvider.overrideWith((ref) => auth),
+            patientServiceProvider.overrideWithValue(ShellProfiles()),
             patientProvider.overrideWith(
               (ref) => patient = RestoringPatientNotifier(patientA, ref),
             ),
@@ -275,4 +277,10 @@ class InProgressJourneyRepository implements JourneyRepository {
 
   @override
   Future<void> reset(PatientJourney journey) => throw UnimplementedError();
+}
+
+class ShellProfiles extends PatientService {
+  ShellProfiles() : super(ApiService());
+  @override
+  Future<List<Patient>> getPatientsByUserId(String userId) async => [patientA];
 }

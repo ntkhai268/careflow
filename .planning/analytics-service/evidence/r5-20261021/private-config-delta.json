@@ -1,0 +1,14 @@
+{
+  "pathsOnly": [
+    "careflow-identity-service/environment/SPRING_APPLICATION_JSON/security/callers-json/analytics-service ADDED",
+    "careflow-identity-service/environment/SPRING_APPLICATION_JSON/security/callers-json/api-gateway/scopes CHANGED",
+    "careflow-api-gateway/environment/SPRING_APPLICATION_JSON/spring/cloud/discovery/client/simple/instances/analytics-service ADDED",
+    "careflow-api-gateway/environment/SPRING_APPLICATION_JSON/spring/cloud/gateway/server/webflux/routes CHANGED",
+    "careflow-consultation-service/environment/SPRING_APPLICATION_JSON/security/analytics ADDED",
+    "careflow-appointment-service/environment/SPRING_APPLICATION_JSON/security/analytics ADDED",
+    "careflow-identity-session-secondary/environment/SPRING_APPLICATION_JSON/security/callers-json/analytics-service ADDED",
+    "careflow-identity-session-secondary/environment/SPRING_APPLICATION_JSON/security/callers-json/api-gateway/scopes CHANGED",
+    "careflow-queue-service/environment/SPRING_APPLICATION_JSON/security/analytics ADDED"
+  ],
+  "newAnalyticsService": true
+}

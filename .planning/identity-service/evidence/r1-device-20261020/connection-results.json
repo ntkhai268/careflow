@@ -1,0 +1,44 @@
+{
+  "checkedAt": "2026-10-20T04:22:11.211271+00:00",
+  "device": {
+    "model": "iPhone 11 Pro Max",
+    "physical": true,
+    "connected": true,
+    "bundleIdentifier": "com.careflow.careflowPatient",
+    "version": "1.0.0",
+    "build": "16"
+  },
+  "network": {
+    "bridgeHealth": 200,
+    "departmentsViaBridge": 200,
+    "roomsViaBridge": 200,
+    "gateway": 200,
+    "identityPrimary": 200,
+    "identitySecondary": 200,
+    "directory": 200,
+    "caVerification": true
+  },
+  "acceptance": {
+    "faceId": "PENDING_USER_ACTION",
+    "cameraOcr": "PENDING_USER_ACTION",
+    "emailRegistrationAndResetUi": "PENDING_USER_ACTION",
+    "physicalAdminPasskey": "PENDING_USER_ACTION"
+  },
+  "adminBootstrap": {
+    "initialActiveAdminPasskeys": 0,
+    "contactConfiguredForUserMailbox": true,
+    "roleStatusPasswordUnchanged": true,
+    "email": {
+      "state": "SENT",
+      "delivery_status": "ACCEPTED",
+      "attempts": 0,
+      "expires_at": "2026-10-20T04:34:21.219334+00:00"
+    },
+    "activationCode": "PRIVATE_FILE_AND_LOCAL_FORM_ONLY",
+    "systemPrompt": "Waiting for operator; no virtual authenticator"
+  },
+  "nativeCodeChanged": false,
+  "reinstalledApp": false,
+  "resendKeyChanged": false,
+  "realIdentityImagesReceived": false
+}

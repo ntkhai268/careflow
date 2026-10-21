@@ -9,6 +9,12 @@ public class AppointmentMapper {
 
     public static AppointmentResponse toResponse(Appointment appointment) {
         return AppointmentResponse.builder()
+                .serviceCode(appointment.getServiceCode())
+                .serviceName(appointment.getServiceName())
+                .priceVersion(appointment.getPriceVersion())
+                .quotedAmount(appointment.getQuotedAmount())
+                .quotedCurrency(appointment.getQuotedCurrency())
+                .priceEffectiveAt(appointment.getPriceEffectiveAt())
                 .id(appointment.getId())
                 .patientId(appointment.getPatientId())
                 .ownerUserId(appointment.getOwnerUserId())

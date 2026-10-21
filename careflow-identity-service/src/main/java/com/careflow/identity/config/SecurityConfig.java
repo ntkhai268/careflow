@@ -35,8 +35,15 @@ public class SecurityConfig {
                         .accessDeniedHandler((request, response, exception) ->
                                 writeError(response, objectMapper, 403, "Không đủ quyền thực hiện thao tác")))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.POST,"/internal/notifications/session-status").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/auth/jwks").permitAll()
                         .requestMatchers(HttpMethod.POST,
-                                "/api/auth/register", "/api/auth/login",
+                                "/api/auth/register", "/api/auth/registration/email/request", "/api/auth/registration/email/verify",
+            "/api/auth/staff-passkeys/enroll/options", "/api/auth/staff-passkeys/enroll/finish", "/api/auth/mail/events", "/api/auth/login",
+            "/api/auth/recovery/email/request","/api/auth/recovery/email/verify", "/api/auth/recovery/email/confirm",
+                                "/api/auth/login/biometric", "/api/auth/login/question", "/api/auth/recovery/question",
+                                "/api/auth/passkeys/login/options", "/api/auth/passkeys/login/finish",
+                                "/api/auth/recovery/passkey/options", "/api/auth/recovery/passkey/finish",
                                 "/api/auth/refresh", "/api/auth/logout").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**",
                                 "/actuator/health/**", "/actuator/info").permitAll()

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import Link from "next/link";
 import {
   directoryApi,
   DepartmentItem,
@@ -38,6 +39,7 @@ export default function AdminFacilityPage() {
   const [docRoomId, setDocRoomId] = useState("");
   const [docSpec, setDocSpec] = useState("");
   const [docLicense, setDocLicense] = useState("");
+  const [docPrimary, setDocPrimary] = useState(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -172,6 +174,7 @@ export default function AdminFacilityPage() {
   // Doctor Profile Handler
   const openCreateDoctor = () => {
     setEditingDoctor(null);
+    setDocPrimary(false);
     setDocUserId("");
     setDocFullName("");
     setDocTitle("BS. CKI");
@@ -185,6 +188,7 @@ export default function AdminFacilityPage() {
 
   const openEditDoctor = (doc: DoctorProfileItem) => {
     setEditingDoctor(doc);
+    setDocPrimary(doc.primaryForBooking === true);
     setDocUserId(doc.userId);
     setDocFullName(doc.fullName);
     setDocTitle(doc.title || "BS");
@@ -210,6 +214,7 @@ export default function AdminFacilityPage() {
           assignedRoomId: docRoomId.trim(),
           specialization: docSpec.trim(),
           licenseNumber: docLicense.trim(),
+          primaryForBooking: docPrimary,
         });
       } else {
         await directoryApi.createDoctorProfile({
@@ -220,6 +225,7 @@ export default function AdminFacilityPage() {
           assignedRoomId: docRoomId.trim(),
           specialization: docSpec.trim(),
           licenseNumber: docLicense.trim(),
+          primaryForBooking: docPrimary,
         });
       }
       setShowDoctorModal(false);
@@ -250,6 +256,7 @@ export default function AdminFacilityPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link href="/admin/services" className="rounded-xl bg-purple-100 px-3.5 py-2 text-xs font-bold text-purple-800 hover:bg-purple-200">Dịch vụ & bảng giá</Link>
           <button
             onClick={openCreateDept}
             disabled={isLoading}
@@ -681,6 +688,7 @@ export default function AdminFacilityPage() {
                 />
               </div>
 
+              <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={docPrimary} onChange={e => setDocPrimary(e.target.checked)} />Bác sĩ nhận lịch mặc định của phòng. Khi có nhiều bác sĩ cùng phòng, chỉ chọn một người; bỏ chọn người cũ trước khi đổi.</label>
               <div className="flex items-center justify-end gap-2 pt-3">
                 <button
                   type="button"

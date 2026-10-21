@@ -10,6 +10,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClientException;
 
 import java.time.Duration;
 import java.util.UUID;
@@ -28,30 +30,38 @@ public class PatientIdentityClient {
                 .build();
     }
 
-    public UUID patientIdForUser(UUID userId, String role) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("X-User-Id", userId.toString());
-        headers.set("X-User-Role", role);
+    public void requirePatientAccess(UUID patientId, UUID userId, String role) {
+        if (userId == null || !("PATIENT".equalsIgnoreCase(role) || "DOCTOR".equalsIgnoreCase(role))) {
+            throw new BusinessException(403, "Patient owner or assigned doctor access is required");
+        }
+        HttpHeaders headers = PrescriptionRequestHeaders.current();
         try {
             ApiResponse<PatientResponse> response = restTemplate.exchange(
-                    patientServiceUrl + "/api/patients/user/" + userId,
-                    HttpMethod.GET,
-                    new HttpEntity<>(headers),
-                    new org.springframework.core.ParameterizedTypeReference<ApiResponse<PatientResponse>>() { })
+                    patientServiceUrl + "/api/patients/" + patientId,
+                    HttpMethod.GET, new HttpEntity<>(headers),
+                    new org.springframework.core.ParameterizedTypeReference<ApiResponse<PatientResponse>>() {})
                     .getBody();
-            if (response == null || response.getData() == null || response.getData().getId() == null) {
-                throw new BusinessException(403, "Không xác định được hồ sơ bệnh nhân hiện tại");
+            PatientResponse patient = response == null ? null : response.getData();
+            if (patient == null || !patientId.equals(patient.getId()) || patient.getUserId() == null) {
+                throw new BusinessException(503, "Patient service returned incomplete identity");
             }
-            return response.getData().getId();
-        } catch (BusinessException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            throw new BusinessException(503, "Không thể xác minh hồ sơ bệnh nhân");
+            if ("PATIENT".equalsIgnoreCase(role) && !userId.equals(patient.getUserId())) {
+                throw new BusinessException(403, "Cannot read another patient's prescriptions");
+            }
+        } catch (HttpStatusCodeException exception) {
+            int status = exception.getStatusCode().value();
+            if (status == 401 || status == 403 || status == 404) {
+                throw new BusinessException(status, "Patient access could not be verified");
+            }
+            throw new BusinessException(503, "Patient service is unavailable");
+        } catch (RestClientException exception) {
+            throw new BusinessException(503, "Patient service is unavailable");
         }
     }
 
     @Data
     public static class PatientResponse {
         private UUID id;
+        private UUID userId;
     }
 }

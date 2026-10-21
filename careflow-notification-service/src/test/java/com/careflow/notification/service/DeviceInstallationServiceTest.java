@@ -34,7 +34,7 @@ class DeviceInstallationServiceTest {
         when(repository.findByUserIdAndDeviceId(userId, "phone-1")).thenReturn(Optional.empty());
         when(repository.findByRegistrationToken("token-1")).thenReturn(Optional.empty());
 
-        DeviceInstallationResponse response = service.register(userId,
+        DeviceInstallationResponse response = service.register(userId, UUID.randomUUID(),
                 new RegisterDeviceRequest("phone-1", "token-1", DevicePlatform.ANDROID, "1.0.0+1"));
 
         assertThat(response.deviceId()).isEqualTo("phone-1");
@@ -52,7 +52,7 @@ class DeviceInstallationServiceTest {
         when(repository.findByUserIdAndDeviceId(userId, "phone-1")).thenReturn(Optional.empty());
         when(repository.findByRegistrationToken("token-1")).thenReturn(Optional.of(oldOwner));
 
-        service.register(userId,
+        service.register(userId, UUID.randomUUID(),
                 new RegisterDeviceRequest("phone-1", "token-1", DevicePlatform.ANDROID, null));
 
         assertThat(oldOwner.isEnabled()).isFalse();

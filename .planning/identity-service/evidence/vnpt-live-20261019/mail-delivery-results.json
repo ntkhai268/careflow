@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-10-19T15:20:51.128889+00:00",
+  "messages": [
+    {
+      "purpose": "SIGNUP",
+      "httpStatus": 200,
+      "lastEvent": "delivered",
+      "senderMatches": true,
+      "inlineImageTags": false,
+      "attachmentCount": 0
+    },
+    {
+      "purpose": "CODE",
+      "httpStatus": 200,
+      "lastEvent": "delivered",
+      "senderMatches": true,
+      "inlineImageTags": false,
+      "attachmentCount": 0
+    },
+    {
+      "purpose": "CHANGED",
+      "httpStatus": 200,
+      "lastEvent": "delivered",
+      "senderMatches": true,
+      "inlineImageTags": false,
+      "attachmentCount": 0
+    }
+  ]
+}

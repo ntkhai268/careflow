@@ -48,7 +48,7 @@ public class AppointmentController {
         if (idempotencyKey == null || idempotencyKey.isBlank()) {
             throw new BusinessException(400, "Idempotency-Key is required for appointment creation");
         }
-        AppointmentResponse response = appointmentService.createAppointment(request, userId, correlationId, idempotencyKey);
+        AppointmentResponse response = appointmentService.bookAppointment(request, userId, role, correlationId, idempotencyKey);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Đặt lịch khám thành công", response));
     }
@@ -175,8 +175,9 @@ public class AppointmentController {
     @Operation(summary = "Tình trạng số chỗ theo ca khám")
     public ResponseEntity<ApiResponse<List<TimeSlotAvailabilityResponse>>> getTimeSlotAvailability(
             @RequestParam String department,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
+            @RequestParam(required=false) UUID doctorId) {
         return ResponseEntity.ok(ApiResponse.success(
-                appointmentService.getTimeSlotAvailability(department, date)));
+                appointmentService.getTimeSlotAvailability(department, date, doctorId)));
     }
 }

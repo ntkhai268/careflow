@@ -1,3 +1,4 @@
+' Historical MVP diagram. Canonical current/target architecture: .planning/architecture/02-service-architecture.md (R0-1.0).
 @startuml
 title DGM-ARC-01 — Kiến trúc logic tổng thể của CareFlow
 

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/health_record_service.dart';
+import '../../services/patient_service.dart';
 import '../../utils/api_error_message.dart';
 import '../../providers/health_record_provider.dart';
 import '../../config/theme.dart';
@@ -52,6 +53,23 @@ class _HealthRecordFormScreenState
   DateTime? _selectedDate;
   final List<BrowserFile> _selectedFiles = [];
   bool _isLoading = false;
+  String? _patientName;
+  String? _patientError;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPatient();
+  }
+
+  Future<void> _loadPatient() async {
+    try {
+      final patient = await ref.read(patientServiceProvider).getPatientById(widget.patientId);
+      if (mounted) setState(() { _patientName = patient.fullName; _patientError = null; });
+    } catch (error) {
+      if (mounted) setState(() => _patientError = ApiErrorMessage.from(error));
+    }
+  }
 
   void _calculateBmi() {
     setState(() {});
@@ -196,12 +214,17 @@ class _HealthRecordFormScreenState
               initiallyExpanded: true,
               childrenPadding: const EdgeInsets.all(16),
               children: [
+                if (_patientError != null) ...[
+                  Text(_patientError!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                  TextButton(onPressed: _loadPatient, child: const Text('Tải lại hồ sơ')),
+                ],
                 TextFormField(
                   decoration: const InputDecoration(
                     labelText: 'Hồ sơ',
                     border: OutlineInputBorder(),
                   ),
-                  initialValue: 'Tên bệnh nhân',
+                  key: ValueKey(_patientName),
+                  initialValue: _patientName ?? 'Đang tải hồ sơ...',
                   readOnly: true,
                 ),
                 const SizedBox(height: 16),
@@ -505,7 +528,7 @@ class _HealthRecordFormScreenState
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _submit,
+                    onPressed: _isLoading || _patientName == null ? null : _submit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                       padding: const EdgeInsets.symmetric(vertical: 16),

@@ -24,6 +24,7 @@ class PushDeliveryServiceTest {
     private PushDeliveryRepository deliveries;
     private NotificationRepository notifications;
     private PushSender sender;
+    private UUID notificationOwner;
     private PushDeliveryService service;
 
     @BeforeEach
@@ -36,6 +37,11 @@ class PushDeliveryServiceTest {
         notifications = mock(NotificationRepository.class);
         sender = mock(PushSender.class);
         service = new PushDeliveryService(properties, installations, deliveries, notifications, sender);
+        var sessions=mock(PushSessionClient.class);when(sessions.active(any(),any())).thenReturn(true);
+        var owners=mock(com.careflow.common.security.PatientOwnershipClient.class);
+        when(owners.owner(any())).thenAnswer(i->notificationOwner);
+        org.springframework.test.util.ReflectionTestUtils.setField(service,"sessions",sessions);
+        org.springframework.test.util.ReflectionTestUtils.setField(service,"owners",owners);
         when(deliveries.save(any(PushDelivery.class))).thenAnswer(call -> call.getArgument(0));
     }
 
@@ -60,14 +66,14 @@ class PushDeliveryServiceTest {
         Notification notification = notification();
         DeviceInstallation device = device(notification.getRecipientUserId());
         PushDelivery delivery = delivery(notification, device);
-        when(deliveries.findByStatusInAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(any(), any(), any()))
+        when(deliveries.findDueForUpdate())
                 .thenReturn(List.of(delivery));
         when(notifications.findById(notification.getId())).thenReturn(Optional.of(notification));
-        when(installations.findById(device.getId())).thenReturn(Optional.of(device));
+        when(installations.findLockedById(device.getId())).thenReturn(Optional.of(device));
 
         service.dispatchDue();
 
-        verify(sender).send("fcm-token", notification);
+        verify(sender).send("fcm-token", notification, device.getBindingId());
         assertThat(delivery.getStatus()).isEqualTo(PushDeliveryStatus.SENT);
         assertThat(delivery.getSentAt()).isNotNull();
     }
@@ -77,12 +83,12 @@ class PushDeliveryServiceTest {
         Notification notification = notification();
         DeviceInstallation device = device(notification.getRecipientUserId());
         PushDelivery delivery = delivery(notification, device);
-        when(deliveries.findByStatusInAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(any(), any(), any()))
+        when(deliveries.findDueForUpdate())
                 .thenReturn(List.of(delivery));
         when(notifications.findById(notification.getId())).thenReturn(Optional.of(notification));
-        when(installations.findById(device.getId())).thenReturn(Optional.of(device));
+        when(installations.findLockedById(device.getId())).thenReturn(Optional.of(device));
         doThrow(new PushSendException("token is not registered", true, null))
-                .when(sender).send(anyString(), any());
+                .when(sender).send(anyString(), any(), any());
 
         service.dispatchDue();
 
@@ -97,12 +103,12 @@ class PushDeliveryServiceTest {
         DeviceInstallation device = device(notification.getRecipientUserId());
         PushDelivery delivery = delivery(notification, device);
         Instant before = Instant.now();
-        when(deliveries.findByStatusInAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(any(), any(), any()))
+        when(deliveries.findDueForUpdate())
                 .thenReturn(List.of(delivery));
         when(notifications.findById(notification.getId())).thenReturn(Optional.of(notification));
-        when(installations.findById(device.getId())).thenReturn(Optional.of(device));
+        when(installations.findLockedById(device.getId())).thenReturn(Optional.of(device));
         doThrow(new PushSendException("FCM unavailable", false, null))
-                .when(sender).send(anyString(), any());
+                .when(sender).send(anyString(), any(), any());
 
         service.dispatchDue();
 
@@ -115,7 +121,7 @@ class PushDeliveryServiceTest {
     private Notification notification() {
         Notification result = new Notification();
         result.setId(UUID.randomUUID());
-        result.setRecipientUserId(UUID.randomUUID());
+        notificationOwner=UUID.randomUUID();result.setRecipientUserId(notificationOwner);result.setPatientId(UUID.randomUUID());
         result.setType(NotificationType.QUEUE_CALLED);
         result.setTitle("Đến lượt khám");
         result.setBody("Mời vào phòng khám");
@@ -128,6 +134,7 @@ class PushDeliveryServiceTest {
         result.setId(UUID.randomUUID());
         result.setUserId(userId);
         result.setRegistrationToken("fcm-token");
+        result.setBindingId(UUID.randomUUID());result.setSessionId(UUID.randomUUID());
         result.setEnabled(true);
         return result;
     }
@@ -138,6 +145,7 @@ class PushDeliveryServiceTest {
         result.setNotificationId(notification.getId());
         result.setDeviceInstallationId(device.getId());
         result.setRegistrationToken(device.getRegistrationToken());
+        result.setBindingId(device.getBindingId());result.setExpiresAt(Instant.now().plusSeconds(300));
         result.setStatus(PushDeliveryStatus.PENDING);
         result.setCreatedAt(Instant.now());
         result.setNextAttemptAt(Instant.now());

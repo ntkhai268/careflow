@@ -1,0 +1,182 @@
+{
+  "checkedAt": "2026-10-16T03:41:38.371Z",
+  "mock": false,
+  "checks": [
+    {
+      "name": "real mobile login",
+      "status": "PASS"
+    },
+    {
+      "name": "real Directory assigns ROOM-01 and Internal Medicine doctor",
+      "status": "PASS"
+    },
+    {
+      "name": "appointment details render without false missing-ticket error",
+      "status": "PASS"
+    },
+    {
+      "name": "mobile renders broker-created real ticket and number",
+      "status": "PASS"
+    },
+    {
+      "name": "resume same actual patient after the already verified browser check-in",
+      "status": "PASS"
+    },
+    {
+      "name": "different-room doctor cannot create this patient consultation",
+      "status": "PASS"
+    },
+    {
+      "name": "actual Doctor Web renders the checked-in Internal Medicine patient",
+      "status": "PASS"
+    },
+    {
+      "name": "Doctor Web reopens same actual consultation",
+      "status": "PASS"
+    },
+    {
+      "name": "patient reads consultation through scoped service delegation",
+      "status": "PASS"
+    },
+    {
+      "name": "positive RSA resource api/patients",
+      "status": "PASS"
+    },
+    {
+      "name": "positive RSA resource api/emr",
+      "status": "PASS"
+    },
+    {
+      "name": "positive RSA resource api/prescriptions",
+      "status": "PASS"
+    },
+    {
+      "name": "successful real mobile journey has no spurious 401 or refresh loop",
+      "status": "PASS"
+    },
+    {
+      "name": "both real interfaces have no uncaught JavaScript errors",
+      "status": "PASS"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/user/abf0e105-14ec-4c0a-8a0b-b0368fa73ea1",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/patient/f4e9929c-abd6-44ba-bf75-13741708e4ae",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/65b8e77c-6396-4941-b30f-300e652fd8c6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/patient/f4e9929c-abd6-44ba-bf75-13741708e4ae",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/65b8e77c-6396-4941-b30f-300e652fd8c6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/tickets/appointment/65b8e77c-6396-4941-b30f-300e652fd8c6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/tickets/appointment/65b8e77c-6396-4941-b30f-300e652fd8c6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae/current",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/appointment/65b8e77c-6396-4941-b30f-300e652fd8c6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/labs/orders/consultation/5f0a2c7b-ec39-4e39-9083-bcf694df27cd",
+      "method": "GET",
+      "status": 403
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/clinical-context/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-01/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/doctor/d0000001-0000-0000-0000-000000000001",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/5f0a2c7b-ec39-4e39-9083-bcf694df27cd",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/prescriptions/medicines",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/prescriptions/consultation/5f0a2c7b-ec39-4e39-9083-bcf694df27cd",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/labs/orders/consultation/5f0a2c7b-ec39-4e39-9083-bcf694df27cd",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "errors": [],
+  "appointmentId": "65b8e77c-6396-4941-b30f-300e652fd8c6",
+  "consultationId": "5f0a2c7b-ec39-4e39-9083-bcf694df27cd"
+}

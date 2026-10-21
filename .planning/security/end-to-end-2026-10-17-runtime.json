@@ -1,0 +1,23 @@
+{
+  "at": "2026-10-17T05:08:39.525980+00:00",
+  "head": "5a8c6e574c1249ce2a6dc791e7415a2bbc33b006",
+  "branch": "feature/dangkhoii/security-integration",
+  "uncommitted": true,
+  "mobileMainJsSha256": "27eaa13ac123caf2d03c4ef3444523f7616e0fe0d2c32dbcb6fd7a9e5840fc59",
+  "hospitalBuildId": "DJ7f-Uw8XDM5xb4TkCQz7",
+  "runningJarSha256": {
+    "careflow-identity-service": "835b3ea842c0b44b0b5526823dddf0694887fb7739c6aae9e2263db9954e85ce",
+    "careflow-hospital-directory-service": "a9301373fd7918d9adf9045ea38ec5cb11003ee532449a4563d22d0e540c9503",
+    "careflow-api-gateway": "91913df2f2f81b670d6d15f2f1af9d5d76ff36ccaae5f5340ce51ef3441d2a8a",
+    "careflow-patient-service": "95bf23ec161b13412724b4c1c818ffd1c37091ae78a87640167ed9ee788b0add",
+    "careflow-consultation-service": "9342b0b1de87251a92464ab6af377196b0e38ba7f508a7e327a3f58071de1710",
+    "careflow-emr-service": "a79b6c12e26321cfc6f24528248663d12ac0d25eddb9e1fa94683775ef521255",
+    "careflow-prescription-service": "1130d84e0cef62dd1c02bf29a041b29a02a2c3379fcf0cce6a9be7919f7347af",
+    "careflow-lab-service": "12e72f4e828c7ce1be54aa1e17644631f91860d964238a251dee1445d7960b63",
+    "careflow-appointment-service": "fb2325f786366b626272a84ba75fd326972dcd20c6bd41f9c9885ca6e94fdcd8",
+    "careflow-identity-session-secondary": "835b3ea842c0b44b0b5526823dddf0694887fb7739c6aae9e2263db9954e85ce",
+    "careflow-queue-service": "f1b4c5c43d5261c72bb4b16ddebfbb01ebbfc83de5ec40fc85687cc704ecce7d",
+    "careflow-notification-service": "4bb3084d7ae923cd195fcbeda3215119b8b751c19247a0261b1120766979eb64"
+  },
+  "database": "Real local PostgreSQL audit; snapshot backed up outside Git"
+}

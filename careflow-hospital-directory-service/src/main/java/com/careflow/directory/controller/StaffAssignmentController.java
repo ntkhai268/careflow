@@ -51,7 +51,13 @@ public class StaffAssignmentController {
     @GetMapping("/{userId}/room-access")
     public ResponseEntity<ApiResponse<Boolean>> hasRoomAccess(
             @PathVariable UUID userId,
-            @RequestParam String roomId) {
+            @RequestParam String roomId,
+            @RequestHeader(value = "X-User-Id", required = false) UUID requesterId,
+            @RequestHeader(value = "X-User-Role", required = false) String role) {
+        if (requesterId == null) throw new BusinessException(401, "Authenticated user is required");
+        if (!userId.equals(requesterId) && !"ADMIN".equals(role)) {
+            throw new BusinessException(403, "Cannot inspect another user's room assignment");
+        }
         return ResponseEntity.ok(ApiResponse.success(
                 directoryService.hasStaffRoomAccess(userId, roomId)));
     }

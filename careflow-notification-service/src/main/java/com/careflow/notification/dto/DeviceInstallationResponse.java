@@ -11,5 +11,6 @@ public record DeviceInstallationResponse(
         DevicePlatform platform,
         String appVersion,
         boolean enabled,
-        Instant lastSeenAt
+        Instant lastSeenAt,
+        UUID bindingId
 ) {}

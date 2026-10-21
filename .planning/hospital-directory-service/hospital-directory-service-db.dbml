@@ -33,4 +33,23 @@ Table doctor_profiles {
   is_active boolean [default: true]
   created_at timestamptz
   updated_at timestamptz
+  primary_for_booking boolean [note: 'Exactly one active primary per room when multiple doctors work there; protected by partial unique index']
+
+}
+
+// MOB-02: immutable, effective-dated service price revisions (Flyway V1).
+Table medical_service_prices {
+  id uuid [pk]
+  code varchar(50) [not null]
+  name varchar(150) [not null]
+  description varchar(500)
+  amount bigint [not null, note: 'Integer VND; 0..1000000000000']
+  currency varchar(3) [not null, note: 'VND']
+  version bigint [not null]
+  effective_at timestamptz [not null]
+  active boolean [not null]
+  estimated_minutes integer [not null]
+  created_by uuid [note: 'Verified Identity actor; null for explicit demo seed']
+  created_at timestamptz [not null]
+  indexes { (code, version) [unique] }
 }

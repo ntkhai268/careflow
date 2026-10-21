@@ -1,0 +1,91 @@
+// CareFlow analytics — physical schema verified against isolated PostgreSQL migrations, 2026-10-21.
+// Partial indexes and CHECK/FK constraints are retained as SQL notes below each table.
+Project CareFlow_Analytics {
+  database_type: 'PostgreSQL'
+}
+
+Table analytics.event_receipts {
+  source varchar(20) [not null]
+  event_id uuid [not null]
+  source_id uuid [not null]
+  outcome varchar(40) [not null]
+  received_at timestamptz [not null]
+  indexes {
+    (source, event_id) [pk]
+  }
+  note: '''
+CREATE UNIQUE INDEX event_receipts_pkey ON analytics.event_receipts USING btree (source, event_id)
+'''
+}
+
+Table analytics.operation_audit {
+  id uuid [pk]
+  actor_user_id uuid
+  operation varchar(30) [not null]
+  affected_rows bigint [not null]
+  occurred_at timestamptz [not null]
+  note: '''
+CREATE UNIQUE INDEX operation_audit_pkey ON analytics.operation_audit USING btree (id)
+'''
+}
+
+Table analytics.snapshot_history {
+  id bigint [pk]
+  source varchar(20) [not null]
+  source_id uuid [not null]
+  synthetic bool [not null]
+  fingerprint character(64) [not null]
+  payload jsonb [not null]
+  accepted bool [not null]
+  observed_at timestamptz [not null]
+  note: '''
+CHECK (((source)::text = ANY ((ARRAY['APPOINTMENT'::character varying, 'QUEUE'::character varying, 'CONSULTATION'::character varying])::text[])))
+UNIQUE (source, source_id, synthetic, fingerprint)
+CREATE UNIQUE INDEX snapshot_history_pkey ON analytics.snapshot_history USING btree (id)
+CREATE UNIQUE INDEX snapshot_history_source_source_id_synthetic_fingerprint_key ON analytics.snapshot_history USING btree (source, source_id, synthetic, fingerprint)
+'''
+}
+
+Table analytics.source_projection {
+  source varchar(20) [not null]
+  source_id uuid [not null]
+  synthetic bool [not null]
+  history_id bigint [not null]
+  payload jsonb [not null]
+  business_date date [not null]
+  department_id uuid
+  department_code varchar(50)
+  room_id varchar(80)
+  appointment_id uuid
+  initial_entry_id uuid
+  consultation_id uuid
+  source_version bigint [not null]
+  source_updated_at timestamptz [not null]
+  indexes {
+    (source, source_id, synthetic) [pk]
+  }
+  note: '''
+FOREIGN KEY (history_id) REFERENCES analytics.snapshot_history(id)
+CREATE UNIQUE INDEX source_projection_pkey ON analytics.source_projection USING btree (source, source_id, synthetic)
+CREATE INDEX idx_analytics_cohort ON analytics.source_projection USING btree (synthetic, business_date, department_id, room_id)
+CREATE INDEX idx_analytics_initial ON analytics.source_projection USING btree (initial_entry_id)
+CREATE INDEX idx_analytics_appointment ON analytics.source_projection USING btree (appointment_id)
+'''
+}
+
+Table analytics.sync_state {
+  source varchar(20) [pk]
+  cursor_id uuid
+  cycle_rows bigint [not null]
+  started_at timestamptz
+  last_success_at timestamptz
+  last_row_count bigint
+  status varchar(20) [not null]
+  last_error_code varchar(50)
+  updated_at timestamptz [not null]
+  note: '''
+CREATE UNIQUE INDEX sync_state_pkey ON analytics.sync_state USING btree (source)
+'''
+}
+
+Ref: analytics.source_projection.history_id > analytics.snapshot_history.id

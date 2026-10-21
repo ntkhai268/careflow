@@ -1,0 +1,55 @@
+{
+  "job": "ios",
+  "passed": true,
+  "steps": [
+    {
+      "command": [
+        "flutter",
+        "pub",
+        "get",
+        "--enforce-lockfile"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "flutter",
+        "analyze",
+        "--no-pub",
+        "--no-fatal-infos"
+      ],
+      "errors": 0,
+      "warnings": 0,
+      "existingInfos": 2,
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "flutter",
+        "build",
+        "ios",
+        "--release",
+        "--no-codesign",
+        "--build-number=16",
+        "private build defines"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "source": "R0 M snapshot; private certificate/pubspec/build defines overlay retained outside Git; ios/Runner replaced with M source",
+  "firstAttempt": "analyzer stopped on info in stale private test/tool copies; replaced those with M snapshot; 2 existing infos remain",
+  "installedOrRestarted": false,
+  "testsExecuted": false,
+  "newArtifactSigned": false,
+  "binarySha256": "d10540b705260cb9a4f5e1a83147e0b50322b078c689f2bac2c352207e72b054",
+  "privateLockInputs": [
+    {
+      "file": "pubspec.lock",
+      "sha256": "82da23b44ccb5bbba5b3324ea0a53c8a558619bced51917bdf1af850f1fc7197"
+    },
+    {
+      "file": "ios/Podfile.lock",
+      "sha256": "ddbbab9db6268e7704421f6642332b12d4fc9b8534b7aa9bf452daf824623aad"
+    }
+  ]
+}

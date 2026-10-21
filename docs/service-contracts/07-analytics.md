@@ -1,5 +1,10 @@
 # Analytics Service Contract
 
+> **CURRENT R5 —21/10/2026:** module/service đã triển khai. [Contract R5_V1 và API thực](../../.planning/analytics-service/r5-contract-2026-10-21.md), [biên bản](../../.planning/analytics-service/r5-acceptance-2026-10-21.md), [hướng dẫn chuẩn](../../huong-dan-su-dung/22-thong-ke-va-doi-soat-r5.md). Nội dung v1.0 bên dưới là TARGET lịch sử, gồm endpoint/no-show/lab-TAT/AI chưa được triển khai; không dùng nó làm danh sách API CURRENT.
+
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Các đoạn MVP/mock cũ phải đọc theo giới hạn và thay đổi tại R0; không loại Analytics/AI khỏi yêu cầu cuối.
+
+
 > Contract ID: `CF-SVC-07` | Version: `1.0` | Target module: `careflow-analytics-service` |
 > Application name: `analytics-service` | Port local: `8091`
 

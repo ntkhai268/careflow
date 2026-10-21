@@ -4,7 +4,6 @@ import com.careflow.appointment.model.Appointment;
 import com.careflow.appointment.model.AppointmentStatus;
 import com.careflow.appointment.model.Department;
 import com.careflow.appointment.repository.AppointmentRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -17,18 +16,26 @@ import java.util.UUID;
 
 @Component
 @Slf4j
+@org.springframework.context.annotation.Profile("demo | test")
 public class DataInitializer implements CommandLineRunner {
 
     private final AppointmentRepository appointmentRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final com.careflow.appointment.service.RoomScheduleService schedules;
 
     public DataInitializer(AppointmentRepository appointmentRepository, JdbcTemplate jdbcTemplate) {
+        this(appointmentRepository,jdbcTemplate,null);
+    }
+    @org.springframework.beans.factory.annotation.Autowired
+    public DataInitializer(AppointmentRepository appointmentRepository,JdbcTemplate jdbcTemplate,com.careflow.appointment.service.RoomScheduleService schedules){
+        this.schedules=schedules;
         this.appointmentRepository = appointmentRepository;
         this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
     public void run(String... args) {
+        if(schedules!=null)schedules.seedDemo();
         LocalDate today = LocalDate.now(ZoneId.of("Asia/Ho_Chi_Minh"));
         // Seed only an empty database. Runtime appointments must never be deleted on restart.
         long countToday = appointmentRepository.count();

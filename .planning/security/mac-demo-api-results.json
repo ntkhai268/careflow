@@ -1,0 +1,182 @@
+{
+  "checkedAt": "2026-10-15T16:16:48.653Z",
+  "mock": false,
+  "gateway": "https://localhost:18080",
+  "checks": [
+    {
+      "name": "emulator uses real HTTPS Gateway",
+      "result": "PASS",
+      "actual": "https://localhost:18080"
+    },
+    {
+      "name": "real login mobile_case01",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role mobile_case01",
+      "result": "PASS",
+      "actual": "PATIENT"
+    },
+    {
+      "name": "active session mobile_case01",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login mobile_case02",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role mobile_case02",
+      "result": "PASS",
+      "actual": "PATIENT"
+    },
+    {
+      "name": "active session mobile_case02",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login mobile_case03",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role mobile_case03",
+      "result": "PASS",
+      "actual": "PATIENT"
+    },
+    {
+      "name": "active session mobile_case03",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login doctor",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role doctor",
+      "result": "PASS",
+      "actual": "DOCTOR"
+    },
+    {
+      "name": "active session doctor",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login an@careflow.vn",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role an@careflow.vn",
+      "result": "PASS",
+      "actual": "DOCTOR"
+    },
+    {
+      "name": "active session an@careflow.vn",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login staff",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role staff",
+      "result": "PASS",
+      "actual": "STAFF"
+    },
+    {
+      "name": "active session staff",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login lab",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role lab",
+      "result": "PASS",
+      "actual": "LAB_TECHNICIAN"
+    },
+    {
+      "name": "active session lab",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login admin",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role admin",
+      "result": "PASS",
+      "actual": "ADMIN"
+    },
+    {
+      "name": "active session admin",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "token copied to different key denied",
+      "result": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "token without cryptographic proof denied",
+      "result": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "new proof accepted",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "same proof replay denied",
+      "result": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "other patient profile denied",
+      "result": "PASS",
+      "actual": 403
+    },
+    {
+      "name": "private Patient rejects forged user headers",
+      "result": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "private Identity requires actual client TLS certificate",
+      "result": "PASS",
+      "actual": true
+    },
+    {
+      "name": "real logout",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "logged-out access denied",
+      "result": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "independent second phone still active",
+      "result": "PASS",
+      "actual": 200
+    }
+  ]
+}

@@ -1,6 +1,7 @@
 package com.careflow.appointment.service;
 
 import com.careflow.appointment.client.DirectoryClient;
+import com.careflow.appointment.client.AppointmentConsultationClient;
 import com.careflow.appointment.client.PatientClient;
 import com.careflow.appointment.client.dto.DoctorProfileResponse;
 import com.careflow.appointment.client.dto.RoomResponse;
@@ -24,6 +25,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -33,6 +36,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,6 +44,8 @@ import java.util.regex.Pattern;
 @Service
 @Slf4j
 public class AppointmentService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.careflow.common.security.PatientOwnershipClient currentOwners;
     private static final ZoneId HOSPITAL_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
     private static final Pattern TIME_SLOT_PATTERN = Pattern.compile(
             "^\\s*(\\d{1,2}):(\\d{2})\\s*-\\s*(\\d{1,2}):(\\d{2})\\s*$");
@@ -55,36 +61,69 @@ public class AppointmentService {
     private final DirectoryClient directoryClient;
     private final PatientClient patientClient;
     private final AppointmentSlotLockRepository appointmentSlotLockRepository;
+    private final AppointmentConsultationClient consultations;
+    private final RoomScheduleService schedules;
+    private final AppointmentCommandStore commands;
 
     @org.springframework.beans.factory.annotation.Value("${appointment.max-appointments-per-slot:5}")
     private int maxAppointmentsPerSlot = 5;
 
     private final Map<String, AppointmentResponse> idempotencyStore = new java.util.concurrent.ConcurrentHashMap<>();
 
-    @Autowired
     public AppointmentService(AppointmentRepository appointmentRepository,
                               AppointmentEventService appointmentEvents,
                               DirectoryClient directoryClient,
                               PatientClient patientClient,
-                              AppointmentSlotLockRepository appointmentSlotLockRepository) {
+                              AppointmentSlotLockRepository appointmentSlotLockRepository,
+                              AppointmentConsultationClient consultations) {
+        this(appointmentRepository,appointmentEvents,directoryClient,patientClient,appointmentSlotLockRepository,consultations,null,null);
+    }
+
+    @Autowired
+    public AppointmentService(AppointmentRepository appointmentRepository,AppointmentEventService appointmentEvents,
+                              DirectoryClient directoryClient,PatientClient patientClient,
+                              AppointmentSlotLockRepository appointmentSlotLockRepository,AppointmentConsultationClient consultations,
+                              RoomScheduleService schedules,AppointmentCommandStore commands) {
+        this.schedules=schedules;this.commands=commands;
         this.appointmentRepository = appointmentRepository;
         this.appointmentEvents = appointmentEvents;
         this.directoryClient = directoryClient;
         this.patientClient = patientClient;
         this.appointmentSlotLockRepository = appointmentSlotLockRepository;
-    }
-
-    /** Backward-compatible constructor for focused unit tests that do not use DB locking. */
-    public AppointmentService(AppointmentRepository appointmentRepository,
-                              AppointmentEventService appointmentEvents,
-                              DirectoryClient directoryClient,
-                              PatientClient patientClient) {
-        this(appointmentRepository, appointmentEvents, directoryClient, patientClient, null);
+        this.consultations = Objects.requireNonNull(consultations);
     }
 
     /**
      * Đặt lịch khám mới (hỗ trợ Idempotency-Key)
      */
+    @Transactional
+    public AppointmentResponse bookAppointment(CreateAppointmentRequest request, UUID actorUserId,
+                                                String role, String correlationId, String idempotencyKey) {
+        if (actorUserId == null) throw new BusinessException(401, "Authenticated user is required");
+        if (!AppConstants.ROLE_PATIENT.equals(role) && !AppConstants.ROLE_ADMIN.equals(role)) {
+            throw new BusinessException(403, "Không có quyền đặt lịch khám");
+        }
+        ApiResponse<PatientClient.BookingContext> response;
+        try {
+            response = patientClient.getBookingContext(request.getPatientId());
+        } catch (feign.FeignException exception) {
+            int status = exception.status();
+            throw new BusinessException(status == 401 || status == 403 || status == 404 ? status : 503,
+                    "Không thể xác minh hồ sơ đặt lịch");
+        }
+        var patient = response == null || response.getStatus() != 200 ? null : response.getData();
+        if (patient == null || !request.getPatientId().equals(patient.id())
+                || patient.userId() == null || patient.fullName() == null || patient.fullName().isBlank()) {
+            throw new BusinessException(503, "Patient Service không trả về hồ sơ đặt lịch hợp lệ");
+        }
+        if (AppConstants.ROLE_PATIENT.equals(role) && !actorUserId.equals(patient.userId())) {
+            throw new BusinessException(403, "Không có quyền đặt lịch cho hồ sơ này");
+        }
+        request.setPatientName(patient.fullName());
+        return createAppointment(request, patient.userId(), correlationId,
+                idempotencyKey==null || idempotencyKey.isBlank()?null:actorUserId+":"+idempotencyKey);
+    }
+
     @Transactional
     public AppointmentResponse createAppointment(CreateAppointmentRequest request,
                                                  UUID ownerUserId,
@@ -99,10 +138,22 @@ public class AppointmentService {
                                                  String correlationId,
                                                  String idempotencyKey,
                                                  UUID assignedDoctorId) {
-        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
-            AppointmentResponse cached = idempotencyStore.get(idempotencyKey);
+        AppointmentCommandStore.Command command=commands==null?null:commands.begin(ownerUserId,idempotencyKey,request,assignedDoctorId);
+        if(command!=null && command.result()!=null)return AppointmentMapper.toResponse(findAppointmentOrThrow(command.result()));
+        String cacheKey = ownerUserId + ":" + idempotencyKey;
+        if (commands==null && idempotencyKey != null && !idempotencyKey.isBlank()) {
+            AppointmentResponse cached = idempotencyStore.get(cacheKey);
             if (cached != null) {
-                log.info("Returning cached appointment response for Idempotency-Key: {}", idempotencyKey);
+                if (!Objects.equals(cached.getPatientId(), request.getPatientId())
+                        || !Objects.equals(cached.getAppointmentDate(), request.getAppointmentDate())
+                        || !Objects.equals(cached.getTimeSlot(), normalizeTimeSlot(request.getTimeSlot()))
+                        || !Objects.equals(cached.getDepartment(), parseDepartment(request.getDepartment()).name())
+                        || !Objects.equals(cached.getServiceCode(), request.getServiceCode()==null?"GENERAL_CONSULTATION":request.getServiceCode())
+                        || (request.getPriceVersion()!=null && !Objects.equals(cached.getPriceVersion(),request.getPriceVersion()))
+                        || (assignedDoctorId != null && !Objects.equals(cached.getDoctorId(), assignedDoctorId))
+                        || !Objects.equals(cached.getReason(), request.getReason())) {
+                    throw new BusinessException(409, "Idempotency-Key đã được dùng cho yêu cầu khác");
+                }
                 return cached;
             }
         }
@@ -127,12 +178,12 @@ public class AppointmentService {
             throw new BusinessException(409, "Bệnh nhân đã có lịch khám vào ca này");
         }
 
-        DirectoryAssignment assignment = resolveDirectoryAssignment(department);
-        if (assignedDoctorId != null && !assignedDoctorId.equals(assignment.doctorUserId())) {
-            throw new BusinessException(409, "Bác sĩ tái khám không khớp phân công của khoa/phòng");
-        }
+        DirectoryAssignment assignment = resolveBookingAssignment(department,request.getAppointmentDate(),request.getTimeSlot(),assignedDoctorId);
+        var price = requireServicePrice(request);
         enforceSlotCapacity(assignment.roomId(), request.getAppointmentDate(), request.getTimeSlot());
         Appointment appointment = Appointment.builder()
+                .serviceCode(price.code()).serviceName(price.name()).priceVersion(price.version())
+                .quotedAmount(price.amount()).quotedCurrency(price.currency()).priceEffectiveAt(price.effectiveAt())
                 .patientId(request.getPatientId())
                 .ownerUserId(ownerUserId)
                 .patientName(request.getPatientName())
@@ -157,11 +208,39 @@ public class AppointmentService {
 
         AppointmentResponse response = AppointmentMapper.toResponse(saved);
 
-        if (idempotencyKey != null && !idempotencyKey.isBlank()) {
-            idempotencyStore.put(idempotencyKey, response);
+        if(commands!=null)commands.complete(command,saved.getId());
+        if (commands==null && idempotencyKey != null && !idempotencyKey.isBlank()) {
+            if (TransactionSynchronizationManager.isSynchronizationActive()) {
+                TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                    @Override
+                    public void afterCommit() {
+                        idempotencyStore.put(cacheKey, response);
+                    }
+                });
+            } else {
+                idempotencyStore.put(cacheKey, response);
+            }
         }
 
         return response;
+    }
+
+    private com.careflow.appointment.client.dto.ServicePriceResponse requireServicePrice(CreateAppointmentRequest request) {
+        String code=request.getServiceCode()==null?"GENERAL_CONSULTATION":request.getServiceCode();
+        com.careflow.appointment.client.dto.ServicePriceResponse price;
+        try {
+            var response=directoryClient==null?null:directoryClient.getServicePrice(code);
+            price=response==null || response.getStatus()!=200?null:response.getData();
+        } catch(feign.FeignException failure) {
+            throw new BusinessException(failure.status()==404 || failure.status()==409?409:503,"Không thể xác nhận bảng giá dịch vụ. Vui lòng tải lại.");
+        }
+        if(price==null || !code.equals(price.code()) || !price.active() || price.name()==null || price.name().isBlank()
+                || price.amount()<0 || price.amount()>1000000000000L || !"VND".equals(price.currency()) || price.version()<1
+                || price.effectiveAt()==null || price.effectiveAt().isAfter(java.time.Instant.now()))
+            throw new BusinessException(503,"Bảng giá dịch vụ chưa sẵn sàng.");
+        if(request.getPriceVersion()!=null && request.getPriceVersion()!=price.version())
+            throw new BusinessException(409,"Bảng giá đã thay đổi. Vui lòng tải lại và xác nhận giá mới.");
+        return price;
     }
 
     @Transactional
@@ -172,29 +251,64 @@ public class AppointmentService {
                 || request.getRecommendedDate() == null) {
             throw new BusinessException(400, "Follow-up requires consultation, patient and date");
         }
-        UUID patientUserId = patientClient.getOwnerUserId(
-                request.getPatientId(), doctorUserId, AppConstants.ROLE_DOCTOR).getData();
-        if (patientUserId == null) {
-            throw new BusinessException(422, "Patient profile has no owner user");
-        }
+        var patient = requireFollowUpPatient(request, doctorUserId);
         String departmentCode = request.getDepartment() == null || request.getDepartment().isBlank()
-                ? Department.NOI_TONG_QUAT.name() : request.getDepartment();
+                ? getClinicalContext(doctorUserId, AppConstants.ROLE_DOCTOR).getDepartment() : request.getDepartment();
+        if(request.getTimeSlot()==null || request.getTimeSlot().isBlank())
+            throw new BusinessException(422,"Chọn ca tái khám còn chỗ trước khi tạo lịch.");
         CreateAppointmentRequest create = CreateAppointmentRequest.builder()
                 .patientId(request.getPatientId())
-                .patientName("Bệnh nhân tái khám")
+                .patientName(patient.fullName())
                 .department(departmentCode)
                 .appointmentDate(request.getRecommendedDate())
-                .timeSlot(request.getTimeSlot() == null || request.getTimeSlot().isBlank()
-                        ? "09:00-09:30" : request.getTimeSlot())
+                .timeSlot(request.getTimeSlot())
                 .reason(request.getNote())
                 .build();
-        AppointmentResponse response = createAppointment(create, patientUserId, correlationId,
+        AppointmentResponse response = createAppointment(create, patient.userId(), correlationId,
                 "follow-up-" + request.getConsultationId() + "-" + request.getRecommendedDate(), doctorUserId);
         Appointment appointment = findAppointmentOrThrow(response.getId());
+        if (appointment.getSourceConsultationId() != null) {
+            if (!request.getConsultationId().equals(appointment.getSourceConsultationId())) {
+                throw new BusinessException(409, "Appointment is linked to a different consultation");
+            }
+            return AppointmentMapper.toResponse(appointment);
+        }
         appointment.setSourceConsultationId(request.getConsultationId());
         appointmentRepository.saveAndFlush(appointment);
         appointmentEvents.followUpScheduled(appointment, request.getConsultationId(), correlationId);
         return AppointmentMapper.toResponse(appointment);
+    }
+
+    private PatientClient.ClinicalProfile requireFollowUpPatient(
+            com.careflow.appointment.dto.request.CreateFollowUpRequest request, UUID doctor) {
+        if (doctor == null) throw new BusinessException(401, "Authenticated doctor is required");
+        try {
+            var response = consultations.getById(request.getConsultationId());
+            var context = response == null || response.getStatus() != 200 ? null : response.getData();
+            if (context == null || !request.getConsultationId().equals(context.id()) || context.patientId() == null
+                    || context.doctorId() == null || context.status() == null
+                    || !java.util.Set.of("IN_PROGRESS", "AWAITING_CLS", "AWAITING_REVIEW", "READY_TO_COMPLETE",
+                    "COMPLETED", "CANCELLED", "TRANSFERRED").contains(context.status())) {
+                throw new BusinessException(503, "Consultation context is incomplete");
+            }
+            if (!request.getPatientId().equals(context.patientId()) || !doctor.equals(context.doctorId())) {
+                throw new BusinessException(403, "Follow-up must match the assigned consultation and patient");
+            }
+            if (java.util.Set.of("CANCELLED", "TRANSFERRED").contains(context.status())) {
+                throw new BusinessException(409, "Cannot schedule follow-up from this consultation state");
+            }
+            var profileResponse = patientClient.getClinicalProfile(request.getPatientId());
+            var patient = profileResponse == null || profileResponse.getStatus() != 200 ? null : profileResponse.getData();
+            if (patient == null || !request.getPatientId().equals(patient.id()) || patient.fullName() == null || patient.fullName().isBlank()) {
+                throw new BusinessException(503, "Patient context is incomplete");
+            }
+            if (patient.userId() == null) throw new BusinessException(422, "Patient profile has no owner user");
+            return patient;
+        } catch (feign.FeignException exception) {
+            int status = exception.status();
+            throw new BusinessException(status == 401 || status == 403 || status == 404 ? status : 503,
+                    "Cannot verify follow-up clinical access");
+        }
     }
 
     /**
@@ -265,7 +379,8 @@ public class AppointmentService {
             UUID patientId, UUID requesterUserId, String role) {
         List<Appointment> appointments;
         if (AppConstants.ROLE_PATIENT.equalsIgnoreCase(role)) {
-            appointments = appointmentRepository.findByPatientIdAndOwnerUserIdOrderByAppointmentDateDesc(
+            if(currentOwners!=null){currentOwners.require(patientId,requesterUserId);appointments=appointmentRepository.findByPatientIdOrderByAppointmentDateDesc(patientId);}
+            else appointments = appointmentRepository.findByPatientIdAndOwnerUserIdOrderByAppointmentDateDesc(
                     patientId, requesterUserId);
         } else if (AppConstants.ROLE_ADMIN.equalsIgnoreCase(role)) {
             appointments = appointmentRepository.findByPatientIdOrderByAppointmentDateDesc(patientId);
@@ -293,6 +408,21 @@ public class AppointmentService {
             return com.careflow.appointment.dto.response.AssignmentAccessResponse.allowed();
         }
 
+        java.util.List<UUID> superseded = java.util.List.of();
+        if (AppConstants.ROLE_DOCTOR.equalsIgnoreCase(role)) {
+            try {
+                var response = consultations.patientAccess(patientId);
+                if (response == null || response.getData() == null || response.getData().supersededAppointmentIds() == null) {
+                    throw new BusinessException(503, "Không thể xác minh trách nhiệm chăm sóc hiện tại");
+                }
+                if (response.getData().allowed()) return com.careflow.appointment.dto.response.AssignmentAccessResponse.allowed();
+                superseded = response.getData().supersededAppointmentIds();
+            } catch (feign.FeignException exception) {
+                throw new BusinessException(503, "Không thể xác minh trách nhiệm chăm sóc hiện tại");
+            }
+        }
+        final var handedOver = superseded;
+
         List<Appointment> candidates;
         if (appointmentId != null) {
             Appointment appointment = appointmentRepository.findById(appointmentId).orElse(null);
@@ -306,7 +436,7 @@ public class AppointmentService {
                 .filter(appointment -> appointment.getStatus() != AppointmentStatus.CANCELLED)
                 .anyMatch(appointment -> {
                     if (AppConstants.ROLE_DOCTOR.equalsIgnoreCase(role)) {
-                        return requesterUserId.equals(getEffectiveDoctorUserId(appointment));
+                        return !handedOver.contains(appointment.getId()) && requesterUserId.equals(getEffectiveDoctorUserId(appointment));
                     }
                     if (AppConstants.ROLE_STAFF.equalsIgnoreCase(role)) {
                         return appointmentId != null
@@ -352,37 +482,35 @@ public class AppointmentService {
      * stay in the response so the patient can see why a slot cannot be chosen.
      */
     @Transactional(readOnly = true)
+    public List<TimeSlotAvailabilityResponse> getTimeSlotAvailability(String departmentStr,LocalDate date){
+        return getTimeSlotAvailability(departmentStr,date,null);
+    }
+
     public List<TimeSlotAvailabilityResponse> getTimeSlotAvailability(
-            String departmentStr, LocalDate date) {
+            String departmentStr, LocalDate date, UUID doctorId) {
         if (date == null) {
             throw new BusinessException(400, "Ngày khám không được để trống");
         }
         Department department = parseDepartment(departmentStr);
-        DirectoryAssignment assignment = resolveDirectoryAssignment(department);
-        Map<String, Long> bookedBySlot = new HashMap<>();
-        appointmentRepository.findByRoomIdAndAppointmentDateAndStatusNot(
-                        assignment.roomId(), date, AppointmentStatus.CANCELLED)
-                .forEach(appointment -> bookedBySlot.merge(
-                        normalizeTimeSlot(appointment.getTimeSlot()), 1L, Long::sum));
-
-        Clock clock = Clock.system(HOSPITAL_ZONE);
-        int capacity = Math.max(1, maxAppointmentsPerSlot);
-        return DEFAULT_TIME_SLOTS.stream()
-                .map(slot -> {
-                    int booked = bookedBySlot.getOrDefault(slot, 0L).intValue();
-                    boolean past = isSlotStartInPast(date, slot, clock);
-                    boolean full = booked >= capacity;
-                    String reason = past ? "PAST" : full ? "FULL" : null;
-                    return TimeSlotAvailabilityResponse.builder()
-                            .timeSlot(slot)
-                            .bookedCount(booked)
-                            .capacity(capacity)
-                            .remaining(Math.max(0, capacity - booked))
-                            .available(!past && !full)
-                            .unavailableReason(reason)
-                            .build();
-                })
-                .toList();
+        List<DirectoryAssignment> assignments=resolveDirectoryAssignments(department,doctorId);
+        var capacityBySlot=new java.util.TreeMap<String,Integer>();
+        var bookedBySlot=new java.util.HashMap<String,Integer>();
+        for(var assignment:assignments){
+            var roomBooked=new HashMap<String,Integer>();
+            appointmentRepository.findByRoomIdAndAppointmentDateAndStatusNot(assignment.roomId(),date,AppointmentStatus.CANCELLED).forEach(a->roomBooked.merge(normalizeTimeSlot(a.getTimeSlot()),1,Integer::sum));
+            for(var slot:roomSlots(assignment.roomId(),date)){
+                capacityBySlot.merge(slot.timeSlot(),slot.capacity(),Integer::sum);
+                int booked=roomBooked.getOrDefault(slot.timeSlot(),0);
+                bookedBySlot.merge(slot.timeSlot(),booked,Integer::sum);
+            }
+        }
+        Clock clock=Clock.system(HOSPITAL_ZONE);
+        return capacityBySlot.entrySet().stream().map(item->{
+            int booked=bookedBySlot.getOrDefault(item.getKey(),0),remaining=Math.max(0,item.getValue()-booked);
+            boolean past=isSlotStartInPast(date,item.getKey(),clock);
+            return TimeSlotAvailabilityResponse.builder().timeSlot(item.getKey()).bookedCount(booked).capacity(item.getValue())
+                    .remaining(remaining).available(!past && remaining>0).unavailableReason(past?"PAST":remaining==0?"FULL":null).build();
+        }).toList();
     }
 
     /**
@@ -402,7 +530,14 @@ public class AppointmentService {
 
         // Validate state transition
         AppointmentStatus oldStatus = appointment.getStatus();
-        validateStatusTransition(oldStatus, newStatus);
+        if (oldStatus == AppointmentStatus.COMPLETED && newStatus == AppointmentStatus.COMPLETED) {
+            return AppointmentMapper.toResponse(appointment);
+        }
+        if (oldStatus == AppointmentStatus.CONFIRMED && newStatus == AppointmentStatus.COMPLETED) {
+            requireCompletedConsultation(appointment);
+        } else {
+            validateStatusTransition(oldStatus, newStatus);
+        }
 
         appointment.setStatus(newStatus);
         if (request.getNotes() != null) {
@@ -416,6 +551,18 @@ public class AppointmentService {
         return AppointmentMapper.toResponse(updated);
     }
 
+    private void requireCompletedConsultation(Appointment appointment) {
+        try {
+            var response = consultations.getByAppointment(appointment.getId());
+            if (response == null || response.getData() == null) throw new BusinessException(503, "Không thể xác minh ca khám đã hoàn tất");
+            if (response.getData().stream().noneMatch(c -> appointment.getPatientId().equals(c.patientId()) && "COMPLETED".equals(c.status()))) {
+                throw new BusinessException(409, "Chỉ hoàn thành lịch khi ca khám liên quan đã hoàn tất");
+            }
+        } catch (feign.FeignException error) {
+            throw new BusinessException(error.status() == 403 || error.status() == 404 ? 403 : 503, "Không thể xác minh ca khám đã hoàn tất");
+        }
+    }
+
     @Transactional
     public AppointmentResponse updateAppointmentStatus(UUID id,
                                                         UpdateAppointmentStatusRequest request,
@@ -424,10 +571,25 @@ public class AppointmentService {
         if (!AppConstants.ROLE_ADMIN.equalsIgnoreCase(role)
                 && (!AppConstants.ROLE_DOCTOR.equalsIgnoreCase(role)
                 || requesterUserId == null
-                || !requesterUserId.equals(getEffectiveDoctorUserId(appointment)))) {
+                || (!requesterUserId.equals(getEffectiveDoctorUserId(appointment))
+                    && !isResponsibleHandoverDoctor(appointment, request, requesterUserId)))) {
             throw new BusinessException(403, "Chỉ bác sĩ được phân công hoặc ADMIN mới được cập nhật trạng thái lịch");
         }
         return updateAppointmentStatus(id, request);
+    }
+
+    private boolean isResponsibleHandoverDoctor(Appointment appointment, UpdateAppointmentStatusRequest request, UUID actor) {
+        if (!"COMPLETED".equals(request.getStatus())) return false;
+        try {
+            var response = consultations.getByAppointment(appointment.getId());
+            if (response == null || response.getData() == null) throw new BusinessException(503, "Không thể xác minh bàn giao ca khám");
+            return response.getData().stream().anyMatch(c -> actor.equals(c.doctorId())
+                    && appointment.getPatientId().equals(c.patientId())
+                    && java.util.Set.of("IN_PROGRESS", "READY_TO_COMPLETE", "COMPLETED").contains(c.status()));
+        } catch (feign.FeignException error) {
+            if (error.status() == 403 || error.status() == 404) return false;
+            throw new BusinessException(503, "Không thể xác minh bàn giao ca khám");
+        }
     }
 
     /**
@@ -439,8 +601,8 @@ public class AppointmentService {
         Appointment appointment = findAppointmentOrThrow(id);
         requireOwnerOrClinical(appointment, requesterUserId, role);
 
-        if (appointment.getStatus() == AppointmentStatus.COMPLETED) {
-            throw new BusinessException(400, "Không thể hủy lịch khám đã hoàn thành");
+        if (appointment.getStatus() == AppointmentStatus.COMPLETED || appointment.getStatus()==AppointmentStatus.IN_PROGRESS) {
+            throw new BusinessException(409, "Không thể hủy lịch đang khám hoặc đã hoàn thành.");
         }
         if (appointment.getStatus() == AppointmentStatus.CANCELLED) {
             throw new BusinessException(400, "Lịch khám đã được hủy trước đó");
@@ -463,49 +625,48 @@ public class AppointmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Appointment", "id", id));
     }
 
-    private DirectoryAssignment resolveDirectoryAssignment(Department department) {
-        if (directoryClient == null) {
-            return new DirectoryAssignment(department.getId(), department.getRoomId(), department.getRoomDisplayName(),
-                    null, null);
+    private List<DirectoryAssignment> resolveDirectoryAssignments(Department department,UUID requestedDoctor) {
+        if(directoryClient==null)return List.of(new DirectoryAssignment(department.getId(),department.getRoomId(),department.getRoomDisplayName(),null,null));
+        try {
+            var departmentResponse=directoryClient.getDepartmentByCode(department.name());
+            var master=departmentResponse==null?null:departmentResponse.getData();
+            if(master==null || master.getId()==null || !Boolean.TRUE.equals(master.getIsActive()))throw new BusinessException(409,"DEPARTMENT_INACTIVE: Department is not active");
+            var roomsResponse=directoryClient.getAllRooms();var doctorsResponse=directoryClient.getDoctors(department.name());
+            if(roomsResponse==null || roomsResponse.getData()==null || doctorsResponse==null || doctorsResponse.getData()==null)throw new BusinessException(503,"Không thể xác minh phòng/bác sĩ.");
+            List<RoomResponse> rooms=roomsResponse.getData().stream().filter(room->Boolean.TRUE.equals(room.getIsActive()) && department.name().equals(room.getDepartmentCode()) && "CONSULTATION".equalsIgnoreCase(room.getRoomType())).sorted(java.util.Comparator.comparing(RoomResponse::getId)).toList();
+            List<DoctorProfileResponse> assignedDoctors=doctorsResponse.getData();
+            if(requestedDoctor!=null){
+                var requested=directoryClient.getDoctorByUserId(requestedDoctor);var profile=requested==null?null:requested.getData();
+                if(profile==null || !requestedDoctor.equals(profile.getUserId()) || !Boolean.TRUE.equals(profile.getIsActive()) || !department.name().equals(profile.getDepartmentCode()))throw new BusinessException(409,"Bác sĩ yêu cầu chưa có phân công hợp lệ.");
+                assignedDoctors=List.of(profile);
+            }
+            var result=new java.util.ArrayList<DirectoryAssignment>();
+            for(var room:rooms){
+                List<DoctorProfileResponse> doctors=assignedDoctors.stream().filter(doctor->Boolean.TRUE.equals(doctor.getIsActive()) && doctor.getUserId()!=null && department.name().equals(doctor.getDepartmentCode()) && room.getId().equals(doctor.getAssignedRoomId()) && (requestedDoctor==null || requestedDoctor.equals(doctor.getUserId()))).toList();
+                if(doctors.size()>1)doctors=doctors.stream().filter(d->Boolean.TRUE.equals(d.getPrimaryForBooking())).toList();
+                if(doctors.size()==1){var doctor=doctors.getFirst();result.add(new DirectoryAssignment(master.getId(),room.getId(),room.getDisplayName(),doctor.getUserId(),doctor.getFullName()));}
+            }
+            if(result.isEmpty())throw new BusinessException(409,"DOCTOR_CONFIGURATION_INVALID: Chưa có phòng hoạt động với đúng một bác sĩ nhận lịch.");
+            return result;
+        }catch(feign.FeignException unavailable){throw new BusinessException(503,"Không thể xác minh phân công phòng/bác sĩ.");}
+    }
+
+    private List<RoomScheduleService.Slot> roomSlots(String roomId,LocalDate date){
+        return schedules==null?RoomScheduleService.slots(RoomScheduleService.defaults(Math.max(1,maxAppointmentsPerSlot)),date):schedules.slots(roomId,date);
+    }
+
+    private DirectoryAssignment resolveBookingAssignment(Department department,LocalDate date,String slot,UUID doctor){
+        var candidates=resolveDirectoryAssignments(department,doctor);
+        if(schedules!=null)schedules.lockRooms(candidates.stream().map(DirectoryAssignment::roomId).toList());
+        DirectoryAssignment selected=null;long best=0;
+        for(var candidate:candidates){
+            int capacity=roomSlots(candidate.roomId(),date).stream().filter(item->item.timeSlot().equals(slot)).mapToInt(RoomScheduleService.Slot::capacity).findFirst().orElse(0);
+            long booked=appointmentRepository.countByRoomIdAndAppointmentDateAndTimeSlotAndStatusNot(candidate.roomId(),date,slot,AppointmentStatus.CANCELLED);
+            long remaining=capacity-booked;
+            if(remaining>best){best=remaining;selected=candidate;}
         }
-        String code = department.name();
-        ApiResponse<com.careflow.appointment.client.dto.DepartmentResponse> departmentResponse =
-                directoryClient.getDepartmentByCode(code);
-        var directoryDepartment = departmentResponse == null ? null : departmentResponse.getData();
-        if (directoryDepartment == null || Boolean.FALSE.equals(directoryDepartment.getIsActive())) {
-            throw new BusinessException(409, "DEPARTMENT_INACTIVE: Department is not active");
-        }
-        ApiResponse<List<RoomResponse>> roomsResponse = directoryClient.getAllRooms();
-        List<RoomResponse> rooms = roomsResponse == null || roomsResponse.getData() == null
-                ? List.of()
-                : roomsResponse.getData().stream()
-                .filter(room -> Boolean.TRUE.equals(room.getIsActive()))
-                .filter(room -> code.equals(room.getDepartmentCode()))
-                .filter(room -> "CONSULTATION".equalsIgnoreCase(room.getRoomType()))
-                .toList();
-        if (rooms.size() != 1) {
-            throw new BusinessException(409,
-                    "ROOM_CONFIGURATION_INVALID: Department must have exactly one active consultation room");
-        }
-        RoomResponse room = rooms.get(0);
-        ApiResponse<List<DoctorProfileResponse>> doctorsResponse = directoryClient.getDoctors(code);
-        List<DoctorProfileResponse> doctors = doctorsResponse == null || doctorsResponse.getData() == null
-                ? List.of()
-                : doctorsResponse.getData().stream()
-                .filter(doctor -> Boolean.TRUE.equals(doctor.getIsActive()))
-                .filter(doctor -> code.equals(doctor.getDepartmentCode()))
-                .filter(doctor -> room.getId().equals(doctor.getAssignedRoomId()))
-                .toList();
-        if (doctors.size() != 1) {
-            throw new BusinessException(409,
-                    "DOCTOR_CONFIGURATION_INVALID: Khoa/phòng phải có đúng một bác sĩ đang hoạt động");
-        }
-        DoctorProfileResponse doctor = doctors.get(0);
-        if (doctor.getUserId() == null) {
-            throw new BusinessException(409, "DOCTOR_CONFIGURATION_INVALID: Bác sĩ chưa liên kết Identity user");
-        }
-        return new DirectoryAssignment(directoryDepartment.getId(), room.getId(), room.getDisplayName(),
-                doctor.getUserId(), doctor.getFullName());
+        if(selected==null)throw new BusinessException(409,"Khung giờ đã đóng hoặc hết chỗ ở các phòng đủ điều kiện. Vui lòng tải lại lịch.");
+        return selected;
     }
 
     /**
@@ -522,7 +683,7 @@ public class AppointmentService {
             return null;
         }
         try {
-            return resolveDirectoryAssignment(appointment.getDepartment()).doctorUserId();
+            return resolveDirectoryAssignments(appointment.getDepartment(),null).stream().filter(a->a.roomId().equals(appointment.getRoomId())).map(DirectoryAssignment::doctorUserId).findFirst().orElse(null);
         } catch (RuntimeException ex) {
             log.warn("Cannot resolve current doctor assignment for legacy appointment {}", appointment.getId(), ex);
             return null;
@@ -561,7 +722,7 @@ public class AppointmentService {
         long booked = appointmentRepository
                 .countByRoomIdAndAppointmentDateAndTimeSlotAndStatusNot(
                         roomId, date, normalizedSlot, AppointmentStatus.CANCELLED);
-        int capacity = Math.max(1, maxAppointmentsPerSlot);
+        int capacity=roomSlots(roomId,date).stream().filter(item->item.timeSlot().equals(normalizedSlot)).mapToInt(RoomScheduleService.Slot::capacity).findFirst().orElse(0);
         if (booked >= capacity) {
             throw new BusinessException(409,
                     "Khung giờ " + normalizedSlot + " đã đủ " + capacity + " người đặt khám");
@@ -585,6 +746,7 @@ public class AppointmentService {
         if (AppConstants.ROLE_STAFF.equalsIgnoreCase(role)) {
             throw new BusinessException(403, "Staff phải truy cập lịch qua phạm vi phòng được phân công");
         }
+        if(AppConstants.ROLE_PATIENT.equalsIgnoreCase(role) && currentOwners!=null){currentOwners.require(appointment.getPatientId(),requesterUserId);return;}
         if (!AppConstants.ROLE_PATIENT.equalsIgnoreCase(role)
                 || !appointment.getOwnerUserId().equals(requesterUserId)) {
             throw new BusinessException(403, "Không có quyền truy cập lịch khám này");

@@ -16,7 +16,7 @@ import java.util.UUID;
 @Getter @Setter @NoArgsConstructor
 public class QueueConfig {
     @Id private UUID id;
-    @Column(name = "department_id", nullable = false, unique = true) private UUID departmentId;
+    @Column(name = "department_id", nullable = false) private UUID departmentId;
     @Column(name = "department_name_snapshot", nullable = false, length = 100) private String departmentNameSnapshot;
     @Column(name = "queue_prefix", nullable = false, length = 10) private String queuePrefix;
     @Column(name = "room_code", length = 50) private String roomCode;
@@ -31,6 +31,7 @@ public class QueueConfig {
     @Enumerated(EnumType.STRING) @Column(name = "normal_cursor", nullable = false) private NormalCursor normalCursor = NormalCursor.APPOINTMENT;
     @Enumerated(EnumType.STRING) @Column(name = "last_served_lane") private SchedulingLane lastServedLane;
     @Column(name = "is_active", nullable = false) private boolean active = true;
+    @Column(name="policy_version",nullable=false) private long policyVersion;
     @Version @Column(nullable = false) private long version;
     @CreationTimestamp @Column(name = "created_at", nullable = false, updatable = false) private Instant createdAt;
     @UpdateTimestamp @Column(name = "updated_at", nullable = false) private Instant updatedAt;

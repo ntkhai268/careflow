@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSFaceIDUsageDescription</key>
+	<string>CareFlow dùng Face ID để xác nhận đăng nhập trên điện thoại của bạn.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>
@@ -25,7 +27,7 @@
 	<key>CFBundleVersion</key>
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>NSCameraUsageDescription</key>
-	<string>CareFlow cần camera để quét QR check-in tại bệnh viện.</string>
+	<string>CareFlow dùng camera để quét QR check-in và đọc thông tin giấy tờ ngay trên điện thoại.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>CareFlow cần vị trí hiện tại để xác nhận bạn đang ở trong khuôn viên bệnh viện.</string>
 	<key>LSRequiresIPhoneOS</key>

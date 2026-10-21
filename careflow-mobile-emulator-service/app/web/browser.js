@@ -15,8 +15,12 @@
     let buffer = '';
     socket = new WebSocket(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/notifications`, ['v12.stomp']);
     report('connecting');
-    socket.onopen = () => {
-      socket.send(`CONNECT\naccept-version:1.2\nheart-beat:10000,10000\nAuthorization:Bearer ${token}\n\n\0`);
+    socket.onopen = async () => {
+      try {
+        const proof = await window.careflowProof({method:'GET',path:'/ws/notifications',token});
+        if (current !== generation || socket?.readyState !== WebSocket.OPEN) return;
+        socket.send(`CONNECT\naccept-version:1.2\nheart-beat:10000,10000\nAuthorization:Bearer ${token}\nDPoP:${proof}\n\n\0`);
+      } catch { report('error'); socket?.close(); }
     };
     socket.onmessage = event => {
       if (typeof event.data !== 'string') return;
@@ -77,7 +81,38 @@
       if (method === 'session') {
         const next = data.token || '';
         if (next !== token) { stop(); token = next; reportSession(Boolean(token)); if (token) connect(); else report('disconnected'); }
-      } else if (method === 'files') result = await files(data.imageOnly);
+      } else if (method === 'dpop') result = await window.careflowProof(data);
+      else if (method === 'passkeyCreate' || method === 'passkeyGet') {
+        if (!window.isSecureContext || !window.PublicKeyCredential) throw new Error('Trình duyệt này không hỗ trợ passkey. Hãy dùng localhost/HTTPS và trình duyệt mới.');
+        const options = typeof data.options === 'string' ? JSON.parse(data.options) : data.options;
+        const decode = value => Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(value.length / 4) * 4, '=')), c => c.charCodeAt(0));
+        const encode = value => btoa(String.fromCharCode(...new Uint8Array(value))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        const pk = options.publicKey;
+        pk.challenge = decode(pk.challenge);
+        if (pk.user) pk.user.id = decode(pk.user.id);
+        for (const item of [...(pk.allowCredentials || []), ...(pk.excludeCredentials || [])]) item.id = decode(item.id);
+        let credential;
+        try { credential = method === 'passkeyCreate' ? await navigator.credentials.create(options) : await navigator.credentials.get(options); }
+        catch (error) {
+          if (error.name === 'NotAllowedError') throw new Error('Chưa xác nhận passkey, đã hủy hoặc thiết bị không có khóa phù hợp.');
+          if (error.name === 'InvalidStateError') throw new Error('Passkey này đã được thiết lập cho tài khoản.');
+          throw error;
+        }
+        if (!credential) throw new Error('Không nhận được passkey.');
+        const r = credential.response;
+        result = {id: credential.id, rawId: encode(credential.rawId), type: credential.type,
+          clientExtensionResults: credential.getClientExtensionResults(),
+          response: {clientDataJSON: encode(r.clientDataJSON), ...(r.attestationObject ? {attestationObject: encode(r.attestationObject), transports: r.getTransports?.() || []} :
+            {authenticatorData: encode(r.authenticatorData), signature: encode(r.signature), userHandle: r.userHandle ? encode(r.userHandle) : null})}};
+      }
+      else if (method === 'download') {
+        const bytes = Uint8Array.from(atob(data.base64), c => c.charCodeAt(0));
+        const url = URL.createObjectURL(new Blob([bytes], {type: data.contentType || 'application/octet-stream'}));
+        const link = document.createElement('a'); link.href = url; link.download = data.name || 'tai-lieu';
+        document.body.append(link); link.click(); link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 30000);
+      }
+      else if (method === 'files') result = await files(data.imageOnly);
       else if (method === 'position') {
         result = await new Promise((resolve, reject) => {
           if (!navigator.geolocation) return reject(new Error('Trình duyệt không hỗ trợ định vị.'));

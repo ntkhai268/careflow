@@ -1,0 +1,2504 @@
+[
+  {
+    "actor": "doctor",
+    "path": "/api/auth/login",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations/doctor/d0000001-0000-0000-0000-000000000001/today",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/appointments/clinical-context/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/f0000001-0000-0000-0000-000000000001",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/f0000001-0000-0000-0000-000000000004",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/auth/login",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/rooms",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/hospital-check-in-qr",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/appointments/clinical-context/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations/doctor/d0000001-0000-0000-0000-000000000001",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations/5f0a2c7b-ec39-4e39-9083-bcf694df27cd",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/labs/services",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/prescriptions/medicines",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/prescriptions/consultation/5f0a2c7b-ec39-4e39-9083-bcf694df27cd",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/labs/orders/consultation/5f0a2c7b-ec39-4e39-9083-bcf694df27cd",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/appointments/clinical-context/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations/doctor/d0000001-0000-0000-0000-000000000001",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/call-next",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations/doctor/d0000001-0000-0000-0000-000000000001",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations/appointment/2e1b1d81-6cae-482d-94d0-15e64e47c174",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations",
+    "method": "POST",
+    "status": 201
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/entries/cf9b900b-cae3-4c60-8e5e-f822ccac4360/start",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations/d075ff76-ccd9-4716-b943-7524b794437c",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/labs/services",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/prescriptions/medicines",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/prescriptions/consultation/d075ff76-ccd9-4716-b943-7524b794437c",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/labs/orders/consultation/d075ff76-ccd9-4716-b943-7524b794437c",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations/d075ff76-ccd9-4716-b943-7524b794437c",
+    "method": "PUT",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/prescriptions",
+    "method": "POST",
+    "status": 201
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/prescriptions/76d1db18-56a8-45e1-a23b-cd81f3d7220c/confirm",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/auth/login",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/patients/user/4115c1c6-8845-4fd4-b057-4f3ec3d21c54",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/patients/user/4115c1c6-8845-4fd4-b057-4f3ec3d21c54/profiles",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations/d075ff76-ccd9-4716-b943-7524b794437c",
+    "method": "PUT",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/labs/orders/consultation/d075ff76-ccd9-4716-b943-7524b794437c",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations/d075ff76-ccd9-4716-b943-7524b794437c/complete",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/entries/cf9b900b-cae3-4c60-8e5e-f822ccac4360/complete",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/appointments/2e1b1d81-6cae-482d-94d0-15e64e47c174/status",
+    "method": "PUT",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/consultations/doctor/d0000001-0000-0000-0000-000000000001/today",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/appointments/clinical-context/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/f0000001-0000-0000-0000-000000000001",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/f0000001-0000-0000-0000-000000000004",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/call-next",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/prescriptions/76d1db18-56a8-45e1-a23b-cd81f3d7220c",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/entries/6d0189b2-6812-4d67-9ff8-40f8b44cf752/start",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/prescriptions/76d1db18-56a8-45e1-a23b-cd81f3d7220c",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/prescriptions/76d1db18-56a8-45e1-a23b-cd81f3d7220c/dispense",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 404
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 404
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 404
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 404
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/patients/user/4115c1c6-8845-4fd4-b057-4f3ec3d21c54/profiles",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/patients/user/4115c1c6-8845-4fd4-b057-4f3ec3d21c54",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/patients/user/4115c1c6-8845-4fd4-b057-4f3ec3d21c54/profiles",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/patients/user/4115c1c6-8845-4fd4-b057-4f3ec3d21c54/profiles",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db/cancel",
+    "method": "PUT",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/patients/user/4115c1c6-8845-4fd4-b057-4f3ec3d21c54/profiles",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/patients/user/4115c1c6-8845-4fd4-b057-4f3ec3d21c54/profiles",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/departments",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/time-slots/availability",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments",
+    "method": "POST",
+    "status": 201
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 404
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/appointments/clinical-context/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/rooms",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/hospital-check-in-qr",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/check-in",
+    "method": "POST",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/appointments/clinical-context/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/rooms",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/hospital-check-in-qr",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/directory/staff/55555555-5555-5555-5555-555555555555/room-access",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/auth/me",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/patients/user/4115c1c6-8845-4fd4-b057-4f3ec3d21c54",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/patients/user/4115c1c6-8845-4fd4-b057-4f3ec3d21c54/profiles",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/labs/orders/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/prescriptions/consultation/72e2303c-a82e-4f7a-b542-064f8a986918",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/labs/orders/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/prescriptions/consultation/72e2303c-a82e-4f7a-b542-064f8a986918",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/labs/orders/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/prescriptions/consultation/72e2303c-a82e-4f7a-b542-064f8a986918",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/tickets/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/consultations/appointment/fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/labs/orders/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/prescriptions/consultation/72e2303c-a82e-4f7a-b542-064f8a986918",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/notifications",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "patient",
+    "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "doctor",
+    "path": "/api/queues/rooms/ROOM-01/active",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/queues/rooms/ROOM-01/reception",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/8a012403-400e-4428-bb08-ce72d49a715a/operational-summary",
+    "method": "GET",
+    "status": 200
+  },
+  {
+    "actor": "staff",
+    "path": "/api/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/operational-summary",
+    "method": "GET",
+    "status": 200
+  }
+]

@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:biometric_storage/biometric_storage.dart' show AuthException;
 import '../services/auth_service.dart';
 import '../services/push_notification_service.dart';
 import '../utils/api_error_message.dart';
@@ -113,6 +114,43 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> alternativeLogin(
+    String method,
+    String username,
+    String question,
+    String answer,
+  ) async {
+    state = const AuthState(status: AuthStatus.loading);
+    try {
+      if (method == 'biometric') {
+        await _authService.biometricLogin();
+      } else {
+        await _authService.questionLogin(username, question, answer);
+      }
+      await checkAuthStatus();
+      if (state.status != AuthStatus.authenticated) {
+        throw Exception(
+          'Không xác minh được phiên đăng nhập. Vui lòng thử lại.',
+        );
+      }
+    } catch (error) {
+      state = AuthState(
+        status: AuthStatus.error,
+        errorMessage: error is AuthException
+            ? 'Đã hủy hoặc chưa xác thực được sinh trắc học. Hãy thử lại hoặc dùng mật khẩu.'
+            : ApiErrorMessage.from(
+                error,
+                fallback: 'Không đăng nhập được. Vui lòng thử lại.',
+              ),
+      );
+    }
+  }
+
+  Future<void> lockSession() async {
+    state = const AuthState(status: AuthStatus.unauthenticated);
+    await _authService.lockSession();
+  }
+
   /// Register
   Future<void> register({
     required String username,
@@ -147,8 +185,17 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Logout
   Future<void> logout() async {
-    await _pushNotifications?.unbindAuthenticatedSession();
-    await _authService.logout();
+    state = const AuthState(status: AuthStatus.loading);
+    try {
+      await _pushNotifications?.unbindAuthenticatedSession();
+    } catch (_) {
+      /* Local logout must still remove authentication data. */
+    }
+    try {
+      await _authService.logout();
+    } catch (_) {
+      /* AuthService clears local credentials even when offline. */
+    }
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 

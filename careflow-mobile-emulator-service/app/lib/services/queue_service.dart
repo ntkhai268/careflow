@@ -22,15 +22,23 @@ class QueueService {
   final ApiService _api;
 
   Future<VisitTicket> getTicket(String appointmentId) async {
-    try {
-      final response = await _api.get(
-        '${ApiConfig.queues}/tickets/appointment/$appointmentId',
-      );
-      return VisitTicket.fromJson(
-        Map<String, dynamic>.from(response.data['data'] as Map),
-      );
-    } on DioException catch (error) {
-      throw _mapError(error, notFound: 'Phiếu khám đang được hệ thống cấp.');
+    // Ticket creation follows AppointmentConfirmed through the outbox/broker.
+    // Brief 404s mean the real consumer has not committed yet; never invent a ticket.
+    for (var attempt = 0; ; attempt++) {
+      try {
+        final response = await _api.get(
+          '${ApiConfig.queues}/tickets/appointment/$appointmentId',
+        );
+        return VisitTicket.fromJson(
+          Map<String, dynamic>.from(response.data['data'] as Map),
+        );
+      } on DioException catch (error) {
+        if (error.response?.statusCode == 404 && attempt < 5) {
+          await Future<void>.delayed(const Duration(milliseconds: 300));
+          continue;
+        }
+        throw _mapError(error, notFound: 'Phiếu khám đang được hệ thống cấp. Vui lòng tải lại.');
+      }
     }
   }
 

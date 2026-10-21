@@ -1,5 +1,8 @@
 # Danh mục Use Case CareFlow
 
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Bộ tám use case lâm sàng MVP là một phần của phạm vi; đăng ký/Auth/định danh, walk-in, Analytics và AI được bổ sung trong ma trận R0.
+
+
 > Danh mục chuẩn cho Chương 3. Use Case được mô tả theo mục tiêu của tác nhân,
 > không ánh xạ máy móc mỗi endpoint thành một Use Case.
 
@@ -33,9 +36,7 @@
 | `UC-CFG-01` | Duy trì khoa, phòng và điểm phục vụ | Bộ phận quản lý bệnh viện | Tóm tắt/thiết kế mục tiêu |
 | `UC-CFG-02` | Duy trì lịch làm việc, slot và capacity | Bộ phận quản lý bệnh viện | Tóm tắt/thiết kế mục tiêu |
 
-Xác thực, làm mới phiên và phân quyền là yêu cầu nền tảng/tiền điều kiện. Chúng
-được thiết kế và kiểm thử ở phần bảo mật, không được dùng làm Use Case nghiệp
-vụ cốt lõi.
+Xác thực/làm mới phiên/phân quyền vẫn là tiền điều kiện của luồng lâm sàng; đăng ký, khôi phục, quản trị tài khoản và đối chiếu danh tính có use case và nghiệm thu riêng trong R0. Danh mục tám use case lâm sàng không thay thế danh mục yêu cầu đầy đủ.
 
 ## 2. Tám Use Case cốt lõi trình bày đầy đủ
 
@@ -163,3 +164,7 @@ trạng thái; Use Case này không làm tăng số Use Case cốt lõi cần v�
   thuốc` để quyết toán cuối lượt trước khi xác nhận cấp phát.
 
 Không lạm dụng `include`/`extend` cho các bước kỹ thuật nội bộ hoặc lời gọi API.
+
+## Bổ sung phạm vi R0
+
+Danh mục chuẩn gồm 22 use case có actor, tiền/hậu điều kiện, luồng chính, lỗi, service và gate: [đặc tả R0](../../../.planning/architecture/01-requirements-use-cases.md). Đọc bảng CURRENT/TARGET trước tích hợp: catalog/giá đã lấy API và snapshot server; booking native dùng thật không tạo ONLINE_MOCK; walk-in/requeue/config còn phần thiếu; định danh dùng đối chiếu trực tiếp; Analytics/AI vẫn bắt buộc cho bàn giao cuối.

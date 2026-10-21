@@ -50,7 +50,6 @@ class AuthState {
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthService _authService;
   final PushNotificationService? _pushNotifications;
-
   AuthNotifier(this._authService, [this._pushNotifications])
     : super(const AuthState());
 
@@ -105,11 +104,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
         status: AuthStatus.error,
         errorMessage: ApiErrorMessage.from(
           e,
-          fallback:
-              'Đăng nhập thất bại. Vui lòng kiểm tra thông tin và thử lại.',
+          fallback: 'Đăng nhập thất bại. Vui lòng thử lại.',
           unauthorized: 'Tên đăng nhập hoặc mật khẩu không đúng.',
         ),
       );
+    }
+  }
+
+  Future<void> alternativeLogin(String method, String username, String question, String answer) async {
+    state = const AuthState(status: AuthStatus.loading);
+    try {
+      await _authService.alternativeLogin(method, username, question, answer);
+      await checkAuthStatus();
+    } catch (e) {
+      state = AuthState(status: AuthStatus.error, errorMessage: ApiErrorMessage.from(e));
     }
   }
 

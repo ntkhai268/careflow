@@ -63,7 +63,11 @@ class _MainShellState extends ConsumerState<MainShell> {
       );
     }
     _currentIndex = widget.initialIndex.clamp(0, 4);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      if (ref.read(authProvider).status == AuthStatus.initial) {
+        await ref.read(authProvider.notifier).checkAuthStatus();
+      }
       if (!mounted) return;
       final patientState = ref.read(patientProvider);
       if (!patientState.isLoading && patientState.patient == null) {

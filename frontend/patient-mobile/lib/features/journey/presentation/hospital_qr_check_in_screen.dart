@@ -81,6 +81,7 @@ class _HospitalQrCheckInScreenState
     } catch (error) {
       if (!mounted) return;
       final locationPermission = await Geolocator.checkPermission();
+      if (!mounted) return;
       setState(() {
         _isProcessing = false;
         _locationRequiresSettings =
@@ -112,7 +113,10 @@ class _HospitalQrCheckInScreenState
     }
 
     return Geolocator.getCurrentPosition(
-      locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      locationSettings: const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        timeLimit: Duration(seconds: 20),
+      ),
     );
   }
 

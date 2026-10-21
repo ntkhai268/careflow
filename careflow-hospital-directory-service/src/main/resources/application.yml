@@ -4,8 +4,11 @@ server:
 spring:
   application:
     name: hospital-directory-service
+  flyway:
+    baseline-on-migrate: true
+    baseline-version: 0
   datasource:
-    url: jdbc:postgresql://localhost:5432/careflow_hospital_directory
+    url: ${DIRECTORY_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_hospital_directory}
     username: careflow
     password: careflow
   jpa:

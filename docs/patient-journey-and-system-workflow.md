@@ -1,5 +1,8 @@
 # Hành trình khám ngoại trú và vai trò của hệ thống CareFlow
 
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Các đoạn ONLINE_MOCK/quyết toán bên dưới là thiết kế demo lịch sử, không mô tả thanh toán thật của bản native16.
+
+
 > Phiên bản nghiệp vụ đã thống nhất ngày 30/07/2026, cập nhật mô hình Queue ngày
 > 03/08/2026, luồng thanh toán Mobile ngày 04/08/2026 và mô hình tự chi trả hai
 > giai đoạn ngày 05/08/2026.
@@ -1234,3 +1237,11 @@ Hệ thống được coi là hoàn thành luồng chính khi:
 - Ký số y tế production-grade.
 - AI tự chẩn đoán hoặc tự kê toa.
 - Thuật toán điều phối ưu tiên ở quy mô toàn bệnh viện hoặc liên phòng.
+
+## 23. Bàn giao trách nhiệm giữa bác sĩ — 16/10/2026
+
+Trong cùng khoa/phòng, bác sĩ đang phụ trách gửi yêu cầu kèm lý do và SBAR; bác sĩ nhận đọc/trao đổi rồi xác nhận tiếp nhận. Trách nhiệm chỉ chuyển sau xác nhận thành công. Từ chối/hủy giữ nguyên người phụ trách. Không tạo lại lịch, phiếu hoặc check-in và không thay số thứ tự. Giữ nguyên tác giả ca gốc, chỉ định và toa đã lập.
+
+ADMIN quản lý quyền điều phối chuyên môn theo ủy quyền của bệnh viện, không ký nhận chuyên môn thay bác sĩ. Bác sĩ được cấp quyền điều phối có thể khởi tạo yêu cầu tiếp quản ngoại lệ cùng phòng với lý do; người nhận vẫn phải xác nhận. Luồng chuyển khoa/chuyển viện khác với bàn giao này. Quy trình trực/ủy quyền cụ thể vẫn do cơ sở quy định.
+
+Phòng có nhiều bác sĩ cần cấu hình một người nhận lịch mặc định; bác sĩ nhận bàn giao không tự thay bác sĩ trên lịch hẹn ban đầu. Chi tiết quyền, API, giới hạn và đồng thời tại contract Consultation v1.2.

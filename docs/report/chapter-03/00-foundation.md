@@ -1,5 +1,8 @@
 # Nguồn sự thật cho Chương 3 — Phân tích và thiết kế hệ thống
 
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Bộ tám use case lâm sàng MVP là một phần của phạm vi; đăng ký/Auth/định danh, walk-in, Analytics và AI được bổ sung trong ma trận R0.
+
+
 > Phiên bản: 1.3 — cập nhật quyết toán tự chi trả hai giai đoạn ngày 05/08/2026
 > Phạm vi: CareFlow MVP hỗ trợ hành trình khám ngoại trú
 > Trạng thái: baseline dùng chung cho nội dung và biểu đồ các giai đoạn sau

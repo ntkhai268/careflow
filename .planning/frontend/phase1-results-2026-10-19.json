@@ -1,0 +1,36 @@
+{
+  "checkedAt": "2026-10-19T04:49:08.804364+00:00",
+  "scope": "MOB-01 through MOB-04; local test deployment",
+  "appVersion": "1.0.0 (11)",
+  "installed": true,
+  "launched": true,
+  "backendTests": {
+    "tests": 754,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "fullReactorTests": 752,
+  "additionalRetirementTests": 2,
+  "flutterPassed": 207,
+  "flutterSkipped": 13,
+  "separateDownloadHttpFixturePassed": 1,
+  "flutterAnalyze": {
+    "errors": 0,
+    "warnings": 0,
+    "preExistingStyleInfo": 2
+  },
+  "webTypecheck": "PASS",
+  "webBuild": "PASS",
+  "liveApiGroups": 12,
+  "browserPrimaryChecks": 5,
+  "nativeViewerShareAcceptance": "PENDING_USER",
+  "nativeDeviceAndBookingUiAcceptance": "PENDING_USER",
+  "remoteDbTouched": false,
+  "productionDeployed": false,
+  "aiChanged": false,
+  "resendKeyChanged": false,
+  "committed": false,
+  "pushed": false,
+  "staleReportCasesExcluded": 6
+}

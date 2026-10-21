@@ -29,6 +29,7 @@ class DirectoryServiceStaffAssignmentTest {
     @Mock RoomRepository rooms;
     @Mock DoctorProfileRepository doctors;
     @Mock StaffAssignmentRepository assignments;
+    @Mock StaffIdentityVerifier identity;
 
     @InjectMocks
     DirectoryService directoryService;

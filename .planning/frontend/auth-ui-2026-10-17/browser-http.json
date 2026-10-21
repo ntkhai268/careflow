@@ -1,0 +1,125 @@
+{
+  "mock": false,
+  "requests": [
+    {
+      "path": "/api/auth/login/question",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login-methods",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login-methods",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login-methods/question",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "path": "/api/auth/login-methods/question",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login-methods",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/recovery/question",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login/question",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login-methods",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login-methods/question",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login-methods",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/recovery/question",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/passkeys/login/options",
+      "method": "POST",
+      "status": 401
+    }
+  ]
+}

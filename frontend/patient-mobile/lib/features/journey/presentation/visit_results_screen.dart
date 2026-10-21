@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../../config/theme.dart';
 import '../application/journey_providers.dart';
+import 'walk_in_results.dart';
 
 /// Patient-facing history of completed visits and their clinical outcomes.
 class VisitResultsScreen extends ConsumerWidget {
@@ -13,38 +14,55 @@ class VisitResultsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final results = ref.watch(visitResultsProvider);
-    return Scaffold(
-      appBar: AppBar(title: const Text('Kết quả khám')),
-      body: results.when(
-        loading: () => const _ResultsLoadingState(),
-        error: (_, _) => _ResultsErrorState(
-          onRetry: () => ref.invalidate(visitResultsProvider),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Kết quả khám'),
+          bottom: const TabBar(
+            tabs: [
+              Tab(text: 'Theo lịch hẹn'),
+              Tab(text: 'Khám không hẹn'),
+            ],
+          ),
         ),
-        data: (journeys) => journeys.isEmpty
-            ? const _ResultsEmptyState()
-            : RefreshIndicator(
-                onRefresh: () async => ref.refresh(visitResultsProvider.future),
-                child: ListView.separated(
-                  physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(
-                    AppSpacing.base,
-                    AppSpacing.base,
-                    AppSpacing.base,
-                    AppSpacing.xxxl,
-                  ),
-                  itemCount: journeys.length,
-                  separatorBuilder: (_, _) =>
-                      const SizedBox(height: AppSpacing.md),
-                  itemBuilder: (context, index) => _VisitResultCard(
-                    key: ValueKey(journeys[index].journey.appointmentId),
-                    result: journeys[index],
-                    onTap: () => context.push(
-                      '/journey/${journeys[index].journey.appointmentId}/outcome',
-                      extra: journeys[index].journey,
-                    ),
-                  ),
-                ),
+        body: TabBarView(
+          children: [
+            results.when(
+              loading: () => const _ResultsLoadingState(),
+              error: (_, _) => _ResultsErrorState(
+                onRetry: () => ref.invalidate(visitResultsProvider),
               ),
+              data: (journeys) => journeys.isEmpty
+                  ? const _ResultsEmptyState()
+                  : RefreshIndicator(
+                      onRefresh: () async =>
+                          ref.refresh(visitResultsProvider.future),
+                      child: ListView.separated(
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        padding: const EdgeInsets.fromLTRB(
+                          AppSpacing.base,
+                          AppSpacing.base,
+                          AppSpacing.base,
+                          AppSpacing.xxxl,
+                        ),
+                        itemCount: journeys.length,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(height: AppSpacing.md),
+                        itemBuilder: (context, index) => _VisitResultCard(
+                          key: ValueKey(journeys[index].journey.appointmentId),
+                          result: journeys[index],
+                          onTap: () => context.push(
+                            '/journey/${journeys[index].journey.appointmentId}/outcome',
+                            extra: journeys[index].journey,
+                          ),
+                        ),
+                      ),
+                    ),
+            ),
+            const WalkInResults(),
+          ],
+        ),
       ),
     );
   }

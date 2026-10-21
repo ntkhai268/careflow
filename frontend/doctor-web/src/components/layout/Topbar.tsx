@@ -11,6 +11,8 @@ import HelpModal from "../modals/HelpModal";
 const BREADCRUMB_MAP: Record<string, string> = {
   "/dashboard/general": "Tổng quan Khám bệnh",
   "/dashboard/queue": "Hàng đợi Khám bệnh",
+  "/dashboard/handovers": "Bàn giao ca khám",
+  "/admin/handovers": "Quyền điều phối bàn giao",
   "/dashboard/prescriptions": "Quản lý Đơn thuốc",
   "/admin": "Tổng quan Quản trị",
   "/admin/accounts": "Quản lý Tài khoản",
@@ -163,10 +165,10 @@ export default function Topbar() {
 
               <div className="hidden sm:block">
                 <p className="text-xs font-semibold text-gray-800 leading-tight">
-                  {user?.fullName || "BS. Nguyễn Văn An"}
+                  {user?.fullName || user?.username || user?.email || "Tài khoản"}
                 </p>
                 <p className="text-[10px] text-gray-400 leading-tight">
-                  {user?.department || "Nội tổng quát"}
+                  {user?.department || user?.role || ""}
                 </p>
               </div>
 
@@ -186,8 +188,8 @@ export default function Topbar() {
               <div className="absolute right-0 mt-2 w-64 rounded-xl bg-white shadow-xl border border-gray-100 py-2 text-left z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                 {/* Doctor Brief Info */}
                 <div className="px-4 py-2.5 border-b border-gray-100">
-                  <p className="text-xs font-bold text-gray-900">{user?.fullName || "BS. Nguyễn Văn An"}</p>
-                  <p className="text-[10px] text-indigo-600 font-medium">{user?.title || "BS. CKI - Khoa Nội tổng quát"}</p>
+                  <p className="text-xs font-bold text-gray-900">{user?.fullName || user?.username || user?.email || "Tài khoản"}</p>
+                  <p className="text-[10px] text-indigo-600 font-medium">{user?.title || user?.role || ""}</p>
                   <div className="mt-2 flex items-center justify-between pt-2 border-t border-gray-50">
                     <span className="text-[10px] text-gray-400">Trạng thái làm việc:</span>
                     <button
@@ -203,6 +205,7 @@ export default function Topbar() {
 
                 {/* Menu items */}
                 <div className="py-1">
+                  <Link href="/account/security" onClick={() => setShowUserDropdown(false)} className="block px-4 py-2 text-xs text-gray-700 hover:bg-purple-50 hover:text-purple-700">Hình thức đăng nhập</Link>
                   <button
                     onClick={() => { setShowUserDropdown(false); setShowProfileModal(true); }}
                     className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2.5 transition-colors"

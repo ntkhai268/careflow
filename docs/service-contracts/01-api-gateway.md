@@ -1,13 +1,16 @@
 # API Gateway Service Contract
 
-> Contract ID: `CF-SVC-01` | Version: `1.0` | Module: `careflow-api-gateway`
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Các đoạn MVP/mock cũ phải đọc theo giới hạn và thay đổi tại R0; không loại Analytics/AI khỏi yêu cầu cuối.
+
+
+> Contract ID: `CF-SVC-01` | Version: `2.0` | Module: `careflow-api-gateway`
 
 ## 1. Trách nhiệm
 
 - Là điểm vào duy nhất của Patient Mobile, Doctor Web và Staff/Lab Web.
-- Xác thực JWT, loại bỏ identity header giả và gắn trusted headers.
+- Xác minh phiên online với Identity, loại bỏ identity/caller header giả và gắn định danh đã xác minh.
 - Tạo hoặc chuẩn hóa correlation ID.
-- Route request đến đúng service qua Eureka.
+- Route request đến đúng service; profile `secure` dùng danh sách HTTPS nội bộ cấu hình trước và mTLS.
 - Áp dụng CORS, giới hạn kích thước request, timeout và response bảo mật thống nhất.
 
 Không chứa nghiệp vụ đặt lịch, queue, hồ sơ, toa thuốc hoặc dữ liệu domain. Không gọi database domain.
@@ -36,25 +39,26 @@ POST /api/auth/login
 POST /api/auth/refresh
 POST /api/auth/logout
 OPTIONS /**
+GET /api/auth/jwks
 GET /actuator/health/**
-GET /v3/api-docs/**
-GET /swagger-ui/**
 WebSocket handshake /ws/**
 ```
 
-Mọi endpoint khác phải có Bearer token hợp lệ.
+Catalog GET được allowlist cụ thể trong filter; không mở toàn bộ `/api/directory/**`. Swagger bị tắt trong profile `secure`. Mọi endpoint được bảo vệ cần Bearer token và DPoP proof hợp lệ. WebSocket handshake chưa cấp quyền: CONNECT phải xác thực token/proof.
 
 ## 3. Security contract
 
 Gateway phải:
 
-1. Xóa `X-User-Id`, `X-User-Role`, `X-Correlation-Id` do client gửi.
-2. Verify signature, issuer, expiry và role của JWT.
-3. Gắn `X-User-Id` từ `sub`, `X-User-Role` từ claim `role`.
+1. Xóa identity header và mọi `X-Careflow-Caller*`, `X-Careflow-Delegated-*`, `X-Careflow-Request-*` do client gửi.
+2. Gọi Identity qua HTTPS/mTLS bằng caller credential riêng. Identity kiểm tra RS256, kid, issuer, audience, expiry và trạng thái phiên/user hiện tại trong DB. Gateway không giữ private key ký JWT.
+3. Gắn `X-User-Id`, `X-User-Role` từ kết quả đã xác minh; chuyển tiếp nguyên Bearer token/DPoP để resource service kiểm tra độc lập và tiêu thụ proof đúng một lần.
 4. Giữ correlation ID hợp lệ dạng UUID hoặc sinh UUID mới.
 5. Trả `401` theo `ApiResponse` nếu token thiếu/sai/hết hạn.
 
-Downstream vẫn chịu trách nhiệm authorization và ownership. Gateway không thay thế kiểm tra nghiệp vụ.
+Downstream vẫn kiểm tra phiên online, proof hoặc service delegation đã xác minh, role, ownership và phân công. Header định danh không phải credential. Identity không truy cập được thì trả 503, không cho thực hiện command.
+
+Breaking migration từ v1: client phải tạo khóa P-256 và gửi DPoP; phiên cũ phải đăng nhập lại. Chi tiết: [security protocol](../../.planning/security/security-runbook.md).
 
 ## 4. Failure behavior
 

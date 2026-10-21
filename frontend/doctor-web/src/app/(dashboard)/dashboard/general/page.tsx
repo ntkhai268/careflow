@@ -6,16 +6,18 @@ import { useRouter } from "next/navigation";
 import { consultationApi, ConsultationResponse } from "@/lib/consultation-api";
 import { queueApi } from "@/lib/queue-api";
 import { patientApi } from "@/lib/patient-api";
+import { appointmentApi } from "@/lib/appointment-api";
 import { getErrorMessage } from "@/lib/error-utils";
 import Link from "next/link";
+import { patientAge, visitTime } from "@/lib/patient-display";
 
 interface DisplayQueuePatient {
   entryId: string;
   queueNo: string;
-  appointmentId: string;
+  appointmentId: string | null;
   patientId: string;
   name: string;
-  age: number;
+  age: number | null;
   department: string;
   status: string;
   time: string;
@@ -51,7 +53,7 @@ export default function DashboardGeneralPage() {
   const [queuePatients, setQueuePatients] = useState<DisplayQueuePatient[] | null>(null);
   const [recentCompleted, setRecentCompleted] = useState<ConsultationResponse[] | null>(null);
   const [patientNames, setPatientNames] = useState<Record<string, string>>({});
-  const [waitingCount, setWaitingCount] = useState<number>(0);
+  const [waitingCount, setWaitingCount] = useState<number|null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeNotice, setActiveNotice] = useState<{
     show: boolean;
@@ -72,6 +74,7 @@ export default function DashboardGeneralPage() {
     async function loadDashboardData() {
       if (!user?.id) return;
       setIsLoading(true);
+      setErrorMessage("");
       try {
         if (isLabTech) {
           try {
@@ -84,14 +87,13 @@ export default function DashboardGeneralPage() {
               appointmentId: e.appointmentId,
               patientId: e.patientId,
               name: `Bệnh nhân (${e.patientId.slice(0, 6)})`,
-              age: 30,
+              age: null,
               department: "Khu Xét nghiệm Cận lâm sàng",
               status: e.queueStatus,
-              time: e.scheduledStartAt ? e.scheduledStartAt.slice(11, 16) : "08:30"
+              time: visitTime(e.scheduledStartAt)
             })));
-          } catch {
-            setWaitingCount(0);
-            setQueuePatients([]);
+          } catch(error) {
+            setWaitingCount(null);setQueuePatients(null);throw error;
           }
           setRecentCompleted([]);
         } else if (isStaff) {
@@ -105,14 +107,13 @@ export default function DashboardGeneralPage() {
               appointmentId: e.appointmentId,
               patientId: e.patientId,
               name: `Bệnh nhân (${e.patientId.slice(0, 6)})`,
-              age: 40,
+              age: null,
               department: "Quầy Phát thuốc",
               status: e.queueStatus,
-              time: e.scheduledStartAt ? e.scheduledStartAt.slice(11, 16) : "08:30"
+              time: visitTime(e.scheduledStartAt)
             })));
-          } catch {
-            setWaitingCount(0);
-            setQueuePatients([]);
+          } catch(error) {
+            setWaitingCount(null);setQueuePatients(null);throw error;
           }
           setRecentCompleted([]);
         } else {
@@ -122,9 +123,13 @@ export default function DashboardGeneralPage() {
           setRecentCompleted(completedList);
 
           const pNames: Record<string, string> = {};
+          const pAges: Record<string, number|null> = {};
 
           try {
-            const queueRes = await queueApi.getRoomActive("ROOM-01");
+            const contextRes = await appointmentApi.getClinicalContext();
+            const assignedRoomId = contextRes.data?.rooms?.[0]?.roomId;
+            if (!assignedRoomId) throw new Error("Bác sĩ chưa được phân công phòng khám.");
+            const queueRes = await queueApi.getRoomActive(assignedRoomId);
             const activeEntries = queueRes.data?.entries || [];
             setWaitingCount(activeEntries.length);
 
@@ -134,6 +139,7 @@ export default function DashboardGeneralPage() {
                 try {
                   const pRes = await patientApi.getPatientById(e.patientId);
                   if (pRes.data?.fullName) pNames[e.patientId] = pRes.data.fullName;
+                  pAges[e.patientId] = patientAge(pRes.data?.dateOfBirth);
                 } catch {
                   pNames[e.patientId] = `Bệnh nhân (${e.patientId.slice(0, 8)})`;
                 }
@@ -146,14 +152,15 @@ export default function DashboardGeneralPage() {
               appointmentId: e.appointmentId,
               patientId: e.patientId,
               name: pNames[e.patientId] || `Bệnh nhân (${e.patientId.slice(0, 8)})`,
-              age: 35,
-              department: queueRes.data?.departmentName || "Nội tổng quát",
+              age: pAges[e.patientId] ?? null,
+              department: queueRes.data?.departmentName || "Chưa xác định khoa",
               status: e.queueStatus,
-              time: e.scheduledStartAt ? e.scheduledStartAt.slice(11, 16) : "09:00"
+              time: visitTime(e.scheduledStartAt)
             })));
-          } catch {
-            setWaitingCount(0);
-            setQueuePatients([]);
+          } catch (error) {
+            setWaitingCount(null);
+            setQueuePatients(null);
+            throw error;
           }
 
           for (const c of completedList) {
@@ -168,14 +175,18 @@ export default function DashboardGeneralPage() {
           }
           setPatientNames(pNames);
         }
-      } catch { /* outer silent */ } finally {
+      } catch (error) {
+        setWaitingCount(null);setRecentCompleted(null);
+        setErrorMessage(getErrorMessage(error, "Không thể tải dữ liệu khám bệnh. Vui lòng thử lại."));
+        setQueuePatients(null);
+      } finally {
         setIsLoading(false);
       }
     }
     loadDashboardData();
   }, [user, isLabTech, isStaff]);
 
-  const handleCallPatient = async (patientId: string, appointmentId: string) => {
+  const handleCallPatient = async (patientId: string, appointmentId: string | null) => {
     if (!user) return;
 
     const queueEntry = (queuePatients ?? []).find(entry =>
@@ -205,10 +216,15 @@ export default function DashboardGeneralPage() {
       const consRes = await consultationApi.getByDoctor(user.id);
       const activeCons = (consRes.data || []).find(c => c.status === "IN_PROGRESS");
       const isSameConsultation = activeCons && (
-        activeCons.patientId === patientId || activeCons.appointmentId === appointmentId
+        activeCons.queueEntryId === entryId || (!!appointmentId && activeCons.appointmentId === appointmentId)
       );
 
       if (activeCons && !isSameConsultation) {
+        setActiveNotice({
+          show: true,
+          message: "Bạn đang có một ca khám chưa hoàn tất. Vào ca khám để xử lý trước khi gọi bệnh nhân khác.",
+          consultationId: activeCons.id,
+        });
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
             detail: {
@@ -234,12 +250,8 @@ export default function DashboardGeneralPage() {
         return;
       }
 
-      const appointmentConsultations = await consultationApi.getByAppointment(appointmentId);
-      let consultation = (appointmentConsultations.data ?? []).find(c => c.status === "IN_PROGRESS");
-      if (!consultation) {
-        const res = await consultationApi.createConsultation({ appointmentId, patientId, doctorId: user.id });
-        consultation = res.data;
-      }
+      const created = await consultationApi.createConsultation({ appointmentId,queueEntryId:entryId,patientId,doctorId:user.id });
+      const consultation=created.data;
       if (queueEntry.status === "CALLED") {
         await queueApi.startEntry(entryId);
       }
@@ -331,7 +343,7 @@ export default function DashboardGeneralPage() {
           </div>
           <div>
             <p className="text-[10px] text-gray-400 font-medium">Đang chờ</p>
-            <p className="text-lg font-bold text-gray-900">{waitingCount}</p>
+            <p className="text-lg font-bold text-gray-900">{waitingCount ?? "—"}</p>
           </div>
         </div>
 
@@ -344,7 +356,7 @@ export default function DashboardGeneralPage() {
           </div>
           <div>
             <p className="text-[10px] text-gray-400 font-medium">Hoàn tất</p>
-            <p className="text-lg font-bold text-gray-900">{(recentCompleted ?? []).length}</p>
+            <p className="text-lg font-bold text-gray-900">{isStaff||isLabTech||recentCompleted===null?"—":recentCompleted.length}</p>
           </div>
         </div>
 
@@ -379,7 +391,7 @@ export default function DashboardGeneralPage() {
               <h2 className="text-sm font-bold text-gray-800">
                 {isLabTech ? "Hàng đợi Cận lâm sàng" : isStaff ? "Hàng đợi Phát thuốc" : "Hàng đợi khám cần xử lý"}
               </h2>
-              {waitingCount > 0 && (
+              {(waitingCount ?? 0) > 0 && (
                 <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">
                   {waitingCount}
                 </span>
@@ -461,7 +473,7 @@ export default function DashboardGeneralPage() {
                           <span className="font-semibold text-gray-800">{patient.name}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-gray-500">{patient.age}</td>
+                      <td className="px-5 py-3 text-gray-500">{patient.age ?? "—"}</td>
                       <td className="px-5 py-3 text-gray-500 font-mono">{patient.time}</td>
                       <td className="px-5 py-3"><StatusDot status={patient.status} /></td>
                       <td className="px-5 py-3 text-right">

@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-10-15 23:20:14 +0700",
+  "sourceBranch": "feature/dangkhoii/security-integration",
+  "apiChecks": 35,
+  "backendAndUiHealthChecks": 14,
+  "datasetBrowserChecks": 7,
+  "hospitalBrowserChecks": 4,
+  "sourceSha256": {
+    "scripts/mac-demo/verify.mjs": "77b1a946c09be45d1e0f5301aa2025af17da8b35d1b6e25b254cb297d362b278",
+    "scripts/mac-demo/demo.py": "5320fdef33a2d4c418e901bc477225af7c898f8b5d34ea2ca2eab481fbb8a637",
+    "start-mac-demo.command": "7d42d92b008181749911a8e0dd505c78d6393e10717714e138a00aa34f56989e",
+    "check-mac-demo.command": "f356099939847237de4e2bf088c5794c9ba27e9006cbbbdc75813da985c6ec0b",
+    ".planning/security/mac-demo-guide.md": "1c4a0bb7827a227d35f9b9a800b69641b12849b9fbc60be6b4b60406b5b28f02"
+  }
+}

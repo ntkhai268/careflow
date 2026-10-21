@@ -25,8 +25,23 @@ public class RefreshToken {
     @Column(name = "token_hash", nullable = false, unique = true, length = 64)
     private String tokenHash;
 
+    @Column(name = "dpop_jkt", length = 43)
+    private String dpopJkt;
+
     @Column(name = "expires_at", nullable = false)
     private Instant expiresAt;
+
+    @Column(name = "authentication_method", nullable = false, length = 16)
+    private String authenticationMethod="PASSWORD";
+
+    @Column(name = "absolute_expires_at", nullable = false)
+    private Instant absoluteExpiresAt;
+
+    @Column(name = "authenticated_at", nullable = false)
+    private Instant authenticatedAt=Instant.now();
+
+    @Column(name = "last_interactive_at", nullable = false)
+    private Instant lastInteractiveAt=authenticatedAt;
 
     @Column(name = "revoked_at")
     private Instant revokedAt;

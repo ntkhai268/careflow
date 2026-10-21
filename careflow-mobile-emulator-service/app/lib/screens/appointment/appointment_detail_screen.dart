@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 import '../../config/theme.dart';
 import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
+import '../../providers/patient_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../services/patient_service.dart';
 import '../../models/appointment_payment.dart';
 import '../../services/appointment_service.dart';
 import '../../services/appointment_payment_store.dart';
@@ -30,20 +33,33 @@ class _AppointmentDetailScreenState
   bool _isLoading = true;
   bool _isCancelling = false;
   String? _error;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadAppointment();
+    Future.microtask(() async {
+      if (!mounted) return;
+      if (ref.read(authProvider).status == AuthStatus.initial) {
+        await ref.read(authProvider.notifier).checkAuthStatus();
+      }
+      if (mounted) _loadAppointment();
+    });
   }
 
   Future<void> _loadAppointment() async {
+    final generation = ++_loadGeneration;
     setState(() {
       _isLoading = true;
       _error = null;
+      _appointment = null;
     });
-    final scope = ref.read(journeyAccountScopeProvider);
-    if (scope == null) {
+    final auth = ref.read(authProvider);
+    if (auth.status == AuthStatus.initial || auth.status == AuthStatus.loading) {
+      return;
+    }
+    final userId = auth.status == AuthStatus.authenticated ? auth.userId : null;
+    if (userId == null) {
       setState(() {
         _error = _unauthorizedMessage;
         _isLoading = false;
@@ -55,16 +71,21 @@ class _AppointmentDetailScreenState
       final appointment = await service.getAppointmentById(
         widget.appointmentId,
       );
-      if (!mounted) return;
-      final currentScope = ref.read(journeyAccountScopeProvider);
-      if (currentScope != scope || appointment.patientId != scope.patientId) {
+      final current = ref.read(patientProvider).patient;
+      final patient = current?.id == appointment.patientId && current?.userId == userId
+          ? current!
+          : await ref.read(patientServiceProvider).getPatientById(appointment.patientId);
+      if (!mounted || generation != _loadGeneration) return;
+      final currentAuth = ref.read(authProvider);
+      if (currentAuth.status != AuthStatus.authenticated ||
+          currentAuth.userId != userId || patient.userId != userId) {
         setState(() {
-          _appointment = null;
           _error = _unauthorizedMessage;
           _isLoading = false;
         });
         return;
       }
+      ref.read(patientProvider.notifier).selectPatient(patient);
       AppointmentPaymentReceipt? paymentReceipt;
       if (ref.read(demoModeProvider)) {
         try {
@@ -76,13 +97,17 @@ class _AppointmentDetailScreenState
           // a real appointment when local storage is unavailable.
         }
       }
+      if (!mounted || generation != _loadGeneration ||
+          ref.read(authProvider).userId != userId) {
+        return;
+      }
       setState(() {
         _appointment = appointment;
         _paymentReceipt = paymentReceipt;
         _isLoading = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _error = ApiErrorMessage.from(
           e,
@@ -198,6 +223,9 @@ class _AppointmentDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authProvider.select((auth) => (auth.status, auth.userId)), (previous, next) {
+      if (previous != next) _loadAppointment();
+    });
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -234,9 +262,7 @@ class _AppointmentDetailScreenState
           Icon(Icons.error_outline, size: 64, color: AppColors.error),
           const SizedBox(height: 16),
           Text(
-            _error == _unauthorizedMessage
-                ? _unauthorizedMessage
-                : 'Không tìm thấy phiếu khám',
+            _error ?? 'Không thể tải thông tin lịch khám. Vui lòng thử lại.',
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 8),

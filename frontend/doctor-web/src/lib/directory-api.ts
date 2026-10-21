@@ -27,6 +27,7 @@ export interface DoctorProfileItem {
   specialization?: string;
   licenseNumber?: string;
   isActive?: boolean;
+  primaryForBooking?: boolean;
 }
 
 export interface CreateDepartmentPayload {
@@ -66,6 +67,7 @@ export interface CreateDoctorProfilePayload {
   specialization?: string;
   licenseNumber?: string;
   isActive?: boolean;
+  primaryForBooking?: boolean;
 }
 
 export interface UpdateDoctorProfilePayload {
@@ -76,6 +78,7 @@ export interface UpdateDoctorProfilePayload {
   specialization?: string;
   licenseNumber?: string;
   isActive?: boolean;
+  primaryForBooking?: boolean;
 }
 
 export const directoryApi = {

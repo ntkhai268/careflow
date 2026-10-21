@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-10-19T04:42:15.903Z",
+  "environment": "local Next development runtime 16.4.2 with real HTTPS backend",
+  "checks": [
+    "Administrator signs in through real BFF/Gateway/Identity",
+    "Facility link opens the live service-price catalog",
+    "Administrator publishes a new real revision through the UI without changing the demo fee",
+    "Price controls use custom UI and render at narrow width",
+    "Reload restores the session with HttpOnly refresh cookie"
+  ],
+  "errors": [],
+  "priceChanged": false,
+  "revisionCreated": true,
+  "screenshots": "/tmp/careflow-phase1-20261019/browser",
+  "visualChecks": [
+    "Administrator signs in through real BFF/Gateway/Identity",
+    "Facility link opens the live service-price catalog",
+    "Price controls use custom UI; narrow layout checked with existing sidebar collapsed",
+    "Reload restores the session with HttpOnly refresh cookie"
+  ],
+  "revisionCreatedInPrimaryRun": true,
+  "visualRepeatChangedPrice": false
+}

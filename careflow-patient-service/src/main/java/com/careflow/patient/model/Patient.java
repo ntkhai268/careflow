@@ -20,8 +20,14 @@ import java.util.UUID;
 @Builder
 public class Patient extends BaseEntity {
 
-    @Column(nullable = false)
+    @Column
     private UUID userId;
+
+    @Column(name = "reception_created_by_user_id")
+    private UUID receptionCreatedByUserId;
+
+    @Column(name = "reception_room_id", length = 50)
+    private String receptionRoomId;
 
     @Column(nullable = false, length = 100)
     private String fullName;

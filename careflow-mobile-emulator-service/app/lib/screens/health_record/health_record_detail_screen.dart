@@ -315,13 +315,13 @@ class _HealthRecordDetailScreenState
                             (file) => ActionChip(
                               label: Text(file.fileName),
                               avatar: const Icon(Icons.attach_file, size: 18),
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Tải file: ${file.fileName}'),
-                                  ),
-                                );
-                                // TODO: Use url_launcher to open URL
+                              onPressed: () async {
+                                try {
+                                  await ref.read(healthRecordServiceProvider).downloadFile(widget.patientId, file);
+                                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Đã tải tệp. Mở từ danh sách tải xuống của trình duyệt.')));
+                                } catch (error) {
+                                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(ApiErrorMessage.from(error))));
+                                }
                               },
                             ),
                           )

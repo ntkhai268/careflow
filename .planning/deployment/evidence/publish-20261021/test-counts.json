@@ -1,0 +1,104 @@
+{
+  "modules": {
+    "careflow-hospital-directory-service": {
+      "tests": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 6
+    },
+    "careflow-api-gateway": {
+      "tests": 35,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-consultation-service": {
+      "tests": 109,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 7
+    },
+    "careflow-queue-service": {
+      "tests": 82,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 7
+    },
+    "careflow-identity-service": {
+      "tests": 175,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 59
+    },
+    "careflow-ai-service": {
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-lab-service": {
+      "tests": 81,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5
+    },
+    "careflow-emr-service": {
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-patient-service": {
+      "tests": 91,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 10
+    },
+    "careflow-common": {
+      "tests": 49,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-notification-service": {
+      "tests": 41,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 6
+    },
+    "careflow-analytics-service": {
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-appointment-service": {
+      "tests": 87,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5
+    },
+    "careflow-prescription-service": {
+      "tests": 113,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5
+    }
+  },
+  "totals": {
+    "tests": 962,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 110
+  },
+  "passed": 852,
+  "nativeFlutter": {
+    "passed": 272,
+    "skipped": 15
+  },
+  "emulatorFlutter": {
+    "passed": 192,
+    "skipped": 1
+  },
+  "webProductionBuild": "PASS"
+}

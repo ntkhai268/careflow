@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-19T15:20:19.298Z",
+  "checks": [
+    {
+      "port": 18080,
+      "authenticatedStatus": 200,
+      "vnptAvailable": true
+    },
+    {
+      "port": 18081,
+      "authenticatedStatus": 200,
+      "vnptAvailable": true
+    },
+    {
+      "port": 18092,
+      "authenticatedStatus": 200,
+      "vnptAvailable": true
+    }
+  ]
+}

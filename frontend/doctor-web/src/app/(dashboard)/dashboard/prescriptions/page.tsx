@@ -56,11 +56,6 @@ export default function DashboardPrescriptionsPage() {
         combined.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         setPrescriptions(combined);
 
-        if (combined.length === 0) {
-          // If no prescriptions returned or service is down
-          setError("Không thể tải danh sách đơn thuốc từ Prescription Service. Vui lòng kiểm tra lại dịch vụ.");
-        }
-
         const map: Record<string, { name: string; age: number }> = {};
         for (const presc of combined) {
           if (!map[presc.patientId]) {

@@ -13,11 +13,13 @@
 |---|---|
 | Web 200 nhưng API không chạy | Kiểm tra Mobile→Gateway và backend health; Web 200 mới chứng minh frontend được phục vụ |
 | Gateway không kết nối | Đúng HTTPS localhost:18080 của runtime này, CA và tiến trình; không đổi sang 8080/HTTP để né TLS |
-| 401 | Đăng nhập lại nếu phiên hết/thu hồi, kiểm tra đúng máy/Gateway; nếu MFA_REQUIRED thì tiếp tục bước MFA |
+| 401 | Đăng nhập lại nếu phiên hết/thu hồi, kiểm tra đúng máy/Gateway; MFA đã gỡ, API MFA cũ trả 410 |
 | 403 | Đúng vai trò, chủ hồ sơ, phân công khoa/phòng/điểm phục vụ và bác sĩ phụ trách hiện tại |
 | 404 phiếu sau đặt lịch | Chờ consumer ngắn rồi tải lại; nếu kéo dài kiểm tra sự kiện và trùng lượt, không tạo lịch liên tiếp |
 | Không thấy bệnh nhân trên bác sĩ | Đã check-in, đúng ngày/phiên/phòng; phân công bác sĩ và phiếu có khớp không |
 | 409 gọi/bắt đầu/nhận bàn giao | Tải lại trạng thái; kiểm tra ca đang phục vụ, yêu cầu chờ, giới hạn gọi và thay đổi phân công |
+| 409 resume/hoàn tất CLS | Chờ đủ kết quả; đọc và xác nhận các order đã phát hành trước khi hoàn tất ca |
+| 422 chỉ định | Chọn mã và điểm từ danh mục thật, không gửi mã tùy ý |
 | 422 bàn giao | Hồ sơ bác sĩ đang hoạt động, cùng khoa/phòng và có liên kết phiếu hợp lệ |
 | 503/5xx | Dependency hoặc quyền liên dịch vụ không xác minh được; ghi thời điểm/correlation ID nếu có để truy log |
 | Home không tải hành trình | Xem từng API Appointment/Queue/Consultation/Lab/Prescription; lỗi một API có thể chặn phần tổng hợp |

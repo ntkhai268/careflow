@@ -2,13 +2,13 @@
 
 ## Hướng dẫn sử dụng end-to-end
 
-Xem [hướng dẫn sử dụng chung tại thư mục gốc](../huong-dan-su-dung/README.md). Tài khoản, điều khiển điện thoại, các bước nghiệp vụ và xử lý lỗi chỉ quản lý tại đó. README này giữ thông tin phát triển/build và kiểm thử service.
+Xem [mục lục hướng dẫn chung](../huong-dan-su-dung/README.md); các bước và tài khoản chỉ quản lý tại thư mục gốc.
 
 Service giả lập nhiều điện thoại, dùng snapshot **Flutter Patient Mobile** từ `frontend/patient-mobile` (`develop@8bf77e2`) với adapter trình duyệt. Mã nguồn nằm trong `careflow-mobile-emulator-service/`, theo quy ước tên service của CareFlow. Đây là service Node.js phục vụ Flutter Web và proxy API/WebSocket thật đến Gateway; chạy riêng bằng npm, không thuộc các module Maven Java.
 
 Thư mục trước đây mang tên `gia_lap_mobile`. Khi chuyển vào repository, giữ nguyên source, bộ dữ liệu cục bộ và các ca kiểm thử. Thay đổi ở service này không tự cập nhật snapshot `frontend/patient-mobile` hay các service backend.
 
-## Chạy service khi phát triển
+## Chạy ngay
 
 Cần Node.js 20 trở lên. Trên máy hiện tại đã có bản Flutter Web tại `app/build/web`, có thể mở ngay. Khi clone Git trên máy mới, cần Flutter 3.41+ để build trước; thư mục build và cache không được đưa lên Git.
 
@@ -19,23 +19,44 @@ npm start
 
 Mở **http://localhost:3000** (dùng đúng hostname `localhost` để khớp allowed origins của cả Gateway và Notification). Có thể nhấp đúp `start.command` trên macOS.
 
-Snapshot source của service mặc định **`http://127.0.0.1:18080`**; runtime tích hợp trên Mac hiện dùng HTTPS và CA riêng theo [chuẩn bị môi trường](../huong-dan-su-dung/00-chuan-bi.md). Cấu hình Gateway phải khớp backend được cấp. Ứng dụng luôn gửi request thật qua proxy của giả lập; không cần thiết bị hoặc Android emulator.
+Gateway mặc định là **`https://localhost:18080`**, môi trường audit riêng đang chạy trên máy này. Cổng `8080` hiện không có Gateway lắng nghe, nên cấu hình cũ không kết nối được. Ứng dụng luôn gửi request thật qua proxy của giả lập; không cần thiết bị hoặc Android emulator.
 
 Nhấn **Gateway / Kết nối hệ thống** ở góc trên, nhập Gateway khác rồi chọn **Lưu và kết nối**. Không tự chuyển sang máy chủ khác khi kết nối thất bại. Đổi Gateway sẽ chuyển sang namespace phiên riêng theo môi trường; token của Gateway cũ không được nạp cho Gateway mới. Khởi động lại bằng `npm start` hoặc `start.command` dùng cổng `18080`, trừ khi đặt biến môi trường bên dưới.
 
 Nếu muốn chọn Gateway từ Terminal:
 
 ```sh
-CAREFLOW_GATEWAY=http://127.0.0.1:18080 npm start
+CAREFLOW_GATEWAY=https://localhost:18080 CAREFLOW_CA_FILE=/duong/dan/ca.crt npm start
 ```
 
-Nếu cổng 3000 đã dùng, chạy `PORT=5173 npm start` và mở `http://localhost:5173`. Gateway hiện chỉ cho phép một số origin, nên cần cấu hình allowed origins tại **môi trường backend test riêng** khi đổi cổng. Notification hiện cho `http://localhost:5173`; Gateway trên snapshot chỉ có `http://localhost:3000`, `http://127.0.0.1:3000` và domain demo. Không chỉnh source backend/nhánh khác chỉ để chạy giả lập này.
+Nếu cổng 3000 đã dùng, có thể dùng `PORT=3001 npm start`; phải thêm origin tương ứng vào cấu hình Gateway/Notification và `SECURITY_DPOP_PUBLIC_ORIGINS` tại Identity. Cổng 5173 trên máy hiện tại đang phục vụ Hospital Web.
+
+Gateway dùng CA nội bộ cần `CAREFLOW_CA_FILE` hoặc file cục bộ **không đưa lên Git** `.runtime/launch.json`:
+
+```json
+{"gateway":"https://localhost:18080","caFile":"/duong/dan/ca.crt"}
+```
+
+Proxy vẫn kiểm tra CA và hostname của TLS, không tắt xác minh chứng chỉ. Các service phía sau Gateway yêu cầu chứng chỉ client mTLS; trình duyệt chỉ gọi proxy/Gateway. Bản đang chạy nằm trên worktree `feature/dangkhoii/security-integration`; phần xác thực mới chưa được merge vào develop.
+
+Đăng nhập tạo khóa P-256 không xuất được trong IndexedDB cho từng điện thoại/môi trường. REST và STOMP dùng token ràng buộc khóa cùng proof mới cho từng request. Token được cấp trước đợt nâng cấp phải đăng nhập lại. Vào **Tài khoản → Bảo mật đăng nhập** để bật TOTP; lưu mã khôi phục ngay khi hiện ra. Bật/tắt MFA thu hồi phiên cũ, cần đăng nhập lại. Tài khoản dataset không tự bật MFA.
+
+Lệnh kiểm thử trên **audit stack cục bộ đang có**, có ghi dữ liệu thật:
+
+```sh
+npm run test:security -- --audit-db
+# Có kiểm thử dừng và phục hồi Identity, gây gián đoạn ngắn cho audit stack:
+npm run test:security -- --audit-db --identity-outage
+npm run test:member-a -- --audit-db
+npm run test:dataset
+npm run test:security:browser
+```
+
+Kết quả và giới hạn: [báo cáo bảo mật](../.planning/security/member-a-hardening-results.md); cấu hình/khởi động: [runbook](../.planning/security/security-runbook.md). Các fixture trong `tests/` dùng riêng cho kiểm thử proxy; các lệnh audit/browser ở trên gọi backend, PostgreSQL và RabbitMQ thật.
 
 ## Sử dụng và dữ liệu demo
 
-- [Chuẩn bị, tách phiên và điều khiển điện thoại](../huong-dan-su-dung/00-chuan-bi.md).
-- [Tài khoản và dữ liệu demo hiện hành](../huong-dan-su-dung/01-tai-khoan-va-du-lieu.md).
-- [Các luồng end-to-end theo từng bước](../huong-dan-su-dung/README.md).
+Xem [chuẩn bị/tách phiên](../huong-dan-su-dung/00-chuan-bi.md) và [tài khoản/dữ liệu](../huong-dan-su-dung/01-tai-khoan-va-du-lieu.md).
 
 ## Các chức năng
 
@@ -54,7 +75,7 @@ Màu, bố cục và các màn hình nghiệp vụ được giữ từ Flutter. 
 
 ## Kiểm tra thao tác nghiệp vụ
 
-Dùng [kịch bản trình diễn/nghiệm thu](../huong-dan-su-dung/10-trinh-dien-va-nghiem-thu.md), [đặt lịch/check-in](../huong-dan-su-dung/03-dat-lich-check-in.md) và [xử lý lỗi](../huong-dan-su-dung/09-ngoai-le-va-xu-ly-loi.md). Mọi thao tác gửi API thật tới môi trường đã chọn.
+Dùng [các luồng end-to-end](../huong-dan-su-dung/README.md) và [kịch bản nghiệm thu](../huong-dan-su-dung/10-trinh-dien-va-nghiem-thu.md).
 
 ## Sửa source và build lại
 
@@ -90,7 +111,7 @@ Chi tiết contract: [docs/API-MAP.md](docs/API-MAP.md). Phạm vi thay đổi v
 
 ## Kiểm tra API audit qua chính giả lập
 
-Địa chỉ runtime và tài khoản hiện hành ở [hướng dẫn sử dụng](../huong-dan-su-dung/README.md). Ứng dụng dùng API thật; script bên dưới chỉ phù hợp môi trường audit đã được cấu hình.
+Gateway audit hiện ở `127.0.0.1:18080`; giả lập đang phục vụ tại **http://localhost:3000**. Đăng nhập trên điện thoại trong trang bằng tài khoản seed `patient` / `Password123@` nếu seed chưa đổi. Ứng dụng luôn dùng API thật. Không cần mở cổng 8080, cài điện thoại hoặc Android emulator.
 
 Có thể kiểm tra tự động đường đi `giả lập:3000 → Gateway:18080 → service → DB audit`:
 
@@ -103,3 +124,7 @@ Lệnh chỉ chấp nhận giả lập đang trỏ đúng Gateway audit loopback
 Kết quả chỉ gồm tên ca kiểm tra/mã HTTP, lưu ở `.runtime/live-api-results.json`; không ghi token, mật khẩu, body bệnh án hoặc QR. Mật khẩu tài khoản test có thể đặt bằng `CAREFLOW_AUDIT_PASSWORD`. Check-in thành công cần lịch đúng ngày, QR bệnh viện còn hạn và vị trí hợp lệ. Kiểm tra đặt lịch ngày mai không được dùng làm bằng chứng đã check-in thành công hôm nay.
 
 Notification/inbox và WebSocket hiện chạy thật trên môi trường audit. Bốn lỗi thành viên A đã sửa và nghiệm thu lại; xem [kết quả và cách chạy lại](docs/MEMBER-A-REPAIR.md). Kiểm tra toàn bộ backend A: `npm run test:member-a -- --audit-db`. eKYC thật, FCM và toàn bộ hành trình lâm sàng chưa được coi là hoàn tất.
+
+## Check-in và trình diễn trên Mac
+
+Xem [đặt lịch/check-in](../huong-dan-su-dung/03-dat-lich-check-in.md), [bàn giao ca](../huong-dan-su-dung/07-ban-giao-ca-kham.md) và [kịch bản trình diễn](../huong-dan-su-dung/10-trinh-dien-va-nghiem-thu.md) tại nguồn hướng dẫn chung.

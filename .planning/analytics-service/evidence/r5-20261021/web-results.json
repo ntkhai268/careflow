@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "checks": [
+    "ADMIN dashboard loads real report and shows a distinct loading state",
+    "Directory-backed custom picker has real options and closes on outside click; no native select",
+    "Date-filtered report renders chart, real metric values and source freshness",
+    "Real room selection is sent to Analytics and the filtered result renders",
+    "Confirmed empty period renders an empty state, rather than fabricated activity",
+    "Simulated report outage shows an error with working retry; not a zero-success report",
+    "ADMIN reconcile and journal rebuild buttons execute real authorized APIs",
+    "Doctor gets the 403 page and no report content"
+  ]
+}

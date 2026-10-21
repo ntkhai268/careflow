@@ -5,8 +5,6 @@ import com.careflow.notification.domain.*;
 import com.careflow.notification.repository.DeviceInstallationRepository;
 import com.careflow.notification.repository.NotificationRepository;
 import com.careflow.notification.repository.PushDeliveryRepository;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,14 +16,14 @@ import java.util.UUID;
 
 @Service
 public class PushDeliveryService {
-    private static final List<PushDeliveryStatus> RETRYABLE =
-            List.of(PushDeliveryStatus.PENDING, PushDeliveryStatus.FAILED);
 
     private final FirebasePushProperties properties;
     private final DeviceInstallationRepository installations;
     private final PushDeliveryRepository deliveries;
     private final NotificationRepository notifications;
     private final PushSender sender;
+    @org.springframework.beans.factory.annotation.Autowired private PushSessionClient sessions;
+    @org.springframework.beans.factory.annotation.Autowired private com.careflow.common.security.PatientOwnershipClient owners;
 
     public PushDeliveryService(FirebasePushProperties properties,
                                DeviceInstallationRepository installations,
@@ -52,6 +50,8 @@ public class PushDeliveryService {
             delivery.setNotificationId(notification.getId());
             delivery.setDeviceInstallationId(installation.getId());
             delivery.setRegistrationToken(installation.getRegistrationToken());
+            delivery.setBindingId(installation.getBindingId());
+            delivery.setExpiresAt(notification.getCreatedAt().plus(Duration.ofMinutes(5)));
             delivery.setStatus(PushDeliveryStatus.PENDING);
             delivery.setNextAttemptAt(now);
             delivery.setCreatedAt(now);
@@ -63,26 +63,29 @@ public class PushDeliveryService {
     @Transactional
     public void dispatchDue() {
         if (!properties.isEnabled()) return;
-        List<PushDelivery> due = deliveries.findByStatusInAndNextAttemptAtLessThanEqualOrderByCreatedAtAsc(
-                RETRYABLE, Instant.now(), PageRequest.of(0, 50));
+        List<PushDelivery> due = deliveries.findDueForUpdate();
         for (PushDelivery delivery : due) dispatch(delivery);
     }
 
     private void dispatch(PushDelivery delivery) {
         Notification notification = notifications.findById(delivery.getNotificationId()).orElse(null);
-        DeviceInstallation installation = installations.findById(delivery.getDeviceInstallationId()).orElse(null);
+        DeviceInstallation installation = installations.findLockedById(delivery.getDeviceInstallationId()).orElse(null);
         if (notification == null || installation == null || !installation.isEnabled()) {
             dead(delivery, "Notification or active device installation no longer exists");
             return;
         }
+        if(delivery.getExpiresAt()==null || !delivery.getExpiresAt().isAfter(Instant.now())){dead(delivery,"PUSH_EXPIRED");return;}
+        if(installation.getBindingId()==null || !installation.getBindingId().equals(delivery.getBindingId()) || !notification.getRecipientUserId().equals(installation.getUserId()) || !installation.getRegistrationToken().equals(delivery.getRegistrationToken())){dead(delivery,"BINDING_CHANGED");return;}
         try {
-            sender.send(delivery.getRegistrationToken(), notification);
+            if(!sessions.active(installation.getUserId(),installation.getSessionId())){installation.setEnabled(false);installations.save(installation);dead(delivery,"SESSION_REVOKED");return;}
+            if(notification.getPatientId()==null || !notification.getRecipientUserId().equals(owners.owner(notification.getPatientId()))){dead(delivery,"PATIENT_OWNERSHIP_CHANGED");return;}
+            sender.send(delivery.getRegistrationToken(), notification, installation.getBindingId());
             delivery.setStatus(PushDeliveryStatus.SENT);
             delivery.setSentAt(Instant.now());
             delivery.setLastError(null);
         } catch (PushSendException exception) {
             delivery.setAttempts(delivery.getAttempts() + 1);
-            delivery.setLastError(abbreviate(exception.getMessage()));
+            delivery.setLastError("PUSH_DEPENDENCY_UNAVAILABLE");
             if (exception.isPermanent() || delivery.getAttempts() >= properties.getMaxAttempts()) {
                 delivery.setStatus(PushDeliveryStatus.DEAD);
                 if (exception.isPermanent()) {
@@ -97,7 +100,7 @@ public class PushDeliveryService {
             }
         } catch (RuntimeException exception) {
             delivery.setAttempts(delivery.getAttempts() + 1);
-            delivery.setLastError(abbreviate(exception.getMessage()));
+            delivery.setLastError("PUSH_DEPENDENCY_UNAVAILABLE");
             delivery.setStatus(delivery.getAttempts() >= properties.getMaxAttempts()
                     ? PushDeliveryStatus.DEAD : PushDeliveryStatus.FAILED);
             delivery.setNextAttemptAt(Instant.now().plus(Duration.ofMinutes(1)));
@@ -111,8 +114,4 @@ public class PushDeliveryService {
         deliveries.save(delivery);
     }
 
-    private String abbreviate(String message) {
-        if (message == null) return "Unknown push delivery error";
-        return message.length() <= 1000 ? message : message.substring(0, 1000);
-    }
 }

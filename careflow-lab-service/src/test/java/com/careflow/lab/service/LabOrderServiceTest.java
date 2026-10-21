@@ -31,18 +31,27 @@ class LabOrderServiceTest {
     @Mock LabOrderRepository orders;
     @Mock LabOrderItemRepository items;
     @Mock LabEventPublisher events;
+    @Mock LabAccessService access;
 
     private LabOrderService service;
+    private LabCatalogService catalog;
     private UUID doctorId;
     private UUID patientId;
     private UUID consultationId;
 
     @BeforeEach
     void setUp() {
-        service = new LabOrderService(orders, items, events);
+        catalog = mock(LabCatalogService.class);
+        lenient().when(catalog.requireItem(any())).thenAnswer(invocation -> {
+            com.careflow.lab.dto.request.LabOrderItemRequest item = invocation.getArgument(0);
+            return new LabCatalogService.Definition(item.serviceCode(), item.serviceName(), item.servicePointId(), item.preparationInstruction());
+        });
+        service = new LabOrderService(orders, items, events,
+                new com.fasterxml.jackson.databind.ObjectMapper().findAndRegisterModules(), access, catalog);
         doctorId = UUID.randomUUID();
         patientId = UUID.randomUUID();
         consultationId = UUID.randomUUID();
+        lenient().when(access.requireConsultation(any(),any(),any(),any(),eq(true))).thenReturn(new com.careflow.lab.client.LabConsultationClient.Context(consultationId,patientId,doctorId,"IN_PROGRESS",UUID.randomUUID(),null));
     }
 
     @Test
@@ -55,7 +64,7 @@ class LabOrderServiceTest {
                 "Rule out infection",
                 false,
                 null);
-        when(orders.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orders.save(any())).thenAnswer(invocation -> {LabOrder persisted=invocation.getArgument(0);if(persisted.getId()==null)persisted.setId(UUID.randomUUID());for(var item:persisted.getItems())if(item.getId()==null)item.setId(UUID.randomUUID());return persisted;});
 
         var response = service.createOrder(request, doctorId, "DOCTOR", "trace-lab-1");
 
@@ -83,7 +92,7 @@ class LabOrderServiceTest {
                 null,
                 false,
                 UUID.randomUUID());
-        when(orders.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(orders.save(any())).thenAnswer(invocation -> {LabOrder persisted=invocation.getArgument(0);if(persisted.getId()==null)persisted.setId(UUID.randomUUID());for(var item:persisted.getItems())if(item.getId()==null)item.setId(UUID.randomUUID());return persisted;});
 
         var response = service.createOrder(request, doctorId, "DOCTOR", "trace-lab-2");
 
@@ -110,6 +119,8 @@ class LabOrderServiceTest {
 
     @Test
     void patientReadsAreRestrictedToTheirOwnPatientId() {
+        doThrow(new BusinessException(403, "Ownership denied")).when(access)
+                .requireProfile(eq(patientId), any(), eq("PATIENT"));
         assertThatThrownBy(() -> service.getByPatient(patientId, UUID.randomUUID(), "PATIENT"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(403);
@@ -123,7 +134,7 @@ class LabOrderServiceTest {
         order.setStatus(LabOrderStatus.ORDERED);
         when(orders.findById(order.getId())).thenReturn(Optional.of(order));
 
-        assertThatThrownBy(() -> service.finalizeOrder(order.getId(), doctorId, "DOCTOR", "trace-lab-3"))
+        assertThatThrownBy(() -> service.finalizeOrder(order.getId(), doctorId, "LAB_TECHNICIAN", "trace-lab-3"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(409);
 
@@ -136,7 +147,7 @@ class LabOrderServiceTest {
         order.setStatus(LabOrderStatus.IN_PROGRESS);
         when(orders.findById(order.getId())).thenReturn(Optional.of(order));
 
-        assertThatThrownBy(() -> service.finalizeOrder(order.getId(), doctorId, "DOCTOR", "trace-lab-4"))
+        assertThatThrownBy(() -> service.finalizeOrder(order.getId(), doctorId, "LAB_TECHNICIAN", "trace-lab-4"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(409);
 
@@ -153,8 +164,8 @@ class LabOrderServiceTest {
         when(orders.findById(order.getId())).thenReturn(Optional.of(order));
         when(orders.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        service.finalizeOrder(order.getId(), doctorId, "DOCTOR", "trace-lab-5");
-        service.finalizeOrder(order.getId(), doctorId, "DOCTOR", "trace-lab-5-redelivery");
+        service.finalizeOrder(order.getId(), doctorId, "LAB_TECHNICIAN", "trace-lab-5");
+        service.finalizeOrder(order.getId(), doctorId, "LAB_TECHNICIAN", "trace-lab-5-redelivery");
 
         assertThat(order.getStatus()).isEqualTo(LabOrderStatus.RESULT_AVAILABLE);
         verify(events, times(1)).publishAllRequiredResultsAvailable(any());
@@ -183,6 +194,7 @@ class LabOrderServiceTest {
         LabOrder order = new LabOrder();
         order.setId(UUID.randomUUID());
         order.setConsultationId(consultationId);
+        order.setSourceQueueEntryId(UUID.randomUUID());
         order.setPatientId(patientId);
         order.setOrderedByDoctorId(doctorId);
         order.setStatus(LabOrderStatus.ORDERED);

@@ -1,0 +1,12 @@
+{
+  "source_project": "careflow-voice-prescription",
+  "files_sha256_before_adaptation": {
+    "models.py": "e4d304413a8bf7b8727348bf09a48d48218c5bbc2678a3b8e311a3345fd3ba63",
+    "text.py": "78548a2db18e811ad8ad2e51118ef6858a00af34425907bace667bd333d1d4e3",
+    "extraction.py": "05f14e3645be39b2829704b310367d8596ad0f9d4fde4fbdc01860be97a47d16",
+    "catalog.py": "ae6bebdefdd7150e9d44a1ad5e150af084d903edcaa0f6fe65ad41f4101142cf",
+    "phonetics.py": "4a308b8dc07f695350f48183a45fc5fc2e318b0ae5e8dd1e452e459477b4e1b2",
+    "aliases.py": "ca5b535ee7b15c013f3661ee7cda2388b27ee913541a86bbf944159bf4269163"
+  },
+  "scope": "pure extraction core only; no private data/models/copied runtime"
+}

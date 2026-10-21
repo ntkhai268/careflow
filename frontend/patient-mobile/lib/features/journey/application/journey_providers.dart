@@ -7,6 +7,7 @@ import '../../../services/appointment_service.dart';
 import '../../../services/consultation_service.dart';
 import '../../../services/lab_service.dart';
 import '../../../services/notification_service.dart';
+import '../../../services/notification_resource_service.dart';
 import '../../../services/prescription_service.dart';
 import '../../../services/queue_service.dart';
 import '../data/backend_journey_repository.dart';
@@ -94,46 +95,99 @@ final patientNotificationInboxProvider =
 
 class PatientNotificationInboxController
     extends AutoDisposeAsyncNotifier<List<PatientNotification>> {
-  bool _refreshing = false;
+  bool _refreshing = false, _disposed = false;
+  int _generation = 0;
+  String? get _owner {
+    final auth = ref.read(authProvider);
+    return auth.status == AuthStatus.authenticated ? auth.userId : null;
+  }
 
   @override
   Future<List<PatientNotification>> build() async {
-    if (ref.watch(journeyAccountScopeProvider) == null) return const [];
+    ++_generation;
+    _refreshing = false;
+    _disposed = false;
+    ref.onDispose(() {
+      _disposed = true;
+      ++_generation;
+    });
+    final scope = ref.watch(authProvider.select((a) => (a.status, a.userId)));
+    if (scope.$1 != AuthStatus.authenticated || scope.$2 == null) {
+      return const [];
+    }
     return _fetch();
   }
 
   Future<bool> refresh() async {
-    if (_refreshing) return false;
+    if (_refreshing || _owner == null) return false;
     _refreshing = true;
+    final owner = _owner, generation = _generation;
     try {
-      state = AsyncData(await _fetch());
-      return true;
-    } catch (error, stackTrace) {
-      final previous = state.valueOrNull;
-      state = previous == null
-          ? AsyncError(error, stackTrace)
-          : AsyncData(previous);
+      final rows = await _fetch();
+      if (!_disposed && generation == _generation && owner == _owner) {
+        state = AsyncData(rows);
+        return true;
+      }
+      return false;
+    } catch (error, stack) {
+      if (!_disposed && generation == _generation && owner == _owner) {
+        final previous = state.valueOrNull;
+        state = previous == null
+            ? AsyncError(error, stack)
+            : AsyncData(previous);
+      }
       return false;
     } finally {
-      _refreshing = false;
+      if (!_disposed && generation == _generation) _refreshing = false;
     }
   }
 
-  Future<bool> markRead(String notificationId) async {
+  Future<bool> loadMore() async {
+    final current = state.valueOrNull;
+    if (_refreshing || _owner == null || current == null || current.isEmpty) {
+      return false;
+    }
+    _refreshing = true;
+    final owner = _owner, generation = _generation;
     try {
-      await ref.read(notificationServiceProvider).markRead(notificationId);
+      final raw = await ref
+          .read(notificationServiceProvider)
+          .older(current.last.id);
+      if (_disposed || generation != _generation || owner != _owner) {
+        return false;
+      }
+      final mapper = BackendJourneyMapper();
+      final ids = current.map((n) => n.id).toSet();
+      final extra = raw
+          .map(mapper.mapNotification)
+          .whereType<PatientNotification>()
+          .where((n) => ids.add(n.id));
+      state = AsyncData([...current, ...extra]);
+      return true;
+    } catch (_) {
+      return false;
+    } finally {
+      if (!_disposed && generation == _generation) _refreshing = false;
+    }
+  }
+
+  Future<bool> markRead(String id) async {
+    final owner = _owner, generation = _generation;
+    if (owner == null) return false;
+    try {
+      await ref.read(notificationServiceProvider).markRead(id);
+      if (_disposed || generation != _generation || owner != _owner) {
+        return false;
+      }
       final current = state.valueOrNull;
       if (current != null) {
         state = AsyncData(
           current
-              .map(
-                (notification) => notification.id == notificationId
-                    ? notification.copyWith(isRead: true)
-                    : notification,
-              )
+              .map((n) => n.id == id ? n.copyWith(isRead: true) : n)
               .toList(growable: false),
         );
       }
+      ref.invalidate(notificationUnreadCountProvider);
       return true;
     } catch (_) {
       return false;
@@ -274,12 +328,20 @@ class VisitResult {
   final PatientJourney journey;
 }
 
-final unreadJourneyNotificationCountProvider = Provider<int>(
-  (ref) =>
+final unreadJourneyNotificationCountProvider = Provider<int>((ref) {
+  if (ref.watch(demoModeProvider)) {
+    return ref
+            .watch(activeJourneyProvider)
+            ?.notifications
+            .where((n) => !n.isRead)
+            .length ??
+        0;
+  }
+  return ref.watch(notificationUnreadCountProvider).valueOrNull ??
       ref
-          .watch(activeJourneyProvider)
-          ?.notifications
-          .where((notification) => !notification.isRead)
+          .watch(patientNotificationInboxProvider)
+          .valueOrNull
+          ?.where((n) => !n.isRead)
           .length ??
-      0,
-);
+      0;
+});

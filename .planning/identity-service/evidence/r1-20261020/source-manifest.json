@@ -1,0 +1,124 @@
+{
+  "capturedAt": "2026-10-20T04:06:33.504817+00:00",
+  "branch": "feature/dangkhoii/security-integration",
+  "head": "5a8c6e574c1249ce2a6dc791e7415a2bbc33b006",
+  "uncommitted": true,
+  "r0ExistingSourceChanges": [
+    {
+      "path": "careflow-hospital-directory-service/src/main/java/com/careflow/directory/controller/DoctorController.java",
+      "r0Sha256": "982f18e923228f58249904f0b4c41b6d7a670ee84e8670089221180591961865",
+      "r1Sha256": "dd213a92f5f4bd820153a65e655af6dd24613038d11f8febbb6b26c4334b794a"
+    },
+    {
+      "path": "careflow-hospital-directory-service/src/main/java/com/careflow/directory/service/DirectoryService.java",
+      "r0Sha256": "67368ef3a34836827f064ea1f500f5aaf31c4086b1a9a7d1d2142aa7fbf7089e",
+      "r1Sha256": "bfa9935b6a51822e5b6193770e83f0497be4d9e894bde04a2f3c1093b1a5b52f"
+    },
+    {
+      "path": "careflow-hospital-directory-service/src/test/java/com/careflow/directory/service/DirectoryServiceStaffAssignmentTest.java",
+      "r0Sha256": "3e159b4d6223e335b94afaf9d2cd340210532c81c0b2fbed28077f9ba3fe1a70",
+      "r1Sha256": "af883a5d3ca42f0e9848a3fd6234c085be702e1861a2b398ebbbd244ffc4339b"
+    },
+    {
+      "path": "careflow-identity-service/src/main/java/com/careflow/identity/controller/UserController.java",
+      "r0Sha256": "eaedd3bc8dedd03c45b58eb0cf0da01a846c84d471e121d6e4702979afd1b877",
+      "r1Sha256": "d7269c1bd087023a5c9034972c086e2ff5e1a2acf8fa8afab93580d7c309fb40"
+    },
+    {
+      "path": "careflow-identity-service/src/main/java/com/careflow/identity/repository/UserRepository.java",
+      "r0Sha256": "241085bcc0cba7e70c7a2f62aacdb9980f6fb1eeee8386827cf8e210c51dde9e",
+      "r1Sha256": "2a53fce623fffc34a5adf50d4d8b812f55be51f919dff54aefae32e133486d45"
+    },
+    {
+      "path": "careflow-identity-service/src/main/java/com/careflow/identity/security/JwtAuthenticationFilter.java",
+      "r0Sha256": "1714bbeb521625fee9ca1eb89e597220ca5e6bbeb313a385ee504169e11b8754",
+      "r1Sha256": "305b579113bd9dff241c85af8d37fc5744cf924da86a3c4555b5cfd1a45c272e"
+    },
+    {
+      "path": "careflow-identity-service/src/main/java/com/careflow/identity/service/AuthService.java",
+      "r0Sha256": "195669dff67acc2a2c62099e8697a12ebdfbe252f3304719618321ec56483bf4",
+      "r1Sha256": "4bd78c036fa16ccdc9dd084e16e20d3b3305fb2747adb6268ce2bc0a0050aedb"
+    },
+    {
+      "path": "frontend/doctor-web/src/app/(dashboard)/admin/accounts/page.tsx",
+      "r0Sha256": "fcd88c7e4076914edb61e6773a5a9a2d6aca63565e63449209024ba713169f03",
+      "r1Sha256": "2c3239a4aead86852dd29cc8e7175f1bf439b988a3f3772b42b76ef7a5f9fef1"
+    },
+    {
+      "path": "frontend/doctor-web/src/app/(dashboard)/admin/page.tsx",
+      "r0Sha256": "6ef96229203366ccaf9e4b6c514a77556b91e1c17d446541ca773aec953ca13f",
+      "r1Sha256": "59e90fc9dbec96bb1b9a0514f57701618c96b3bd8278abe59c01dd2d80c9a1f3"
+    },
+    {
+      "path": "frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx",
+      "r0Sha256": "e02abdffe71806772af651eb6516c53ea3e3d46923173fa813f2170cfd5c8fce",
+      "r1Sha256": "aa34737dca3b22c16c571e29d9f2f1816415a89e7ac543b3e36e5b88b5b6f563"
+    },
+    {
+      "path": "frontend/doctor-web/src/app/(dashboard)/dashboard/general/page.tsx",
+      "r0Sha256": "9d3cddf64b1ed2b49b3c2862bb4595128fc73a61697e446e0f663a84b0fa4995",
+      "r1Sha256": "a926420a917341336c7a04ae6ad1b61fb674f4f798dc91d8f117401a81abc2ce"
+    }
+  ],
+  "r1NewSourceAndTestFiles": [
+    {
+      "path": "careflow-identity-service/src/main/java/com/careflow/identity/administration/StaffAccountService.java",
+      "sha256": "a3d1c35fbc304ab61654a478a715afdc8a2709c5fb32b6e96a5c04f5028a9b03"
+    },
+    {
+      "path": "careflow-identity-service/src/main/resources/db/migration/V18__staff_account_administration.sql",
+      "sha256": "8dfcb5539206cc0b26f1d6ce63ce9cb9e93ecf59bbe79e09e91f7b90b9eea4ab"
+    },
+    {
+      "path": "careflow-identity-service/src/test/java/com/careflow/identity/administration/StaffAdministrationPostgresTest.java",
+      "sha256": "6396bb6aade4074a5677a78a27445bbed2b662e3ea254e5d3ec520c0ffd7a757"
+    },
+    {
+      "path": "careflow-identity-service/src/test/java/com/careflow/identity/security/StaffDirectoryDelegationTest.java",
+      "sha256": "0cddcc532706ed248bc39430955f5a1215ed84d3396d48912a929f357dbd15ce"
+    },
+    {
+      "path": "careflow-hospital-directory-service/src/main/java/com/careflow/directory/service/StaffIdentityVerifier.java",
+      "sha256": "6be06d2310e9b366444165c8efa183a81862f47f8becae90b17a28fcb39ffc4c"
+    },
+    {
+      "path": "careflow-hospital-directory-service/src/test/java/com/careflow/directory/service/StaffIdentityVerifierTest.java",
+      "sha256": "8586a2e0a74c83adb7c5f8db479dc30f9a5bf023d50e116522cc8e3745acc027"
+    },
+    {
+      "path": "careflow-hospital-directory-service/src/test/java/com/careflow/directory/service/DoctorProfilePersistencePostgresTest.java",
+      "sha256": "f09c17caf25e38f274715553df7639e84d18e62373434d4eec2ae312fc4d1005"
+    },
+    {
+      "path": "frontend/doctor-web/src/lib/staff-api.ts",
+      "sha256": "f2efaf317687b4c42dd8e72374024341c3081e69df8945f7715b048e0580c830"
+    },
+    {
+      "path": "frontend/doctor-web/src/lib/patient-display.ts",
+      "sha256": "78a27e7eb02278706182934becfef63062ae4c8df1eacf3e9106b2ff8cafe187"
+    },
+    {
+      "path": "scripts/security/patient-display-test.cjs",
+      "sha256": "55dccda225f7ac40f5283453952768fe8a9131c64a01f3ca273b5c3f6b96209f"
+    }
+  ],
+  "nativeR0InputFilesUnchanged": 262,
+  "nativeBuild": 16,
+  "runtimeArtifacts": [
+    {
+      "name": "careflow-identity-service-1792468850357780000.jar",
+      "sha256": "de35e6036c94e250e55d62bae6fed2ae7e6363d15352096788fd18f807eef0df",
+      "bytes": 94381512
+    },
+    {
+      "name": "careflow-identity-session-secondary-1792468856855554000.jar",
+      "sha256": "de35e6036c94e250e55d62bae6fed2ae7e6363d15352096788fd18f807eef0df",
+      "bytes": 94381512
+    },
+    {
+      "name": "careflow-hospital-directory-service-1792468863613177000.jar",
+      "sha256": "f93836c45740caa9fc5848fdd0315abbaf109b111946d692bb69e892570fef2c",
+      "bytes": 85640420
+    }
+  ]
+}

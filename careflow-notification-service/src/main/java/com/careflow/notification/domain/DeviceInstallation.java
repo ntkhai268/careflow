@@ -20,6 +20,9 @@ public class DeviceInstallation {
     private UUID id;
     @Column(name = "user_id", nullable = false)
     private UUID userId;
+    @Column(name = "session_id") private UUID sessionId;
+    @Column(name = "binding_id") private UUID bindingId;
+    @Version private long version;
     @Column(name = "device_id", nullable = false, length = 160)
     private String deviceId;
     @Column(name = "registration_token", nullable = false, length = 512)

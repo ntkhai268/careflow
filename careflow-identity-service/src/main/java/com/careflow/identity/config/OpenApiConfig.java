@@ -16,7 +16,7 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("CareFlow Identity & eKYC API")
                         .version("1.0.0")
-                        .description("API đăng ký, đăng nhập, quản lý phiên và eKYC giả lập của CareFlow")
+                        .description("API đăng ký, đăng nhập, quản lý phiên và xác minh danh tính qua VNPT của CareFlow")
                         .license(new License().name("Internal educational project")))
                 .components(new Components().addSecuritySchemes("bearerAuth",
                         new SecurityScheme()

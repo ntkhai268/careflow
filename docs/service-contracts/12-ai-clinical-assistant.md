@@ -1,5 +1,8 @@
 # AI Clinical Assistant Service Contract
 
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Các đoạn MVP/mock cũ phải đọc theo giới hạn và thay đổi tại R0; không loại Analytics/AI khỏi yêu cầu cuối.
+
+
 > Contract ID: `CF-SVC-12` | Version: `1.0` | Module: `careflow-ai-service`
 
 ## 1. Trách nhiệm và giới hạn an toàn
@@ -23,8 +26,7 @@ MOCK_RULE_BASED
 LLM_PROVIDER
 ```
 
-`MOCK_RULE_BASED` là đủ cho demo nếu output deterministic, có nhãn mock và không tuyên bố là AI y tế
-đã được kiểm định. Provider key chỉ nằm trong secret/environment.
+`MOCK_RULE_BASED` chỉ dùng fixture/test có nhãn rõ; không đủ để hoàn thành yêu cầu chatbot gợi ý phác đồ. R6 yêu cầu context có quyền, nguồn tham chiếu được kiểm tra và đánh giá chuyên môn; model lỗi phải báo unavailable, không tự trả gợi ý y khoa mẫu trong luồng dùng thật. Provider key chỉ nằm trong cấu hình private.
 
 ## 3. HTTP API
 

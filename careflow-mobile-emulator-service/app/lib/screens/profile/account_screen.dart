@@ -130,6 +130,12 @@ class AccountScreen extends ConsumerWidget {
                 _buildMenuItem(
                   icon: Icons.verified_user_outlined,
                   iconColor: AppColors.primary,
+                  title: 'Bảo mật đăng nhập',
+                  onTap: () => context.push('/security'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.verified_user_outlined,
+                  iconColor: AppColors.primary,
                   title: 'Xác minh eKYC',
                   onTap: () => context.push('/ekyc'),
                 ),

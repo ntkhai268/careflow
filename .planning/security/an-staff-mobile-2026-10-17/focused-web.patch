@@ -1,0 +1,89 @@
+--- a/frontend/doctor-web/src/app/(dashboard)/layout.tsx
++++ b/frontend/doctor-web/src/app/(dashboard)/layout.tsx
+@@ -72,7 +72,8 @@
+   } else if (pathname.startsWith("/staff") && !isStaff) {
+     isAuthorized = false;
+     requiredRoleLabel = "Nhân viên Tiếp nhận & Dược (STAFF)";
+-  } else if ((pathname.startsWith("/dashboard") || pathname.startsWith("/consultation")) && !isDoctor) {
++  } else if ((pathname.startsWith("/dashboard") || pathname.startsWith("/consultation")) && !isDoctor &&
++      !(pathname === "/dashboard/general" && (isStaff || isLabTech || isAdmin))) {
+     isAuthorized = false;
+     requiredRoleLabel = "Bác sĩ khám bệnh (DOCTOR)";
+   }
+--- a/frontend/doctor-web/src/app/(dashboard)/dashboard/general/page.tsx
++++ b/frontend/doctor-web/src/app/(dashboard)/dashboard/general/page.tsx
+@@ -218,6 +218,11 @@
+       );
+ 
+       if (activeCons && !isSameConsultation) {
++        setActiveNotice({
++          show: true,
++          message: "Bạn đang có một ca khám chưa hoàn tất. Vào ca khám để xử lý trước khi gọi bệnh nhân khác.",
++          consultationId: activeCons.id,
++        });
+         if (typeof window !== "undefined") {
+           window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
+             detail: {
+--- a/frontend/doctor-web/src/app/(dashboard)/dashboard/queue/page.tsx
++++ b/frontend/doctor-web/src/app/(dashboard)/dashboard/queue/page.tsx
+@@ -8,6 +8,7 @@
+ import { patientApi } from "@/lib/patient-api";
+ import { appointmentApi } from "@/lib/appointment-api";
+ import { getErrorMessage } from "@/lib/error-utils";
++import Link from "next/link";
+ 
+ function StatusDot({ status }: { status: string }) {
+   const config: Record<string, { color: string; label: string; textClass: string }> = {
+@@ -65,6 +66,7 @@
+   const [isCallingNext, setIsCallingNext] = useState(false);
+   const [callingEntryId, setCallingEntryId] = useState<string | null>(null);
+   const [errorMessage, setErrorMessage] = useState("");
++  const [activeConsultationId, setActiveConsultationId] = useState<string | null>(null);
+ 
+   const [roomId, setRoomId] = useState<string | null>(null);
+ 
+@@ -141,10 +143,13 @@
+     if (!user || !roomId) return;
+     setIsCallingNext(true);
+     setErrorMessage("");
++    setActiveConsultationId(null);
+     try {
+       const consRes = await consultationApi.getByDoctor(user.id);
+       const activeCons = (consRes.data ?? []).find(c => c.status === "IN_PROGRESS");
+       if (activeCons) {
++        setActiveConsultationId(activeCons.id);
++        setErrorMessage("Bạn đang có một ca khám chưa hoàn tất. Vào ca khám để xử lý trước khi gọi bệnh nhân tiếp theo.");
+         if (typeof window !== "undefined") {
+           window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
+             detail: {
+@@ -181,6 +186,7 @@
+     if (!user || !roomId) return;
+     setCallingEntryId(entry.entryId);
+     setErrorMessage("");
++    setActiveConsultationId(null);
+     try {
+       const consRes = await consultationApi.getByDoctor(user.id);
+       const activeCons = (consRes.data ?? []).find(c => c.status === "IN_PROGRESS");
+@@ -189,6 +195,8 @@
+       );
+ 
+       if (activeCons && !isSameConsultation) {
++        setActiveConsultationId(activeCons.id);
++        setErrorMessage("Bạn đang có một ca khám chưa hoàn tất. Vào ca khám để xử lý trước khi gọi bệnh nhân khác.");
+         if (typeof window !== "undefined") {
+           window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
+             detail: {
+@@ -355,9 +363,10 @@
+ 
+       {/* Clean Inline Errors as specified in design.md Rule 39-40 */}
+       {errorMessage && (
+-        <p className="text-[11px] text-[#D9381E] font-medium px-1">
+-          {errorMessage}
+-        </p>
++        <div role="alert" className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
++          <p>{errorMessage}</p>
++          {activeConsultationId && <Link href={`/consultation/${activeConsultationId}`} className="shrink-0 rounded-lg bg-[#6E2582] px-3 py-2 font-semibold text-white hover:bg-[#581c69]">Vào ca khám</Link>}
++        </div>
+       )}
+ 
+       {/* Three scheduling lanes */}

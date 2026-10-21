@@ -1,3 +1,5 @@
+import 'dart:convert';
+import '../platform/browser_bridge.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../config/api_config.dart';
 import '../utils/api_error_message.dart';
@@ -87,6 +89,21 @@ class AuthService {
     } catch (e) {
       throw Exception(_messageFrom(e, login: true));
     }
+  }
+
+  Future<void> alternativeLogin(String method, String username, String question, String answer) async {
+    dynamic response;
+    if (method == 'question') {
+      response = await _apiService.post('/auth/login/question', data: {'usernameOrEmail': username, 'questionId': question, 'answer': answer});
+    } else {
+      final start = await _apiService.post('/auth/passkeys/login/options', data: {'usernameOrEmail': username});
+      final data = start.data['data'];
+      final credential = await browserCall('passkeyGet', {'options': data['options']});
+      response = await _apiService.post('/auth/passkeys/login/finish', data: {'requestId': data['requestId'], 'credential': jsonEncode(credential)});
+    }
+    final auth = AuthResponse.fromJson(Map<String, dynamic>.from(response.data['data']));
+    await _apiService.saveToken(auth.token);
+    await _apiService.saveRefreshToken(auth.refreshToken!);
   }
 
   /// Register Identity account, then login to obtain the token pair.

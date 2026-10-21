@@ -1,0 +1,86 @@
+{
+  "checkedAt": "2026-10-16T06:06:11.802Z",
+  "mock": false,
+  "checks": [
+    {
+      "name": "Three real doctor accounts/profiles share an unused configured room, with explicit primary booking doctor",
+      "status": "PASS"
+    },
+    {
+      "name": "Two real patients book and check in; multiple doctors do not break primary booking resolution",
+      "status": "PASS"
+    },
+    {
+      "name": "Source doctor creates actual clinical data, prescription draft and Lab order before handover",
+      "status": "PASS"
+    },
+    {
+      "name": "Repeated pending request is idempotent",
+      "status": "PASS"
+    },
+    {
+      "name": "Pending receiver has neither general clinical nor patient-profile access",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong receiver and ADMIN cannot sign or send clinical handovers",
+      "status": "PASS"
+    },
+    {
+      "name": "Reject keeps original responsibility",
+      "status": "PASS"
+    },
+    {
+      "name": "Cancelled request cannot be accepted later",
+      "status": "PASS"
+    },
+    {
+      "name": "Accept changes current authority, keeps original author, revokes former clinical/profile access, and replays safely",
+      "status": "PASS"
+    },
+    {
+      "name": "Receiver reads real Patient/EMR and earlier Lab/toa, without changing author or signing an inherited draft",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent acceptances from two IN_PROGRESS cases produce exactly one success and one conflict",
+      "status": "PASS"
+    },
+    {
+      "name": "Conflict leaves a valid pending request that succeeds once receiver workload is free",
+      "status": "PASS"
+    },
+    {
+      "name": "Revoking coordination blocks pending exceptional acceptance without impersonating source doctor",
+      "status": "PASS"
+    },
+    {
+      "name": "Explicit medical coordinator can initiate takeover, receiver still accepts",
+      "status": "PASS"
+    },
+    {
+      "name": "Receiver creates and confirms own signed prescription after takeover",
+      "status": "PASS"
+    },
+    {
+      "name": "Receiver completes Consultation, original Queue and Appointment; patient sees the completed booking",
+      "status": "PASS"
+    },
+    {
+      "name": "Closed visit cannot be handed over",
+      "status": "PASS"
+    },
+    {
+      "name": "Grant, revoke and regrant retain immutable permission audit",
+      "status": "PASS"
+    },
+    {
+      "name": "Dedicated real fixtures retained for browser handover and user demonstration",
+      "status": "PASS"
+    },
+    {
+      "name": "Original user NOI-010 remains IN_PROGRESS and unchanged",
+      "status": "PASS"
+    }
+  ]
+}

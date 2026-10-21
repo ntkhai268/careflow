@@ -1,0 +1,1777 @@
+{
+  "sourceBranch": "feature/dangkhoii/security-integration",
+  "baseCommit": "5a8c6e574c1249ce2a6dc791e7415a2bbc33b006",
+  "runtime": "real loopback PostgreSQL, RabbitMQ, HTTPS/mTLS JVMs and Chrome; no clinical response mocking",
+  "backend": {
+    "careflow-api-gateway": {
+      "tests": 34,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-appointment-service": {
+      "tests": 68,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-common": {
+      "tests": 42,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-consultation-service": {
+      "tests": 36,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-emr-service": {
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-hospital-directory-service": {
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-identity-service": {
+      "tests": 46,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-lab-service": {
+      "tests": 76,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-notification-service": {
+      "tests": 23,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-patient-service": {
+      "tests": 64,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-prescription-service": {
+      "tests": 105,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-queue-service": {
+      "tests": 66,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "suites": {
+    "tls_auth_mfa": {
+      "count": 46,
+      "sourceArtifact": "/tmp/careflow-security-primary-http.json",
+      "checkedAt": "2026-10-15T15:48:04.849Z",
+      "passed": 46,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "real registration",
+          "status": "PASS"
+        },
+        {
+          "name": "login requires cryptographic proof",
+          "status": "PASS"
+        },
+        {
+          "name": "bound login succeeds",
+          "status": "PASS"
+        },
+        {
+          "name": "Identity signs RS256",
+          "status": "PASS"
+        },
+        {
+          "name": "JWT audience",
+          "status": "PASS"
+        },
+        {
+          "name": "JWT binds client public key",
+          "status": "PASS"
+        },
+        {
+          "name": "direct request with proof",
+          "status": "PASS"
+        },
+        {
+          "name": "stolen token without proof rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "stolen token with attacker key rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "wrong method rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "wrong URI rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "expired proof rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "first proof accepted",
+          "status": "PASS"
+        },
+        {
+          "name": "replayed proof rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "refresh rejects wrong client key",
+          "status": "PASS"
+        },
+        {
+          "name": "bound refresh rotation",
+          "status": "PASS"
+        },
+        {
+          "name": "rotation revokes old access token",
+          "status": "PASS"
+        },
+        {
+          "name": "wrong-key refresh did not revoke valid session",
+          "status": "PASS"
+        },
+        {
+          "name": "Gateway creates owned patient with bound token",
+          "status": "PASS"
+        },
+        {
+          "name": "Gateway reads owned patient",
+          "status": "PASS"
+        },
+        {
+          "name": "direct Patient verifies proof independently",
+          "status": "PASS"
+        },
+        {
+          "name": "direct Patient rejects stolen token without proof",
+          "status": "PASS"
+        },
+        {
+          "name": "direct Patient rejects attacker key",
+          "status": "PASS"
+        },
+        {
+          "name": "forged caller credentials rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "patient cannot create profile for another user",
+          "status": "PASS"
+        },
+        {
+          "name": "valid certificate cannot impersonate another registered service",
+          "status": "PASS"
+        },
+        {
+          "name": "valid caller certificate and key cannot exceed caller scope",
+          "status": "PASS"
+        },
+        {
+          "name": "public Gateway strips private caller credentials and still requires client proof",
+          "status": "PASS"
+        },
+        {
+          "name": "MFA setup requires password",
+          "status": "PASS"
+        },
+        {
+          "name": "real MFA enrollment",
+          "status": "PASS"
+        },
+        {
+          "name": "confirm real TOTP",
+          "status": "PASS"
+        },
+        {
+          "name": "MFA enrollment revokes previous access",
+          "status": "PASS"
+        },
+        {
+          "name": "password alone cannot bypass enabled MFA",
+          "status": "PASS"
+        },
+        {
+          "name": "used enrollment TOTP cannot log in",
+          "status": "PASS"
+        },
+        {
+          "name": "password and fresh TOTP login",
+          "status": "PASS"
+        },
+        {
+          "name": "enabled MFA status",
+          "status": "PASS"
+        },
+        {
+          "name": "enabled MFA secret cannot be replaced",
+          "status": "PASS"
+        },
+        {
+          "name": "one-use recovery login",
+          "status": "PASS"
+        },
+        {
+          "name": "recovery code replay rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "MFA disable requires password and factor",
+          "status": "PASS"
+        },
+        {
+          "name": "controlled MFA disable",
+          "status": "PASS"
+        },
+        {
+          "name": "disable revokes previous access",
+          "status": "PASS"
+        },
+        {
+          "name": "login after controlled disable",
+          "status": "PASS"
+        },
+        {
+          "name": "wrong-key logout rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "correct bound logout",
+          "status": "PASS"
+        },
+        {
+          "name": "logged-out token rejected",
+          "status": "PASS"
+        }
+      ]
+    },
+    "session_lifecycle": {
+      "count": 43,
+      "sourceArtifact": "/tmp/careflow-security-lifecycle.json",
+      "checkedAt": "2026-10-15T15:48:25.976Z",
+      "passed": 43,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "create real lifecycle account",
+          "status": "PASS"
+        },
+        {
+          "name": "first client authenticates",
+          "status": "PASS"
+        },
+        {
+          "name": "second client authenticates",
+          "status": "PASS"
+        },
+        {
+          "name": "administrator authenticates",
+          "status": "PASS"
+        },
+        {
+          "name": "patient cannot assign own ADMIN role",
+          "status": "PASS"
+        },
+        {
+          "name": "first Identity accepts proof",
+          "status": "PASS"
+        },
+        {
+          "name": "second Identity rejects the same proof",
+          "status": "PASS"
+        },
+        {
+          "name": "five concurrent wrong passwords rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "account is locked after concurrent failures",
+          "status": "PASS"
+        },
+        {
+          "name": "auto-lock revokes first session",
+          "status": "PASS"
+        },
+        {
+          "name": "auto-lock revokes second session",
+          "status": "PASS"
+        },
+        {
+          "name": "administrator unlocks account",
+          "status": "PASS"
+        },
+        {
+          "name": "unlock does not revive old access",
+          "status": "PASS"
+        },
+        {
+          "name": "user can reauthenticate after unlock",
+          "status": "PASS"
+        },
+        {
+          "name": "real bound WebSocket connects",
+          "status": "PASS"
+        },
+        {
+          "name": "administrator changes role",
+          "status": "PASS"
+        },
+        {
+          "name": "old role token rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "role change closes existing socket",
+          "status": "PASS"
+        },
+        {
+          "name": "new login receives current role",
+          "status": "PASS"
+        },
+        {
+          "name": "disable account",
+          "status": "PASS"
+        },
+        {
+          "name": "disabled user access rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "disabled user cannot log in",
+          "status": "PASS"
+        },
+        {
+          "name": "reenable account",
+          "status": "PASS"
+        },
+        {
+          "name": "reenable cannot revive token",
+          "status": "PASS"
+        },
+        {
+          "name": "logout-all succeeds",
+          "status": "PASS"
+        },
+        {
+          "name": "logout-all revokes first key/session",
+          "status": "PASS"
+        },
+        {
+          "name": "logout-all revokes second key/session",
+          "status": "PASS"
+        },
+        {
+          "name": "real short-TTL Identity issues token",
+          "status": "PASS"
+        },
+        {
+          "name": "short-TTL token initially accepted",
+          "status": "PASS"
+        },
+        {
+          "name": "expired real access token rejected",
+          "status": "PASS"
+        },
+        {
+          "name": "direct service 18082 rejects forged identity without user token",
+          "status": "PASS"
+        },
+        {
+          "name": "direct service 18083 rejects forged identity without user token",
+          "status": "PASS"
+        },
+        {
+          "name": "direct service 18084 rejects forged identity without user token",
+          "status": "PASS"
+        },
+        {
+          "name": "direct service 18085 rejects forged identity without user token",
+          "status": "PASS"
+        },
+        {
+          "name": "direct service 18086 rejects forged identity without user token",
+          "status": "PASS"
+        },
+        {
+          "name": "direct service 18087 rejects forged identity without user token",
+          "status": "PASS"
+        },
+        {
+          "name": "direct service 18088 rejects forged identity without user token",
+          "status": "PASS"
+        },
+        {
+          "name": "direct service 18089 rejects forged identity without user token",
+          "status": "PASS"
+        },
+        {
+          "name": "direct service 18090 rejects forged identity without user token",
+          "status": "PASS"
+        },
+        {
+          "name": "Gateway fails closed when Identity is down",
+          "status": "PASS"
+        },
+        {
+          "name": "direct Patient fails closed when Identity is down",
+          "status": "PASS"
+        },
+        {
+          "name": "Identity outage closes idle notification socket",
+          "status": "PASS"
+        },
+        {
+          "name": "same active token works after Identity recovery",
+          "status": "PASS"
+        }
+      ]
+    },
+    "member_a": {
+      "count": 114,
+      "sourceArtifact": "careflow-mobile-emulator-service/.runtime/member-a-repair-results.json",
+      "checkedAt": "2026-10-15T15:55:53.059Z",
+      "passed": 114,
+      "failed": 0,
+      "checks": [
+        {
+          "case": "audit-config",
+          "method": "GET",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "login-admin",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "login-an@careflow.vn",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "register-repairOwner",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "login-auditArepairOwner3c1b1ad73f",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "profile-repairOwner",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "register-socket",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "login-auditAsocketcd6c7989aa",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "profile-socket",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "register-staff",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "login-auditAstaffa7010255f7",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "profile-staff",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "register-unassigned",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "login-auditAunassigned0fe025bbf7",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "profile-unassigned",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "assign-real-STAFF-role",
+          "method": "PATCH",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "login-auditAstaffa7010255f7",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "assign-real-STAFF-role",
+          "method": "PATCH",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "login-auditAunassigned0fe025bbf7",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "create-actual-reception-assignment",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "active-personal-websocket-connect",
+          "result": "PASS"
+        },
+        {
+          "case": "no-token-websocket-denied",
+          "result": "PASS"
+        },
+        {
+          "case": "foreign-destination-is-closed",
+          "result": "PASS"
+        },
+        {
+          "case": "login-auditAsocketcd6c7989aa",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "real-logout-current",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "logout-old-token-REST-denied",
+          "method": "GET",
+          "status": 401,
+          "result": "PASS"
+        },
+        {
+          "case": "logout-closes-idle-socket-and-rejects-reconnect",
+          "result": "PASS"
+        },
+        {
+          "case": "login-auditAsocketcd6c7989aa",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "real-logout-all",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "logout-all-old-token-REST-denied",
+          "method": "GET",
+          "status": 401,
+          "result": "PASS"
+        },
+        {
+          "case": "logout-all-closes-idle-socket-and-rejects-reconnect",
+          "result": "PASS"
+        },
+        {
+          "case": "login-auditAsocketcd6c7989aa",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "real-refresh-rotation",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "refresh-old-token-REST-denied",
+          "method": "GET",
+          "status": 401,
+          "result": "PASS"
+        },
+        {
+          "case": "refresh-closes-idle-socket-and-rejects-reconnect",
+          "result": "PASS"
+        },
+        {
+          "case": "login-auditAsocketcd6c7989aa",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "real-admin-disable",
+          "method": "PATCH",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "disable-old-token-REST-denied",
+          "method": "GET",
+          "status": 401,
+          "result": "PASS"
+        },
+        {
+          "case": "disable-closes-idle-socket-and-rejects-reconnect",
+          "result": "PASS"
+        },
+        {
+          "case": "restore-fixture-user-active",
+          "method": "PATCH",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "login-auditAsocketcd6c7989aa",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "real-admin-change-role",
+          "method": "PATCH",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "role-change-old-token-REST-denied",
+          "method": "GET",
+          "status": 401,
+          "result": "PASS"
+        },
+        {
+          "case": "role-change-closes-idle-socket-and-rejects-reconnect",
+          "result": "PASS"
+        },
+        {
+          "case": "restore-fixture-user-role",
+          "method": "PATCH",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "real-short-lived-Identity-login",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "actual-issued-token-expiry-closes-idle-socket",
+          "result": "PASS"
+        },
+        {
+          "case": "unassigned-STAFF-intake-denied",
+          "method": "POST",
+          "status": 403,
+          "result": "PASS"
+        },
+        {
+          "case": "forged-owner-intake-denied",
+          "method": "POST",
+          "status": 403,
+          "result": "PASS"
+        },
+        {
+          "case": "reception-STAFF-cannot-self-assign-emergency-priority",
+          "method": "POST",
+          "status": 403,
+          "result": "PASS"
+        },
+        {
+          "case": "nonexistent-patient-intake-denied",
+          "method": "POST",
+          "status": 404,
+          "result": "PASS"
+        },
+        {
+          "case": "denied-intakes-create-no-entry",
+          "result": "PASS"
+        },
+        {
+          "case": "assigned-STAFF-real-default-ROOM01-intake",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "seeded-number-collision-fixed-without-deleting-seed",
+          "result": "PASS"
+        },
+        {
+          "case": "parallel-same-key-replay-two-JVMs",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "parallel-same-key-replay-two-JVMs",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "parallel-same-key-replay-two-JVMs",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "parallel-same-key-replay-two-JVMs",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "concurrent-replay-one-entry-one-checkin-event",
+          "result": "PASS"
+        },
+        {
+          "case": "creator-and-patient-owner-separated",
+          "result": "PASS"
+        },
+        {
+          "case": "duplicate-active-intake-denied",
+          "method": "POST",
+          "status": 409,
+          "result": "PASS"
+        },
+        {
+          "case": "active-session-still-receives-real-notification",
+          "result": "PASS"
+        },
+        {
+          "case": "assigned-doctor-call-intake",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "assigned-doctor-start-intake",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "assigned-doctor-complete-intake",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "PATIENT-cannot-create-unowned-profile",
+          "method": "POST",
+          "status": 403,
+          "result": "PASS"
+        },
+        {
+          "case": "unassigned-STAFF-cannot-create-profile",
+          "method": "POST",
+          "status": 403,
+          "result": "PASS"
+        },
+        {
+          "case": "STAFF-wrong-room-profile-denied",
+          "method": "POST",
+          "status": 403,
+          "result": "PASS"
+        },
+        {
+          "case": "unknown-room-profile-denied",
+          "method": "POST",
+          "status": 403,
+          "result": "PASS"
+        },
+        {
+          "case": "assigned-STAFF-creates-real-no-account-patient",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "duplicate-unowned-ID-card-denied",
+          "method": "POST",
+          "status": 409,
+          "result": "PASS"
+        },
+        {
+          "case": "assigned-STAFF-intakes-patient-without-login",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "no-account-patient-stays-unowned-with-audit",
+          "result": "PASS"
+        },
+        {
+          "case": "creator-is-not-clinical-owner",
+          "method": "GET",
+          "status": 403,
+          "result": "PASS"
+        },
+        {
+          "case": "unrelated-STAFF-cannot-edit-unowned-profile",
+          "method": "PUT",
+          "status": 403,
+          "result": "PASS"
+        },
+        {
+          "case": "real-parallel-intake-profile",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "real-parallel-intake-profile",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "real-parallel-intake-profile",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "real-parallel-intake-profile",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "concurrent-distinct-patient-intake-two-JVMs",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "concurrent-distinct-patient-intake-two-JVMs",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "concurrent-distinct-patient-intake-two-JVMs",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "concurrent-distinct-patient-intake-two-JVMs",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "concurrent-actual-allocations-use-distinct-numbers",
+          "result": "PASS"
+        },
+        {
+          "case": "profile-for-duplicate-race",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "different-key-concurrent-intake-cannot-duplicate-patient",
+          "result": "PASS"
+        },
+        {
+          "case": "fresh-second-profile-for-concurrent-appointment-queue-events",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "real-booking-slots",
+          "method": "GET",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "real-second-profile-booking",
+          "method": "POST",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "poll-real-inbox",
+          "method": "GET",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "poll-real-inbox",
+          "method": "GET",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "poll-real-inbox",
+          "method": "GET",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "second-profile-actual-booking-notification-fixed",
+          "result": "PASS"
+        },
+        {
+          "case": "multiple-real-patient-mappings-per-user",
+          "result": "PASS"
+        },
+        {
+          "case": "cancel-only-audit-booking",
+          "method": "PUT",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "deactivate-test-reception-assignment",
+          "method": "PUT",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "inactive-assignment-denies-existing-idempotency-replay",
+          "method": "POST",
+          "status": 403,
+          "result": "PASS"
+        },
+        {
+          "case": "inactive-assignment-cannot-create-patient",
+          "method": "POST",
+          "status": 403,
+          "result": "PASS"
+        },
+        {
+          "case": "all-four-defect-regressions-fixed",
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cleanup-audit-session",
+          "method": "POST",
+          "status": 200,
+          "result": "PASS"
+        }
+      ]
+    },
+    "dataset_api": {
+      "count": 25,
+      "sourceArtifact": "careflow-mobile-emulator-service/.runtime/mobile-dataset-verification.json",
+      "checkedAt": null,
+      "passed": 25,
+      "failed": 0,
+      "checks": [
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "status": 409
+        },
+        {
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "status": 409
+        },
+        {
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "status": 409
+        },
+        {
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "status": 403
+        },
+        {
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "status": 200
+        },
+        {
+          "method": "POST",
+          "status": 200
+        }
+      ]
+    },
+    "booking_api": {
+      "count": 23,
+      "sourceArtifact": "careflow-mobile-emulator-service/.runtime/live-api-results.json",
+      "checkedAt": null,
+      "passed": 23,
+      "failed": 0,
+      "checks": [
+        {
+          "case": "simulator-config",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "gateway-health",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "register-synthetic-patient",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "wrong-password-is-rejected",
+          "status": 401,
+          "result": "PASS"
+        },
+        {
+          "case": "patient-login",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "verified-current-user",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "create-patient-profile",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "mobile-patient-profiles",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "real-department-catalog",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "real-slot-capacity",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "book-real-appointment",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "booking-retry-is-idempotent",
+          "status": 201,
+          "result": "PASS"
+        },
+        {
+          "case": "queue-ticket-created-by-real-event",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "ticket-requires-authentication",
+          "status": 401,
+          "result": "PASS"
+        },
+        {
+          "case": "checkin-requires-valid-qr",
+          "status": 401,
+          "result": "PASS"
+        },
+        {
+          "case": "admin-login-for-hospital-qr",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "server-issued-hospital-qr",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "future-booking-cannot-check-in-today",
+          "status": 409,
+          "result": "PASS"
+        },
+        {
+          "case": "denied-checkin-keeps-ticket-issued",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "cancel-synthetic-booking",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "logout-patient",
+          "status": 200,
+          "result": "PASS"
+        },
+        {
+          "case": "revoked-session-is-rejected",
+          "status": 401,
+          "result": "PASS"
+        },
+        {
+          "case": "logout-qr-admin",
+          "status": 200,
+          "result": "PASS"
+        }
+      ]
+    },
+    "mfa_browser": {
+      "count": 8,
+      "sourceArtifact": "careflow-mobile-emulator-service/.runtime/security-browser-results.json",
+      "checkedAt": "2026-10-15T15:55:24.813Z",
+      "passed": 8,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "browser logs in using its real bound key",
+          "status": "PASS"
+        },
+        {
+          "name": "real STOMP connection validates client proof",
+          "status": "PASS"
+        },
+        {
+          "name": "browser private key is non-extractable and persists in IndexedDB",
+          "status": "PASS"
+        },
+        {
+          "name": "real UI enrolls and confirms TOTP through Identity",
+          "status": "PASS"
+        },
+        {
+          "name": "enabling MFA invalidates the previous browser session",
+          "status": "PASS"
+        },
+        {
+          "name": "browser logs in with password and one-use recovery code",
+          "status": "PASS"
+        },
+        {
+          "name": "another phone key cannot use the logged-in phone token",
+          "status": "PASS"
+        },
+        {
+          "name": "browser MFA flow has no uncaught JavaScript errors",
+          "status": "PASS"
+        }
+      ]
+    },
+    "dataset_browser": {
+      "count": 7,
+      "sourceArtifact": "careflow-mobile-emulator-service/.runtime/dataset-browser-results.json",
+      "checkedAt": null,
+      "passed": 7,
+      "failed": 0,
+      "checks": [
+        {
+          "case": "phone-01: actual login and owned profile for mobile_case01",
+          "result": "PASS"
+        },
+        {
+          "case": "phone-02: actual login and owned profile for mobile_case02",
+          "result": "PASS"
+        },
+        {
+          "case": "phone-03: actual login and owned profile for mobile_case03",
+          "result": "PASS"
+        },
+        {
+          "case": "phone-01: real appointment screen shows Chưa có lịch khám sắp tới; no other patient's appointment request",
+          "result": "PASS"
+        },
+        {
+          "case": "phone-02: real appointment screen shows Đã xác nhận; no other patient's appointment request",
+          "result": "PASS"
+        },
+        {
+          "case": "phone-03: real appointment screen shows Đã hủy; no other patient's appointment request",
+          "result": "PASS"
+        },
+        {
+          "case": "three real sessions simultaneously render without uncaught JavaScript errors",
+          "result": "PASS"
+        }
+      ]
+    },
+    "hospital_browser": {
+      "count": 4,
+      "sourceArtifact": "/tmp/careflow-security-hospital-browser.json",
+      "checkedAt": "2026-10-15T15:53:36.638Z",
+      "passed": 4,
+      "failed": 0,
+      "checks": [
+        {
+          "name": "production Hospital Web submits real bound doctor login",
+          "status": "PASS"
+        },
+        {
+          "name": "production reload verifies live session instead of trusting localStorage",
+          "status": "PASS"
+        },
+        {
+          "name": "production logout revokes bound session on Identity",
+          "status": "PASS"
+        },
+        {
+          "name": "Hospital Web has no uncaught JavaScript errors",
+          "status": "PASS"
+        }
+      ]
+    }
+  },
+  "sourceSha256": {
+    "careflow-api-gateway/pom.xml": "0842755c69ee2f9ce4f3f306485f8ae194ea32a7133b43059e3af8ae3bacbd48",
+    "careflow-api-gateway/src/main/java/com/careflow/gateway/security/JwtAuthenticationFilter.java": "9e478b1cae61e41d3e85826b556b905caf63f1e7bfc61e5f7bebb9b913b279a8",
+    "careflow-api-gateway/src/main/resources/application-secure.yml": "a1f6cfe985eccbaa4ebc3de40a1fbabdd2c0c17a43f3ccc8943937dceced8864",
+    "careflow-api-gateway/src/main/resources/application.yml": "334ab37f34e4810a773e6cb8fcb3b210e6b6e216723e9fa5b41aae45439097fa",
+    "careflow-api-gateway/src/test/java/com/careflow/gateway/security/DirectoryAuthenticationRegressionTest.java": "ccac41bf99c8ca2cd7442d7a003e2ec62e4e1d6ae6939f29da756a81cdb5835c",
+    "careflow-api-gateway/src/test/java/com/careflow/gateway/security/GatewayActiveSessionTest.java": "0bb3c0718bd9451630eb6cce33a658c39cc24d948fb91539aa842d1b7140b0e5",
+    "careflow-api-gateway/src/test/java/com/careflow/gateway/security/GatewaySessionTestSupport.java": "c48f19c7ce423bc762cb0cebffddb13f61d90e2a28ab2cf9018277f2e7c6b133",
+    "careflow-api-gateway/src/test/java/com/careflow/gateway/security/GatewayTokenClaimsTest.java": "ec2ca49589bfb4003a54d6fe3b7592030b746943fca157302e8511a64cbba81b",
+    "careflow-api-gateway/src/test/java/com/careflow/gateway/security/JwtAuthenticationFilterTest.java": "7a9d60b0e3379c25b11658a9f1f8dfb19c4e8e8b93ae94d18c9bbd94b268874c",
+    "careflow-appointment-service/src/main/java/com/careflow/appointment/client/AppointmentConsultationClient.java": "6ef4dc965645077fe68f4c880ff5e856e0c6ff5d993585ac8d5f1c0a913c8064",
+    "careflow-appointment-service/src/main/java/com/careflow/appointment/client/PatientClient.java": "aa47eb2f6177961f007423a56626221de92ded3ee1d455cfce3db57d3686ad26",
+    "careflow-appointment-service/src/main/java/com/careflow/appointment/config/AppointmentSecurityConfiguration.java": "c44e92c7b5eaa5df0ba6fc4324b6a47b01d89cea0e83143640d6478d4dd37760",
+    "careflow-appointment-service/src/main/java/com/careflow/appointment/config/DataInitializer.java": "933be627f1c8f743af5e8e1fecbb6b9ba405ba026efdb8fe580a5f1aceebb7af",
+    "careflow-appointment-service/src/main/java/com/careflow/appointment/controller/AppointmentController.java": "885fb424e5aacb6255599d63ca8afc61071ec3cfbd764b3f4937eb01f16da927",
+    "careflow-appointment-service/src/main/java/com/careflow/appointment/service/AppointmentService.java": "7677a782808bfc9222e299a3699f7a48ed0b48647bdd44ceeeb4d31062d173ac",
+    "careflow-appointment-service/src/main/resources/application-secure.yml": "a37ab4158373b0849bdee9e21998bcc4239fa00195ebd758c8c376656c2e9380",
+    "careflow-appointment-service/src/test/java/com/careflow/appointment/client/PatientBookingClientContractTest.java": "46906e1153d2a3ba6096b9c2cb8f1d9923739fffd99c9b14278af775493c47cb",
+    "careflow-appointment-service/src/test/java/com/careflow/appointment/config/AppointmentSecurityConfigurationTest.java": "8ae9ed39db92061a6d01c07cf4275373e85fddd0af4313426d81b6ee02ecc41a",
+    "careflow-appointment-service/src/test/java/com/careflow/appointment/service/AppointmentBookingOwnershipTest.java": "b643bfec6986e48ea1eec500099c86d43e0757fe0a554d656fc3895fe2bb6081",
+    "careflow-appointment-service/src/test/java/com/careflow/appointment/service/AppointmentCacheTransactionTest.java": "5ac1f4795be3556796246b06a69d8aaabc36f23d86794c2be876f0df3a6079fc",
+    "careflow-appointment-service/src/test/java/com/careflow/appointment/service/AppointmentDirectoryResolutionTest.java": "d8c54375bfcbc8405ea01c634d64f903ca1abc379115235048414fd2c9ae0665",
+    "careflow-appointment-service/src/test/java/com/careflow/appointment/service/AppointmentFollowUpAuthorizationTest.java": "32f5456857921346a84e8a28ec6d73055047a4548727aa8c73c686dd912b8a07",
+    "careflow-appointment-service/src/test/java/com/careflow/appointment/service/AppointmentIdempotencyNormalizationTest.java": "f1fedf6341444b74c4e609b77c1e5a23ed47e858875e35edc1ef5074abef6f94",
+    "careflow-appointment-service/src/test/java/com/careflow/appointment/service/AppointmentServiceTest.java": "1142fe3d4751ae2dc2be7bdb37d404d5a29aedde2cb3696092334915c2a065f8",
+    "careflow-appointment-service/src/test/java/com/careflow/appointment/service/AppointmentSlotCapacityTest.java": "6411102df1c79f60cb245bb57b938b079720c005a75e97c52d07042062088660",
+    "careflow-appointment-service/src/test/resources/contracts/consultation/followup-error-401.json": "8b11063ed9b64d6904b20f5435c97dfdac6890a0a4d9df4ad0bb5f2a8b3c0b8e",
+    "careflow-appointment-service/src/test/resources/contracts/consultation/followup-error-403.json": "d904e3e6cad23e02053dea3c90c5c1bbb18fb2aeb7b14fb50f04d74a1e4c96c5",
+    "careflow-appointment-service/src/test/resources/contracts/consultation/followup-error-404.json": "40f1fd299bf24870415f812b68028dc69853e472b5b3bf34ed3e4ecdeac55c7e",
+    "careflow-appointment-service/src/test/resources/contracts/consultation/followup-error-500.json": "140a4a8a8b206f165d4db8cfaeaddfea56f6684fb6cda61a4c4ea1b0741cb5b4",
+    "careflow-appointment-service/src/test/resources/contracts/consultation/followup-error-503.json": "29359a0bcdd9734fbf2a59381c80a5b4eb85081b44cc861f9bfe6c45392a6966",
+    "careflow-appointment-service/src/test/resources/contracts/consultation/followup-success.json": "0aae4d24b1fe1e99864fdbd94e7176d6ab295cd95b35cce576bf26710a1a09e6",
+    "careflow-appointment-service/src/test/resources/contracts/patient/booking-error-401.json": "82b7af69eb0fa396eb12b9b180ecd797c50482a7b5c91ebe65b6f384f9b12bc3",
+    "careflow-appointment-service/src/test/resources/contracts/patient/booking-error-403.json": "ed356a6c0485340b264e491f8d2cf4679ba2deea5f01b572c213d59a2e8def0e",
+    "careflow-appointment-service/src/test/resources/contracts/patient/booking-error-404.json": "addf670ac62aca506f744cb6db516d126a962688a3d53c2d1ffb286a65e154ee",
+    "careflow-appointment-service/src/test/resources/contracts/patient/booking-error-500.json": "b12f621e7c994687d4d354e1f9fc13aee3ac21381dff7b58a1ed16dcd7f5372d",
+    "careflow-appointment-service/src/test/resources/contracts/patient/booking-error-503.json": "baeb47a6a9bad5457a3f99dc3cfe40521ce01cf747fd1c359bf345b702bbf71b",
+    "careflow-appointment-service/src/test/resources/contracts/patient/booking-success.json": "e1c60e51bbd4e4ced4106cf1a36f15d8df41c800a7b9d2b1bffeefab8908a0e3",
+    "careflow-appointment-service/src/test/resources/contracts/patient/clinical-error-401.json": "8b11063ed9b64d6904b20f5435c97dfdac6890a0a4d9df4ad0bb5f2a8b3c0b8e",
+    "careflow-appointment-service/src/test/resources/contracts/patient/clinical-error-403.json": "d904e3e6cad23e02053dea3c90c5c1bbb18fb2aeb7b14fb50f04d74a1e4c96c5",
+    "careflow-appointment-service/src/test/resources/contracts/patient/clinical-error-404.json": "40f1fd299bf24870415f812b68028dc69853e472b5b3bf34ed3e4ecdeac55c7e",
+    "careflow-appointment-service/src/test/resources/contracts/patient/clinical-error-500.json": "140a4a8a8b206f165d4db8cfaeaddfea56f6684fb6cda61a4c4ea1b0741cb5b4",
+    "careflow-appointment-service/src/test/resources/contracts/patient/clinical-error-503.json": "29359a0bcdd9734fbf2a59381c80a5b4eb85081b44cc861f9bfe6c45392a6966",
+    "careflow-appointment-service/src/test/resources/contracts/patient/clinical-success.json": "3afccc5c99c13c886c3a04aaacf86ed7e459c638dce6fff7104e487429595783",
+    "careflow-common/pom.xml": "7bec99a8f1176e0bb336cf99e207f2df5500707d1cc68a68fdadddd804d40cde",
+    "careflow-common/src/main/java/com/careflow/common/security/ActiveSessionAutoConfiguration.java": "f167203f4770c740ac116dcad2ae1f82b352457815dcb808bb7d2da5828ef45e",
+    "careflow-common/src/main/java/com/careflow/common/security/ActiveSessionClient.java": "781f9744f0f497fc5e5a0cf216138d615456c247da3a9a5d660cea9da1eac06a",
+    "careflow-common/src/main/java/com/careflow/common/security/ActiveSessionFilter.java": "e4394cc17db8f84ec5a5dd67336c2906a880eb31c4daec90414b9752ef9c1b4e",
+    "careflow-common/src/main/java/com/careflow/common/security/InternalTlsAutoConfiguration.java": "829ffe715255ef06981117caab1c253c1529959fe340b0c0c625447a26638924",
+    "careflow-common/src/main/java/com/careflow/common/security/InternalTlsMaterial.java": "329c61fc3d59d4d660d52c662a3375d9d707df40456de6acd0fea7612be676a8",
+    "careflow-common/src/main/java/com/careflow/common/security/ServiceCallerAutoConfiguration.java": "d2aef0aad0216a9033ed8bcb44e2a3464e5552845e7dd919edeaec5c8f986e4e",
+    "careflow-common/src/main/java/com/careflow/common/security/ServiceTransportIdentity.java": "e02251516f5a9ab9a4729c5c9d8d5c929df1e0e71fbc83a261e249fb9ae7707b",
+    "careflow-common/src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports": "7a547ed8e5f5f18c0cb729e4f1ae14f55009c16129fde56e91d91614a24f8374",
+    "careflow-common/src/main/resources/careflow-security.yml": "13366229e2d9be2e9575cad227db9399b08cbf1a7577a4a0990bb84990934072",
+    "careflow-common/src/test/java/com/careflow/common/security/ActiveSessionAutoConfigurationTest.java": "0cd4e1fa2f94855c41f39ee76d7cddc08a39e401a351945a25e1c016bca28f20",
+    "careflow-common/src/test/java/com/careflow/common/security/ActiveSessionClientTest.java": "b9ecf35288f39b183ab9625275e92ee33fdc589792cf63a89a611eea3e814506",
+    "careflow-common/src/test/java/com/careflow/common/security/ActiveSessionContainerPathTest.java": "5bb2f429183a256145e764c9d4b5c89b38574aa9ee9f9bb7dc5e722a183e177f",
+    "careflow-common/src/test/java/com/careflow/common/security/ActiveSessionFilterTest.java": "4e51f9373fa9b83e1de592a18d202221f1b7ad7a1dbf0430518098f3eac3eb79",
+    "careflow-consultation-service/pom.xml": "3adf7e406940b8b91981b62299a1c43c982cb152672cdc93965f860d5ffeae32",
+    "careflow-consultation-service/src/main/java/com/careflow/consultation/config/ConsultationErrorConfiguration.java": "b7d4c1acb798d9e9bb558b6cfd16ec0b0886277e80630d5cd816804c90d1773c",
+    "careflow-consultation-service/src/main/java/com/careflow/consultation/config/DataInitializer.java": "47ae153842eb680e6118c91425ed22a5319e66fb40c03082b2587e19e52aa3c2",
+    "careflow-consultation-service/src/main/java/com/careflow/consultation/config/FeignClientInterceptorConfig.java": "833ef401284243db7fce304eabcfa27624aa4d87dda5bded570f9f3aeaa50d5a",
+    "careflow-consultation-service/src/main/java/com/careflow/consultation/controller/ConsultationController.java": "ca55b112f1360ced8750af1e48e21115ff25f07cf3409930f2d8c2367fafcf1a",
+    "careflow-consultation-service/src/main/java/com/careflow/consultation/security/ConsultationAuthenticationFilter.java": "bd6fc1ad07adf34241ab595cf617c6c79377d3a37cf10b9c5342f1376a82afa5",
+    "careflow-consultation-service/src/main/java/com/careflow/consultation/service/ConsultationService.java": "3f949529eab2b361a45b215823d13f4dbcd5065ca446c32bcf5c4c15f95b39da",
+    "careflow-consultation-service/src/main/resources/application-secure.yml": "a37ab4158373b0849bdee9e21998bcc4239fa00195ebd758c8c376656c2e9380",
+    "careflow-consultation-service/src/test/java/com/careflow/consultation/config/FeignIdentityPropagationTest.java": "a674e5f963c1b3f2d2002ececb146e0ab7537eef3314dd7711cfa6e0d30f37a5",
+    "careflow-consultation-service/src/test/java/com/careflow/consultation/controller/ConsultationAuthorizationRegressionTest.java": "dbe7a8ff2348441f85866ba61df17543867468cf1a74433cf94e3b91c7fbffb1",
+    "careflow-consultation-service/src/test/java/com/careflow/consultation/security/MissingSubjectAuthenticationTest.java": "aca6f1465b81d4cd426f91ca21439a5149e720be806ee8dfa1a8be61e7ec4849",
+    "careflow-consultation-service/src/test/java/com/careflow/consultation/service/ConsultationReadScopeTest.java": "da35849f2cfaa81d9d3abda5afb2a810e7c30944ae87a94373e6fa45e023460f",
+    "careflow-consultation-service/src/test/java/com/careflow/consultation/service/ConsultationResumeGuardTest.java": "a1b45e33ba17877f4499502e787a222e7a86c7787ed5f0b14cca5ca87c731312",
+    "careflow-emr-service/pom.xml": "156e2ba336d04f439fbdc8a775bd5840c4a8144cf50ca2b8862e8e7399584105",
+    "careflow-emr-service/src/main/java/com/careflow/emr/client/LabClient.java": "e6f73fe26e53d554012abf6bdefc186860928ca0dc3d6c084d4b66c9185ad5bf",
+    "careflow-emr-service/src/main/java/com/careflow/emr/config/DataInitializer.java": "95a74a45b2687efccec18ee5829195d18bd522d7545f1fd9eb6342310d969dca",
+    "careflow-emr-service/src/main/java/com/careflow/emr/config/EmrSecurityConfiguration.java": "9d97896350611d59828d38e696d7f2ea15bc26bb8c9c79b89bf094707c77d1c9",
+    "careflow-emr-service/src/main/java/com/careflow/emr/controller/MedicalRecordController.java": "41c10af026bf498045d8791fe3f8e456f1e07ed22688758dcaedd20af6f5f802",
+    "careflow-emr-service/src/main/java/com/careflow/emr/security/EmrAuthenticationFilter.java": "a0c82821b0595c6f5190b0462e67d9289b0e904cfa33777a519271d07f076097",
+    "careflow-emr-service/src/main/java/com/careflow/emr/service/EmrAccessService.java": "609130c676e1d4cb105e65b6df5ee9f2cd2b4b903e3fbd69fd00090670dd491f",
+    "careflow-emr-service/src/main/java/com/careflow/emr/service/MedicalRecordService.java": "bba4b1f62ba3e72f72beb2ea4473fe89fb09ad7263bf6a4f3beae73fb49b644c",
+    "careflow-emr-service/src/main/resources/application-secure.yml": "a37ab4158373b0849bdee9e21998bcc4239fa00195ebd758c8c376656c2e9380",
+    "careflow-emr-service/src/test/java/com/careflow/emr/controller/EmrAuthorizationRegressionTest.java": "44e699ce2e1c46edc382eedf392b413da47e19c50e8ebe51b0bd73b6ed7e2fd0",
+    "careflow-emr-service/src/test/java/com/careflow/emr/security/MissingSubjectAuthenticationTest.java": "25935b848a6a728f72077560684c20add19c426b7ff32273e6456c04835e892e",
+    "careflow-emr-service/src/test/java/com/careflow/emr/service/EmrMissingProviderDataTest.java": "02dc7146adc78f1a1e8cdef641f1cdc00bcf8a65fe605b050e383e240801c5c0",
+    "careflow-hospital-directory-service/src/main/java/com/careflow/directory/config/DataInitializer.java": "cb4a5e10274ba8e60e261d554d2a3900a6f429da8db1dc261cb4144a10e053e4",
+    "careflow-hospital-directory-service/src/main/java/com/careflow/directory/controller/StaffAssignmentController.java": "f3d6ecb3f4268ecf6d1377b69f95ba4fc24a20958707cff39ce78a09803e81e9",
+    "careflow-hospital-directory-service/src/main/resources/application-secure.yml": "a37ab4158373b0849bdee9e21998bcc4239fa00195ebd758c8c376656c2e9380",
+    "careflow-hospital-directory-service/src/test/java/com/careflow/directory/controller/DirectorySessionSecurityTest.java": "d12816782ebd1197197c54fe4a4053122829ca6bd2fe94317f15bc768b1f3918",
+    "careflow-identity-service/src/main/java/com/careflow/identity/config/DataInitializer.java": "6db9720506b139a42ccc2376182d26be1c2d4fcd3ddb94ce3e46a722a9e4127b",
+    "careflow-identity-service/src/main/java/com/careflow/identity/config/SecurityConfig.java": "9cf71172cb99888df4851d6d8890fc95822d2cfd99ffa31a9437f9e544c960b9",
+    "careflow-identity-service/src/main/java/com/careflow/identity/controller/AuthController.java": "0dd5e8b27d8c3769332e63ca22e588124ffa7db8955f73b01e4f6061110a5caa",
+    "careflow-identity-service/src/main/java/com/careflow/identity/controller/JwksController.java": "87475287955621c97122bb9411b784937b5dcfab587358ccbe9a325eb44ce8d7",
+    "careflow-identity-service/src/main/java/com/careflow/identity/controller/MfaController.java": "5d6a90ce153b03244747ea2ae8ef051143c4e9fcc02aece4d116d012e4c896e8",
+    "careflow-identity-service/src/main/java/com/careflow/identity/domain/RefreshToken.java": "75548f180a9a80e247ff7c71e5c96df1ba0bbeee6ff88875a156caa0fd56ccca",
+    "careflow-identity-service/src/main/java/com/careflow/identity/dto/LoginRequest.java": "2a08bf1f656a84c00e440eb4a39e676499f15aee49f73e36c6a1b465fc43e236",
+    "careflow-identity-service/src/main/java/com/careflow/identity/dto/SessionStatusResponse.java": "9b2a201a7b54a63bd11b3c789f49fb56598715be142b79fd1544855f52e1a6d2",
+    "careflow-identity-service/src/main/java/com/careflow/identity/repository/RefreshTokenRepository.java": "bc54e50fede087120551f392d00bddf6d56c65d4e2f9774def02ca0aa19b3d08",
+    "careflow-identity-service/src/main/java/com/careflow/identity/repository/UserRepository.java": "739f537672d8399a620de9450d5884df185e9f3b8c910320ef8c9e1adc24d07f",
+    "careflow-identity-service/src/main/java/com/careflow/identity/security/CallerRegistry.java": "fcbe4c2deecfc15ce6f9030fa9470b76f705c377bf18d2ebda0c5746c055f8fd",
+    "careflow-identity-service/src/main/java/com/careflow/identity/security/DpopProofService.java": "7de1210347771ed4a2044460756d1d882f3d326b4ccd181796fe42e451da8f45",
+    "careflow-identity-service/src/main/java/com/careflow/identity/security/DpopReplayStore.java": "201be3173b43a364472a0dbf0948e3e614c3cddf8b028aa31d69ff87d310a888",
+    "careflow-identity-service/src/main/java/com/careflow/identity/security/JwtAuthenticationFilter.java": "0dc1b3f6910207c5921fe264e9087cc175bc21600f0a53b4146b3a088b381833",
+    "careflow-identity-service/src/main/java/com/careflow/identity/security/JwtService.java": "0a2754eafc63069c00fe4030741f7ea3ae90d83ddfdf37510831d204aa853b87",
+    "careflow-identity-service/src/main/java/com/careflow/identity/security/JwtSigningKeys.java": "3a0c1ba3bc3091de3b49bdda7c35f11ee4a751c9735d6104e017a43d28984db9",
+    "careflow-identity-service/src/main/java/com/careflow/identity/security/Totp.java": "6d60d3fd524f96f3e3eb78e4d9ec27b574e476aaf4acdf24b2873a42fcf2f898",
+    "careflow-identity-service/src/main/java/com/careflow/identity/service/AuthService.java": "8cd58312d8d7afbb1945e2b85f81357a6806ec690f836b2c653fd7f321133de7",
+    "careflow-identity-service/src/main/java/com/careflow/identity/service/MfaService.java": "2dcdd382c01397490d340e8e8c5890a22aff7b0f61281af7bf3840716eeea209",
+    "careflow-identity-service/src/main/java/com/careflow/identity/service/RefreshTokenService.java": "e84ce4ba271ed64298411077385be4e66eeddc4cc9d48bd2599a2820cc30d19a",
+    "careflow-identity-service/src/main/resources/application-secure.yml": "a37ab4158373b0849bdee9e21998bcc4239fa00195ebd758c8c376656c2e9380",
+    "careflow-identity-service/src/main/resources/application.yml": "26bc7ebea517a6908a44ddcad59898dd0c7713ab35406dd5fb6ca53015d0f81f",
+    "careflow-identity-service/src/main/resources/db/migration/V8__mfa_and_token_binding.sql": "63db0c955b8adaa70f099a9b18c8ab26cadab8c4ed37f401c070cd06925ad135",
+    "careflow-identity-service/src/test/java/com/careflow/identity/security/JwtServiceTest.java": "b9603975752a7013e32948b1115b4933d5daca359f19a38610655b9d4c979499",
+    "careflow-identity-service/src/test/java/com/careflow/identity/security/JwtSessionFilterFailureTest.java": "283c80fc30d5c1b8dde65e99643cda0a8b49c3254f767543f1afc77c01dda913",
+    "careflow-identity-service/src/test/java/com/careflow/identity/security/JwtSessionValidationTest.java": "0dc549aa9e270254e53471006d74da90b105450d35eb7af1065b447dcda1d172",
+    "careflow-identity-service/src/test/java/com/careflow/identity/security/SigningTestKeys.java": "00efd85bf32564d33250e16127fe4bcd551784cd972a4bd88ab4c06f2b81ec72",
+    "careflow-identity-service/src/test/java/com/careflow/identity/security/TotpTest.java": "34bdaad4afd7a94824dbbddad3424d3d1d9eb5c54e7e366b7d843d7522331dfc",
+    "careflow-identity-service/src/test/java/com/careflow/identity/service/AccountSessionRevocationTest.java": "1c508fa30c3a8ef0ee167130f2fc7eb356c76b0a7f6febec9a556ef55046d5b7",
+    "careflow-identity-service/src/test/java/com/careflow/identity/service/AuthServiceTest.java": "1114e9d321636fb866527a171a11f0a986276ea454910d58e456e42c7594fca2",
+    "careflow-identity-service/src/test/java/com/careflow/identity/service/RefreshTokenServiceTest.java": "d3904b7b1a2d604ab5d9bb5ad6c181e36a1990401263e9145d8cac032ac47fd0",
+    "careflow-lab-service/src/main/java/com/careflow/lab/client/LabConsultationClient.java": "525a599ff82667abaf6877898a9a19baafac18b1d69ce6129bc667646963f916",
+    "careflow-lab-service/src/main/java/com/careflow/lab/client/LabDirectoryClient.java": "ddc0b2b0083d37c1210f7276645a14e6a03280b9bb44e18a0904f1a90b7bfd36",
+    "careflow-lab-service/src/main/java/com/careflow/lab/client/PatientIdentityClient.java": "6788781228af79bb2f1c12a41ef5fba3e8acd4ef0ad91cdd36a65bee92315c1b",
+    "careflow-lab-service/src/main/java/com/careflow/lab/client/QueueExecutionClient.java": "43d4e323c56a433cacb7f2f761d01f549efab9dd374d70fe56e59983835cfa16",
+    "careflow-lab-service/src/main/java/com/careflow/lab/config/LabSecurityConfiguration.java": "20f6c847ebe94bcb0ba775c44dc4b7a5bf87af1209e2ba1ad3aa7ff142521d33",
+    "careflow-lab-service/src/main/java/com/careflow/lab/service/LabAccessService.java": "f1eb5f20c1a713c1cf15d89614f55157198086600670ec564112791b6bdbf90d",
+    "careflow-lab-service/src/main/java/com/careflow/lab/service/LabOrderService.java": "5c20db4dbbd7f319957b1a9ee13c0480847d82b846b1bdc0ae2eeb6afce11a8d",
+    "careflow-lab-service/src/main/resources/application-secure.yml": "a37ab4158373b0849bdee9e21998bcc4239fa00195ebd758c8c376656c2e9380",
+    "careflow-lab-service/src/test/java/com/careflow/lab/config/LabSecurityConfigurationTest.java": "7459db3c486e3e5bea704022e8ea394405096a19bbcee1412abaa934d28427da",
+    "careflow-lab-service/src/test/java/com/careflow/lab/service/LabAccessServiceTest.java": "790f70a5dab0fbd76c47f418ec4e8f2fffd639ab1136b415e5a42cc4ada78221",
+    "careflow-lab-service/src/test/java/com/careflow/lab/service/LabOrderServiceTest.java": "b830110adabd6580770f1a15907741783ccd180873d6c67f77f00aee24f8fb47",
+    "careflow-lab-service/src/test/java/com/careflow/lab/service/LabServicePointValidationTest.java": "476709f28279e4850d5a10a8ba2350a6bcbab556d48049a1b198a3724270547b",
+    "careflow-lab-service/src/test/resources/contracts/consultation/access-error-401.json": "e8644c1a558d5bbc1f8f63d101df588ca49055a74caaea54cc21a11cf224ae74",
+    "careflow-lab-service/src/test/resources/contracts/consultation/access-error-403.json": "bfd0bec079f4db7c2e9e50cd52b7830021d64c8838f62f02f7d0ac72bc94bfc8",
+    "careflow-lab-service/src/test/resources/contracts/consultation/access-error-404.json": "6960444be0271c4c5b68fbd8e7925347e2e04515e7d5ac619133a54413077f96",
+    "careflow-lab-service/src/test/resources/contracts/consultation/access-error-500.json": "89e44cbc76dec6c861fe5d79ca4ee614f94573fa563cd283ca17745918501671",
+    "careflow-lab-service/src/test/resources/contracts/consultation/access-error-503.json": "10bbe4ffeceee25edfb25aeefae94068d6b7710633ea74f490494e61364c71ad",
+    "careflow-lab-service/src/test/resources/contracts/consultation/access-success.json": "9ad3e80abb67f13b7ba041a05e70a409404966e9f67f5210405b93690355dbb6",
+    "careflow-lab-service/src/test/resources/contracts/directory/access-error-401.json": "ed8cc310741151ce65cc8b0ca472886d51b7ea9ef191f243e1a63a92e262c99c",
+    "careflow-lab-service/src/test/resources/contracts/directory/access-error-403.json": "0b64d1dacd832f74606b7812409a768f67ca657f15812ee09eb5d09768aaedcd",
+    "careflow-lab-service/src/test/resources/contracts/directory/access-error-404.json": "a33171f5c846adb15767ae03fd5970c0b0c43ac3403e3d574709f7238ad81384",
+    "careflow-lab-service/src/test/resources/contracts/directory/access-error-500.json": "fa87231e0d738239d47f0d365da543f65a39b17769ddef6d9c0ae97b10682733",
+    "careflow-lab-service/src/test/resources/contracts/directory/access-error-503.json": "3c82d2fe48e7b4f278a0f117570e6e3a86fe495d03c68b7511a67ecf1ce8e7c6",
+    "careflow-lab-service/src/test/resources/contracts/directory/access-success.json": "7d60d00519a5db67f472f13f237a8a41fa84589bcc27cd676ef98511d591a2dd",
+    "careflow-lab-service/src/test/resources/contracts/patient/access-error-401.json": "e8644c1a558d5bbc1f8f63d101df588ca49055a74caaea54cc21a11cf224ae74",
+    "careflow-lab-service/src/test/resources/contracts/patient/access-error-403.json": "bfd0bec079f4db7c2e9e50cd52b7830021d64c8838f62f02f7d0ac72bc94bfc8",
+    "careflow-lab-service/src/test/resources/contracts/patient/access-error-404.json": "6960444be0271c4c5b68fbd8e7925347e2e04515e7d5ac619133a54413077f96",
+    "careflow-lab-service/src/test/resources/contracts/patient/access-error-500.json": "89e44cbc76dec6c861fe5d79ca4ee614f94573fa563cd283ca17745918501671",
+    "careflow-lab-service/src/test/resources/contracts/patient/access-error-503.json": "10bbe4ffeceee25edfb25aeefae94068d6b7710633ea74f490494e61364c71ad",
+    "careflow-lab-service/src/test/resources/contracts/patient/access-success.json": "67ccba78d68698ec55cefddcf7b2317a35833a9711b52d291d05f435889695ab",
+    "careflow-lab-service/src/test/resources/contracts/queue/access-error-401.json": "e8644c1a558d5bbc1f8f63d101df588ca49055a74caaea54cc21a11cf224ae74",
+    "careflow-lab-service/src/test/resources/contracts/queue/access-error-403.json": "bfd0bec079f4db7c2e9e50cd52b7830021d64c8838f62f02f7d0ac72bc94bfc8",
+    "careflow-lab-service/src/test/resources/contracts/queue/access-error-404.json": "6960444be0271c4c5b68fbd8e7925347e2e04515e7d5ac619133a54413077f96",
+    "careflow-lab-service/src/test/resources/contracts/queue/access-error-500.json": "89e44cbc76dec6c861fe5d79ca4ee614f94573fa563cd283ca17745918501671",
+    "careflow-lab-service/src/test/resources/contracts/queue/access-error-503.json": "10bbe4ffeceee25edfb25aeefae94068d6b7710633ea74f490494e61364c71ad",
+    "careflow-lab-service/src/test/resources/contracts/queue/access-success.json": "edc728156c617d49ab62d013f7498526075de87fc5d3c9cc267a6ae6ff9b31b8",
+    "careflow-mobile-emulator-service/README.md": "a39bc1cfa585c4e4c42911ac9d3323d41f7fc1cff18e884f6ebfbf722c7ce974",
+    "careflow-mobile-emulator-service/app/lib/config/router.dart": "63df823b90f340d7bfe1af33774293af018f779ef2ec5872ad93ab7c06370523",
+    "careflow-mobile-emulator-service/app/lib/providers/auth_provider.dart": "0d08ddcd123ba38100a8b9af12636da1dc689aa270f906e974ce7ca22dd2efdc",
+    "careflow-mobile-emulator-service/app/lib/screens/auth/login_screen.dart": "17e288fef5557c14b364b689b5b650c916ce940727a28c51ba7bbc8b8f470d5a",
+    "careflow-mobile-emulator-service/app/lib/screens/auth/mfa_screen.dart": "7b7a0b0e15bece1cb3815dd7afee7632d5232b2f52088a367590902cc2d6dc39",
+    "careflow-mobile-emulator-service/app/lib/screens/profile/account_screen.dart": "9eadcdfbb7dbc74960bbb2ab8e2fccc937c5f24383e0ed723f7644d7b09c0a6f",
+    "careflow-mobile-emulator-service/app/lib/services/api_service.dart": "18550ff2a22aa69b88a9b0974819cb7f2a53fe96d757d3f3bcdfb59884a883ed",
+    "careflow-mobile-emulator-service/app/lib/services/auth_service.dart": "6770b9bd78ffd445230c022e81763c854915b8073f9c8b5482d13362e6b56572",
+    "careflow-mobile-emulator-service/app/web/browser.js": "5f00288e8ac889d4cdb09c298105338ec6a6749e753176ac45193a14947e7ea6",
+    "careflow-mobile-emulator-service/app/web/device-key.js": "2f6a7b206e7660a6efbaf0d92e9c83172b53302b4c9361b1048eafc7726b81ad",
+    "careflow-mobile-emulator-service/app/web/index.html": "4bca1a013fed23ee09c1deabf5c95c35ba8a9a31c1be530f93d493124928d998",
+    "careflow-mobile-emulator-service/docs/source-snapshot.json": "af263d7af69360931fe64a77bcf6487dec0a2db40e51edf0a38a16bdc41696d4",
+    "careflow-mobile-emulator-service/package.json": "459ab85db18f430a5a3e76dd4319236d0fe9372644d0cd1b8a21b84f3256349b",
+    "careflow-mobile-emulator-service/scripts/bound-http.mjs": "581de56889dfa546ebc65df8eb5badffeb4f605faa1af9d9bd30508dc67aa956",
+    "careflow-mobile-emulator-service/scripts/live-api-smoke.mjs": "e8b791f8e1231527aff1c58bdc8693e82af32ac56797c547a32803762182fa1e",
+    "careflow-mobile-emulator-service/scripts/member-a-repair-smoke.mjs": "33b048ad285043f065350f997e25baaeeff6c8ee97e1680e98e210744b8e8825",
+    "careflow-mobile-emulator-service/scripts/run-member-a-repair.mjs": "ba1fadf3602ca052b012ff3922d23e6f4fed080ea5b9170c0b45a472a3f181e5",
+    "careflow-mobile-emulator-service/scripts/security-browser-smoke.mjs": "8152d4bfac7d0d09194ccc2234c86606b86ab3a2ca553027023d135f38977cdd",
+    "careflow-mobile-emulator-service/scripts/security-dataset-browser.mjs": "88a2487a8be6f39a1e12d6c9d334a814d3433e9c3f33dd4b0e6c4f86757d462c",
+    "careflow-mobile-emulator-service/scripts/seed-mobile-dataset.mjs": "2f7abdc77dc2dff92876cd1c3d0cb741e797a6a8957fa68a9bc27fd86d05228a",
+    "careflow-mobile-emulator-service/server.mjs": "a18f4526e19d171ca1624ecb322b17e4dc6fc767b83f85262d7d2fbd137fb459",
+    "careflow-mobile-emulator-service/tests/browser.test.mjs": "15e799a10799bd56c4bf3a9d8bf80344becc49dfda99d03f8d05b894dd766fc8",
+    "careflow-mobile-emulator-service/tests/server.test.mjs": "2d7087719fb0a19668e42a7609018318b17ca45ec527cea03bb61a788963a76b",
+    "careflow-notification-service/src/main/java/com/careflow/notification/config/WebSocketConfig.java": "4f46d2a4df7690343d6e83a58cb8700e6b1d51f6587433682e802e0b032b5057",
+    "careflow-notification-service/src/main/java/com/careflow/notification/domain/PatientRecipientProjection.java": "3878fb0ca4f9ae5261fa757440188db530636f586207c6599ff7c5d805e4b501",
+    "careflow-notification-service/src/main/java/com/careflow/notification/repository/PatientRecipientRepository.java": "bd8d1ef76fdf968a2f67380564b39b9c1c5c47374718d4d9f63c3df63dc3e713",
+    "careflow-notification-service/src/main/java/com/careflow/notification/security/JwtAuthenticator.java": "13ef944cf40e9022065c77e85ff4687a7fc309d07198abddb2bc7336ef8bb060",
+    "careflow-notification-service/src/main/java/com/careflow/notification/security/WebSocketSessionGuard.java": "6be5fea5aed6462e64f84f702becc13a8bd94b5e2b3c34502705593a53944644",
+    "careflow-notification-service/src/main/java/com/careflow/notification/service/NotificationService.java": "80f6ffb48545c2b6223e54bf7365cf47e4bd93c55e212fbe613cd3654a392040",
+    "careflow-notification-service/src/main/resources/application-secure.yml": "a37ab4158373b0849bdee9e21998bcc4239fa00195ebd758c8c376656c2e9380",
+    "careflow-notification-service/src/main/resources/application.yml": "4043f98fb55636b0873f388a85333676850f66f01a598f2696c795f8cfa74347",
+    "careflow-notification-service/src/main/resources/db/migration/V3__recipient_many_profiles.sql": "4aace71ee10f77c56525f6d82bcfaefd093053101b5f0b9ec7bc2cbc9f5c336a",
+    "careflow-notification-service/src/test/java/com/careflow/notification/NotificationApplicationTest.java": "d8602929829b84f71a8e8c7f88fad80c13303eb8a0804e5c082514642b37a06d",
+    "careflow-notification-service/src/test/java/com/careflow/notification/security/JwtAuthenticatorTest.java": "1540cebf19c35502b301c1ae52a6d0d0d68e2c7f287eeda182197b8b93f20a09",
+    "careflow-notification-service/src/test/java/com/careflow/notification/security/WebSocketSessionGuardTest.java": "58723daf21dd1095ca0b35cbda45527b532d9ba8ecc75a292e80011ccfe49d36",
+    "careflow-notification-service/src/test/java/com/careflow/notification/service/NotificationServiceTest.java": "23ff295582498452b92cf328f4179318e37a3d159c7c2dd4d67d0eeaf9ced58e",
+    "careflow-patient-service/pom.xml": "6b86ef137ffc9599ff86739b1ddced1bd479d3875bdaf2fe98c29531b987aac6",
+    "careflow-patient-service/src/main/java/com/careflow/patient/client/ReceptionDirectoryClient.java": "64e456be61c5957cff769086c292bbc71210fa9c73e177d855c7ff278f3bb6a3",
+    "careflow-patient-service/src/main/java/com/careflow/patient/config/DataInitializer.java": "7e8315dfe9333e23c8808d8a1ff335917b391cef73df0bdf05418e94259f6f4d",
+    "careflow-patient-service/src/main/java/com/careflow/patient/config/PatientSecurityConfiguration.java": "a11f73f6f4de6cae17e32704bcdf8f53662e1123a4a73c3c23f52303e5292e2d",
+    "careflow-patient-service/src/main/java/com/careflow/patient/controller/HealthRecordController.java": "edab18bd568e4c6d93ca36cb604eb13d749b4b84bf8d18857848b14c8f64985e",
+    "careflow-patient-service/src/main/java/com/careflow/patient/controller/PatientBookingController.java": "3bd208cfa79c29e57ba0a582d3b99ca0255278e2ba2fd0587067f045fe1df19f",
+    "careflow-patient-service/src/main/java/com/careflow/patient/controller/PatientReceptionController.java": "430df0101adee3cf566549448a11b9219fc943550e071d4e8e476ea331936eb3",
+    "careflow-patient-service/src/main/java/com/careflow/patient/dto/request/ReceptionPatientRequest.java": "108393ccc93468d155387316d2f5e37d6a9cb454d0e5d0815df45c8945bfadf4",
+    "careflow-patient-service/src/main/java/com/careflow/patient/model/Patient.java": "9bb480cc1bac1ff8c73e6ab77cf6bfc9a458f64543ae3ba711af1d7d948de5fa",
+    "careflow-patient-service/src/main/java/com/careflow/patient/security/HealthRecordActor.java": "458ae238f3d7d41e55bc5417c0fec80cec0bfa5bf40101b3e56793b37bd594c9",
+    "careflow-patient-service/src/main/java/com/careflow/patient/security/HealthRecordAuthenticationFilter.java": "17e25fc36deea8a3e9d4dc9a981561e7b00e099baa68dc4036978254527e3141",
+    "careflow-patient-service/src/main/java/com/careflow/patient/service/HealthRecordAccessService.java": "a9a3528815c6bda550132bd2868e1b3b30f216a3bf022857df426f5e8ac2687d",
+    "careflow-patient-service/src/main/java/com/careflow/patient/service/PatientReceptionService.java": "2acc44da083a943829ad17dca7b56af32a545a1b0e77ae2cf1070287d4ab13d9",
+    "careflow-patient-service/src/main/java/com/careflow/patient/service/PatientService.java": "930036c937657e1a3c4414c379631106ad6e541c2bf01b25119e203a41881c68",
+    "careflow-patient-service/src/main/resources/application-secure.yml": "a37ab4158373b0849bdee9e21998bcc4239fa00195ebd758c8c376656c2e9380",
+    "careflow-patient-service/src/main/resources/db/migration/V8__patients_without_login_accounts.sql": "5dc48e98108ecaabae347068f34a51ece3aed17fdead198dd4511e6e56c9ae32",
+    "careflow-patient-service/src/test/java/com/careflow/patient/config/PatientSecurityConfigurationTest.java": "b86851a51c05b722455bd90192e4c368deab5aa46448c9f195328586f84f4a0e",
+    "careflow-patient-service/src/test/java/com/careflow/patient/controller/HealthRecordControllerAuthorizationTest.java": "5b6d55cb7e89383308eb732088b71e9e1d47d362175a8036d4bb7e9babe3e70f",
+    "careflow-patient-service/src/test/java/com/careflow/patient/controller/PatientBookingControllerTest.java": "bd20c507022ca03147d29f215d85184e761bc03ea962083794d92b2fbbaf4c12",
+    "careflow-patient-service/src/test/java/com/careflow/patient/security/MissingSubjectAuthenticationTest.java": "c0fb6c102d86d4de9ac57ca4b323def708c90400eaf51c6550fdf683ab9fb137",
+    "careflow-patient-service/src/test/java/com/careflow/patient/service/PatientReceptionServiceTest.java": "f2df6df07864bc5a9c369295f6756af0bfb12a0960895c92b887fa97f129bd22",
+    "careflow-prescription-service/pom.xml": "985d13b0bce361e19eca7529b392715adefc70f46f1c545e725c9c411d661a5c",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/config/AppointmentClient.java": "255ab3564176778701aa4c2eeafc02072129c909fb6ac632f3ad5d3c23f8f1d0",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/config/ConsultationClient.java": "909bcfc02ea7882be69ea23823890191db8ea550c66b0ed422432cfd4fb365dd",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/config/DataInitializer.java": "78e4e8fef8211dfbdc3d6d9d0abeff4f5d97fdd6031dc35e36aed5fabc619f14",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/config/PatientIdentityClient.java": "4ab10894be6867336ed1a8c401235a88ba571ada5e9127a3d339562b4cc5dd14",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/config/PrescriptionRequestHeaders.java": "72302109df062cd93ca6be0fc1bb0c3844bc7bde1062485928100ed7542c2505",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/config/QueueExecutionClient.java": "814d6b6dfaa5237d85afd548355148ca4771be42a4987052e4012042baeee0c5",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/controller/PrescriptionController.java": "e2368b698cb64fba3ab7536e31c8d505fda8e0265751a3772bfff5942d84984b",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/dto/request/CreatePrescriptionRequest.java": "0225c2b804a6d223ebdb02f507677c97244924aa6f1950cdd207a933e4857e74",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/repository/PrescriptionRepository.java": "585f6f2428d881d5301beebbf720b8e4b9380ca997d46b9a5e223e72e00349e5",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/security/PrescriptionAuthenticationFilter.java": "4479090e4b787e1ffa2fae63ba18b09f665daded09b3f33ecee2b284da3d6477",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/service/PrescriptionService.java": "9cbd4c1d26c279fa06b1c9d65b9e06c0bb901bb8fabe9b273078a01119e1fc83",
+    "careflow-prescription-service/src/main/resources/application-secure.yml": "a37ab4158373b0849bdee9e21998bcc4239fa00195ebd758c8c376656c2e9380",
+    "careflow-prescription-service/src/test/java/com/careflow/prescription/config/PrescriptionProviderAuthorizationTest.java": "c7de2789fdeb172fda9a093adfdf85f8614d118e0a5d838ccb1f5576c45e752f",
+    "careflow-prescription-service/src/test/java/com/careflow/prescription/config/PrescriptionRemainingProviderAuthorizationTest.java": "ed6258ce927fbbbd028e7ebc945269c7113fb215c7a94cbc07a0f95e6836e1f5",
+    "careflow-prescription-service/src/test/java/com/careflow/prescription/controller/PrescriptionAuthenticationRegressionTest.java": "2538d66700df3fd806ce723da07ab5474a656c78e52b7deb118398e9adbd9c9f",
+    "careflow-prescription-service/src/test/java/com/careflow/prescription/service/PrescriptionConfirmationRetryTest.java": "7bb1771481645a9b8819fcd18cf55fcba7d3cd76e17ad2676be649d946d05685",
+    "careflow-prescription-service/src/test/java/com/careflow/prescription/service/PrescriptionDependencyFailureRegressionTest.java": "b6a500c3d3e298f9711f654b5228324007d2ec0a03369d1d2fc047989e2b5b8c",
+    "careflow-prescription-service/src/test/java/com/careflow/prescription/service/PrescriptionOwnershipRegressionTest.java": "c09cb7914b3ed1b28ba185d38cab646b064378b6db7ff2eb26f3c696679b6c0d",
+    "careflow-prescription-service/src/test/java/com/careflow/prescription/service/PrescriptionServiceTest.java": "155bc6867055f2816c38fb006d474d75b74f2a9f74236ee3325b031e9a0995fe",
+    "careflow-prescription-service/src/test/resources/contracts/consultation/access-error-401.json": "ccb2bae80f50bc011b53bebbd55bdb3f3aabd434b1aba8f6d6db12605435c85c",
+    "careflow-prescription-service/src/test/resources/contracts/consultation/access-error-403.json": "bcee54178fd1398657a58eca5ab8bae7fb0effe47f3d95a486242c779da5e21c",
+    "careflow-prescription-service/src/test/resources/contracts/consultation/access-error-404.json": "bfcdfc9481135959897a5dab5cf3fef655ce10cc3fc423235f61b6efef36cda4",
+    "careflow-prescription-service/src/test/resources/contracts/consultation/access-error-500.json": "93aef796fb7b7cd954d86e24bbcfae2d2433234758c9b84de94f3ca77683763a",
+    "careflow-prescription-service/src/test/resources/contracts/consultation/access-error-503.json": "00791818da7c1386729170e3cb3ac121ce05c20f1035b7633ddcc122e49988f4",
+    "careflow-prescription-service/src/test/resources/contracts/consultation/access-success.json": "70b70972f39592237ded85105cbe1bb1fda016228a309dbff7089a7a7932c68d",
+    "careflow-prescription-service/src/test/resources/contracts/patient/access-error-401.json": "ccb2bae80f50bc011b53bebbd55bdb3f3aabd434b1aba8f6d6db12605435c85c",
+    "careflow-prescription-service/src/test/resources/contracts/patient/access-error-403.json": "bcee54178fd1398657a58eca5ab8bae7fb0effe47f3d95a486242c779da5e21c",
+    "careflow-prescription-service/src/test/resources/contracts/patient/access-error-404.json": "bfcdfc9481135959897a5dab5cf3fef655ce10cc3fc423235f61b6efef36cda4",
+    "careflow-prescription-service/src/test/resources/contracts/patient/access-error-500.json": "93aef796fb7b7cd954d86e24bbcfae2d2433234758c9b84de94f3ca77683763a",
+    "careflow-prescription-service/src/test/resources/contracts/patient/access-error-503.json": "00791818da7c1386729170e3cb3ac121ce05c20f1035b7633ddcc122e49988f4",
+    "careflow-prescription-service/src/test/resources/contracts/patient/access-success.json": "92ef96585b6faa6633271f006a3da08cca6e5f4e6fc579b178c8f2c6aa7a8b37",
+    "careflow-queue-service/src/main/java/com/careflow/queue/client/PatientIntakeClient.java": "ecd6e9935730707cb4de7c4f7b43cad4cca3faf6cd038ace560d3c42290a0a5e",
+    "careflow-queue-service/src/main/java/com/careflow/queue/client/ReceptionRoomClient.java": "064e171382976b0393e06857a61db4fec0e2e230e6ef915890985844e96fbac7",
+    "careflow-queue-service/src/main/java/com/careflow/queue/config/QueueDataInitializer.java": "9be4955fc08f803ec8234e58b55bb1060f59a07a682554803c7a8f485acd63b3",
+    "careflow-queue-service/src/main/java/com/careflow/queue/config/QueueSecurityConfiguration.java": "9d222f6da5a56612e1eed38b0ef49bf785958663d545c12154b44d9aae2d5965",
+    "careflow-queue-service/src/main/java/com/careflow/queue/controller/QueueController.java": "50e9d97eb8c4493a1170e46e25f677f805236569088ccc71f4a705f38c59dee2",
+    "careflow-queue-service/src/main/java/com/careflow/queue/dto/ManualIntakeRequest.java": "8047f9fccd355190437e776d217783132ad5eb91edf8be65d268d53dcb09b753",
+    "careflow-queue-service/src/main/java/com/careflow/queue/repository/QueueEntryRepository.java": "71773a55a57cdd56c507b6363e0b383de8fd4ec35bd6b4b750d176af96c286ce",
+    "careflow-queue-service/src/main/java/com/careflow/queue/service/QueueManagementService.java": "ce4ad09e21349e2dc4a32516d41678de0a420d0f40c3aa3393c5afd58fb70677",
+    "careflow-queue-service/src/main/java/com/careflow/queue/service/ReceptionIntakeService.java": "6b7023c17a8cabd2aa65ed6007f3bee2a507a9efd62f884cbc8baaa0213af2a4",
+    "careflow-queue-service/src/main/resources/application-secure.yml": "a37ab4158373b0849bdee9e21998bcc4239fa00195ebd758c8c376656c2e9380",
+    "careflow-queue-service/src/test/java/com/careflow/queue/service/QueueAccessRegressionTest.java": "5dc96476647e7e3abe234c96f1c415634f909e1aabfe05394ae75276fe2171ad",
+    "careflow-queue-service/src/test/java/com/careflow/queue/service/QueueNumberAllocationTest.java": "6de4d6d3d0933075d88c2a2de2dcd527aac22ebc166fb92ab23ec0b9008a7e27",
+    "careflow-queue-service/src/test/java/com/careflow/queue/service/ReceptionIntakeServiceTest.java": "595400d9377036ad0fdaa5f6cc2199af77e32d18a5b1f69fa7f2f39c92c1fe10",
+    "docker-compose.security.yml": "4e39a0cf178307fef1b71d74aa8ad03cf355ff36eb0d7714f07d64ca80719e8f",
+    "frontend/doctor-web/next.config.ts": "c72aeaf8e4c15f150cc7131df202bb1e6faf8bcf356c8fa718d92b564664b726",
+    "frontend/doctor-web/src/app/login/page.tsx": "38b9a1c2e11946b5fb26b7ec302af71693043b5772b8a86709513657aa80734c",
+    "frontend/doctor-web/src/contexts/AuthContext.tsx": "b5dcef932406cca105509f0021e6d4a703f54b83b2fff36861f581936a2d87b9",
+    "frontend/doctor-web/src/lib/api.ts": "da91105255b3fe4ca699f3b484564de2d0050aa9b744dfffe0ba17187acbed87",
+    "frontend/doctor-web/src/lib/dpop.ts": "3e2d7b1488d9fcd71a4f14df4297d7bc81c9d616df56416ffc1d14bbbbc07fa0",
+    "scripts/security/audit-client.mjs": "594ca5ba86a1497e4453b577c2ce85695727ced6808db8d6c1fbec601bbb0d29",
+    "scripts/security/hardening-smoke.mjs": "a30c6b5e2e4a337ae51e3c5e58bad3eb06a4cfd99360ca2903af3f4cbb39ba08",
+    "scripts/security/hospital-browser-smoke.mjs": "e7bc0d23738b72aa1d576adc5e6dde0789d3e6b7de0f2cd00e9b04773df495de",
+    "scripts/security/lifecycle-smoke.mjs": "eecbeebf913099bc13e8c0d228d3288f77ddf93400fdfd2f2f7e2d43d58997f6",
+    "scripts/security/provision-audit-tls.py": "c66c2e90579895cf792c0e2a27ba68dba302a5bce6e7e44a9739e0f26700b0ee",
+    "scripts/security/restart-audit-service.py": "1c4483727361210d4b38ce874fda823039969627374bd6156daf0e9a6e04061b",
+    "scripts/security/rollout-audit.py": "209d21aa0bfe6ec6ecc58986a9f365d131ec7398351db58a85482bfde18e7598",
+    "scripts/security/run-checks.mjs": "ed4194717dd06cab4ed4e2ff37c6ebc78e3394f5365fcdb4dd11ae2fa48b18a3"
+  },
+  "deployedClassVerification": [
+    {
+      "service": "careflow-identity-service",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    },
+    {
+      "service": "careflow-hospital-directory-service",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    },
+    {
+      "service": "careflow-api-gateway",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    },
+    {
+      "service": "careflow-patient-service",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    },
+    {
+      "service": "careflow-consultation-service",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    },
+    {
+      "service": "careflow-emr-service",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    },
+    {
+      "service": "careflow-prescription-service",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    },
+    {
+      "service": "careflow-lab-service",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    },
+    {
+      "service": "careflow-appointment-service",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    },
+    {
+      "service": "careflow-identity-session-secondary",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    },
+    {
+      "service": "careflow-queue-service",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    },
+    {
+      "service": "careflow-notification-service",
+      "matchesFinalCompiledClasses": true,
+      "mismatches": []
+    }
+  ]
+}

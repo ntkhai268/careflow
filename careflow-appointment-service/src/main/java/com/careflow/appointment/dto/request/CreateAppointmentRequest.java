@@ -34,4 +34,10 @@ public class CreateAppointmentRequest {
     private String timeSlot;
 
     private String reason;
+
+    @jakarta.validation.constraints.Pattern(regexp="[A-Z][A-Z0-9_]{2,49}")
+    private String serviceCode;
+
+    @jakarta.validation.constraints.Positive
+    private Long priceVersion;
 }

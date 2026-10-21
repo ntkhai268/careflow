@@ -1,7 +1,8 @@
 import { api } from "./api";
 
 export interface CreateConsultationRequest {
-  appointmentId: string;
+  appointmentId?: string | null;
+  queueEntryId?: string;
   patientId: string;
   doctorId: string;
 }
@@ -23,8 +24,13 @@ export interface UpdateConsultationRequest {
 export interface ConsultationResponse {
   id: string;
   appointmentId?: string;
+  queueEntryId?: string;
   patientId: string;
+  patientName?: string;
   doctorId: string;
+  doctorName?: string;
+  authoredByDoctorId?: string;
+  authoredByDoctorName?: string;
   temperature?: number;
   bloodPressure?: string;
   heartRate?: number;
@@ -43,7 +49,10 @@ export interface ConsultationResponse {
   updatedAt: string;
 }
 
+export interface ClinicalFinalization { consultation: ConsultationResponse; queueCompleted: boolean; appointmentCompleted: boolean; complete: boolean; pendingSteps: string[] }
+
 export const consultationApi = {
+  finalizeVisit: (id: string) => api.post<ClinicalFinalization>(`/api/consultations/${id}/finalize`, {}),
   createConsultation: (data: CreateConsultationRequest) => 
     api.post<ConsultationResponse>("/api/consultations", data),
     

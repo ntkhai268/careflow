@@ -141,7 +141,13 @@ class BackendJourneyRepository implements JourneyRepository {
         _string(consultation?['id']) ?? appointment.sourceConsultationId;
     final labOrders = consultationId == null
         ? const <Map<String, dynamic>>[]
-        : await _labService.getByConsultation(consultationId);
+        : (await _labService.getByPatient(patientId))
+              .where(
+                (order) =>
+                    order['patientId'] == patientId &&
+                    order['consultationId'] == consultationId,
+              )
+              .toList(growable: false);
     final prescriptions = consultationId == null
         ? const <Map<String, dynamic>>[]
         : await _prescriptionService.getByConsultation(consultationId);

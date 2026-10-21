@@ -1,0 +1,43 @@
+careflow_appointment
+                  id                  |  status   
+--------------------------------------+-----------
+ 2e1b1d81-6cae-482d-94d0-15e64e47c174 | COMPLETED
+ 52106adc-8f8c-4361-a621-1323d946c4db | CANCELLED
+(2 rows)
+
+
+careflow_consultation
+                  id                  |  status   
+--------------------------------------+-----------
+ 5f0a2c7b-ec39-4e39-9083-bcf694df27cd | CANCELLED
+ d075ff76-ccd9-4716-b943-7524b794437c | COMPLETED
+(2 rows)
+
+
+careflow_prescription
+                  id                  |  status   
+--------------------------------------+-----------
+ 76d1db18-56a8-45e1-a23b-cd81f3d7220c | DISPENSED
+(1 row)
+
+
+careflow_queue
+ queue_number |     queue_type      |  status   
+--------------+---------------------+-----------
+ NOI-001      | CONSULTATION        | COMPLETED
+ RX-005       | PHARMACY_DISPENSING | COMPLETED
+(2 rows)
+
+
+Prepared NOI-003
+ queue_number |   status    | call_attempts |        checked_in_by_user_id         
+--------------+-------------+---------------+--------------------------------------
+ NOI-003      | IN_PROGRESS |             1 | 55555555-5555-5555-5555-555555555555
+(1 row)
+
+
+ new_consultations 
+-------------------
+                 1
+(1 row)
+

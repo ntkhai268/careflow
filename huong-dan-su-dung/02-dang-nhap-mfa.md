@@ -1,38 +1,36 @@
-# 02 — Đăng nhập, MFA và đăng xuất
+# 02 — Đăng nhập, passkey và quên mật khẩu
 
-[Quay về mục lục](README.md) · [Tài khoản](01-tai-khoan-va-du-lieu.md) · [Tiếp: đặt lịch/check-in](03-dat-lich-check-in.md)
+[Quay về mục lục](README.md) · [Tài khoản](01-tai-khoan-va-du-lieu.md) · [App điện thoại](12-dang-nhap-mobile.md) · [Bản vá bảo mật](13-ban-va-bao-mat-va-van-hanh.md)
 
-## Đăng nhập thường hoặc hai bước
+**Phạm vi source 19/10/2026:** hướng dẫn này mô tả bản vá chưa triển khai/cài lại trên máy thật. iPhone đang cài Release 1.0.0 (8) và runtime trước bản vá có thể còn giao diện cũ. MFA/TOTP cũ đã gỡ; email quên mật khẩu không phải MFA. Câu hỏi bí mật đã ngừng hỗ trợ trong bản vá, cả cấu hình và đăng nhập đều trả 410.
 
-Điều kiện: API đang hoạt động, đúng tài khoản và đúng hồ sơ trình duyệt/điện thoại.
+## Đăng nhập
 
-1. Bệnh nhân mở điện thoại giả lập; nhân viên nội bộ mở Hospital Web.
-2. Nhập tài khoản và mật khẩu. Trang đăng nhập đầu tiên không yêu cầu điền OTP cùng mật khẩu.
-3. Sai mật khẩu: nhận lỗi, không có phiên sử dụng chức năng.
-4. Đúng mật khẩu và chưa bật MFA: vào màn hình chính theo vai trò.
-5. Đúng mật khẩu và đã bật MFA: chuyển sang màn **Xác thực hai bước**. Bước kiểm tra mật khẩu chưa hoàn tất đăng nhập.
-6. Nhập mã 6 số từ ứng dụng xác thực trên Mac hoặc chọn **Dùng mã khôi phục**, nhập một mã chưa dùng rồi **Xác nhận đăng nhập**.
-7. Mã đúng: vào ứng dụng. Mã sai: ở lại bước 2. Không cố thử sai liên tục vì có lockout thật.
-8. Hết khoảng chờ 5 phút, hủy hoặc tải mới document: bắt đầu lại tài khoản/mật khẩu.
+1. Mở đúng app hoặc Hospital Web bằng phiên riêng.
+2. Bệnh nhân nhập tài khoản/mật khẩu, hoặc chọn Face ID/vân tay đã bật trên thiết bị. Máy không hỗ trợ sinh trắc học vẫn dùng mật khẩu.
+3. Trên web, chọn **Đổi hình thức đăng nhập → Vân tay / Khuôn mặt**, nhập tài khoản và hoàn tất passkey trong hộp xác thực trình duyệt.
+4. Production yêu cầu tài khoản nội bộ dùng passkey đã đăng ký. Không thử mở production khi chưa cấp passkey và nghiệm thu quy trình cấp lại cho nhân viên.
+5. Sai thông tin không tạo phiên. Gặp 429 cần chờ theo thông báo; không thử liên tục trên tài khoản trình diễn khám.
 
-Kết quả cần thấy: tên tài khoản và giao diện đúng vai trò; API bảo vệ thành công sau đủ các bước. `401 MFA_REQUIRED:` sau kiểm tra mật khẩu là tín hiệu chuyển bước, không phải mất kết nối Gateway.
+## Thiết lập và gỡ passkey trên web
 
-## Bật MFA sau khi đã đăng nhập
+1. Trong phiên hợp lệ, mở menu tài khoản → **Hình thức đăng nhập**.
+2. Chọn **Vân tay / Khuôn mặt**, nhập mật khẩu hiện tại rồi **Thêm passkey**.
+3. Hoàn tất xác thực thiết bị. Chỉ coi thành công khi server lưu khóa; hủy hộp thoại không tạo khóa.
+4. Danh sách hiển thị passkey và ngày thêm. Chọn **Gỡ**, xác nhận bằng mật khẩu hiện tại. Các phiên bị thu hồi; tài khoản nội bộ production phải còn cách xác thực được cấp hợp lệ trước khi gỡ khóa cuối cùng.
 
-Dùng tài khoản demo riêng để có thể thay đổi cấu hình mà không ảnh hưởng các ca khác.
+App native sử dụng đăng ký thiết bị, không gọi browser passkey; xem [trang 12](12-dang-nhap-mobile.md).
 
-1. Trên Mobile vào **Tài khoản → Bảo mật đăng nhập**.
-2. Nhập mật khẩu hiện tại, chọn thiết lập xác thực hai bước.
-3. Lưu setup key vào ứng dụng TOTP của bạn trên Mac. Setup key là secret thiết lập; OTP là mã 6 số thay đổi theo thời gian. Không cần điện thoại vật lý.
-4. Lấy OTP hiện tại, nhập và xác nhận bật MFA trước khi secret thiết lập hết hạn.
-5. Lưu các mã khôi phục vào nơi riêng ngay khi hiện ra, trước khi chọn đăng nhập lại. Mỗi mã chỉ dùng một lần.
-6. Đăng nhập lại: đúng mật khẩu phải tới bước MFA; thử OTP hợp lệ hoặc một mã khôi phục chưa dùng.
-7. Nếu cần tắt MFA, làm theo màn Bảo mật với thông tin xác thực hợp lệ rồi đăng nhập lại. Bật/tắt MFA thu hồi các phiên cũ.
+## Quên mật khẩu
 
-## Đăng xuất và kiểm tra quyền
+Chỉ dùng mã gửi tới email đã đăng ký theo [trang 12](12-dang-nhap-mobile.md#quên-mật-khẩu-qua-email): nhập email → xác thực mã → nhập mật khẩu mới. Không reset bằng câu hỏi, passkey hoặc SMS. Xác thực mã riêng chưa đổi mật khẩu.
 
-1. Đăng xuất riêng điện thoại/hồ sơ trình duyệt đã dùng. Phiên đó bị thu hồi.
-2. Mở lại tài nguyên bảo vệ: yêu cầu đăng nhập lại; không tiếp tục bằng token cũ.
-3. Các tài khoản trên điện thoại độc lập khác vẫn dùng phiên riêng của chúng.
+Sau reset, đăng nhập lại và thiết lập lại Face ID/passkey; các phiên và credential cũ không còn dùng được. Nhân viên production mất passkey cần quy trình hỗ trợ xác minh, không thể dùng email để tự cấp lại passkey.
 
-Request đi qua Gateway rồi service nghiệp vụ; service vẫn xác minh phiên, quyền sở hữu và phân công. Đăng nhập không khởi động service đang tắt. DPoP ràng buộc token với khóa trình duyệt; chép token sang công cụ khác không thay cho đăng nhập hợp lệ. Passkey/Touch ID/Face ID và eKYC production chưa thuộc luồng đã nghiệm thu.
+## Đăng xuất
+
+Đăng xuất kết thúc phiên hiện tại, giữ đăng ký Face ID trên app nếu người dùng đã bật. Web xóa cookie phiên; tải lại trang/tài nguyên bảo vệ phải yêu cầu đăng nhập. Token vẫn ràng buộc DPoP; sao chép token không tạo quyền truy cập. Route ngoài vai trò phải hiện 403.
+
+## Phạm vi nghiệm thu
+
+Bản vá có kiểm thử tự động và kiểm tra web cục bộ; Face ID/passkey thật, nhiều tab trình duyệt trên production, cấp lại tài khoản nội bộ và hạ tầng thật chưa được nghiệm thu đầy đủ. Kết quả kiểm tra câu hỏi trước 19/10 là lịch sử, không phải hướng dẫn tiếp tục sử dụng phương thức đã ngừng.

@@ -1,0 +1,46 @@
+{
+  "sharedBannerMaxChannelDelta": {
+    "banner-recovery": 0,
+    "banner-settings": 0,
+    "banner-question": 0,
+    "banner-passkey": 0,
+    "banner-recovery-question": 1,
+    "banner-methods": 0,
+    "banner-login": 0
+  },
+  "bannerHashes": {
+    "login": "4c05273ed2f95888281cbdc0ef8cc9450f0719e2ef8ff42d9da1093819983cb5",
+    "methods": "4c05273ed2f95888281cbdc0ef8cc9450f0719e2ef8ff42d9da1093819983cb5",
+    "passkey": "4c05273ed2f95888281cbdc0ef8cc9450f0719e2ef8ff42d9da1093819983cb5",
+    "question": "4c05273ed2f95888281cbdc0ef8cc9450f0719e2ef8ff42d9da1093819983cb5",
+    "recovery": "4c05273ed2f95888281cbdc0ef8cc9450f0719e2ef8ff42d9da1093819983cb5",
+    "recovery-question": "670ff0b09e5f37612fe31a03a0108ecb37cb5d7f62ddd123e161373b3d8902b2",
+    "settings": "4c05273ed2f95888281cbdc0ef8cc9450f0719e2ef8ff42d9da1093819983cb5"
+  },
+  "stickyBannerAt800": {
+    "before": {
+      "x": 0,
+      "y": 0,
+      "width": 720,
+      "height": 800
+    },
+    "after": {
+      "x": 0,
+      "y": 0,
+      "width": 720,
+      "height": 800
+    },
+    "pageScrolled": 352
+  },
+  "narrowNoOverflow": [
+    "/login",
+    "/login/methods",
+    "/forgot-password"
+  ],
+  "customQuestionOutsideDismiss": true,
+  "navigationAndBack": true,
+  "realPasswordLoginHTTP": 200,
+  "authenticatedSettings": true,
+  "browserErrors": [],
+  "originalLoginBannerMaxChannelDelta": 0
+}

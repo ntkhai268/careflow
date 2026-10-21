@@ -15,6 +15,7 @@ import java.util.UUID;
 
 @Component
 @Slf4j
+@org.springframework.context.annotation.Profile("demo | test")
 public class DataInitializer implements CommandLineRunner {
 
     private final ConsultationRepository consultationRepository;

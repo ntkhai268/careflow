@@ -6,6 +6,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.Map;
 import java.util.UUID;
@@ -15,6 +16,13 @@ public interface QueueExecutionClient {
     @GetMapping("/api/queues/lab-orders/{labOrderId}/current")
     ApiResponse<Map<String, Object>> getCurrent(
             @PathVariable UUID labOrderId,
+            @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
+            @RequestHeader(AppConstants.HEADER_USER_ROLE) String role);
+
+    @GetMapping("/api/queues/lab-orders/{labOrderId}/current")
+    ApiResponse<Map<String, Object>> getAtServicePoint(
+            @PathVariable UUID labOrderId,
+            @RequestParam("servicePointId") String servicePointId,
             @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
             @RequestHeader(AppConstants.HEADER_USER_ROLE) String role);
 }

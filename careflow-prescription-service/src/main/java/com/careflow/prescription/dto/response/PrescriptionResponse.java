@@ -24,6 +24,12 @@ public class PrescriptionResponse {
     private String diagnosis;
     private String notes;
     private LocalDate followUpDate;
+    private String followUpDepartment;
+    private String followUpTimeSlot;
+    private UUID followUpAppointmentId;
+    private String followUpErrorCode;
+    private String followUpStatus;
+
     private String dispensingServicePointId;
     private LocalDateTime confirmedAt;
     private LocalDateTime dispensedAt;

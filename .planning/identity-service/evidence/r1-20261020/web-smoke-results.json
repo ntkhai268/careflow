@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-20T04:01:26.536Z",
+  "environment": "owned local web/gateway",
+  "mailSent": false,
+  "checks": [
+    {
+      "name": "Real admin security UI loads Identity accounts/mail operations; refresh cookie is HttpOnly and tokens stay out of localStorage",
+      "status": "PASS"
+    },
+    {
+      "name": "Admin password session cannot issue staff enrollment even in the local demo exception",
+      "status": "PASS"
+    },
+    {
+      "name": "Four email templates fit 320px and contain no image/CID attachment references",
+      "status": "PASS"
+    }
+  ]
+}

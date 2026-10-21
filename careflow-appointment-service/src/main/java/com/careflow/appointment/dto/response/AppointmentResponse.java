@@ -35,5 +35,11 @@ public class AppointmentResponse {
     private String queueNumber;
     private Instant createdAt;
     private Instant updatedAt;
+    private String serviceCode;
+    private String serviceName;
+    private Long priceVersion;
+    private Long quotedAmount;
+    private String quotedCurrency;
+    private Instant priceEffectiveAt;
 }
 

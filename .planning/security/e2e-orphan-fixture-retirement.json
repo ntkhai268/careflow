@@ -1,0 +1,8 @@
+{
+  "checkedAt": "2026-10-16T03:34:09.986Z",
+  "consultationId": "48653384-d68d-4285-a5ef-1ab464bd3e18",
+  "reason": "Legacy test fixture: Authorized update, no patient row, no appointment, no startedAt",
+  "before": "IN_PROGRESS",
+  "after": "CANCELLED",
+  "method": "authorized doctor PUT API; row preserved"
+}

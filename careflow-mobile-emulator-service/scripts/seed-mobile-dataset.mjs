@@ -1,3 +1,4 @@
+import {auditFetch as fetch} from './bound-http.mjs';
 import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {mkdir, writeFile} from 'node:fs/promises';
@@ -21,7 +22,7 @@ async function api(path, {method='GET', token, body, statuses=[200], headers={}}
   return {status:response.status, data:path.startsWith('/__emulator/') ? payload : payload.data};
 }
 const config = (await api('/__emulator/config')).data;
-assert.equal(config.gateway,'http://127.0.0.1:18080','Chỉ được ghi dữ liệu vào Gateway audit cục bộ.');
+assert.equal(config.gateway,'https://localhost:18080','Chỉ được ghi dữ liệu vào Gateway audit cục bộ.');
 const health = (await api('/__emulator/health')).data;
 assert.ok(health.reachable && health.status===200);
 async function ticketFor(appointmentId, token, expectedStatus) {

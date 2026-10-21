@@ -13,7 +13,7 @@ function fixture(){
     close(){this.closed=true;this.onclose?.();}
   }
   const listeners={};
-  const window={parent:{postMessage:(data,origin)=>posts.push({data,origin})},addEventListener(name,fn){listeners[name]=fn;}};
+  const window={careflowProof:async()=> 'fixture-proof',parent:{postMessage:(data,origin)=>posts.push({data,origin})},addEventListener(name,fn){listeners[name]=fn;}};
   const navigator={geolocation:{getCurrentPosition(callback){callback({coords:{latitude:10.8,longitude:106.7,accuracy:12}});}}};
   const context={window,location,WebSocket,navigator,document:{},setTimeout(fn,ms){const t={fn,ms};timeouts.push(t);return t;},clearTimeout(t){if(t)t.cleared=true;},setInterval(fn,ms){const t={fn,ms};intervals.push(t);return t;},clearInterval(t){if(t)t.cleared=true;},Uint8Array,btoa};
   vm.runInNewContext(source,context);
@@ -23,7 +23,7 @@ function fixture(){
 test('authenticates STOMP with bearer and subscribes only to personal inbox',async()=>{
   const f=fixture();await f.call('session',{token:'private-jwt'});
   const socket=f.sockets[0];assert.equal(socket.url,'ws://127.0.0.1:5173/ws/notifications');
-  socket.onopen();assert.match(socket.sent[0],/Authorization:Bearer private-jwt/);
+  await socket.onopen();assert.match(socket.sent[0],/Authorization:Bearer private-jwt/);
   socket.onmessage({data:'CONNECTED\nversion:1.2\n\n\0'});
   assert.match(socket.sent[1],/destination:\/user\/queue\/notifications/);
   assert.ok(f.posts.every(item=>!JSON.stringify(item).includes('private-jwt')));

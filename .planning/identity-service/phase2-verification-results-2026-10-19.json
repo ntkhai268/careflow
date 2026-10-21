@@ -1,0 +1,133 @@
+{
+  "date": "2026-10-19",
+  "backend": {
+    "common": 46,
+    "gateway": 35,
+    "identity": 160,
+    "passed": 241,
+    "failed": 0,
+    "skipped": 0
+  },
+  "flutter": {
+    "suitePassed": 222,
+    "conditionalSkipped": 13,
+    "conditionalHttpPassedSeparately": 12,
+    "obsoleteDemoStillSkipped": 1,
+    "analyzerErrors": 0,
+    "analyzerWarnings": 0,
+    "preexistingAnalyzerInfo": 2
+  },
+  "ios": {
+    "version": "1.0.0 (13)",
+    "built": true,
+    "signatureVerified": true,
+    "installed": true,
+    "launched": true,
+    "finalTarget": "lib/main.dart",
+    "diagnostic": "CAREFLOW_DEVICE_KEY_CHECK PASS secure_enclave; ES256 verified; stable public key; no account access",
+    "faceIdHumanAcceptance": "pending"
+  },
+  "android": {
+    "debugBuild": "PASS",
+    "physicalHardware": "pending"
+  },
+  "runtime": {
+    "identityPrimary": "UP",
+    "identitySecondary": "UP",
+    "gateway": "UP",
+    "iphoneBridgeTlsStatus": 200,
+    "database": "owned loopback only",
+    "resendKeyChanged": false,
+    "outboxKeyChanged": false
+  },
+  "emailInboxAcceptance": "pending",
+  "resendPublicWebhook": "pending",
+  "productionDeployment": false,
+  "webauthn": {
+    "checkedAt": "2026-10-19T14:33:15.510Z",
+    "database": "isolated loopback PostgreSQL",
+    "transport": "real Identity TLS/mTLS; UI enrollment HTTP forwarded to fixture",
+    "authenticator": "Chrome CDP virtual CTAP2; not physical",
+    "outboundEmail": false,
+    "checks": [
+      {
+        "name": "Operator bootstrap + two-factor enrollment UI creates a verified WebAuthn ADMIN key",
+        "status": "PASS"
+      },
+      {
+        "name": "Consumed bootstrap grant cannot be reused",
+        "status": "PASS"
+      },
+      {
+        "name": "Mandatory staff policy accepts verified passkey; rejects password and copied token",
+        "status": "PASS"
+      },
+      {
+        "name": "Last ADMIN passkey cannot be removed",
+        "status": "PASS"
+      },
+      {
+        "name": "STAFF invitation requires separate admin factor; STAFF cannot enumerate or issue grants",
+        "status": "PASS"
+      },
+      {
+        "name": "Recovery immediately revokes sessions/old keys; two-factor re-enrollment restores access",
+        "status": "PASS"
+      },
+      {
+        "name": "Five-minute step-up rejects stale authentication and permits a real backup-key registration after reauthentication",
+        "status": "PASS"
+      },
+      {
+        "name": "Staff idle expiry is server-enforced and refresh cannot revive it",
+        "status": "PASS"
+      }
+    ]
+  },
+  "deviceKeyApi": {
+    "checkedAt": "2026-10-19T14:42:55.915Z",
+    "database": "isolated loopback PostgreSQL",
+    "transport": "real Identity TLS/mTLS",
+    "hardware": "server proof contract only; iPhone hardware tested separately",
+    "checks": [
+      {
+        "name": "Key migration rejects incorrect reauthentication and a proof for another endpoint",
+        "status": "PASS"
+      },
+      {
+        "name": "Old and new proofs bind migration; old session is revoked and copied new token is unusable",
+        "status": "PASS"
+      },
+      {
+        "name": "The same device credential follows the new key and ordinary logout preserves biometric sign-in",
+        "status": "PASS"
+      }
+    ]
+  },
+  "web": {
+    "checkedAt": "2026-10-19T14:45:40.189Z",
+    "environment": "owned local web/gateway",
+    "mailSent": false,
+    "checks": [
+      {
+        "name": "Real admin security UI loads Identity accounts/mail operations; refresh cookie is HttpOnly and tokens stay out of localStorage",
+        "status": "PASS"
+      },
+      {
+        "name": "Admin password session cannot issue staff enrollment even in the local demo exception",
+        "status": "PASS"
+      },
+      {
+        "name": "Four email templates fit 320px and contain no image/CID attachment references",
+        "status": "PASS"
+      }
+    ]
+  },
+  "gitnexus": {
+    "impactAnalysis": "completed before relevant edits; HIGH/CRITICAL warnings communicated",
+    "allTrackedDiffBackendRisk": "critical",
+    "allTrackedDiffMobileRisk": "high",
+    "scopeNote": "includes pre-existing changes; new untracked files reviewed/tested separately",
+    "stagedOrCommitted": false
+  }
+}

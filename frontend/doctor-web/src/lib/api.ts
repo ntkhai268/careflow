@@ -1,3 +1,5 @@
+import { getAccessToken, setAccessToken, getSessionEpoch } from "./session-memory";
+import { createProof } from "./dpop";
 import { getErrorMessage } from "./error-utils";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://api.careflow-demo.online";
@@ -8,12 +10,12 @@ export interface ApiResponse<T> {
   data: T;
 }
 
-export async function request<T>(path: string, options?: RequestInit): Promise<ApiResponse<T>> {
+export async function request<T>(path: string, options?: RequestInit, retried = false): Promise<ApiResponse<T>> {
   const url = `${BASE_URL}${path}`;
   console.log(`[API DEBUG] Requesting: ${url}`, options?.method || "GET");
   
   // Retrieve token from localStorage if available
-  const token = typeof window !== "undefined" ? localStorage.getItem("careflow_token") : null;
+  const token = getAccessToken();
   
   const isFormData = options?.body instanceof FormData;
   const headers: Record<string, string> = {
@@ -33,8 +35,11 @@ export async function request<T>(path: string, options?: RequestInit): Promise<A
       : `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
   }
 
+  headers["DPoP"] = await createProof(method, url, token);
+
   try {
-    const response = await fetch(url, {
+    const sessionAction = ({"/api/auth/login":"login","/api/auth/passkeys/login/finish":"passkey","/api/auth/logout":"logout"} as Record<string,string>)[path];
+    const response = await fetch(sessionAction ? `/api/session/${sessionAction}` : url, {
       ...options,
       headers,
     });
@@ -46,6 +51,10 @@ export async function request<T>(path: string, options?: RequestInit): Promise<A
       return { status: "success", data: null as unknown as T };
     }
 
+    if (response.status===401 && !retried && !["/api/auth/login","/api/auth/register","/api/auth/refresh","/api/auth/logout"].includes(path) && !(method === "POST" && ["/api/auth/login/", "/api/auth/recovery/", "/api/auth/registration/", "/api/auth/staff-passkeys/", "/api/auth/passkeys/", "/api/auth/login-methods"].some(prefix => path.startsWith(prefix)))) {
+      await refreshAccessToken();
+      return request<T>(path,options,true);
+    }
     const resJson = await response.json().catch(() => ({}));
     
     if (!response.ok) {
@@ -69,3 +78,31 @@ export const api = {
     request<T>(path, { ...options, method: "PUT", body: JSON.stringify(body) }),
   delete: <T>(path: string, options?: RequestInit) => request<T>(path, { ...options, method: "DELETE" }),
 };
+
+let refreshing: Promise<void> | undefined;
+export async function refreshAccessToken(): Promise<void> {
+  if (refreshing) return refreshing;
+  const epoch = getSessionEpoch();
+  const execute = async () => {
+    const target = `${BASE_URL}/api/auth/refresh`;
+    const response = await fetch("/api/session/refresh", {
+      method: "POST", headers: { "Content-Type": "application/json", DPoP: await createProof("POST", target) },
+      body: "{}", credentials: "same-origin", cache: "no-store",
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      if ((response.status === 401 || response.status === 403) && getSessionEpoch() === epoch) {
+        setAccessToken(null);
+        window.dispatchEvent(new Event("careflow:session-expired"));
+      }
+      throw new Error(result.message || "Cần đăng nhập lại.");
+    }
+    if (getSessionEpoch() !== epoch) throw new Error("Phiên đã thay đổi. Vui lòng thử lại.");
+    setAccessToken(result.data.accessToken);
+  };
+  refreshing = (async () => {
+    if (navigator.locks) await navigator.locks.request("careflow-refresh", execute);
+    else await execute();
+  })().finally(() => { refreshing = undefined; });
+  return refreshing;
+}

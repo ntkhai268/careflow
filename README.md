@@ -1,146 +1,20 @@
-# CareFlow — Healthcare Platform
+# CareFlow
 
-## Hướng dẫn sử dụng
+CareFlow gồm Patient Mobile native, Hospital Web và các microservice phục vụ khám ngoại trú. Phạm vi bàn giao đầy đủ và trạng thái CURRENT/TARGET được chuẩn hóa tại [đặc tả R0](.planning/architecture/README.md).
 
-Mở [huong-dan-su-dung/README.md](huong-dan-su-dung/README.md) để xem hướng dẫn từng bước cho toàn hệ thống: khởi động Mac, tài khoản, MFA, đặt lịch/check-in, khám, CLS, toa/cấp phát, bàn giao và xử lý lỗi. Đây là nguồn hướng dẫn duy nhất; trang chuẩn ghi rõ runtime và phạm vi đã kiểm chứng.
+## Tài liệu chuẩn
 
-## Tổng quan
+- [Hướng dẫn sử dụng và trình diễn](huong-dan-su-dung/README.md): nguồn duy nhất cho thao tác người dùng; tài khoản demo ở trang01.
+- [Yêu cầu và use case](.planning/architecture/01-requirements-use-cases.md).
+- [Kiến trúc và ownership](.planning/architecture/02-service-architecture.md).
+- [Contract/state hiện hành và mục tiêu](.planning/architecture/03-contracts-and-states.md).
+- [Baseline, build và điều kiện nghiệm thu](.planning/architecture/05-r0-baseline-results.md).
+- [Kế hoạch hoàn thiện R0–R7](.planning/full-requirements-plan-2026-10-19.md).
 
-CareFlow là hệ thống quản lý khám chữa bệnh tại bệnh viện, gồm nhiều microservices.
+## Phạm vi hiện tại
 
-| Layer | Công nghệ |
-|-------|-----------|
-| Backend | Spring Boot 3, Java 21 |
-| Mobile | Flutter |
-| Web | React + Vite |
-| Database | PostgreSQL |
-| Message Broker | RabbitMQ |
-| Service Discovery | Spring Cloud Eureka |
-| API Gateway | Spring Cloud Gateway |
-| Container | Docker + Docker Compose |
+Có module Gateway, Identity, Patient, EMR, Appointment, Queue, Consultation, Prescription, Lab, Notification và AI; Analytics hiện có đặc tả, chưa có module. Directory và Eureka là thành phần bổ sung; Common là thư viện. Danh sách module không đại diện tỷ lệ hoàn thành.
 
-## Trạng thái hiện tại
+Định danh dùng đọc giấy tờ trên máy và đối chiếu trực tiếp, không dùng VNPT. AI còn prototype và được hoàn thiện ở đợt sau. Luồng khám backend/web có bằng chứng riêng; Face ID/camera/push và hành trình native phải được nghiệm thu đúng thiết bị. Bản iPhone16 vẫn là bản đang dùng; build kiểm chứng R0 không tự được cài hoặc phát hành.
 
-| Service | Trạng thái |
-|---------|------------|
-| API Gateway | ✅ Hoạt động, port `8080` |
-| Identity & Auth | ✅ Hoạt động, port `8081` |
-| Patient Service | ✅ Hoạt động, port `8082` |
-| Appointment Service | ✅ Hoạt động, port `8083` |
-| Queue Management | ✅ Hoạt động, port `8084` |
-| Notification Service | ✅ Inbox/WebSocket, port `8085` |
-| Doctor Consultation | 🔧 Planned |
-| Prescription Service | 🔧 Planned |
-| EMR Service | 🔧 Planned |
-| Laboratory Order | 🔧 Planned |
-
-## Kiến trúc và trust boundary
-
-```text
-Flutter / Web
-      │  Authorization: Bearer <access-token>
-      ▼
-API Gateway :8080 ── Eureka ── Identity Service :8081 ── PostgreSQL
-      │                            │
-      ├─ kiểm tra chữ ký/issuer    └─ kiểm tra lại JWT và phân quyền
-      └─ xóa header giả mạo
-```
-
-Client không được tự gửi `X-User-Id` hoặc `X-User-Role`. Gateway luôn xóa các
-header này trước khi tạo lại từ JWT cho downstream.
-
-`JWT_SECRET` và issuer phải đồng nhất giữa Gateway và Identity Service. Secret phải
-có ít nhất 32 byte và không được commit vào repository.
-
-## API contract
-
-Tất cả JSON response dùng envelope:
-
-```json
-{
-  "status": 200,
-  "message": "Mô tả kết quả",
-  "data": {},
-  "timestamp": "2026-07-20T16:00:00Z"
-}
-```
-
-### Identity Service API
-
-| Method | Endpoint | Input | Output chính | Auth |
-|---|---|---|---|---|
-| `POST` | `/api/auth/register` | `username`, `email`, `password` | `201`, `UserResponse` | Public |
-| `POST` | `/api/auth/login` | `usernameOrEmail`, `password` | `200`, cặp token và user | Public |
-| `POST` | `/api/auth/refresh` | `refreshToken` | `200`, cặp token mới | Public |
-| `POST` | `/api/auth/logout` | `refreshToken` | `200` | Public |
-| `GET` | `/api/auth/me` | Bearer access token | `200`, `UserResponse` | Authenticated |
-| `POST` | `/api/auth/ekyc` | multipart field `image` | `200`, `EkycResponse` | Authenticated |
-| `PATCH` | `/api/users/{id}/status` | `ACTIVE`, `LOCKED` hoặc `DISABLED` | `200`, `UserResponse` | ADMIN |
-
-### Queue Service API
-
-| Method | Endpoint | Quyền |
-|---|---|---|
-| `GET` | `/api/queues/me/status` | PATIENT |
-| `POST` | `/api/queues/entries` | ADMIN |
-| `GET` | `/api/queues/rooms/{roomId}/check-in-qr?session=MORNING` | STAFF, ADMIN — Hospital Web lấy QR để hiển thị |
-| `POST` | `/api/queues/check-in` | PATIENT — gửi `appointmentId`, `checkInQrToken` và vị trí thiết bị |
-| `GET`, `PUT` | `/api/queues/hospital-check-in-config` | ADMIN — xem/cập nhật tâm, bán kính và ngưỡng accuracy geofence |
-| `GET` | `/api/queues/departments/{id}/dashboard` | DOCTOR, ADMIN |
-| `POST` | `/api/queues/departments/{id}/next` | DOCTOR, ADMIN |
-| `POST` | `/api/queues/entries/{id}/miss` | DOCTOR, ADMIN |
-| `POST` | `/api/queues/entries/{id}/requeue` | DOCTOR, ADMIN |
-| `POST` | `/api/queues/entries/{id}/start` | DOCTOR, ADMIN |
-| `POST` | `/api/queues/entries/{id}/complete` | DOCTOR, ADMIN |
-| `GET`, `PUT` | `/api/queues/configs/{departmentId}` | ADMIN |
-
-Sự kiện `APPOINTMENT_CREATED` bắt buộc có `appointmentDate` và `timeSlot`
-(`HH:mm-HH:mm`, ví dụ `08:00-08:30`). Queue Service bảo vệ giờ bắt đầu đã hẹn:
-bệnh nhân ưu tiên thông thường và walk-in chỉ được gọi nếu không làm lịch hẹn kế
-tiếp bị trễ; ca `EMERGENCY` vẫn luôn được gọi trước.
-
-## Cơ chế refresh token
-
-Refresh token đã được triển khai theo cơ chế rotation:
-
-1. `/login` cấp một access token và một refresh token ngẫu nhiên 256-bit.
-2. Database chỉ lưu SHA-256 hash, không lưu raw refresh token.
-3. `/refresh` kiểm tra token tồn tại, chưa hết hạn, chưa bị thu hồi và user còn
-   `ACTIVE`.
-4. Token cũ bị revoke và được liên kết với token thay thế; response trả một access
-   token và refresh token hoàn toàn mới.
-5. Dùng lại refresh token cũ trả `401` và thu hồi các refresh token còn hoạt động
-   của user để giới hạn token theft/replay.
-6. `/logout` thu hồi refresh token được gửi lên.
-
-## Khởi chạy
-
-Yêu cầu: JDK 21, Maven 3.9+, PostgreSQL 16, Docker Engine có Compose v2.
-
-```bash
-# Infrastructure
-docker compose -f docker-compose.infra.yml up -d
-
-# Build & Run
-export JWT_SECRET="$(openssl rand -base64 48)"
-mvn clean package -DskipTests
-java -jar careflow-identity-service/target/careflow-identity-service-1.0.0-SNAPSHOT.jar
-```
-
-## Kiểm thử
-
-```bash
-# Backend
-mvn -pl careflow-queue-service -am test
-mvn -pl careflow-identity-service -am test
-
-# Mobile
-cd frontend/patient-mobile
-flutter analyze
-flutter test --no-test-assets
-```
-
-## Tài liệu liên quan
-
-- [Implementation plan](docs/implementation_plan.md)
-- [Tài liệu trong thư mục docs](docs/)
+Source backend/web R0–R5 và mobile được hợp nhất trong đợt xuất bản develop ngày21/10/2026; [biên bản gộp](.planning/deployment/publish-r0-r5-2026-10-21.md) ghi phạm vi và kiểm tra. Runtime Mac/iPhone vẫn đối chiếu theo biên bản từng đợt và artifact, không suy ra đã triển khai chỉ từ commit. Cấu hình private, token và dữ liệu người thật không thuộc bản xuất bản.

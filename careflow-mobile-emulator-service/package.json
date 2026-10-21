@@ -5,14 +5,16 @@
   "type": "module",
   "scripts": {
     "dataset:seed": "node scripts/seed-mobile-dataset.mjs",
-    "test:dataset": "node scripts/dataset-browser-smoke.mjs",
+    "test:dataset": "node scripts/security-dataset-browser.mjs",
     "test:member-a": "node scripts/run-member-a-repair.mjs",
     "start": "node server.mjs",
     "build": "sh scripts/build.sh",
     "test": "node --test tests/*.test.mjs",
     "test:integration": "node --test tests/integration/*.integration.mjs",
     "test:api": "node scripts/live-api-smoke.mjs",
-    "test:browser": "node scripts/fleet-browser-smoke.mjs"
+    "test:browser": "node scripts/fleet-browser-smoke.mjs",
+    "test:security": "node ../scripts/security/run-checks.mjs",
+    "test:security:browser": "node scripts/security-browser-smoke.mjs"
   },
   "engines": {
     "node": ">=20"

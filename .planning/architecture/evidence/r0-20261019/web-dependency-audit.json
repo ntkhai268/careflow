@@ -1,0 +1,62 @@
+{
+  "capturedAt": "2026-10-19T16:59:21.784215+00:00",
+  "counts": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 8,
+    "critical": 0,
+    "total": 8
+  },
+  "packages": [
+    {
+      "name": "@next/eslint-plugin-next",
+      "severity": "high",
+      "direct": false,
+      "fixAvailable": true
+    },
+    {
+      "name": "brace-expansion",
+      "severity": "high",
+      "direct": false,
+      "fixAvailable": true
+    },
+    {
+      "name": "braces",
+      "severity": "high",
+      "direct": false,
+      "fixAvailable": true
+    },
+    {
+      "name": "browserslist",
+      "severity": "high",
+      "direct": false,
+      "fixAvailable": true
+    },
+    {
+      "name": "eslint-config-next",
+      "severity": "high",
+      "direct": true,
+      "fixAvailable": true
+    },
+    {
+      "name": "fast-glob",
+      "severity": "high",
+      "direct": false,
+      "fixAvailable": true
+    },
+    {
+      "name": "js-yaml",
+      "severity": "high",
+      "direct": false,
+      "fixAvailable": true
+    },
+    {
+      "name": "micromatch",
+      "severity": "high",
+      "direct": false,
+      "fixAvailable": true
+    }
+  ],
+  "status": "OPEN: triage before release; baseline dependencies unchanged; no automatic fix"
+}

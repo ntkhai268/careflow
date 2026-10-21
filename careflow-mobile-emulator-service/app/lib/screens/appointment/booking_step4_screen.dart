@@ -8,6 +8,7 @@ import '../../models/appointment.dart';
 import '../../models/appointment_payment.dart';
 import '../../models/appointment_service_option.dart';
 import '../../models/patient.dart';
+import '../../providers/patient_provider.dart';
 import '../../services/appointment_service.dart';
 import '../../services/appointment_payment_store.dart';
 
@@ -58,6 +59,8 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
             ? _reasonController.text.trim()
             : null,
       });
+
+      ref.read(patientProvider.notifier).selectPatient(widget.patient);
 
       final demoMode = ref.read(demoModeProvider);
       AppointmentPaymentReceipt? receipt;

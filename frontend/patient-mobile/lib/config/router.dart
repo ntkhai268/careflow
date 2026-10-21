@@ -3,9 +3,14 @@ import 'package:go_router/go_router.dart';
 import '../screens/auth/splash_screen.dart';
 import '../screens/auth/onboarding_screen.dart';
 import '../screens/auth/login_screen.dart';
+import '../screens/auth/devices_screen.dart';
+import '../screens/auth/ekyc_screen.dart';
+import '../screens/auth/forgot_password_screen.dart';
+import '../screens/auth/login_methods_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/main_shell.dart';
 import '../screens/profile/create_profile_screen.dart';
+import '../screens/profile/profile_links_screen.dart';
 import '../screens/profile/profile_detail_screen.dart';
 import '../screens/profile/edit_profile_screen.dart';
 import '../screens/health_record/health_record_list_screen.dart';
@@ -27,23 +32,55 @@ import '../features/journey/presentation/settlement_screen.dart';
 import '../features/journey/presentation/result_review_screen.dart';
 import '../features/journey/presentation/visit_outcome_screen.dart';
 import '../features/journey/presentation/visit_results_screen.dart';
+import '../features/journey/presentation/walk_in_results.dart';
 import '../features/journey/presentation/visit_ticket_screen.dart';
 import '../features/journey/presentation/hospital_qr_check_in_screen.dart';
 import '../features/journey/domain/journey_models.dart';
 import '../models/patient.dart';
 import '../models/appointment.dart';
+import '../screens/notification/notification_resource_screen.dart';
 
 /// GoRouter configuration for CareFlow app.
 final GoRouter appRouter = GoRouter(
   initialLocation: '/splash',
   debugLogDiagnostics: false,
   routes: [
+    GoRoute(path:'/notifications/:id',builder:(context,state)=>NotificationResourceScreen(notificationId:state.pathParameters['id']!)),
     GoRoute(path: '/splash', builder: (context, state) => const SplashScreen()),
     GoRoute(
       path: '/onboarding',
       builder: (context, state) => const OnboardingScreen(),
     ),
+    GoRoute(
+      path: '/account/profile-links',
+      builder: (context, state) => const ProfileLinksScreen(),
+    ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(
+      path: '/account/devices',
+      builder: (context, state) => const DevicesScreen(),
+    ),
+    GoRoute(
+      path: '/account/ekyc',
+      builder: (context, state) => const EkycScreen(),
+    ),
+    GoRoute(
+      path: '/login/methods',
+      builder: (context, state) => const LoginMethodsScreen(),
+    ),
+    GoRoute(
+      path: '/login/biometric',
+      builder: (context, state) =>
+          const LoginMethodsScreen(initialBiometric: true),
+    ),
+    GoRoute(
+      path: '/login/recovery',
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      path: '/account/security',
+      builder: (context, state) => const LoginMethodsScreen(configure: true),
+    ),
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
@@ -62,6 +99,12 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/visit-results',
       builder: (context, state) => const VisitResultsScreen(),
+    ),
+    GoRoute(
+      path: '/clinical-visits/:id',
+      builder: (context, state) => ClinicalVisitOutcomeScreen(
+        consultationId: state.pathParameters['id']!,
+      ),
     ),
     // Profile routes
     GoRoute(

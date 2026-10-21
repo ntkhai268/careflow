@@ -175,6 +175,7 @@ void main() {
 }
 
 List<Override> authenticatedJourneyOverrides(JourneyController controller) => [
+  demoModeProvider.overrideWithValue(true),
   authProvider.overrideWith((ref) => NotificationAuthNotifier()),
   patientProvider.overrideWith((ref) => NotificationPatientNotifier(ref)),
   journeyControllerProvider.overrideWith((ref) => controller),

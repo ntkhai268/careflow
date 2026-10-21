@@ -1,0 +1,106 @@
+{
+  "r2PostgresTests": 30,
+  "additionalDocumentCompatibilityTests": 10,
+  "suites": [
+    {
+      "suite": "ConfirmedDocumentMatchPostgresTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "9a662474d85c8a7dc33f0ebee8ae4a569c04358c8abc3e7af600ba41f1b98bb1"
+    },
+    {
+      "suite": "ProfileLinkPostgresTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "d46386510f69f41f903fe3439e8e57bc1ec245b5f2940535c9904c33251f66b7"
+    },
+    {
+      "suite": "RoomSchedulingPostgresTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "d46386510f69f41f903fe3439e8e57bc1ec245b5f2940535c9904c33251f66b7"
+    },
+    {
+      "suite": "RoomQueuePostgresTest",
+      "tests": 7,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "dcad6c656e68f9af150447c339dde3124cf71296492e16079c5139ed40633e77"
+    },
+    {
+      "suite": "WalkInVisitPostgresTest",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "d46386510f69f41f903fe3439e8e57bc1ec245b5f2940535c9904c33251f66b7"
+    },
+    {
+      "suite": "ConsultationMigrationPostgresTest",
+      "tests": 2,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "d46386510f69f41f903fe3439e8e57bc1ec245b5f2940535c9904c33251f66b7"
+    },
+    {
+      "suite": "DocumentIdentityPostgresTest",
+      "tests": 10,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "logSha256": "9a662474d85c8a7dc33f0ebee8ae4a569c04358c8abc3e7af600ba41f1b98bb1"
+    }
+  ],
+  "builds": [
+    {
+      "name": "Backend 11-module package",
+      "status": "PASS",
+      "logSha256": "6ba1dceff71431cf3fbe6e329831e1ab0b8986788b8737577922ed854a6001cc"
+    },
+    {
+      "name": "Final Appointment/Queue unit package",
+      "status": "PASS",
+      "logSha256": "f71b177b003c5452957ef04afd383fcb8ecc051e1cd59be6f55fc07f70588cd1"
+    },
+    {
+      "name": "Final Identity unit package",
+      "status": "PASS",
+      "logSha256": "d97803e824c237a9beb87f7921b6a439e8055d999b18e29a38397bc16656ee58"
+    },
+    {
+      "name": "Final Next production build",
+      "status": "PASS",
+      "logSha256": "92615632aca59922cb82e54cc23c991b8d5e97140cf54f8f31d80a080bf1f317"
+    },
+    {
+      "name": "Signed iOS release 1.0.0 (17)",
+      "status": "PASS",
+      "logSha256": "fa9582c3bf2fa651986610ff8d66f59746b0b28900907f2c463be9e566c67a13"
+    }
+  ],
+  "flutter": {
+    "mainSuitePassed": 237,
+    "additionalQueueWidgetTestsPassed": 3,
+    "conditionalHttpFixtureTestsPassedSeparately": 14,
+    "remainingSkippedTests": 1,
+    "remainingSkipReason": "Pre-existing pharmacy/payment assertion outside R2; do not treat as accepted.",
+    "httpFixtureScope": "Contract fixtures; not real sensor/provider/backend acceptance."
+  },
+  "nativeAnalyze": "No issues found in selected edited/new files",
+  "device": {
+    "model": "iPhone 11 Pro Max",
+    "version": "1.0.0",
+    "build": "17",
+    "install": "SUCCESS",
+    "launch": "SUCCESS",
+    "physicalCameraGpsAndProfileConsentAcceptance": "PENDING_USER_CONFIRMATION"
+  }
+}

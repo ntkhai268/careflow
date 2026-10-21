@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { queueApi, QueueEntry } from "@/lib/queue-api";
+import { directoryApi } from "@/lib/directory-api";
 import { labApi, LabOrderResponse } from "@/lib/lab-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmModal from "@/components/ConfirmModal";
 import { getErrorMessage } from "@/lib/error-utils";
 
 export default function LabQueuePage() {
-  const [selectedServicePoint, setSelectedServicePoint] = useState("LAB-HEMATOLOGY-01");
+  const [selectedServicePoint, setSelectedServicePoint] = useState("");
   const [entries, setEntries] = useState<QueueEntry[] | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -41,6 +42,7 @@ export default function LabQueuePage() {
   };
 
   const fetchQueue = useCallback(async () => {
+    if (!selectedServicePoint) { setEntries([]); setIsLoading(false); return; }
     setIsLoading(true);
     setError(null);
     try {
@@ -150,12 +152,17 @@ export default function LabQueuePage() {
     }
   };
 
-  const servicePoints = [
-    { id: "LAB-HEMATOLOGY-01", name: "Phòng Xét nghiệm Huyết học 101" },
-    { id: "LAB-BIOCHEM-01", name: "Phòng Xét nghiệm Sinh hóa 102" },
-    { id: "US-ROOM-01", name: "Phòng Siêu âm 201" },
-    { id: "XRAY-ROOM-01", name: "Phòng X-Quang 202" },
-  ];
+  const [servicePoints, setServicePoints] = useState<{id: string; name: string}[]>([]);
+  useEffect(() => {
+    let active = true;
+    directoryApi.getRooms(undefined, "LAB").then(rooms => {
+      if (!active) return;
+      const points = rooms.filter(room => room.isActive).map(room => ({id: room.id, name: room.displayName}));
+      setServicePoints(points);
+      setSelectedServicePoint(current => points.some(point => point.id === current) ? current : points[0]?.id || "");
+    }).catch(err => { if (active) setError(getErrorMessage(err, "Không tải được danh mục phòng LAB.")); });
+    return () => { active = false; };
+  }, []);
 
   return (
     <div className="space-y-6 pb-12">
@@ -190,7 +197,7 @@ export default function LabQueuePage() {
           </div>
           <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Hàng đợi Thực hiện Xét nghiệm</h1>
           <p className="text-xs text-text-muted mt-0.5">
-            Điều phối và nhập kết quả xét nghiệm, chẩn đoán hình ảnh theo Điểm phục vụ
+            Điều phối và nhập kết quả xét nghiệm tại phòng LAB đang hoạt động
           </p>
         </div>
 
@@ -210,7 +217,7 @@ export default function LabQueuePage() {
           return (
             <button
               key={sp.id}
-              onClick={() => setSelectedServicePoint(sp.id)}
+              onClick={() => { setSelectedServicePoint(sp.id); setActiveEntry(null); setActiveLabOrder(null); }}
               className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                 isActive
                   ? "bg-purple-600 text-white shadow-sm"

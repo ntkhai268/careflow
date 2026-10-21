@@ -5,6 +5,7 @@ import com.careflow.identity.domain.RefreshToken;
 import com.careflow.identity.domain.User;
 import com.careflow.identity.domain.UserStatus;
 import com.careflow.identity.repository.RefreshTokenRepository;
+import com.careflow.identity.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,18 +25,19 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class RefreshTokenServiceTest {
     @Mock RefreshTokenRepository tokens;
+    @Mock UserRepository users;
     RefreshTokenService service;
 
     @BeforeEach
     void setUp() {
-        service = new RefreshTokenService(tokens, 2_592_000_000L);
+        service = new RefreshTokenService(tokens, users, org.mockito.Mockito.mock(com.careflow.identity.repository.BiometricDeviceRepository.class), 2_592_000_000L);
     }
 
     @Test
     void issueReturnsOpaqueTokenAndStoresOnlyItsHash() {
         User user = activeUser();
 
-        RefreshTokenService.IssuedRefreshToken issued = service.issue(user);
+        RefreshTokenService.IssuedRefreshToken issued = service.issue(user, "test-binding");
 
         ArgumentCaptor<RefreshToken> tokenCaptor = ArgumentCaptor.forClass(RefreshToken.class);
         verify(tokens).save(tokenCaptor.capture());
@@ -52,7 +54,7 @@ class RefreshTokenServiceTest {
         RefreshToken current = activeToken(user);
         when(tokens.findByTokenHash(any())).thenReturn(Optional.of(current));
 
-        RefreshTokenService.RotatedRefreshToken rotated = service.rotate("old-refresh-token");
+        RefreshTokenService.RotatedRefreshToken rotated = service.rotate("old-refresh-token", "test-binding");
 
         assertThat(rotated.value()).isNotBlank().isNotEqualTo("old-refresh-token");
         assertThat(current.isRevoked()).isTrue();
@@ -70,7 +72,7 @@ class RefreshTokenServiceTest {
         when(tokens.findAllByUserIdAndRevokedAtIsNull(user.getId()))
                 .thenReturn(List.of(activeSession));
 
-        assertThatThrownBy(() -> service.rotate("reused-refresh-token"))
+        assertThatThrownBy(() -> service.rotate("reused-refresh-token", "test-binding"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(401);
         assertThat(activeSession.isRevoked()).isTrue();
@@ -84,7 +86,7 @@ class RefreshTokenServiceTest {
         expired.setExpiresAt(Instant.now().minusSeconds(1));
         when(tokens.findByTokenHash(any())).thenReturn(Optional.of(expired));
 
-        assertThatThrownBy(() -> service.rotate("expired-refresh-token"))
+        assertThatThrownBy(() -> service.rotate("expired-refresh-token", "test-binding"))
                 .isInstanceOf(BusinessException.class)
                 .extracting("status").isEqualTo(401);
         assertThat(expired.isRevoked()).isTrue();
@@ -95,12 +97,15 @@ class RefreshTokenServiceTest {
         User user = new User();
         user.setId(UUID.randomUUID());
         user.setStatus(UserStatus.ACTIVE);
+        lenient().when(users.findByIdForUpdate(user.getId())).thenReturn(Optional.of(user));
+        lenient().when(tokens.findOwnerIdByTokenHash(any())).thenReturn(Optional.of(user.getId()));
         return user;
     }
 
     private RefreshToken activeToken(User user) {
         RefreshToken token = new RefreshToken();
         token.setUser(user);
+        token.setDpopJkt("test-binding");
         token.setTokenHash("a".repeat(64));
         token.setExpiresAt(Instant.now().plusSeconds(3600));
         return token;

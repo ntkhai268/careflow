@@ -1,18 +1,13 @@
 import 'dart:async';
-import 'dart:convert';
-
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:uuid/uuid.dart';
-
 import '../config/api_config.dart';
-import '../config/router.dart';
 import 'api_service.dart';
+import 'push_platform.dart';
 
 class FirebaseBootstrap {
   static const enabled = bool.fromEnvironment(
@@ -35,169 +30,223 @@ class FirebaseBootstrap {
 }
 
 class PushNotificationService {
-  static const _deviceIdKey = 'careflow_device_id';
-  static const _channel = AndroidNotificationChannel(
-    'careflow_notifications',
-    'Thông báo CareFlow',
-    description: 'Lượt khám, chỉ định, kết quả và toa thuốc',
-    importance: Importance.high,
-  );
-
+  PushNotificationService(this._api, {PushPlatform? platform})
+    : _platform = platform ?? FirebasePushPlatform();
   final ApiService _api;
-  FirebaseMessaging? _messaging;
-  final FlutterLocalNotificationsPlugin _localNotifications;
-  bool _handlersInitialized = false;
-  StreamSubscription<String>? _tokenRefreshSubscription;
+  final PushPlatform _platform;
+  final _changes = StreamController<void>.broadcast(),
+      _taps = StreamController<String>.broadcast();
+  Stream<void> get changes => _changes.stream;
+  Stream<String> get taps => _taps.stream;
+  String? _owner, _binding, _device;
+  int _epoch = 0;
+  bool _disposed = false;
+  Future<void>? _initializing;
+  final statusListenable = ValueNotifier<String>('Chưa bật thông báo đẩy');
+  String get status => statusListenable.value;
+  set status(String value) {
+    if (!_disposed) statusListenable.value = value;
+  }
 
-  PushNotificationService(
-    this._api, {
-    FirebaseMessaging? messaging,
-    FlutterLocalNotificationsPlugin? localNotifications,
-  }) : _messaging = messaging,
-       _localNotifications =
-           localNotifications ?? FlutterLocalNotificationsPlugin();
-
-  FirebaseMessaging get _firebaseMessaging =>
-      _messaging ??= FirebaseMessaging.instance;
+  StreamSubscription<String>? _tokens;
+  StreamSubscription<Map<String, dynamic>>? _foreground, _opened;
+  final Set<String> _shown = {};
+  Map<String, dynamic>? _pendingTap;
+  void setAccount(String? user) {
+    if (_owner == user) return;
+    ++_epoch;
+    _owner = user;
+    _binding = null;
+    _shown.clear();
+    unawaited(_tokens?.cancel());
+    _tokens = null;
+    if (FirebaseBootstrap.isReady) {
+      unawaited(_platform.clearVisible().catchError((Object _) {}));
+    }
+    if (user == null) status = 'Cần đăng nhập để nhận thông báo';
+  }
 
   Future<void> initializeHandlers() async {
-    if (!FirebaseBootstrap.isReady || _handlersInitialized) return;
-    _handlersInitialized = true;
-
-    const settings = InitializationSettings(
-      android: AndroidInitializationSettings('@mipmap/ic_launcher'),
-      iOS: DarwinInitializationSettings(),
-    );
-    await _localNotifications.initialize(
-      settings: settings,
-      onDidReceiveNotificationResponse: (response) {
-        if (response.payload == null) return;
-        final data = Map<String, dynamic>.from(
-          jsonDecode(response.payload!) as Map,
-        );
-        _open(data);
-      },
-    );
-    await _localNotifications
-        .resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin
-        >()
-        ?.createNotificationChannel(_channel);
-
-    FirebaseMessaging.onMessage.listen(_showForegroundNotification);
-    FirebaseMessaging.onMessageOpenedApp.listen(
-      (message) => _open(message.data),
-    );
-    final initialMessage = await _firebaseMessaging.getInitialMessage();
-    if (initialMessage != null) _open(initialMessage.data);
+    if (!FirebaseBootstrap.isReady || _disposed) return;
+    final pending = _initializing;
+    if (pending != null) return pending;
+    final future = _initializeHandlers();
+    _initializing = future;
+    try {
+      await future;
+    } catch (_) {
+      _initializing = null;
+      rethrow;
+    }
   }
 
-  Future<void> bindAuthenticatedSession() async {
-    if (!FirebaseBootstrap.isReady) return;
+  Future<void> _initializeHandlers() async {
+    await _platform.initialize();
+    if (_disposed) return;
+    _foreground = _platform.foreground.listen(_receive);
+    _opened = _platform.opened.listen(_open);
+    final initial = await _platform.initial();
+    _pendingTap ??= initial;
+  }
+
+  Future<void> bindAuthenticatedSession({
+    bool requestPermission = false,
+  }) async {
+    if (!FirebaseBootstrap.isReady) {
+      status =
+          'Push chưa được cấu hình; thông báo trong ứng dụng vẫn hoạt động';
+      return;
+    }
+    final epoch = _epoch;
     try {
       await initializeHandlers();
-      final permission = await _firebaseMessaging.requestPermission(
-        alert: true,
-        badge: true,
-        sound: true,
-      );
-      if (permission.authorizationStatus == AuthorizationStatus.denied) return;
-
-      final token = await _firebaseMessaging.getToken();
-      if (token != null && token.isNotEmpty) await _register(token);
-      _tokenRefreshSubscription ??= _firebaseMessaging.onTokenRefresh.listen(
-        (token) => _register(token).catchError(
-          (Object error) => debugPrint('Không thể gửi FCM token mới: $error'),
-        ),
-        onError: (Object error) =>
-            debugPrint('Không thể làm mới FCM token: $error'),
-      );
-    } catch (error) {
-      debugPrint('Không thể đăng ký nhận push; inbox vẫn hoạt động: $error');
+      if (epoch != _epoch || _disposed) return;
+      final me = await _api.get('/auth/me');
+      final user = me.data['data']['id'] as String;
+      if (epoch != _epoch) return;
+      if (_owner == null) {
+        _owner = user;
+      } else if (_owner != user) {
+        return;
+      }
+      if (!await _platform.allowed(requestPermission)) {
+        if (epoch == _epoch) status = 'Chưa cho phép thông báo trên điện thoại';
+        return;
+      }
+      if (epoch != _epoch) return;
+      final token = await _platform.token();
+      if (epoch != _epoch) return;
+      if (token == null || token.isEmpty) {
+        status = 'Thiết bị chưa có mã push; hãy thử lại sau';
+        return;
+      }
+      await _register(token, epoch, user);
+      if (epoch != _epoch) return;
+      _tokens ??= _platform.tokens.listen((value) {
+        unawaited(
+          _register(value, epoch, user).catchError((Object _) {
+            if (epoch == _epoch) {
+              status = 'Chưa cập nhật được đăng ký thông báo';
+            }
+          }),
+        );
+      });
+      final tap = _pendingTap;
+      _pendingTap = null;
+      if (tap != null) _open(tap);
+    } catch (_) {
+      if (epoch == _epoch) status = 'Chưa đăng ký được push; có thể thử lại';
     }
   }
 
+  Future<void> enable() => bindAuthenticatedSession(requestPermission: true);
   Future<void> unbindAuthenticatedSession() async {
-    if (!FirebaseBootstrap.isReady) return;
-    final deviceId = await _deviceId();
+    setAccount(null);
+    _pendingTap = null;
     try {
-      await _api.delete('${ApiConfig.notifications}/devices/$deviceId');
-    } catch (error) {
-      debugPrint('Không thể hủy đăng ký push trên server: $error');
+      if (FirebaseBootstrap.isReady) {
+        await _api.delete(
+          '${ApiConfig.notifications}/devices/${await _deviceId()}',
+        );
+      }
+    } catch (_) {
+      /* Server session validation still gates future delivery. */
     }
-    await _tokenRefreshSubscription?.cancel();
-    _tokenRefreshSubscription = null;
+    try {
+      if (FirebaseBootstrap.isReady) await _platform.deleteToken();
+    } catch (_) {
+      /* Next successful bind transfers the actual token exclusively. */
+    }
+    if (FirebaseBootstrap.isReady) await _platform.clearVisible();
   }
 
-  Future<void> _register(String token) async {
+  Future<void> _register(String token, int epoch, String owner) async {
+    final id = await _deviceId();
     final package = await PackageInfo.fromPlatform();
-    await _api.put(
+    if (epoch != _epoch || _owner != owner) return;
+    final response = await _api.put(
       '${ApiConfig.notifications}/devices',
       data: {
-        'deviceId': await _deviceId(),
+        'deviceId': id,
         'registrationToken': token,
-        'platform': _platform,
+        'platform': defaultTargetPlatform == TargetPlatform.iOS
+            ? 'IOS'
+            : 'ANDROID',
         'appVersion': '${package.version}+${package.buildNumber}',
       },
     );
+    if (epoch != _epoch || _owner != owner) return;
+    final binding = response.data['data']['bindingId'];
+    if (binding is! String || binding.isEmpty) {
+      throw const FormatException('Thiếu ràng buộc thông báo.');
+    }
+    _binding = binding;
+    status = 'Đã đăng ký nhận thông báo';
   }
 
   Future<String> _deviceId() async {
+    if (_device != null) return _device!;
     final preferences = await SharedPreferences.getInstance();
-    final current = preferences.getString(_deviceIdKey);
-    if (current != null && current.isNotEmpty) return current;
+    final key = 'careflow_push_device:${ApiConfig.baseUrl}';
+    final current = preferences.getString(key);
+    if (current != null) return _device = current;
     final generated = const Uuid().v4();
-    await preferences.setString(_deviceIdKey, generated);
-    return generated;
+    await preferences.setString(key, generated);
+    return _device = generated;
   }
 
-  String get _platform {
-    if (kIsWeb) return 'WEB';
-    if (defaultTargetPlatform == TargetPlatform.iOS) return 'IOS';
-    return 'ANDROID';
-  }
-
-  Future<void> _showForegroundNotification(RemoteMessage message) async {
-    final notification = message.notification;
-    if (notification == null) return;
-    await _localNotifications.show(
-      id: notification.hashCode,
-      title: notification.title,
-      body: notification.body,
-      notificationDetails: const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'careflow_notifications',
-          'Thông báo CareFlow',
-          channelDescription: 'Lượt khám, chỉ định, kết quả và toa thuốc',
-          importance: Importance.high,
-          priority: Priority.high,
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
-      payload: jsonEncode(message.data),
-    );
+  bool _matches(Map<String, dynamic> data) =>
+      _owner != null &&
+      _binding != null &&
+      data['bindingId'] == _binding &&
+      data['notificationId'] is String;
+  void _receive(Map<String, dynamic> data) {
+    if (!_matches(data) || _disposed) return;
+    _changes.add(null);
+    final id = data['notificationId'] as String;
+    if (!_shown.add(id)) return;
+    if (_shown.length > 256) _shown.remove(_shown.first);
+    unawaited(_platform.showGeneric(data).catchError((Object _) {}));
   }
 
   void _open(Map<String, dynamic> data) {
-    final actionType = data['actionType']?.toString();
-    final resourceId = data['resourceId']?.toString();
-    if (actionType == 'OPEN_APPOINTMENT' && resourceId?.isNotEmpty == true) {
-      appRouter.go('/appointment/$resourceId');
+    if (_disposed) return;
+    if (_owner == null || _binding == null) {
+      _pendingTap = data;
       return;
     }
-    if (actionType == 'OPEN_QUEUE' || actionType == 'OPEN_TICKET') {
-      // Queue notifications currently carry a queue-entry ID. The Mobile
-      // contract exposes queue details through the appointment list, so take
-      // the patient there instead of treating the entry ID as an appointment.
-      appRouter.go('/?tab=1');
-      return;
+    if (!_matches(data) || _disposed) return;
+    // Retain the tap until navigation accepts it. An interactive lock can occur
+    // between the OS callback and the next authenticated foreground session.
+    _pendingTap = data;
+    _taps.add(data['notificationId'] as String);
+  }
+
+  void acknowledgeTap(String id) {
+    final pending = _pendingTap;
+    if (pending != null &&
+        pending['notificationId'] == id &&
+        _matches(pending)) {
+      _pendingTap = null;
     }
-    appRouter.go('/');
+  }
+
+  Future<void> dispose() async {
+    _disposed = true;
+    ++_epoch;
+    await _tokens?.cancel();
+    await _foreground?.cancel();
+    await _opened?.cancel();
+    await _changes.close();
+    await _taps.close();
+    statusListenable.dispose();
   }
 }
 
 final pushNotificationServiceProvider = Provider<PushNotificationService>((
   ref,
 ) {
-  return PushNotificationService(ref.read(apiServiceProvider));
+  final service = PushNotificationService(ref.read(apiServiceProvider));
+  ref.onDispose(() => unawaited(service.dispose()));
+  return service;
 });

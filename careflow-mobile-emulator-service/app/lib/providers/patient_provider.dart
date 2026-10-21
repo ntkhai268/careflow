@@ -48,6 +48,14 @@ class PatientNotifier extends StateNotifier<PatientState> {
     state = const PatientState();
   }
 
+  void selectPatient(Patient patient) {
+    if (_userId == null || patient.userId != _userId) {
+      throw StateError('Hồ sơ không thuộc tài khoản đang đăng nhập.');
+    }
+    ++_operationGeneration;
+    state = PatientState(patient: patient);
+  }
+
   /// Load patient profile for the currently authenticated user.
   Future<void> loadPatient() async {
     final userId = _userId;

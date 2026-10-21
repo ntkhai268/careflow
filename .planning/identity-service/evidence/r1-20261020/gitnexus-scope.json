@@ -1,0 +1,12 @@
+{
+  "upstreamHighRisk": "UserRepository: 17 direct callers, warned before edit",
+  "finalWorktreeDetectChanges": {
+    "files": 202,
+    "symbols": 848,
+    "affectedProcesses": 544,
+    "risk": "CRITICAL"
+  },
+  "scopeNote": "Whole worktree includes earlier uncommitted phases; not all changes belong to R1. R0 hash comparison identifies 11 existing code/test files changed by R1, plus listed new R1 files.",
+  "nativeSourceChanged": false,
+  "stagedCommittedOrPushed": false
+}

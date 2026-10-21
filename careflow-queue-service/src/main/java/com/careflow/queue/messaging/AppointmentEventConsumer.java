@@ -67,7 +67,7 @@ public class AppointmentEventConsumer {
         try { date = LocalDate.parse(requiredText(payload, "appointmentDate")); }
         catch (RuntimeException exception) { throw new BusinessException(422, "appointmentDate không hợp lệ"); }
         LocalTime scheduledStart = parseTimeSlotStart(requiredText(payload, "timeSlot"));
-        QueueConfig config = queueService.requireLockedConfig(departmentId);
+        QueueConfig config = queueService.requireScheduledRoom(roomId,departmentId);
         if (!roomId.equals(config.getRoomCode())) {
             throw new BusinessException(422, "roomId không khớp cấu hình Queue của khoa");
         }
@@ -76,6 +76,7 @@ public class AppointmentEventConsumer {
                 config, date, scheduledStart, requiredText(payload, "timeSlot"),
                 requiredText(payload, "department"), roomDisplayName,
                 appointmentId, patientId, userId);
+        entry.setPatientNameSnapshot(payload.hasNonNull("patientName")?payload.get("patientName").asText():null);
         entries.saveAndFlush(entry);
         events.append(entry, config, "VisitTicketIssued", AppConstants.RK_QUEUE_NUMBER_ASSIGNED,
                 envelope.correlationId(), Map.of(
@@ -87,10 +88,10 @@ public class AppointmentEventConsumer {
     private void cancel(EventEnvelope envelope) {
         UUID appointmentId = requiredUuid(envelope.payload(), "appointmentId");
         QueueEntry snapshot = entries.findByAppointmentId(appointmentId).orElse(null);
-        if (snapshot == null || snapshot.getStatus() != QueueStatus.WAITING) return;
-        QueueConfig config = queueService.requireLockedConfig(snapshot.getDepartmentId());
+        if (snapshot == null || !java.util.Set.of(QueueStatus.WAITING,QueueStatus.CHECKED_IN,QueueStatus.CALLED,QueueStatus.MISSED).contains(snapshot.getStatus())) return;
+        QueueConfig config = queueService.requireEntryConfigForEvent(snapshot);
         QueueEntry entry = entries.findFirstByAppointmentId(appointmentId).orElse(null);
-        if (entry == null || entry.getStatus() != QueueStatus.WAITING) return;
+        if (entry == null || !java.util.Set.of(QueueStatus.WAITING,QueueStatus.CHECKED_IN,QueueStatus.CALLED,QueueStatus.MISSED).contains(entry.getStatus())) return;
         entry.setStatus(QueueStatus.CANCELLED);
         entry.setCancelledAt(Instant.now());
         entries.saveAndFlush(entry);

@@ -6,6 +6,7 @@ import '../../models/appointment.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/patient_provider.dart';
 import '../../services/appointment_service.dart';
+import '../../services/patient_service.dart';
 import '../../utils/api_error_message.dart';
 import 'package:intl/intl.dart';
 
@@ -53,6 +54,8 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
 
   Future<void> _loadAppointments(String patientId) async {
     if (patientId.isEmpty) return;
+    final userId = ref.read(authProvider).userId;
+    if (userId == null) return;
     setState(() {
       _isLoading = true;
       _error = null;
@@ -60,12 +63,15 @@ class _AppointmentScreenState extends ConsumerState<AppointmentScreen> {
     });
     try {
       final service = ref.read(appointmentServiceProvider);
-      final appointments = await service.getAppointmentsByPatientId(patientId);
-      if (!mounted || patientId != _patientId) return;
+      final profiles = await ref.read(patientServiceProvider).getPatientsByUserId(userId);
+      if (!mounted || userId != ref.read(authProvider).userId || patientId != _patientId) return;
+      final ownedIds = profiles.where((profile) => profile.userId == userId).map((profile) => profile.id).toSet();
+      final appointments = (await Future.wait(ownedIds.map(service.getAppointmentsByPatientId)))
+          .expand((items) => items).where((appointment) => ownedIds.contains(appointment.patientId)).toList()
+        ..sort((left, right) => right.appointmentDate.compareTo(left.appointmentDate));
+      if (!mounted || userId != ref.read(authProvider).userId || patientId != _patientId) return;
       setState(() {
-        _appointments = appointments
-            .where((appointment) => appointment.patientId == patientId)
-            .toList();
+        _appointments = appointments;
         _isLoading = false;
       });
     } catch (e) {

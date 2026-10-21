@@ -1,0 +1,14 @@
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "entryId": "e1000000-0000-0000-0000-000000000001",
+    "labOrderId": "b1000000-0000-0000-0000-000000000001",
+    "patientId": "f1000000-0000-0000-0000-000000000002",
+    "consultationId": "c1000000-0000-0000-0000-000000000001",
+    "calledByUserId": "44000000-0000-0000-0000-000000000001",
+    "servicePointId": "LAB-HEMATOLOGY-01",
+    "type": "LAB_EXECUTION",
+    "queueStatus": "IN_PROGRESS"
+  }
+}

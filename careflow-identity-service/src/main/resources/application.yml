@@ -23,7 +23,7 @@ spring:
   servlet:
     multipart:
       max-file-size: 5MB
-      max-request-size: 6MB
+      max-request-size: 16MB
   lifecycle:
     timeout-per-shutdown-phase: 20s
   threads:
@@ -50,8 +50,7 @@ management:
         include: health,info
 
 jwt:
-  secret: ${JWT_SECRET:careflow_super_secret_jwt_key_2026_very_long_secret_key_minimum_256_bits}
-  expiration: ${JWT_EXPIRATION_MS:86400000}
+  expiration: ${JWT_EXPIRATION_MS:900000}
   refresh-expiration: ${JWT_REFRESH_EXPIRATION_MS:2592000000}
   issuer: careflow-identity
 
@@ -59,3 +58,11 @@ springdoc:
   swagger-ui:
     operations-sorter: method
     tags-sorter: alpha
+
+resend:
+  webhook-secret: ${RESEND_WEBHOOK_SECRET:}
+  api-key: ${RESEND_API_KEY:}
+  from: ${RESEND_FROM:CareFlow <careflow@supersignal-resend.id.vn>}
+
+identity:
+  document-key-file: ${IDENTITY_DOCUMENT_KEY_FILE:}

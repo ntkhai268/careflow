@@ -1,52 +1,30 @@
 package com.careflow.notification.security;
-
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import com.careflow.common.security.ActiveSessionClient;
+import com.careflow.common.exception.BusinessException;
 import org.junit.jupiter.api.Test;
-
-import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Date;
 import java.util.UUID;
-
 import static org.assertj.core.api.Assertions.*;
-
+import static org.mockito.Mockito.*;
 class JwtAuthenticatorTest {
-    private static final String SECRET = "careflow-test-jwt-secret-key-must-be-at-least-256-bits-long";
-
-    @Test
-    void authenticatesSupportedClinicalRole() {
-        UUID userId = UUID.randomUUID();
-        String token = token(userId, "LAB_TECHNICIAN", "careflow-identity");
-
-        var authentication = new JwtAuthenticator(SECRET, "careflow-identity")
-                .authenticate("Bearer " + token);
-
-        assertThat(authentication.getName()).isEqualTo(userId.toString());
-        assertThat(authentication.getAuthorities()).extracting("authority")
-                .containsExactly("ROLE_LAB_TECHNICIAN");
+    @Test void usesOnlyVerifiedIdentity() {
+        var sessions=mock(ActiveSessionClient.class);UUID user=UUID.randomUUID();
+        when(sessions.verify("Bearer fixture",null)).thenReturn(new ActiveSessionClient.Principal(true,user,"LAB_TECHNICIAN",UUID.randomUUID(),Instant.now().plusSeconds(60)));
+        var auth=new JwtAuthenticator(sessions).authenticate("Bearer fixture");
+        assertThat(auth.getName()).isEqualTo(user.toString());
+        assertThat(auth.getAuthorities()).extracting("authority").containsExactly("ROLE_LAB_TECHNICIAN");
     }
-
-    @Test
-    void rejectsWrongIssuer() {
-        String token = token(UUID.randomUUID(), "PATIENT", "another-issuer");
-        JwtAuthenticator authenticator = new JwtAuthenticator(SECRET, "careflow-identity");
-
-        assertThatThrownBy(() -> authenticator.authenticate("Bearer " + token))
-                .isInstanceOf(RuntimeException.class);
+    @Test void unavailableOrRevokedAuthorityCannotAuthenticate() {
+        var sessions=mock(ActiveSessionClient.class);
+        for(int status:new int[]{401,503}) {
+            doThrow(new BusinessException(status,"Denied")).when(sessions).verify("Bearer fixture",null);
+            assertThatThrownBy(()->new JwtAuthenticator(sessions).authenticate("Bearer fixture")).isInstanceOf(BusinessException.class);
+        }
     }
-
-    @Test
-    void rejectsMissingBearerToken() {
-        assertThatThrownBy(() -> new JwtAuthenticator(SECRET, "careflow-identity").authenticate(null))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("Bearer");
-    }
-
-    private String token(UUID userId, String role, String issuer) {
-        Instant now = Instant.now();
-        return Jwts.builder().subject(userId.toString()).issuer(issuer).claim("role", role)
-                .issuedAt(Date.from(now)).expiration(Date.from(now.plusSeconds(300)))
-                .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8))).compact();
+    @Test void connectValidatesProofForNotificationEndpoint() {
+        var sessions=mock(ActiveSessionClient.class);UUID user=UUID.randomUUID();
+        when(sessions.verifyRequest("Bearer fixture",null,"proof","GET","/ws/notifications",null,null))
+            .thenReturn(new ActiveSessionClient.Principal(true,user,"PATIENT",UUID.randomUUID(),Instant.now().plusSeconds(60)));
+        assertThat(new JwtAuthenticator(sessions).authenticateConnect("Bearer fixture","proof").getName()).isEqualTo(user.toString());
     }
 }

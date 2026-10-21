@@ -1,3 +1,4 @@
+import {auditFetch as fetch, proofFor} from './bound-http.mjs';
 import assert from 'node:assert/strict';
 import {randomUUID} from 'node:crypto';
 import {createRequire} from 'node:module';
@@ -39,13 +40,14 @@ async function waitInbox(token,predicate) {
   return api('final-real-inbox','/api/notifications?limit=100',{token});
 }
 async function connect(id,token,destination='/user/queue/notifications') {
-  return page.evaluate(({id,token,destination})=>new Promise(resolve=>{
+  const dpop=token?proofFor(token,'GET','/ws/notifications'):null;
+  return page.evaluate(({id,token,destination,dpop})=>new Promise(resolve=>{
     window.auditSockets ||= {};
     const socket=new WebSocket(`ws://${location.host}/ws/notifications`),state={socket,messages:[],frames:[],closed:false};window.auditSockets[id]=state;
     let settled=false,buffer='';
     const done=value=>{if(!settled){settled=true;clearTimeout(timer);resolve(value);}};
     const timer=setTimeout(()=>done('TIMEOUT'),3500);
-    socket.onopen=()=>socket.send(`CONNECT\naccept-version:1.2\nhost:localhost\nheart-beat:0,0\n${token?`Authorization:Bearer ${token}\n`:''}\n\0`);
+    socket.onopen=()=>socket.send(`CONNECT\naccept-version:1.2\nhost:localhost\nheart-beat:0,0\n${token?`Authorization:Bearer ${token}\nDPoP:${dpop}\n`:''}\n\0`);
     socket.onmessage=event=>{
       buffer+=event.data;let end;
       while((end=buffer.indexOf('\0'))>=0){
@@ -59,7 +61,7 @@ async function connect(id,token,destination='/user/queue/notifications') {
       }
     };
     socket.onclose=()=>{state.closed=true;done('CLOSED');};socket.onerror=()=>done('ERROR');
-  }),{id,token,destination});
+  }),{id,token,destination,dpop});
 }
 async function messages(id){return page.evaluate(id=>window.auditSockets[id].messages,id);}
 const {execFileSync}=await import('node:child_process');
@@ -74,7 +76,7 @@ async function requireClosed(id){
   throw Error(`Socket ${id} remains open after revocation/expiry`);
 }
 try {
-  const config=await api('audit-config','/__emulator/config');assert.equal(config.gateway,'http://127.0.0.1:18080');
+  const config=await api('audit-config','/__emulator/config');assert.equal(config.gateway,'https://localhost:18080');
   const admin=await login('admin'),doctor=await login('an@careflow.vn');
   const owner=await patient('repairOwner'),socketUser=await patient('socket');
   const staffAccount=await patient('staff'),unassignedAccount=await patient('unassigned');
@@ -107,7 +109,7 @@ try {
     if(action==='disable')await api('restore-fixture-user-active','/api/users/'+socketUser.user.id+'/status',{method:'PATCH',token:admin.accessToken,body:{status:'ACTIVE'}});
     if(action==='role-change')await api('restore-fixture-user-role','/api/users/'+socketUser.user.id+'/role',{method:'PATCH',token:admin.accessToken,body:{role:'PATIENT'}});
   }
-  const short=await api('real-short-lived-Identity-login','/api/auth/login',{method:'POST',direct:'http://127.0.0.1:18093',body:{usernameOrEmail:socketUser.username,password}});sessions.push(short.refreshToken);
+  const short=await api('real-short-lived-Identity-login','/api/auth/login',{method:'POST',direct:'https://localhost:18093',body:{usernameOrEmail:socketUser.username,password}});sessions.push(short.refreshToken);
   const claims=JSON.parse(Buffer.from(short.accessToken.split('.')[1],'base64url'));
   assert.ok(claims.exp-claims.iat<=5,'Token must be issued with a real short lifetime.');
   assert.equal(await connect('expiry',short.accessToken),'CONNECTED');await requireClosed('expiry');
@@ -126,7 +128,7 @@ try {
   const entry=await api('assigned-STAFF-real-default-ROOM01-intake','/api/queues/entries',{method:'POST',token:staff,body:intake,headers:{'Idempotency-Key':key},statuses:[201]});
   artifacts.queueEntries.push(entry.entryId);assert.equal(entry.queueStatus,'CHECKED_IN');assert.ok(Number(entry.queueNumber.split('-').at(-1))>5);
   verify('seeded-number-collision-fixed-without-deleting-seed',true);
-  const replays=await Promise.all(Array.from({length:4},(_,index)=>api('parallel-same-key-replay-two-JVMs','/api/queues/entries',{method:'POST',token:staff,body:intake,headers:{'Idempotency-Key':key},statuses:[201],...(index%2 ? {direct:'http://127.0.0.1:18094'} : {})})));
+  const replays=await Promise.all(Array.from({length:4},(_,index)=>api('parallel-same-key-replay-two-JVMs','/api/queues/entries',{method:'POST',token:staff,body:intake,headers:{'Idempotency-Key':key},statuses:[201],...(index%2 ? {direct:'https://localhost:18094'} : {})})));
   assert.ok(replays.every(item=>item.entryId===entry.entryId));
   assert.equal(sql('careflow_queue',`select count(*) from queue.outbox_events where aggregate_id='${uuid(entry.entryId)}' and event_type='PatientCheckedIn'`),'1');
   verify('concurrent-replay-one-entry-one-checkin-event',true);
@@ -159,10 +161,10 @@ try {
     const profile=await api('real-parallel-intake-profile','/api/patients',{method:'POST',token,statuses:[201],body:{userId:owner.user.id,fullName:`Real concurrent intake ${number}`,gender:'OTHER'}});
     extraProfiles.push(profile);artifacts.createdPatients.push(profile.id);
   }
-  const parallelEntries=await Promise.all(extraProfiles.map((profile,index)=>api('concurrent-distinct-patient-intake-two-JVMs','/api/queues/entries',{method:'POST',token:staff,body:{...intake,patientId:profile.id},headers:{'Idempotency-Key':randomUUID()},statuses:[201],...(index%2 ? {direct:'http://127.0.0.1:18094'} : {})})));
+  const parallelEntries=await Promise.all(extraProfiles.map((profile,index)=>api('concurrent-distinct-patient-intake-two-JVMs','/api/queues/entries',{method:'POST',token:staff,body:{...intake,patientId:profile.id},headers:{'Idempotency-Key':randomUUID()},statuses:[201],...(index%2 ? {direct:'https://localhost:18094'} : {})})));
   artifacts.queueEntries.push(...parallelEntries.map(item=>item.entryId));assert.equal(new Set(parallelEntries.map(item=>item.queueNumber)).size,4);verify('concurrent-actual-allocations-use-distinct-numbers',true);
   const contender=await api('profile-for-duplicate-race','/api/patients',{method:'POST',token,statuses:[201],body:{userId:owner.user.id,fullName:'Real duplicate race',gender:'OTHER'}});
-  const raced=await Promise.all([base,'http://127.0.0.1:18094'].map(origin=>fetch(origin+'/api/queues/entries',{method:'POST',headers:{Origin:base,'Content-Type':'application/json',Authorization:`Bearer ${staff}`,'Idempotency-Key':randomUUID()},body:JSON.stringify({...intake,patientId:contender.id})})));
+  const raced=await Promise.all([base,'https://localhost:18094'].map(origin=>fetch(origin+'/api/queues/entries',{method:'POST',headers:{Origin:base,'Content-Type':'application/json',Authorization:`Bearer ${staff}`,'Idempotency-Key':randomUUID()},body:JSON.stringify({...intake,patientId:contender.id})})));
   assert.deepEqual(raced.map(item=>item.status).sort(),[201,409]);for(const response of raced)await response.arrayBuffer();verify('different-key-concurrent-intake-cannot-duplicate-patient',true);
   const bookingProfile=await api('fresh-second-profile-for-concurrent-appointment-queue-events','/api/patients',{method:'POST',token,statuses:[201],body:{userId:owner.user.id,fullName:'Real new booking profile',gender:'OTHER'}});
   const date=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(Date.now()+86400000));
@@ -185,7 +187,7 @@ try {
   if(browser)await browser.close();
   for(const refreshToken of sessions)await api('cleanup-audit-session','/api/auth/logout',{method:'POST',body:{refreshToken}}).catch(()=>{});
   await mkdir(new URL('../.runtime/',import.meta.url),{recursive:true});
-  const result={checkedAt:new Date().toISOString(),mode:'real',mock:false,gateway:'http://127.0.0.1:18080',passed:checks.filter(item=>item.result==='PASS').length,failed:checks.filter(item=>item.result==='FAIL').length,checks,findings,artifacts};
+  const result={checkedAt:new Date().toISOString(),mode:'real',mock:false,gateway:'https://localhost:18080',passed:checks.filter(item=>item.result==='PASS').length,failed:checks.filter(item=>item.result==='FAIL').length,checks,findings,artifacts};
   await writeFile(new URL('../.runtime/member-a-repair-results.json',import.meta.url),JSON.stringify(result,null,2)+'\n');
   console.log(JSON.stringify({passed:result.passed,failed:result.failed,findings}));
   if(result.failed || findings.length)process.exitCode=1;

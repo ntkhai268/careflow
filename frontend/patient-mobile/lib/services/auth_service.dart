@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
 import '../config/api_config.dart';
 import '../utils/api_error_message.dart';
 import 'api_service.dart';
@@ -84,15 +85,232 @@ class AuthService {
         data: {'usernameOrEmail': usernameOrEmail, 'password': password},
       );
 
-      final authResponse = AuthResponse.fromJson(response.data['data']);
-      await _apiService.saveToken(authResponse.token);
-      if (authResponse.refreshToken != null) {
-        await _apiService.saveRefreshToken(authResponse.refreshToken!);
+      var authResponse = AuthResponse.fromJson(response.data['data']);
+      await _acceptSession(authResponse);
+      final upgraded = await _apiService.upgradeDeviceKey(password: password);
+      if (upgraded != null) {
+        authResponse = AuthResponse.fromJson(upgraded);
+        await _acceptSession(authResponse);
       }
       return authResponse;
     } catch (e) {
       throw Exception(_messageFrom(e, login: true));
     }
+  }
+
+  Future<Map<String, dynamic>> loginMethods() async {
+    final response = await _apiService.get('/auth/login-methods');
+    return Map<String, dynamic>.from(response.data['data']);
+  }
+
+  Future<void> saveQuestion(
+    String password,
+    String questionId,
+    String answer,
+  ) async {
+    await _apiService.post(
+      '/auth/login-methods/question',
+      data: {'password': password, 'questionId': questionId, 'answer': answer},
+    );
+  }
+
+  Future<void> questionLogin(
+    String username,
+    String questionId,
+    String answer,
+  ) async {
+    final response = await _apiService.post(
+      '/auth/login/question',
+      data: {
+        'usernameOrEmail': username,
+        'questionId': questionId,
+        'answer': answer,
+      },
+    );
+    final auth = AuthResponse.fromJson(
+      Map<String, dynamic>.from(response.data['data']),
+    );
+    await _acceptSession(auth);
+  }
+
+  Future<void> _acceptSession(AuthResponse auth) async {
+    final account = await _apiService.sessions.account();
+    if (account != null && account != auth.fullName) {
+      await _apiService.clearTokens();
+    } else {
+      await _apiService.clearSession();
+    }
+    await _apiService.saveToken(auth.token);
+    if (auth.refreshToken != null) {
+      await _apiService.saveRefreshToken(auth.refreshToken!);
+    }
+  }
+
+  Future<Map<String, dynamic>> requestEmailRecovery(String email) async {
+    final response = await _apiService.post(
+      '/auth/recovery/email/request',
+      data: {'email': email.trim().toLowerCase()},
+      options: Options(extra: {'anonymous': true}),
+    );
+    return Map<String, dynamic>.from(response.data['data']);
+  }
+
+  Future<Map<String, dynamic>> verifyEmailRecovery(
+    String requestId,
+    String code,
+  ) async {
+    final response = await _apiService.post(
+      '/auth/recovery/email/verify',
+      data: {'requestId': requestId, 'code': code},
+      options: Options(extra: {'anonymous': true}),
+    );
+    return Map<String, dynamic>.from(response.data['data']);
+  }
+
+  Future<void> confirmEmailRecovery(
+    String requestId,
+    String resetToken,
+    String newPassword,
+  ) async {
+    await _apiService.post(
+      '/auth/recovery/email/confirm',
+      data: {
+        'requestId': requestId,
+        'resetToken': resetToken,
+        'newPassword': newPassword,
+      },
+      options: Options(extra: {'anonymous': true}),
+    );
+    await _apiService.clearTokens();
+  }
+
+  /// An authenticated settings visit can discard a registration the server has
+  /// revoked, while preserving the current password session. Network failures
+  /// must leave the registration untouched.
+  Future<void> reconcileBiometrics() async {
+    final id = await _apiService.sessions.credentialId();
+    if (id == null) return;
+    final response = await _apiService.get('/auth/devices');
+    final devices = response.data['data'];
+    if (devices is! List) throw const FormatException('Invalid device list');
+    if (devices.any((device) => device is Map && device['id'] == id)) return;
+    if (await _apiService.sessions.credentialId() == id) {
+      await _apiService.sessions.disable();
+    }
+  }
+
+  Future<void> enableBiometrics(String password) async {
+    final user = await fetchCurrentUser();
+    if (user == null) throw Exception('Vui lòng đăng nhập lại để thiết lập.');
+    if (await _apiService.sessions.enabled()) {
+      throw Exception('Sinh trắc học đã bật trên điện thoại này.');
+    }
+    final supported = await _apiService.sessions.vault.capability();
+    if (!supported.available) throw Exception(supported.detail);
+    final access = await _apiService.getToken();
+    final refresh = await _apiService.getRefreshToken();
+    if (access == null || refresh == null) {
+      throw Exception('Vui lòng đăng nhập lại để thiết lập.');
+    }
+    final response = await _apiService.post(
+      '/auth/biometric-devices',
+      data: {'password': password},
+    );
+    final registration = Map<String, dynamic>.from(response.data['data']);
+    try {
+      await _apiService.sessions.enable(
+        user.username,
+        access,
+        refresh,
+        credentialId: registration['credentialId'] as String,
+        deviceToken: registration['deviceToken'] as String,
+      );
+    } catch (_) {
+      try {
+        await _apiService.delete(
+          '/auth/biometric-devices/${registration['credentialId']}',
+        );
+      } catch (_) {
+        /* The unused random credential was not enabled locally. */
+      }
+      rethrow;
+    }
+  }
+
+  Future<void> disableBiometrics() async {
+    final id = await _apiService.sessions.credentialId();
+    if (id != null) await _apiService.delete('/auth/biometric-devices/$id');
+    await _apiService.sessions.disable();
+  }
+
+  Future<void> biometricLogin() async {
+    final expected = await _apiService.sessions.account();
+    _apiService.sessions.lock();
+    try {
+      final credential = await _apiService.sessions.unlockCredential();
+      Map<String, dynamic> data;
+      try {
+        final response = await _apiService.post(
+          '/auth/login/biometric',
+          data: {
+            'credentialId': credential.id,
+            'deviceToken': credential.token,
+          },
+          options: Options(extra: {'anonymous': true}),
+        );
+        data = Map<String, dynamic>.from(response.data['data']);
+      } on DioException catch (error) {
+        final recovered = error.response?.statusCode == 401
+            ? await _apiService.recoverPendingDeviceKey(
+                credential.id,
+                credential.token,
+              )
+            : null;
+        if (recovered == null) rethrow;
+        data = recovered;
+      }
+      final auth = AuthResponse.fromJson(data);
+      if (auth.fullName != expected ||
+          (data['user'] as Map)['role'] != 'PATIENT') {
+        try {
+          await _apiService.post(
+            ApiConfig.authLogout,
+            data: {'refreshToken': auth.refreshToken},
+            options: Options(extra: {'anonymous': true}),
+          );
+        } finally {
+          await _apiService.clearTokens();
+        }
+        throw Exception(
+          'Tài khoản không khớp thiết lập trên điện thoại. Vui lòng đăng nhập lại.',
+        );
+      }
+      await _acceptSession(auth);
+      final upgraded = await _apiService.upgradeDeviceKey(
+        credentialId: credential.id,
+        deviceToken: credential.token,
+      );
+      if (upgraded != null) {
+        await _acceptSession(AuthResponse.fromJson(upgraded));
+      }
+    } on DioException catch (error) {
+      _apiService.sessions.lock();
+      if (error.response?.statusCode == 401 ||
+          error.response?.statusCode == 403) {
+        await _apiService.clearTokens();
+        throw Exception(
+          'Thiết lập sinh trắc học đã hết hạn hoặc bị thu hồi. Đăng nhập bằng mật khẩu và bật lại.',
+        );
+      }
+      rethrow;
+    } catch (_) {
+      _apiService.sessions.lock();
+      rethrow;
+    }
+  }
+
+  Future<void> lockSession() async {
+    await _apiService.clearSession();
   }
 
   /// Register Identity account, then login to obtain the token pair.
@@ -139,7 +357,7 @@ class AuthService {
     }
   }
 
-  /// Logout — revoke refresh token on server then clear local storage.
+  /// Logout ends this session while retaining OS-protected device enrollment.
   Future<void> logout() async {
     try {
       final refreshToken = await _apiService.getRefreshToken();
@@ -150,7 +368,7 @@ class AuthService {
         );
       }
     } finally {
-      await _apiService.clearTokens();
+      await _apiService.clearSession();
     }
   }
 

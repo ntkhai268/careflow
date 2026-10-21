@@ -81,6 +81,15 @@ class HealthRecordService {
     );
   }
 
+  Future<void> downloadFile(String patientId, HealthRecordFileInfo file) async {
+    final response = await _apiService.get(
+      '${ApiConfig.patients}/$patientId/health-records/files/${file.id}',
+      options: Options(responseType: ResponseType.bytes),
+    );
+    await browserCall('download', {'name': file.fileName, 'contentType': file.contentType ?? 'application/octet-stream',
+      'base64': base64Encode(List<int>.from(response.data as List))});
+  }
+
   String getFileUrl(String patientId, String fileId) {
     return '${ApiConfig.baseUrl}${ApiConfig.patients}/$patientId/health-records/files/$fileId';
   }

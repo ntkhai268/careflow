@@ -1,0 +1,42 @@
+server:
+  port: 8091
+  shutdown: graceful
+spring:
+  application:
+    name: analytics-service
+  datasource:
+    url: ${ANALYTICS_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_analytics}
+    username: ${ANALYTICS_DB_USERNAME:careflow}
+    password: ${ANALYTICS_DB_PASSWORD}
+  flyway:
+    schemas: analytics
+  rabbitmq:
+    host: ${RABBITMQ_HOST:100.116.233.60}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME}
+    password: ${RABBITMQ_PASSWORD}
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+  threads:
+    virtual:
+      enabled: true
+eureka:
+  client:
+    enabled: ${EUREKA_CLIENT_ENABLED:false}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+analytics:
+  demo-enabled: ${ANALYTICS_DEMO_ENABLED:false}
+  sync-enabled: ${ANALYTICS_SYNC_ENABLED:true}
+  sync-delay-ms: ${ANALYTICS_SYNC_DELAY_MS:60000}
+  sources:
+    appointment: ${app.appointment-service.url:https://careflow-appointment-service:8083}
+    queue: ${app.queue-service.url:https://careflow-queue-service:8084}
+    consultation: ${app.consultation-service.url:https://careflow-consultation-service:8086}

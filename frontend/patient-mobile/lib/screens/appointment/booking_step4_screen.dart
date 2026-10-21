@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 import '../../config/theme.dart';
 import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
-import '../../models/appointment_payment.dart';
-import '../../models/appointment_service_option.dart';
+import '../../services/service_catalog_service.dart';
 import '../../models/patient.dart';
 import '../../services/appointment_service.dart';
-import '../../services/appointment_payment_store.dart';
 
 /// Booking Step 4: Confirm and submit
 class BookingStep4Screen extends ConsumerStatefulWidget {
@@ -32,7 +31,94 @@ class BookingStep4Screen extends ConsumerStatefulWidget {
 
 class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
   final _reasonController = TextEditingController();
-  final _service = AppointmentServiceOption.generalConsultation;
+  final _bookingKey = const Uuid().v4();
+  ServicePrice? _service;
+  List<ServicePrice> _services = [];
+  String? _priceError;
+  bool _priceLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPrices();
+  }
+
+  Future<void> _loadPrices() async {
+    setState(() {
+      _priceLoading = true;
+      _priceError = null;
+      _service = null;
+    });
+    try {
+      final prices = await ref.read(serviceCatalogServiceProvider).list();
+      if (prices.isEmpty) {
+        throw const FormatException('Chưa có dịch vụ có bảng giá hiệu lực.');
+      }
+      if (mounted) {
+        setState(() {
+          _services = prices;
+          _service = prices.first;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(
+          () => _priceError = e is FormatException
+              ? e.message.toString()
+              : 'Không thể tải bảng giá. Vui lòng thử lại.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _priceLoading = false);
+    }
+  }
+
+  Future<void> _chooseService() async {
+    var query = '';
+    final choice = await showModalBottomSheet<ServicePrice>(
+      context: context,
+      showDragHandle: true,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, update) => SafeArea(
+          child: ListView(
+            shrinkWrap: true,
+            children: [
+              const Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  'Chọn dịch vụ',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: TextField(
+                  decoration: const InputDecoration(labelText: 'Tìm dịch vụ'),
+                  onChanged: (value) =>
+                      update(() => query = value.trim().toLowerCase()),
+                ),
+              ),
+              for (final service in _services.where(
+                (s) =>
+                    s.name.toLowerCase().contains(query) ||
+                    s.code.toLowerCase().contains(query),
+              ))
+                ListTile(
+                  title: Text(service.name),
+                  subtitle: Text(_formatCurrency(service.amount)),
+                  trailing: service.code == _service?.code
+                      ? const Icon(Icons.check)
+                      : null,
+                  onTap: () => Navigator.pop(ctx, service),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (choice != null && mounted) setState(() => _service = choice);
+  }
+
   bool _isSubmitting = false;
 
   @override
@@ -42,6 +128,8 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
   }
 
   Future<void> _submitAppointment() async {
+    final selectedService = _service;
+    if (selectedService == null || _priceLoading) return;
     setState(() => _isSubmitting = true);
 
     try {
@@ -49,6 +137,8 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
       final dateStr = DateFormat('yyyy-MM-dd').format(widget.date);
 
       final appointment = await service.createAppointment({
+        'serviceCode': selectedService.code,
+        'priceVersion': selectedService.version,
         'patientId': widget.patient.id,
         'patientName': widget.patient.fullName,
         'department': widget.department.code,
@@ -57,29 +147,7 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
         'reason': _reasonController.text.trim().isNotEmpty
             ? _reasonController.text.trim()
             : null,
-      });
-
-      final demoMode = ref.read(demoModeProvider);
-      AppointmentPaymentReceipt? receipt;
-      var receiptSaved = false;
-      if (demoMode) {
-        receipt = AppointmentPaymentReceipt(
-          appointmentId: appointment.id,
-          serviceCode: _service.code,
-          serviceName: _service.name,
-          amount: _service.price,
-          method: AppointmentPaymentMethod.onlineMock,
-          status: AppointmentPaymentStatus.paid,
-          createdAt: DateTime.now().toUtc(),
-        );
-        receiptSaved = true;
-        try {
-          await ref.read(appointmentPaymentStoreProvider).save(receipt);
-        } catch (_) {
-          // A local receipt failure must not roll back a successful appointment.
-          receiptSaved = false;
-        }
-      }
+      }, idempotencyKey: _bookingKey);
 
       if (appointment.allowsActiveJourney) {
         try {
@@ -96,16 +164,12 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
       }
 
       if (mounted) {
-        _showSuccessDialog(
-          appointment,
-          receipt: receipt,
-          receiptSaved: receiptSaved,
-          demoMode: demoMode,
-        );
+        _showSuccessDialog(appointment);
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
+        _loadPrices();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(appointmentBookingErrorMessage(e)),
@@ -116,12 +180,7 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
     }
   }
 
-  void _showSuccessDialog(
-    Appointment appointment, {
-    required AppointmentPaymentReceipt? receipt,
-    required bool receiptSaved,
-    required bool demoMode,
-  }) {
+  void _showSuccessDialog(Appointment appointment) {
     final canOpenJourney = appointment.allowsActiveJourney;
     showDialog(
       context: context,
@@ -166,14 +225,11 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                 style: Theme.of(ctx).textTheme.bodyMedium,
               ),
               const SizedBox(height: AppSpacing.md),
-              if (demoMode && receipt != null)
-                _buildPaymentReceiptSummary(
-                  ctx,
-                  receipt: receipt,
-                  receiptSaved: receiptSaved,
-                )
-              else
-                _buildPaymentPendingSummary(ctx),
+              if (appointment.quotedAmount != null)
+                Text(
+                  '${appointment.serviceName ?? "Dịch vụ khám"}: ${_formatCurrency(appointment.quotedAmount!)}',
+                ),
+              _buildPaymentPendingSummary(ctx),
               const SizedBox(height: AppSpacing.xl),
               SizedBox(
                 width: double.infinity,
@@ -224,51 +280,9 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
     ),
   );
 
-  Widget _buildPaymentReceiptSummary(
-    BuildContext context, {
-    required AppointmentPaymentReceipt receipt,
-    required bool receiptSaved,
-  }) {
-    final color = receipt.isPaid ? AppColors.success : AppColors.warning;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: receipt.isPaid ? AppColors.successLight : AppColors.warningLight,
-        borderRadius: BorderRadius.circular(AppRadius.md),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            receipt.serviceName,
-            style: Theme.of(
-              context,
-            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 4),
-          Text(_formatCurrency(receipt.amount)),
-          const SizedBox(height: 4),
-          Text(
-            '${receipt.status.displayName} • ${receipt.method.displayName}',
-            style: TextStyle(color: color, fontWeight: FontWeight.w600),
-          ),
-          if (!receiptSaved) ...[
-            const SizedBox(height: 6),
-            const Text(
-              'Lịch đã tạo nhưng chưa lưu được biên lai trên thiết bị.',
-              style: TextStyle(color: AppColors.error, fontSize: 12),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final dateStr = DateFormat('EEEE, dd/MM/yyyy', 'vi').format(widget.date);
-    final demoMode = ref.watch(demoModeProvider);
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -353,7 +367,7 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
                     ),
                   ),
                   const SizedBox(height: AppSpacing.lg),
-                  _buildPaymentSection(demoMode),
+                  _buildPaymentSection(),
                   const SizedBox(height: AppSpacing.lg),
                   // Note
                   Container(
@@ -392,59 +406,52 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
     );
   }
 
-  Widget _buildPaymentSection(bool demoMode) {
+  Widget _buildPaymentSection() {
+    if (_priceLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_priceError != null) {
+      return Column(
+        children: [
+          Text(_priceError!, style: const TextStyle(color: AppColors.error)),
+          TextButton(
+            onPressed: _loadPrices,
+            child: const Text('Tải lại bảng giá'),
+          ),
+        ],
+      );
+    }
+    final service = _service!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(AppSpacing.lg),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppRadius.lg),
-        boxShadow: AppShadows.card,
-        border: Border.all(color: AppColors.cardBorder, width: 0.5),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            demoMode ? 'Thanh toán phí khám (demo)' : 'Chi phí khám dự kiến',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          const Text(
+            'Chi phí khám dự kiến',
+            style: TextStyle(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: AppSpacing.sm),
-          Row(
-            children: [
-              Expanded(child: Text(_service.name)),
-              Text(
-                _formatCurrency(_service.price),
-                style: const TextStyle(fontWeight: FontWeight.w700),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.sm),
-          Text(
-            _service.description,
-            style: TextStyle(
-              color: AppColors.textSecondary,
-              fontSize: 12,
-              height: 1.35,
-            ),
-          ),
-          const SizedBox(height: AppSpacing.sm),
+          const SizedBox(height: 8),
           ListTile(
             contentPadding: EdgeInsets.zero,
-            leading: const Icon(Icons.account_balance_wallet_rounded),
-            title: Text(
-              demoMode ? 'Thanh toán trực tuyến' : 'Thanh toán tại bệnh viện',
+            title: Text(service.name),
+            subtitle: Text(service.description),
+            trailing: Text(_formatCurrency(service.amount)),
+            onTap: _isSubmitting ? null : _chooseService,
+          ),
+          if (_services.length > 1)
+            TextButton(
+              onPressed: _isSubmitting ? null : _chooseService,
+              child: const Text('Chọn dịch vụ'),
             ),
-            subtitle: Text(
-              demoMode
-                  ? 'Chỉ là mô phỏng, không phát sinh giao dịch thật'
-                  : 'Thực hiện theo hướng dẫn của bệnh viện sau khi đặt lịch',
-            ),
-            trailing: Icon(
-              demoMode ? Icons.science_outlined : Icons.info_outline_rounded,
-            ),
+          const Text(
+            'Thanh toán tại bệnh viện theo hướng dẫn. Chưa phát sinh giao dịch trên ứng dụng.',
           ),
         ],
       ),
@@ -587,7 +594,9 @@ class _BookingStep4ScreenState extends ConsumerState<BookingStep4Screen> {
           width: double.infinity,
           height: 52,
           child: ElevatedButton(
-            onPressed: _isSubmitting ? null : _submitAppointment,
+            onPressed: _isSubmitting || _priceLoading || _service == null
+                ? null
+                : _submitAppointment,
             child: _isSubmitting
                 ? const SizedBox(
                     width: 24,

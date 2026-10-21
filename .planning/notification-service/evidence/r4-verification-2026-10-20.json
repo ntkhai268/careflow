@@ -1,0 +1,245 @@
+{
+  "date": "2026-10-20",
+  "status": "TECHNICAL_VERIFICATION_PASSED_NATIVE_PUSH_ACCEPTANCE_PENDING",
+  "environment": "Owned local PostgreSQL/RabbitMQ/mTLS services, synthetic test fixtures and physical iPhone installation",
+  "backend": {
+    "common": {
+      "tests": 46,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 46
+    },
+    "identity": {
+      "tests": 175,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 57,
+      "passed": 118
+    },
+    "queue": {
+      "tests": 82,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 7,
+      "passed": 75
+    },
+    "notification": {
+      "tests": 41,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "passed": 41
+    }
+  },
+  "realPostgresR4Tests": {
+    "notification": 6,
+    "identityRotation": 2
+  },
+  "native": {
+    "testsPassed": 266,
+    "testsSkipped": 15,
+    "skipScope": "14 conditional local HTTP fixture cases and one existing pharmacy test; not claimed as passes",
+    "analysis": "All lib and R4 tests analyzed: no issues",
+    "iOS": "1.0.0 (19)",
+    "signedBuild": "PASS",
+    "installedVersionVerified": "PASS",
+    "launch": "PASS",
+    "physicalUiAndPushAcceptance": "PENDING; no claim that Face ID, background delivery or notification taps were physically exercised",
+    "android": "Build/device acceptance not performed in R4"
+  },
+  "liveApiAndRealtime": {
+    "status": "PASS",
+    "checks": [
+      {
+        "name": "Real device registration binds verified session; private mTLS endpoint validates exact caller and user/session",
+        "status": "PASS"
+      },
+      {
+        "name": "Actual appointment/outbox/RabbitMQ produces personal STOMP hint and durable inbox; detail and queue context enforce ownership",
+        "status": "PASS"
+      },
+      {
+        "name": "Cursor history is persistent, non-overlapping, owner-scoped and read state survives reload",
+        "status": "PASS"
+      },
+      {
+        "name": "Shared-topic subscription is refused",
+        "status": "PASS"
+      },
+      {
+        "name": "Push binding follows actual refresh rotation without retaining a bearer token",
+        "status": "PASS"
+      },
+      {
+        "name": "Logout revokes rotated push session and closes existing authenticated WebSocket",
+        "status": "PASS"
+      }
+    ],
+    "pushDelivery": "NOT_TESTED_FIREBASE_DISABLED",
+    "fixtures": "Synthetic R4 future appointment cancelled through authorized API; existing tomorrow booking untouched"
+  },
+  "runtimeChecks": {
+    "status": "PASS",
+    "checks": [
+      {
+        "name": "Global private environment unchanged",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-service caller key material unchanged",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-hospital-directory-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-api-gateway mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-patient-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-consultation-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-emr-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-prescription-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-lab-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-appointment-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-session-secondary caller key material unchanged",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-session-secondary mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-queue-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-notification-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "Native lib equals signed build staging",
+        "status": "PASS"
+      },
+      {
+        "name": "Signed iOS artifact build19",
+        "status": "PASS"
+      },
+      {
+        "name": "iOS codesign verifies",
+        "status": "PASS"
+      }
+    ]
+  },
+  "configuration": {
+    "status": "PASS",
+    "checks": [
+      {
+        "name": "careflow-identity-service",
+        "exactExpectedPrivateConfig": true
+      },
+      {
+        "name": "careflow-hospital-directory-service",
+        "exactExpectedPrivateConfig": true
+      },
+      {
+        "name": "careflow-api-gateway",
+        "exactExpectedPrivateConfig": true
+      },
+      {
+        "name": "careflow-patient-service",
+        "exactExpectedPrivateConfig": true
+      },
+      {
+        "name": "careflow-consultation-service",
+        "exactExpectedPrivateConfig": true
+      },
+      {
+        "name": "careflow-emr-service",
+        "exactExpectedPrivateConfig": true
+      },
+      {
+        "name": "careflow-prescription-service",
+        "exactExpectedPrivateConfig": true
+      },
+      {
+        "name": "careflow-lab-service",
+        "exactExpectedPrivateConfig": true
+      },
+      {
+        "name": "careflow-appointment-service",
+        "exactExpectedPrivateConfig": true
+      },
+      {
+        "name": "careflow-identity-session-secondary",
+        "exactExpectedPrivateConfig": true
+      },
+      {
+        "name": "careflow-queue-service",
+        "exactExpectedPrivateConfig": true
+      },
+      {
+        "name": "careflow-notification-service",
+        "exactExpectedPrivateConfig": true
+      }
+    ]
+  },
+  "pushProvisioning": {
+    "firebaseServerEnabled": false,
+    "nativeFirebaseEnabled": false,
+    "nativeConfigFiles": "MISSING",
+    "firebaseAdminCredential": "MISSING",
+    "currentProfileApsEnvironment": "MISSING",
+    "physicalPushDelivery": "NOT_TESTED"
+  },
+  "gitNexus": {
+    "backend": {
+      "fullWorktreeSummary": [
+        "Changes: 239 files, 417 symbols",
+        "Affected processes: 843",
+        "Risk level: critical"
+      ],
+      "limitation": "Includes preexisting changes and earlier releases; not the R4-only delta. Java symbol metadata/flow traversal incomplete; manually cross-checked."
+    },
+    "native": {
+      "fullWorktreeSummary": [
+        "Changes: 51 files, 232 symbols",
+        "Affected processes: 10",
+        "Risk level: high"
+      ],
+      "limitation": "Includes preexisting changes and earlier releases; not the R4-only delta. Java symbol metadata/flow traversal incomplete; manually cross-checked."
+    }
+  },
+  "runtimeJarSha256": {
+    "careflow-identity-service": "847042093b27a76c5a12a03556da92d9f1f2a4883b38846c3211b3f120d9b2c0",
+    "careflow-identity-session-secondary": "847042093b27a76c5a12a03556da92d9f1f2a4883b38846c3211b3f120d9b2c0",
+    "careflow-queue-service": "8a48e6f4bca610affd4f1191d03126bc32b31ae3679f29709c60ee0c59005a9e",
+    "careflow-notification-service": "e41fde398f1517a7cebc043b56cbc88ddcb1d45534c84a13aea583339f5cdbf5"
+  },
+  "git": "No add, commit or push; user changes preserved."
+}

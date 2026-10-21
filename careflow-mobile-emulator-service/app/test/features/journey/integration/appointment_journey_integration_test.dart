@@ -565,6 +565,7 @@ Widget integrationApp({
         (ref) => SeededAuthNotifier(scopedPatient.userId),
       ),
       appointmentServiceProvider.overrideWithValue(service),
+      patientServiceProvider.overrideWithValue(IntegrationPatientService(scopedPatient)),
       appointmentPaymentStoreProvider.overrideWithValue(
         paymentStore ?? InMemoryAppointmentPaymentStore(),
       ),
@@ -575,6 +576,19 @@ Widget integrationApp({
     ],
     child: MaterialApp.router(routerConfig: router),
   );
+}
+
+class IntegrationPatientService extends PatientService {
+  IntegrationPatientService(this.patient) : super(ApiService());
+  final Patient patient;
+
+  @override
+  Future<List<Patient>> getPatientsByUserId(String userId) async => [patient];
+
+  @override
+  Future<Patient> getPatientById(String id) async => id == patient.id
+      ? patient
+      : Patient(id: id, userId: 'another-owner', fullName: 'Dữ liệu bệnh nhân khác');
 }
 
 GoRouter testRouter(Widget initialScreen, {bool useRealTicketScreen = false}) =>

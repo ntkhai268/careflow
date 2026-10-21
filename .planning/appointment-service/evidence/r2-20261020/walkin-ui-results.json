@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "Admin queue-policy control saves a real manual requeue policy",
+      "status": "PASS"
+    },
+    {
+      "name": "Staff creates an unowned profile and issues a walk-in number entirely through web UI",
+      "status": "PASS"
+    },
+    {
+      "name": "Doctor calls, recalls, marks missed and requeues BACK through visible controls",
+      "status": "PASS"
+    },
+    {
+      "name": "Reopening IN_PROGRESS walk-in from visible queue action resumes the persisted visit",
+      "status": "PASS"
+    },
+    {
+      "name": "Web completion saves consultation and completes the walk-in queue entry without an appointment",
+      "status": "PASS"
+    }
+  ],
+  "note": "After creating the visit, the first harness looked for diagnosis in the vital-sign tab. Continued through the visible resume action and diagnosis tab; no mocked responses or database state overrides."
+}

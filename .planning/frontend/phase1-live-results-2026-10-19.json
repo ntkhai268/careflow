@@ -1,0 +1,61 @@
+{
+  "checkedAt": "2026-10-19T04:38:06.298Z",
+  "environment": "owned local HTTPS/mTLS test stack",
+  "database": "local PostgreSQL only",
+  "checks": [
+    {
+      "name": "Verified administrator can initialize the real service catalog; existing master prices retained",
+      "status": "PASS"
+    },
+    {
+      "name": "Patient cannot read administration or publish prices",
+      "status": "PASS"
+    },
+    {
+      "name": "Mobile catalog API returns the server price and revision",
+      "status": "PASS"
+    },
+    {
+      "name": "Booking snapshots server price and ignores client-supplied amount/name",
+      "status": "PASS"
+    },
+    {
+      "name": "Publishing a newer price does not change an existing appointment quote",
+      "status": "PASS"
+    },
+    {
+      "name": "Stale quote is rejected before creating a booking",
+      "status": "PASS"
+    },
+    {
+      "name": "Stale administrator writes cannot overwrite another revision",
+      "status": "PASS"
+    },
+    {
+      "name": "Future prices do not become current before their effective time",
+      "status": "PASS"
+    },
+    {
+      "name": "Inactive services disappear from selection and cannot be booked",
+      "status": "PASS"
+    },
+    {
+      "name": "Device metadata matches mobile contract and another account cannot revoke it",
+      "status": "PASS"
+    },
+    {
+      "name": "Real PDF upload/download preserves bytes; another account is denied; attachment/no-store headers retained",
+      "status": "PASS"
+    },
+    {
+      "name": "Revoking current device invalidates its session and biometric credential; password sign-in remains possible",
+      "status": "PASS"
+    }
+  ],
+  "externalEmailsSent": 0,
+  "syntheticAccountsCreated": 2,
+  "testBookingsCancelled": 1,
+  "testRecordDeleted": true,
+  "testServiceInactive": true,
+  "physicalNativeFileViewer": "Not verified by this API regression"
+}

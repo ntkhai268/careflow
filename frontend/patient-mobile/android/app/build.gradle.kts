@@ -51,5 +51,13 @@ flutter {
 }
 
 dependencies {
+    // Statically bundled on-device recognizer, not the Google Play model-download variant.
+    implementation("com.google.mlkit:text-recognition:16.0.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
+    constraints {
+        // Flutter integration_test pulls 3.2.0, whose duplicate namespaces fail
+        // manifest validation with this project's Android Gradle plugin.
+        implementation("androidx.test.espresso:espresso-core:3.6.1")
+        implementation("androidx.test.espresso:espresso-idling-resource:3.6.1")
+    }
 }

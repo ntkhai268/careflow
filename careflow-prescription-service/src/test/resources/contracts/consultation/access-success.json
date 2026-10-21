@@ -1,0 +1,12 @@
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "id": "c1000000-0000-0000-0000-000000000001",
+    "patientId": "f1000000-0000-0000-0000-000000000001",
+    "doctorId": "d1000000-0000-0000-0000-000000000001",
+    "status": "IN_PROGRESS",
+    "clinicalNotes": "Synthetic contract fixture"
+  },
+  "timestamp": "2026-10-14T10:00:00Z"
+}

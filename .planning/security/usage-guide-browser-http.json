@@ -1,0 +1,1185 @@
+{
+  "mock": false,
+  "note": "Historical trace includes discovered failures and expected negatives; see dated report for retest results. Polling GETs compacted; full trace kept outside Git.",
+  "totalRequests": 2861,
+  "requests": [
+    {
+      "at": "2026-10-17T03:49:09.586Z",
+      "path": "/api/queues/entries/c145e8cf-ee60-4205-b182-595f33e84fa4/call",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:49:10.105Z",
+      "path": "/api/consultations",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "at": "2026-10-17T03:49:10.192Z",
+      "path": "/api/queues/entries/c145e8cf-ee60-4205-b182-595f33e84fa4/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:50:45.385Z",
+      "path": "/api/consultations/05d09b0d-77ba-453d-8e49-b5c4cb7e2bd8",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:50:45.853Z",
+      "path": "/api/prescriptions",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "at": "2026-10-17T03:53:04.765Z",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:53:30.368Z",
+      "path": "/api/prescriptions/b2684058-4d87-4222-a1f2-cbfd38d6198d/confirm",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:53:30.483Z",
+      "path": "/api/consultations/05d09b0d-77ba-453d-8e49-b5c4cb7e2bd8",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:53:30.528Z",
+      "path": "/api/prescriptions/b2684058-4d87-4222-a1f2-cbfd38d6198d",
+      "method": "PUT",
+      "status": 400
+    },
+    {
+      "at": "2026-10-17T03:53:30.649Z",
+      "path": "/api/consultations/05d09b0d-77ba-453d-8e49-b5c4cb7e2bd8/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:53:30.883Z",
+      "path": "/api/queues/entries/c145e8cf-ee60-4205-b182-595f33e84fa4/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:53:30.956Z",
+      "path": "/api/appointments/984f2ea3-500c-4968-8018-022b58065433/status",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:53:41.367Z",
+      "path": "/api/queues/service-points/PHARMACY-MAIN-01/call-next",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:53:41.680Z",
+      "path": "/api/queues/entries/9cabab2e-59b7-4d0f-adc4-b44c4e8793c5/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:54:04.343Z",
+      "path": "/api/prescriptions/b2684058-4d87-4222-a1f2-cbfd38d6198d/dispense",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:54:35.837Z",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:55:10.418Z",
+      "path": "/api/appointments",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "at": "2026-10-17T03:58:27.470Z",
+      "path": "/api/queues/check-in",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "at": "2026-10-17T03:58:27.491Z",
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:58:27.517Z",
+      "path": "/api/queues/check-in",
+      "method": "POST",
+      "status": 401
+    },
+    {
+      "at": "2026-10-17T03:58:27.747Z",
+      "path": "/api/queues/check-in",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:59:07.541Z",
+      "path": "/api/queues/entries/7e37994a-6b81-4099-9734-c781c6caddaf/call",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T03:59:07.872Z",
+      "path": "/api/consultations",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "at": "2026-10-17T03:59:07.931Z",
+      "path": "/api/queues/entries/7e37994a-6b81-4099-9734-c781c6caddaf/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:00:34.980Z",
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:01:28.989Z",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:02:34.656Z",
+      "path": "/api/appointments/e89123a9-c970-4901-bf73-cad7862fbf59/cancel",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:02:35.315Z",
+      "path": "/api/queues/check-in",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:04:11.134Z",
+      "path": "/api/labs/orders",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "at": "2026-10-17T04:04:11.429Z",
+      "path": "/api/consultations/7450d494-f5b0-49f7-b946-8557d3b6e877/wait-for-results",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:04:12.101Z",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:06:48.742Z",
+      "path": "/api/queues/service-points/LAB-HEMATOLOGY-01/call-next",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:06:49.087Z",
+      "path": "/api/queues/entries/326f08c7-7d7f-4021-bddd-dc0e328f1c1d/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:06:49.172Z",
+      "path": "/api/labs/orders/a1fe4147-eab1-4f8f-8354-633334eaae7c/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:07:03.488Z",
+      "path": "/api/labs/orders/a1fe4147-eab1-4f8f-8354-633334eaae7c/items/4249ce51-d451-4ebc-993e-2ce1153e457d/result",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:07:03.556Z",
+      "path": "/api/labs/orders/a1fe4147-eab1-4f8f-8354-633334eaae7c/finalize",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:07:03.606Z",
+      "path": "/api/queues/entries/326f08c7-7d7f-4021-bddd-dc0e328f1c1d/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:07:25.821Z",
+      "path": "/api/queues/entries/8b05f160-845d-4311-987e-ed2cc2ae6259/call",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:13:55.511Z",
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:13:56.734Z",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:15:26.613Z",
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:15:27.657Z",
+      "path": "/api/consultations/7450d494-f5b0-49f7-b946-8557d3b6e877/resume",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:15:27.772Z",
+      "path": "/api/queues/entries/7e37994a-6b81-4099-9734-c781c6caddaf/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:15:27.819Z",
+      "path": "/api/queues/entries/8b05f160-845d-4311-987e-ed2cc2ae6259/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:15:34.967Z",
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:15:52.340Z",
+      "path": "/api/patients/794d4f04-436b-4fe3-8887-924a0747d493/health-records",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "at": "2026-10-17T04:16:30.957Z",
+      "path": "/api/consultations/7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:16:31.085Z",
+      "path": "/api/prescriptions",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "at": "2026-10-17T04:16:31.421Z",
+      "path": "/api/prescriptions/adaf37f7-9654-449d-b29c-43d3a9c605b5/confirm",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:16:44.788Z",
+      "path": "/api/consultations/7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:16:44.850Z",
+      "path": "/api/prescriptions/adaf37f7-9654-449d-b29c-43d3a9c605b5",
+      "method": "PUT",
+      "status": 400
+    },
+    {
+      "at": "2026-10-17T04:16:44.949Z",
+      "path": "/api/labs/orders/a1fe4147-eab1-4f8f-8354-633334eaae7c/mark-reviewed",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:16:45.049Z",
+      "path": "/api/consultations/7450d494-f5b0-49f7-b946-8557d3b6e877/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:16:45.184Z",
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:16:45.204Z",
+      "path": "/api/queues/entries/8b05f160-845d-4311-987e-ed2cc2ae6259/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:16:45.336Z",
+      "path": "/api/appointments/d415b1c9-0336-4d81-9b53-497540794946/status",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:16:45.435Z",
+      "path": "/api/queues/service-points/PHARMACY-MAIN-01/call-next",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:16:45.635Z",
+      "path": "/api/queues/entries/096e74f5-bf64-4aef-961e-8b9df48a3be4/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:16:45.927Z",
+      "path": "/api/prescriptions/adaf37f7-9654-449d-b29c-43d3a9c605b5/dispense",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:18:49.058Z",
+      "path": "/api/queues/entries/685f7547-6d80-4be3-8086-43ed9d90a1c2/call",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:18:49.428Z",
+      "path": "/api/consultations",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "at": "2026-10-17T04:18:49.493Z",
+      "path": "/api/queues/entries/685f7547-6d80-4be3-8086-43ed9d90a1c2/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:18:50.100Z",
+      "path": "/api/consultations/931caa7c-c5ec-4e45-ad82-51762674d622",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:18:50.163Z",
+      "path": "/api/prescriptions",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "at": "2026-10-17T04:18:50.371Z",
+      "path": "/api/labs/orders",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "at": "2026-10-17T04:18:50.397Z",
+      "path": "/api/consultations/931caa7c-c5ec-4e45-ad82-51762674d622/wait-for-results",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:18:50.486Z",
+      "path": "/api/queues/entries/685f7547-6d80-4be3-8086-43ed9d90a1c2/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:20:11.686Z",
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:20:12.623Z",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:20:13.235Z",
+      "path": "/api/consultations/handovers/f0d989e9-3866-463d-a369-7d7b552f7fba/reject",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:20:13.956Z",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:21:05.148Z",
+      "path": "/api/consultations/handovers/coordinators",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:21:05.520Z",
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:21:05.700Z",
+      "path": "/api/consultations/handovers/272b2975-661a-4d7c-b273-b1525474cc53/cancel",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:21:06.616Z",
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:21:07.384Z",
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:21:07.769Z",
+      "path": "/api/consultations/handovers/a6c5a584-d6ee-4fa0-91f9-dbbbafa95215/accept",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:22:06.794Z",
+      "path": "/api/consultations/handovers/coordinators/037f610e-6ed1-4953-b08d-777e46867343/revoke",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:22:07.499Z",
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:22:07.903Z",
+      "path": "/api/consultations/handovers/40217726-5c81-484e-b6f1-6f2197b11091/reject",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:22:08.532Z",
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:22:08.954Z",
+      "path": "/api/consultations/handovers/434fe07b-72a8-4b20-acf4-a7827f9ac8d5/accept",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:22:09.435Z",
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:22:09.766Z",
+      "path": "/api/consultations/handovers/66f7156f-12ab-4318-babf-cb9a6ce44cd1/accept",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:22:09.907Z",
+      "path": "/api/consultations/handovers/coordinators",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:25:17.657Z",
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:25:17.877Z",
+      "path": "/api/queues/service-points/LAB-HEMATOLOGY-01/call-next",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:25:18.201Z",
+      "path": "/api/queues/entries/0c29ad86-8df0-4283-89d4-709231eec42e/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:25:18.260Z",
+      "path": "/api/labs/orders/4470563b-22fe-4ec0-ad66-3f3d370f7ff0/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:25:18.589Z",
+      "path": "/api/labs/orders/4470563b-22fe-4ec0-ad66-3f3d370f7ff0/items/f046c911-5d23-45f7-9689-1c46e622c2ce/result",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:25:18.664Z",
+      "path": "/api/labs/orders/4470563b-22fe-4ec0-ad66-3f3d370f7ff0/finalize",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:25:18.706Z",
+      "path": "/api/queues/entries/0c29ad86-8df0-4283-89d4-709231eec42e/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:29:01.486Z",
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:29:27.918Z",
+      "path": "/api/queues/entries/2b3852bd-460a-4b29-85c1-91b30ff99e06/call",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:29:28.193Z",
+      "path": "/api/consultations/931caa7c-c5ec-4e45-ad82-51762674d622/resume",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:29:28.281Z",
+      "path": "/api/queues/entries/2b3852bd-460a-4b29-85c1-91b30ff99e06/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:29:29.459Z",
+      "path": "/api/consultations/931caa7c-c5ec-4e45-ad82-51762674d622",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:29:29.525Z",
+      "path": "/api/prescriptions",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "at": "2026-10-17T04:29:29.671Z",
+      "path": "/api/prescriptions/96966cc3-1d82-475b-936c-7ad7ffc73a73/confirm",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:30:34.975Z",
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:31:45.311Z",
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:32:00.598Z",
+      "path": "/api/consultations/931caa7c-c5ec-4e45-ad82-51762674d622",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:32:00.633Z",
+      "path": "/api/prescriptions/96966cc3-1d82-475b-936c-7ad7ffc73a73",
+      "method": "PUT",
+      "status": 400
+    },
+    {
+      "at": "2026-10-17T04:32:00.735Z",
+      "path": "/api/labs/orders/4470563b-22fe-4ec0-ad66-3f3d370f7ff0/mark-reviewed",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:32:00.824Z",
+      "path": "/api/consultations/931caa7c-c5ec-4e45-ad82-51762674d622/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:32:00.972Z",
+      "path": "/api/queues/entries/2b3852bd-460a-4b29-85c1-91b30ff99e06/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:32:01.072Z",
+      "path": "/api/queues/service-points/PHARMACY-MAIN-01/call-next",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:32:01.086Z",
+      "path": "/api/appointments/c19a296b-58a6-4da5-a7a7-d5280a9a96fa/status",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:32:01.285Z",
+      "path": "/api/queues/entries/3e377ba3-1957-4f70-b87a-3e297f5a5903/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:32:01.618Z",
+      "path": "/api/prescriptions/96966cc3-1d82-475b-936c-7ad7ffc73a73/dispense",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:35:02.468Z",
+      "path": "/api/auth/login-methods/question",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:35:44.963Z",
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:35:45.544Z",
+      "path": "/api/auth/login/question",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:35:57.318Z",
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:35:58.334Z",
+      "path": "/api/auth/recovery/question",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:36:36.244Z",
+      "path": "/api/notifications/77b7c5fc-11b8-4483-8577-18c611a8e7a2/read",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:44:01.483Z",
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "at": "2026-10-17T04:45:35.024Z",
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "status": 200
+    }
+  ],
+  "getSummary": [
+    {
+      "method": "GET",
+      "path": "/api/consultations/doctor/78da2fc2-fcea-45ac-abab-68ddacd19315",
+      "status": 200,
+      "count": 9
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/rooms/ROOM-11/active",
+      "status": 200,
+      "count": 15
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/appointment/984f2ea3-500c-4968-8018-022b58065433",
+      "status": 200,
+      "count": 233
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/05d09b0d-77ba-453d-8e49-b5c4cb7e2bd8",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/eb5faab3-2145-4f50-a3fc-3db1250f8987",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "method": "GET",
+      "path": "/api/prescriptions/medicines",
+      "status": 200,
+      "count": 9
+    },
+    {
+      "method": "GET",
+      "path": "/api/prescriptions/consultation/05d09b0d-77ba-453d-8e49-b5c4cb7e2bd8",
+      "status": 200,
+      "count": 234
+    },
+    {
+      "method": "GET",
+      "path": "/api/labs/orders/consultation/05d09b0d-77ba-453d-8e49-b5c4cb7e2bd8",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 200,
+      "count": 30
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/tickets/appointment/984f2ea3-500c-4968-8018-022b58065433",
+      "status": 200,
+      "count": 233
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+      "status": 200,
+      "count": 137
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/doctor/78da2fc2-fcea-45ac-abab-68ddacd19315/today",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/clinical-context/me",
+      "status": 200,
+      "count": 8
+    },
+    {
+      "method": "GET",
+      "path": "/api/prescriptions/b2684058-4d87-4222-a1f2-cbfd38d6198d",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 200,
+      "count": 682
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/patient/eb5faab3-2145-4f50-a3fc-3db1250f8987",
+      "status": 200,
+      "count": 235
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/user/10d20c9a-07ba-485b-950e-d96d097756ef",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/984f2ea3-500c-4968-8018-022b58065433",
+      "status": 200,
+      "count": 234
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/patients/eb5faab3-2145-4f50-a3fc-3db1250f8987/current",
+      "status": 404,
+      "count": 232
+    },
+    {
+      "method": "GET",
+      "path": "/api/labs/orders/patient/eb5faab3-2145-4f50-a3fc-3db1250f8987",
+      "status": 200,
+      "count": 232
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/user/5522591e-4114-440a-8351-034994d27335",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/patient/765baab5-5ff5-4dfd-9ca9-ce2c69e10b6a",
+      "status": 200,
+      "count": 5
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/user/5522591e-4114-440a-8351-034994d27335/profiles",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/departments",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/time-slots/availability",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/d415b1c9-0336-4d81-9b53-497540794946",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/tickets/appointment/d415b1c9-0336-4d81-9b53-497540794946",
+      "status": 404,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/tickets/appointment/d415b1c9-0336-4d81-9b53-497540794946",
+      "status": 200,
+      "count": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/patients/765baab5-5ff5-4dfd-9ca9-ce2c69e10b6a/current",
+      "status": 200,
+      "count": 3
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/appointment/d415b1c9-0336-4d81-9b53-497540794946",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "method": "GET",
+      "path": "/api/directory/rooms",
+      "status": 200,
+      "count": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/hospital-check-in-qr",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/rooms/ROOM-01/active",
+      "status": 403,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/765baab5-5ff5-4dfd-9ca9-ce2c69e10b6a",
+      "status": 200,
+      "count": 8
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "method": "GET",
+      "path": "/api/prescriptions/consultation/7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "method": "GET",
+      "path": "/api/labs/orders/consultation/7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "status": 200,
+      "count": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/984f2ea3-500c-4968-8018-022b58065433",
+      "status": 401,
+      "count": 4
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 401,
+      "count": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/user/a93ced05-0fab-4bb4-8364-c7407cb8b244",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/patient/d9d72b40-4266-4f45-a5b3-04e16ee0deab",
+      "status": 200,
+      "count": 7
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/e89123a9-c970-4901-bf73-cad7862fbf59",
+      "status": 200,
+      "count": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/tickets/appointment/e89123a9-c970-4901-bf73-cad7862fbf59",
+      "status": 200,
+      "count": 5
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/patients/d9d72b40-4266-4f45-a5b3-04e16ee0deab/current",
+      "status": 200,
+      "count": 5
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/appointment/e89123a9-c970-4901-bf73-cad7862fbf59",
+      "status": 200,
+      "count": 5
+    },
+    {
+      "method": "GET",
+      "path": "/api/notifications",
+      "status": 503,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/984f2ea3-500c-4968-8018-022b58065433",
+      "status": 503,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/b1f3097c-f416-4dfc-9a58-dbc4a3e2ab7e/operational-summary",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/765baab5-5ff5-4dfd-9ca9-ce2c69e10b6a/operational-summary",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/labs/services",
+      "status": 200,
+      "count": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/service-points/LAB-HEMATOLOGY-01/active",
+      "status": 200,
+      "count": 9
+    },
+    {
+      "method": "GET",
+      "path": "/api/labs/orders/a1fe4147-eab1-4f8f-8354-633334eaae7c",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/b1f3097c-f416-4dfc-9a58-dbc4a3e2ab7e",
+      "status": 200,
+      "count": 9
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/appointment/null",
+      "status": 400,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/user/a0836d8a-1b21-4c3e-bf27-415d863ac53d",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/appointments/patient/794d4f04-436b-4fe3-8887-924a0747d493",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/794d4f04-436b-4fe3-8887-924a0747d493/health-records",
+      "status": 200,
+      "count": 3
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "status": 401,
+      "count": 3
+    },
+    {
+      "method": "GET",
+      "path": "/api/prescriptions/adaf37f7-9654-449d-b29c-43d3a9c605b5",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/appointment/c19a296b-58a6-4da5-a7a7-d5280a9a96fa",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/931caa7c-c5ec-4e45-ad82-51762674d622",
+      "status": 200,
+      "count": 3
+    },
+    {
+      "method": "GET",
+      "path": "/api/prescriptions/consultation/931caa7c-c5ec-4e45-ad82-51762674d622",
+      "status": 200,
+      "count": 3
+    },
+    {
+      "method": "GET",
+      "path": "/api/labs/orders/consultation/931caa7c-c5ec-4e45-ad82-51762674d622",
+      "status": 200,
+      "count": 5
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/tickets/appointment/c19a296b-58a6-4da5-a7a7-d5280a9a96fa",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/handovers",
+      "status": 200,
+      "count": 22
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/handovers/coordinators",
+      "status": 200,
+      "count": 4
+    },
+    {
+      "method": "GET",
+      "path": "/api/directory/doctors",
+      "status": 200,
+      "count": 6
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/794d4f04-436b-4fe3-8887-924a0747d493/health-records/ec9e3854-6f4e-4829-b095-e0ae1546d00a",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/794d4f04-436b-4fe3-8887-924a0747d493/health-records/files/919f8a4c-9a5d-45aa-b349-f069378358a7",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/labs/orders/4470563b-22fe-4ec0-ad66-3f3d370f7ff0",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/794d4f04-436b-4fe3-8887-924a0747d493",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/patients/user/a0836d8a-1b21-4c3e-bf27-415d863ac53d/profiles",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/doctor/210e2263-0a37-4c1a-9d1e-f6701ad6e1fc",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/queues/service-points/PHARMACY-MAIN-01/active",
+      "status": 401,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/prescriptions/96966cc3-1d82-475b-936c-7ad7ffc73a73",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/consultations/doctor/210e2263-0a37-4c1a-9d1e-f6701ad6e1fc/today",
+      "status": 200,
+      "count": 1
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/login-methods",
+      "status": 200,
+      "count": 2
+    },
+    {
+      "method": "GET",
+      "path": "/api/directory/departments",
+      "status": 200,
+      "count": 2
+    }
+  ]
+}

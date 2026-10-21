@@ -1,0 +1,35 @@
+{
+  "backend": {
+    "passed": 222,
+    "failed": 0,
+    "skipped": 0,
+    "newDocumentTests": 14
+  },
+  "flutter": {
+    "fullPassed": 225,
+    "fullConditionalSkips": 15,
+    "httpSeparatelyPassed": 14,
+    "totalExecutedPassed": 239,
+    "remainingLegacyDemoSkip": 1
+  },
+  "ios": {
+    "build": "15",
+    "signedInstalledLaunched": true,
+    "cameraOcrUserAcceptance": "pending"
+  },
+  "android": {
+    "debugBuild": true,
+    "physicalDeviceAcceptance": "pending"
+  },
+  "web": {
+    "typecheck": true,
+    "productionBuild": true,
+    "actualUiAndApiAcceptance": true
+  },
+  "analyzer": {
+    "errors": 0,
+    "warnings": 0,
+    "preexistingInfo": 2
+  },
+  "realIdentityVerified": false
+}

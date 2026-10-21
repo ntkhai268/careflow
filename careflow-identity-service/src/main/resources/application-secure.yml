@@ -1,0 +1,7 @@
+spring:
+  config:
+    import: classpath:careflow-security.yml
+
+security:
+  auth:
+    require-staff-passkey: true

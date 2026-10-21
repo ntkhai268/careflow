@@ -1,0 +1,7 @@
+{
+  "status": "PASS",
+  "checks": [
+    "A real future booking reaches Analytics through the source event; its WAITING ticket is not counted as an arrival",
+    "A real authorized cancellation updates the cancellation count without increasing bookings or arrivals"
+  ]
+}

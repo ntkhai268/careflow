@@ -74,7 +74,10 @@ function loadDevice(view) {
   view.ready = false; view.authenticated = false; view.socketState = 'disconnected';
   updateView(view);
   if (!config?.built || view.device.paused) { view.frame.src = 'about:blank'; return; }
-  view.frame.src = deviceUrl(view.device, config.storageScope);
+  const target = new URL(deviceUrl(view.device, config.storageScope), location.origin);
+  // A hash-only navigation keeps Dart state alive and never emits ready again.
+  target.searchParams.set('reload', crypto.randomUUID());
+  view.frame.src = `${target.pathname}${target.search}${target.hash}`;
 }
 function clearDeviceStorage(id) {
   for (const key of deviceStorageKeys(Object.keys(localStorage),id)) localStorage.removeItem(key);
@@ -283,3 +286,6 @@ try{
 new ResizeObserver(applyZoom).observe($('device-grid'));
 window.addEventListener('resize',applyZoom);
 setInterval(clock,30000);setInterval(activity,2000);setInterval(health,30000);
+
+$('show-demo').onclick=()=>$('demo-dialog').showModal();
+$('close-demo').onclick=()=>$('demo-dialog').close();

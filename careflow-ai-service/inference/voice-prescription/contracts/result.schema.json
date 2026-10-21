@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "careflow.voice-prescription.v1",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "transcript",
+    "transcriptRevision",
+    "transcriptHash",
+    "catalogVersion",
+    "items",
+    "warnings",
+    "modelInfo",
+    "prescriptionDraft",
+    "processingMs"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "careflow.voice-prescription.v1"
+    },
+    "transcript": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 12000
+    },
+    "transcriptRevision": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "transcriptHash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "catalogVersion": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "maxItems": 50,
+      "items": {
+        "type": "object",
+        "required": [
+          "spokenName",
+          "medicineCode",
+          "candidates",
+          "evidence"
+        ],
+        "properties": {
+          "spokenName": {
+            "type": "string"
+          },
+          "medicineCode": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "required": [
+                "text",
+                "start",
+                "end",
+                "transcriptRevision",
+                "transcriptHash",
+                "offsetUnit"
+              ],
+              "properties": {
+                "text": {
+                  "type": "string"
+                },
+                "start": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "end": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "transcriptRevision": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "transcriptHash": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "offsetUnit": {
+                  "const": "unicode_codepoint"
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "candidates": {
+            "type": "array"
+          }
+        }
+      }
+    },
+    "warnings": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "modelInfo": {
+      "type": "object"
+    },
+    "prescriptionDraft": {
+      "type": "object",
+      "required": [
+        "items",
+        "blockers",
+        "canSaveWithoutCorrection"
+      ]
+    },
+    "processingMs": {
+      "type": "number",
+      "minimum": 0
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "job": "backend",
+  "capturedAt": "2026-10-19T16:50:28.867253+00:00",
+  "source": "R0 private source snapshot; app lib/native source restored from M snapshot",
+  "steps": [
+    {
+      "step": 0,
+      "command": [
+        "mvn",
+        "-B",
+        "-DskipTests",
+        "-Dnet.bytebuddy.experimental=true",
+        "package"
+      ],
+      "exitCode": 0,
+      "seconds": 24.0,
+      "log": "backend-0.log"
+    }
+  ],
+  "passed": true,
+  "seconds": 24.0,
+  "testsExecuted": false,
+  "installedOrRestarted": false
+}

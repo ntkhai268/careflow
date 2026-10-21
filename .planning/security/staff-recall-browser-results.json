@@ -1,0 +1,152 @@
+{
+  "checkedAt": "2026-10-16T04:12:20.042Z",
+  "mock": false,
+  "ticketCode": "NOI-002",
+  "checks": [
+    {
+      "name": "checked-in ticket retains enabled Gọi lại label; miss is unavailable before call",
+      "status": "PASS"
+    },
+    {
+      "name": "in-progress clinical case cannot be recalled or marked missed",
+      "status": "PASS"
+    },
+    {
+      "name": "same Gọi lại button routes to /call and persists call attempt 1",
+      "status": "PASS"
+    },
+    {
+      "name": "same Gọi lại button routes to /recall and persists call attempt 2",
+      "status": "PASS"
+    },
+    {
+      "name": "same Gọi lại button routes to /recall and persists call attempt 3",
+      "status": "PASS"
+    },
+    {
+      "name": "three-call cap disables recall and permits the supported missed action",
+      "status": "PASS"
+    },
+    {
+      "name": "real database state retained; existing consultation left in progress",
+      "status": "PASS"
+    },
+    {
+      "name": "fixed browser journey has no failing API request or uncaught JavaScript error",
+      "status": "PASS"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/directory/rooms",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/hospital-check-in-qr",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-01/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/18ebe817-18b6-43a8-ab5a-a6de9890dd0d/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/entries/d98367b9-13ec-4a08-9ca8-4881255cb06a/call",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-01/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/18ebe817-18b6-43a8-ab5a-a6de9890dd0d/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/entries/d98367b9-13ec-4a08-9ca8-4881255cb06a/recall",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-01/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/18ebe817-18b6-43a8-ab5a-a6de9890dd0d/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/entries/d98367b9-13ec-4a08-9ca8-4881255cb06a/recall",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-01/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/18ebe817-18b6-43a8-ab5a-a6de9890dd0d/operational-summary",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "errors": []
+}

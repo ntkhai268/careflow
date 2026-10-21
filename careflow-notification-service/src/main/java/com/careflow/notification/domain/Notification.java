@@ -18,6 +18,8 @@ public class Notification {
     private UUID id;
     @Column(name = "recipient_user_id", nullable = false)
     private UUID recipientUserId;
+    @Column(name = "patient_id")
+    private UUID patientId;
     @Column(name = "source_event_id", nullable = false)
     private UUID sourceEventId;
     @Column(name = "source_event_type", nullable = false, length = 100)

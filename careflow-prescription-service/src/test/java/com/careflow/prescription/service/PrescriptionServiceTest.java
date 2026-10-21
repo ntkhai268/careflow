@@ -60,7 +60,9 @@ class PrescriptionServiceTest {
     @Test
     void doctorCanCancelDraftAndCancellationIsPublished() {
         Prescription draft = prescription(PrescriptionStatus.DRAFT);
-        when(prescriptionRepository.findById(PRESCRIPTION_ID)).thenReturn(Optional.of(draft));
+        when(consultationClient.getConsultation(draft.getConsultationId())).thenReturn(
+                new ConsultationClient.ConsultationContext(draft.getConsultationId(), draft.getPatientId(), DOCTOR_ID, "IN_PROGRESS"));
+        when(prescriptionRepository.findByIdForUpdate(PRESCRIPTION_ID)).thenReturn(Optional.of(draft));
         when(prescriptionRepository.save(draft)).thenReturn(draft);
         when(prescriptionMapper.toResponse(draft)).thenReturn(new PrescriptionResponse());
         when(objectMapper.valueToTree(any())).thenReturn(JsonNodeFactory.instance.objectNode());
@@ -78,7 +80,9 @@ class PrescriptionServiceTest {
     @Test
     void confirmedPrescriptionCanOnlyBeReplacedThroughAmendment() {
         Prescription original = prescription(PrescriptionStatus.CONFIRMED);
-        when(prescriptionRepository.findById(PRESCRIPTION_ID)).thenReturn(Optional.of(original));
+        when(consultationClient.getConsultation(CONSULTATION_ID)).thenReturn(
+                new ConsultationClient.ConsultationContext(CONSULTATION_ID, PATIENT_ID, DOCTOR_ID, "COMPLETED"));
+        when(prescriptionRepository.findByIdForUpdate(PRESCRIPTION_ID)).thenReturn(Optional.of(original));
         when(drugRepository.existsByCode("PARA500")).thenReturn(true);
         when(prescriptionMapper.toItemEntity(any())).thenReturn(PrescriptionItem.builder()
                 .medicineName("Paracetamol")
@@ -111,7 +115,7 @@ class PrescriptionServiceTest {
     @Test
     void doctorCannotCancelAnotherDoctorsPrescription() {
         Prescription draft = prescription(PrescriptionStatus.DRAFT);
-        when(prescriptionRepository.findById(PRESCRIPTION_ID)).thenReturn(Optional.of(draft));
+        when(prescriptionRepository.findByIdForUpdate(PRESCRIPTION_ID)).thenReturn(Optional.of(draft));
 
         assertThatThrownBy(() -> prescriptionService.cancelPrescription(
                 PRESCRIPTION_ID,

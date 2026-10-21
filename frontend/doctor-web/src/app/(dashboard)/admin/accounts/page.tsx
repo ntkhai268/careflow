@@ -1,431 +1,179 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import { directoryApi, DepartmentItem } from "@/lib/directory-api";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useAuth } from "@/contexts/AuthContext";
+import HandoverPicker from "@/components/ui/HandoverPicker";
+import { directoryApi, DepartmentItem, DoctorProfileItem, RoomItem } from "@/lib/directory-api";
+import { staffApi, StaffAccount, StaffAssignment, StaffPage, StaffRole, AccountStatus, CreateStaff } from "@/lib/staff-api";
+import { getErrorMessage } from "@/lib/error-utils";
 
-interface AccountItem {
-  id: string;
-  fullName: string;
-  email: string;
-  role: "DOCTOR" | "LAB_TECHNICIAN" | "STAFF" | "ADMIN";
-  department: string;
-  status: "ACTIVE" | "LOCKED";
-}
-
-const INITIAL_ACCOUNTS: AccountItem[] = [
-  { id: "1", fullName: "BS. Nguyễn Văn An", email: "an.nguyen@careflow.vn", role: "DOCTOR", department: "Khoa Nội tổng quát", status: "ACTIVE" },
-  { id: "2", fullName: "BS. Trần Thị Bình", email: "binh.tran@careflow.vn", role: "DOCTOR", department: "Khoa Nhi", status: "ACTIVE" },
-  { id: "3", fullName: "KTV. Lê Hoàng Nam", email: "nam.le@careflow.vn", role: "LAB_TECHNICIAN", department: "Khoa Xét nghiệm", status: "ACTIVE" },
-  { id: "4", fullName: "NV. Phạm Minh Thu", email: "thu.pham@careflow.vn", role: "STAFF", department: "Quầy Tiếp nhận", status: "ACTIVE" },
-];
-
-const ROLE_OPTIONS: { value: AccountItem["role"]; label: string }[] = [
-  { value: "DOCTOR", label: "Bác sĩ" },
-  { value: "LAB_TECHNICIAN", label: "Kỹ thuật viên Cận lâm sàng" },
-  { value: "STAFF", label: "Nhân viên Tiếp nhận & Dược" },
-  { value: "ADMIN", label: "Quản trị viên" },
-];
+const roleLabels: Record<StaffRole,string> = { DOCTOR:"Bác sĩ", STAFF:"Nhân viên tiếp nhận / dược", LAB_TECHNICIAN:"Kỹ thuật viên CLS", ADMIN:"Quản trị viên" };
+const statusLabels: Record<AccountStatus,string> = { ACTIVE:"Hoạt động", LOCKED:"Đã khóa", DISABLED:"Vô hiệu hóa" };
+interface DirectorySnapshot { departments: DepartmentItem[]; rooms: RoomItem[]; doctors: DoctorProfileItem[]; assignments: StaffAssignment[] }
 
 export default function AdminAccountsPage() {
-  const [, setIsLoading] = useState(true);
-  const [accounts, setAccounts] = useState<AccountItem[] | null>(null);
-  const [search, setSearch] = useState("");
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [confirmAccount, setConfirmAccount] = useState<AccountItem | null>(null);
+  const { user } = useAuth();
+  const [result,setResult] = useState<StaffPage|null>(null), [loading,setLoading] = useState(true);
+  const [query,setQuery] = useState(""), [page,setPage] = useState(0), [roles,setRoles] = useState<StaffRole[]>([]);
+  const [directory,setDirectory] = useState<DirectorySnapshot|null>(null), [directoryError,setDirectoryError] = useState("");
+  const [error,setError] = useState(""), [notice,setNotice] = useState(""), [busy,setBusy] = useState(false);
+  const [creating,setCreating] = useState(false), [form,setForm] = useState<CreateStaff>({ username:"",email:"",displayName:"",role:"DOCTOR" });
+  const [confirmation,setConfirmation] = useState<{account:StaffAccount;status:AccountStatus}|null>(null);
+  const [selected,setSelected] = useState<StaffAccount|null>(null), [department,setDepartment] = useState(""), [room,setRoom] = useState(""), [license,setLicense] = useState("");
+  const requestId = useRef<string|null>(null), loadVersion = useRef(0);
 
-  // Form states
-  const [newFullName, setNewFullName] = useState("");
-  const [newEmail, setNewEmail] = useState("");
-  const [newRole, setNewRole] = useState<AccountItem["role"]>("DOCTOR");
-  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
-  const roleSelectRef = useRef<HTMLDivElement>(null);
-  const [newDept, setNewDept] = useState("Khoa Nội tổng quát");
+  const loadAccounts = useCallback(async (search:string, nextPage:number) => {
+    const version=++loadVersion.current;setLoading(true);setError("");
+    try {
+      const response=await staffApi.list(search,nextPage);
+      if(version===loadVersion.current){setResult(response.data);setPage(nextPage);}
+    } catch (failure) {
+      if(version===loadVersion.current){setResult(null);setError(getErrorMessage(failure,"Không tải được tài khoản từ Identity."));}
+    } finally {if(version===loadVersion.current)setLoading(false);}
+  },[]);
 
-  // Real Data Departments Combobox
-  const [departments, setDepartments] = useState<DepartmentItem[]>([]);
-  const [selectedDept, setSelectedDept] = useState<DepartmentItem | null>(null);
-  const [deptSearch, setDeptSearch] = useState("");
-  const [showDeptDropdown, setShowDeptDropdown] = useState(false);
-  const deptComboboxRef = useRef<HTMLDivElement>(null);
+  const loadDirectory = useCallback(async () => {
+    try {
+      const [departments,rooms,doctors,assignments]=await Promise.all([directoryApi.getDepartments(),directoryApi.getRooms(),staffApi.doctors(),staffApi.assignments()]);
+      setDirectory({departments,rooms,doctors:doctors.data,assignments:assignments.data});setDirectoryError("");
+    } catch (failure) {setDirectory(null);setDirectoryError(getErrorMessage(failure,"Không tải được phân công. Chưa thể xác định tài khoản đã sẵn sàng."));}
+  },[]);
 
-  // Close dropdowns on outside click
-  useEffect(() => {
-    function handleClickOutside(event: MouseEvent) {
-      if (deptComboboxRef.current && !deptComboboxRef.current.contains(event.target as Node)) {
-        setShowDeptDropdown(false);
-      }
-      if (roleSelectRef.current && !roleSelectRef.current.contains(event.target as Node)) {
-        setShowRoleDropdown(false);
-      }
+  useEffect(()=>{
+    void loadAccounts("",0);void loadDirectory();
+    void staffApi.roles().then(response=>setRoles(response.data)).catch(failure=>setError(getErrorMessage(failure,"Không tải được vai trò hệ thống.")));
+  },[loadAccounts,loadDirectory]);
+
+  function assignmentLabel(account:StaffAccount) {
+    if(account.role==="ADMIN")return "Quản trị hệ thống";
+    if(!directory)return "Chưa xác định phân công";
+    if(account.role==="DOCTOR") {
+      const profile=directory.doctors.find(item=>item.userId===account.id && item.isActive && item.assignedRoomId);
+      return profile ? directory.rooms.find(item=>item.id===profile.assignedRoomId)?.displayName || profile.assignedRoomId : "Cần hồ sơ / phân công";
     }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+    const assigned=directory.assignments.filter(item=>item.userId===account.id && item.isActive);
+    return assigned.length ? assigned.map(item=>directory.rooms.find(candidate=>candidate.id===item.roomId)?.displayName || item.roomId).join(", ") : "Cần phân công";
+  }
 
-  useEffect(() => {
-    async function loadData() {
-      setIsLoading(true);
-      try {
-        const [deptsList, doctorProfiles] = await Promise.all([
-          directoryApi.getDepartments(),
-          directoryApi.getDoctors(),
-        ]);
+  async function create(event:React.FormEvent) {
+    event.preventDefault();setBusy(true);setError("");setNotice("");
+    try {
+      requestId.current ??= crypto.randomUUID();
+      const response=await staffApi.create(form,requestId.current);
+      setCreating(false);requestId.current=null;
+      setNotice(`Đã tạo tài khoản ${response.data.username} trong Identity. Hoàn thiện phân công và cấp passkey để nhân viên sử dụng.`);
+      await loadAccounts(query,0);
+      if(response.data.role!=="ADMIN")openAssignment(response.data);
+    } catch (failure) {setError(getErrorMessage(failure,"Không tạo được tài khoản. Bạn có thể thử lại hoặc tìm tài khoản đã tạo."));}
+    finally {setBusy(false);}
+  }
 
-        setDepartments(deptsList ?? []);
-        if ((deptsList ?? []).length > 0) {
-          setSelectedDept(deptsList[0]);
-          setNewDept(deptsList[0].name);
-        }
+  async function changeStatus() {
+    if(!confirmation)return;setBusy(true);setError("");setNotice("");
+    try {
+      await staffApi.status(confirmation.account.id,confirmation.status);
+      setNotice(`Đã cập nhật tài khoản ${confirmation.account.username}: ${statusLabels[confirmation.status]}.`);
+      setConfirmation(null);await loadAccounts(query,page);
+    } catch (failure) {setError(getErrorMessage(failure,"Máy chủ chưa lưu trạng thái tài khoản."));}
+    finally {setBusy(false);}
+  }
 
-        if (doctorProfiles && doctorProfiles.length > 0) {
-          const realAccounts: AccountItem[] = doctorProfiles.map((doc, idx) => ({
-            id: doc.id || String(idx + 1),
-            fullName: doc.title ? `${doc.title} ${doc.fullName}` : doc.fullName,
-            email: `${doc.fullName.toLowerCase().replace(/[^a-z0-9]/g, ".")}@careflow.vn`,
-            role: "DOCTOR",
-            department: doc.specialization || doc.departmentName || "Khoa Nội tổng quát",
-            status: doc.isActive !== false ? "ACTIVE" : "LOCKED",
-          }));
-          setAccounts([...realAccounts, ...INITIAL_ACCOUNTS.filter(a => a.role !== "DOCTOR")]);
-        } else {
-          setAccounts(INITIAL_ACCOUNTS);
-        }
-      } catch {
-        setAccounts(INITIAL_ACCOUNTS);
-      } finally {
-        setIsLoading(false);
+  function openAssignment(account:StaffAccount) {
+    setSelected(account);setError("");
+    const profile=directory?.doctors.find(item=>item.userId===account.id);
+    setDepartment(profile?.departmentCode || "");setRoom(profile?.assignedRoomId || "");setLicense(profile?.licenseNumber || "");
+  }
+
+  async function saveAssignment(event:React.FormEvent) {
+    event.preventDefault();if(!selected||!directory)return;
+    const allowedRoom=directory.rooms.find(item=>item.id===room && item.departmentCode===department && item.isActive);
+    if(!allowedRoom){setError("Chọn khoa và phòng đang hoạt động từ danh mục.");return;}
+    setBusy(true);setError("");setNotice("");
+    try {
+      if(selected.role==="DOCTOR") {
+        const previous=directory.doctors.find(item=>item.userId===selected.id);
+        const payload={fullName:selected.displayName || previous?.fullName || selected.username,departmentCode:department,assignedRoomId:room,licenseNumber:license,isActive:true};
+        if(previous)await directoryApi.updateDoctorProfile(previous.id,payload);
+        else await directoryApi.createDoctorProfile({...payload,userId:selected.id});
+      } else {
+        const previous=directory.assignments.find(item=>item.userId===selected.id && item.roomId===room);
+        const payload={userId:selected.id,departmentCode:department,roomId:room,isActive:true};
+        if(previous)await staffApi.updateAssignment(previous.id,payload);else await staffApi.createAssignment(payload);
       }
-    }
-    loadData();
-  }, []);
+      setNotice(`Đã lưu phân công cho ${selected.username}.`);setSelected(null);await loadDirectory();
+    } catch (failure) {
+      setError(getErrorMessage(failure,"Tài khoản Identity vẫn được giữ; phân công chưa hoàn tất. Hãy tải lại và tiếp tục."));
+      await loadDirectory();
+    } finally {setBusy(false);}
+  }
 
-  const handleConfirmToggleStatus = () => {
-    if (!confirmAccount) return;
-    setAccounts(prev =>
-      (prev ?? []).map(acc =>
-        acc.id === confirmAccount.id ? { ...acc, status: acc.status === "ACTIVE" ? "LOCKED" : "ACTIVE" } : acc
-      )
-    );
-    setConfirmAccount(null);
-  };
+  const roomTypes=selected?.role==="DOCTOR"?["CONSULTATION"]:selected?.role==="LAB_TECHNICIAN"?["LAB","IMAGING"]:["CONSULTATION","PHARMACY"];
+  const rooms=directory?.rooms.filter(item=>item.isActive && item.departmentCode===department && roomTypes.includes(item.roomType)) || [];
+  const fieldClass="w-full rounded-lg border border-card-border bg-white p-3 text-sm";
+  const primaryClass="rounded-lg bg-[#6E2582] px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50";
 
-  const handleCreateAccount = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newFullName.trim() || !newEmail.trim()) return;
-
-    const newAcc: AccountItem = {
-      id: String(Date.now()),
-      fullName: newFullName.trim(),
-      email: newEmail.trim(),
-      role: newRole,
-      department: newDept,
-      status: "ACTIVE",
-    };
-
-    setAccounts(prev => [newAcc, ...(prev ?? [])]);
-    setShowAddModal(false);
-    setNewFullName("");
-    setNewEmail("");
-  };
-
-  const filtered = (accounts ?? []).filter(
-    a =>
-      a.fullName.toLowerCase().includes(search.toLowerCase()) ||
-      a.email.toLowerCase().includes(search.toLowerCase())
-  );
-
-  return (
-    <div className="space-y-6 pb-12">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border border-card-border bg-card-bg p-5 rounded-xl shadow-sm">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-600">
-              Quản trị Hệ thống
-            </span>
-          </div>
-          <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Quản lý Tài khoản Nội bộ</h1>
-          <p className="text-xs text-[#6A5C70] mt-0.5">
-            Tạo mới, phân quyền vai trò (Role) và khóa/mở khóa tài khoản Bác sĩ, KTV, Nhân viên quầy
-          </p>
-        </div>
-
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="px-4 py-2.5 rounded-xl font-bold text-xs text-white bg-[#6E2582] hover:bg-[#561A66] shadow-md transition-all cursor-pointer"
-        >
-          + Thêm tài khoản
-        </button>
+  return <div className="space-y-5 pb-12">
+    <header className="rounded-xl border border-card-border bg-card-bg p-5 shadow-sm">
+      <h1 className="text-2xl font-bold text-[#2B1D30]">Quản lý tài khoản nội bộ</h1>
+      <p className="mt-2 text-sm text-[#6A5C70]">Tạo, khóa và mở khóa tài khoản được lưu tại máy chủ. Đăng nhập lại bằng passkey quản trị trong vòng 5 phút trước thao tác.</p>
+      <div className="mt-4 flex flex-wrap items-center gap-4">
+        <button className={primaryClass} disabled={!roles.length||busy} onClick={()=>{setCreating(true);setSelected(null);setConfirmation(null);setForm({username:"",email:"",displayName:"",role:roles.includes("DOCTOR")?"DOCTOR":roles[0]});requestId.current=crypto.randomUUID();setError("");}}>Thêm tài khoản</button>
+        <Link href="/admin/security" className="text-sm font-semibold text-purple-800 underline">Cấp / khôi phục passkey</Link>
+        <Link href="/login/methods" className="text-sm text-purple-800 underline">Đăng nhập bằng passkey</Link>
       </div>
-
-      {/* Account List Table */}
-      <div className="border border-card-border bg-card-bg rounded-xl p-5 shadow-sm space-y-4">
-        <div className="flex items-center justify-between gap-4">
-          <input
-            type="text"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            placeholder="Tìm theo tên hoặc email..."
-            className="w-72 p-2.5 border border-card-border rounded-lg text-xs bg-card-bg focus:ring-2 focus:ring-purple-500"
-          />
-          <span className="text-xs text-[#6A5C70] font-semibold">{filtered.length} tài khoản</span>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
-            <thead>
-              <tr className="border-b border-card-border text-[#6A5C70] uppercase font-bold text-[11px]">
-                <th className="py-3 px-4">Họ và Tên</th>
-                <th className="py-3 px-4">Email</th>
-                <th className="py-3 px-4">Vai trò</th>
-                <th className="py-3 px-4">Khoa / Phòng</th>
-                <th className="py-3 px-4">Trạng thái</th>
-                <th className="py-3 px-4 text-right">Thao tác</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-card-border text-[#2B1D30]">
-              {filtered.map(acc => (
-                <tr key={acc.id} className="hover:bg-purple-50/50 transition-colors">
-                  <td className="py-3.5 px-4 font-bold">{acc.fullName}</td>
-                  <td className="py-3.5 px-4">{acc.email}</td>
-                  <td className="py-3.5 px-4 font-bold text-[#6E2582]">
-                    {acc.role === "DOCTOR" ? "Bác sĩ" : acc.role === "LAB_TECHNICIAN" ? "Kỹ thuật viên CLS" : acc.role === "STAFF" ? "Nhân viên Tiếp nhận/Dược" : "Quản trị viên"}
-                  </td>
-                  <td className="py-3.5 px-4">{acc.department}</td>
-                  <td className="py-3.5 px-4">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold">
-                      <span className={`w-1.5 h-1.5 rounded-full ${acc.status === "ACTIVE" ? "bg-emerald-500" : "bg-rose-500"}`} />
-                      <span className={acc.status === "ACTIVE" ? "text-emerald-700" : "text-rose-700"}>
-                        {acc.status === "ACTIVE" ? "Hoạt động" : "Đã khóa"}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-3.5 px-4 text-right">
-                    <button
-                      onClick={() => setConfirmAccount(acc)}
-                      className="w-20 py-1 text-xs font-semibold rounded-md border border-card-border bg-white text-[#2B1D30] hover:bg-gray-100 transition-all cursor-pointer text-center"
-                    >
-                      {acc.status === "ACTIVE" ? "Khóa" : "Mở khóa"}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Status Change Confirmation Modal */}
-      {confirmAccount && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-card-bg border border-card-border rounded-xl p-6 w-full max-w-md shadow-xl space-y-4">
-            <h3 className="text-base font-bold text-[#2B1D30]">
-              {confirmAccount.status === "ACTIVE" ? "Xác nhận khóa tài khoản" : "Xác nhận mở khóa tài khoản"}
-            </h3>
-            <p className="text-xs text-[#6A5C70]">
-              Bạn có chắc chắn muốn {confirmAccount.status === "ACTIVE" ? "khóa" : "mở khóa"} tài khoản của nhân viên{" "}
-              <strong className="text-[#2B1D30]">{confirmAccount.fullName}</strong> ({confirmAccount.email}) không?
-            </p>
-            <div className="flex items-center justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setConfirmAccount(null)}
-                className="px-4 py-2 border border-card-border text-xs font-bold text-[#6A5C70] rounded-lg hover:bg-gray-100 cursor-pointer"
-              >
-                Hủy
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmToggleStatus}
-                className={`px-4 py-2 text-xs font-bold text-white rounded-lg shadow-sm transition-all cursor-pointer ${
-                  confirmAccount.status === "ACTIVE"
-                    ? "bg-rose-600 hover:bg-rose-700"
-                    : "bg-[#6E2582] hover:bg-[#561A66]"
-                }`}
-              >
-                {confirmAccount.status === "ACTIVE" ? "Xác nhận khóa" : "Xác nhận mở khóa"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Add Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-card-bg border border-card-border rounded-xl p-6 w-full max-w-md shadow-xl space-y-4">
-            <h3 className="text-base font-bold text-[#2B1D30]">Tạo tài khoản nội bộ mới</h3>
-
-            <form onSubmit={handleCreateAccount} className="space-y-3 text-xs">
-              <div>
-                <label className="block font-bold mb-1 text-[#2B1D30]">Họ và tên:</label>
-                <input
-                  type="text"
-                  required
-                  value={newFullName}
-                  onChange={e => setNewFullName(e.target.value)}
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block font-bold mb-1 text-[#2B1D30]">Email:</label>
-                <input
-                  type="email"
-                  required
-                  value={newEmail}
-                  onChange={e => setNewEmail(e.target.value)}
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg text-xs"
-                />
-              </div>
-
-              {/* Custom Role Dropdown */}
-              <div>
-                <label className="block font-bold mb-1 text-[#2B1D30]">Vai trò:</label>
-                <div className="relative" ref={roleSelectRef}>
-                  <button
-                    type="button"
-                    onClick={() => setShowRoleDropdown(!showRoleDropdown)}
-                    className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg text-xs text-left font-semibold text-[#2B1D30] flex items-center justify-between hover:bg-gray-50 cursor-pointer shadow-sm"
-                  >
-                    <span>{ROLE_OPTIONS.find(r => r.value === newRole)?.label}</span>
-                    <svg className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${showRoleDropdown ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-
-                  {showRoleDropdown && (
-                    <div className="absolute left-0 right-0 mt-1 bg-white border border-card-border rounded-lg shadow-lg z-50 overflow-hidden divide-y divide-gray-100">
-                      {ROLE_OPTIONS.map(opt => (
-                        <div
-                          key={opt.value}
-                          onClick={() => {
-                            setNewRole(opt.value);
-                            setShowRoleDropdown(false);
-                          }}
-                          className={`p-2.5 text-xs font-semibold cursor-pointer transition-colors flex items-center justify-between ${
-                            newRole === opt.value
-                              ? "bg-purple-50 text-[#6E2582] font-bold"
-                              : "text-[#2B1D30] hover:bg-purple-50/50"
-                          }`}
-                        >
-                          <span>{opt.label}</span>
-                          {newRole === opt.value && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#6E2582]" />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Custom Department Combobox Chips */}
-              <div>
-                <label className="block font-bold mb-1 text-[#2B1D30]">Khoa / Phòng trực thuộc:</label>
-                <div className="relative" ref={deptComboboxRef}>
-                  {selectedDept ? (
-                    <div className="flex items-center justify-between p-2.5 border border-purple-200 rounded-lg bg-purple-50 text-xs shadow-sm">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-[#6E2582]" />
-                        <span className="font-bold text-[#6E2582]">{selectedDept.name}</span>
-                        <span className="text-[10px] text-purple-700 font-mono">({selectedDept.code})</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedDept(null);
-                          setNewDept("");
-                          setShowDeptDropdown(true);
-                        }}
-                        className="text-purple-600 hover:text-purple-900 text-xs font-bold px-1.5 py-0.5 rounded-md hover:bg-purple-100 transition-colors cursor-pointer"
-                        title="Đổi Khoa khác"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ) : (
-                    <div>
-                      <div className="relative">
-                        <input
-                          type="text"
-                          placeholder="Gõ từ khóa để lọc nhanh Khoa từ hệ thống..."
-                          value={deptSearch}
-                          onFocus={() => setShowDeptDropdown(true)}
-                          onChange={e => {
-                            setDeptSearch(e.target.value);
-                            setShowDeptDropdown(true);
-                          }}
-                          className="w-full p-2.5 pr-8 border border-card-border rounded-lg bg-card-bg text-xs focus:ring-2 focus:ring-purple-500 outline-none shadow-sm"
-                        />
-                        <svg className={`w-4 h-4 text-gray-500 absolute right-2.5 top-3 transition-transform duration-200 pointer-events-none ${showDeptDropdown ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      </div>
-
-                      {showDeptDropdown && (
-                        <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-white border border-card-border rounded-lg shadow-lg z-50 divide-y divide-gray-100">
-                          {departments
-                            .filter(d =>
-                              d.name.toLowerCase().includes(deptSearch.toLowerCase()) ||
-                              d.code.toLowerCase().includes(deptSearch.toLowerCase())
-                            )
-                            .map(dept => (
-                              <div
-                                key={dept.code}
-                                onClick={() => {
-                                  setSelectedDept(dept);
-                                  setNewDept(dept.name);
-                                  setShowDeptDropdown(false);
-                                  setDeptSearch("");
-                                }}
-                                className="p-2.5 hover:bg-purple-50 cursor-pointer flex items-center justify-between transition-colors"
-                              >
-                                <span className="font-bold text-[#2B1D30] text-xs">{dept.name}</span>
-                                <span className="text-[10px] text-[#6A5C70] font-mono">{dept.code}</span>
-                              </div>
-                            ))}
-                          {departments.filter(d =>
-                            d.name.toLowerCase().includes(deptSearch.toLowerCase()) ||
-                            d.code.toLowerCase().includes(deptSearch.toLowerCase())
-                          ).length === 0 && (
-                            <div className="p-3 text-center text-xs text-gray-500">
-                              Không tìm thấy Khoa khớp từ khóa trong hệ thống
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-                <div className="mt-1.5 flex items-center justify-between text-[11px] text-[#6A5C70]">
-                  <span>Chỉ chọn các Khoa đã có sẵn trong hệ thống.</span>
-                  <a href="/admin/facility" className="text-purple-600 font-bold hover:underline">
-                    + Tạo Khoa mới →
-                  </a>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="px-4 py-2 border border-card-border text-xs font-bold text-[#6A5C70] rounded-lg hover:bg-gray-100 cursor-pointer"
-                >
-                  Hủy
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-[#6E2582] text-white text-xs font-bold rounded-lg hover:bg-[#561A66] cursor-pointer"
-                >
-                  Lưu tài khoản
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
-  );
+    </header>
+    {error&&<p role="alert" className="rounded-xl bg-red-50 p-4 text-sm text-red-800">{error}</p>}
+    {notice&&<p role="status" className="rounded-xl bg-green-50 p-4 text-sm text-green-800">{notice}</p>}
+    {directoryError&&<div role="alert" className="rounded-xl bg-amber-50 p-4 text-sm text-amber-900">{directoryError} <button className="ml-2 underline" onClick={()=>void loadDirectory()}>Tải lại danh mục</button></div>}
+    <section className="rounded-xl border border-card-border bg-card-bg p-5">
+      <form className="mb-4 flex gap-3" onSubmit={event=>{event.preventDefault();void loadAccounts(query,0);}}>
+        <input aria-label="Tìm tài khoản nội bộ" className={fieldClass} maxLength={100} value={query} onChange={event=>setQuery(event.target.value)} placeholder="Tìm tên tài khoản, họ tên hoặc email" />
+        <button className={primaryClass} disabled={loading}>Tìm kiếm</button>
+      </form>
+      {loading?<p role="status">Đang tải tài khoản…</p>:result?<>
+        <p className="mb-3 text-sm text-slate-600">{result.total} tài khoản từ Identity</p>
+        <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr className="border-b text-slate-600"><th className="p-3">Tài khoản</th><th className="p-3">Email</th><th className="p-3">Vai trò / phân công</th><th className="p-3">Trạng thái</th><th className="p-3">Thao tác</th></tr></thead>
+          <tbody>{result.items.map(account=><tr className="border-b last:border-0" key={account.id}>
+            <td className="p-3"><p className="font-semibold">{account.displayName || directory?.doctors.find(item=>item.userId===account.id)?.fullName || account.username}</p><p className="text-xs text-slate-500">{account.username}</p></td>
+            <td className="p-3">{account.email}</td>
+            <td className="p-3"><p>{roleLabels[account.role]}</p><p className="mt-1 text-xs text-slate-600">{assignmentLabel(account)}</p><p className="mt-1 text-xs text-purple-800">{account.passkeyCount>0?`${account.passkeyCount} passkey`:"Chưa có passkey"}</p></td>
+            <td className="p-3">{statusLabels[account.status]}</td>
+            <td className="p-3"><div className="flex flex-wrap gap-2">
+              {account.role!=="ADMIN"&&<button disabled={!directory||busy||account.status!=="ACTIVE"} onClick={()=>openAssignment(account)} className="rounded-lg bg-purple-50 px-3 py-2 text-purple-800 disabled:opacity-40">Phân công</button>}
+              <button disabled={busy||account.id===user?.id} onClick={()=>{setConfirmation({account,status:account.status==="ACTIVE"?"LOCKED":"ACTIVE"});setError("");}} className="rounded-lg border px-3 py-2 disabled:opacity-40">{account.status==="ACTIVE"?"Khóa":"Mở khóa"}</button>
+              {account.status!=="DISABLED"&&<button disabled={busy||account.id===user?.id} onClick={()=>{setConfirmation({account,status:"DISABLED"});setError("");}} className="rounded-lg border px-3 py-2 text-red-800 disabled:opacity-40">Vô hiệu hóa</button>}
+            </div></td>
+          </tr>)}</tbody></table></div>
+        {!result.items.length&&<p className="p-4 text-sm text-slate-500">Không có tài khoản phù hợp.</p>}
+        <div className="mt-4 flex items-center justify-end gap-3"><button disabled={page===0||loading} onClick={()=>void loadAccounts(query,page-1)} className="rounded-lg border px-3 py-2 disabled:opacity-40">Trang trước</button><span className="text-sm">Trang {page+1}</span><button disabled={(page+1)*result.size>=result.total||loading} onClick={()=>void loadAccounts(query,page+1)} className="rounded-lg border px-3 py-2 disabled:opacity-40">Trang sau</button></div>
+      </>:<button onClick={()=>void loadAccounts(query,page)} className="rounded-lg border px-4 py-2">Tải lại tài khoản</button>}
+    </section>
+    {creating&&<div role="dialog" aria-modal="true" aria-labelledby="new-account-title" className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"><form onSubmit={create} className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-xl bg-white p-6 shadow-lg">
+      <h2 id="new-account-title" className="text-lg font-bold">Tạo tài khoản nội bộ</h2>
+      <label className="block text-sm">Họ và tên<input className={fieldClass} required minLength={2} maxLength={100} value={form.displayName} onChange={event=>setForm({...form,displayName:event.target.value})}/></label>
+      <label className="block text-sm">Tên tài khoản<input className={fieldClass} required pattern="[A-Za-z0-9._-]{3,50}" maxLength={50} autoComplete="off" value={form.username} onChange={event=>setForm({...form,username:event.target.value})}/></label>
+      <label className="block text-sm">Email<input className={fieldClass} type="email" required maxLength={255} value={form.email} onChange={event=>setForm({...form,email:event.target.value})}/></label>
+      <HandoverPicker label="Vai trò" value={form.role} onChange={value=>setForm({...form,role:value as StaffRole})} options={roles.map(value=>({value,label:roleLabels[value]}))}/>
+      <p className="text-sm text-slate-600">Tài khoản mới cần được cấp passkey. Không tạo hoặc gửi mật khẩu tạm.</p>
+      {error&&<p role="alert" className="text-sm text-red-800">{error}</p>}
+      <div className="flex justify-end gap-3"><button type="button" disabled={busy} className="rounded-lg border px-4 py-2" onClick={()=>setCreating(false)}>Hủy</button><button disabled={busy} className={primaryClass}>{busy?"Đang lưu…":"Tạo tài khoản"}</button></div>
+    </form></div>}
+    {selected&&<div role="dialog" aria-modal="true" aria-labelledby="assignment-title" className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"><form onSubmit={saveAssignment} className="max-h-[90vh] w-full max-w-lg space-y-4 overflow-y-auto rounded-xl bg-white p-6 shadow-lg">
+      <h2 id="assignment-title" className="text-lg font-bold">Phân công cho {selected.username}</h2>
+      <p className="text-sm text-slate-600">Tài khoản đã lưu trong Identity. Bạn có thể đóng và tiếp tục phân công sau.</p>
+      <HandoverPicker label="Khoa" value={department} onChange={value=>{setDepartment(value);setRoom("");}} options={(directory?.departments || []).filter(item=>item.isActive!==false).map(item=>({value:item.code,label:item.name}))}/>
+      <HandoverPicker label="Phòng" value={room} onChange={setRoom} options={rooms.map(item=>({value:item.id,label:item.displayName}))}/>
+      {selected.role==="DOCTOR"&&<label className="block text-sm">Số chứng chỉ hành nghề<input className={fieldClass} maxLength={100} value={license} onChange={event=>setLicense(event.target.value)}/></label>}
+      {error&&<p role="alert" className="text-sm text-red-800">{error}</p>}
+      {directoryError&&<p role="alert" className="text-sm text-amber-900">{directoryError}</p>}
+      <div className="flex justify-end gap-3"><button type="button" disabled={busy} className="rounded-lg border px-4 py-2" onClick={()=>setSelected(null)}>Để sau</button><button disabled={busy||!directory||!department||!rooms.some(item=>item.id===room)} className={primaryClass}>{busy?"Đang lưu…":"Lưu phân công"}</button></div>
+    </form></div>}
+    {confirmation&&<div role="dialog" aria-modal="true" aria-labelledby="status-title" className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"><div className="w-full max-w-md space-y-4 rounded-xl bg-white p-6 shadow-lg">
+      <h2 id="status-title" className="text-lg font-bold">Xác nhận: {statusLabels[confirmation.status]}</h2>
+      <p className="text-sm">Cập nhật tài khoản <strong>{confirmation.account.username}</strong> ({confirmation.account.email}). Phiên đăng nhập hiện có sẽ bị thu hồi khi trạng thái thay đổi.</p>
+      {error&&<p role="alert" className="text-sm text-red-800">{error}</p>}
+      <div className="flex justify-end gap-3"><button disabled={busy} className="rounded-lg border px-4 py-2" onClick={()=>setConfirmation(null)}>Hủy</button><button disabled={busy} className={primaryClass} onClick={()=>void changeStatus()}>{busy?"Đang lưu…":"Xác nhận"}</button></div>
+    </div></div>}
+  </div>;
 }

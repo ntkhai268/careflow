@@ -6,6 +6,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:careflow_patient/models/patient.dart';
+import 'package:careflow_patient/providers/auth_provider.dart';
+import 'package:careflow_patient/services/api_service.dart';
+import 'package:careflow_patient/services/auth_service.dart';
+
+class ListTestAuth extends AuthNotifier {
+  ListTestAuth() : super(AuthService(ApiService())) {
+    state = const AuthState(
+      status: AuthStatus.authenticated,
+      userId: 'synthetic-owner',
+    );
+  }
+}
 
 void main() {
   testWidgets('upload action opens the registered health record form route', (
@@ -36,6 +49,14 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
+          authProvider.overrideWith((ref) => ListTestAuth()),
+          healthRecordPatientProvider('patient-1').overrideWith(
+            (ref) async => Patient(
+              id: 'patient-1',
+              userId: 'synthetic-owner',
+              fullName: 'SYNTHETIC OWNER',
+            ),
+          ),
           healthRecordsProvider(
             'patient-1',
           ).overrideWith((ref) async => <HealthRecord>[]),

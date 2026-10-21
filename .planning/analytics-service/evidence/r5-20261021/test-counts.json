@@ -1,0 +1,38 @@
+{
+  "careflow-common": {
+    "tests": 49,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "careflow-analytics-service": {
+    "tests": 30,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "careflow-appointment-service": {
+    "tests": 87,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 5
+  },
+  "careflow-queue-service": {
+    "tests": 82,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 7
+  },
+  "careflow-consultation-service": {
+    "tests": 109,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 7
+  },
+  "careflow-api-gateway": {
+    "tests": 35,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+}

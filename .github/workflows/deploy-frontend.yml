@@ -1,31 +1,42 @@
-name: Deploy Frontend (Doctor Web)
-
+name: Validate and deploy secure doctor web
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'frontend/doctor-web/**'
-
+  workflow_dispatch:
 jobs:
-  deploy:
-    runs-on: self-hosted
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: frontend/doctor-web
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Build and deploy doctor-web
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/doctor-web/package-lock.json
+      - run: npm ci
+      - run: npm audit --omit=dev --audit-level=high
+      - run: node ../../scripts/security/test_web_session_memory.cjs
+      - run: npx tsc --noEmit
+      - run: npm run build
+  deploy:
+    needs: verify
+    runs-on: self-hosted
+    environment: production
+    permissions:
+      contents: read
+    concurrency:
+      group: careflow-production-web
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Deploy the secure web manifest
+        shell: bash
         run: |
-          echo "🔨 Building doctor-web..."
-          docker-compose up --build -d careflow-doctor-web
-          echo "✅ Doctor-web deployed successfully!"
-
-      - name: Health check
-        run: |
-          sleep 5
-          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000)
-          if [ "$HTTP_CODE" = "200" ]; then
-            echo "✅ Health check passed (HTTP $HTTP_CODE)"
-          else
-            echo "❌ Health check failed (HTTP $HTTP_CODE)"
-            exit 1
-          fi
+          set -euo pipefail
+          test -n "${CAREFLOW_PRODUCTION_ENV_FILE:-}"
+          test -r "$CAREFLOW_PRODUCTION_ENV_FILE"
+          docker compose --env-file "$CAREFLOW_PRODUCTION_ENV_FILE" -f docker-compose.security.yml config --quiet
+          docker compose --env-file "$CAREFLOW_PRODUCTION_ENV_FILE" -f docker-compose.security.yml up --build -d --wait --wait-timeout 180 careflow-doctor-web

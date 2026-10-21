@@ -18,7 +18,7 @@ public class PatientRecipientProjection {
     @Id
     @Column(name = "patient_id")
     private UUID patientId;
-    @Column(name = "user_id", nullable = false, unique = true)
+    @Column(name = "user_id", nullable = false)
     private UUID userId;
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;

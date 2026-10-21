@@ -2,6 +2,18 @@
 
 [Quay về mục lục](README.md) · [Tài khoản](01-tai-khoan-va-du-lieu.md)
 
+## Tiếp tục lượt demo chính đã chuẩn bị
+
+Tài khoản/mật khẩu ở mục **Bộ demo chính — Nội tổng quát, ROOM-01** tại [trang 01](01-tai-khoan-va-du-lieu.md). Chức năng Web được đối chiếu với `origin/develop` tại `e5fc9c1`; runtime vẫn ở worktree tích hợp, không reset checkout hoặc dữ liệu.
+
+1. Mở riêng ba hồ sơ Chrome cho bệnh nhân, bác sĩ và STAFF. Bệnh nhân dùng Điện thoại 01 trên `http://localhost:3000`; Web ở `http://localhost:5173`.
+2. Lượt kiểm tra mới nhất **NOI-006, 17/10/2026, 15:30–16:00**, ROOM-01, đã được dùng kiểm tra giao diện rồi chuyển COMPLETED; toa tại mốc đối chiếu CONFIRMED. NOI-003 trước đó cũng đã COMPLETED. Hai ca này chỉ dùng xem lịch sử; STAFF tiếp tục quầy thuốc nếu toa chưa cấp phát. Muốn demo bước khám/kê toa từ đầu cần lượt mới hợp lệ.
+3. Bác sĩ vào `/dashboard/queue`, đối chiếu **Mẫu Mobile 01 / NOI-006**: CHECKED_IN thì **Gọi số**, CALLED thì **Bắt đầu khám**, IN_PROGRESS thì **Vào khám** để giữ cùng ca. Nếu đã hoàn tất, chỉ xem lịch sử và tạo lượt mới hợp lệ khi muốn trình diễn lại.
+4. Thực hiện trang 04: nhập dữ liệu demo, lưu nháp, ký toa nếu có thuốc, hoàn tất. STAFF thực hiện trang 06 tại `/staff/pharmacy`; mobile mở kết quả của cùng lượt khám.
+5. Muốn diễn từ bước đặt lịch/check-in, hoàn tất lượt này trước rồi chọn **ca giờ khác còn hợp lệ** theo trang 03. Không đặt lại các ca 15:00, 15:30 hoặc 16:00 đã dùng, không sửa trạng thái lịch sử. Nếu ngày/giờ đã qua thì tạo lượt đúng ngày thực tế mới.
+
+NOI-001 trước đó của cùng bệnh nhân đã hoàn tất và phát thuốc; chỉ dùng đọc lịch sử. Tổng quan STAFF mở được đúng dữ liệu vai trò; STAFF vẫn thấy 403 khi vào hàng đợi bác sĩ, ca khám hoặc ADMIN.
+
 ## Chạy một luồng từ đầu
 
 1. Mở stack theo trang 00, xác nhận Web/mobile/API hoạt động.
@@ -10,31 +22,31 @@
 4. Bác sĩ gọi/bắt đầu, nhập và lưu dữ liệu theo trang 04. Ghi mã Consultation, đối chiếu với appointment/phiếu.
 5. Chọn một nhánh: hoàn tất không CLS; hoặc làm đủ trang 05 rồi đọc kết quả trên ca cũ.
 6. Nếu cần trình diễn bàn giao, thực hiện trang 07 trong lúc ca mở; tiếp tục các bước dưới quyền bác sĩ nhận.
-7. Phát hành toa nếu cần và thực hiện trang 06 khi đủ điều kiện. Không bỏ qua điều kiện quyết toán chưa xác minh.
+7. Phát hành toa nếu cần và thực hiện trang 06 khi đủ điều kiện. Ghi riêng thanh toán/quyết toán thật chưa tích hợp/nghiệm thu.
 8. Mobile xem kết quả/hồ sơ/thông báo theo trang 08.
 9. Ghi từng chặng đạt/thất bại/chưa chạy. Chỉ gọi là E2E đạt khi cùng ca đi qua đủ những chặng đã chọn bằng API/DB thật.
 
-## Kịch bản ngắn trên dữ liệu đang có
+## Mốc kiểm tra 17/10/2026
 
-1. Mở mobile và đăng nhập bệnh nhân bàn giao 01.
-2. Mở Web bằng hai hồ sơ Chrome cho B và C.
-3. B gửi SBAR đến C, C xem yêu cầu chờ rồi tự tiếp nhận.
-4. C mở ca, đối chiếu tác giả gốc A và các toa cũ chỉ đọc; B không còn mở/sửa được ca.
-5. Mobile vẫn cùng hành trình/phiếu. C bàn giao lại B và B xác nhận để giữ bộ demo sẵn dùng.
-6. Nếu trình diễn ADMIN, dùng hồ sơ Chrome thứ ba để cấp/thu hồi quyền điều phối; ADMIN không nhận thay bác sĩ.
+Source `.worktrees/security-integration`, HEAD `5a8c6e5` và thay đổi chưa commit; runtime local HTTPS/mTLS, PostgreSQL/RabbitMQ thật. Dùng Mobile Emulator thay mobile native. Browser Chrome có giao diện, thao tác bằng Playwright hỗ trợ; không chặn request để trả response giả, không sửa SQL trạng thái để qua bước.
 
-## Bằng chứng tại mốc 16/10/2026
-
-| Luồng | Mức đã kiểm tra |
+| Luồng | Kết quả thực tế |
 |---|---|
-| Đăng nhập hai bước, refresh/thu hồi, kiểm tra quyền | Đã có API và browser thật trên runtime Mac |
-| Đặt lịch, phiếu, check-in nhân viên/QR, gọi/bắt đầu | Đã kiểm tra các chặng trên dữ liệu thật; phải ghi lại nếu chạy một vòng mới |
-| Bàn giao cùng khoa/phòng | Đã kiểm tra API, cạnh tranh nhận ca và 28 bước UI trên Chrome; sửa lỗi form trống khi 403/404 |
-| Bác sĩ nhận ghi bệnh án/toa nháp | Đã lưu và tải lại qua Web; giữ tác giả A/C |
-| Ca nhận bàn giao không CLS đến hoàn tất | Đã kiểm tra API Consultation/Queue/Appointment và toa phát hành; bệnh nhân thấy lịch hoàn tất |
-| CLS → đọc kết quả → cấp phát đầy đủ | Có implementation/contract, chưa nghiệm thu liền mạch toàn bộ nhánh trên bộ hiện tại |
-| Tái khám toàn chu kỳ, thanh toán/quyết toán thật | Chưa được coi là hoàn tất qua một lượt E2E |
-| eKYC thật, passkey/sinh trắc, FCM/native push | Ngoài phần đã nghiệm thu; không thay bằng mô phỏng để báo đạt |
+| Đăng nhập mật khẩu, câu hỏi và quên mật khẩu | Đã thao tác mobile/Web; API kiểm tra revoke, DPoP, lockout; MFA cũ 410 |
+| CXK-001 không CLS | Đặt lịch → check-in → khám/ký toa → hoàn tất → phát thuốc đạt |
+| CXK-004 có CBC | QR → chỉ định → LAB thực hiện/phát hành → đọc kết quả cùng ca → ký toa/hoàn tất/phát thuốc đạt |
+| CXK-002 bàn giao + CBC | Gửi/nhận/từ chối/hủy/điều phối, giữ tác giả A, B hoàn tất/phát toa riêng đạt |
+| CXK-005 lưu lỗi sau ký toa | Dừng thật service: lưu lỗi thì không hoàn tất; khởi động lại, hoàn tất/phát thuốc đạt, không PUT toa đã ký |
+| CXK-003 hủy lịch | Lịch và phiếu CANCELLED |
+| Hồ sơ gia đình, tệp | Hai hồ sơ thật; upload tồn tại sau reload; tải xuống khớp bytes; khác chủ 403 |
+| Thông báo | Inbox từ sự kiện thật; đánh dấu đọc 200; chưa nghiệm thu native push |
+| Tái khám | Xem phạm vi và kết quả cập nhật tại trang 08; không đánh dấu cả chu kỳ ngày tương lai đã đạt |
+| Touch ID/Face ID thật, camera/GPS vật lý | Chưa nghiệm thu; không dùng authenticator/vị trí giả để báo đạt phần vật lý |
+| Thu/hoàn tiền thật, eKYC production | Chưa nghiệm thu; không dùng ONLINE_MOCK để thay thế |
+
+Các ca CXK đã đóng, dùng để đối chiếu lịch sử. Demo mới cần ca/lịch đúng ngày mới, không tái sử dụng QR cũ hoặc ép trạng thái. Muốn thử bàn giao ca mở cũ DAL, xem trang 07 và đọc lại trạng thái thực tế trước thao tác.
+
+Báo cáo kỹ thuật và mã tài nguyên: [báo cáo E2E](../.planning/security/end-to-end-2026-10-17.md) ở checkout gốc; trong worktree tích hợp xem `.planning/security/end-to-end-2026-10-17.md`.
 
 ## Phiếu ghi cho mỗi lần chạy
 

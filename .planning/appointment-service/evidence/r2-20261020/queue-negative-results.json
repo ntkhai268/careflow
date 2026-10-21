@@ -1,0 +1,35 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "Two booked slots produce independent tickets and stable doctor/room snapshots",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid QR, missing GPS and outside-geofence requests do not check in",
+      "status": "PASS"
+    },
+    {
+      "name": "A correctly signed expired hospital QR is rejected by the live service",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong reception room and unassigned doctor cannot activate/start the ticket",
+      "status": "PASS"
+    },
+    {
+      "name": "Repeated check-in is idempotent and per-appointment status does not show another ticket",
+      "status": "PASS"
+    },
+    {
+      "name": "Cancelling a checked-in appointment invalidates its queue ticket",
+      "status": "PASS"
+    },
+    {
+      "name": "Historical appointment and ticket snapshots do not restore a revoked owner",
+      "status": "PASS"
+    }
+  ],
+  "transportEvidence": "transport-boundary-results.json",
+  "note": "Initial harness expected HTTP 401 without a certificate; the live server requires a certificate at TLS handshake. Confirmed with separate transport checks."
+}

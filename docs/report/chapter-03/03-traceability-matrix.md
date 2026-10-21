@@ -1,5 +1,8 @@
 # Ma trận truy vết Giai đoạn 2
 
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Bộ tám use case lâm sàng MVP là một phần của phạm vi; đăng ký/Auth/định danh, walk-in, Analytics và AI được bổ sung trong ma trận R0.
+
+
 Tài liệu này liên kết Use Case cốt lõi với yêu cầu, quy tắc, aggregate và service
 để các nhóm viết chi tiết ở Giai đoạn 3 không tự thay đổi phạm vi.
 
@@ -46,3 +49,7 @@ Use Case nghiệp vụ riêng.
    liệu bệnh nhân.
 5. Phải ghi rõ `TARGET_DESIGN` hoặc `DEMO_MOCK` khi mô tả phần chưa có
    implementation đầy đủ trên `develop`.
+
+## Ma trận đầy đủ sau R0
+
+Bảng trên giữ mapping của giai đoạn MVP. [Ma trận chuẩn R0](../../../.planning/architecture/01-requirements-use-cases.md#4-ma-trận-bao-phủ-yêu-cầu) bao phủ 24 mã REQ/PAT/DOC/CORE cùng Analytics và E01–E18. Auth/định danh và AI có use case riêng, không bị loại khỏi nghiệm thu vì tám luồng lâm sàng đã đạt. Các trạng thái demo payment không được coi là payment production.

@@ -1,0 +1,10 @@
+{
+  "checkedAt": "2026-10-16T04:10:47.707Z",
+  "mock": false,
+  "ticketCode": "NOI-002",
+  "before": "CHECKED_IN",
+  "actionLabel": "Gọi lại",
+  "endpoint": "/api/queues/entries/d98367b9-13ec-4a08-9ca8-4881255cb06a/recall",
+  "httpStatus": 409,
+  "message": "Không thể chuyển QueueEntry từ CHECKED_IN sang CALLED"
+}

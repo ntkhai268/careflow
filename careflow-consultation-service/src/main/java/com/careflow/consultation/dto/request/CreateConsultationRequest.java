@@ -14,7 +14,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class CreateConsultationRequest {
 
-    @NotNull(message = "Appointment ID is required")
     private UUID appointmentId;
 
     private UUID queueEntryId;

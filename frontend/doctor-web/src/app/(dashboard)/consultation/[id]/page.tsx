@@ -1,18 +1,25 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, use, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
 import { consultationApi, ConsultationResponse, UpdateConsultationRequest } from "@/lib/consultation-api";
-import { appointmentApi } from "@/lib/appointment-api";
 import { prescriptionApi, PrescriptionResponse, PrescriptionItemRequest, MedicineCatalogItem } from "@/lib/prescription-api";
 import { patientApi, emrApi, PatientAllergyResponse } from "@/lib/patient-api";
-import { labApi, MOCK_LAB_SERVICES, LabCatalogItem, LabOrderResponse } from "@/lib/lab-api";
+import HandoverPicker from "@/components/ui/HandoverPicker";
+import { getErrorMessage } from "@/lib/error-utils";
+import { labApi, LabCatalogItem, LabOrderResponse } from "@/lib/lab-api";
 import { queueApi } from "@/lib/queue-api";
 import { aiApi, ClinicalSuggestionResponse } from "@/lib/ai-api";
 import { renderFormattedAiText } from "@/lib/format-ai-text";
+import { patientAge as ageFromBirthday } from "@/lib/patient-display";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmModal from "@/components/ConfirmModal";
+import UploadedHealthRecords from "@/components/UploadedHealthRecords";
+import FollowUpFields from "@/components/FollowUpFields";
+import FollowUpAppointmentPanel from "@/components/FollowUpAppointmentPanel";
 
 const ICD10_CATALOG = [
   { code: "K21.9", name: "Bệnh trào ngược dạ dày - thực quản không có viêm thực quản" },
@@ -28,8 +35,6 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const resolvedParams = use(params);
   const consultationId = resolvedParams.id;
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const entryId = searchParams.get("entryId");
   const { user } = useAuth();
 
   // Active tab for clinical details
@@ -42,6 +47,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [aiChatHistory, setAiChatHistory] = useState<{ sender: "user" | "ai"; text: string; time: string; responseObj?: ClinicalSuggestionResponse }[]>([]);
 
   // Lab Orders state
+  const [labCatalog, setLabCatalog] = useState<LabCatalogItem[]>([]);
   const [selectedLabServices, setSelectedLabServices] = useState<LabCatalogItem[]>([]);
   const [labClinicalNote, setLabClinicalNote] = useState("");
   const [existingLabOrders, setExistingLabOrders] = useState<LabOrderResponse[]>([]);
@@ -55,6 +61,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   // Clinical Summary lazy-load state
   const [summaryLoaded, setSummaryLoaded] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
+  const [summaryError,setSummaryError] = useState<string|null>(null);
   const [consultationHistory, setConsultationHistory] = useState<ConsultationResponse[] | null>(null);
   const [prescriptionHistory, setPrescriptionHistory] = useState<PrescriptionResponse[] | null>(null);
   const [patientMedicalHistory, setPatientMedicalHistory] = useState<string | null>(null);
@@ -63,6 +70,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   // Detail Modal view states
   const [selectedHistoryConsultation, setSelectedHistoryConsultation] = useState<ConsultationResponse | null>(null);
   const [selectedHistoryPrescription, setSelectedHistoryPrescription] = useState<PrescriptionResponse | null>(null);
+  const [inheritedDrafts, setInheritedDrafts] = useState<PrescriptionResponse[]>([]);
 
   // Custom Modal confirm state
   const [confirmModalConfig, setConfirmModalConfig] = useState<{
@@ -82,8 +90,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   // Consultation states
   const [consultation, setConsultation] = useState<ConsultationResponse | null>(null);
   const [patientName, setPatientName] = useState("Bệnh nhân");
-  const [patientAge, setPatientAge] = useState(30);
-  const [patientGender, setPatientGender] = useState("Nam");
+  const [patientAge, setPatientAge] = useState<number|null>(null);
+  const [patientGender, setPatientGender] = useState("Chưa ghi nhận giới tính");
+  const [patientDataError,setPatientDataError] = useState<string|null>(null);
+  const patientRequest = useRef(0);
   
   // Vital signs & Clinical states
   const [temperature, setTemperature] = useState("");
@@ -107,6 +117,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [prescriptionItems, setPrescriptionItems] = useState<PrescriptionItemRequest[]>([]);
   const [prescriptionNotes, setPrescriptionNotes] = useState("");
   const [followUpDate, setFollowUpDate] = useState("");
+  const [followUpDepartment, setFollowUpDepartment] = useState("");
+  const [followUpTimeSlot, setFollowUpTimeSlot] = useState("");
+  const [followUpDelivery, setFollowUpDelivery] = useState<PrescriptionResponse | null>(null);
+  const [completionPending, setCompletionPending] = useState(false);
   const [prescriptionStatus, setPrescriptionStatus] = useState<"DRAFT" | "CONFIRMED" | "DISPENSED" | "CANCELLED" | "CANCELLED_BY_AMENDMENT" | null>(null);
 
   // Progressive disclosure notes state
@@ -130,6 +144,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [medNotes, setMedNotes] = useState("");
 
   const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "danger" | "warning" } | null>(null);
 
@@ -177,43 +192,42 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     return null;
   };
 
+  const loadPatientDetails = useCallback(async (patientId:string) => {
+    const version=++patientRequest.current;
+    setPatientDataError(null);setAllergyLoaded(false);
+    try {
+      const response=await patientApi.getPatientById(patientId);
+      if(version!==patientRequest.current)return;
+      const data=response.data;
+      if(!data || data.id!==patientId)throw new Error("Thông tin hồ sơ không khớp ca khám.");
+      setPatientName(data.fullName || `Bệnh nhân (${patientId.slice(0,8)})`);
+      setPatientAge(ageFromBirthday(data.dateOfBirth));
+      setPatientGender(data.gender==="FEMALE"?"Nữ":data.gender==="MALE"?"Nam":data.gender==="OTHER"?"Khác":"Chưa ghi nhận giới tính");
+      setAllergyNotes(data.allergyNotes || null);setPatientAllergies(data.allergies || []);
+      setPatientMedicalHistory(data.medicalHistory || null);setAllergyLoaded(true);
+    } catch(failure) {
+      if(version!==patientRequest.current)return;
+      setPatientDataError(getErrorMessage(failure,"Không tải được thông tin hồ sơ và dị ứng. Chưa thể kết luận bệnh nhân không có tiền sử."));
+    }
+  },[]);
+
   // Fetch all initial data
   useEffect(() => {
     async function loadData() {
       try {
         setIsLoading(true);
+        setLoadError(null);
+        setConsultation(null);
+        ++patientRequest.current;
+        setSummaryLoaded(false);setSummaryError(null);setConsultationHistory(null);setPrescriptionHistory(null);setEmrRecord(null);
+        setPatientAge(null);setPatientGender("Chưa ghi nhận giới tính");setPatientMedicalHistory(null);
+        setAllergyLoaded(false);setPatientAllergies([]);setAllergyNotes(null);setPatientDataError(null);
         // Get consultation
         const consRes = await consultationApi.getConsultation(consultationId);
         const consData = consRes.data;
         setConsultation(consData);
 
-        // Fetch real patient info from patient-service
-        try {
-          const pRes = await patientApi.getPatientById(consData.patientId);
-          if (pRes.data) {
-            setPatientName(pRes.data.fullName || "Bệnh nhân");
-            if (pRes.data.dateOfBirth) {
-              const birthYear = new Date(pRes.data.dateOfBirth).getFullYear();
-              setPatientAge(new Date().getFullYear() - birthYear);
-            }
-            if (pRes.data.gender) {
-              setPatientGender(pRes.data.gender === "FEMALE" ? "Nữ" : "Nam");
-            }
-            if (pRes.data.allergyNotes) {
-              setAllergyNotes(pRes.data.allergyNotes);
-            }
-            if (pRes.data.allergies) {
-              setPatientAllergies(pRes.data.allergies);
-            }
-            if (pRes.data.medicalHistory) {
-              setPatientMedicalHistory(pRes.data.medicalHistory);
-            }
-          }
-        } catch {
-          setPatientName(`Bệnh nhân (ID: ${consData.patientId.slice(0, 8)})`);
-        } finally {
-          setAllergyLoaded(true);
-        }
+        await loadPatientDetails(consData.patientId);
 
         // Prepopulate inputs
         setTemperature(consData.temperature?.toString() || "");
@@ -228,6 +242,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         setIcd10Name(consData.icd10Name || "");
         setDiagnosis(consData.diagnosis || "");
 
+        const catalogRes = await labApi.getCatalog();
+        setLabCatalog(catalogRes.data);
+
         // Fetch medicine catalog from real API
         const medRes = await prescriptionApi.getMedicineCatalog();
         setMedicines(medRes.data);
@@ -235,12 +252,16 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         // Fetch existing prescription if any
         const prescRes = await prescriptionApi.getByConsultation(consultationId);
         if (prescRes.data && prescRes.data.length > 0) {
-          const presc = prescRes.data[0];
+          setInheritedDrafts(prescRes.data.filter(p => p.status === "DRAFT" && p.doctorId !== user?.id));
+          const presc = prescRes.data.find(p => p.doctorId === user?.id && p.status !== "CANCELLED" && p.status !== "CANCELLED_BY_AMENDMENT")
+            || prescRes.data.find(p => p.status === "CONFIRMED" || p.status === "DISPENSED");
+          if (presc) {
           setPrescriptionId(presc.id);
           setPrescriptionStatus(presc.status);
           setPrescriptionNotes(presc.notes || "");
           if (presc.notes) setShowPrescriptionNotes(true);
           setFollowUpDate(presc.followUpDate || "");
+          setFollowUpDepartment(presc.followUpDepartment || "");setFollowUpTimeSlot(presc.followUpTimeSlot || "");setFollowUpDelivery(presc);
           setPrescriptionItems(presc.items.map(item => ({
             medicineName: item.medicineName,
             medicineCode: item.medicineCode,
@@ -252,6 +273,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             quantity: item.quantity,
             notes: item.notes
           })));
+          }
         }
 
         // Fetch existing lab orders if any
@@ -260,46 +282,44 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           if (labRes.data) {
             setExistingLabOrders(labRes.data);
           }
-        } catch {
-          // Silent catch for lab order fetch
+        } catch (failure) {
+          throw new Error(getErrorMessage(failure,"Chưa tải được chỉ định xét nghiệm; không thể kết luận ca không có chỉ định."));
         }
       } catch (err) {
         console.error(err);
-        showToast(err instanceof Error ? err.message : "Không thể tải thông tin phiên khám.", "danger");
+        setLoadError(err instanceof Error ? err.message : "Không thể tải thông tin phiên khám.");
       } finally {
         setIsLoading(false);
       }
     }
     loadData();
-  }, [consultationId]);
+  }, [consultationId, user?.id, loadPatientDetails]);
 
-  // Lazy load Clinical Summary data when tab "summary" is active
+  // A failed history request is unknown, never an empty clinical history.
   const summaryPatientId = consultation?.patientId;
   useEffect(() => {
     if (activeTab !== "summary" || summaryLoaded || !summaryPatientId) return;
     const patientId = summaryPatientId;
+    let active=true;
     async function loadSummary() {
-      setSummaryLoading(true);
+      setSummaryLoading(true);setSummaryError(null);
       try {
-        const [consRes, prescRes, emrRes] = await Promise.all([
-          consultationApi.getByPatient(patientId),
-          prescriptionApi.getByPatient(patientId),
-          emrApi.getPatientSummary(patientId).catch(() => null),
+        const [consRes,prescRes,emrRes]=await Promise.all([
+          consultationApi.getByPatient(patientId),prescriptionApi.getByPatient(patientId),emrApi.getPatientSummary(patientId),
         ]);
-        setConsultationHistory((consRes.data ?? []).filter(c => c.id !== consultationId));
-        setPrescriptionHistory(prescRes.data ?? []);
-        if (emrRes?.data?.medicalRecord) {
-          setEmrRecord(emrRes.data.medicalRecord);
-        }
-      } catch {
-        setConsultationHistory([]);
-        setPrescriptionHistory([]);
+        if(!active)return;
+        if(!Array.isArray(consRes.data) || !Array.isArray(prescRes.data) || !emrRes.data)
+          throw new Error("Máy chủ chưa trả đủ dữ liệu bệnh sử.");
+        setConsultationHistory(consRes.data.filter(item=>item.id!==consultationId));
+        setPrescriptionHistory(prescRes.data);setEmrRecord(emrRes.data.medicalRecord || null);
+      } catch(failure) {
+        if(active)setSummaryError(getErrorMessage(failure,"Không tải được bệnh sử. Chưa thể kết luận không có dữ liệu."));
       } finally {
-        setSummaryLoading(false);
-        setSummaryLoaded(true);
+        if(active){setSummaryLoading(false);setSummaryLoaded(true);}
       }
     }
-    loadSummary();
+    void loadSummary();
+    return ()=>{active=false;};
   }, [activeTab, summaryLoaded, summaryPatientId, consultationId]);
 
   // Handle ICD-10 Search
@@ -438,7 +458,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
   // Save draft
   const saveDraft = async () => {
-    if (!user) return;
+    if (!user) return false;
+    if(followUpDate && prescriptionItems.length>0 && (!prescriptionId || prescriptionStatus==="DRAFT") && (!followUpDepartment || !followUpTimeSlot)){
+      showToast("Chọn khoa và ca tái khám còn chỗ trước khi lưu toa.","warning");return false;
+    }
     setIsSaving(true);
 
     try {
@@ -457,7 +480,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       };
       await consultationApi.updateConsultation(consultationId, consultationUpdate);
 
-      if (prescriptionItems.length > 0) {
+      if (prescriptionItems.length > 0 && (!prescriptionId || prescriptionStatus === "DRAFT")) {
         const prescriptionData = {
           consultationId,
           patientId: consultation!.patientId,
@@ -465,6 +488,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           diagnosis,
           notes: prescriptionNotes,
           followUpDate: followUpDate || undefined,
+          followUpDepartment: followUpDate ? followUpDepartment : undefined,
+          followUpTimeSlot: followUpDate ? followUpTimeSlot : undefined,
           items: prescriptionItems
         };
 
@@ -479,9 +504,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       }
 
       showToast("Lưu thông tin nháp thành công.");
+      return true;
     } catch (err) {
       console.error(err);
       showToast(err instanceof Error ? err.message : "Đã xảy ra lỗi khi lưu thông tin.", "danger");
+      return false;
     } finally {
       setIsSaving(false);
     }
@@ -493,8 +520,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     setIsSaving(true);
     try {
       const res = await prescriptionApi.confirmPrescription(prescriptionId);
-      setPrescriptionStatus(res.data.status);
-      showToast("Ký và Xác nhận đơn thuốc thành công. Hệ thống đã đồng bộ sang Quầy thuốc.");
+      setPrescriptionStatus(res.data.status);setFollowUpDelivery(res.data);
+      showToast(res.data.followUpDate && res.data.followUpStatus!=="SCHEDULED"
+        ? "Toa đã ký. Lịch tái khám chưa được xác nhận; kiểm tra trạng thái và thử lại."
+        : "Toa đã ký; hệ thống đang chuyển thông tin đến quầy thuốc.",res.data.followUpDate && res.data.followUpStatus!=="SCHEDULED"?"warning":"success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Đã xảy ra lỗi khi ký đơn thuốc.", "danger");
     } finally {
@@ -520,56 +549,29 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     });
   };
 
+  const executeWaitForResults = async () => {
+    if(!consultation)return;
+    await consultationApi.waitForResults(consultationId);
+    setConsultation(current=>current?{...current,status:"AWAITING_CLS"}:current);
+    let initial=consultation.queueEntryId;
+    if(!initial && consultation.appointmentId)initial=(await queueApi.getTicket(consultation.appointmentId)).data.ticketId;
+    if(!initial)throw new Error("Đã chuyển chờ CLS nhưng chưa xác định được lượt để đóng. Tải lại ca khám rồi thử tiếp tục chờ CLS.");
+    await queueApi.completeEntry(initial);
+  };
+
   // Action to execute complete consultation
   const executeCompleteConsultation = async () => {
     setIsSaving(true);
     try {
-      await saveDraft();
-      await consultationApi.completeConsultation(consultationId);
-      let resolvedEntryId = entryId;
-      if (consultation?.appointmentId) {
-        try {
-          const ticketRes = await queueApi.getTicket(consultation.appointmentId);
-          if (ticketRes.data?.ticketId) {
-            resolvedEntryId = ticketRes.data.ticketId;
-          }
-        } catch {
-          /* Fallback to URL entryId */
-        }
-      }
-      if (resolvedEntryId) {
-        try {
-          await queueApi.completeEntry(resolvedEntryId);
-        } catch (err) {
-          console.warn("[QUEUE COMPLETE WARN] Failed to complete resolved entry, trying appointment ticket...", err);
-          if (consultation?.appointmentId) {
-            try {
-              const ticketRes = await queueApi.getTicket(consultation.appointmentId);
-              if (ticketRes.data?.ticketId && ticketRes.data.ticketId !== resolvedEntryId) {
-                await queueApi.completeEntry(ticketRes.data.ticketId);
-              }
-            } catch { /* ignore */ }
-          }
-        }
-      }
-      if (consultation?.appointmentId) {
-        try {
-          await appointmentApi.updateStatus(consultation.appointmentId, "COMPLETED", "Hoàn tất khám bệnh");
-        } catch {
-          /* Ignore secondary sync failure */
-        }
-      }
-      
-      showToast("Hoàn tất lượt khám thành công. Đang chuyển về bảng điều khiển...");
-      setTimeout(() => {
-        router.replace("/dashboard/general");
-      }, 1200);
-    } catch (err) {
-      showToast(err instanceof Error ? err.message : "Đã xảy ra lỗi khi hoàn tất phiên khám.", "danger");
-    } finally {
-      setIsSaving(false);
-      setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
-    }
+      if(consultation?.status!=="COMPLETED" && !(await saveDraft()))return;
+      setIsSaving(true);
+      const result=(await consultationApi.finalizeVisit(consultationId)).data;
+      setConsultation(result.consultation);setCompletionPending(!result.complete);
+      if(!result.complete){showToast("Ca khám đã đóng; hàng đợi hoặc lịch hẹn chưa đồng bộ xong. Bấm Thử lại đồng bộ để tiếp tục.","warning");return;}
+      showToast("Ca khám, hàng đợi và lịch hẹn đã hoàn tất.");
+      router.replace("/dashboard/general");
+    }catch(failure){showToast(getErrorMessage(failure,"Chưa hoàn tất thao tác. Tải lại trạng thái trước khi thử lại."),"danger");}
+    finally{setIsSaving(false);setConfirmModalConfig(previous=>({...previous,isOpen:false}));}
   };
 
   // AI Clinical Assistant Call handlers
@@ -641,7 +643,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
   // Complete Consultation trigger
   const completeConsultation = () => {
-    if (prescriptionItems.length > 0 && prescriptionStatus !== "CONFIRMED") {
+    if (prescriptionItems.length > 0 && prescriptionStatus !== "CONFIRMED" && prescriptionStatus !== "DISPENSED") {
       showToast("Vui lòng KÝ và XÁC NHẬN đơn thuốc trước khi hoàn tất phiên khám.", "warning");
       if (typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
@@ -670,8 +672,22 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     );
   }
 
+  if (loadError || !consultation) {
+    return (
+      <section role="alert" className="max-w-xl mx-auto mt-12 bg-white border border-red-200 rounded-xl p-6 space-y-4">
+        <h1 className="text-xl font-bold">Không thể mở phiên khám</h1>
+        <p>{loadError || "Không tìm thấy thông tin phiên khám."}</p>
+        <p className="text-sm text-gray-600">Nếu đây là ca bàn giao, bạn cần xác nhận tiếp nhận trước khi mở ca khám.</p>
+        <div className="flex gap-3">
+          <Link href="/dashboard/handovers" className="border rounded-lg px-4 py-2">Quay lại bàn giao</Link>
+          <button onClick={() => window.location.reload()} className="bg-purple-800 text-white rounded-lg px-4 py-2">Thử lại</button>
+        </div>
+      </section>
+    );
+  }
+
   const isConsultationLocked = consultation?.status === "COMPLETED" || consultation?.status === "CANCELLED";
-  const isPrescriptionLocked = prescriptionStatus === "CONFIRMED" || isConsultationLocked;
+  const isPrescriptionLocked = prescriptionStatus === "CONFIRMED" || prescriptionStatus === "DISPENSED" || isConsultationLocked;
 
   const tempWarn = getTempWarning(temperature);
   const bpWarn = getBpWarning(bloodPressure);
@@ -679,7 +695,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const spo2Warn = getSpo2Warning(spo2);
 
   return (
-    <div className="space-y-6 pb-24 relative bg-[linear-gradient(to_right,rgba(43,29,48,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(43,29,48,0.015)_1px,transparent_1px)] bg-[size:24px_24px]">
+    <div className="space-y-6 pb-40 relative bg-[linear-gradient(to_right,rgba(43,29,48,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(43,29,48,0.015)_1px,transparent_1px)] bg-[size:24px_24px]">
       
       {/* Toast Notification Container */}
       {toast && (
@@ -696,22 +712,25 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       )}
 
       {/* Patient header info */}
+      {inheritedDrafts.length > 0 && <div className="border border-amber-200 bg-amber-50 p-3 rounded-lg text-sm space-y-2"><p>Ca bàn giao có toa nháp của bác sĩ trước. Bạn có thể xem để đối chiếu; toa mới sẽ được lập dưới tên của bạn, không ký thay tác giả cũ.</p>{inheritedDrafts.map(p => <button key={p.id} onClick={() => setSelectedHistoryPrescription(p)} className="text-purple-800 underline mr-3">Xem toa nháp {p.id.slice(0, 8)}</button>)}</div>}
       <div className="border border-card-border bg-card-bg p-4 shadow-[0_1px_3px_rgba(110,37,130,0.06)] flex flex-wrap justify-between items-center rounded-lg">
         <div>
           <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Phiên khám hiện hành</span>
           <h1 className="text-xl font-bold text-[#2B1D30]">{patientName}</h1>
-          <p className="text-xs text-[#6A5C70]">{patientAge} tuổi · {patientGender}</p>
+          <p className="text-xs text-[#6A5C70]">{patientAge===null?"Chưa có ngày sinh":`${patientAge} tuổi`} · {patientGender}</p>
+          {consultation?.doctorName && <p className="text-xs text-[#6A5C70] mt-1">Bác sĩ phụ trách: {consultation.doctorName}{consultation.authoredByDoctorName && consultation.authoredByDoctorId !== consultation.doctorId ? ` · Khởi tạo: ${consultation.authoredByDoctorName}` : ""}</p>}
+          {consultation && !["COMPLETED", "CANCELLED", "TRANSFERRED"].includes(consultation.status) && <Link href="/dashboard/handovers" className="inline-block mt-2 text-sm text-purple-800 underline">Bàn giao ca khám</Link>}
         </div>
         <div className="flex gap-4">
           <div className="text-right">
             <span className="text-[10px] uppercase font-bold text-gray-400">Trạng thái khám</span>
             <div className="mt-1">
               <span className={`px-2 py-0.5 text-xs font-semibold rounded-md ${
-                consultation?.status === "IN_PROGRESS" 
-                  ? "bg-[#E8F1FD] text-[#2F80ED] border border-[#2F80ED]/20" 
-                  : "bg-success-light text-success border border-success/20"
+                consultation?.status === "COMPLETED"
+                  ? "bg-success-light text-success border border-success/20"
+                  : "bg-[#E8F1FD] text-[#2F80ED] border border-[#2F80ED]/20"
               }`}>
-                {consultation?.status === "IN_PROGRESS" ? "Đang khám" : "Hoàn tất"}
+                {({IN_PROGRESS: "Đang khám", AWAITING_CLS: "Chờ cận lâm sàng", AWAITING_REVIEW: "Chờ đọc kết quả", READY_TO_COMPLETE: "Sẵn sàng hoàn tất", COMPLETED: "Hoàn tất", CANCELLED: "Đã hủy", TRANSFERRED: "Đã chuyển"} as Record<string, string>)[consultation?.status || ""] || consultation?.status}
               </span>
             </div>
           </div>
@@ -732,6 +751,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
+      {patientDataError && <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+        Không tải được thông tin hồ sơ / dị ứng: {patientDataError}. Chưa thể kết luận bệnh nhân không có tiền sử.
+        <button type="button" className="ml-3 font-semibold underline" onClick={()=>{if(consultation)void loadPatientDetails(consultation.patientId);}}>Thử lại thông tin hồ sơ</button>
+      </div>}
       {/* Structured 3-Level Allergy Banners */}
       {allergyLoaded && (
         patientAllergies.length > 0 ? (
@@ -1216,13 +1239,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                           clinicalNote: labClinicalNote || symptoms || "Chỉ định cận lâm sàng",
                           paymentRequired: false
                         });
-                        try {
-                          await consultationApi.waitForResults(consultationId);
-                          setConsultation(prev => prev ? { ...prev, status: "AWAITING_CLS" } : null);
-                        } catch {
-                          /* Ignore status update failure */
-                        }
-                        showToast("Đã tạo chỉ định Cận lâm sàng thành công. Bệnh nhân đã được tự động xếp lượt!", "success");
+                        let transitioned=true;
+                        try{await executeWaitForResults();}catch(failure){transitioned=false;showToast(getErrorMessage(failure,"Đã tạo chỉ định; bước chuyển chờ CLS chưa xong. Dùng Tiếp tục chờ CLS để thử lại."),"warning");}
+                        if(transitioned)showToast("Đã tạo chỉ định và chuyển ca sang chờ CLS. Lượt xét nghiệm đang được đồng bộ.","success");
                         setSelectedLabServices([]);
                         setLabClinicalNote("");
                         const updatedOrders = await labApi.getByConsultation(consultationId);
@@ -1240,6 +1259,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 )}
               </div>
 
+              {existingLabOrders.some(order=>!["REVIEWED","CANCELLED"].includes(order.status)) && (consultation.status==="IN_PROGRESS" || consultation.status==="AWAITING_CLS") && <button disabled={isSaving || isSubmittingLabOrder} className="rounded-lg border border-indigo-200 px-3 py-2 text-sm" onClick={async()=>{setIsSaving(true);try{await executeWaitForResults();showToast("Đã chuyển sang chờ xét nghiệm và đóng lượt khám ban đầu.");}catch(failure){showToast(getErrorMessage(failure,"Chưa chuyển xong giai đoạn chờ CLS."),"warning");}finally{setIsSaving(false);}}}>Tiếp tục chờ CLS</button>}
               {/* Danh sách Chỉ định đã được tạo */}
               {existingLabOrders.length > 0 && (
                 <div className="space-y-3">
@@ -1258,9 +1278,14 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                             "bg-amber-100 text-amber-800"
                           }`}>
                             {order.status === "RESULT_AVAILABLE" ? "Đã có kết quả" :
-                             order.status === "IN_PROGRESS" ? "Đang thực hiện" : "Đã vào hàng chờ CLS"}
+                             order.status === "IN_PROGRESS" ? "Đang thực hiện" : order.status === "REVIEWED" ? "Bác sĩ đã đọc" : order.status === "CANCELLED" ? "Đã hủy" : "Đã vào hàng chờ CLS"}
                           </span>
                         </div>
+                        {!isConsultationLocked && <button disabled={isSaving} className="rounded-lg border border-indigo-200 px-3 py-2 text-xs text-indigo-800" onClick={async()=>{setIsSaving(true);try{await labApi.synchronizeReview(order.id);showToast("Đã đối chiếu lượt CLS. Nếu đủ kết quả, hệ thống sẽ đồng bộ lượt đọc kết quả.");}catch(failure){showToast(getErrorMessage(failure,"Chưa đồng bộ được lượt CLS."),"warning");}finally{setIsSaving(false);}}}>Đồng bộ lượt CLS</button>}
+                        {order.status==="RESULT_AVAILABLE" && !isConsultationLocked && <button disabled={isSaving} className="rounded-lg border border-emerald-300 px-3 py-2 text-xs text-emerald-800 disabled:opacity-50" onClick={async()=>{
+                          setIsSaving(true);try{await labApi.markReviewed(order.id);setExistingLabOrders((await labApi.getByConsultation(consultationId)).data);showToast("Đã ghi nhận bác sĩ đọc kết quả.");}
+                          catch(failure){showToast(getErrorMessage(failure,"Chưa ghi nhận đọc kết quả."),"danger");}finally{setIsSaving(false);}
+                        }}>Tôi đã đọc kết quả chỉ định này</button>}
                         <div className="divide-y divide-indigo-100 border border-indigo-100 bg-white rounded-md text-xs">
                           {order.items.map(item => (
                             <div key={item.id} className="p-2.5 flex items-center justify-between">
@@ -1291,45 +1316,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   <h3 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wider">
                     Chọn dịch vụ Cận lâm sàng từ Danh mục
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {MOCK_LAB_SERVICES.map((service) => {
-                      const isSelected = selectedLabServices.some(s => s.serviceCode === service.serviceCode);
-                      return (
-                        <div
-                          key={service.serviceCode}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedLabServices(prev => prev.filter(s => s.serviceCode !== service.serviceCode));
-                            } else {
-                              setSelectedLabServices(prev => [...prev, service]);
-                            }
-                          }}
-                          className={`p-3 border rounded-lg cursor-pointer transition-all ${
-                            isSelected
-                              ? "border-primary-600 bg-primary-50/40 shadow-xs"
-                              : "border-card-border bg-white hover:border-gray-300"
-                          }`}
-                        >
-                          <div className="flex items-start justify-between">
-                            <div className="space-y-1">
-                              <span className="text-xs font-bold text-gray-900">{service.serviceName}</span>
-                              <span className="text-[11px] text-gray-500 block">{service.servicePointName}</span>
-                              {service.preparationInstruction && (
-                                <span className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 px-1.5 py-0.5 rounded inline-block">
-                                  {service.preparationInstruction}
-                                </span>
-                              )}
-                            </div>
-                            <input
-                              type="checkbox"
-                              checked={isSelected}
-                              onChange={() => {}}
-                              className="h-4 w-4 text-primary-600 rounded focus:ring-primary-500 cursor-pointer mt-0.5"
-                            />
-                          </div>
-                        </div>
-                      );
-                    })}
+                  <HandoverPicker label="Dịch vụ cận lâm sàng" value=""
+                    options={labCatalog.filter(service => !selectedLabServices.some(selected => selected.serviceCode === service.serviceCode)).map(service => ({value: service.serviceCode, label: `${service.serviceName} · ${service.servicePointId}`}))}
+                    onChange={code => { const service = labCatalog.find(item => item.serviceCode === code); if (service) setSelectedLabServices(current => [...current, service]); }} />
+                  <div className="flex flex-wrap gap-2">
+                    {selectedLabServices.map(service => <button type="button" key={service.serviceCode} onClick={() => setSelectedLabServices(current => current.filter(item => item.serviceCode !== service.serviceCode))} className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs text-purple-800" aria-label={`Bỏ ${service.serviceName}`}>{service.serviceName} ×</button>)}
                   </div>
 
                   <div>
@@ -1348,6 +1339,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           )}
 
           {/* TAB 5: Clinical Summary */}
+          {activeTab === "summary" && consultation && user && <div className="space-y-4 mb-4">
+            <UploadedHealthRecords key={`uploads-${consultation.patientId}-${user.id}`} patientId={consultation.patientId} />
+            <FollowUpAppointmentPanel key={`follow-up-${consultationId}-${user.id}`} consultationId={consultationId} patientId={consultation.patientId} doctorId={user.id} />
+          </div>}
           {activeTab === "summary" && (
             <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-5">
               <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
@@ -1360,6 +1355,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   <div className="h-28 bg-gray-100 animate-pulse rounded-md" />
                   <div className="h-24 bg-gray-100 animate-pulse rounded-md" />
                 </div>
+              ) : summaryError ? (
+                <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
+                  Không tải được bệnh sử: {summaryError}. Chưa thể kết luận không có lịch sử khám hoặc đơn thuốc.
+                  <button type="button" className="ml-3 font-semibold underline" onClick={()=>setSummaryLoaded(false)}>Thử lại bệnh sử</button>
+                </div>
               ) : (
                 <div className="space-y-5">
                   {/* Section A: EMR Master Record Card (Hồ sơ Bệnh án Điện tử) */}
@@ -1370,7 +1370,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                           Hồ sơ EMR Master
                         </span>
                         <span className="text-xs font-mono font-bold text-purple-900">
-                          {emrRecord?.recordNumber || "EMR-2026-PENDING"}
+                          {emrRecord?.recordNumber || "Chưa có mã EMR"}
                         </span>
                       </div>
                       {emrRecord?.bloodType && (
@@ -1404,7 +1404,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
                     {(consultationHistory ?? []).length === 0 ? (
                       <div className="py-6 text-center text-xs text-slate-400 italic bg-slate-50 border border-dashed border-slate-200 rounded-md">
-                        Đây là lần khám đầu tiên của bệnh nhân trong hệ thống CareFlow
+                        Chưa có lịch sử khám được trả về trong phạm vi tra cứu
                       </div>
                     ) : (
                       <div className="divide-y divide-slate-100 border border-slate-200 rounded-md max-h-[260px] overflow-y-auto pr-1">
@@ -1872,19 +1872,13 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
               Lịch Hẹn Tái khám
             </h2>
-            <div>
-              <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Ngày hẹn tái khám</label>
-              <input
-                type="date"
-                disabled={isPrescriptionLocked}
-                value={followUpDate}
-                onChange={(e) => setFollowUpDate(e.target.value)}
-                className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
-              />
-            </div>
-            <p className="text-[10px] text-[#6A5C70]">
-              * Bệnh nhân sẽ nhận được thông báo tái khám tự động trên ứng dụng di động dựa theo ngày đã chọn.
-            </p>
+            {user && <FollowUpFields doctorId={user.id} value={{date:followUpDate,department:followUpDepartment,timeSlot:followUpTimeSlot}} onChange={plan=>{setFollowUpDate(plan.date);setFollowUpDepartment(plan.department);setFollowUpTimeSlot(plan.timeSlot);}} disabled={isPrescriptionLocked || isSaving} />}
+            {followUpDelivery?.followUpDate && (followUpDelivery.status==="CONFIRMED" || followUpDelivery.status==="DISPENSED") && <div className="rounded-lg border p-3 text-xs space-y-2">
+              <p>{followUpDelivery.followUpStatus==="SCHEDULED"?"Lịch tái khám đã được xác nhận.":"Toa đã ký. Lịch tái khám chưa được xác nhận; không cần ký lại toa."}</p>
+              {followUpDelivery.followUpStatus!=="SCHEDULED" && followUpDelivery.followUpStatus!=="NEEDS_SELECTION" && <button disabled={isSaving} className="rounded-lg border px-3 py-2" onClick={async()=>{if(!prescriptionId)return;setIsSaving(true);try{setFollowUpDelivery((await prescriptionApi.retryFollowUp(prescriptionId)).data);}catch(failure){showToast(getErrorMessage(failure,"Chưa xác nhận được lịch tái khám."),"warning");}finally{setIsSaving(false);}}}>Thử lại tạo lịch đã chọn</button>}
+              {(followUpDelivery.followUpStatus==="FAILED" || followUpDelivery.followUpStatus==="NEEDS_SELECTION") && <p>Nếu ca đã đầy/ngày đã qua, mở Tổng quan &amp; Tiền sử, đối chiếu lịch đã tạo rồi chọn lịch phù hợp trong Hẹn tái khám từ ca khám.</p>}
+            </div>}
+            <p className="text-[10px] text-[#6A5C70]">Chỉ báo tạo lịch thành công sau khi máy chủ xác nhận. Thông báo đẩy khi app ở nền được nghiệm thu riêng.</p>
           </div>
 
         </div>
@@ -1892,13 +1886,14 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       </div>
 
       {/* SLIDE-OVER DRAWER MODAL FOR MEDICINE ENTRY */}
+      {typeof document !== "undefined" && createPortal(
+      <div className="relative z-[60]">
       {isMedicineDrawerOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs">
-          <div className="w-full max-w-lg bg-card-bg border-l border-card-border shadow-2xl h-full flex flex-col justify-between p-6 animate-in slide-in-from-right duration-200 rounded-l-xl">
+        <div role="dialog" aria-modal="true" aria-labelledby="medicine-drawer-title" className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs">
+          <div className="w-full max-w-lg min-h-0 bg-card-bg border-l border-card-border shadow-2xl h-dvh flex flex-col p-6 animate-in slide-in-from-right duration-200 rounded-l-xl">
             
-            <div className="flex-1 overflow-y-auto pr-1 space-y-5">
-              <div className="flex justify-between items-center border-b border-card-border pb-3">
-                <h3 className="text-base font-bold text-[#2B1D30] uppercase tracking-wide">
+              <div className="shrink-0 flex justify-between items-center border-b border-card-border pb-3">
+                <h3 id="medicine-drawer-title" className="text-base font-bold text-[#2B1D30] uppercase tracking-wide">
                   {editingMedicineCode ? "Cập nhật thông tin thuốc" : "Thêm thuốc vào đơn kê"}
                 </h3>
                 <button
@@ -1910,6 +1905,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 </button>
               </div>
 
+            <div className="min-h-0 flex-1 overflow-y-auto py-4 pr-1 space-y-5">
               {/* Search-as-you-type Autocomplete for Medicine Selection */}
               <div className="relative z-40">
                 <label className="block text-xs font-bold text-[#2B1D30] mb-1">Tìm kiếm & Chọn thuốc (*)</label>
@@ -2041,7 +2037,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             </div>
 
             {/* Drawer Actions */}
-            <div className="pt-4 border-t border-card-border flex gap-3">
+            <div className="shrink-0 pt-4 border-t border-card-border flex gap-3">
               <button
                 type="button"
                 onClick={() => setIsMedicineDrawerOpen(false)}
@@ -2063,18 +2059,19 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       )}
 
       {/* Sticky Bottom Action Bar */}
-      <div className="fixed bottom-0 left-64 right-0 bg-[#2B1D30] border-t border-white/10 h-[64px] px-6 flex justify-between items-center z-30 shadow-2xl">
-        <div className="flex items-center gap-2">
+      <div aria-label="Thao tác phiên khám" className="fixed bottom-0 left-64 right-0 bg-[#2B1D30] border-t border-white/10 min-h-16 px-4 py-3 flex flex-wrap justify-between items-center gap-3 z-30 shadow-2xl">
+        <div className="flex min-w-0 items-center gap-2">
           <span className="w-2 h-2 bg-emerald-400 rounded-full inline-block"></span>
-          <span className="text-xs text-white/70 font-medium">Bác sĩ phụ trách: <strong className="text-white">{user?.fullName}</strong></span>
+          <span className="truncate text-xs text-white/70 font-medium">Bác sĩ phụ trách: <strong className="text-white">{consultation?.doctorName || user?.fullName || user?.username || user?.email}</strong></span>
         </div>
         
-        <div className="flex gap-3">
+        <div className="ml-auto flex max-w-full flex-wrap justify-end gap-2">
+          {consultation?.status==="COMPLETED" && <button onClick={()=>void executeCompleteConsultation()} disabled={isSaving} className="rounded-lg border border-white/40 px-3 py-2 text-xs text-white disabled:opacity-50">{completionPending?"THỬ LẠI ĐỒNG BỘ":"ĐỐI SOÁT HOÀN TẤT"}</button>}
           {!isConsultationLocked && (
             <button
               onClick={saveDraft}
               disabled={isSaving}
-              className="border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md"
+              className="whitespace-nowrap border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md"
             >
               {isSaving ? "ĐANG LƯU..." : "LƯU NHÁP ĐƠN"}
             </button>
@@ -2084,7 +2081,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <button
               onClick={confirmPrescription}
               disabled={isSaving}
-              className="border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md"
+              className="whitespace-nowrap border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md"
             >
               {isSaving ? "ĐANG KÝ..." : "KÝ & XÁC NHẬN ĐƠN"}
             </button>
@@ -2094,7 +2091,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <button
               onClick={completeConsultation}
               disabled={isSaving}
-              className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md shadow-sm"
+              className="whitespace-nowrap bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md shadow-sm"
             >
               {isSaving ? "ĐANG XỬ LÝ..." : "HOÀN TẤT PHIÊN KHÁM"}
             </button>
@@ -2349,6 +2346,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         </div>
       )}
 
+      </div>,
+      document.body
+      )}
     </div>
 
   );

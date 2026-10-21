@@ -1,0 +1,63 @@
+spring:
+  config:
+    import: classpath:careflow-security.yml
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            add-to-simple-url-handler-mapping: true
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: '${CAREFLOW_WEB_ORIGIN}'
+                allowedMethods: [GET, POST, PUT, PATCH, DELETE, OPTIONS]
+                allowedHeaders: [Authorization, Content-Type, DPoP, X-Correlation-Id, Idempotency-Key, X-Emulator-Device]
+          routes:
+            - id: secure-notifications-ws
+              uri: wss://careflow-notification-service:8085
+              predicates:
+                - Path=/ws/**
+            - id: secure-identity-service
+              uri: lb://identity-service
+              predicates:
+                - Path=/api/auth/**,/api/users/**
+            - id: secure-patient-service
+              uri: lb://patient-service
+              predicates:
+                - Path=/api/patients/**,/api/health-records/**
+            - id: secure-appointment-service
+              uri: lb://appointment-service
+              predicates:
+                - Path=/api/appointments/**
+            - id: secure-queue-service
+              uri: lb://queue-service
+              predicates:
+                - Path=/api/queues/**
+            - id: secure-notification-service
+              uri: lb://notification-service
+              predicates:
+                - Path=/api/notifications/**
+            - id: secure-analytics-service
+              uri: lb://analytics-service
+              predicates:
+                - Path=/api/analytics/**
+            - id: secure-consultation-service
+              uri: lb://consultation-service
+              predicates:
+                - Path=/api/consultations/**
+            - id: secure-prescription-service
+              uri: lb://prescription-service
+              predicates:
+                - Path=/api/prescriptions/**
+            - id: secure-emr-service
+              uri: lb://emr-service
+              predicates:
+                - Path=/api/emr/**
+            - id: secure-lab-service
+              uri: lb://lab-service
+              predicates:
+                - Path=/api/labs/**
+            - id: secure-hospital-directory-service
+              uri: lb://hospital-directory-service
+              predicates:
+                - Path=/api/directory/**

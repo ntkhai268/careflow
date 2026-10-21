@@ -1,0 +1,14 @@
+OK   api-gateway :18080
+OK   identity-service :18081
+OK   patient-service :18082
+OK   appointment-service :18083
+OK   queue-service :18084
+OK   notification-service :18085
+OK   consultation-service :18086
+OK   prescription-service :18087
+OK   emr-service :18088
+OK   lab-service :18089
+OK   hospital-directory-service :18090
+OK   identity-session-secondary :18092
+OK   Mobile → Gateway
+OK   Hospital Web

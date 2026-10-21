@@ -8,6 +8,7 @@ import { consultationApi } from "@/lib/consultation-api";
 import { patientApi } from "@/lib/patient-api";
 import { appointmentApi } from "@/lib/appointment-api";
 import { getErrorMessage } from "@/lib/error-utils";
+import Link from "next/link";
 
 function StatusDot({ status }: { status: string }) {
   const config: Record<string, { color: string; label: string; textClass: string }> = {
@@ -65,12 +66,13 @@ export default function DashboardQueuePage() {
   const [isCallingNext, setIsCallingNext] = useState(false);
   const [callingEntryId, setCallingEntryId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [activeConsultationId, setActiveConsultationId] = useState<string | null>(null);
 
   const [roomId, setRoomId] = useState<string | null>(null);
 
-  const loadQueue = useCallback(async (targetRoomId?: string) => {
+  const loadQueue = useCallback(async (targetRoomId?: string, background = false) => {
     if (!targetRoomId) return;
-    setIsLoading(true);
+    if (!background) setIsLoading(true);
     setFetchError(null);
     try {
       const res = await queueApi.getRoomActive(targetRoomId);
@@ -81,6 +83,7 @@ export default function DashboardQueuePage() {
       if (data?.entries && data.entries.length > 0) {
         const pMap: Record<string, string> = { ...patientNamesRef.current };
         for (const entry of data.entries) {
+          if(entry.patientName){pMap[entry.patientId]=entry.patientName;continue;}
           if (entry.patientId && !pMap[entry.patientId]) {
             try {
               const pRes = await patientApi.getPatientById(entry.patientId);
@@ -129,14 +132,25 @@ export default function DashboardQueuePage() {
     return () => { active = false; };
   }, [user, loadQueue]);
 
+  useEffect(() => {
+    if (!roomId) return;
+    const refresh = () => { if (document.visibilityState === "visible") void loadQueue(roomId, true); };
+    const timer = window.setInterval(refresh, 10000);
+    window.addEventListener("focus", refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener("focus", refresh); };
+  }, [roomId, loadQueue]);
+
   const handleCallNext = async () => {
     if (!user || !roomId) return;
     setIsCallingNext(true);
     setErrorMessage("");
+    setActiveConsultationId(null);
     try {
       const consRes = await consultationApi.getByDoctor(user.id);
       const activeCons = (consRes.data ?? []).find(c => c.status === "IN_PROGRESS");
       if (activeCons) {
+        setActiveConsultationId(activeCons.id);
+        setErrorMessage("Bạn đang có một ca khám chưa hoàn tất. Vào ca khám để xử lý trước khi gọi bệnh nhân tiếp theo.");
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
             detail: {
@@ -173,14 +187,17 @@ export default function DashboardQueuePage() {
     if (!user || !roomId) return;
     setCallingEntryId(entry.entryId);
     setErrorMessage("");
+    setActiveConsultationId(null);
     try {
       const consRes = await consultationApi.getByDoctor(user.id);
       const activeCons = (consRes.data ?? []).find(c => c.status === "IN_PROGRESS");
       const isSameConsultation = activeCons && (
-        activeCons.patientId === entry.patientId || activeCons.appointmentId === entry.appointmentId
+        activeCons.queueEntryId === entry.entryId || (!!entry.appointmentId && activeCons.appointmentId === entry.appointmentId)
       );
 
       if (activeCons && !isSameConsultation) {
+        setActiveConsultationId(activeCons.id);
+        setErrorMessage("Bạn đang có một ca khám chưa hoàn tất. Vào ca khám để xử lý trước khi gọi bệnh nhân khác.");
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
             detail: {
@@ -199,21 +216,31 @@ export default function DashboardQueuePage() {
         return;
       }
 
+      if (entry.consultationPhase === "RESULT_REVIEW") {
+        if (!entry.consultationId) throw new Error("Lượt đọc kết quả chưa liên kết ca khám.");
+        const resumed = await consultationApi.resume(entry.consultationId);
+        const appointmentId = resumed.data.appointmentId;
+        if (appointmentId) {
+          const initial = await queueApi.getTicket(appointmentId);
+          if (initial.data.status === "IN_PROGRESS" && initial.data.ticketId !== entry.entryId) await queueApi.completeEntry(initial.data.ticketId);
+        }
+        if (entry.queueStatus === "CALLED") await queueApi.startEntry(entry.entryId);
+        router.push(`/consultation/${resumed.data.id}?entryId=${entry.entryId}`);
+        return;
+      }
+
       if (entry.queueStatus === "IN_PROGRESS" && isSameConsultation) {
         router.push(`/consultation/${activeCons.id}?entryId=${entry.entryId}`);
         return;
       }
 
-      const appointmentConsultations = await consultationApi.getByAppointment(entry.appointmentId);
-      let consultation = (appointmentConsultations.data ?? []).find(c => c.status === "IN_PROGRESS");
-      if (!consultation) {
-        const res = await consultationApi.createConsultation({
-          appointmentId: entry.appointmentId,
-          patientId: entry.patientId,
-          doctorId: user.id
-        });
-        consultation = res.data;
-      }
+      const res = await consultationApi.createConsultation({
+        appointmentId: entry.appointmentId,
+        queueEntryId: entry.entryId,
+        patientId: entry.patientId,
+        doctorId: user.id
+      });
+      const consultation = res.data;
 
       if (entry.queueStatus === "CALLED") {
         await queueApi.startEntry(entry.entryId);
@@ -226,9 +253,19 @@ export default function DashboardQueuePage() {
     }
   };
 
+  const handleMissedAction = async (entry: QueueEntry, action: "recall" | "miss" | "requeue", position?: "FRONT" | "BACK") => {
+    if(!roomId || callingEntryId) return;
+    setCallingEntryId(entry.entryId);setErrorMessage("");
+    try {
+      if(action==="recall") await queueApi.recallEntry(entry.entryId);
+      else if(action==="miss") await queueApi.missEntry(entry.entryId);
+      else await queueApi.requeueEntry(entry.entryId,position);
+    }catch(e){setErrorMessage(getErrorMessage(e,"Không thể cập nhật lượt khám."));}
+    finally{await loadQueue(roomId,true);setCallingEntryId(null);}
+  };
   const safeEntries = dashboardData?.entries ?? [];
   const recommended = dashboardData?.recommendedNext;
-  const hasCallableEntry = safeEntries.some(entry =>
+  const hasCallableEntry = dashboardData?.receptionActive !== false && safeEntries.some(entry =>
     entry.queueStatus === "CHECKED_IN" || entry.queueStatus === "QUEUED"
   );
   const actionLabel = (status: QueueEntry["queueStatus"]) => {
@@ -301,6 +338,8 @@ export default function DashboardQueuePage() {
         </button>
       </div>
 
+      {dashboardData?.receptionActive === false && <p role="status" className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm">Phòng đang tạm ngừng tiếp nhận và gọi lượt mới. Bạn vẫn có thể xem và hoàn tất các ca đang phục vụ.</p>}
+
       {/* Recommended Next Patient Card (Indigo-Navy Dark Gradient Accent) */}
       {recommended && (
         <div className="bg-gradient-to-r from-[#0D0F1E] via-[#161930] to-[#1E2340] rounded-lg p-3.5 text-white border border-[#2E3462] shadow-xs flex items-center justify-between">
@@ -324,7 +363,7 @@ export default function DashboardQueuePage() {
           </div>
           <button
             onClick={() => handleCallEntry(recommended)}
-            disabled={callingEntryId === recommended.entryId}
+            disabled={!!callingEntryId || dashboardData?.receptionActive === false}
             className="px-3.5 py-1.5 bg-[#6E2582] hover:bg-[#581c69] disabled:opacity-50 text-white font-semibold text-[11px] rounded-md shadow-xs transition-colors cursor-pointer"
           >
             {callingEntryId === recommended.entryId ? "Đang xử lý..." : actionLabel(recommended.queueStatus)}
@@ -334,9 +373,10 @@ export default function DashboardQueuePage() {
 
       {/* Clean Inline Errors as specified in design.md Rule 39-40 */}
       {errorMessage && (
-        <p className="text-[11px] text-[#D9381E] font-medium px-1">
-          {errorMessage}
-        </p>
+        <div role="alert" className="flex items-center justify-between gap-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-xs text-amber-900">
+          <p>{errorMessage}</p>
+          {activeConsultationId && <Link href={`/consultation/${activeConsultationId}`} className="shrink-0 rounded-lg bg-[#6E2582] px-3 py-2 font-semibold text-white hover:bg-[#581c69]">Vào ca khám</Link>}
+        </div>
       )}
 
       {/* Three scheduling lanes */}
@@ -396,7 +436,7 @@ export default function DashboardQueuePage() {
                           </div>
                           <button
                             onClick={() => handleCallEntry(entry)}
-                            disabled={callingEntryId === entry.entryId}
+                            disabled={!!callingEntryId || (dashboardData?.receptionActive === false && (entry.queueStatus === "CHECKED_IN" || entry.queueStatus === "QUEUED"))}
                             className="flex-shrink-0 px-2.5 py-1.5 bg-white hover:bg-purple-50 border border-gray-200 text-[#2B1D30] hover:text-[#6E2582] disabled:opacity-50 rounded text-[10px] font-semibold transition-all cursor-pointer"
                           >
                             {callingEntryId === entry.entryId
@@ -417,6 +457,16 @@ export default function DashboardQueuePage() {
           </div>
         )}
       </div>
+
+      <section className="space-y-3 rounded-xl border bg-white p-4">
+        <h2 className="font-bold">Lượt đã gọi và lỡ lượt</h2>
+        <p className="text-xs text-slate-600">Gọi đủ số lần theo quy định trước khi đánh dấu lỡ lượt. Xếp lại theo chính sách phòng; lượt đọc kết quả luôn về cuối.</p>
+        {safeEntries.filter(e => e.queueStatus === "CALLED" || e.queueStatus === "MISSED").map(entry => <div key={entry.entryId} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+          <div>#{entry.queueNumber} · {entry.patientName || patientNames[entry.patientId] || "Bệnh nhân"} · <StatusDot status={entry.queueStatus} /> · Đã gọi {entry.callAttempts}/3</div>
+          <div className="flex flex-wrap gap-2">{entry.queueStatus === "CALLED" ? <><button disabled={!!callingEntryId || entry.callAttempts >= 3} onClick={() => void handleMissedAction(entry,"recall")} className="rounded-lg border p-2 disabled:opacity-50">Gọi lại</button><button disabled={!!callingEntryId || entry.callAttempts < 3} onClick={() => void handleMissedAction(entry,"miss")} className="rounded-lg border p-2 disabled:opacity-50">Đánh dấu lỡ lượt</button></> : <>{dashboardData?.missedPolicy === "REQUIRE_MANUAL" && entry.consultationPhase !== "RESULT_REVIEW" ? <><button disabled={!!callingEntryId} onClick={() => void handleMissedAction(entry,"requeue","FRONT")} className="rounded-lg border p-2 disabled:opacity-50">Xếp đầu</button><button disabled={!!callingEntryId} onClick={() => void handleMissedAction(entry,"requeue","BACK")} className="rounded-lg border p-2">Xếp cuối</button></> : <button disabled={!!callingEntryId} onClick={() => void handleMissedAction(entry,"requeue")} className="rounded-lg border p-2">{entry.consultationPhase === "RESULT_REVIEW" || dashboardData?.missedPolicy === "REQUEUE_BACK" ? "Xếp cuối" : "Xếp đầu"}</button>}</>}</div>
+        </div>)}
+        {!safeEntries.some(e => e.queueStatus === "CALLED" || e.queueStatus === "MISSED") && <p className="text-sm text-slate-500">Không có lượt cần xử lý.</p>}
+      </section>
     </div>
   );
 }

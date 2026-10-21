@@ -1,0 +1,36 @@
+{
+  "checkedAt": "2026-10-19T15:52:50.668Z",
+  "environment": "owned test Gateway, both Identity instances, PostgreSQL and real web UI",
+  "identityData": "synthetic TEST PERSON only; no real documents or photos",
+  "simulatedPhysicalReview": true,
+  "actualPatientIdentityVerified": false,
+  "providerCallsBefore": 4,
+  "providerCallsAfter": 4,
+  "newProviderCalls": 0,
+  "checks": [
+    {
+      "name": "Both legacy VNPT endpoints return410 before any provider call; new local-review API available",
+      "status": "PASS"
+    },
+    {
+      "name": "Patient sends three JSON fields only; encrypted pending record is idempotent and never auto-confirmed",
+      "status": "PASS"
+    },
+    {
+      "name": "Patient cannot read queue/details or approve; cross-account withdrawal and incomplete review are blocked",
+      "status": "PASS"
+    },
+    {
+      "name": "Real admin web queue renders masked list; all three checks required before real Gateway review succeeds",
+      "status": "PASS"
+    },
+    {
+      "name": "Human-review result is shared by both Identity instances; details erased and repeated decision rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner withdrawal erases pending details; complete test causes zero VNPT requests",
+      "status": "PASS"
+    }
+  ]
+}

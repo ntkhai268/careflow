@@ -20,6 +20,8 @@ public class PushDelivery {
     private UUID notificationId;
     @Column(name = "device_installation_id", nullable = false)
     private UUID deviceInstallationId;
+    @Column(name = "binding_id") private UUID bindingId;
+    @Column(name = "expires_at", nullable = false) private Instant expiresAt;
     @Column(name = "registration_token", nullable = false, length = 512)
     private String registrationToken;
     @Enumerated(EnumType.STRING)
