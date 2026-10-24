@@ -3,7 +3,7 @@
 > **Tài liệu bàn giao ngữ cảnh liên phiên (Cross-Session Handover & Memory Context)**  
 > **Dự án**: CareFlow — Phân hệ AI Lâm Sàng & Clinical RAG  
 > **Nhánh Git hiện tại**: `feature/vi/ai-service` (Tuyệt đối không push trực tiếp lên `main`)  
-> **Cập nhật lần cuối**: 23/10/2026 (17:00)  
+> **Cập nhật lần cuối**: 24/10/2026 (18:15)  
 > **Mục đích**: Lưu giữ 100% bối cảnh công việc, các quyết định kiến trúc, kinh nghiệm xử lý lỗi và nhiệm vụ tiếp theo để bất kỳ phiên làm việc AI mới nào cũng có thể tiếp tục ngay lập tức mà không bị mất dấu.
 
 ---
@@ -32,79 +32,103 @@
       - Hiển thị khối Cảnh báo tương tác thuốc DDI từ Dược thư Quốc gia nổi bật.
   - ✅ **Phase 5: User Feedback Refinement, Zustand Global Store & Medicine Catalog**: **ĐÃ HOÀN TẤT 100%**:
     - **Markdown Rendering**: Tích hợp thư viện chuẩn `react-markdown` + `remark-gfm` trong component `FormattedAiText`, render chuẩn xác tiêu đề `####`, gạch đầu dòng `*`, in đậm `**`, bảng biểu và trích dẫn.
-    - **Loại bỏ Overdesign theo `docs/design.md`**: Gỡ bỏ hoàn toàn gradient lòe lẹt, emoji trong tiêu đề (`🐾`), áp dụng bảng màu tối giản thực dụng SJD Barcelona, giảm 30% cỡ chữ chuẩn y khoa.
-    - **Hợp nhất Hỏi đáp & Gợi ý nhanh**: Gộp khung câu hỏi gợi ý và ô tra cứu thành một thanh điều khiển duy nhất tại đầu trang, loại bỏ hoàn toàn khung chat thừa thãi bên dưới.
-    - **Nút Hủy (Cancel & Re-record) cho Voice STT**:
-      - Bổ sung nút **"Hủy & Nói lại"** ngay khi đang ghi âm để bác sĩ hủy ngay mà không cần đợi.
-      - Bổ sung nút **"Hủy"** khi đang xử lý STT và trong `VoicePreviewModal`.
+    - **Loại bỏ Overdesign theo `docs/design.md`**: Gỡ bỏ hoàn toàn gradient tím/hồng lòe lẹt, emoji trong tiêu đề (`🐾`), xóa bỏ nhân vật "Bác sĩ Chồn AI" và các câu đùa cợt; chuẩn hóa giọng điệu AI nghiêm túc của "Trợ lý Lâm sàng (Phác đồ điều trị Bộ Y Tế)", giảm 30% cỡ chữ chuẩn y khoa SJD Barcelona.
+    - **Hợp nhất Hỏi đáp & Gợi ý nhanh**: Gộp khung câu hỏi gợi ý và ô tra cứu thành một thanh điều khiển duy nhất tại đầu tab AI, loại bỏ hoàn toàn khung chat thừa thãi bên dưới.
     - **Quản lý Trạng thái Toàn cục với Zustand**: Tạo store `useVoiceStore` (`src/stores/voice-store.ts`) quản lý tập trung `isRecording`, `isProcessing`, `recordingDuration`, `transcript`, `extractedFields`, `isPreviewOpen`.
+    - **Nút Hủy (Cancel & Re-record) cho Voice STT**:
+      - Bổ sung nút **"Hủy"** ngay khi đang ghi âm để bác sĩ hủy ngay và nói lại mà không cần đợi STT bóc tách.
+      - Bổ sung nút **"Hủy"** khi đang xử lý STT và trong `VoicePreviewModal`.
+    - **Tinh gọn Text Nút bấm theo `docs/design.md`**:
+      - Nút ghi âm ban đầu: `"Ghi âm"` (bỏ "lời khám", bỏ icon rườm rà).
+      - Khi đang ghi âm: đồng hồ bấm giờ `[00:05]` + nút `"Xong"` + nút `"Hủy"`.
+      - Khi đang xử lý: badge `"Đang xử lý..."` + nút `"Hủy"`.
+      - Trong modal xem trước: nút `"Hủy"` và nút `"Áp dụng"`.
+    - **Vị trí Nút Ghi âm (Layout Optimization)**:
+      - Loại bỏ hoàn toàn khung frame to bao quanh ("Ghi âm lời khám rảnh tay (STT)...").
+      - Tách nút `"Ghi âm"` ra khỏi hàng Tab khám bệnh và đặt tinh gọn ở **phía trên dãy Tab** (căn lề phải), giữ cho hàng Tab thông thoáng, phẳng phiu.
     - **Khắc phục Danh mục Thuốc Trống (Combobox Chips)**:
       - Khởi tạo bảng `drugs_dictionary` và nạp 25 thuốc lâm sàng chuẩn phác đồ Bộ Y Tế (ĐTĐ type 2, Tăng huyết áp, Viêm phổi, Tim mạch, DDI Clopidogrel - Omeprazole) vào CSDL `careflow_prescription`.
       - Cung cấp `DEFAULT_MEDICINE_CATALOG` trên Frontend đảm bảo ô chọn thuốc Combobox luôn có đầy đủ dữ liệu gợi ý.
+    - **Triệt tiêu Cảnh báo Tương tác Thuốc (DDI) Rác**:
+      - Sửa Backend `AiClinicalAssistantService`: Chỉ trích xuất DDI khi ngữ cảnh ca khám thực sự có danh sách thuốc đang kê và tên hoạt chất khớp với phác đồ DDI.
+      - Sửa Frontend `page.tsx`: Khối thẻ cảnh báo DDI màu vàng chỉ render khi `prescriptionItems.length > 0` và có thuốc tương tác; khi chưa kê thuốc, thẻ này bị ẩn hoàn toàn.
 
 ---
 
-## 2. Những Công Việc Đã Hoàn Thành
+## 2. Nhật Ký Các Phiên Gần Nhất (Recent Sessions Log)
 
-### A. Phiên 23/10/2026 (Phiên chiều):
-1. **Kiểm Tra & Khôi Phục Hạn Mức Google Embedding API**:
-   - Xác nhận quota Google AI Studio đã tự động reset thành công sau 00:00 UTC (14:00 VN).
-   - Gọi kiểm thử trực tiếp sinh vector 768 chiều từ `models/gemini-embedding-2` trả về HTTP 200 OK.
-2. **Khởi Động Lại Hạ Tầng Vector Database**:
-   - Kích hoạt lại container Docker `careflow-ai-postgres` (PostgreSQL 16 + pgvector 0.8.7) tại port `5433`.
-   - Kết nối thành công với user `careflow`, db `careflow_ai`.
-3. **Hoàn Tất Ingestion 100% Kho Tri Thức Lâm Sàng**:
-   - Chạy pipeline nạp tri thức [`scripts/ingest_clinical_rag.py`](../scripts/ingest_clinical_rag.py).
-   - Nạp 976 chunks cũ trong 0.2s nhờ cơ chế Disk Cache Hit.
-   - Xử lý hoàn tất 119 chunks DDI cuối cùng qua 12 batches an toàn với Google API.
-   - Ghi thành công toàn bộ **1.095 chunks kèm dense vector 768 chiều** vào bảng `clinical_guideline_chunks`.
-4. **Kiểm Thử Trực Tiếp Truy Vấn CSDL (Verification Tests)**:
-   - **BM25 / Full-text search**: Cấu hình `simple` dictionary trên cột `tsv_content` hoạt động chính xác với độ tương đồng từ khóa cao.
-   - **Vector Cosine Distance**: Truy vấn toán tử `<=>` với chỉ mục HNSW hoạt động mượt mà, trả kết quả tương đồng ngữ nghĩa chính xác.
+### A. Phiên 24/10/2026 (Phiên tối — Archify Architecture, Header Patient Refinement, Allergy Compact Bar & Manual RAG Import):
+1. **Tích hợp Skill Archify & Tạo Sơ đồ Kiến trúc**:
+   - Cài đặt skill `archify` vào dự án (`.agents/skills/archify`).
+   - Thiết kế và xuất bản sơ đồ kiến trúc trực quan độc lập (HTML standalone): [`docs/ai-service/clinical-ai-rag-and-voice-architecture.html`](./ai-service/clinical-ai-rag-and-voice-architecture.html) mô tả chi tiết luồng Voice STT, Hybrid Search RAG và Human-in-the-Loop.
+2. **Chuẩn hóa Header Thông tin Bệnh nhân**:
+   - Chỉnh sửa `consultation/[id]/page.tsx`: Tên bệnh nhân hiển thị chữ đen đậm rõ ràng (`Nguyễn Thị Mai`), thông tin tuổi, giới tính và mã ID (`ID: f0000001`) thu gọn chữ nhỏ màu xám ở dòng dưới.
+   - Thêm ánh xạ fallback dữ liệu mẫu cho các bệnh nhân hạt giống (`f0000001` đến `f0000006`).
+3. **Refactor Thanh Cảnh báo Dị ứng theo Chuẩn `docs/design.md`**:
+   - Thay thế các banner to đùng thô ráp bằng các thanh Compact Bar siêu gọn (~36px, `min-h-[36px] px-3 py-1.5`).
+   - Viền trái mảnh 3px (`border-l-[3px]`), loại bỏ hoàn toàn chữ IN HOA thô cứng (`MỨC 1`, `TỰ ĐỘNG CHẶN KÊ ĐƠN TRÙNG NHÓM`).
+   - Áp dụng thang cỡ chữ giảm 30% (`text-[11px]` và `text-[10px]`).
+4. **Chuẩn bị Dữ liệu & Hướng dẫn Import CSDL RAG Local**:
+   - Khẳng định quy định Git: Toàn bộ tài liệu `.md` (phác đồ điều trị) và `.csv` (DDI, generic drugs) được phép và BẮT BUỘC push lên Git để đồng bộ cả nhóm.
+   - Xuất file dump CSDL hoàn chỉnh: `scripts/careflow_ai_schema_and_data.sql` (9.5MB) chứa sẵn 1.095 chunks và vector 768 chiều.
+   - Soạn thảo tài liệu hướng dẫn nhóm: [`docs/ai-service/manual-rag-import.md`](./ai-service/manual-rag-import.md) hỗ trợ import trong 3–5 giây mà không cần gọi lại API Gemini.
+5. **Kiểm thử**:
+   - `npm run build` trên `frontend/doctor-web`: PASS 100%.
+   - `mvn -pl careflow-ai-service test`: 13/13 tests PASS 100%.
 
-### B. Phiên 22/10/2026 (Phiên tối):
-1. **Tài liệu Tiêu chuẩn Chiến lược Phân đoạn Tri thức ([`.planning/ai-service/chunking-strategy.md`](../.planning/ai-service/chunking-strategy.md))**:
-   - Chuẩn mực Best Practice: Contextual Document-Structure Chunking, Breadcrumb Injection, Window Guard 400 - 800 tokens.
-   - Nguyên tắc DDI: 1 Hàng CSV = 1 Synthetic Narrative chunk độc lập.
-2. **Sơ đồ DBML & Sổ tay Lý thuyết Vector HNSW**:
-   - Hoàn thiện tài liệu DBML tại [`.planning/ai-service/ai-service-db.dbml`](../.planning/ai-service/ai-service-db.dbml) và giải trình [`.planning/ai-service/ai-service-db.md`](../.planning/ai-service/ai-service-db.md).
-   - Chuẩn hóa sơ đồ HNSW 3 tầng tại [`.planning/ai-service/theory.md`](../.planning/ai-service/theory.md).
+### B. Phiên 24/10/2026 (Phiên chiều — Refactor UI/UX, Markdown, Zustand & Layout):
+1. **Markdown Formatting**: Cài đặt `react-markdown@10.1.0` + `remark-gfm@4.0.1`, tạo `FormattedAiText.tsx` thay thế render text thô.
+2. **Loại bỏ Overdesign & Tinh gọn Giao tiếp AI**: Xóa bỏ mascot "Bác sĩ Chồn AI", icon `🐾`, các câu đùa cợt; đổi tên thành "Trợ lý Lâm sàng (Phác đồ điều trị Bộ Y Tế)".
+3. **Gộp Điều khiển Tra cứu RAG**: Chuyển ô nhập câu hỏi lên cùng hàng với các chips gợi ý nhanh ("Chẩn đoán phân biệt", "Cảnh báo tương tác DDI", "Dữ liệu còn thiếu", "Đề xuất Cận lâm sàng").
+4. **Zustand Voice Store**: Tạo `voice-store.ts`, tách biệt logic MediaRecorder khỏi UI component, hỗ trợ nút "Hủy" bất kỳ thời điểm nào.
+5. **Tinh gọn Nút Bấm & Bố trí Nút Voice**: Bỏ frame to bao quanh nút voice, chuyển nút "Ghi âm" lên phía trên dãy Tab (căn phải) để không làm vỡ layout hàng Tab.
+6. **Data Seeding & DDI Guard**: Nạp 25 thuốc chuẩn BYT vào bảng `drugs_dictionary`, triệt tiêu cảnh báo DDI rác khi chưa kê đơn.
+7. **Kiểm thử & Git**:
+   - `npm run build` trên `frontend/doctor-web`: PASS 100% (không lỗi TypeScript hay build).
+   - `mvn -pl careflow-ai-service test`: 13/13 tests PASS 100%.
+   - Push commit `bc7bc85` và `d6fdbbd` lên `feature/vi/ai-service`.
+
+### B. Phiên 23/10/2026 (Phiên chiều — Ingestion & Backend RAG Engine):
+1. **Kiểm tra & khôi phục Quota Gemini Embedding API**: Quota reset thành công sau 00:00 UTC.
+2. **Khởi động Vector Database**: Kích hoạt Docker `careflow-ai-postgres` (PostgreSQL 16 + pgvector 0.8.7) tại port `5433`.
+3. **Ingestion 100% Tri thức Lâm sàng**: Nạp hoàn tất **1.095 chunks kèm dense vector 768 chiều** vào `clinical_guideline_chunks`.
+4. **Hybrid Search Service**: Xây dựng thuật toán Reciprocal Rank Fusion kết hợp HNSW Cosine Distance và GIN BM25.
 
 ---
 
-## 3. Trạng Thái CSDL & Hạn Mức Vector
+## 3. Trạng Thái CSDL & Hạ Tầng (Infrastructure & DB State)
 
-- **Thông số kết nối Vector DB**:
+- **Vector Database**:
   - Host: `localhost` | Port: `5433` | Database: `careflow_ai` | User: `careflow` | Password: `careflow`
   - Container Docker: `careflow-ai-postgres`
-- **Số lượng bản ghi thực tế**:
-  - `clinical_guideline_documents`: **4** tài liệu cha (`BYT-QD-4800-HOHAP`, `BYT-QD-5968-TIMMACH`, `BYT-QD-5481-NOITIET`, `BYT-QD-5948-DDI`).
-  - `clinical_guideline_chunks`: **1.095** chunks (100% có dense vector 768 chiều không null).
-- **Bộ nhớ đệm Offline Cache**:
-  - [`scripts/.rag_embeddings_cache_v2.json`](../scripts/.rag_embeddings_cache_v2.json) chứa toàn bộ 1.095 vector embeddings, đảm bảo nạp lại DB trong < 1s nếu cần tái tạo.
+  - Bảng `clinical_guideline_documents`: **4** tài liệu cha.
+  - Bảng `clinical_guideline_chunks`: **1.095** chunks (100% có vector 768 chiều).
+- **Core Database**:
+  - Host: `localhost` | Port: `5432` | User: `careflow` | Password: `careflow`
+  - CSDL `careflow_prescription`: Đã có bảng `drugs_dictionary` và 25 thuốc chuẩn phác đồ BYT.
+- **Tiến trình Nền (Background Tasks)**:
+  - Tất cả các tiến trình Spring Boot và Next.js dev server đã được **DỪNG HOÀN TOÀN** an toàn trước khi kết thúc phiên.
 
 ---
 
-## 4. Nhiệm Vụ Cụ Thể Tiếp Theo (Next Immediate Tasks — Phase 5 End-to-End Verification)
+## 4. Nhiệm Vụ Tiếp Theo Khi Tiếp Tục (Next Tasks)
 
-1. **Khởi chạy Hệ thống & Thử nghiệm Thực tế (Live End-to-End Test)**:
-   - Khởi động `careflow-ai-service` (port `8088` hoặc profile dev).
-   - Mở `frontend/doctor-web` trên trình duyệt (`http://localhost:3000`).
-   - Vào một ca khám mẫu (ví dụ: ca ho sốt hoặc tăng huyết áp), chuyển qua Tab "Trợ lý AI Lâm sàng" và bấm "Gợi ý Chẩn đoán Phân biệt".
-   - Xác nhận kết quả phân tích hiển thị chính xác các đoạn trích Phác đồ Bộ Y Tế và cảnh báo tương tác thuốc DDI.
-
-2. **Commit Code & Báo Cáo Milestone**:
-   - Khi người dùng yêu cầu, tạo focused commit theo quy chuẩn conventional commits tiếng Anh.
+1. **Commit Thay đổi Layout Nút Voice**:
+   - Khi user yêu cầu, commit thay đổi đưa nút `"Ghi âm"` lên trên hàng tab trong `frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx` và push lên `feature/vi/ai-service`.
+2. **Khởi chạy lại Dịch vụ khi cần Test**:
+   - Khởi động backend AI: `./start-local.sh ai` hoặc `mvn -pl careflow-ai-service spring-boot:run -Dspring-boot.run.profiles=local`.
+   - Khởi động frontend: `npm --prefix frontend/doctor-web run dev`.
+3. **Thử nghiệm Đơn thuốc Thực tế (E2E Test)**:
+   - Thử kê đơn thực tế gồm 2 thuốc tương tác (ví dụ `Clopidogrel` và `Omeprazole`), bấm tab "Trợ lý AI Lâm sàng" để kiểm chứng thẻ Cảnh báo DDI xuất hiện chính xác theo phác đồ Dược thư Quốc gia.
 
 ---
 
 ## 5. Tệp Tham Khảo Quan Trọng (Key File References)
 
+- **Component định dạng Markdown**: [`frontend/doctor-web/src/lib/format-ai-text.tsx`](../frontend/doctor-web/src/lib/format-ai-text.tsx)
+- **Zustand Voice Store**: [`frontend/doctor-web/src/stores/voice-store.ts`](../frontend/doctor-web/src/stores/voice-store.ts)
+- **Voice Button Component**: [`frontend/doctor-web/src/components/VoiceRecorderButton.tsx`](../frontend/doctor-web/src/components/VoiceRecorderButton.tsx)
+- **Trang Ca Khám Bác Sĩ**: [`frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx`](../frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx)
+- **Service AI Lâm Sàng**: [`careflow-ai-service/src/main/java/com/careflow/ai/service/AiClinicalAssistantService.java`](../careflow-ai-service/src/main/java/com/careflow/ai/service/AiClinicalAssistantService.java)
 - **Chiến lược Chunking chuẩn CareFlow**: [`.planning/ai-service/chunking-strategy.md`](../.planning/ai-service/chunking-strategy.md)
-- **Script Ingestion hoàn chỉnh**: [`scripts/ingest_clinical_rag.py`](../scripts/ingest_clinical_rag.py)
-- **Cache Vector 1.095 chunks**: [`scripts/.rag_embeddings_cache_v2.json`](../scripts/.rag_embeddings_cache_v2.json)
-- **Sơ đồ DBML CSDL AI**: [`.planning/ai-service/ai-service-db.dbml`](../.planning/ai-service/ai-service-db.dbml)
-- **Tài liệu giải trình CSDL**: [`.planning/ai-service/ai-service-db.md`](../.planning/ai-service/ai-service-db.md)
-- **Sổ tay lý thuyết Vector & HNSW**: [`.planning/ai-service/theory.md`](../.planning/ai-service/theory.md)
 - **Tài liệu kiến trúc AI & RAG đầy đủ**: [`docs/ai-service/clinical-ai-architecture-and-rag-implementation-plan.md`](./ai-service/clinical-ai-architecture-and-rag-implementation-plan.md)
-- **Hợp đồng dịch vụ AI**: `docs/service-contracts/12-ai-clinical-assistant.md` (CF-SVC-12)

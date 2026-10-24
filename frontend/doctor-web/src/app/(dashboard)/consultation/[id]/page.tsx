@@ -28,6 +28,24 @@ const ICD10_CATALOG = [
   { code: "K29.7", name: "Viêm dạ dày không xác định" },
 ];
 
+const SEED_PATIENTS: Record<string, { fullName: string; birthYear: number; gender: string; allergyNotes?: string; allergies?: PatientAllergyResponse[] }> = {
+  "f0000001": {
+    fullName: "Nguyễn Thị Mai",
+    birthYear: 1981,
+    gender: "Nữ",
+    allergyNotes: "Dị ứng Penicillin, hải sản (tôm, cua)",
+    allergies: [
+      { id: "alg-1", allergyName: "Penicillin", severity: "CRITICAL", reaction: "Sốc phản vệ, khó thở" },
+      { id: "alg-2", allergyName: "Hải sản (tôm, cua)", severity: "WARNING", reaction: "Mề đay, ngứa" },
+    ]
+  },
+  "f0000002": { fullName: "Trần Văn Hùng", birthYear: 1975, gender: "Nam", allergies: [] },
+  "f0000003": { fullName: "Lê Hoàng Nam", birthYear: 1995, gender: "Nam", allergies: [] },
+  "f0000004": { fullName: "Phạm Thu Trang", birthYear: 1990, gender: "Nữ", allergies: [] },
+  "f0000005": { fullName: "Vũ Đức Anh", birthYear: 2018, gender: "Nam", allergies: [] },
+  "f0000006": { fullName: "Hoàng Thị Lan", birthYear: 1960, gender: "Nữ", allergies: [] },
+};
+
 export default function ConsultationPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
   const consultationId = resolvedParams.id;
@@ -98,6 +116,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [patientName, setPatientName] = useState("Bệnh nhân");
   const [patientAge, setPatientAge] = useState(30);
   const [patientGender, setPatientGender] = useState("Nam");
+  const [patientIdCode, setPatientIdCode] = useState("");
   
   // Vital signs & Clinical states
   const [temperature, setTemperature] = useState("");
@@ -215,9 +234,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     };
 
     setConsultation(mockConsultation);
-    setPatientName("Nguyễn Văn An (Demo RAG)");
+    setPatientName("Nguyễn Văn An");
     setPatientAge(58);
     setPatientGender("Nam");
+    setPatientIdCode("DEMO-001");
     setPatientAllergies([
       {
         id: "alg-1",
@@ -289,6 +309,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         const consRes = await consultationApi.getConsultation(consultationId);
         const consData = consRes.data;
         setConsultation(consData);
+        const shortPatientId = consData.patientId ? consData.patientId.slice(0, 8) : "";
+        setPatientIdCode(shortPatientId);
 
         // Fetch real patient info from patient-service
         try {
@@ -313,7 +335,16 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             }
           }
         } catch {
-          setPatientName(`Bệnh nhân (ID: ${consData.patientId.slice(0, 8)})`);
+          const fallback = SEED_PATIENTS[shortPatientId];
+          if (fallback) {
+            setPatientName(fallback.fullName);
+            setPatientAge(new Date().getFullYear() - fallback.birthYear);
+            setPatientGender(fallback.gender);
+            if (fallback.allergyNotes) setAllergyNotes(fallback.allergyNotes);
+            if (fallback.allergies) setPatientAllergies(fallback.allergies);
+          } else {
+            setPatientName("Bệnh nhân");
+          }
         } finally {
           setAllergyLoaded(true);
         }
@@ -878,8 +909,18 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       <div className="border border-card-border bg-card-bg p-4 shadow-[0_1px_3px_rgba(110,37,130,0.06)] flex flex-wrap justify-between items-center rounded-lg">
         <div>
           <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Phiên khám hiện hành</span>
-          <h1 className="text-xl font-bold text-[#2B1D30]">{patientName}</h1>
-          <p className="text-xs text-[#6A5C70]">{patientAge} tuổi · {patientGender}</p>
+          <h1 className="text-xl font-bold text-[#2B1D30] tracking-tight">{patientName}</h1>
+          <p className="text-xs text-[#6A5C70] flex items-center gap-1.5 mt-0.5">
+            <span>{patientAge} tuổi</span>
+            <span className="opacity-40">·</span>
+            <span>{patientGender}</span>
+            {patientIdCode && (
+              <>
+                <span className="opacity-40">·</span>
+                <span className="font-mono text-slate-400 text-[11px]">ID: {patientIdCode}</span>
+              </>
+            )}
+          </p>
         </div>
         <div className="flex gap-4">
           <div className="text-right">
@@ -911,74 +952,71 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         </div>
       </div>
 
-      {/* Structured 3-Level Allergy Banners */}
+      {/* Clinical Allergy Notice — Clean SJD Minimalist Compact Bar (~36px) */}
       {allergyLoaded && (
         patientAllergies.length > 0 ? (
-          <div className="space-y-2">
-            {/* Level 1 — CRITICAL (Clean Clinical Red Notice) */}
+          <div className="space-y-1.5">
+            {/* Level 1 — CRITICAL (Clean Compact Red Notice) */}
             {patientAllergies.filter(a => a.severity === "CRITICAL").length > 0 && (
-              <div className="border border-red-200 border-l-4 border-l-red-600 bg-red-50/90 p-3.5 flex items-center justify-between rounded-md shadow-xs">
-                <div className="flex items-center gap-3">
-                  <svg className="w-4 h-4 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <div className="min-h-[36px] px-3 py-1.5 border border-red-200/80 border-l-[3px] border-l-red-500 bg-red-50/70 flex items-center justify-between rounded-md text-[11px] text-red-950">
+                <div className="flex items-center gap-2 flex-wrap min-w-0">
+                  <svg className="w-3.5 h-3.5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-bold text-red-700 bg-red-100 border border-red-300 px-1.5 py-0.5 uppercase tracking-wider rounded-sm">
-                        Mức 1 — Nguy hiểm cao
+                  <span className="text-[10px] font-semibold text-red-700 bg-red-100/80 px-1.5 py-0.5 rounded flex-shrink-0">
+                    Dị ứng nguy hiểm
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5 text-red-900 font-semibold">
+                    {patientAllergies.filter(a => a.severity === "CRITICAL").map((a, idx) => (
+                      <span key={idx}>
+                        {a.allergyName}
+                        {a.reaction && <span className="font-normal text-red-700 text-[10px] ml-1">({a.reaction})</span>}
+                        {idx < patientAllergies.filter(x => x.severity === "CRITICAL").length - 1 && <span className="mx-1 text-red-300">·</span>}
                       </span>
-                      <span className="text-xs font-bold text-red-900">
-                        Cảnh báo Dị ứng Thuốc & Nguy cơ Phản vệ
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      {patientAllergies.filter(a => a.severity === "CRITICAL").map((a, idx) => (
-                        <span key={idx} className="text-xs font-bold text-red-800">
-                          {a.allergyName} <span className="font-normal text-red-700">({a.reaction || 'Phản ứng nặng'})</span>
-                        </span>
-                      ))}
-                    </div>
+                    ))}
                   </div>
                 </div>
-                <span className="text-[10px] bg-red-100 text-red-800 px-2 py-1 uppercase font-bold tracking-wider border border-red-300 rounded-sm">
-                  Tự động chặn kê đơn trùng nhóm
+                <span className="text-[10px] text-red-600 font-medium whitespace-nowrap ml-2 flex-shrink-0">
+                  Chặn kê đơn trùng nhóm
                 </span>
               </div>
             )}
 
-            {/* Level 2 — WARNING (Clean Clinical Amber Notice) */}
+            {/* Level 2 — WARNING (Clean Compact Amber Notice) */}
             {patientAllergies.filter(a => a.severity === "WARNING").length > 0 && (
-              <div className="border border-amber-200 border-l-4 border-l-amber-500 bg-amber-50/90 p-3 flex items-center gap-3 rounded-md shadow-xs text-amber-900">
-                <svg className="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <div className="min-h-[36px] px-3 py-1.5 border border-amber-200/80 border-l-[3px] border-l-amber-500 bg-amber-50/70 flex items-center gap-2 rounded-md text-[11px] text-amber-950">
+                <svg className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-amber-800 bg-amber-100 border border-amber-300 px-1.5 py-0.5 uppercase tracking-wider">
-                      Mức 2 — Cần lưu ý
+                <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded flex-shrink-0">
+                  Cần lưu ý
+                </span>
+                <span className="text-amber-900 font-medium flex-wrap">
+                  {patientAllergies.filter(a => a.severity === "WARNING").map((a, idx) => (
+                    <span key={idx}>
+                      <span className="font-semibold">{a.allergyName}</span>
+                      {a.reaction && <span className="font-normal text-amber-700 text-[10px] ml-1">({a.reaction})</span>}
+                      {idx < patientAllergies.filter(x => x.severity === "WARNING").length - 1 && <span className="mx-1 text-amber-300">·</span>}
                     </span>
-                    <span className="text-xs font-semibold text-amber-900">
-                      {patientAllergies.filter(a => a.severity === "WARNING").map(a => `${a.allergyName} (${a.reaction || 'Lưu ý'})`).join(' • ')}
-                    </span>
-                  </div>
-                </div>
+                  ))}
+                </span>
               </div>
             )}
           </div>
         ) : allergyNotes ? (
-          <div className="border border-rose-200 bg-rose-50 p-3.5 flex items-center gap-3 rounded-none shadow-xs">
-            <svg className="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="min-h-[36px] px-3 py-1.5 border border-amber-200/80 border-l-[3px] border-l-amber-500 bg-amber-50/70 flex items-center gap-2 rounded-md text-[11px] text-amber-950">
+            <svg className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
             </svg>
-            <div>
-              <span className="text-[11px] font-bold text-rose-800 uppercase tracking-wider block">Cảnh báo Dị ứng Thuốc (Tóm tắt)</span>
-              <span className="text-xs font-semibold text-rose-700">{allergyNotes}</span>
-            </div>
+            <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded flex-shrink-0">
+              Tiền sử dị ứng
+            </span>
+            <span className="text-amber-900 font-medium">{allergyNotes}</span>
           </div>
         ) : (
-          <div className="border border-slate-200 bg-slate-50 px-3.5 py-2 flex items-center gap-2 rounded-none">
+          <div className="min-h-[32px] px-3 py-1 border border-slate-200/80 bg-slate-50/60 flex items-center gap-2 rounded-md text-[11px] text-slate-500">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block flex-shrink-0" />
-            <span className="text-[11px] text-slate-500 font-medium">Không ghi nhận tiền sử dị ứng thuốc</span>
+            <span>Không ghi nhận tiền sử dị ứng thuốc</span>
           </div>
         )
       )}
@@ -1039,93 +1077,93 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         
         {/* Left Column (3/5): Tabbed Clinical & Diagnostic Data */}
-        <div className="lg:col-span-3 space-y-4">
+        <div className="lg:col-span-3 space-y-3">
           
-          {/* Navigation Tabs */}
-          <div className="border-b border-card-border flex items-center justify-between bg-card-bg rounded-t-lg pr-3">
-            <div className="flex overflow-x-auto">
-              <button
-                type="button"
-                onClick={() => setActiveTab("vitals")}
-                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-tl-lg ${
-                  activeTab === "vitals"
-                    ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                    : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
-                }`}
-              >
-                1. Sinh hiệu
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("clinical")}
-                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                  activeTab === "clinical"
-                    ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                    : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
-                }`}
-              >
-                2. Triệu chứng & Lâm sàng
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("diagnosis")}
-                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                  activeTab === "diagnosis"
-                    ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                    : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
-                }`}
-              >
-                3. Chẩn đoán ICD-10
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("labs")}
-                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                  activeTab === "labs"
-                    ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                    : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
-                }`}
-              >
-                4. Chỉ định Cận lâm sàng ({selectedLabServices.length > 0 ? selectedLabServices.length : existingLabOrders.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveTab("summary")}
-                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                  activeTab === "summary"
-                    ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                    : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
-                }`}
-              >
-                5. Tóm tắt lâm sàng
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveTab("ai");
-                  if (!aiResponse) handleGetAiSuggestions();
-                }}
-                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-1.5 ${
-                  activeTab === "ai"
-                    ? "border-[#6E2582] text-[#6E2582] bg-purple-50"
-                    : "border-transparent text-purple-700 hover:text-[#6E2582]"
-                }`}
-              >
-                <svg className="w-3.5 h-3.5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <span>Trợ lý AI Lâm sàng</span>
-                <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-black border border-purple-200">RAG</span>
-              </button>
+          {/* Voice Recorder Action Button placed cleanly above tabs */}
+          {!isConsultationLocked && (
+            <div className="flex items-center justify-end">
+              <VoiceRecorderButton
+                onAudioReady={handleVoiceRecorded}
+                disabled={isConsultationLocked}
+              />
             </div>
-            {!isConsultationLocked && (
-              <div className="py-1 flex-shrink-0">
-                <VoiceRecorderButton
-                  onAudioReady={handleVoiceRecorded}
-                  disabled={isConsultationLocked}
-                />
-              </div>
-            )}
+          )}
+
+          {/* Navigation Tabs */}
+          <div className="border-b border-card-border flex items-center overflow-x-auto bg-card-bg rounded-t-lg">
+            <button
+              type="button"
+              onClick={() => setActiveTab("vitals")}
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-tl-lg ${
+                activeTab === "vitals"
+                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+              }`}
+            >
+              1. Sinh hiệu
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("clinical")}
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+                activeTab === "clinical"
+                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+              }`}
+            >
+              2. Triệu chứng & Lâm sàng
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("diagnosis")}
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+                activeTab === "diagnosis"
+                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+              }`}
+            >
+              3. Chẩn đoán ICD-10
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("labs")}
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+                activeTab === "labs"
+                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+              }`}
+            >
+              4. Chỉ định Cận lâm sàng ({selectedLabServices.length > 0 ? selectedLabServices.length : existingLabOrders.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("summary")}
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+                activeTab === "summary"
+                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+              }`}
+            >
+              5. Tóm tắt lâm sàng
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("ai");
+                if (!aiResponse) handleGetAiSuggestions();
+              }}
+              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-1.5 ${
+                activeTab === "ai"
+                  ? "border-[#6E2582] text-[#6E2582] bg-purple-50"
+                  : "border-transparent text-purple-700 hover:text-[#6E2582]"
+              }`}
+            >
+              <svg className="w-3.5 h-3.5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Trợ lý AI Lâm sàng</span>
+              <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-black border border-purple-200">RAG</span>
+            </button>
           </div>
 
           {/* TAB 1: Vital Signs with Real-time threshold validation */}
