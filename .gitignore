@@ -63,3 +63,4 @@ desktop.ini
 # Heavy binary raw docs (Keep Markdown and CSV only)
 docs/rag-docs/**/*.pdf
 docs/rag-docs/**/*.xlsx
+scripts/.rag_embeddings_cache*.json

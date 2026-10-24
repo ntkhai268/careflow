@@ -1,47 +1,107 @@
 import React from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-export function renderFormattedAiText(text: string) {
-  if (!text) return null;
+interface FormattedAiTextProps {
+  content: string;
+  className?: string;
+}
 
-  const lines = text.split("\n");
+export function FormattedAiText({ content, className = "" }: FormattedAiTextProps) {
+  if (!content) return null;
 
   return (
-    <div className="space-y-1.5 leading-relaxed">
-      {lines.map((line, lineIdx) => {
-        const trimmed = line.trim();
-        if (!trimmed) return <div key={lineIdx} className="h-1" />;
-
-        // Check if bullet point (*, -, •, 1., 2.)
-        const isBullet = /^[*\-•]\s/.test(trimmed) || /^\d+\.\s/.test(trimmed);
-        const bulletMatch = trimmed.match(/^([*\-•]|\d+\.)\s/);
-        const bulletSymbol = bulletMatch ? bulletMatch[1] : "•";
-        const content = bulletMatch ? trimmed.substring(bulletMatch[0].length) : trimmed;
-
-        // Parse **bold** parts
-        const parts = content.split(/(\*\*.*?\*\*)/g);
-
-        const renderedContent = parts.map((part, pIdx) => {
-          if (part.startsWith("**") && part.endsWith("**") && part.length > 4) {
-            return (
-              <strong key={pIdx} className="font-bold text-[#2B1D30]">
-                {part.slice(2, -2)}
-              </strong>
-            );
-          }
-          return part;
-        });
-
-        if (isBullet) {
-          return (
-            <div key={lineIdx} className="flex items-start gap-1.5 ml-1">
-              <span className="text-purple-700 font-bold flex-shrink-0 font-mono text-[11px]">{bulletSymbol}</span>
-              <span className="flex-1">{renderedContent}</span>
+    <div className={`prose-sm max-w-none text-xs leading-relaxed text-slate-800 space-y-1.5 ${className}`}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        components={{
+          h1: ({ children }) => (
+            <h1 className="text-sm font-bold text-[#2B1D30] mt-2.5 mb-1 tracking-tight border-b border-slate-200 pb-1">
+              {children}
+            </h1>
+          ),
+          h2: ({ children }) => (
+            <h2 className="text-xs font-bold text-[#2B1D30] mt-2 mb-1 tracking-tight">
+              {children}
+            </h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className="text-xs font-bold text-[#2B1D30] mt-2 mb-1 tracking-tight">
+              {children}
+            </h3>
+          ),
+          h4: ({ children }) => (
+            <h4 className="text-xs font-bold text-[#2B1D30] mt-1.5 mb-0.5 tracking-tight text-[#6E2582]">
+              {children}
+            </h4>
+          ),
+          p: ({ children }) => (
+            <p className="text-xs text-slate-700 leading-relaxed mb-1.5 last:mb-0">
+              {children}
+            </p>
+          ),
+          ul: ({ children }) => (
+            <ul className="list-disc list-outside pl-4 space-y-1 my-1.5 text-xs text-slate-700">
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol className="list-decimal list-outside pl-4 space-y-1 my-1.5 text-xs text-slate-700">
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => (
+            <li className="text-xs text-slate-700 leading-relaxed pl-0.5">
+              {children}
+            </li>
+          ),
+          strong: ({ children }) => (
+            <strong className="font-bold text-[#2B1D30]">
+              {children}
+            </strong>
+          ),
+          blockquote: ({ children }) => (
+            <blockquote className="border-l-3 border-[#6E2582] pl-2.5 py-0.5 my-1.5 text-slate-600 bg-purple-50/40 rounded-r text-[11px] italic">
+              {children}
+            </blockquote>
+          ),
+          table: ({ children }) => (
+            <div className="overflow-x-auto my-2 border border-slate-200 rounded-md">
+              <table className="w-full text-xs text-left border-collapse">
+                {children}
+              </table>
             </div>
-          );
-        }
-
-        return <div key={lineIdx}>{renderedContent}</div>;
-      })}
+          ),
+          thead: ({ children }) => (
+            <thead className="bg-slate-50 text-slate-800 font-semibold border-b border-slate-200 text-[11px]">
+              {children}
+            </thead>
+          ),
+          th: ({ children }) => (
+            <th className="px-2.5 py-1.5 border border-slate-200">
+              {children}
+            </th>
+          ),
+          td: ({ children }) => (
+            <td className="px-2.5 py-1.5 border border-slate-200 text-slate-700">
+              {children}
+            </td>
+          ),
+          code: ({ children }) => (
+            <code className="font-mono text-[11px] bg-slate-100 text-purple-900 px-1 py-0.5 rounded border border-slate-200">
+              {children}
+            </code>
+          ),
+        }}
+      >
+        {content}
+      </ReactMarkdown>
     </div>
   );
+}
+
+// Backward compatible helper function
+export function renderFormattedAiText(text: string) {
+  if (!text) return null;
+  return <FormattedAiText content={text} />;
 }

@@ -184,15 +184,15 @@ export default function VoicePreviewModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 text-xs font-semibold text-[#6A5C70] hover:text-[#2B1D30] hover:bg-gray-200/60 rounded-lg transition-colors"
+            className="px-4 py-2 text-xs font-semibold text-[#6A5C70] hover:text-rose-700 hover:bg-rose-50 rounded-lg border border-transparent hover:border-rose-200 transition-colors cursor-pointer"
           >
-            Hủy bỏ
+            Hủy & Nói lại
           </button>
           <button
             type="button"
             onClick={handleApply}
             disabled={selectedKeys.size === 0}
-            className="px-5 py-2 text-xs font-bold text-white bg-[#6E2582] hover:bg-[#5a1e6e] rounded-lg shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+            className="px-5 py-2 text-xs font-bold text-white bg-[#6E2582] hover:bg-[#5a1e6e] rounded-lg shadow-sm disabled:opacity-40 disabled:cursor-not-allowed transition-all cursor-pointer"
           >
             Áp dụng {selectedKeys.size} trường vào ca khám
           </button>

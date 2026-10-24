@@ -1,110 +1,79 @@
-HƯỚNG DẪN
-CHẨN ĐOÁN VÀ ĐIỀU TRỊ TĂNG HUYẾT ÁP
+# HƯỚNG DẪN CHẨN ĐOÁN VÀ ĐIỀU TRỊ TĂNG HUYẾT ÁP
+
 (Ban hành kèm theo Quyết định số 3192/QĐ-BYT ngày 31 tháng 08 năm 2010 của Bộ
 trưởng Bộ Y tế)
-1. ĐỊNH NGHĨA
+
+## 1. ĐỊNH NGHĨA
+
 Tăng huyết áp là khi huyết áp tâm thu ≥ 140mmHg và/hoặc huyết áp tâm trương ≥
 90mmHg.
-2. NGUYÊN NHÂN
+
+## 2. NGUYÊN NHÂN
+
 Phần lớn tăng huyết áp (THA) ở người trưởng thành là không rõ nguyên nhân (THA
 nguyên phát), chỉ có khoảng 10% các trường hợp là có nguyên nhân (THA thứ phát, xem
 Phụ lục 1 – Nguyên nhân gây THA thứ phát, các yếu tố nguy cơ tim mạch, biến chứng &
 tổn thương cơ quan đích do THA).
-3. CHẨN ĐOÁN
-3.1. Chẩn đoán xác định THA: dựa vào trị số huyết áp đo được sau khi đo huyết áp
+
+## 3. CHẨN ĐOÁN
+
+### 3.1. Chẩn đoán xác định THA
+
+dựa vào trị số huyết áp đo được sau khi đo huyết áp
 đúng quy trình (xem Phụ lục 2 – Quy trình đo huyết áp). Ngưỡng chẩn đoán THA thay
 đổi tùy theo từng cách đo huyết áp (Bảng 1).
-Bảng 1. Các ngưỡng chẩn đoán tăng huyết áp theo từng cách đo
-|     | Huyết áp tâm  |     |     |
-| --- | ------------- | --- | --- |
-Huyết áp tâm trương
-thu
-| 1. Cán bộ y tế đo theo đúng quy  | ≥ 140  |     | ≥ 90 mmHg  |
-| -------------------------------- | ------ | --- | ---------- |
-| trình                            | mmHg   |     |            |
-≥ 80 mmHg
-| 2. Đo bằng máy đo HA tự động  | ≥ 130  |     |     |
-| ----------------------------- | ------ | --- | --- |
-≥ 85 mmHg
-và/hoặc
-| 24 giờ                           | mmHg   |     |     |
-| -------------------------------- | ------ | --- | --- |
-| 3. Tự đo tại nhà (đo nhiều lần)  | ≥ 135  |     |     |
-mmHg
-3.2. Phân độ THA: dựa vào trị số huyết áp do cán bộ y tế đo được (xem Bảng 2).
-Bảng 2. Phân độ huyết áp
-| Phân độ huyết áp      | Huyết áp tâm  | Huyết áp tâm trương  |          |
-| --------------------- | ------------- | -------------------- | -------- |
-|                       | thu (mmHg)    |                      | (mmHg)   |
-| Huyết áp tối ưu       | < 120         | và                   | < 80     |
-| Huyết áp bình thường  | 120 – 129     | và/hoặc              | 80 – 84  |
-| Tiền tăng huyết áp    | 130 - 139     | và/hoặc              | 85 – 89  |
+**Bảng 1. Các ngưỡng chẩn đoán tăng huyết áp theo từng cách đo**
 
-| Tăng huyết áp độ 1             |     |     | 140 – 150  |        |     | và/hoặc   |     | 90 – 99    |     |     |
-| ------------------------------ | --- | --- | ---------- | ------ | --- | --------- | --- | ---------- | --- | --- |
-| Tăng huyết áp độ 2             |     |     | 160 – 179  |        |     | và/hoặc   |     | 110 – 109  |     |     |
-| Tăng huyết áp độ 3             |     |     |            | ≥ 180  |     | và/hoặc   |     | ≥ 110      |     |     |
-| Tăng huyết áp tâm thu đơn độc  |     |     |            | ≥ 140  |     | và        |     | < 90       |     |     |
+
+| Cách đo | Huyết áp tâm thu (mmHg) | Huyết áp tâm trương (mmHg) |
+| :--- | :--- | :--- |
+| 1. Cán bộ y tế đo theo đúng quy trình | ≥ 140 | và/hoặc ≥ 90 |
+| 2. Đo bằng máy đo HA tự động 24 giờ | ≥ 130 | và/hoặc ≥ 80 |
+| 3. Tự đo tại nhà (đo nhiều lần) | ≥ 135 | và/hoặc ≥ 85 |
+
+
+### 3.2. Phân độ THA
+
+dựa vào trị số huyết áp do cán bộ y tế đo được (xem Bảng 2).
+**Bảng 2. Phân độ huyết áp**
+
+
+| Phân độ huyết áp | Huyết áp tâm thu (mmHg) | Huyết áp tâm trương (mmHg) |
+| :--- | :--- | :--- |
+| Huyết áp tối ưu | < 120 | và < 80 |
+| Huyết áp bình thường | 120 – 129 | và/hoặc 80 – 84 |
+| Tiền tăng huyết áp | 130 – 139 | và/hoặc 85 – 89 |
+| Tăng huyết áp độ 1 | 140 – 159 | và/hoặc 90 – 99 |
+| Tăng huyết áp độ 2 | 160 – 179 | và/hoặc 100 – 109 |
+| Tăng huyết áp độ 3 | ≥ 180 | và/hoặc ≥ 110 |
+| Tăng huyết áp tâm thu đơn độc | ≥ 140 | và < 90 |
+
+
 Nếu huyết áp tâm thu và huyết áp tâm trương không cùng mức phân độ thì chọn mức cao
 hơn để xếp loại. THA tâm thu đơn độc cũng được phân độ theo các mức biến động của
 huyết áp tâm thu.
-3.3. Phân tầng nguy cơ tim mạch: dựa vào phân độ huyết áp, số lượng các yếu tố nguy
+
+### 3.3. Phân tầng nguy cơ tim mạch
+
+dựa vào phân độ huyết áp, số lượng các yếu tố nguy
 cơ tim mạch (YTNCTM) và biến cố tim mạch (xem Bảng 3 – Phân tầng nguy cơ tim
 mạch) để có chiến lược quản lý, theo dõi và điều trị lâu dài.
-Bảng 3. Phân tầng nguy cơ tim mạch
-|            | Huyết áp    | Tiền        |     | Tăng huyết  |           |     | Tăng huyết  |       | Tăng huyết  |           |
-| ---------- | ----------- | ----------- | --- | ----------- | --------- | --- | ----------- | ----- | ----------- | --------- |
-|            |             |             |     |             | áp        |     |             | áp    |             | áp        |
-|            | Bình        | Tăng huyết  |     |             |           |     |             |       |             |           |
-|            | thường      | áp          |     |             | Độ 1      |     |             | Độ 2  |             | Độ 3      |
-|            |             | Huyết áp    |     |             | Huyết áp  |     | Huyết áp    |       |             |           |
-|            | Huyết áp    |             |     |             |           |     |             |       |             | Huyết áp  |
-|            |             | tâm thu     |     |             | tâm thu   |     | tâm thu     |       |             |           |
-|            | tâm thu     |             |     |             |           |     |             |       | tâm thu ≥   |           |
-| Bệnh cảnh  |             | 130-139     |     |             | 140-159   |     | 160-179     |       |             |           |
-|            | 120-129     |             |     |             |           |     |             |       | 180 mmHg    |           |
-|            |             | mmHg        |     |             | mmHg      |     | mmHg        |       |             |           |
-|            | mmHg và     |             |     |             |           |     |             |       |             | và/hoặc   |
-|            |             | và/hoặc     |     |             | và/hoặc   |     | và/hoặc     |       |             |           |
-|            | Huyết áp    |             |     |             |           |     |             |       |             | Huyết áp  |
-|            |             | Huyết áp    |     |             | Huyết áp  |     | Huyết áp    |       |             |           |
-|            | tâm trương  |             |     |             |           |     |             |       | tâm trương  |           |
-|            |             | tâm trương  |     | tâm trương  |           |     | tâm trương  |       |             |           |
-|            | 80-84       |             |     |             |           |     |             |       |             | ≥ 110     |
-|            |             | 85-89       |     |             | 90-99     |     | 100-109     |       |             |           |
-|            | mmHg        |             |     |             |           |     |             |       |             | mmHg      |
-|            |             | mmHg        |     |             | mmHg      |     | mmHg        |       |             |           |
-Không có
-| yếu tố nguy  |     |     |     |     | Nguy cơ  |     | Nguy cơ      |     |     | Nguy cơ  |
-| ------------ | --- | --- | --- | --- | -------- | --- | ------------ | --- | --- | -------- |
-|              |     |     |     |     |          |     |              |     |     |          |
-| cơ tim mạch  |     |     |     |     | thấp     |     | trung bình   |     |     | cao      |
-nào
-Có từ 1-2
-yếu tố nguy  Nguy cơ  Nguy cơ  Nguy cơ  Nguy cơ  Nguy cơ rất
-| cơ tim mạch  | thấp  | thấp  |     | trung bình   |     |     | trung bình   |     |     | cao  |
-| ------------ | ----- | ----- | --- | ------------ | --- | --- | ------------ | --- | --- | ---- |
-(YTNCTM)
-Có ≥ 3
-| YTNCTM    | Nguy cơ      | Nguy cơ  |     |     | Nguy cơ  |     | Nguy cơ  |      | Nguy cơ rất  |      |
-| --------- | ------------ | -------- | --- | --- | -------- | --- | -------- | ---- | ------------ | ---- |
-| hoặc hội  | trung bình   | cao      |     |     | cao      |     |          | cao  |              | cao  |
-chứng
+**Bảng 3. Phân tầng nguy cơ tim mạch**
 
-chuyển hóa
-hoặc tổn
-thương cơ
-quan đích
-hoặc đái
-tháo đường
-Đã có biến
-cố hoặc có
-bệnh tim Nguy cơ Nguy cơ rất Nguy cơ rất Nguy cơ rất Nguy cơ rất
-mạch hoặc rất cao cao cao cao cao
-có bệnh thận
-mạn tính
-4. ĐIỀU TRỊ
-4.1. Nguyên tắc chung:
+
+| Bệnh cảnh / Yếu tố nguy cơ | Huyết áp Bình thường<br>(120-129 / 80-84) | Tiền Tăng huyết áp<br>(130-139 / 85-89) | Tăng huyết áp Độ 1<br>(140-159 / 90-99) | Tăng huyết áp Độ 2<br>(160-179 / 100-109) | Tăng huyết áp Độ 3<br>(≥ 180 / ≥ 110) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Không có yếu tố nguy cơ tim mạch nào | Nguy cơ trung bình | Nguy cơ trung bình | Nguy cơ thấp | Nguy cơ trung bình | Nguy cơ cao |
+| Có từ 1 - 2 yếu tố nguy cơ tim mạch (YTNCTM) | Nguy cơ thấp | Nguy cơ thấp | Nguy cơ trung bình | Nguy cơ trung bình | Nguy cơ rất cao |
+| Có ≥ 3 YTNCTM hoặc hội chứng chuyển hóa hoặc tổn thương cơ quan đích hoặc đái tháo đường | Nguy cơ trung bình | Nguy cơ cao | Nguy cơ cao | Nguy cơ cao | Nguy cơ rất cao |
+| Đã có biến cố hoặc có bệnh tim mạch hoặc có bệnh thận mạn tính | Nguy cơ rất cao | Nguy cơ rất cao | Nguy cơ rất cao | Nguy cơ rất cao | Nguy cơ rất cao |
+
+
+
+## 4. ĐIỀU TRỊ
+
+### 4.1. Nguyên tắc chung
+
 - Tăng huyết áp là bệnh mạn tính nên cần theo dõi đều, điều trị đúng và đủ hàng ngày,
 điều trị lâu dài.
 - Mục tiêu điều trị là đạt “huyết áp mục tiêu” và giảm tối đa “nguy cơ tim mạch”.
@@ -115,7 +84,10 @@ trị lâu dài kèm theo việc theo dõi chặt chẽ, định kỳ để đi�
 - Điều trị cần hết sức tích cực ở bệnh nhân đã có tổn thương cơ quan đích. Không nên hạ
 huyết áp quá nhanh để tránh biến chứng thiếu máu ở các cơ quan đích, trừ tình huống cấp
 cứu.
-4.2. Các biện pháp tích cực thay đổi lối sống: áp dụng cho mọi bệnh nhân để ngăn
+
+### 4.2. Các biện pháp tích cực thay đổi lối sống
+
+áp dụng cho mọi bệnh nhân để ngăn
 ngừa tiến triển và giảm được huyết áp, giảm số thuốc cần dùng …
 - Chế độ ăn hợp lý, đảm bảo đủ kali và các yếu tố vi lượng:
 + Giảm ăn mặn (< 6 gam muối hay 1 thìa cà phê muối mỗi ngày).
@@ -134,7 +106,9 @@ hoặc 30ml rượu mạnh.
 độ vừa phải, đều đặn khoảng 30-60 phút mỗi ngày.
 - Tránh lo âu, căng thẳng thần kinh; cần chú ý đến việc thư giãn, nghỉ ngơi hợp lý.
 - Tránh bị lạnh đột ngột.
-4.3. Điều trị tăng huyết áp bằng thuốc tại tuyến cơ sở:
+
+### 4.3. Điều trị tăng huyết áp bằng thuốc tại tuyến cơ sở
+
 - Chọn thuốc khởi đầu:
 + Tăng huyết áp độ 1: có thể lựa chọn một thuốc trong số các nhóm: lợi tiểu thiazide liều
 thấp; ức chế men chuyển; chẹn kênh canxi loại tác dụng kéo dài; chẹn beta giao cảm (nếu
@@ -153,7 +127,9 @@ Quy trình 4 bước điều trị tăng huyết áp tại tuyến cơ sở).
 khác cho đến khi đạt huyết áp mục tiêu.
 - Nếu vẫn không đạt huyết áp mục tiêu hoặc có biến cố: cần chuyển tuyến trên hoặc gửi
 khám chuyên khoa tim mạch.
-4.4. Các lý do chuyển tuyến trên hoặc chuyên khoa tim mạch:
+
+### 4.4. Các lý do chuyển tuyến trên hoặc chuyên khoa tim mạch
+
 Cân nhắc chuyển đến các đơn vị quản lý THA tuyến trên hoặc chuyên khoa tim mạch
 trong các trường hợp sau:
 - Tăng huyết áp tiến triển: THA đe dọa có biến chứng (như tai biến mạch não thoáng qua,
@@ -165,7 +141,9 @@ thương cơ quan đích.
 ít nhất có 1 thuốc lợi tiểu) hoặc không thể dung nạp với các thuốc hạ áp, hoặc có quá
 nhiều bệnh nặng phối hợp.
 - THA ở phụ nữ có thai hoặc một số trường hợp đặc biệt khác.
-4.5. Điều trị tăng huyết áp và các yếu tố nguy cơ tim mạch khác ở tuyến trên:
+
+### 4.5. Điều trị tăng huyết áp và các yếu tố nguy cơ tim mạch khác ở tuyến trên
+
 Quản lý tăng huyết áp và các yếu tố nguy cơ tim mạch khác ở tuyến trên bao gồm:
 - Phát hiện tổn thương cơ quan đích ngay ở giai đoạn tiền lâm sàng (Phụ lục 1 – Nguyên
 nhân gây THA thứ phát, các yếu tố nguy cơ tim mạch, biến chứng & tổn thương cơ quan
@@ -187,21 +165,22 @@ nhồi máu cơ tim (NMCT) cấp hoặc suy tim trái cấp … (Phụ lục 6, 
 thuốc hạ huyết áp đường tĩnh mạch thường dùng).
 Sơ đồ 1. Quy trình điều trị tăng huyết áp
 
-5. TIẾN TRIỂN
+## 5. TIẾN TRIỂN
+
 Tăng huyết áp không được điều trị và kiểm soát tốt sẽ dẫn đến tổn thương nặng các cơ
 quan đích và gây các biến chứng nguy hiểm như tai biến mạch não, nhồi máu cơ tim,
 phình tách thành động mạch chủ, suy tim, suy thận … thậm chí dẫn đến tử vong (Phụ lục
 1).
-6. PHÒNG BỆNH
+
+## 6. PHÒNG BỆNH
+
 Các biện pháp tích cực thay đổi lối sống (Phần 4.2) là những biện pháp để phòng ngừa
 tăng huyết áp ở người trưởng thành, phối hợp với việc giáo dục truyền thông nâng cao
 nhận thức và hiểu biết về bệnh tăng huyết áp cũng như các biến chứng của tăng huyết áp
 và các yếu tố nguy cơ tim mạch khác./.
 
-PHỤ LỤC 1
-NGUYÊN NHÂN GÂY TĂNG HUYẾT ÁP THỨ PHÁT, CÁC YẾU TỐ NGUY CƠ
-TIM MẠCH, BIẾN CHỨNG VÀ TỔN THƯƠNG CƠ QUAN ĐÍCH DO TĂNG
-HUYẾT ÁP
+## PHỤ LỤC 1: NGUYÊN NHÂN GÂY TĂNG HUYẾT ÁP THỨ PHÁT, CÁC YẾU TỐ NGUY CƠ TIM MẠCH, BIẾN CHỨNG VÀ TỔN THƯƠNG CƠ QUAN ĐÍCH DO TĂNG HUYẾT ÁP
+
 (Ban hành kèm theo Quyết định số 3192/QĐ-BYT ngày 31 tháng 8 năm 2010 của Bộ
 trưởng Bộ Y tế)
 1. Nguyên nhân gây tăng huyết áp thứ phát (cần chú ý tìm kiếm nguyên nhân trong
@@ -266,8 +245,8 @@ o Chụp động mạch.
 o Siêu âm thận và thượng thận.
 o Chụp cắt lớp, cộng hưởng từ …
 
-PHỤ LỤC 2
-QUY TRÌNH ĐO HUYẾT ÁP ĐÚNG
+## PHỤ LỤC 2: QUY TRÌNH ĐO HUYẾT ÁP ĐÚNG
+
 (Ban hành kèm theo Quyết định số 3192/QĐ-BYT ngày 31 tháng 8 năm 2010 của Bộ
 trưởng Bộ Y tế)
 1. Nghỉ ngơi trong phòng yên tĩnh ít nhất 5 – 10 phút trước khi đo huyết áp.
@@ -297,293 +276,111 @@ máy đo huyết áp tự động 24 giờ (Holter huyết áp).
 10. Ghi lại số đo theo đơn vị mmHg dưới dạng HA tâm thu/HA tâm trương (ví dụ 126/82
 mmHg) không làm tròn số quá hàng đơn vị và thông báo kết quả cho người được đo.
 
-PHỤ LỤC 3
-QUY TRÌNH 4 BƯỚC ĐIỀU TRỊ TĂNG HUYẾT ÁP TẠI TUYẾN CƠ SỞ
+## PHỤ LỤC 3: QUY TRÌNH 4 BƯỚC ĐIỀU TRỊ TĂNG HUYẾT ÁP TẠI TUYẾN CƠ SỞ
+
 (Ban hành kèm theo Quyết định số 3192/QĐ-BYT ngày 31 tháng 8 năm 2010 của Bộ trưởng Bộ Y tế)
 
-PHỤ LỤC 4
-CHIẾN LƯỢC ĐIỀU TRỊ TĂNG HUYẾT ÁP THEO ĐỘ HUYẾT ÁP VÀ NGUY CƠ TIM MẠCH
-(Ban hành kèm theo Quyết định số 3192/QĐ-BYT ngày 31 tháng 8 năm 2010 của Bộ trưởng Bộ Y tế)
-|     |     | Huyết áp     |     | Tiền           | Tăng huyết áp  |       | Tăng huyết áp  |       | Tăng huyết áp  |       |
-| --- | --- | ------------ | --- | -------------- | -------------- | ----- | -------------- | ----- | -------------- | ----- |
-|     |     | Bình thường  |     | Tăng huyết áp  |                | Độ 1  |                | Độ 2  |                | Độ 3  |
-Huyết áp tâm thu  Huyết áp tâm thu  Huyết áp tâm thu  Huyết áp tâm thu
-Huyết áp tâm thu ≥
-Bệnh cảnh
-|     | 120-129 mmHg và  |     |     | 130-139 mmHg  | 140-159 mmHg  |     | 160-179 mmHg  |     |     |     |
-| --- | ---------------- | --- | --- | ------------- | ------------- | --- | ------------- | --- | --- | --- |
-180 mmHg và/hoặc
-Huyết áp tâm  và/hoặc  Huyết áp  và/hoặc  Huyết áp  và/hoặc  Huyết áp
-Huyết áp tâm trương
-trương 80-84  tâm trương 85-89  tâm trương 90-99  tâm trương 100-109
-≥ 110 mmHg
-|     |     | mmHg  |     | mmHg  |                        | mmHg  |                     | mmHg  |                        |     |
-| --- | --- | ----- | --- | ----- | ---------------------- | ----- | ------------------- | ----- | ---------------------- | --- |
-|     |     |       |     |       | Tích cực thay đổi lối  |       | Tích cực thay đổi   |       |                        |     |
-|     |     |       |     |       | sống Kiểm soát         |       | lối sống Kiểm soát  |       | Tích cực thay đổi lối  |     |
-|     |     |       |     |       | YTNC vài tháng         |       | YTNC vài tuần       |       | sống Kiểm soát yếu     |     |
-Không có yếu
-|     | Theo dõi huyết áp  |     | Theo dõi huyết áp  |     |     |     |     |     |     |     |
-| --- | ------------------ | --- | ------------------ | --- | --- | --- | --- | --- | --- | --- |
-tố nguy cơ
-| tố nguy cơ tim  |     |          |     |          |                        | +   |                     | +   |                        |      |
-| --------------- | --- | -------- | --- | -------- | ---------------------- | --- | ------------------- | --- | ---------------------- | ---- |
-|                 |     | định kỳ  |     | định kỳ  |                        |     |                     |     |                        |      |
-| mạch nào        |     |          |     |          |                        |     |                     |     |                        |  +   |
-|                 |     |          |     |          | Dùng thuốc nếu         |     | Dùng thuốc nếu      |     |                        |      |
-|                 |     |          |     |          | không kiểm soát        |     | không kiểm soát     |     | Dùng thuốc ngay        |      |
-|                 |     |          |     |          | được huyết áp          |     | được huyết áp       |     |                        |      |
-|                 |     |          |     |          | Tích cực thay đổi lối  |     | Tích cực thay đổi   |     |                        |      |
-|                 |     |          |     |          | sống Kiểm soát         |     | lối sống Kiểm soát  |     | Tích cực thay đổi lối  |      |
-Có từ 1-2 yếu  YTNC vài tuần  YTNC vài tuần   sống Kiểm soát yếu
-|                 | Tích cực thay đổi   |     | Tích cực thay đổi lối  |     |     |     |     |     |     |             |
-| --------------- | ------------------- | --- | ---------------------- | --- | --- | --- | --- | --- | --- | ----------- |
-| tố nguy cơ tim  |                     |     |                        |     |     |     |     |     |     | tố nguy cơ  |
-|                 | lối sống Kiểm soát  |     | sống Kiểm soát yếu     |     |     | +   |     | +   |     |             |
-mạch
-|           |     | yếu tố nguy cơ  |     | tố nguy cơ  |                  |     |                  |     |                  |  +   |
-| --------- | --- | --------------- | --- | ----------- | ---------------- | --- | ---------------- | --- | ---------------- | ---- |
-| (YTNCTM)  |     |                 |     |             | Dùng thuốc nếu   |     | Dùng thuốc nếu   |     |                  |      |
-|           |     |                 |     |             | không kiểm soát  |     | không kiểm soát  |     | Dùng thuốc ngay  |      |
-|           |     |                 |     |             | được huyết áp    |     | được huyết áp    |     |                  |      |
+## PHỤ LỤC 4: CHIẾN LƯỢC ĐIỀU TRỊ TĂNG HUYẾT ÁP THEO ĐỘ HUYẾT ÁP VÀ NGUY CƠ TIM MẠCH
 
-Có ≥ 3  Tích cực thay đổi lối
-YTNCTM
-sống Kiểm soát yếu
-hoặc hội  Tích cực thay đổi
-tố nguy cơ
-chứng chuyển  lối sống Kiểm soát
-+
-|                               |     |     | Tích cực thay đổi lối  |     | Tích cực thay đổi   | Tích cực thay đổi lối  |     |
-| ----------------------------- | --- | --- | ---------------------- | --- | ------------------- | ---------------------- | --- |
-| hóa hoặc tổn  yếu tố nguy cơ  |     |     |                        |     |                     |                        |     |
-|                               |     |     | sống Kiểm soát yếu     |     | lối sống Kiểm soát  | sống Kiểm soát yếu     |     |
-thương cơ  Cân nhắc điều trị
-|             |     |        | tố nguy cơ   |     | yếu tố nguy cơ   | tố nguy cơ   |     |
-| ----------- | --- | ------ | ------------ | --- | ---------------- | ------------ | --- |
-| quan đích   |     | thuốc  |              |     |                  |              |     |
-|             |     |        |              | +   | +                |              | +   |
-Tích cực thay đổi lối
-sống Kiểm soát yếu  Điều trị thuốc  Điều trị thuốc  Dùng thuốc ngay
-Tích cực thay đổi
-| Có đái tháo  | tố nguy cơ   |     |     |     |     |     |     |
-| ------------ | ------------ | --- | --- | --- | --- | --- | --- |
-lối sống Kiểm soát
-đường
-| yếu tố nguy cơ  |     | +   |     |     |     |     |     |
-| --------------- | --- | --- | --- | --- | --- | --- | --- |
-Điều trị thuốc
-Tích cực thay đổi  Tích cực thay đổi lối Tích cực thay đổi lối  Tích cực thay đổi  Tích cực thay đổi lối
-Đã có biến cố
-lối sống Kiểm soát  sống Kiểm soát yếu  sống Kiểm soát yếu  lối sống Kiểm soát  sống Kiểm soát yếu
-hoặc có bệnh
-yếu tố nguy cơ   tố nguy cơ   tố nguy cơ   yếu tố nguy cơ   tố nguy cơ
-tim mạch hoặc
-| có bệnh thận  | +   | +   |     | +   | +   |     | +   |
-| ------------- | --- | --- | --- | --- | --- | --- | --- |
-mạn tính
-Dùng thuốc ngay  Dùng thuốc ngay  Dùng thuốc ngay  Dùng thuốc ngay  Dùng thuốc ngay
+*(Ban hành kèm theo Quyết định số 3192/QĐ-BYT ngày 31 tháng 8 năm 2010 của Bộ trưởng Bộ Y tế)*
 
-PHỤ LỤC 5
-CHỈ ĐỊNH BẮT BUỘC VÀ ƯU TIÊN ĐỐI VỚI MỘT SỐ THUỐC HẠ ÁP, SƠ ĐỒ
-PHỐI HỢP THUỐC
+
+| Bệnh cảnh / Nguy cơ | Huyết áp Bình thường<br>(120-129 / 80-84) | Tiền Tăng huyết áp<br>(130-139 / 85-89) | Tăng huyết áp Độ 1<br>(140-159 / 90-99) | Tăng huyết áp Độ 2<br>(160-179 / 100-109) | Tăng huyết áp Độ 3<br>(≥ 180 / ≥ 110) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Không có yếu tố nguy cơ | Theo dõi huyết áp định kỳ | Theo dõi huyết áp định kỳ | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC vài tháng.<br>Dùng thuốc nếu HA chưa đạt mục tiêu | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC vài tuần.<br>Dùng thuốc nếu HA chưa đạt mục tiêu | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Dùng thuốc ngay |
+| Có 1-2 yếu tố nguy cơ | Tích cực thay đổi lối sống | Tích cực thay đổi lối sống | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC vài tuần.<br>Dùng thuốc nếu HA chưa đạt mục tiêu | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC vài tuần.<br>Dùng thuốc nếu HA chưa đạt mục tiêu | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Dùng thuốc ngay |
+| Có ≥ 3 YTNCTM hoặc tổn thương cơ quan đích | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Cân nhắc điều trị thuốc | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Điều trị thuốc | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Điều trị thuốc | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Dùng thuốc ngay |
+| Có đái tháo đường | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Điều trị thuốc | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Điều trị thuốc | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Điều trị thuốc | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Dùng thuốc ngay |
+| Đã có bệnh tim mạch hoặc bệnh thận mạn | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Điều trị thuốc ngay | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Điều trị thuốc ngay | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Điều trị thuốc ngay | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Điều trị thuốc ngay | Tích cực thay đổi lối sống.<br>Kiểm soát YTNC.<br>+ Dùng thuốc ngay |
+
+
+
+## PHỤ LỤC 5: CHỈ ĐỊNH BẮT BUỘC VÀ ƯU TIÊN ĐỐI VỚI MỘT SỐ THUỐC HẠ ÁP, SƠ ĐỒ PHỐI HỢP THUỐC
+
 (Ban hành kèm theo Quyết định số 3192/QĐ-BYT ngày 31 tháng 8 năm 2010 của Bộ
 trưởng Bộ Y tế)
-1. Chỉ định bắt buộc đối với một số nhóm thuốc hạ huyết áp
-|     |     | Lợi tiểu  | Chẹn  Ức chế   |     | Ức  Chẹn   |              | Kháng  |
-| --- | --- | --------- | -------------- | --- | ---------- | ------------ | ------ |
-|     |     |           | kênh  men      |     | chế  bêta  | aldosterone  |        |
-|     |     |           | canxi  chuyển  |     | thụ        |              |        |
-thể
-AT1
-| Suy tim          |     | X   |     | X   | X  X  |     | X   |
-| ---------------- | --- | --- | --- | --- | ----- | --- | --- |
-| Sau nhồi máu cơ  |     |     |     | X   | X  X  |     | X   |
-tim
-| Bệnh ĐMV (nguy  |     | X   | X   | X   |   X  |     |     |
-| --------------- | --- | --- | --- | --- | ---- | --- | --- |
-cơ cao)
-| Đái tháo đường   |     |     |     | X   | X    |     |     |
-| ---------------- | --- | --- | --- | --- | ---- | --- | --- |
-| Suy thận mạn     |     | X   |     | X   | X    |     |     |
-(lợi tiểu
-quai)
-| Dự phòng tái phát  |     | X   |     | X   |     |     |     |
-| ------------------ | --- | --- | --- | --- | --- | --- | --- |
-đột quỵ
-2. Chỉ định ưu tiên và chống chỉ định đối với một số nhóm thuốc hạ huyết áp
-| Nhóm thuốc  |     | Chỉ định ưu tiên   |     |     | Thận trọng   |     | Chống chỉ  |
-| ----------- | --- | ------------------ | --- | --- | ------------ | --- | ---------- |
-định
-| Lợi tiểu  | THA tâm thu đơn độc         |     |     | Hội chứng        |     | Bệnh gút  |     |
-| --------- | --------------------------- | --- | --- | ---------------- | --- | --------- | --- |
-| thiazide  | (người cao tuổi), suy tim,  |     |     | chuyển hóa, rối  |     |           |     |
-|           | dự phòng thứ phát đột       |     |     | loạn dung nạp    |     |           |     |
-|           | quỵ                         |     |     | glucose, thai    |     |           |     |
-nghén
-| Lợi tiểu quai  | Suy thận giai đoạn cuối,  |     |     |     |     |     |     |
-| -------------- | ------------------------- | --- | --- | --- | --- | --- | --- |
-suy tim
-| Lợi tiểu (loại  | Suy tim, sau nhồi máu cơ  |     |     |     |     | Suy thận,  |     |
-| --------------- | ------------------------- | --- | --- | --- | --- | ---------- | --- |
+### 1. Chỉ định bắt buộc đối với một số nhóm thuốc hạ huyết áp
 
-| kháng  | tim   |     | kali máu cao  |
-| ------ | ----- | --- | ------------- |
-aldosterone)
-Ức chế men  Suy tim, rối loạn chức  Suy thận, bệnh  Thai nghén,
-| chuyển  | năng thất trái, sau nhồi     | mạch máu ngoại  | hẹp động       |
-| ------- | ---------------------------- | --------------- | -------------- |
-| (ƯCMC)  | máu cơ tim, phì đại thất     | biên            | mạch thận      |
-|         | trái, bệnh thận do đái tháo  |                 | hai bên, kali  |
-|         | đường, có protein hoặc       |                 | máu cao        |
-microalbumin niệu, rung
-nhĩ, hội chứng chuyển
-hóa, xơ vữa động mạch
-cảnh
-Ức chế thụ thể  Suy tim, sau nhồi máu cơ  Suy thận, bệnh  Thai nghén,
-AT1 của  tim, phì đại thất trái, bệnh  mạch máu ngoại  hẹp động
-| angiotensin II  | thận do đái tháo đường,  | biên   | mạch thận      |
-| --------------- | ------------------------ | ------ | -------------- |
-| (ƯCTT)          | có protein hoặc micro    |        | hai bên, kali  |
-|                 | albumin niệu, rung nhĩ,  |        | máu cao        |
-hội chứng chuyển hóa, có
-chỉ định dùng nhưng
-không dung nạp với
-ƯCMC
-| Chẹn kênh        | THA tâm thu đơn độc         | Nhịp tim nhanh,  |     |
-| ---------------- | --------------------------- | ---------------- | --- |
-| canxi (loại      | (người cao tuổi), đau thắt  | suy tim          |     |
-| dihydropyridin)  | ngực, phì đại thất trái,    |                  |     |
-THA ở phụ nữ có thai
-| Chẹn kênh       | Đau thắt ngực, nhịp      |                    | Blốc nhĩ thất   |
-| --------------- | ------------------------ | ------------------ | --------------- |
-| canxi (loại ức  | nhanh trên thất          |                    | độ 2-3, suy     |
-| chế nhịp tim)   |                          |                    | tim             |
-| Chẹn bêta       | Đau thắt ngực, sau       | Bệnh mạch máu      | Hen phế         |
-|                 | NMCT, suy tim, nhịp tim  | ngoại vi, hội      | quản, bệnh      |
-|                 | nhanh, tăng nhãn áp,     | chứng chuyển       | phổi tắc        |
-|                 | THA ở phụ nữ có thai     | hóa, rối loạn      | nghẽn mạn       |
-|                 |                          | dung nạp glucose   | tính, blốc nhĩ  |
-thất độ 2-3
-Chẹn anpha   Phì đại lành tính tiền liệt  Hạ huyết áp tư  Đái dầm
-|     | tuyến   | thế đứng, suy tim   |     |
-| --- | ------- | ------------------- | --- |
+
+| Tình trạng lâm sàng | Lợi tiểu | Chẹn kênh canxi | Ức chế men chuyển | Ức chế thụ thể AT1 | Chẹn bêta | Kháng aldosterone |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| Suy tim | X |  | X | X | X | X |
+| Sau nhồi máu cơ<br>tim |  |  | X | X | X | X |
+| Bệnh ĐMV (nguy<br>cơ cao) | X | X | X |  | X |  |
+| Đái tháo đường |  |  | X | X |  |  |
+| Suy thận mạn | X<br>(lợi tiểu<br>quai) |  | X | X |  |  |
+| Dự phòng tái phát<br>đột quỵ | X |  | X |  |  |  |
+
+
+
+### 2. Chỉ định ưu tiên và chống chỉ định đối với một số nhóm thuốc hạ huyết áp
+
+
+| Nhóm thuốc | Chỉ định ưu tiên | Thận trọng | Chống chỉ định |
+| :--- | :--- | :--- | :--- |
+| Lợi tiểu<br>thiazide | THA tâm thu đơn độc<br>(người cao tuổi), suy tim,<br>dự phòng thứ phát đột<br>quỵ | Hội chứng<br>chuyển hóa, rối<br>loạn dung nạp<br>glucose, thai<br>nghén | Bệnh gút |
+| Lợi tiểu quai | Suy thận giai đoạn cuối,<br>suy tim |  |  |
+| Lợi tiểu (loại | Suy tim, sau nhồi máu cơ<br>tim |  | Suy thận,<br>kali máu cao |
+| Ức chế men<br>chuyển<br>(ƯCMC) | Suy tim, rối loạn chức<br>năng thất trái, sau nhồi<br>máu cơ tim, phì đại thất<br>trái, bệnh thận do đái tháo<br>đường, có protein hoặc<br>microalbumin niệu, rung<br>nhĩ, hội chứng chuyển<br>hóa, xơ vữa động mạch<br>cảnh | Suy thận, bệnh<br>mạch máu ngoại<br>biên | Thai nghén,<br>hẹp động<br>mạch thận<br>hai bên, kali<br>máu cao |
+| Ức chế thụ thể<br>AT1 của<br>angiotensin II<br>(ƯCTT) | Suy tim, sau nhồi máu cơ<br>tim, phì đại thất trái, bệnh<br>thận do đái tháo đường,<br>có protein hoặc micro<br>albumin niệu, rung nhĩ,<br>hội chứng chuyển hóa, có<br>chỉ định dùng nhưng<br>không dung nạp với<br>ƯCMC | Suy thận, bệnh<br>mạch máu ngoại<br>biên | Thai nghén,<br>hẹp động<br>mạch thận<br>hai bên, kali<br>máu cao |
+| Chẹn kênh<br>canxi (loại<br>dihydropyridin) | THA tâm thu đơn độc<br>(người cao tuổi), đau thắt<br>ngực, phì đại thất trái,<br>THA ở phụ nữ có thai | Nhịp tim nhanh,<br>suy tim |  |
+| Chẹn kênh<br>canxi (loại ức<br>chế nhịp tim) | Đau thắt ngực, nhịp<br>nhanh trên thất |  | Blốc nhĩ thất<br>độ 2-3, suy<br>tim |
+| Chẹn bêta | Đau thắt ngực, sau<br>NMCT, suy tim, nhịp tim<br>nhanh, tăng nhãn áp,<br>THA ở phụ nữ có thai | Bệnh mạch máu<br>ngoại vi, hội<br>chứng chuyển<br>hóa, rối loạn<br>dung nạp glucose | Hen phế<br>quản, bệnh<br>phổi tắc<br>nghẽn mạn<br>tính, blốc nhĩ<br>thất độ 2-3 |
+| Chẹn anpha | Phì đại lành tính tiền liệt<br>tuyến | Hạ huyết áp tư<br>thế đứng, suy tim | Đái dầm |
+
+
+
 3. Sơ đồ phối hợp các thuốc trong điều trị tăng huyết áp
 
-PHỤ LỤC 6
-MỘT SỐ LOẠI THUỐC HẠ HUYẾT ÁP THƯỜNG DÙNG
+## PHỤ LỤC 6: MỘT SỐ LOẠI THUỐC HẠ HUYẾT ÁP THƯỜNG DÙNG
+
 (Ban hành kèm theo Quyết định số 3192/QĐ-BYT ngày 31 tháng 8 năm 2010 của Bộ
 trưởng Bộ Y tế)
-1. Một số loại thuốc hạ huyết áp đường uống thường dùng
-| Nhóm   |     | Loại thuốc  | Liều ban  | Liều duy  |
-| ------ | --- | ----------- | --------- | --------- |
-| thuốc  |     |             | đầu       | trì hàng  |
-ngày
-| Lợi tiểu   | Lợi tiểu thiazide    |     |          |            |
-| ---------- | -------------------- | --- | -------- | ---------- |
-|            | Hydrochlorothiazide  |     | 12,5 mg  | 12,5 – 25  |
-mg
-|     | Indapamide   |     | 1,5 mg   |     |
-| --- | ------------ | --- | -------- | --- |
-1,5-3 mg
-Lợi tiểu tác động lên quai Henle
-|     | Furosemide   |     | 20 mg   | 20-80 mg   |
-| --- | ------------ | --- | ------- | ---------- |
-Lợi tiểu giữ kali
-|            | Spironolactone              |     | 25 mg  | 25-75 mg   |
-| ---------- | --------------------------- | --- | ------ | ---------- |
-| Chẹn kênh  | Loại Dihydropyridine (DHP)  |     |        |            |
-canxi
-|     | Amlodipine         |     | 5 mg   | 2,5-10 mg  |
-| --- | ------------------ | --- | ------ | ---------- |
-|     | Felodipine         |     | 5 mg   | 2,5-20 mg  |
-|     | Lacidipine         |     | 2 mg   | 2-6 mg     |
-|     | Nicardipine SR     |     | 20 mg  | 60-120 mg  |
-|     | Nifedipine Retard  |     | 10 mg  | 10-80 mg   |
-|     | Nifedipine LA      |     | 30 mg  | 30-90 mg   |
-Loại Benzothiazepine
-|     | Diltiazem  |     | 60 mg   | 60-180 mg  |
-| --- | ---------- | --- | ------- | ---------- |
-Loại Diphenylalkylamine
-|           | Verapamil                      |     | 80 mg    | 80-160 mg   |
-| --------- | ------------------------------ | --- | -------- | ----------- |
-|           | Verapamil LA                   |     | 120 mg   | 120-240 mg  |
-| Tác động  | Loại ức chế men chuyển (ƯCMC)  |     |          |             |
+### 1. Một số loại thuốc hạ huyết áp đường uống thường dùng
 
-lên hệ
-|     | Benazepril  | 10 mg  | 10-40 mg  |
-| --- | ----------- | ------ | --------- |
-renin
-|     | Captopril  | 25 mg  | 25-100 mg  |
-| --- | ---------- | ------ | ---------- |
-angiotensin
-|     | Enalapril    | 5 mg    | 5-40 mg    |
-| --- | ------------ | ------- | ---------- |
-|     | Imidapril    | 2,5 mg  | 5-20 mg    |
-|     | Lisinopril   | 5 mg    | 10-40 mg   |
-|     | Perindopril  | 5 mg    | 5-10 mg    |
-|     | Quinapril    | 5 mg    | 10-40 mg   |
-|     | Ramipril     | 2,5 mg  | 2,5-20 mg  |
-Loại ức chế thụ thể AT1 của angiotensin II (ƯCTT)
-|            | Candesartan                 | 4 mg   | 4-32 mg     |
-| ---------- | --------------------------- | ------ | ----------- |
-|            | Irbesartan                  | 75 mg  | 150-300 mg  |
-|            | Losartan                    | 25 mg  | 25-100 mg   |
-|            | Telmisartan                 | 40 mg  | 20-80 mg    |
-|            | Valsartan                   | 80 mg  | 80-160 mg   |
-| Chẹn bêta  | Loại chẹn bêta chọn lọc β1  |        |             |
-giao cảm
-|     | Atenolol    | 25 mg   | 25-100 mg   |
-| --- | ----------- | ------- | ----------- |
-|     | Bisoprolol  | 2,5 mg  | 2,5-10 mg   |
-|     | Metoprolol  | 50 mg   | 50-100 mg   |
-|     | Acebutolol  | 200 mg  | 200-800 mg  |
-Loại chẹn cả bêta và anpha giao cảm
-|     | Labetalol   | 100 mg   | 100-600 mg  |
-| --- | ----------- | -------- | ----------- |
-|     | Carvedilol  | 6,25 mg  | 6,25-50 mg  |
-Loại chẹn bêta không chọn lọc
-|       | Propanolol          | 40 mg   | 40-160 mg  |
-| ----- | ------------------- | ------- | ---------- |
-| Chẹn  | Doxazosin mesylate  | 1 mg    | 1-8 mg     |
-anpha giao
-|     | Prazosin hydrochloride  | 1 mg   | 1-6 mg  |
-| --- | ----------------------- | ------ | ------- |
-cảm
-| Tác động  | Clonidine   | 0,1 mg  | 0,1-0,8 mg  |
-| --------- | ----------- | ------- | ----------- |
-lên hệ giao
-|     | Methyldopa  | 250 mg   | 250-2000  |
-| --- | ----------- | -------- | --------- |
-cảm trung
 
-| ương       |              |     |     |         | mg         |
-| ---------- | ------------ | --- | --- | ------- | ---------- |
-| Giãn mạch  | Hydralazine  |     |     | 10 mg   | 25-100 mg  |
-trực tiếp
-2. Một số loại thuốc hạ huyết áp dùng qua đường tĩnh mạch
-| Tên thuốc  | Bắt đầu  | Kéo dài  |     | Liều dùng  |     |
-| ---------- | -------- | -------- | --- | ---------- | --- |
-tác dụng
-| Nitroglycerin  | 2-5 phút  | 5-10  | Truyền TM 5-100 mcg/ph  |     |     |
-| -------------- | --------- | ----- | ----------------------- | --- | --- |
-phút
-Nicardipine  5-10 phút  15-30  Truyền TM khởi đầu 1-2mg/giờ, tăng
-|     |     | phút  | dần 0,5-2mg/giờ sau 15 phút, liều truyền  |     |     |
-| --- | --- | ----- | ----------------------------------------- | --- | --- |
-tối đa 15mg/giờ
-| Natri          | Ngay lập  | 1-2 phút  | Truyền TM 0,3mcg/kg/ph, tăng dần         |     |     |
-| -------------- | --------- | --------- | ---------------------------------------- | --- | --- |
-| nitroprusside  | tức       |           | 0,5mcg/kg/ph sau 10 ph, liều truyền tối  |     |     |
-đa 10mcg/kg/ph
-Esmolol  1-5 phút  10 phút  Tiêm TM 500mcg/kg/ph trong phút đầu,
-truyền TM 50-100 cmg/kg/ph, liều
-truyền tối đa 300mcg/kg/ph
-Labetalol  5-10 phút  3-6 giờ  Tiêm TM chậm 10-20mg trong vòng 2
-phút, lặp lại sau 10-15 phút đến khi đạt
-tổng liều tối đa 300mg
-Truyền TM 0,5-2mg/phút
-Hydralazine  5-10 phút  4-6 giờ  Tiêm TM chậm 5-10 mg, lặp lại sau 4-6
-giờ/lần
-Enalaprilat  5-15 phút  1-6 giờ  Tiêm TM 0,625-1,25 mg, lặp lại 6
-giờ/lần
+| Nhóm thuốc | Loại thuốc | Liều ban đầu | Liều duy trì hàng ngày |
+| :--- | :--- | :--- | :--- |
+| Lợi tiểu | Lợi tiểu thiazide |  |  |
+|  | Hydrochlorothiazide<br>Indapamide | 12,5 mg<br>1,5 mg | 12,5 – 25<br>mg<br>1,5-3 mg |
+|  | Lợi tiểu tác động lên quai Henle |  |  |
+|  | Furosemide | 20 mg | 20-80 mg |
+|  | Lợi tiểu giữ kali |  |  |
+|  | Spironolactone | 25 mg | 25-75 mg |
+| Chẹn kênh<br>canxi | Loại Dihydropyridine (DHP) |  |  |
+|  | Amlodipine<br>Felodipine<br>Lacidipine<br>Nicardipine SR<br>Nifedipine Retard<br>Nifedipine LA | 5 mg<br>5 mg<br>2 mg<br>20 mg<br>10 mg<br>30 mg | 2,5-10 mg<br>2,5-20 mg<br>2-6 mg<br>60-120 mg<br>10-80 mg<br>30-90 mg |
+|  | Loại Benzothiazepine |  |  |
+|  | Diltiazem | 60 mg | 60-180 mg |
+|  | Loại Diphenylalkylamine |  |  |
+|  | Verapamil<br>Verapamil LA | 80 mg<br>120 mg | 80-160 mg<br>120-240 mg |
+| Tác động | Loại ức chế men chuyển (ƯCMC) |  |  |
+| lên hệ<br>renin<br>angiotensin | Benazepril<br>Captopril<br>Enalapril<br>Imidapril<br>Lisinopril<br>Perindopril<br>Quinapril<br>Ramipril | 10 mg<br>25 mg<br>5 mg<br>2,5 mg<br>5 mg<br>5 mg<br>5 mg<br>2,5 mg | 10-40 mg<br>25-100 mg<br>5-40 mg<br>5-20 mg<br>10-40 mg<br>5-10 mg<br>10-40 mg<br>2,5-20 mg |
+|  | Loại ức chế thụ thể AT1 của angiotensin II (ƯCTT) |  |  |
+|  | Candesartan<br>Irbesartan<br>Losartan<br>Telmisartan<br>Valsartan | 4 mg<br>75 mg<br>25 mg<br>40 mg<br>80 mg | 4-32 mg<br>150-300 mg<br>25-100 mg<br>20-80 mg<br>80-160 mg |
+| Chẹn bêta<br>giao cảm | Loại chẹn bêta chọn lọc β1 |  |  |
+|  | Atenolol<br>Bisoprolol<br>Metoprolol<br>Acebutolol | 25 mg<br>2,5 mg<br>50 mg<br>200 mg | 25-100 mg<br>2,5-10 mg<br>50-100 mg<br>200-800 mg |
+|  | Loại chẹn cả bêta và anpha giao cảm |  |  |
+|  | Labetalol<br>Carvedilol | 100 mg<br>6,25 mg | 100-600 mg<br>6,25-50 mg |
+|  | Loại chẹn bêta không chọn lọc |  |  |
+|  | Propanolol | 40 mg | 40-160 mg |
+| Chẹn<br>anpha giao<br>cảm | Doxazosin mesylate<br>Prazosin hydrochloride | 1 mg<br>1 mg | 1-8 mg<br>1-6 mg |
+| Tác động<br>lên hệ giao<br>cảm trung | Clonidine<br>Methyldopa | 0,1 mg<br>250 mg | 0,1-0,8 mg<br>250-2000 |
+| ương |  |  | mg |
+| Giãn mạch<br>trực tiếp | Hydralazine | 10 mg | 25-100 mg |
+
+
+
+### 2. Một số loại thuốc hạ huyết áp dùng qua đường tĩnh mạch
+
+
+| Tên thuốc | Bắt đầu tác dụng | Kéo dài | Liều dùng |
+| :--- | :--- | :--- | :--- |
+| Nitroglycerin | 2-5 phút | 5-10<br>phút | Truyền TM 5-100 mcg/ph |
+| Nicardipine | 5-10 phút | 15-30<br>phút | Truyền TM khởi đầu 1-2mg/giờ, tăng<br>dần 0,5-2mg/giờ sau 15 phút, liều truyền<br>tối đa 15mg/giờ |
+| Natri<br>nitroprusside | Ngay lập<br>tức | 1-2 phút | Truyền TM 0,3mcg/kg/ph, tăng dần<br>0,5mcg/kg/ph sau 10 ph, liều truyền tối<br>đa 10mcg/kg/ph |
+| Esmolol | 1-5 phút | 10 phút | Tiêm TM 500mcg/kg/ph trong phút đầu,<br>truyền TM 50-100 cmg/kg/ph, liều<br>truyền tối đa 300mcg/kg/ph |
+| Labetalol | 5-10 phút | 3-6 giờ | Tiêm TM chậm 10-20mg trong vòng 2<br>phút, lặp lại sau 10-15 phút đến khi đạt<br>tổng liều tối đa 300mg<br>Truyền TM 0,5-2mg/phút |
+| Hydralazine | 5-10 phút | 4-6 giờ | Tiêm TM chậm 5-10 mg, lặp lại sau 4-6<br>giờ/lần |
+| Enalaprilat | 5-15 phút | 1-6 giờ | Tiêm TM 0,625-1,25 mg, lặp lại 6<br>giờ/lần |
+
+

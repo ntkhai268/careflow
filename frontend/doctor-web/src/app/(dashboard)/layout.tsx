@@ -18,6 +18,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -76,8 +77,6 @@ export default function DashboardLayout({
     isAuthorized = false;
     requiredRoleLabel = "Bác sĩ khám bệnh (DOCTOR)";
   }
-
-  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   return (
     <div className="flex h-screen bg-[#F1F5F9]">

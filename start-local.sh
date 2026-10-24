@@ -91,6 +91,7 @@ run_service "patient-service" "mvn -pl careflow-patient-service spring-boot:run 
 case "$MODE" in
     "ai")
         run_service "hospital-directory-service" "mvn -pl careflow-hospital-directory-service spring-boot:run -Dspring-boot.run.profiles=local $MAVEN_JVM_FLAG" 2
+        run_service "queue-service" "mvn -pl careflow-queue-service spring-boot:run -Dspring-boot.run.profiles=local $MAVEN_JVM_FLAG" 2
         run_service "consultation-service" "mvn -pl careflow-consultation-service spring-boot:run -Dspring-boot.run.profiles=local $MAVEN_JVM_FLAG" 2
         run_service "ai-service" "mvn -pl careflow-ai-service spring-boot:run -Dspring-boot.run.profiles=local $MAVEN_JVM_FLAG" 2
         ;;

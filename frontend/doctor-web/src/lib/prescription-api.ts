@@ -72,6 +72,35 @@ export interface MedicineCatalogItem {
   description: string;
 }
 
+// 25 Thuốc mẫu chuẩn theo Phác đồ điều trị Bộ Y Tế & Dược thư Quốc gia (RAG Knowledge)
+export const DEFAULT_MEDICINE_CATALOG: MedicineCatalogItem[] = [
+  { code: "MED001", name: "Paracetamol 500mg", unit: "viên", description: "Giảm đau, hạ sốt (Paracetamol)" },
+  { code: "MED002", name: "Amoxicillin 500mg", unit: "viên", description: "Kháng sinh nhóm Penicillin" },
+  { code: "MED003", name: "Omeprazole 20mg", unit: "viên", description: "Ức chế bơm proton PPI, trào ngược dạ dày (DDI với Clopidogrel)" },
+  { code: "MED004", name: "Metformin 500mg", unit: "viên", description: "Thuốc đầu tay điều trị Đái tháo đường type 2 (BYT)" },
+  { code: "MED005", name: "Amlodipine 5mg", unit: "viên", description: "Thuốc chẹn kênh Canxi điều trị Tăng huyết áp (BYT)" },
+  { code: "MED006", name: "Atorvastatin 10mg", unit: "viên", description: "Statin hạ lipid máu, phòng ngừa biến cố tim mạch" },
+  { code: "MED007", name: "Cetirizine 10mg", unit: "viên", description: "Kháng histamin H1 chống dị ứng" },
+  { code: "MED008", name: "Ibuprofen 400mg", unit: "viên", description: "Giảm đau, kháng viêm không steroid (NSAID)" },
+  { code: "MED009", name: "Vitamin C 500mg", unit: "viên", description: "Bổ sung vitamin C, tăng cường đề kháng" },
+  { code: "MED010", name: "Loperamide 2mg", unit: "viên", description: "Chống tiêu chảy cấp" },
+  { code: "MED011", name: "Salbutamol 2mg", unit: "viên", description: "Giãn phế quản, cắt cơn hen suyễn" },
+  { code: "MED012", name: "Diclofenac 50mg", unit: "viên", description: "Kháng viêm NSAID giảm đau khớp" },
+  { code: "MED013", name: "Prednisolone 5mg", unit: "viên", description: "Corticosteroid kháng viêm, ức chế miễn dịch" },
+  { code: "MED014", name: "Cephalexin 500mg", unit: "viên", description: "Kháng sinh Cephalosporin thế hệ 1" },
+  { code: "MED015", name: "Domperidone 10mg", unit: "viên", description: "Chống nôn, kích thích nhu động ruột" },
+  { code: "MED016", name: "Clopidogrel 75mg", unit: "viên", description: "Kháng kết tập tiểu cầu (Nguy cơ DDI tương tác mạnh với Omeprazole)" },
+  { code: "MED017", name: "Augmentin 625mg", unit: "viên", description: "Amoxicillin + Acid Clavulanic điều trị Viêm phổi cộng đồng (BYT)" },
+  { code: "MED018", name: "Azithromycin 500mg", unit: "viên", description: "Kháng sinh Macrolide hô hấp điều trị Viêm phổi" },
+  { code: "MED019", name: "Levofloxacin 500mg", unit: "viên", description: "Kháng sinh Fluoroquinolone hô hấp" },
+  { code: "MED020", name: "Losartan 50mg", unit: "viên", description: "Thuốc chẹn thụ thể ARB điều trị Tăng huyết áp" },
+  { code: "MED021", name: "Telmisartan 40mg", unit: "viên", description: "Chẹn thụ thể ARB tác dụng kéo dài theo phác đồ BYT" },
+  { code: "MED022", name: "Gliclazide MR 30mg", unit: "viên", description: "Sulfonylurea hạ đường huyết theo phác đồ ĐTĐ type 2" },
+  { code: "MED023", name: "Dapagliflozin 10mg", unit: "viên", description: "Ức chế SGLT2 bảo vệ tim mạch, thận ở bệnh nhân ĐTĐ type 2" },
+  { code: "MED024", name: "Aspirin 81mg", unit: "viên", description: "Aspirin liều thấp phòng ngừa huyết khối tim mạch" },
+  { code: "MED025", name: "Esomeprazole 40mg", unit: "viên", description: "Ức chế bơm proton PPI thế hệ mới điều trị viêm loét dạ dày" },
+];
+
 export const prescriptionApi = {
   createPrescription: (data: CreatePrescriptionRequest) => 
     api.post<PrescriptionResponse>("/api/prescriptions", data),
@@ -100,6 +129,15 @@ export const prescriptionApi = {
   getByPatient: (patientId: string) => 
     api.get<PrescriptionResponse[]>(`/api/prescriptions/patient/${patientId}`),
     
-  getMedicineCatalog: () => 
-    api.get<MedicineCatalogItem[]>("/api/prescriptions/medicines"),
+  getMedicineCatalog: async () => {
+    try {
+      const res = await api.get<MedicineCatalogItem[]>("/api/prescriptions/medicines");
+      if (res.data && Array.isArray(res.data) && res.data.length > 0) {
+        return res;
+      }
+      return { data: DEFAULT_MEDICINE_CATALOG, status: 200 };
+    } catch {
+      return { data: DEFAULT_MEDICINE_CATALOG, status: 200 };
+    }
+  },
 };

@@ -8,7 +8,7 @@ export interface EvidenceRef {
 }
 
 export interface ClinicalSuggestionItem {
-  type: "DIFFERENTIAL_DIAGNOSIS" | "WARNING" | "TREATMENT_REFERRAL" | "MISSING_DATA";
+  type: "DIFFERENTIAL_DIAGNOSIS" | "WARNING" | "TREATMENT_REFERRAL" | "MISSING_DATA" | "CLINICAL_GUIDELINE_RECOMMENDATION" | string;
   text: string;
   evidenceRefs?: EvidenceRef[];
 }
@@ -56,9 +56,11 @@ export interface VoiceClinicalFieldsResponse {
   extractedFields: VoiceExtractedFields;
 }
 
+const AI_BASE_URL = process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8091";
+
 export const aiApi = {
   getClinicalSuggestions: async (consultationId: string, question?: string, context?: ScreenContext) => {
-    return api.post<ClinicalSuggestionResponse>("/api/ai/clinical-suggestions", {
+    return api.post<ClinicalSuggestionResponse>(`${AI_BASE_URL}/api/ai/clinical-suggestions`, {
       consultationId,
       question: question || "Gợi ý chẩn đoán phân biệt và dữ liệu còn thiếu",
       pageRoute: context?.pageRoute,
@@ -75,7 +77,7 @@ export const aiApi = {
   ) => {
     const context = typeof contextOrParentId === "object" ? contextOrParentId : undefined;
     const parentId = typeof contextOrParentId === "string" ? contextOrParentId : parentInteractionId;
-    return api.post<ClinicalSuggestionResponse>("/api/ai/clinical-chat", {
+    return api.post<ClinicalSuggestionResponse>(`${AI_BASE_URL}/api/ai/clinical-chat`, {
       consultationId,
       message,
       parentInteractionId: parentId,
@@ -86,17 +88,17 @@ export const aiApi = {
   },
 
   getInteractionById: async (interactionId: string) => {
-    return api.get<ClinicalSuggestionResponse>(`/api/ai/interactions/${interactionId}`);
+    return api.get<ClinicalSuggestionResponse>(`${AI_BASE_URL}/api/ai/interactions/${interactionId}`);
   },
 
   processVoiceToFields: async (audioBlob: Blob): Promise<ApiResponse<VoiceClinicalFieldsResponse>> => {
     const formData = new FormData();
     const filename = audioBlob.type.includes("wav") ? "voice-record.wav" : "voice-record.webm";
     formData.append("file", audioBlob, filename);
-    return api.upload<VoiceClinicalFieldsResponse>("/api/ai/voice-to-clinical-fields", formData);
+    return api.upload<VoiceClinicalFieldsResponse>(`${AI_BASE_URL}/api/ai/voice-to-clinical-fields`, formData);
   },
 
   processTextToFields: async (transcriptText: string): Promise<ApiResponse<VoiceClinicalFieldsResponse>> => {
-    return api.post<VoiceClinicalFieldsResponse>("/api/ai/text-to-clinical-fields", { transcriptText });
+    return api.post<VoiceClinicalFieldsResponse>(`${AI_BASE_URL}/api/ai/text-to-clinical-fields`, { transcriptText });
   },
 };

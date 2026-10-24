@@ -1,0 +1,50 @@
+{
+  "version": "3.0.0",
+  "darkMode": true,
+  "gridEnabling": false,
+  "currentViewName": null,
+  "defaultView": {
+    "detailLevel": "All",
+    "relationshipMode": "All",
+    "tablePositions": [
+      {
+        "name": "clinical_guideline_documents",
+        "schemaName": "public",
+        "x": 12,
+        "y": 578
+      },
+      {
+        "name": "clinical_guideline_chunks",
+        "schemaName": "public",
+        "x": 531.3427734375,
+        "y": 578
+      },
+      {
+        "name": "ai_clinical_interactions",
+        "schemaName": "public",
+        "x": 251.35378456836787,
+        "y": -9.759337301873927
+      }
+    ],
+    "tableGroupCollapseStates": [],
+    "stickyNoteLayouts": [],
+    "referencePaths": [
+      {
+        "firstFieldNames": [
+          "id"
+        ],
+        "firstTableName": "clinical_guideline_documents",
+        "firstSchemaName": "public",
+        "firstRelation": "1",
+        "secondFieldNames": [
+          "document_id"
+        ],
+        "secondTableName": "clinical_guideline_chunks",
+        "secondSchemaName": "public",
+        "secondRelation": "*",
+        "checkPoints": []
+      }
+    ]
+  },
+  "views": {}
+}

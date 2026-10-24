@@ -37,6 +37,14 @@ public class GeminiClientService {
             "gemini-2.0-flash-lite"
     );
 
+    private static final List<String> EMBEDDING_MODELS = List.of(
+            "gemini-embedding-2-preview",
+            "text-embedding-004",
+            "gemini-embedding-exp-03-07"
+    );
+
+    private static final int EMBEDDING_DIM = 768;
+
     public boolean isGeminiConfigured() {
         return apiKey != null && !apiKey.trim().isEmpty();
     }
@@ -81,6 +89,66 @@ public class GeminiClientService {
             }
         }
 
+        return null;
+    }
+
+    /**
+     * Sinh vector embedding 768 chiều từ Gemini API.
+     * Trả về chuỗi định dạng "[f1,f2,...,f768]" để nạp trực tiếp vào câu lệnh SQL cast(:embedding as vector).
+     * Trả về null an toàn nếu input rỗng, API key chưa cấu hình, hoặc API bị lỗi/hết quota (để fallback sang BM25).
+     */
+    public String generateEmbedding(String text) {
+        if (text == null || text.trim().isEmpty()) {
+            return null;
+        }
+
+        if (!isGeminiConfigured()) {
+            log.warn("Gemini API key is not configured. Skipping embedding, will use BM25 fulltext search.");
+            return null;
+        }
+
+        for (String targetModel : EMBEDDING_MODELS) {
+            try {
+                String url = String.format("/v1beta/models/%s:embedContent?key=%s", targetModel, apiKey);
+
+                Map<String, Object> requestPayload = Map.of(
+                        "model", "models/" + targetModel,
+                        "content", Map.of(
+                                "parts", List.of(Map.of("text", text.trim()))
+                        ),
+                        "outputDimensionality", EMBEDDING_DIM
+                );
+
+                String responseBody = webClient.post()
+                        .uri(url)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(requestPayload)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .block();
+
+                if (responseBody != null) {
+                    JsonNode root = objectMapper.readTree(responseBody);
+                    JsonNode valuesNode = root.path("embedding").path("values");
+                    if (!valuesNode.isMissingNode() && valuesNode.isArray() && valuesNode.size() > 0) {
+                        StringBuilder sb = new StringBuilder("[");
+                        for (int i = 0; i < valuesNode.size(); i++) {
+                            if (i > 0) {
+                                sb.append(",");
+                            }
+                            sb.append(valuesNode.get(i).asDouble());
+                        }
+                        sb.append("]");
+                        log.debug("Successfully generated {}d embedding with model: {}", valuesNode.size(), targetModel);
+                        return sb.toString();
+                    }
+                }
+            } catch (Exception e) {
+                log.warn("Embedding model {} failed ({}). Trying next model...", targetModel, e.getMessage());
+            }
+        }
+
+        log.warn("All Gemini embedding models failed or quota exhausted. Falling back to BM25-only.");
         return null;
     }
 

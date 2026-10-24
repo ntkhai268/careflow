@@ -10,7 +10,9 @@ import { patientApi, emrApi, PatientAllergyResponse } from "@/lib/patient-api";
 import { labApi, MOCK_LAB_SERVICES, LabCatalogItem, LabOrderResponse } from "@/lib/lab-api";
 import { queueApi } from "@/lib/queue-api";
 import { aiApi, ClinicalSuggestionResponse, VoiceExtractedFields } from "@/lib/ai-api";
-import { renderFormattedAiText } from "@/lib/format-ai-text";
+import { FormattedAiText, renderFormattedAiText } from "@/lib/format-ai-text";
+import { DEFAULT_MEDICINE_CATALOG } from "@/lib/prescription-api";
+import { useVoiceStore } from "@/stores/voice-store";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import ConfirmModal from "@/components/ConfirmModal";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
@@ -40,12 +42,18 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   // AI Clinical Assistant state
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResponse, setAiResponse] = useState<ClinicalSuggestionResponse | null>(null);
-  const [aiChatInput, setAiChatInput] = useState("");
-  const [aiChatHistory, setAiChatHistory] = useState<{ sender: "user" | "ai"; text: string; time: string; responseObj?: ClinicalSuggestionResponse }[]>([]);
+  const [aiQueryInput, setAiQueryInput] = useState("");
 
-  // AI Voice-to-Clinical-Fields state
-  const [isVoiceProcessing, setIsVoiceProcessing] = useState(false);
-  const [voicePreview, setVoicePreview] = useState<{ transcript: string; fields: VoiceExtractedFields } | null>(null);
+  // AI Voice-to-Clinical-Fields state via Zustand Store
+  const {
+    transcript: voiceTranscript,
+    extractedFields: voiceExtractedFields,
+    isPreviewOpen: isVoicePreviewOpen,
+    closePreview: closeVoicePreview,
+    openPreview: openVoicePreview,
+    reset: resetVoiceStore,
+    setIsProcessing: setVoiceIsProcessing,
+  } = useVoiceStore();
 
   // Lab Orders state
   const [selectedLabServices, setSelectedLabServices] = useState<LabCatalogItem[]>([]);
@@ -123,7 +131,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [isMedicineDrawerOpen, setIsMedicineDrawerOpen] = useState(false);
   const [editingMedicineCode, setEditingMedicineCode] = useState<string | null>(null);
 
-  const [medicines, setMedicines] = useState<MedicineCatalogItem[]>([]);
+  const [medicines, setMedicines] = useState<MedicineCatalogItem[]>(DEFAULT_MEDICINE_CATALOG);
   const [medSearchQuery, setMedSearchQuery] = useState("");
   const [showMedDropdown, setShowMedDropdown] = useState(false);
   const [selectedMedicine, setSelectedMedicine] = useState<MedicineCatalogItem | null>(null);
@@ -183,11 +191,100 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     return null;
   };
 
+  // Helper: Setup Demo Mock Consultation for Standalone RAG Testing
+  const setupDemoFallbackConsultation = () => {
+    const mockConsultation: ConsultationResponse = {
+      id: consultationId || "DEMO-CONSULTATION-01",
+      patientId: "p-demo-001",
+      doctorId: "doc-demo-01",
+      temperature: 38.5,
+      bloodPressure: "145/95",
+      heartRate: 88,
+      spo2: 96,
+      height: 168,
+      weight: 65,
+      symptoms: "Sốt cao 38.5°C 3 ngày nay, ho có đờm vàng đặc, khó thở nhẹ khi gắng sức, tức ngực trái.",
+      clinicalNotes: "Bệnh nhân có tiền sử Tăng huyết áp 5 năm, Đái tháo đường Type 2, dị ứng Penicillin. Hiện tỉnh, tiếp xúc tốt, phổi ran ẩm rải rác.",
+      icd10Code: "J18.9",
+      icd10Name: "Viêm phổi, không đặc hiệu",
+      diagnosis: "Theo dõi Viêm phổi mắc phải tại cộng đồng (CAP) / Tăng huyết áp độ 2",
+      status: "IN_PROGRESS",
+      startedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    setConsultation(mockConsultation);
+    setPatientName("Nguyễn Văn An (Demo RAG)");
+    setPatientAge(58);
+    setPatientGender("Nam");
+    setPatientAllergies([
+      {
+        id: "alg-1",
+        allergyName: "Penicillin",
+        allergyGroup: "Kháng sinh nhóm Beta-lactam",
+        severity: "CRITICAL",
+        reaction: "Phát ban, phù mạch, khó thở"
+      }
+    ]);
+    setPatientMedicalHistory("Tăng huyết áp 5 năm điều trị thường xuyên, Đái tháo đường Type 2 kiểm soát bằng Metformin.");
+    setAllergyLoaded(true);
+
+    setTemperature("38.5");
+    setBloodPressure("145/95");
+    setHeartRate("88");
+    setSpo2("96");
+    setHeight("168");
+    setWeight("65");
+    setSymptoms(mockConsultation.symptoms!);
+    setClinicalNotes(mockConsultation.clinicalNotes!);
+    setIcd10Code(mockConsultation.icd10Code!);
+    setIcd10Name(mockConsultation.icd10Name!);
+    setDiagnosis(mockConsultation.diagnosis!);
+
+    // Seed all 25 clinical medicines from Ministry of Health (BYT) RAG guidelines
+    setMedicines(DEFAULT_MEDICINE_CATALOG);
+
+    setPrescriptionItems([
+      {
+        medicineName: "Clopidogrel 75mg",
+        medicineCode: "CLOP-75",
+        unit: "Viên",
+        dosage: "1 viên/lần",
+        frequency: "1 lần/ngày",
+        timing: "Sau ăn sáng",
+        duration: 30,
+        quantity: 30,
+        notes: "Thuốc chống kết tập tiểu cầu"
+      },
+      {
+        medicineName: "Omeprazole 20mg",
+        medicineCode: "OMEP-20",
+        unit: "Viên",
+        dosage: "1 viên/lần",
+        frequency: "1 lần/ngày",
+        timing: "Trước ăn sáng 30 phút",
+        duration: 14,
+        quantity: 14,
+        notes: "Giảm tiết acid dạ dày"
+      }
+    ]);
+    setShowPrescriptionNotes(true);
+    setPrescriptionNotes("Uống thuốc đúng giờ, tái khám sau 7 ngày.");
+  };
+
   // Fetch all initial data
   useEffect(() => {
     async function loadData() {
       try {
         setIsLoading(true);
+
+        if (consultationId === "demo" || consultationId === "demo-01") {
+          setupDemoFallbackConsultation();
+          showToast("Đã kích hoạt Ca Khám Mẫu Demo sẵn sàng thử nghiệm Trợ lý AI RAG", "success");
+          return;
+        }
+
         // Get consultation
         const consRes = await consultationApi.getConsultation(consultationId);
         const consData = consRes.data;
@@ -234,30 +331,42 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         setIcd10Name(consData.icd10Name || "");
         setDiagnosis(consData.diagnosis || "");
 
-        // Fetch medicine catalog from real API
-        const medRes = await prescriptionApi.getMedicineCatalog();
-        setMedicines(medRes.data);
+        // Fetch medicine catalog from real API or default RAG catalog
+        try {
+          const medRes = await prescriptionApi.getMedicineCatalog();
+          if (medRes.data && medRes.data.length > 0) {
+            setMedicines(medRes.data);
+          } else {
+            setMedicines(DEFAULT_MEDICINE_CATALOG);
+          }
+        } catch {
+          setMedicines(DEFAULT_MEDICINE_CATALOG);
+        }
 
         // Fetch existing prescription if any
-        const prescRes = await prescriptionApi.getByConsultation(consultationId);
-        if (prescRes.data && prescRes.data.length > 0) {
-          const presc = prescRes.data[0];
-          setPrescriptionId(presc.id);
-          setPrescriptionStatus(presc.status);
-          setPrescriptionNotes(presc.notes || "");
-          if (presc.notes) setShowPrescriptionNotes(true);
-          setFollowUpDate(presc.followUpDate || "");
-          setPrescriptionItems(presc.items.map(item => ({
-            medicineName: item.medicineName,
-            medicineCode: item.medicineCode,
-            unit: item.unit,
-            dosage: item.dosage,
-            frequency: item.frequency,
-            timing: item.timing,
-            duration: item.duration,
-            quantity: item.quantity,
-            notes: item.notes
-          })));
+        try {
+          const prescRes = await prescriptionApi.getByConsultation(consultationId);
+          if (prescRes.data && prescRes.data.length > 0) {
+            const presc = prescRes.data[0];
+            setPrescriptionId(presc.id);
+            setPrescriptionStatus(presc.status);
+            setPrescriptionNotes(presc.notes || "");
+            if (presc.notes) setShowPrescriptionNotes(true);
+            setFollowUpDate(presc.followUpDate || "");
+            setPrescriptionItems(presc.items.map(item => ({
+              medicineName: item.medicineName,
+              medicineCode: item.medicineCode,
+              unit: item.unit,
+              dosage: item.dosage,
+              frequency: item.frequency,
+              timing: item.timing,
+              duration: item.duration,
+              quantity: item.quantity,
+              notes: item.notes
+            })));
+          }
+        } catch {
+          // Ignore prescription fetch failure
         }
 
         // Fetch existing lab orders if any
@@ -270,8 +379,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           // Silent catch for lab order fetch
         }
       } catch (err) {
-        console.error(err);
-        showToast(err instanceof Error ? err.message : "Không thể tải thông tin phiên khám.", "danger");
+        console.warn("Consultation service offline. Falling back to Demo Consultation Data:", err);
+        setupDemoFallbackConsultation();
+        showToast("Backend lâm sàng chưa bật. Đã tự động nạp Ca Khám Mẫu để thử nghiệm AI RAG", "warning");
       } finally {
         setIsLoading(false);
       }
@@ -578,27 +688,57 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     }
   };
 
-  // AI Clinical Assistant Call handlers
+  // Compile live consultation screen data for RAG Retrieval
+  const compileLiveConsultationContext = () => {
+    const contextParts: string[] = [];
+    if (symptoms?.trim()) contextParts.push(`Triệu chứng: ${symptoms.trim()}`);
+    if (diagnosis?.trim()) contextParts.push(`Chẩn đoán: ${diagnosis.trim()}`);
+    if (clinicalNotes?.trim()) contextParts.push(`Bệnh sử / Diễn tiến: ${clinicalNotes.trim()}`);
+    if (patientName) {
+      contextParts.push(`Bệnh nhân: ${patientName} (${patientGender}, ${patientAge} tuổi)`);
+    }
+    if (patientAllergies.length > 0) {
+      const allergyStr = patientAllergies.map(a => `${a.allergyName} (${a.severity || 'Dị ứng'})`).join(", ");
+      contextParts.push(`Dị ứng: ${allergyStr}`);
+    }
+    if (patientMedicalHistory) {
+      contextParts.push(`Tiền sử bệnh: ${patientMedicalHistory}`);
+    }
+    const vitalsStr: string[] = [];
+    if (bloodPressure) vitalsStr.push(`Huyết áp: ${bloodPressure}`);
+    if (heartRate) vitalsStr.push(`Mạch: ${heartRate} lần/phút`);
+    if (temperature) vitalsStr.push(`Nhiệt độ: ${temperature}°C`);
+    if (vitalsStr.length > 0) contextParts.push(`Sinh hiệu: ${vitalsStr.join(', ')}`);
+    if (prescriptionItems.length > 0) {
+      const medNames = prescriptionItems.map(p => `${p.medicineName} (${p.dosage || ''})`).join('; ');
+      contextParts.push(`Thuốc đang chỉ định: ${medNames}`);
+    }
+    return contextParts.join(' | ');
+  };
+
+  // AI Clinical Assistant Call handlers (Unified Prompt & Query Handler)
   const handleGetAiSuggestions = async (promptQuestion?: string) => {
+    const query = (promptQuestion || aiQueryInput).trim();
+    if (!query || aiLoading) return;
+
     setAiLoading(true);
+    if (!promptQuestion) {
+      setAiQueryInput("");
+    }
+
     try {
-      const res = await aiApi.getClinicalSuggestions(consultationId, promptQuestion || "Gợi ý chẩn đoán phân biệt và dữ liệu còn thiếu");
+      const liveContext = {
+        pageRoute: `/consultation/${consultationId}`,
+        pageTitle: "Khám bệnh Chi tiết",
+        pageData: compileLiveConsultationContext(),
+      };
+      const res = await aiApi.getClinicalSuggestions(
+        consultationId,
+        query,
+        liveContext
+      );
       if (res.data) {
         setAiResponse(res.data);
-        setAiChatHistory(prev => [
-          ...prev,
-          {
-            sender: "user",
-            text: promptQuestion || "Gợi ý chẩn đoán phân biệt và dữ liệu còn thiếu",
-            time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-          },
-          {
-            sender: "ai",
-            text: res.data.summary,
-            time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-            responseObj: res.data,
-          },
-        ]);
       }
     } catch {
       showToast("Không thể kết nối AI Service.", "danger");
@@ -607,62 +747,23 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     }
   };
 
-  const handleSendAiChat = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!aiChatInput.trim() || aiLoading) return;
-
-    const msg = aiChatInput.trim();
-    setAiChatInput("");
-    setAiLoading(true);
-
-    setAiChatHistory(prev => [
-      ...prev,
-      {
-        sender: "user",
-        text: msg,
-        time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-      },
-    ]);
-
-    try {
-      const res = await aiApi.sendClinicalChat(consultationId, msg, aiResponse?.interactionId);
-      if (res.data) {
-        setAiResponse(res.data);
-        setAiChatHistory(prev => [
-          ...prev,
-          {
-            sender: "ai",
-            text: res.data.summary,
-            time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-            responseObj: res.data,
-          },
-        ]);
-      }
-    } catch {
-      showToast("AI Service chưa sẵn sàng.", "danger");
-    } finally {
-      setAiLoading(false);
-    }
-  };
-
-  // Voice STT Recording and Field Extraction Handlers
+  // Voice STT Recording and Field Extraction Handlers (via Zustand Store)
   const handleVoiceRecorded = async (audioBlob: Blob) => {
-    setIsVoiceProcessing(true);
+    setVoiceIsProcessing(true);
     try {
       const res = await aiApi.processVoiceToFields(audioBlob);
       if (res && res.data) {
-        setVoicePreview({
-          transcript: res.data.transcriptText,
-          fields: res.data.extractedFields || {},
-        });
+        openVoicePreview(res.data.transcriptText || "", res.data.extractedFields || {});
       } else {
         showToast("AI không nhận diện được nội dung từ bản ghi âm.", "warning");
+        resetVoiceStore();
       }
     } catch (err) {
       console.error("Voice STT error:", err);
       showToast("Không thể xử lý âm thanh từ AI Service.", "danger");
+      resetVoiceStore();
     } finally {
-      setIsVoiceProcessing(false);
+      setVoiceIsProcessing(false);
     }
   };
 
@@ -713,7 +814,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       appliedCount++;
     }
 
-    setVoicePreview(null);
+    closeVoicePreview();
     showToast(`Đã áp dụng thành công ${appliedCount} trường thông tin vào ca khám.`, "success");
   };
 
@@ -942,13 +1043,12 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           
           {/* AI Voice Dictation Bar */}
           {!isConsultationLocked && (
-            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-gradient-to-r from-purple-50/90 via-purple-50/50 to-white border border-purple-200/80 rounded-lg shadow-[0_1px_3px_rgba(110,37,130,0.06)]">
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-purple-50/50 border border-purple-200/80 rounded-lg">
               <div className="flex items-center gap-2">
-                <span className="text-base">🎙️</span>
                 <div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs font-bold text-[#6E2582]">Ghi âm lời khám rảnh tay (STT)</span>
-                    <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-black border border-purple-200">AI</span>
+                    <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-bold border border-purple-200">AI</span>
                   </div>
                   <p className="text-[11px] text-[#6A5C70]">Đọc các chỉ số sinh hiệu, triệu chứng hoặc chẩn đoán để AI tự động điền</p>
                 </div>
@@ -956,7 +1056,6 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
               <VoiceRecorderButton
                 onAudioReady={handleVoiceRecorded}
                 disabled={isConsultationLocked}
-                isProcessing={isVoiceProcessing}
               />
             </div>
           )}
@@ -1030,8 +1129,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   : "border-transparent text-purple-700 hover:text-[#6E2582]"
               }`}
             >
-              <span>🤖 Trợ lý AI Lâm sàng</span>
-              <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-black border border-purple-200">AI</span>
+              <svg className="w-3.5 h-3.5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span>Trợ lý AI Lâm sàng</span>
+              <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-black border border-purple-200">RAG</span>
             </button>
           </div>
 
@@ -1636,109 +1738,161 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
           {/* TAB 6: AI Clinical Assistant Workspace */}
           {activeTab === "ai" && (
-            <div className="border border-purple-200 bg-card-bg p-5 shadow-lg rounded-b-lg space-y-5">
-              {/* Header Banner */}
-              <div className="p-4 bg-gradient-to-r from-purple-900 via-[#6E2582] to-purple-800 text-white rounded-xl shadow-md space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="text-xl">🤖</span>
-                    <h3 className="font-extrabold text-sm tracking-wide">Trợ Lý Lâm Sàng AI CareFlow</h3>
-                  </div>
-                  <span className="text-[10px] bg-purple-700/60 border border-purple-400/40 text-purple-200 px-2 py-0.5 rounded font-mono font-semibold">
-                    CareFlow Rule Engine v1.0
-                  </span>
-                </div>
-                <p className="text-xs text-purple-100/90 leading-relaxed">
-                  Phân tích triệu chứng, gợi ý chẩn đoán phân biệt, phát hiện cảnh báo tương tác thuốc và dữ liệu lâm sàng còn thiếu.
-                </p>
-              </div>
-
-              {/* Quick Prompts Bar */}
-              <div className="space-y-2">
-                <span className="text-[11px] font-bold text-[#6A5C70] uppercase tracking-wider block">
-                  Nút câu hỏi gợi ý nhanh cho Bác sĩ:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleGetAiSuggestions("Gợi ý các khả năng chẩn đoán phân biệt cần cân nhắc")}
-                    disabled={aiLoading}
-                    className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
-                  >
-                    <span>💡 Gợi ý Chẩn đoán Phân biệt</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleGetAiSuggestions("Cảnh báo yếu tố dị ứng và tương tác thuốc nhóm Penicillin & NSAIDs")}
-                    disabled={aiLoading}
-                    className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-900 border border-rose-200 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
-                  >
-                    <span>⚠️ Cảnh báo Tương tác & Dị ứng</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleGetAiSuggestions("Kiểm tra dữ liệu lâm sàng và xét nghiệm còn thiếu")}
-                    disabled={aiLoading}
-                    className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
-                  >
-                    <span>❓ Dữ liệu Lâm sàng Còn thiếu</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => handleGetAiSuggestions("Đề xuất các chỉ định Cận lâm sàng khẩn cấp")}
-                    disabled={aiLoading}
-                    className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
-                  >
-                    <span>🔬 Đề xuất Cận lâm sàng</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* AI Analysis Response Card */}
-              {aiLoading ? (
-                <div className="p-8 text-center bg-purple-50/50 border border-purple-100 rounded-xl space-y-3">
-                  <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-xs font-bold text-purple-800 animate-pulse">
-                    CareFlow AI đang tổng hợp EMR và phân tích dữ liệu lâm sàng...
+            <div className="border border-card-border bg-card-bg p-5 rounded-b-lg space-y-4">
+              {/* Section Header */}
+              <div className="flex items-center justify-between pb-3 border-b border-card-border">
+                <div>
+                  <h3 className="font-bold text-xs text-[#2B1D30] tracking-wide">
+                    Trợ lý Lâm sàng (Phác đồ điều trị Bộ Y Tế)
+                  </h3>
+                  <p className="text-[10px] text-[#6A5C70]">
+                    Truy hồi tri thức phác đồ BYT & Dược thư Quốc gia (RAG Hybrid Search)
                   </p>
                 </div>
-              ) : aiResponse && (
-                <div className="space-y-4 border border-card-border bg-white p-4 rounded-xl shadow-sm">
-                  {/* Summary */}
-                  <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                    <span className="text-[11px] font-bold text-purple-900 uppercase tracking-wider block">Tóm tắt phân tích:</span>
-                    <div className="text-xs font-medium text-purple-950 mt-1">{renderFormattedAiText(aiResponse.summary)}</div>
+                <span className="text-[10px] bg-purple-50 text-[#6E2582] border border-purple-200 px-2 py-0.5 rounded font-mono font-medium">
+                  BYT Guidelines & Gemini 2.5 Flash
+                </span>
+              </div>
+
+              {/* Unified Query & Quick Prompts Bar */}
+              <div className="space-y-2.5 bg-slate-50 p-3 rounded-lg border border-card-border">
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleGetAiSuggestions();
+                  }}
+                  className="flex gap-2"
+                >
+                  <input
+                    type="text"
+                    value={aiQueryInput}
+                    onChange={(e) => setAiQueryInput(e.target.value)}
+                    placeholder="Nhập câu hỏi lâm sàng, biệt dược, liều dùng hoặc tra cứu phác đồ..."
+                    className="flex-1 px-3 py-2 border border-card-border rounded-md text-xs bg-white text-[#2B1D30] placeholder-[#6A5C70] focus:outline-none focus:border-[#6E2582]"
+                  />
+                  <button
+                    type="submit"
+                    disabled={aiLoading || !aiQueryInput.trim()}
+                    className="px-4 py-2 bg-[#6E2582] hover:bg-[#561A66] text-white text-xs font-semibold rounded-md transition-all disabled:opacity-40 cursor-pointer"
+                  >
+                    Tra cứu
+                  </button>
+                </form>
+
+                {/* Quick Prompt Chips */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[10px] font-semibold text-[#6A5C70] mr-1">Gợi ý nhanh:</span>
+                  <button
+                    type="button"
+                    onClick={() => handleGetAiSuggestions("Gợi ý các khả năng chẩn đoán phân biệt cần cân nhắc theo phác đồ")}
+                    disabled={aiLoading}
+                    className="px-2.5 py-1 bg-white hover:bg-purple-50 text-slate-700 hover:text-[#6E2582] border border-card-border text-[11px] font-medium rounded-md transition-all cursor-pointer"
+                  >
+                    Chẩn đoán phân biệt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleGetAiSuggestions("Kiểm tra tương tác thuốc DDI từ Dược thư Quốc gia và yếu tố dị ứng")}
+                    disabled={aiLoading}
+                    className="px-2.5 py-1 bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-card-border text-[11px] font-medium rounded-md transition-all cursor-pointer"
+                  >
+                    Cảnh báo tương tác DDI
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleGetAiSuggestions("Kiểm tra dữ liệu lâm sàng và tiền sử còn thiếu")}
+                    disabled={aiLoading}
+                    className="px-2.5 py-1 bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-card-border text-[11px] font-medium rounded-md transition-all cursor-pointer"
+                  >
+                    Dữ liệu còn thiếu
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleGetAiSuggestions("Đề xuất các chỉ định Cận lâm sàng theo phác đồ")}
+                    disabled={aiLoading}
+                    className="px-2.5 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-800 border border-card-border text-[11px] font-medium rounded-md transition-all cursor-pointer"
+                  >
+                    Đề xuất Cận lâm sàng
+                  </button>
+                </div>
+              </div>
+
+              {/* Loading State */}
+              {aiLoading && (
+                <div className="p-6 text-center bg-slate-50 border border-card-border rounded-lg space-y-2">
+                  <div className="w-5 h-5 border-2 border-[#6E2582] border-t-transparent rounded-full animate-spin mx-auto" />
+                  <p className="text-xs text-slate-600 font-medium">
+                    Đang truy hồi phác đồ Bộ Y Tế và phân tích ca khám...
+                  </p>
+                </div>
+              )}
+
+              {/* Results Viewport */}
+              {!aiLoading && aiResponse && (
+                <div className="space-y-3.5">
+                  {/* DDI & Critical Warnings Alert (if any) */}
+                  {aiResponse.warnings && aiResponse.warnings.some(w => w.includes("DDI") || w.toLowerCase().includes("tương tác")) && (
+                    <div className="p-3 bg-amber-50/90 border-l-3 border-amber-500 rounded-r-md space-y-1">
+                      <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
+                        <span>Cảnh báo tương tác thuốc (Dược Thư Quốc Gia):</span>
+                      </div>
+                      <ul className="list-disc list-inside text-xs text-amber-950 space-y-0.5 pl-1">
+                        {aiResponse.warnings
+                          .filter(w => w.includes("DDI") || w.toLowerCase().includes("tương tác"))
+                          .map((w, idx) => (
+                            <li key={idx}>{w}</li>
+                          ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Analysis Content with Formatted Markdown */}
+                  <div className="p-4 bg-white border border-card-border rounded-lg space-y-2">
+                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                      <span className="text-[11px] font-bold text-[#2B1D30] uppercase tracking-wide">
+                        Kết quả phân tích lâm sàng:
+                      </span>
+                      {aiResponse.model && (
+                        <span className="text-[10px] text-slate-500 font-mono">
+                          {aiResponse.model.name}
+                        </span>
+                      )}
+                    </div>
+                    <FormattedAiText content={aiResponse.summary} />
                   </div>
 
-                  {/* Suggestions list with evidence & copy action */}
+                  {/* Suggestions list with Guidelines evidence & apply button */}
                   {aiResponse.suggestions && aiResponse.suggestions.length > 0 && (
                     <div className="space-y-2">
-                      <span className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide block">💡 Gợi ý Chẩn đoán & Hướng xử lý:</span>
+                      <span className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide block">
+                        Khuyến nghị từ Phác đồ Bộ Y Tế:
+                      </span>
                       <div className="space-y-2">
                         {aiResponse.suggestions.map((item, idx) => (
-                          <div key={idx} className="p-3 bg-gray-50 border border-card-border rounded-lg space-y-2">
+                          <div key={idx} className="p-3 bg-white border border-card-border rounded-lg space-y-2">
                             <div className="flex items-start justify-between gap-3">
-                              <p className="text-xs font-semibold text-slate-800">{item.text}</p>
+                              <p className="text-xs text-slate-800 leading-relaxed font-medium">{item.text}</p>
                               <button
                                 type="button"
                                 onClick={() => {
                                   setDiagnosis(item.text);
-                                  showToast(`Đã sao chép gợi ý AI vào ô Chẩn đoán: ${item.text}`, "success");
+                                  showToast(`Đã áp dụng gợi ý vào ô Chẩn đoán`, "success");
                                 }}
-                                className="px-2.5 py-1 text-[11px] font-bold text-purple-800 bg-purple-100 hover:bg-purple-200 border border-purple-300 rounded transition-all flex-shrink-0 cursor-pointer"
+                                className="px-2.5 py-1 text-[11px] font-medium text-[#6E2582] bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-md transition-all flex-shrink-0 cursor-pointer"
                               >
-                                + Áp dụng vào Chẩn đoán
+                                + Áp dụng
                               </button>
                             </div>
                             {item.evidenceRefs && item.evidenceRefs.length > 0 && (
-                              <div className="flex items-center gap-1.5 text-[10px]">
-                                <span className="text-gray-500 font-medium">Bằng chứng:</span>
+                              <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-slate-100 text-[10px]">
+                                <span className="text-slate-500">Căn cứ:</span>
                                 {item.evidenceRefs.map((ev, eIdx) => (
-                                  <span key={eIdx} className="bg-purple-100/70 text-purple-800 font-mono px-1.5 py-0.5 rounded border border-purple-200">
-                                    {ev.sourceType} ({ev.field})
+                                  <span
+                                    key={eIdx}
+                                    className="bg-purple-50 text-purple-900 font-mono px-1.5 py-0.5 rounded border border-purple-200 text-[10px]"
+                                  >
+                                    <span className="font-semibold">{ev.sourceId}</span>
+                                    {ev.field && <span className="text-purple-700 ml-1">({ev.field})</span>}
                                   </span>
                                 ))}
                               </div>
@@ -1749,11 +1903,13 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     </div>
                   )}
 
-                  {/* Missing Info */}
+                  {/* General Missing Information */}
                   {aiResponse.missingInformation && aiResponse.missingInformation.length > 0 && (
-                    <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg space-y-1">
-                      <span className="text-xs font-bold text-amber-900 uppercase tracking-wide block">❓ Dữ liệu cần khai thác thêm:</span>
-                      <ul className="list-disc list-inside text-xs font-medium text-amber-950 space-y-0.5">
+                    <div className="p-3 bg-slate-50 border border-card-border rounded-lg space-y-1">
+                      <span className="text-xs font-semibold text-slate-800 block">
+                        Dữ liệu lâm sàng cần khai thác thêm:
+                      </span>
+                      <ul className="list-disc list-inside text-xs text-slate-700 space-y-0.5 pl-1">
                         {aiResponse.missingInformation.map((info, idx) => (
                           <li key={idx}>{info}</li>
                         ))}
@@ -1761,62 +1917,12 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     </div>
                   )}
 
-                  {/* Warnings */}
-                  {aiResponse.warnings && aiResponse.warnings.length > 0 && (
-                    <div className="p-3 bg-rose-50 border border-rose-200 rounded-lg space-y-1">
-                      <span className="text-xs font-bold text-rose-900 uppercase tracking-wide block">⚠️ Cảnh báo Lâm sàng:</span>
-                      <ul className="list-disc list-inside text-xs font-semibold text-rose-950 space-y-0.5">
-                        {aiResponse.warnings.map((w, idx) => (
-                          <li key={idx}>{w}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
                   {/* Medical Disclaimer */}
-                  <div className="p-2.5 bg-gray-100 border border-gray-200 text-center rounded-lg text-[11px] font-semibold text-gray-600">
-                    🛡️ {aiResponse.disclaimer}
-                  </div>
+                  <p className="text-[10px] text-slate-400 italic text-center pt-1">
+                    {aiResponse.disclaimer}
+                  </p>
                 </div>
               )}
-
-              {/* Continuous Interactive Chat Box */}
-              <div className="border border-card-border bg-white p-4 rounded-xl shadow-sm space-y-3">
-                <span className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide block">
-                  💬 Tương tác & Hỏi đáp Lâm sàng với AI
-                </span>
-
-                {aiChatHistory.length > 0 && (
-                  <div className="max-h-60 overflow-y-auto space-y-2 p-2 bg-gray-50 border border-card-border rounded-lg text-xs">
-                    {aiChatHistory.map((chat, idx) => (
-                      <div key={idx} className={`p-2.5 rounded-lg text-xs ${chat.sender === "user" ? "bg-purple-100 text-purple-950 ml-6 text-right" : "bg-white border border-card-border text-slate-800 mr-6"}`}>
-                        <div className="flex items-center justify-between text-[10px] font-bold text-gray-400 mb-1">
-                          <span>{chat.sender === "user" ? "Bác sĩ" : "CareFlow AI"}</span>
-                          <span>{chat.time}</span>
-                        </div>
-                        <div>{renderFormattedAiText(chat.text)}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <form onSubmit={handleSendAiChat} className="flex gap-2">
-                  <input
-                    type="text"
-                    value={aiChatInput}
-                    onChange={(e) => setAiChatInput(e.target.value)}
-                    placeholder="Nhập câu hỏi hoặc yêu cầu hỗ trợ lâm sàng cho AI..."
-                    className="flex-1 p-2.5 border border-card-border rounded-lg text-xs bg-white focus:ring-2 focus:ring-purple-500"
-                  />
-                  <button
-                    type="submit"
-                    disabled={aiLoading || !aiChatInput.trim()}
-                    className="px-4 py-2.5 bg-[#6E2582] hover:bg-[#561A66] text-white text-xs font-bold rounded-lg shadow-sm transition-all disabled:opacity-50 cursor-pointer"
-                  >
-                    Gửi
-                  </button>
-                </form>
-              </div>
             </div>
           )}
 
@@ -2448,13 +2554,13 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         </div>
       )}
 
-      {/* AI Voice-to-Clinical-Fields Review & Apply Modal */}
-      {voicePreview && (
+      {/* AI Voice-to-Clinical-Fields Review & Apply Modal (Zustand Store) */}
+      {isVoicePreviewOpen && voiceExtractedFields && (
         <VoicePreviewModal
-          transcript={voicePreview.transcript}
-          fields={voicePreview.fields}
+          transcript={voiceTranscript}
+          fields={voiceExtractedFields}
           onApply={applyVoiceFields}
-          onClose={() => setVoicePreview(null)}
+          onClose={closeVoicePreview}
         />
       )}
 

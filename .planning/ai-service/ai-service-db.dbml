@@ -4,43 +4,94 @@
  * Database Engine: PostgreSQL 16 + pgvector Extension
  * Remote Host: 100.116.233.60:5432
  * Database Name: careflow_ai
+ * Reference: docs/service-contracts/12-ai-clinical-assistant.md (CF-SVC-12)
+ * Architecture Plan: docs/ai-service/clinical-ai-architecture-and-rag-implementation-plan.md
  */
 
 Project CareFlow_AI_Service {
   database_type: 'PostgreSQL 16 + pgvector'
-  note: 'Clinical AI Assistant & Clinical RAG Knowledge Base. Manages MOH Treatment Guidelines, National Drug Formulary, ICD-10 embeddings, and hybrid vector search for doctor clinical decision support.'
+  note: '''
+    # CareFlow Clinical AI Assistant & Clinical RAG Knowledge Base
+    CSDL chuyên dụng cho AI Service, bao gồm:
+    1. Kho văn bản phác đồ Bộ Y Tế & Dược thư Quốc gia
+    2. Các phân đoạn tri thức (chunks) kèm Vector Embeddings (pgvector) cho Hybrid Search
+    3. Nhật ký tương tác & giám sát y tế (Clinical Audit Trail & Interaction Log)
+  '''
 }
 
+// -------------------------------------------------------------
+// 1. TÀI LIỆU NGUỒN PHÁC ĐỒ BỘ Y TẾ (CLINICAL GUIDELINE DOCUMENTS)
+// -------------------------------------------------------------
 Table clinical_guideline_documents {
-  id uuid [pk, default: `gen_random_uuid()`, note: 'Khóa chính tài liệu phác đồ']
-  code varchar(100) [unique, not null, note: 'Mã phác đồ/Quyết định, vd: BYT-QD-4800-HOHAP']
-  title varchar(500) [not null, note: 'Tên hướng dẫn/phác đồ của Bộ Y Tế hoặc Dược thư']
-  issuer varchar(255) [not null, note: 'Cơ quan ban hành, vd: Bộ Y Tế Việt Nam']
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Khóa chính UUID tài liệu phác đồ']
+  code varchar(100) [unique, not null, note: 'Mã phác đồ/Quyết định BYT, vd: BYT-QD-4800-HOHAP, BYT-QD-5948-DDI']
+  title varchar(500) [not null, note: 'Tên hướng dẫn/phác đồ chẩn đoán điều trị hoặc Dược thư']
+  issuer varchar(255) [not null, default: 'Bộ Y Tế Việt Nam', note: 'Cơ quan ban hành']
   published_year int [not null, note: 'Năm ban hành']
-  specialty varchar(100) [not null, note: 'Chuyên khoa, vd: Hô hấp, Tim mạch, Đái tháo đường']
-  source_url varchar(1000) [null, note: 'Đường dẫn tài liệu văn bản gốc']
+  specialty varchar(100) [not null, note: 'Chuyên khoa, vd: HO_HAP, TIM_MACH, NOI_TIET, DUOC_LAM_SANG']
+  source_url varchar(1000) [null, note: 'Đường dẫn văn bản gốc trên kcb.vn']
+  is_active boolean [not null, default: true, note: 'Trạng thái hiệu lực (hỗ trợ bãi bỏ khi có QĐ mới)']
   created_at timestamp [default: `now()`, note: 'Thời điểm nạp vào hệ thống']
 
   indexes {
     code [unique]
     specialty
+    is_active
   }
 }
 
+// -------------------------------------------------------------
+// 2. PHÂN ĐOẠN TRI THỨC & CHỈ MỤC VECTOR (CLINICAL GUIDELINE CHUNKS)
+// -------------------------------------------------------------
 Table clinical_guideline_chunks {
-  id uuid [pk, default: `gen_random_uuid()`, note: 'Khóa chính đoạn trích']
-  document_id uuid [not null, ref: > clinical_guideline_documents.id, note: 'Khóa ngoại trỏ đến tài liệu gốc']
-  section_title varchar(300) [null, note: 'Tiêu đề đề mục phân cấp, vd: Tiêu chuẩn chẩn đoán Viêm phổi']
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Khóa chính UUID của đoạn trích']
+  document_id uuid [not null, ref: > clinical_guideline_documents.id, note: 'Khóa ngoại trỏ đến tài liệu cha']
+  section_title varchar(300) [null, note: 'Breadcrumb tiêu đề phân cấp, vd: [QĐ 4800 > Viêm phổi > Kháng sinh ban đầu]']
   content text [not null, note: 'Nội dung chi tiết của đoạn phác đồ']
-  metadata jsonb [not null, note: 'Metadata phân loại: mã icd10, hoạt chất thuốc, phân độ nặng, ngưỡng sinh hiệu']
-  embedding vector(1024) [null, note: 'Dense Vector Embedding (1024 chiều cho BGE-M3 hoặc 768 chiều cho Google text-embedding-004)']
-  tsv_content tsvector [null, note: 'Sparse Full-Text Token Vector cho tìm kiếm từ khóa chính xác BM25']
+  metadata jsonb [not null, default: `'{}'`, note: 'Metadata phân loại: mã icd10, hoạt chất thuốc, phân độ nặng, ngưỡng sinh hiệu']
+  embedding vector(768) [not null, note: 'Dense Vector Embedding (768 chiều cho Google text-embedding-004 hoặc 1024 cho BGE-M3)']
+  tsv_content tsvector [null, note: 'Sparse Full-Text Token Vector tự động sinh phục vụ BM25 Full-Text Search']
   created_at timestamp [default: `now()`, note: 'Thời điểm tạo chunk']
 
   indexes {
-    document_id
-    embedding [type: 'hnsw', note: 'HNSW vector index for cosine similarity']
-    tsv_content [type: 'gin', note: 'GIN index for full-text search']
-    metadata [type: 'gin', note: 'GIN index for JSONB metadata filtering']
+    document_id [name: 'idx_clinical_chunks_doc']
+    embedding [name: 'idx_clinical_chunks_hnsw', note: 'Chỉ mục HNSW (vector_cosine_ops, m=16, ef_construction=64) cho ANN Cosine Search < 15ms']
+    tsv_content [name: 'idx_clinical_chunks_tsv', note: 'Chỉ mục GIN cho BM25 Full-Text Search bắt chính xác tên thuốc/ICD-10']
+    metadata [name: 'idx_clinical_chunks_meta', note: 'Chỉ mục GIN cho JSONB metadata filtering']
   }
+}
+
+// -------------------------------------------------------------
+// 3. NHẬT KÝ TƯƠNG TÁC & AUDIT LÂM SÀNG (AI CLINICAL INTERACTIONS)
+// -------------------------------------------------------------
+Table ai_clinical_interactions {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Khóa chính UUID (interactionId phục vụ CF-SVC-12)']
+  consultation_id uuid [not null, note: 'Mã ca khám bệnh liên kết (từ careflow-consultation-service)']
+  doctor_id uuid [not null, note: 'ID bác sĩ thực hiện yêu cầu']
+  parent_interaction_id uuid [null, note: 'ID tương tác cha nếu là lượt hỏi đáp chat nối tiếp']
+  mode varchar(50) [not null, default: 'LLM_PROVIDER', note: 'Chế độ hoạt động: LLM_PROVIDER hoặc MOCK_RULE_BASED']
+  question text [null, note: 'Nội dung câu hỏi lâm sàng của bác sĩ']
+  summary text [null, note: 'Tóm tắt lâm sàng do AI tạo từ ngữ cảnh bệnh nhân']
+  suggestions jsonb [not null, default: `'[]'`, note: 'Danh sách gợi ý chẩn đoán phân biệt & bằng chứng trích dẫn evidenceRefs']
+  warnings jsonb [not null, default: `'[]'`, note: 'Cảnh báo tương tác thuốc DDI và chống chỉ định']
+  missing_info jsonb [not null, default: `'[]'`, note: 'Thông tin lâm sàng/cận lâm sàng còn thiếu']
+  disclaimer text [not null, note: 'Tuyên bố miễn trừ trách nhiệm: Bác sĩ chịu trách nhiệm lâm sàng cuối cùng']
+  model_name varchar(100) [not null, note: 'Tên và phiên bản mô hình AI (vd: gemini-2.5-flash)']
+  latency_ms int [null, note: 'Thời gian AI phản hồi (miliseconds)']
+  created_at timestamp [default: `now()`, note: 'Thời điểm sinh kết quả gợi ý']
+
+  indexes {
+    consultation_id
+    doctor_id
+    created_at
+  }
+}
+
+TableGroup Clinical_Knowledge_Base {
+  clinical_guideline_documents
+  clinical_guideline_chunks
+}
+
+TableGroup Clinical_Audit_Trail {
+  ai_clinical_interactions
 }

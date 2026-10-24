@@ -12,6 +12,8 @@ interface ChatMessage {
   text: string;
   timestamp: string;
   consultationId?: string;
+  guidelines?: string[];
+  warnings?: string[];
 }
 
 export default function AiAssistantWidget() {
@@ -31,7 +33,7 @@ export default function AiAssistantWidget() {
     {
       id: "1",
       sender: "ai",
-      text: "Xin chào Bác sĩ! Em là Bác sĩ Chồn AI (CareFlow Assistant) 🐾. Em có thể hỗ trợ Bác sĩ tra cứu thông tin dược lý, tương tác thuốc hay tóm tắt chỉ số sinh hiệu ạ!",
+      text: "Xin chào Bác sĩ! Em là Trợ lý AI CareFlow. Em có thể hỗ trợ Bác sĩ tra cứu thông tin dược lý, tương tác thuốc DDI hay đối chiếu phác đồ Bộ Y Tế ạ!",
       timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
     }
   ]);
@@ -145,11 +147,20 @@ export default function AiAssistantWidget() {
       
       const aiReplyText = res.data?.summary || `Bác sĩ Chồn AI 🐾: Đã ghi nhận câu hỏi "${currentQuery}".`;
       
+      // Extract guideline refs and DDI warnings if any
+      const guidelinesList = res.data?.suggestions?.flatMap(s => 
+        (s.evidenceRefs ?? []).map(e => e.sourceId)
+      ) ?? [];
+      const distinctGuidelines = Array.from(new Set(guidelinesList));
+      const ddiWarnings = res.data?.warnings?.filter(w => w.includes("DDI") || w.toLowerCase().includes("tương tác")) ?? [];
+
       const aiReply: ChatMessage = {
         id: (Date.now() + 1).toString(),
         sender: "ai",
         text: aiReplyText,
-        timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" })
+        timestamp: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
+        guidelines: distinctGuidelines.length > 0 ? distinctGuidelines : undefined,
+        warnings: ddiWarnings.length > 0 ? ddiWarnings : undefined,
       };
       setMessages(prev => [...prev, aiReply]);
     } catch {
@@ -171,7 +182,7 @@ export default function AiAssistantWidget() {
     }`}>
       {/* Popover Chat Window — Morph / Expand smoothly from bottom-right anchor */}
       {isOpen && (
-        <div className="mb-3 w-[calc(100vw-1.5rem)] max-w-sm sm:w-96 bg-white border border-slate-200 shadow-2xl rounded-none flex flex-col h-[440px] origin-bottom-right animate-in fade-in zoom-in-95 duration-200 ease-out pointer-events-auto">
+        <div className="mb-3 w-[calc(100vw-1.5rem)] max-w-sm sm:w-96 bg-white border border-slate-200 shadow-2xl rounded-2xl flex flex-col h-[460px] origin-bottom-right animate-in fade-in zoom-in-95 duration-200 ease-out pointer-events-auto overflow-hidden">
           {/* Header */}
           <div className="p-3.5 bg-[#0D0F1E] text-white flex justify-between items-center border-b border-[#1E2340]">
             <div className="flex items-center gap-2.5">
@@ -186,12 +197,12 @@ export default function AiAssistantWidget() {
               </div>
               <div>
                 <h3 className="text-xs font-bold tracking-wide flex items-center gap-1.5">
-                  Bác sĩ Chồn AI 🐾
-                  <span className="text-[9px] bg-indigo-900/90 text-indigo-200 px-1.5 py-0.5 rounded-none border border-indigo-500/30 font-medium">CareFlow AI</span>
+                  Trợ lý AI CareFlow
+                  <span className="text-[9px] bg-indigo-900/90 text-indigo-200 px-1.5 py-0.5 rounded-md border border-indigo-500/30 font-medium">Phác đồ BYT</span>
                 </h3>
                 <span className="text-[10px] text-emerald-400 font-medium flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block animate-pulse"></span>
-                  Sẵn sàng hỗ trợ Bác sĩ
+                  Sẵn sàng hỗ trợ lâm sàng
                 </span>
               </div>
             </div>
@@ -222,22 +233,50 @@ export default function AiAssistantWidget() {
                     />
                   </div>
                 )}
-                <div className={`flex flex-col ${msg.sender === "doctor" ? "items-end" : "items-start"}`}>
+                <div className={`flex flex-col ${msg.sender === "doctor" ? "items-end" : "items-start"} max-w-[85%]`}>
                   <div
-                    className={`max-w-[85%] p-2.5 text-xs leading-relaxed rounded-none shadow-xs ${
+                    className={`p-2.5 text-xs leading-relaxed rounded-xl shadow-xs ${
                       msg.sender === "doctor"
                         ? "bg-[#6366F1] text-white"
                         : "bg-white text-slate-800 border border-slate-200"
                     }`}
                   >
                     <div>{renderFormattedAiText(msg.text)}</div>
+
+                    {/* DDI Warning Badge in Chat */}
+                    {msg.warnings && msg.warnings.length > 0 && (
+                      <div className="mt-2 p-1.5 bg-rose-50 border border-rose-200 rounded-md text-[10px] font-semibold text-rose-800">
+                        <span className="font-bold">⚠️ Cảnh báo tương tác thuốc DDI:</span>
+                        <ul className="list-disc list-inside mt-0.5">
+                          {msg.warnings.map((w, wIdx) => (
+                            <li key={wIdx}>{w}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* Guideline Sources in Chat */}
+                    {msg.guidelines && msg.guidelines.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-1 items-center text-[9px] pt-1 border-t border-slate-100">
+                        <span className="text-slate-400 font-semibold">Căn cứ:</span>
+                        {msg.guidelines.map((guide, gIdx) => (
+                          <span
+                            key={gIdx}
+                            className="bg-purple-50 text-purple-800 px-1.5 py-0.5 rounded font-mono font-medium border border-purple-200"
+                          >
+                            {guide}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
                     {msg.consultationId && (
                       <button
                         onClick={() => {
                           setIsOpen(false);
                           router.push(`/consultation/${msg.consultationId}`);
                         }}
-                        className="mt-2 inline-flex items-center gap-1 bg-[#6366F1] hover:bg-indigo-700 text-white px-2.5 py-1 text-[10px] font-bold transition-colors rounded-none cursor-pointer"
+                        className="mt-2 inline-flex items-center gap-1 bg-[#6366F1] hover:bg-indigo-700 text-white px-2.5 py-1 text-[10px] font-bold transition-colors rounded-lg cursor-pointer"
                       >
                         <span>Đến ca khám hiện tại</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -262,8 +301,8 @@ export default function AiAssistantWidget() {
                     className="w-9 h-9 object-contain translate-y-1 scale-125 animate-clinical-breathing"
                   />
                 </div>
-                <div className="bg-white text-slate-800 border border-slate-200 p-2.5 rounded-none shadow-xs flex items-center gap-2">
-                  <span className="text-[11px] font-semibold text-indigo-700">CareFlow AI đang phân tích</span>
+                <div className="bg-white text-slate-800 border border-slate-200 p-2.5 rounded-xl shadow-xs flex items-center gap-2">
+                  <span className="text-[11px] font-semibold text-indigo-700">CareFlow RAG đang tra cứu</span>
                   <span className="flex items-center gap-1">
                     <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.3s]" />
                     <span className="w-1.5 h-1.5 bg-indigo-600 rounded-full animate-bounce [animation-delay:-0.15s]" />
@@ -277,12 +316,12 @@ export default function AiAssistantWidget() {
 
           {/* Quick suggestions pills */}
           <div className="px-3 py-1.5 bg-white border-t border-slate-100 flex gap-1.5 overflow-x-auto text-[10px] whitespace-nowrap custom-scrollbar">
-            {["Tra cứu Omeprazole", "Kiểm tra tương tác thuốc", "Tóm tắt sinh hiệu"].map((sug, i) => (
+            {["Phác đồ Viêm phổi", "Cảnh báo DDI", "Phác đồ Tăng huyết áp", "Tóm tắt ca khám"].map((sug, i) => (
               <button
                 key={i}
                 type="button"
                 onClick={() => setInputText(sug)}
-                className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#6366F1] font-medium rounded-none transition-colors"
+                className="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-[#6366F1] font-medium rounded-lg transition-colors cursor-pointer"
               >
                 {sug}
               </button>
@@ -293,15 +332,15 @@ export default function AiAssistantWidget() {
           <form onSubmit={handleSendMessage} className="p-2.5 bg-white border-t border-slate-200 flex gap-2">
             <input
               type="text"
-              placeholder="Hỏi Bác sĩ Chồn AI..."
+              placeholder="Hỏi Bác sĩ Chồn AI về phác đồ..."
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
-              className="flex-1 px-3 py-1.5 text-xs border border-slate-300 focus:outline-none focus:border-[#6366F1] rounded-none text-slate-800 placeholder-slate-400"
+              className="flex-1 px-3 py-1.5 text-xs border border-slate-300 focus:outline-none focus:border-[#6366F1] rounded-lg text-slate-800 placeholder-slate-400"
             />
             <button
               type="submit"
               disabled={!inputText.trim()}
-              className="bg-[#6366F1] hover:bg-indigo-600 disabled:opacity-40 text-white font-bold px-3 py-1.5 text-xs transition-colors rounded-none"
+              className="bg-[#6366F1] hover:bg-indigo-600 disabled:opacity-40 text-white font-bold px-3 py-1.5 text-xs transition-colors rounded-lg cursor-pointer"
             >
               Gửi
             </button>
@@ -351,7 +390,7 @@ export default function AiAssistantWidget() {
             setIsOpen(!isOpen);
             setShowSpeechBubble(false);
           }}
-          title="Bác sĩ Chồn AI CareFlow 🐾"
+          title="Trợ lý AI CareFlow"
           className="relative w-14 h-14 rounded-full border-2 border-[#6366F1] hover:border-indigo-400 bg-transparent shadow-xl transition-transform duration-200 hover:scale-105 active:scale-95 flex items-center justify-center overflow-visible cursor-pointer focus:outline-none"
         >
           {/* Soft Glow Pulse Ring */}

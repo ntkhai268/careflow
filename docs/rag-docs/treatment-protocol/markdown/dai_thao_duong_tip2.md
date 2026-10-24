@@ -1,3 +1,5 @@
+# HƯỚNG DẪN CHẨN ĐOÁN VÀ ĐIỀU TRỊ ĐÁI THÁO ĐƯỜNG TÍP 2
+
 BỘ Y TẾ CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
 Độc lập – Tự do – Hạnh phúc
 Số: /QĐ-BYT Hà Nội, ngày tháng năm 2020
@@ -74,7 +76,6 @@ PGS.TS. Hồ Thị Kim Thanh – Trưởng Bộ môn Y học gia đình, Trườ
 TS. Trần Thừa Nguyên – Tổng Thư ký Hội Nội tiết – Đái tháo đường Việt Nam;
 ThS. Trương Lê Vân Ngọc – Chuyên viên Cục Quản lý Khám, chữa bệnh, Bộ Y tế;
 CN. Đỗ Thị Thư – Cục Quản lý Khám, chữa bệnh, Bộ Y tế.
-1
 
 LỜI NÓI ĐẦU
 Đái tháo đường là một trong những bệnh không lây nhiễm phổ biến trên toàn cầu.
@@ -113,9 +114,7 @@ quý độc giả, đồng nghiệp để Tài liệu ngày một hoàn thiện 
 CỤC TRƯỞNG
 CỤC QUẢN LÝ KHÁM, CHỮA BỆNH
 PGS.TS. Lương Ngọc Khuê
-1
 IDF Diabetes Atlas 9th edition www.idf.org/diabetesatlas www.idf.org/diabetesatlas
-2
 
 MỤC LỤC
 LỜI NÓI ĐẦU .............................................................................................................. 2
@@ -151,7 +150,6 @@ PHẦN 4: ĐIỀU TRỊ ........................................................
 5. 1. Hoạt động thể lực .......................................................................................... 27
 5. 2. Dinh dư ng ................................................................................................... 28
 6. Quản lý các bệnh đồng mắc và biến chứng: ............................................................ 32
-3
 
 6.1. Tăng huyết áp................................................................................................. 32
 6.2. Rối loạn lipid máu ......................................................................................... 33
@@ -187,7 +185,6 @@ T NG ÁP LỰC THẨM THẤU ...................................................
 4.3. Bù Kali ........................................................................................................... 45
 4.4. Insulin ............................................................................................................ 45
 4.5. Bicarbonate .................................................................................................... 46
-4
 
 4.6. Điều trị các bệnh đi kèm hoặc các nguyên nhân thúc đẩy như viêm phổi,
 nhồi máu cơ tim, tai biến mạch não… và ngừng thuốc ức chế SGLT-2 (nếu có
@@ -224,7 +221,6 @@ VÀ THUỐC DẠNG TIÊM KHÔNG THU C NHÓM INSULIN ....................... 58
 2. Metformin ................................................................................................................ 59
 3. Glinides .................................................................................................................... 59
 4. Thiazolidinedione (TZD hay glitazone) .................................................................. 60
-5
 
 5. Ức chế enzyme -glucosidase ................................................................................. 60
 6. Thuốc có tác dụng Incretin ...................................................................................... 60
@@ -243,7 +239,6 @@ PHỤ LỤC 02: CÁC LOẠI INSULIN ............................................
 PHỤ LỤC 03: DANH MỤC THUỐC THIẾT YẾU ĐIỀU TRỊ ĐÁI THÁO
 ĐƯỜNG TÍP 2 ........................................................................................................... 73
 TÀI LIỆU THAM KHẢO ......................................................................................... 74
-6
 
 DANH MỤC CÁC TỪ VIẾT TẮT
 ACC American College of Cardiology (Trường môn Tim mạch Hoa Kỳ)
@@ -266,12 +261,13 @@ NPH Neutral Protamine Hagedorn
 PCI Percutaneous Coronary Intervention (Can thiệp mạch vành qua da)
 UACR Urine albumin to Creatinine Ratio (Tỷ lệ albumin/creatinin niệu)
 YTNC Yếu tố nguy cơ
-7
 
 HƯỚNG DẪN CHẨN ĐOÁN VÀ ĐIỀU TRỊ ĐÁI THÁO ĐƯỜNG TÍP 2
 (Ban hành kèm theo Quyết định số /QĐ-BYT
 ngày tháng năm 2020 của Bộ trưởng Bộ Y tế)
-PHẦN 1: ĐỊNH NGHĨA VÀ DỊCH TỄ HỌC
+
+## PHẦN 1: ĐỊNH NGHĨA VÀ DỊCH TỄ HỌC
+
 Bệnh đái tháo đường là bệnh rối loạn chuyển hóa, có đặc điểm tăng glucose huyết
 mạn tính do khiếm khuyết về tiết insulin, về tác động của insulin, hoặc cả hai. Tăng
 glucose mạn tính trong thời gian dài gây nên những rối loạn chuyển hóa
@@ -301,11 +297,13 @@ là 3,6%, trong đó tỷ lệ ĐTĐ được chẩn đoán là 31,1%, tỷ lệ
 cơ sở y tế: 28,9%, tỷ lệ ĐTĐ chưa được quản lý: 71,1%. Dữ liệu cập nhật của Liên
 đoàn Đái tháo đường Quốc tế (IDF) cho thấy năm 2019 Việt Nam có tỷ lệ 6%
 người trưởng thành mắc ĐTĐ.
-8
 
-PHẦN 2: CHẨN ĐOÁN VÀ PHÂN LOẠI ĐÁI THÁO ĐƯỜNG
-1. Chẩn đoán
-1.1. Chẩn đoán đái tháo đường
+## PHẦN 2: CHẨN ĐOÁN VÀ PHÂN LOẠI ĐÁI THÁO ĐƯỜNG
+
+### 1. Chẩn đoán
+
+#### 1.1. Chẩn đoán đái tháo đường
+
 Tiêu chuẩn chẩn đoán đái tháo đường dựa vào 1 trong 4 tiêu chí sau đây:
 a) Glucose huyết tương lúc đói ≥ 126 mg/dL (hay 7 mmol/L) hoặc:
 b) Glucose huyết tương ở thời điểm sau 2 giờ làm nghiệm pháp dung nạp với 75g
@@ -328,7 +326,9 @@ nghiệm pháp, dùng một lượng 75g glucose, hòa trong 250-300 mL nước,
 trong 5 phút; trong 3 ngày trước đó BN ăn khẩu phần có khoảng 150-200 gam
 carbohydrat mỗi ngày, không mắc các bệnh lý cấp tính và không sử dụng các
 thuốc làm tăng glucose huyết. Định lượng glucose huyết tương tĩnh mạch.
-1.2. Khuyến cáo làm xét nghiệm để tầm soát, phát hiện ĐTĐ hoặc tiền ĐTĐ ở
+
+#### 1.2. Khuyến cáo làm xét nghiệm để tầm soát, phát hiện ĐTĐ hoặc tiền ĐTĐ ở
+
 người lớn không có triệu chứng, biểu hiện lâm sàng.
 a) Người trưởng thành ở bất kỳ tuổi nào có thừa cân hoặc béo phì (BMI ≥ 23
 kg/m2) và có kèm một trong số các yếu tố nguy cơ sau:
@@ -341,14 +341,15 @@ kg/m2) và có kèm một trong số các yếu tố nguy cơ sau:
 - Ít hoạt động thể lực
 - Các tình trạng lâm sàng khác liên quan với kháng insulin (như dấu gai đen:
 acanthosis nigricans).
-9
 
 b) Phụ nữ đã được chẩn đoán ĐTĐ thai kỳ cần theo dõi lâu dài, xét nghiệm ít nhất
 mỗi 3 năm.
 c) Tất cả mọi người từ 45 tuổi trở lên
 d) Nếu các kết quả bình thường, xét nghiệm sẽ được làm lại trong vòng 1- 3 năm
 sau hoặc ngắn hơn tùy theo kết quả ban đầu và các yếu tố nguy cơ.
-1.3. Phát hiện và chẩn đoán đái tháo đường thai kỳ
+
+#### 1.3. Phát hiện và chẩn đoán đái tháo đường thai kỳ
+
 a) Khái niệm: ĐTĐ thai kỳ là ĐTĐ được chẩn đoán trong 3 tháng giữa hoặc 3
 tháng cuối của thai kỳ và không có bằng chứng về ĐTĐ típ 1, ĐTĐ típ 2 trước
 đó. Nếu phụ nữ có thai 3 tháng đầu được phát hiện tăng glucose huyết thì xếp
@@ -384,10 +385,11 @@ khi bất kỳ giá trị glucose huyết tương nào thoả mãn tiêu chuẩn
 - Lúc đói ≥ 92 mg/dL (5,1 mmol/L)
 - Ở thời điểm 1 giờ ≥ 180 mg/dL (10,0 mmol/L)
 - Ở thời điểm 2 giờ ≥ 153 mg/dL (8,5 mmol/L)
-10
 
 Hình 1: Sơ đồ chẩn đoán đái tháo đường
-2. Phân loại đái tháo đường
+
+### 2. Phân loại đái tháo đường
+
 Bệnh đái tháo đường được phân thành 4 loại chính
 a) Đái tháo đường típ 1 (do phá hủy tế bào beta tụy, dẫn đến thiếu insulin tuyệt
 đối).
@@ -398,18 +400,21 @@ tháng cuối của thai kỳ và không có bằng chứng về ĐTĐ típ 1, t
 d) Các loại ĐTĐ đặc biệt do các nguyên nhân khác, như ĐTĐ sơ sinh hoặc đái tháo
 đường do sử dụng thuốc và hoá chất như sử dụng glucocorticoid, điều trị
 HIV/AIDS hoặc sau cấy ghép mô…
-2.1. Đái tháo đường típ 1
+
+#### 2.1. Đái tháo đường típ 1
+
 Đái tháo đường típ 1 do tế bào beta bị phá hủy nên BN không còn hoặc còn rất ít
 insulin, 95% do cơ chế tự miễn (típ 1A), 5% vô căn (típ 1 B). BN bị thiếu hụt
 insulin, tăng glucagon trong máu, không điều trị sẽ bị nhiễm toan ceton. Bệnh có
-11
 
 thể xảy ra ở mọi lứa tuổi nhưng chủ yếu ở trẻ em và thanh thiếu niên. BN cần
 insulin để ổn định glucose huyết. Người lớn tuổi có thể bị ĐTĐ tự miễn diễn tiến
 chậm còn gọi là Latent Autoimmune Diabetes of Adulthood (LADA), lúc đầu BN
 còn đủ insulin nên không bị nhiễm toan ceton và có thể điều trị bằng thuốc viên
 nhưng tình trạng thiếu insulin sẽ năng dần với thời gian.
-2.2. Đái tháo đường típ 2
+
+#### 2.2. Đái tháo đường típ 2
+
 Đái tháo đường típ 2 trước kia được gọi là ĐTĐ của người lớn tuổi hay ĐTĐ không
 phụ thuộc insulin, chiếm 90-95% các trường hợp ĐTĐ. Thể bệnh này bao gồm
 những người có thiếu insulin tương đối cùng với đề kháng insulin. Ít nhất ở giai
@@ -425,13 +430,17 @@ trong máu, nếu tình trạng đề kháng insulin kéo dài hoặc nặng d�
 không tiết đủ insulin và ĐTĐ típ 2 lâm sàng sẽ xuất hiện. Tình trạng đề kháng
 insulin có thể cải thiện khi giảm cân, hoặc dùng một số thuốc nhưng không bao giờ
 hoàn toàn trở lại bình thường.
-2.3. Đái tháo đường thai kỳ:
+
+#### 2.3. Đái tháo đường thai kỳ
+
 ĐTĐ thai kỳ là ĐTĐ được chẩn đoán trong 3 tháng giữa hoặc 3 tháng cuối của thai
 kỳ và không có bằng chứng về ĐTĐ típ 1, típ 2 trước đó. Nếu phụ nữ có thai 3
 tháng đầu được phát hiện tăng glucose huyết thì chẩn đoán là ĐTĐ chưa được
 chẩn đoán hoặc chưa được phát hiện và dùng tiêu chí chẩn đoán như ở người
 không có thai.
-2.4. Đái tháo đường thứ phát và thể bệnh chuyên biệt của ĐTĐ
+
+#### 2.4. Đái tháo đường thứ phát và thể bệnh chuyên biệt của ĐTĐ
+
 a) Khiếm khuyết trên nhiễm sắc thể thường, di truyền theo gen trội tại tế bào beta.
 - ĐTĐ đơn gen thể MODY (Maturity Onset Diabetes of the Young)
 - Insulin hoặc proinsulin đột biến: (Protein đột biến preproinsulin-gen INS)
@@ -446,64 +455,36 @@ c) Khiếm khuyết gen liên quan đến hoạt tính insulin
 d) Các hội chứng bất thường nhiễm sắc thể khác (Hội chứng Down, Klinefelter,
 Turner..) đôi khi cũng kết hợp với ĐTĐ.
 e) Bệnh lý tụy: viêm tụy, chấn thương, u, cắt tụy, xơ sỏi tụy, nhiễm sắc tố sắt…
-12
 
 f)
 ĐTĐ do bệnh lý nội tiết: to đầu chi, hội chứng Cushing, u tủy thượng thận,
 cường giáp, u tiết glucagon
 g)  ĐTĐ do thuốc, hóa chất: interferon alpha, corticoid, thiazide, hormon  giáp,
 thuốc chống trầm cảm, antiretroviral protease inhibitors
-2.5. Phân biệt đái tháo đường típ 1 và típ 2
-Bảng 1: Phân biệt ĐTĐ típ 1 và típ 2
 
-| Đặc điểm        |     |     | Đái tháo đường típ 1    | Đái tháo đường típ 2  |            |
-| --------------- | --- | --- | ----------------------- | --------------------- | ---------- |
-| Tuổi xuất hiện  |     |     | Trẻ, thanh thiếu niên   | Tuổi trưởng thành     |            |
-| Khởi phát       |     |     | Các triệu chứng rầm rộ  | Chậm,  thường         | không  rõ  |
-triệu chứng
-Biểu hiện lâm sàng  -  Sút cân nhanh  -  Bệnh diễn tiến âm ỉ, ít
-|     |     |     | chóng.         | triệu chứng             |     |
-| --- | --- | --- | -------------- | ----------------------- | --- |
-|     |     |     | -  Đái nhiều.  | -  Thể trạng béo, thừa  |     |
-|     |     |     | -  Uống nhiều  | cân                     |     |
--  Tiền sử gia đình có
-người mắc bệnh đái
-tháo đường típ 2.
--  Đặc tính dân tộc có tỷ
-lệ mắc bệnh cao.
--  Dấu gai đen
-(Acanthosis nigricans)
--  Hội chứng buồng
-trứng đa nang
-Nhiễm ceton, tăng ceton trong máu,  Dương tính  Thường không có
-nước tiểu
-| Insulin/C-peptid  |     |     | Thấp/không đo được  | Bình thường hoặc tăng  |     |
-| ----------------- | --- | --- | ------------------- | ---------------------- | --- |
-| Kháng thể:        |     |     | Dương tính          | Âm tính                |     |
-Kháng đảo tụy (ICA)
-Kháng Glutamic acid decarboxylase
-65 (GAD 65)
-Kháng Insulin (IAA)
-Kháng Tyrosine phosphatase (IA-2)
-Kháng Zinc Transporter 8 (ZnT8)
-| Điều trị  |     |     | Bắt buộc dùng insulin   | Thay đổi lối sống, thuốc  |     |
-| --------- | --- | --- | ----------------------- | ------------------------- | --- |
-viên và/  hoặc insulin
-| Cùng  hiện  | diện  với  | bệnh  tự  miễn  | Có thể có  | Hiếm  |     |
-| ----------- | ---------- | --------------- | ---------- | ----- | --- |
-khác
-Các  bệnh  lý đi  kèm  lúc  mới  chẩn  Không có  Thường  gặp,  nhất  là  hội
-đoán: tăng huyết áp, rối loạn chuyển  Nếu  có,  phải  tìm  các  chứng chuyển hóa
-| hóa lipid, béo phì  |     |     | bệnh lý khác đồng mắc  |     |     |
-| ------------------- | --- | --- | ---------------------- | --- | --- |
-Chú thích: bảng trên chỉ có tính tham khảo, có nhiều thể bệnh trùng lấp giữa các
-đặc điểm. Khi biểu hiện bệnh lý không rõ ràng, cần theo dõi một thời gian để phân
-loại đúng bệnh. Điều trị chủ yếu dựa trên bệnh cảnh lâm sàng của BN để quyết
-định có cần dùng ngay insulin hay không.
-13
+#### 2.5. Phân biệt đái tháo đường típ 1 và típ 2
 
-PHẦN 3: KHÁM VÀ ĐÁNH GIÁ TOÀN DIỆN NGƯỜI BỆNH ĐTĐ
-1. Mục đích
+**Bảng 1: Phân biệt ĐTĐ típ 1 và típ 2**
+
+
+| Đặc điểm | Đái tháo đường típ 1 | Đái tháo đường típ 2 |
+| :--- | :--- | :--- |
+| Tuổi xuất hiện | Trẻ, thanh thiếu niên | Tuổi trưởng thành |
+| Khởi phát | Các triệu chứng rầm rộ | Chậm, thường không rõ<br>triệu chứng |
+| Biểu hiện lâm sàng | - Sút cân nhanh<br>chóng.<br>- Đái nhiều.<br>- Uống nhiều | - Bệnh diễn tiến âm ỉ, ít<br>triệu chứng<br>- Thể trạng béo, thừa<br>cân<br>- Tiền sử gia đình có<br>người mắc bệnh đái<br>tháo đường típ 2.<br>- Đặc tính dân tộc có tỷ<br>lệ mắc bệnh cao.<br>- Dấu gai đen<br>(Acanthosis nigricans)<br>- Hội chứng buồng<br>trứng đa nang |
+| Nhiễm ceton, tăng ceton trong máu,<br>nước tiểu | Dương tính | Thường không có |
+| Insulin/C-peptid | Thấp/không đo được | Bình thường hoặc tăng |
+| Kháng thể:<br>Kháng đảo tụy (ICA)<br>Kháng Glutamic acid decarboxylase<br>65 (GAD 65)<br>Kháng Insulin (IAA)<br>Kháng Tyrosine phosphatase (IA-2)<br>Kháng Zinc Transporter 8 (ZnT8) | Dương tính | Âm tính |
+| Điều trị | Bắt buộc dùng insulin | Thay đổi lối sống, thuốc<br>viên và/ hoặc insulin |
+| Cùng hiện diện với bệnh tự miễn<br>khác | Có thể có | Hiếm |
+| Các bệnh lý đi kèm lúc mới chẩn<br>đoán: tăng huyết áp, rối loạn chuyển<br>hóa lipid, béo phì | Không có<br>Nếu có, phải tìm các<br>bệnh lý khác đồng mắc | Thường gặp, nhất là hội<br>chứng chuyển hóa |
+
+
+
+## PHẦN 3: KHÁM VÀ ĐÁNH GIÁ TOÀN DIỆN NGƯỜI BỆNH ĐTĐ
+
+### 1. Mục đích
+
 Đánh giá toàn diện nên thực hiện vào lần khám bệnh đầu tiên sau đó định kỳ hàng
 năm nhằm mục đích sau:
 - Xác định chẩn đoán và phân loại ĐTĐ;
@@ -513,8 +494,11 @@ năm nhằm mục đích sau:
 - Thảo luận cùng người bệnh và thân nhân trong xây dựng kế hoạch quản lý, tự
 quản lý và chăm sóc.
 - Xây dựng kế hoạch hoặc điều chỉnh để chăm sóc liên tục, toàn diện người bệnh.
-2. Các nội dung đánh giá toàn diện
-2.1. Bệnh sử - Lâm sàng:
+
+### 2. Các nội dung đánh giá toàn diện
+
+#### 2.1. Bệnh sử - Lâm sàng
+
 - Tuổi, đặc điểm lúc khởi phát đái tháo đường (nhiễm toan ceton đái tháo đường,
 phát hiện đái tháo đường bằng xét nghiệm nhưng không có triệu chứng).
 - Cách ăn uống, tình trạng dinh dư ng, tiền sử cân nặng, thói quen luyện tập thể
@@ -539,12 +523,14 @@ tần suất, nguyên nhân.
 - Các biến chứng mạch máu nhỏ: võng mạc, thận, thần kinh
 - Các biến chứng mạch máu lớn: bệnh tim thiếu máu cục bộ, nhồi máu cơ tim, đột
 quị, bệnh mạch máu ngoại vi.
-14
 
 - Cân nặng các con lúc sinh của phụ nữ.
 Đối với phụ nữ trong lứa tuổi sinh sản: hỏi vế kế hoạch sinh con của BN, người
 bệnh có dùng phương pháp nào để ngừa thai.
-2.2. Khám thực thể: cần đặc biệt chú trọng
+
+#### 2.2. Khám thực thể
+
+cần đặc biệt chú trọng
 a) Chiều cao, cân nặng và BMI, vòng eo; Quá trình phát triển và dậy thì ở trẻ em,
 thanh thiếu niên.
 b) Đo huyết áp, nếu cần đo huyết áp nằm và đứng để tìm hạ huyết áp tư thế
@@ -572,53 +558,43 @@ h) Khám thần kinh:
 + Khám thực thể: cảm giác xúc giác, cảm giác rung, cảm giác áp lực bằng sợi
 đơn (monofilament).
 - Thần kinh tự động ảnh hưởng trên nhiều cơ quan
-2.3. Đánh giá về cận lâm sàng
-15
 
-Bảng 2: Xét nghiệm đối với người bệnh đái tháo đường
-Lần
-Tên xét nghiệm Tái khám
-đầu
-Công thức máu x 3- 6 tháng, Tùy tình trạng người bệnh
-Glucose x Mỗi lần khám
-Mỗi 3 tháng hoặc khi nhập viện không có thông số
-HbA1c x
-tham khảo của những lần khám trước
-Fructosamin Mỗi 2 tuần, trừ lần khám có làm HbA1c
-Insulin/C-peptide x Làm C-peptide hoặc insulin
-Ure x Xét nghiệm mỗi lần khám
-Xét nghiệm lần khám đầu, làm lại mỗi năm hoặc
-Creatinin, tính eGFR x
-theo yêu cầu lâm sàng.
-ALT x
-Xét nghiệm mỗi lần khám
-AST x
-Na+, K+, Ca++, Cl-
-Tùy tình trạng người bệnh
-GGT
-Albumin/Protein Tùy tình trạng người bệnh
-Tùy tình trạng người bệnh: Suy thận, gút mạn,
-Acid uric x
-viêm khớp…
-ABI, CK, CKMB, BNP,
-x Tùy tình trạng người bệnh
-Pro-BNP
-Lipid máu x 1 - 2 tháng/lần, tùy tình trạng người bệnh
-Tổng phân tích nước tiểu x Mỗi lần khám
-MAU/creatinin niệu x 3- 6 tháng/lần
-Điện tim, X - quang ngực x 1 – 2 tháng/lần, tùy tình trạng người bệnh
-Siêu âm ổ bụng x 3 – 6 tháng/lần, tùy tình trạng người bệnh
-Siêu âm tim, Doppler mạch x Tùy tình trạng người bệnh
-Khám răng hàm mặt x 3 – 6 tháng/lần, tùy tình trạng người bệnh
-Khám đáy mắt x 3 - 6 tháng/lần, tùy tình trạng người bệnh
-Chụp đáy mắt Theo chỉ định BS chuyên khoa
-Các xét nghiệm khác Tùy tình trạng người bệnh
-- Tần xuất tái khám:
-+ Giai đoạn mới phát hiện, đang điều chỉnh thuốc: tái khám 0,5-1 tháng/lần
-+ BN ổn định: khám định kỳ mỗi 1-2 tháng/lần
-16
+#### 2.3. Đánh giá về cận lâm sàng
 
-2.4. Tương quan giữa HbA1c và nồng độ glucose huyết trung bình
+**Bảng 2: Xét nghiệm đối với người bệnh đái tháo đường**
+
+
+| Tên xét nghiệm | Lần đầu | Tái khám |
+| :--- | :--- | :--- |
+| Công thức máu | x | 3- 6 tháng, Tùy tình trạng người bệnh |
+| Glucose | x | Mỗi lần khám |
+| HbA1c | x | Mỗi 3 tháng hoặc khi nhập viện không có thông số<br>tham khảo của những lần khám trước |
+| Fructosamin |  | Mỗi 2 tuần, trừ lần khám có làm HbA1c |
+| Insulin/C-peptide | x | Làm C-peptide hoặc insulin |
+| Ure | x | Xét nghiệm mỗi lần khám |
+| Creatinin, tính eGFR | x | Xét nghiệm lần khám đầu, làm lại mỗi năm hoặc<br>theo yêu cầu lâm sàng. |
+| ALT | x | Xét nghiệm mỗi lần khám |
+| AST | x |  |
+| Na+, K+, Ca++, Cl- | Tùy tình trạng người bệnh |  |
+| GGT |  |  |
+| Albumin/Protein | Tùy tình trạng người bệnh |  |
+| Acid uric | x | Tùy tình trạng người bệnh: Suy thận, gút mạn,<br>viêm khớp… |
+| ABI, CK, CKMB, BNP,<br>Pro-BNP | x | Tùy tình trạng người bệnh |
+| Lipid máu | x | 1 - 2 tháng/lần, tùy tình trạng người bệnh |
+| Tổng phân tích nước tiểu | x | Mỗi lần khám |
+| MAU/creatinin niệu | x | 3- 6 tháng/lần |
+| Điện tim, X - quang ngực | x | 1 – 2 tháng/lần, tùy tình trạng người bệnh |
+| Siêu âm ổ bụng | x | 3 – 6 tháng/lần, tùy tình trạng người bệnh |
+| Siêu âm tim, Doppler mạch | x | Tùy tình trạng người bệnh |
+| Khám răng hàm mặt | x | 3 – 6 tháng/lần, tùy tình trạng người bệnh |
+| Khám đáy mắt | x | 3 - 6 tháng/lần, tùy tình trạng người bệnh |
+| Chụp đáy mắt | Theo chỉ định BS chuyên khoa |  |
+| Các xét nghiệm khác | Tùy tình trạng người bệnh |  |
+
+
+
+#### 2.4. Tương quan giữa HbA1c và nồng độ glucose huyết trung bình
+
 HbA1c là giá trị glucose huyết trung bình trong 3 tháng. Bảng dưới đây chỉ có tính
 cách tham khảo vì trị số glucose huyết dao động rất nhanh, do đó tốt nhất là tự đo
 đường huyết nhiều lần trong ngày (đối với ĐTĐ típ 2 có thể đo lúc đói, sau ăn,
@@ -627,24 +603,27 @@ Khi glucose huyết đã tương đối ổn định, có thể đo glucose huy�
 hơn.
 HbA1c thường được khuyến cáo đo 3 tháng một lần để theo dõi sát tình trạng kiểm
 soát glucose huyết.
-Bảng 3: Tương quan giữa HbA1c và nồng độ glucose huyết trung bình
+**Bảng 3: Tương quan giữa HbA1c và nồng độ glucose huyết trung bình**
 
-HbA1c (%)  HbA1c (mmol/mol)  Glucose huyết trung bình (mmol/L)
-| 13  | 119  | 18   |
-| --- | ---- | ---- |
-| 12  | 108  | 17   |
-| 11  | 97   | 15   |
-| 10  | 86   | 13   |
-| 9   | 75   | 12   |
-| 8   | 64   | 10   |
-| 7   | 53   | 8    |
-| 6   | 42   | 7    |
-| 5   | 31   | 5    |
 
-17
+| HbA1c (%) | HbA1c (mmol/mol) | Glucose huyết trung bình (mmol/L) |
+| :--- | :--- | :--- |
+| 13 | 119 | 18 |
+| 12 | 108 | 17 |
+| 11 | 97 | 15 |
+| 10 | 86 | 13 |
+| 9 | 75 | 12 |
+| 8 | 64 | 10 |
+| 7 | 53 | 8 |
+| 6 | 42 | 7 |
+| 5 | 31 | 5 |
 
-PHẦN 4: ĐIỀU TRỊ
-1. Nguyên tắc điều trị cho người bệnh đái tháo đường
+
+
+## PHẦN 4: ĐIỀU TRỊ
+
+### 1. Nguyên tắc điều trị cho người bệnh đái tháo đường
+
 a) Lập kế hoạch toàn diện, tổng thể, lấy người bệnh làm trung tâm, cá nhân hóa
 cho mỗi người mắc đái tháo đường, phát hiện và dự phòng sớm, tích cực các
 yếu tố nguy cơ, giảm các tai biến và biến cố.
@@ -672,74 +651,45 @@ bia, chế độ ăn và hoạt động thể lực (áp dụng cho tất cả n
 - Kiểm soát rối loạn lipid máu
 - Chống đông
 - Điều trị và kiểm soát biến chứng, bệnh đồng mắc.
-3. Các loại thuốc điều trị ĐTĐ
+
+### 3. Các loại thuốc điều trị ĐTĐ
+
 - Thuốc uống: Metformin, Sulfonylurea, ức chế enzym alpha glucosidase, ức chế
 kênh SGLT2, ức chế enzym DPP- 4, TZD (Pioglitazon).
 - Thuốc tiêm: Insulin, đồng vận thụ thể GLP-1.
-2. Mục tiêu điều trị
-18
 
-Bảng 4: Mục tiêu điều trị cho BN ĐTĐ ở người trưởng thành, không có thai
+### 2. Mục tiêu điều trị
 
-| Mục tiêu                 | Chỉ số                          |     |     |     |     |
-| ------------------------ | ------------------------------- | --- | --- | --- | --- |
-| HbA1c                    |   < 7% (53mmol/mol)             |     |     |     |     |
-| Glucose huyết tương mao  | 80-130 mg/dL (4,4-7,2 mmol/L)*  |     |     |     |     |
-mạch lúc đói, trước ăn
-| Đỉnh glucose huyết tương  | <180 mg/dL (10,0 mmol/L)*  |     |     |     |     |
-| ------------------------- | -------------------------- | --- | --- | --- | --- |
-mao mạch sau ăn 1-2 giờ
-| Huyết áp  | Tâm thu <140 mmHg, Tâm trương <90 mmHg  |     |     |     |     |
-| --------- | --------------------------------------- | --- | --- | --- | --- |
-Nếu đã có biến chứng thận, hoặc có yếu tố nguy cơ tim
-mạch  do xơ vữa cao: Huyết áp <130/80 mmHg
-Lipid máu  LDL cholesterol <100 mg/dL (2,6 mmol/L), nếu chưa có
-biến chứng tim mạch
-LDL cholesterol <70 mg/dL (1,8 mmol/L) nếu đã có bệnh
-tim mạch vữa xơ, hoặc có thể thấp hơn <50 mg/dL nếu có
-yếu tố nguy cơ xơ vữa cao
-Triglycerides <150 mg/dL (1,7 mmol/L)
-HDL cholesterol >40 mg/dL (1,0 mmol/L) ở nam và >50
-mg/dL (1,3 mmol/L) ở nữ
-* Mục tiêu điều trị ở các cá nhân có thể khác nhau.
--  Mục tiêu có thể thấp hơn (HbA1c <6,5%) ở BN trẻ, mới chẩn đoán, không có
-các bệnh lý tim mạch, nguy cơ hạ glucose máu thấp.
--  Ngược lại, mục tiêu có thể cao hơn (HbA1c từ 7,5 – 8%) ở những BN lớn tuổi,
-mắc bệnh đái tháo đường đã lâu, có nhiều bệnh lý đi kèm, có tiền sử hạ glucose
-máu nặng trước đó.
--  Cần chú ý mục tiêu glucose huyết sau ăn (sau khi bắt đầu ăn 1-2 giờ) nếu đã đạt
-được mục tiêu glucose huyết lúc đói nhưng chưa đạt được mục tiêu HbA1c.
-Bảng 5: Mục tiêu điều trị đái tháo đường ở người cao tuổi
-|     |     |     | Glucose  | Glucose  |     |
-| --- | --- | --- | -------- | -------- | --- |
-Huyết
-| Tình trạng sức  | Cơ sở để chọn  | HbA1c  | huyết lúc đói  | lúc đi  |     |
-| --------------- | -------------- | ------ | -------------- | ------- | --- |
-áp
-| khỏe  | lựa  | (%)  | hoặc trước  | ngủ  |     |
-| ----- | ---- | ---- | ----------- | ---- | --- |
-mmHg
-ăn (mg/dL)
-(mg/dL)
-| Mạnh khỏe  | Còn sống lâu  | <7,5%  | 90-130  | 90-150  | <140/90  |
-| ---------- | ------------- | ------ | ------- | ------- | -------- |
-Nhiều bệnh, sức  Kỳ  vọng  sống  <8,0%  90-150  100-180  <140/90
-| khỏe trung bình  | trung bình  |     |     |     |     |
-| ---------------- | ----------- | --- | --- | --- | --- |
-Nhiều bệnh phức  Không  còn  <8,5%  100-180  110-200  <150/90
-| tạp hoặc bệnh nguy  | sống lâu  |     |     |     |     |
-| ------------------- | --------- | --- | --- | --- | --- |
-kịch/ sức khỏe kém
-19
+**Bảng 4: Mục tiêu điều trị cho BN ĐTĐ ở người trưởng thành, không có thai**
 
-* Đánh giá về kiểm soát đường huyết:
-- Thực hiện xét nghiệm HbA1c ít nhất 2 lần trong 1 năm ở những người bệnh đáp
-ứng mục tiêu điều trị (và những người có đường huyết được kiểm soát ổn định).
-- Thực hiện xét nghiệm HbA1c hàng quý ở những người bệnh được thay đổi liệu
-pháp điều trị hoặc những người không đáp ứng mục tiêu về glucose huyết.
-Thực hiện xét nghiệm HbA1c tại thời điểm người bệnh đến khám, chữa bệnh để
-tạo cơ hội cho việc thay đổi điều trị kịp thời hơn.
-3. Phân tầng nguy cơ tim mạch, thận ở BN ĐTĐ típ 2
+
+| Mục tiêu | Chỉ số |
+| :--- | :--- |
+| HbA1c | < 7% (53mmol/mol) |
+| Glucose huyết tương mao<br>mạch lúc đói, trước ăn | 80-130 mg/dL (4,4-7,2 mmol/L)* |
+| Đỉnh glucose huyết tương<br>mao mạch sau ăn 1-2 giờ | <180 mg/dL (10,0 mmol/L)* |
+| Huyết áp | Tâm thu <140 mmHg, Tâm trương <90 mmHg<br>Nếu đã có biến chứng thận, hoặc có yếu tố nguy cơ tim<br>mạch do xơ vữa cao: Huyết áp <130/80 mmHg |
+| Lipid máu | LDL cholesterol <100 mg/dL (2,6 mmol/L), nếu chưa có<br>biến chứng tim mạch |
+|  | LDL cholesterol <70 mg/dL (1,8 mmol/L) nếu đã có bệnh |
+|  | tim mạch vữa xơ, hoặc có thể thấp hơn <50 mg/dL nếu có |
+|  | yếu tố nguy cơ xơ vữa cao |
+|  | Triglycerides <150 mg/dL (1,7 mmol/L)<br>HDL cholesterol >40 mg/dL (1,0 mmol/L) ở nam và >50<br>mg/dL (1,3 mmol/L) ở nữ |
+
+
+
+**Bảng 5: Mục tiêu điều trị đái tháo đường ở người cao tuổi**
+
+
+| Tình trạng sức khỏe | Kỳ vọng sống | Mục tiêu HbA1c (%) | Glucose huyết lúc đói / trước ăn (mg/dL) | Glucose huyết trước lúc đi ngủ (mg/dL) | Huyết áp (mmHg) |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| Mạnh khỏe | Còn sống lâu | < 7,5% | 90 – 130 | 90 – 150 | < 140/90 |
+| Nhiều bệnh đồng mắc, sức khỏe trung bình | Kỳ vọng sống trung bình | < 8,0% | 90 – 150 | 100 – 180 | < 140/90 |
+| Sức khỏe rất kém, giai đoạn cuối | Kỳ vọng sống ngắn | < 8,5% | 100 – 180 | 110 – 200 | < 150/90 |
+
+
+
+### 3. Phân tầng nguy cơ tim mạch, thận ở BN ĐTĐ típ 2
+
 Trong lựa chọn thuốc và phương pháp điều trị cho BN ĐTĐ típ 2 cần đánh giá nguy
 cơ cao hay tiền sử bệnh lý tim mạch do xơ vữa (BTMDXV) và bệnh lý suy tim, suy
 thận để có thể ra quyết định điều trị hợp lý.
@@ -764,14 +714,15 @@ quan đích và có thêm bất kỳ YTNC nào
 (có đạm niệu hay suy thận được định nghĩa khi eGFR <30 mL/ph/1.73m2, phì
 đại thất trái hoặc có bệnh võng mạc) hoặc có ≥ 3 YTNC chính hoặc ĐTĐ típ 1
 khởi phát sớm, có thời gian mắc bệnh >20 năm
-4. Lựa chọn thuốc kiểm soát đường huyết cho người bệnh đái tháo đường típ 2
-Hình 2: Lược đồ lựa chọn thuốc và phương pháp điều trị ĐTĐ típ 2
-20
 
-21
+### 4. Lựa chọn thuốc kiểm soát đường huyết cho người bệnh đái tháo đường típ 2
+
+Hình 2: Lược đồ lựa chọn thuốc và phương pháp điều trị ĐTĐ típ 2
+
 -
 
-4. 1. Các yếu tố cần xem xét khi chọn lựa thuốc điều trị:
+#### 4.1. Các yếu tố cần xem xét khi chọn lựa thuốc điều trị
+
 a) Hiệu quả giảm glucose huyết
 b) Nguy cơ hạ glucose máu: sulfonylurea, insulin
 c) Tăng cân: Pioglitazon, insulin, sulfonylurea
@@ -802,13 +753,14 @@ gan nặng.
 j) Giá thuốc, tính sẵn có, sự dung nạp và khả năng chi trả của BN
 k) Phác đồ sử dụng dễ nhớ, dễ thực hiện và khả năng tuân thủ điều trị của người
 bệnh
-4.2. Lựa chọn cụ thể
+
+#### 4.2. Lựa chọn cụ thể
+
 a) Metformin là lựa chọn đầu tiên để điều trị BN ĐTĐ típ 2 cùng với thay đổi lối
 sống (bao gồm kiểm soát cân nặng, chế độ ăn và tập luyện thể lực). Có thể kết
 hợp thay đổi lối sống và metformin ngay từ đầu. Thay đổi lối sống đơn thuần chỉ
 thực hiện ở những BN mới chẩn đoán, chưa có biến chứng mạn và mức đường
 huyết gần bình thường.
-22
 
 b) Khi các vấn đề BTMDXV, Suy tim và Bệnh thận mạn đã xuất hiện ở người
 bệnh đái tháo đường thì chúng ta cần hành động ngay theo chỉ định mới, ưu tiên,
@@ -852,13 +804,11 @@ thuộc vào các yếu tố đặc biệt có ảnh hưởng đến lựa chọ
 j) Cần thận trọng tránh nguy cơ hạ glucose máu khi khởi đầu điều trị bằng
 sulfonylurea, insulin, đặc biệt khi glucose huyết ban đầu không cao và BN lớn
 tuổi.
-23
 
 k) Hướng dẫn kỹ thuật tiêm và triệu chứng hạ đường huyết cho BN. Kiểm tra mỗi
 khi tái khám, khám vùng da nơi tiêm insulin xem có vết bầm, nhiễm trùng, loạn
 dư ng m .
 Hình 3: Sơ đồ điều trị với insulin
-24
 
 Các chiến lược điều trị insulin ở BN đái tháo đường típ 2.
 * Điều trị với insulin nền:
@@ -901,7 +851,6 @@ mỗi tuần cho đến khi đạt mục tiêu đường huyết lúc đói.
 + Hạ đường huyết: xác định nguyên nhân hạ đường huyết, nếu không có
 nguyên nhân rõ ràng, giảm liều insulin 2 – 4 đơn vị hay giảm 10 – 20%.
 - BN đang điều trị insulin nền trước đó: liều khởi đầu bằng liều insulin nền trước
-25
 
 đó, chia thành 2/3 buổi sáng, 1/3 buổi chiều HOẶC 1/2 buổi sáng, 1/2 buổi
 chiều
@@ -943,13 +892,16 @@ tính, hoặc ĐTĐ thai kỳ cần tiêm insulin
 + Hoặc các BN ĐTĐ: Khó kiểm soát đường huyết: thường xuyên hạ đường
 huyết, hạ đường huyết không triệu chứng, hạ đường huyết về đêm, bị liệt dạ
 dày ruột; Lối sống hay thay đổi, tập luyện nhiều, làm việc theo ca
-26
 
 Chống chỉ định: BN bị rối loạn tâm thần
-5. Tư vấn và hỗ trợ thay đổi lối sống
+
+### 5. Tư vấn và hỗ trợ thay đổi lối sống
+
 Thay đổi lối sống hay điều trị không dùng thuốc bao gồm luyện tập thể lực, dinh
 dư ng và thay đổi lối sống.
-5. 1. Hoạt động thể lực
+
+#### 5.1. Hoạt động thể lực
+
 Tăng hoạt động thể lực giúp làm cải thiện đường huyết, kiểm soát cân nặng và giảm
 nguy cơ bệnh tim mạch. Kết hợp luyện tập thể lực với can thiệp dinh dư ng sẽ có
 hiệu quả giảm HbA1c nhiều hơn.
@@ -984,7 +936,6 @@ e) Khuyến cáo hoạt động thể lực cho đái tháo đường típ 2
 - BN nên chọn hình thức hoạt động thể lực phù hợp mà có thể duy trì lâu dài. Đi
 bộ là hình thức vận động thuận tiện về thời gian và không tốn chi phí.
 - Đối với đái tháo đường típ 2, chương trình luyện tập thể lực được giám sát có
-27
 
 hiệu quả cải thiện kiểm soát đường huyết, giảm nhu cầu thuốc uống đái tháo
 đường và insulin, giảm và duy trì cân nặng.
@@ -999,8 +950,11 @@ tháo đường: làm vườn, đi bộ lên cầu thang, lau nhà,…
 - Tránh ngồi kéo dài và mỗi 20 tới 30 phút nên đứng dậy đi lại.
 - Một số hình thức thể dục khác có lợi ích như thể dục dưới nước phù hợp với
 người bị thoái hoá khớp: bơi lội, đi bộ nhanh trong nước.
-5. 2. Dinh dư ng
-5.2.1. Nguyên tắc cơ bản trong chế độ ăn bệnh Đái tháo đường.
+
+#### 5.2. Dinh dư ng
+
+##### 5.2.1. Nguyên tắc cơ bản trong chế độ ăn bệnh Đái tháo đường.
+
 - Đảm bảo cung cấp đủ dinh dư ng cân bằng cả về số lượng và chất lượng.
 - Không làm tăng đường huyết nhiều sau ăn, không làm hạ đường huyết xa bữa
 ăn.
@@ -1011,7 +965,9 @@ Lipid máu.
 - Không thay đổi quá nhanh và quá nhiều cơ cấu và khối lượng bữa ăn.
 - Đơn giản không quá đắt tiền.
 - Phù hợp với tập quán địa phương dân tộc.
-5.2.2. Kiểm soát cân nặng:
+
+##### 5.2.2. Kiểm soát cân nặng:
+
 - Người thừa cân, béo phì cần giảm cân, mục tiêu giảm 5-10% trọng lượng cơ thể
 trong vòng 3-6 tháng. Do vậy mức năng lượng khẩu phần ăn cũng giảm dần,
 250-500 kcal/ngày (giảm từng giai đoạn, không giảm đột ngột)
@@ -1023,13 +979,14 @@ trong vòng 3-6 tháng. Do vậy mức năng lượng khẩu phần ăn cũng gi
 - Năng lượng được cung cấp từ thực phẩm:
 Glucid: 50 – 60% tổng năng lượng
 Lipid: 20 – 30% tổng năng lượng
-28
 
 Protein: 15 – 20% tổng năng lượng
 - Mức năng lượng của BN cần được cá nhân hóa dựa trên: thói quen ăn uống, tình
 trạng sức khỏe, phác đỗ điều trị, phong tục tập quán…
 - Có thể khởi đầu với mức năng lượng 20-30 kcal/kg cân nặng lý tưởng/ngày.
-5.2.3. Nguồn cung cấp năng lượng:
+
+##### 5.2.3. Nguồn cung cấp năng lượng:
+
 a) Chất bột đường (Glucid):
 - Nguồn gốc:
 + Ngũ cốc và các sản phẩm chế biến: Gạo, bún, phở, ngô, bánh mỳ
@@ -1061,7 +1018,6 @@ b) Chất béo (Lipid):
 + Nguồn gốc động vật như: thịt m , m cá, bơ, sữa, phomat, lòng đỏ trứng gà.
 + Nguồn gốc thực vật như: dầu thực vật, lạc, vừng,đậu tương, cùi dừa, hạt dẻ,
 sôcôla.
-29
 
 + Chất béo bão hòa có nhiều trong thực phẩm có nguồn gốc động vật.
 + Chất béo không bão hòa có nhiều trong thực phẩm có nguồn gốc thực vật.
@@ -1099,7 +1055,6 @@ nặng lên tình trạng suy thận.
 đậu đỗ, lạc, vừng, dầu oliu, dầu cá, …
 d) Vi chất dinh dưỡng: Bao gồm: vitamin và muối khoáng
 - Người bệnh đái tháo đường cần được cung cấp các vi chất dinh dư ng như
-30
 
 người bình thường.
 - Vi chất dinh dư ng có nhiều trong rau và trái cây
@@ -1137,9 +1092,10 @@ các tác nhân ung thư trực tràng và đường ruột, ….
 - Chất xơ có nhiều trong các phần như vỏ, dây, lá, hạt, … của các loại cây lấy
 quả, rau xanh và ngũ cốc.
 - Nhu cầu: 20 – 30g/ngày.
-5.2.4. Cách phân bố bữa ăn:
+
+##### 5.2.4. Cách phân bố bữa ăn:
+
 a) Cơ cấu bữa ăn cần cá nhân hóa
-31
 
 - BN cần duy trì 3 bữa ăn chính trong ngày. Bữa phụ của BN cần cá nhân hóa
 - BN kiểm soát tốt đường huyết không khuyến cáo chia nhỏ bữa ăn.
@@ -1163,25 +1119,33 @@ người bệnh. Nếu dư thừa có thể gây tăng cân, tăng đường huy
 bữa phụ chỉ nên chiếm 10-15% tổng số năng lượng trong ngày.
 - Thời điểm bữa phụ: bữa phụ vào cuối buổi chiều hoặc trước khi đi ngủ chỉ được
 thực hiện nếu có nguy cơ hạ đường huyết cuối buổi chiều hoặc nửa đêm.
-6. Quản lý các bệnh đồng mắc và biến chứng:
+
+### 6. Quản lý các bệnh đồng mắc và biến chứng:
+
 - Điều trị các bệnh phối hợp và các biến chứng nếu có theo hướng dẫn chuyên
 môn của các bệnh và biến chứng đó
-6.1. Tăng huyết áp
-6.1.1. Theo dõi huyết áp: Phải đo huyết áp định kỳ ở mỗi lần thăm khám. Nếu huyết
+
+#### 6.1. Tăng huyết áp
+
+##### 6.1.1. Theo dõi huyết áp: Phải đo huyết áp định kỳ ở mỗi lần thăm khám. Nếu huyết
+
 áp tâm thu ≥ 130mmHg hay huyết áp tâm trương ≥80 mmHg cần phải kiểm tra lại
 huyết áp vào ngày khác. Chẩn đoán tăng huyết áp khi kiểm tra lại có huyết áp tâm
 thu ≥140 mmHg và/hay huyết áp tâm trương ≥90 mmHg.
-6.1.2. Mục tiêu điều trị về huyết áp: Mục tiêu huyết áp tâm thu <140 mmHg phù
+
+##### 6.1.2. Mục tiêu điều trị về huyết áp: Mục tiêu huyết áp tâm thu <140 mmHg phù
+
 hợp với đa số BN đái tháo đường. Mục tiêu huyết áp tâm trương < 90 mmHg. Có
 thể đặt mục tiêu huyết áp tâm thu cao hơn hay thấp hơn tùy vào đặc điểm của BN
 và đáp ứng với điều trị. BN còn trẻ, có thể giảm huyết áp đến <130/90-80 mmHg
 nếu BN dung nạp được. Mục tiêu huyết áp ở BN ĐTĐ và bệnh thận mạn có thể
 <130/80-85 mmHg.
-6.1.3. Điều trị:
+
+##### 6.1.3. Điều trị:
+
 a) BN có huyết áp tâm thu từ 130–139 mmHg và/hoặc tâm trương 80–89 mmHg
 cần điều trị bằng cách thay đổi lối sống trong thời gian tối đa là 3 tháng. Sau đó
 nếu vẫn chưa đạt được mục tiêu huyết áp, cần điều trị bằng thuốc hạ huyết áp.
-32
 
 b) BN có tăng huyết áp nặng hơn (HA tâm thu ≥140 và/hoặc HA tâm trương ≥90
 mmHg) vào thời điểm chẩn đoán hay khi theo dõi cần điều trị bằng với thuốc hạ
@@ -1211,9 +1175,13 @@ nguy cơ tim mạch chuyển hóa khác.
 i) Trong các thuốc hạ đường huyết, nhóm thuốc GLP-1 RA và Ức chế SGLT2
 ngoài kiểm soát đường huyết còn có tác dụng giảm nhẹ huyết áp, có thể cân
 nhắc trong điều trị.
-6.2. Rối loạn lipid máu
-6.2.1. Đo chỉ số lipid máu: Cần kiểm tra bộ lipid máu ít nhất hàng năm.
-6.2.2. Điều trị:
+
+#### 6.2. Rối loạn lipid máu
+
+##### 6.2.1. Đo chỉ số lipid máu: Cần kiểm tra bộ lipid máu ít nhất hàng năm.
+
+##### 6.2.2. Điều trị:
+
 a) Thay đổi lối sống: Tất cả BN đái tháo đường típ 2 người lớn cần có chế độ ăn
 uống tốt cho tim mạch và hoạt động thể lực (cường độ trung bình 150 phút hoặc
 cường độ mạnh 75 phút mỗi tuần) để kiểm soát đường huyết, giảm cân nếu cần
@@ -1223,7 +1191,6 @@ b) Điều trị bằng thuốc:
 nhiêu, cần được điều trị statin cường độ trung bình.
 - BN đái tháo đường 20-39 tuổi có yếu tố nguy cơ bệnh tim mạch xơ vữa, có thể
 bắt đầu điều trị statin.
-33
 
 - BN đái tháo đường nguy cơ cao (đái tháo đường ≥10 năm chưa có tổn thương cơ
 quan đích hoặc có đa yếu tố nguy cơ tim mạch xơ vữa) nên được điều trị statin
@@ -1251,11 +1218,18 @@ statin với liều tối đa có thể dung nạp được có thể thêm ezet
 - BN đái tháo đường >75 tuổi đang sử dụng statin thì nên tiếp tục điều trị, nếu
 chưa dùng statin vẫn nên bắt đầu điều trị statin.
 - Chống chỉ định statin trong thai kỳ.
-7. Sử dụng thuốc chống kết tập tiểu cầu
-7.1. Phòng ngừa tiên phát: ở BN ĐTĐ có nguy cơ tim mạch trung bình, không
+
+### 7. Sử dụng thuốc chống kết tập tiểu cầu
+
+#### 7.1. Phòng ngừa tiên phát
+
+ở BN ĐTĐ có nguy cơ tim mạch trung bình, không
 khuyến cáo sử dụng aspirin để dự phòng tiên phát. Có thể cân nhắc sử dụng aspirin
 để dự phòng tiên phát ở BN ĐTĐ có nguy cơ tim mạch cao/rất cao.
-7.2. Phòng ngừa thứ phát: sau biến cố tim mạch
+
+#### 7.2. Phòng ngừa thứ phát
+
+sau biến cố tim mạch
 - Aspirin: 75-160mg/ngày (trọn đời)
 - Dị ứng/không dung nạp Aspirin: dùng Clopidogrel 75mg/ngày để thay thế
 - Aspirin phối hợp với Ticagrelor /Prasugrel trong vòng 12 tháng sau hội chứng
@@ -1265,12 +1239,14 @@ mạch vành cấp (ở BN không được can thiệp mạch vành)
 - Aspirin phối hợp với Clopidogrel/ Ticagrelor liều thấp (60mg) có thể sử dụng
 cho BN sau nhồi máu cơ tim từ 12 đến 36 tháng, hoặc BN bệnh mạch vành mạn
 (CAD) có chỉ định PCI
-34
 
-8. Tiêm vacxin
+### 8. Tiêm vacxin
+
 BN ĐTĐ cần được tiêm vacxin phòng cúm, phế cầu trùng hàng năm. Ngoài ra cũng
 nên tiêm vacxin phòng viêm gan siêu vi B.
-9. Chuyển tuyến
+
+### 9. Chuyển tuyến
+
 - BN đái tháo đường típ 1 cần được khám bởi bác sĩ chuyên khoa nội tiết, sau đó
 cùng theo dõi với bác sĩ đa khoa
 - BN đái tháo đường típ 2 cần được chuyển lên khám bác sĩ chuyên khoa nội tiết
@@ -1288,16 +1264,20 @@ giá nguy cơ loét bàn chân.
 tháo đường: thí dụ cơn đau thắt ngực không ổn định, bệnh thận mạn giai đoạn
 3…(tham khảo thêm các hướng dẫn chẩn đoán và điều trị biến chứng mạn của
 bệnh ĐTĐ)
-35
 
-PHẦN 5: QUẢN LÝ T NG GLUCOSE MÁU Ở BỆNH NHÂN N I TRÖ
+## PHẦN 5: QUẢN LÝ T NG GLUCOSE MÁU Ở BỆNH NHÂN N I TRÖ
+
 KHÔNG CÓ BIẾN CHỨNG CẤP
-1. Mục tiêu glucose máu
+
+### 1. Mục tiêu glucose máu
+
 a) Mục tiêu glucose máu từ 7,8 – 10,0 mmol/L (140 – 180 mg/dL) được khuyến
 cáo cho đa số BN (A)
 b) Mục tiêu glucose máu tích cực hơn từ 6,1 – 7,8 mmol/L (110 – 140 mg/dL) cho
 BN trẻ nếu có thể đạt được mục tiêu này mà không có hạ ĐH đáng kể. (C)
-2. Phác đồ điều trị tăng glucose máu cho bệnh nhân mắc bệnh nguy kịch
+
+### 2. Phác đồ điều trị tăng glucose máu cho bệnh nhân mắc bệnh nguy kịch
+
 a) Truyền insulin tĩnh mạch là phương pháp lựa chọn để kiểm soát glucose máu ở
 bệnh nhân có tăng glucose máu và tình trạng nguy kịch. Sử dụng insulin nhanh,
 truyền bơm tiêm điện (pha với dung dịch natri clorua đ ng trương để được nồng
@@ -1320,7 +1300,6 @@ tuần sau lần lọc màng bụng cuối cùng; nếu BN dùng máy đo G mao 
 phương pháp glucose dehydrogenase, máy sẽ xác định nhầm maltose thành glucose
 dẫn đến kết quả G máu tăng giả.
 Tại các Khoa Chăm sóc tích cực, phòng phẫu thuật: sự thay đổi Hct, pH máu, SaO ,
-2
 sốt, mất nước và tình trạng nhiễm ceton đều ảnh hưởng đáng kể đến kết quả G mao
 mạch.
 Trường hợp có suy tuần hoàn, nhất là khi có nhiễm toan hay sốc giảm thể tích làm
@@ -1333,7 +1312,6 @@ e) Căn cứ kết quả glucose máu mao mạch để điều chỉnh tốc đ�
 f) Thêm insulin nhanh vào dịch truyền nuôi dư ng với liều 1 IU/15 g carbohydrat.
 Nếu bệnh nhân ăn (qua sonde) tiêm thêm insulin nhanh dưới da trước ăn với liều
 1 IU/15 g carbohydrat.
-36
 
 g) Xử lý khi có glucose máu thấp < 5,6 mmol/L (100 mg/dL):
 - Ngừng truyền insulin và đo glucose máu mỗi 15 phút cho đến khi glucose máu >
@@ -1351,7 +1329,9 @@ mạch.
 - Tổng liều insulin dưới da/ngày = 60 – 80% nhu cầu insulin trong 24h tính từ
 tổng liều insulin dùng trong 6 – 8h ngay trước đó, phân bố insulin nền và insulin
 nhanh như trong phác đồ điều trị bệnh nhân nặng dưới đây.
-3. Phác đồ điều trị tăng glucose máu ở bệnh nhân nặng không nguy kịch
+
+### 3. Phác đồ điều trị tăng glucose máu ở bệnh nhân nặng không nguy kịch
+
 a) Điều trị bằng insulin bắt đầu khi có glucose máu ≥ 10,0 mmol/L (180 mg/dL)
 lặp lại.
 b) Chế độ insulin nền – nhanh (tiêm dưới da) là lựa chọn để kiểm soát glucose máu
@@ -1373,7 +1353,6 @@ glucose máu kém, tăng glucose máu mới phát hiện:
 * Insulin nền liều dùng ở nhà trước đó hoặc 0,2 – 0,3 IU/kg cân nặng, chia 2
 lần/24 giờ với insulin NPH, 1-2 lần/24 giờ với insulin detemir và 1 lần/24 giờ
 với insulin glargine.
-37
 
 * Insulin hiệu chỉnh: insulin nhanh người tiêm mỗi 6 giờ hoặc insulin nhanh
 analog tiêm mỗi 4 giờ; liều căn cứ mức glucose máu trước khi tiêm: khi glucose
@@ -1414,9 +1393,9 @@ HbA1c, các chống chỉ định với các thuốc hạ gluocose và các yế
 Nếu HbA1c đạt mục tiêu thì dùng lại phác đồ trước nhập viện. Nếu HbA1c trên
 mức mục tiêu thì cần tăng cường thuốc hạ glucose máu theo phác đồ điều trị
 tăng glucose máu chung cho bệnh nhân ĐTĐ.
-38
 
-4. Sử dụng thuốc hạ glucose huyết không phải insulin
+### 4. Sử dụng thuốc hạ glucose huyết không phải insulin
+
 - Các thuốc hạ glucose huyết không phải insulin mà BN đang dùng ở nhà có thể
 tiếp tục sử dụng trong một số trường hợp: tình trạng BN ổn định, bệnh mắc kèm
 theo nhẹ - trung bình, ăn uống bình thường, glucose huyết ổn định, chức năng
@@ -1424,7 +1403,9 @@ tim, thận bình thường.
 - Thận trọng với các thuốc hạ glucose huyết có nguy cơ tác dụng phụ cao như
 sulfonylurea, glinide, ức chế SGLT-2, thiazolidinedion, ức chế alpha-
 glucosidase.
-5. Bệnh nhân có d ng glucocorticoid
+
+### 5. Bệnh nhân có d ng glucocorticoid
+
 a) Bệnh nhân dùng glucocorticoid tác dụng trung bình (hydrocortison, prednison,
 prednisolon, methylprenisolon) 1 lần buổi sáng: Thêm insulin nhanh với liều 0,1
 IU/ngày với mỗi 10 mg prednison (hoặc liều glucocorticoid khác tương đương),
@@ -1433,7 +1414,9 @@ b) Bệnh nhân dùng glucocorticoid tác dung trung bình 2 lần/ngày (sáng,
 hoặc glucocorticoid tác dụng kéo dài (dexamethason) : thêm insulin 0,1
 IU/kg/ngày, chia 25% thêm vào insulin nền, 75% thêm insulin nhanh chia đều 3
 lần trước các bữa ăn.
-6. Bệnh nhân chu phẫu
+
+### 6. Bệnh nhân chu phẫu
+
 a) Mục tiêu glucose máu thời kỳ chu phẫu : 4,4 – 10,0 mmol/L (80 – 180 mg/dL).
 b) Ngừng metformin trong ngày phẫu thuật
 c) Ngừng các thuốc uống hạ glucose khác vào buổi sáng ngày phẫu thuật và tiêm
@@ -1441,14 +1424,15 @@ nửa liều insulin NPH hoặc 60 – 80% liều insulin tác dụng kéo dài.
 d) Theo dõi glucose huyết ít nhất mối 4 – 6 giờ trong khi BN không ăn gì qua
 miệng và tiêm các mũi insulin nhanh khi cần như insulin hiệu chỉnh trong các đồ
 trên.
-39
 
-PHẦN 6
-HẠ ĐƯỜNG HUYẾT
+## PHẦN 6: HẠ ĐƯỜNG HUYẾT
+
 Hạ glucose huyết (hay hạ đường huyết) là biến chứng cấp tính, thường gặp ở BN
 đái tháo đường, là rào cản lớn trong việc kiểm soát đường huyết đạt mục tiêu, kiểm
 soát chặt cho cả BN đái tháo đường típ 1 và típ 2.
-1. Khuyến cáo:
+
+### 1. Khuyến cáo:
+
 a) Với các BN có nguy cơ hạ đường huyết: cần hỏi bệnh kỹ các cơn hạ đường
 huyết có triệu chứng và hạ đường huyết không triệu chứng mỗi lần thăm khám
 b) Với người bệnh dùng các nhóm thuốc có nguy cơ hạ đường huyết (insulin, SU)
@@ -1470,7 +1454,9 @@ nhận biết, hạ đường huyết mức độ nặng thì cần điều ch�
 kiểm soát đường huyết trong vài tuần, nhằm giảm nguy cơ hạ đường huyết.
 g) Cần đánh giá chức năng nhận thức cho những BN có nhiều cơn hạ đường huyết
 hoặc cơn hạ đường huyết nặng để kịp thời điều chỉnh phác đồ điều trị
-2. Phân mức độ hạ đường huyết
+
+### 2. Phân mức độ hạ đường huyết
+
 Hạ đường huyết được chia làm 3 mức độ, dựa vào nồng độ glucose huyết:
 Bảng Phân mức độ hạ glucose huyết
 Tiêu chí glucose huyết
@@ -1478,9 +1464,9 @@ Mức 1 Glucose <70 mg/dL (3,9 mmol/L) và ≥54 mg/dL (3,0 mmol/L)
 Mức 2 Glucose <54 mg/dL (3,0 mmol/L)
 Hạ đường huyết mức độ nặng, BN có rối loạn ý thức và/hoặc có thay đổi
 Mức 3 biểu hiện toàn thân cần xử trí cấp cứu
-40
 
-3. Xử trí
+### 3. Xử trí
+
 Thực hiện các biện pháp cấp cứu ban đầu theo các bước ABC
 Các biện pháp điều trị cấp cứu đặc hiệu
 a) Truyền glucose tĩnh mạch
@@ -1515,12 +1501,14 @@ Insulin glargine không có hoạt động đỉnh và nói chung bản thân n�
 hạ đường máu. Những bệnh nhân dùng insulin tác dụng chậm có thời gian tác
 dụng đỉnh như lente hoặc ultralente, hoặc bệnh nhân uống thuốc sulfonylurea thì
 cần phải được theo dõi trong bệnh viện.
-41
 
-PHẦN 7 : CHẨN ĐOÁN VÀ ĐIỀU TRỊ BIẾN CHỨNG CẤP TÍNH CỦA ĐÁI
+## PHẦN 7: CHẨN ĐOÁN VÀ ĐIỀU TRỊ BIẾN CHỨNG CẤP TÍNH CỦA ĐÁI
+
 THÁO ĐƯỜNG: NHIỄM TOAN KETONE, NHIỄM TOAN LACTIC, VÀ
 T NG ÁP LỰC THẨM THẤU
-1. Đại cương
+
+### 1. Đại cương
+
 - Đái tháo đường có nhiễm toan ketone, toan lactic và tăng đường huyết có tăng
 áp lực thẩm thấu là những biến chứng cấp tính đe dọa tính mạng BN.
 - Tỷ lệ BN đái tháo đường nhập viện vì nhiễm toan ketone cao hơn nhưng tỷ lệ tử
@@ -1536,8 +1524,11 @@ thuốc như corticoid, lợi tiểu…
 tăng lactate máu > 5 mmol/L. Nhiễm toan lactic ở BN đái tháo đường chủ yếu
 có liên quan với điều trị thuốc biaguanide. Tuy hiếm gặp nhưng toan lactic do
 metformin có tỷ lệ tử vong rất cao, có thể đến 45-50%.
-2. Triệu chứng lâm sàng và cận lâm sàng:
-2.1. Triệu chứng lâm sàng:
+
+### 2. Triệu chứng lâm sàng và cận lâm sàng:
+
+#### 2.1. Triệu chứng lâm sàng
+
 - ĐTĐ nhiễm toan ketone thường diễn biến nhanh trong vòng vài giờ. Các triệu
 chứng phổ biến là tiểu nhiều, khát nước, thở sâu do tăng thông khí bù trừ (thở
 kiểu Kussmault), hơi thở có mùi ketone (giống mùi thuốc tẩy móng tay). Một số
@@ -1552,12 +1543,13 @@ huyết áp
 - Các triệu chứng của nhiễm toan lactic gồm yếu mệt nhiều, buồn nôn, nôn và đau
 bụng. Các dấu hiệu gồm thở nhanh (Kussmaul), rối loạn ý thức, mất nước trung
 bình, đái ít, giảm nhiệt độ, giảm huyết áp và shock
-2.2. Các xét nghiệm cần làm ban đầu
+
+#### 2.2. Các xét nghiệm cần làm ban đầu
+
 Các xét nghiệm cần làm ban đầu gồm sinh hóa máu (Glucose, điện giải đồ, ure và
 creatinin máu), công thức máu, ketone niệu và/hoặc ketone máu, khí máu động
 mạch và điện tâm đồ. Các xét nghiệm khác có thể cần làm tùy BN cụ thể: cấy nước
 tiểu/máu/đờm, amylase máu, chụp XQ phổi, HbA1C. Kết quả:
-42
 
 - Đường huyết tăng ở BN có tăng áp lực thẩm thấu nhiều hơn BN có nhiễm toan
 ketone. BN đái tháo đường nhiễm toan ketone do thuốc ức chế SGLT-2 có thể
@@ -1579,68 +1571,75 @@ tuần hoàn.
 quan với mức độ nhiễm toan. Nhưng nếu bạch cầu tăng > 25.000/microL thì
 phải đi tìm nguyên nhân nhiễm trùng.
 - Xét nghiệm lactate máu nếu nghi ngờ nhiễm toan lactic
-2.3. Tính khoảng trống anion (Anion Gap): Bình thường = 3 - 10
+
+#### 2.3. Tính khoảng trống anion (Anion Gap)
+
+Bình thường = 3 - 10
 Công thức = Na máu – (Clo máu + Bicarbonate).
 Các BN có nhiễm toan ketone thường có khoảng trống anion > 12
-2.4. Áp lực thẩm thấu máu: Bình thường từ 275 – 295
+
+#### 2.4. Áp lực thẩm thấu máu
+
+Bình thường từ 275 – 295
 a) Ở BN đái tháo đường có tăng áp lực thẩm thấu, áp lực thẩm thấu hiệu dụng
 thường > 320 mosmol/kg. Có thể ước tính áp lực thẩm thấu hiệu dụng bằng
 công thức sau, sử dụng Na đo được chức không phải Na ―hiệu chỉnh‖:
 Áp lực thẩm thấu hiệu dụng = [2 x Na (mEq/L)] + [glucose (mg/dL) : 18] hoặc
 Áp lực thẩm thấu hiệu dụng = [2 x Na (mmol/L)] + Glucose (mmol/L)
-Bảng 7: Chẩn đoán BN ĐTĐ có nhiễm toan ketone và tăng ALTT
-Xét nghiệm ĐTĐ có nhiễm toan ketone Tăng đường
-huyết có
-Nhẹ Vừa Nặng
-tăng ALTT
-Đường huyết (mg/dL) > 250 > 250 > 250 > 600
-Đường huyết (mmol/L) ≥ 14,0 ≥ 14,0 ≥ 14,0 > 33,3
-pH máu động mạch 7,25 - 7,30 7,0 - 7,24 < 7,0 > 7,30
-Bicarbonate 15 - 18 10 - 15 < 10 > 18
-43
+**Bảng 7: Chẩn đoán BN ĐTĐ có nhiễm toan ketone và tăng ALTT**
 
-| Xét nghiệm  | ĐTĐ có nhiễm toan ketone  |     |     | Tăng đường  |
-| ----------- | ------------------------- | --- | --- | ----------- |
-huyết có
-|     | Nhẹ  | Vừa  | Nặng  |     |
-| --- | ---- | ---- | ----- | --- |
-tăng ALTT
-| Ketone niệu       | (+)  | (+)  | (+)  | (+) nhẹ  |
-| ----------------- | ---- | ---- | ---- | -------- |
-| Ketone máu (Test  | (+)  | (+)  | (+)  | Rất nhẹ  |
-Nitroprusside)
-| ALTT hiệu dụng      | Thay đổi  | Thay đổi  | Thay đổi   | > 320        |
-| ------------------- | --------- | --------- | ---------- | ------------ |
-| Khoảng trống anion  | > 10      | > 12      | > 12       | Thay đổi     |
-| Thay đổi ý thức     | Tỉnh      | Tỉnh/     | Sững       | Sững sờ/hôn  |
-|                     |           | chậm      | sờ/hôn mê  | mê           |
-3. Chẩn đoán xác định:
-3.1. Đái tháo đường có nhiễm toan ketone:
+
+| Xét nghiệm | ĐTĐ nhiễm toan ketone (Nhẹ) | ĐTĐ nhiễm toan ketone (Vừa) | ĐTĐ nhiễm toan ketone (Nặng) | Tăng đường huyết có tăng ALTT |
+| :--- | :--- | :--- | :--- | :--- |
+| Đường huyết (mg/dL) | > 250 | > 250 | > 250 | > 600 |
+| Đường huyết (mmol/L) | ≥ 14,0 | ≥ 14,0 | ≥ 14,0 | > 33,3 |
+| pH máu động mạch | 7,25 - 7,30 | 7,0 - 7,24 | < 7,0 | > 7,30 |
+| Bicarbonate | 15 - 18 | 10 - 15 | < 10 | > 18 |
+| Ketone niệu | (+) | (+) | (+) | (+) nhẹ |
+| Ketone máu (Test<br>Nitroprusside) | (+) | (+) | (+) | Rất nhẹ |
+| ALTT hiệu dụng | Thay đổi | Thay đổi | Thay đổi | > 320 |
+| Khoảng trống anion | > 10 | > 12 | > 12 | Thay đổi |
+| Thay đổi ý thức | Tỉnh | Tỉnh/<br>chậm | Sững<br>sờ/hôn mê | Sững sờ/hôn<br>mê |
+
+
+
+### 3. Chẩn đoán xác định:
+
+#### 3.1. Đái tháo đường có nhiễm toan ketone
+
 a)  Tăng đường huyết, thường ở mức 350 – 500mg/dL (19,5 – 28,0 mmol/L). Một
 số trường hợp đường huyết có thể chỉ tăng nhẹ.
 b)  Toan chuyển hóa có tăng khoảng trống anion
 c)  Tăng Ketone máu
-3.2. Tăng đường huyết có tăng áp lực thẩm thấu:
+
+#### 3.2. Tăng đường huyết có tăng áp lực thẩm thấu
+
 a)  Tăng đường huyết nhiều, thường trên 600mg/dL (33,3 mmol/L)
 b)  Tăng áp lực thẩm thấu > 320 mosmol/kg
 c)  pH > 7,30, bicarbonate máu > 20 mEq/L, ketone máu có thể tăng nhẹ
-3.3. Một số BN đái tháo đường có cả nhiễm toan ketone và tăng áp lực thẩm thấu
-3.4. Đái tháo đường có nhiễm toan lactic:
+
+#### 3.3. Một số BN đái tháo đường có cả nhiễm toan ketone và tăng áp lực thẩm thấu
+
+#### 3.4. Đái tháo đường có nhiễm toan lactic
+
 a)  Lacate máu ≥ 5 mmol/L (4mEq/L), ngay cả khi không có nhiễm toan rõ
 b)  Khí máu: pH < 7,35, bicarbonate < 10 mmol/L
 c)  Khoảng trống anion > 16 mEq/L
 d)  Xét nghiệm nồng độ metformin trong máu có thể cao
-4. Điều trị và theo dõi:
-4.1. Nguyên tắc:
+
+### 4. Điều trị và theo dõi:
+
+#### 4.1. Nguyên tắc
+
 a)  Điều trị đái tháo đường nhiễm toan ketone và tăng đường huyết có tăng áp lực
 thẩm thấu tương đồng nhau, bao gồm (theo thứ tự) bù dịch, điều chỉnh rối loạn
 điện giải và insulin
 b)  Nên sơ đồ hóa phác đồ điều trị và theo dõi điều trị theo từng BN
 c)  Phát hiện sớm và điều trị đồng thời nguyên nhân gây mất bù cấp
 d)  Giải thích cho BN và người nhà về phác đồ điều trị và tiên lượng (nếu có thể)
-44
 
-4.2. Bù dịch:
+#### 4.2. Bù dịch
+
 Bù dịch để điều chỉnh cả tình trạng giảm khối lượng tuần hoàn và tăng áp lực thẩm
 thấu, và làm giảm đường huyết
 a) Nên khởi đầu bằng muối đ ng trương (NaCl 0,9%). Nếu BN có nhiễm toan
@@ -1662,7 +1661,9 @@ hoặc 200mg/dL (11,0 mmol/L) ở BN nhiễm toan ketone thì cần truyền th�
 glucose 5%.
 h) Đánh giá bù đủ dịch dựa vào theo dõi huyết động và xét nghiệm. Mục tiêu là
 điều chỉnh lượng dịch thiếu ước tính trong vòng 24h.
-4.3. Bù Kali
+
+#### 4.3. Bù Kali
+
 Tùy thuộc nồng độ Kali máu ban đầu:
 a) Kali máu < 3,3 mmol/L: truyền tĩnh mạch kali chloride (KCl) 20-40 mmol/h,
 thường pha 20-40mmol trong 1L muối NaCl. Xét nghiệm kali máu hàng giờ.
@@ -1670,7 +1671,9 @@ b) Kali máu từ 3,3 – 5,3 mmol/L: pha truyền KCl 20-30 mmol trong 1L muố
 và duy trì cho đến khi nồng độ kali máu lên đến 4-5 mmol/L.
 c) Kali máu > 5,3 mmol/L: tạm chưa bù Kali.
 d) Bù kali cần thận trọng khi có giảm chức năng thận và nước tiểu ít < 50mL/h.
-4.4. Insulin
+
+#### 4.4. Insulin
+
 Sử dụng insulin regular
 a) Nên điều trị insulin regular tĩnh mạch cho tất cả những BN đái tháo đường có
 nhiễm toan ketone hay tăng áp lực thẩm thấu mức độ vừa đến nặng có kali máu
@@ -1678,7 +1681,6 @@ nhiễm toan ketone hay tăng áp lực thẩm thấu mức độ vừa đến n
 insulin.
 b) Bắt đầu bằng tiêm tĩnh mạch 1 mũi insulin regular 0,1 UI/kg, sau đó truyền tĩnh
 mạch liên tục insulin regular 0,1UI/kg/h. Nếu đường huyết chỉ giảm < 50mg/dL
-45
 
 trong giờ đầu thì có thể tăng (gấp đôi) liều mỗi giờ cho tới khi đường huyết
 giảm đến mức này.
@@ -1688,14 +1690,20 @@ glucose 5% + NaCl 0,9% và đồng thời giảm tốc độ truyền insulin xu
 0,05 UI/kg/h.
 d) Một số BN đái tháo đường có nhiễm toan ketone nhẹ có thể điều trị insulin dưới
 da
-4.5. Bicarbonate
+
+#### 4.5. Bicarbonate
+
 Có thể truyền bicarbonate cho BN có pH ≤ 6,9 và giảm co bóp cơ tim. Pha 100 mEq
 NaHCO3/400mL muối NaCl 0,9%, truyền trong 2 giờ. Nếu kali máu < 5,3 mmol/L
 thì pha thêm 20 mEq KCl. Ngừng điều trị khi pH tăng lên > 7,0.
-4.6. Điều trị các bệnh đi kèm hoặc các nguyên nhân thúc đẩy như viêm phổi,
+
+#### 4.6. Điều trị các bệnh đi kèm hoặc các nguyên nhân thúc đẩy như viêm phổi,
+
 nhồi máu cơ tim, tai biến mạch não… và ngừng thuốc ức chế SGLT-2 (nếu có
 dùng).
-4.7. Điều trị nhiễm toan lactic
+
+#### 4.7. Điều trị nhiễm toan lactic
+
 a) Điều trị các bệnh lý nguyên nhân và các bệnh lý đi kèm, cải thiện cung cấp oxy
 cho các mô
 b) Làm giảm đường huyết bằng truyền insulin regular tĩnh mạch
@@ -1703,23 +1711,29 @@ c) Điều trị truyền tĩnh mạch bicarbonate cho BN nhiễm toan lactic n�
 bicarbonate ≤ 6 mEq/L) hoặc nhiễm toan nhẹ hơn (pH = 7,1 – 7,2) nhưng có tổn
 thương thận cấp (để tránh phải lọc máu và ngăn tử vong)
 d) TD nồng độ lactate máu mỗi 2-6 giờ. Nếu lactate tăng kéo dài là tiên lượng xấu
-5. Theo dõi
-5.1. Theo dõi chung
+
+### 5. Theo dõi
+
+#### 5.1. Theo dõi chung
+
 Xét nghiệm đường huyết mao mạch hàng giờ cho đến khi ổn định, còn điện giải đồ,
 ure, creatinin và khí máu mỗi 2-4 giờ tùy theo tình trạng lâm sàng.
-5.2. Tăng đường huyết cấp cứu được coi là khỏi nếu BN tỉnh, ăn được và:
+
+#### 5.2. Tăng đường huyết cấp cứu được coi là khỏi nếu BN tỉnh, ăn được và
+
 a) Hết nhiễm toan ketone: đường huyết < 200mg/dL (11 mmol/L) và có ít nhất 2/3
 tiêu chuẩn: pH > 7,3, khoảng trống anion < 12 và bicarbonate ≥ 15
 b) Hết tăng áp lực thẩm thấu: áp lực thẩm thấu máu giảm xuống dưới 315
 mOsmol/kg
-5.3. Chuyển tiêm insulin dưới da:
+
+#### 5.3. Chuyển tiêm insulin dưới da
+
 a) Chỉ định: BN đái tháo đường nhiễm toan ketone khi hết nhiễm toan và ăn được.
 Còn với BN đái tháo đường có tăng áp lực thẩm thấu thì có thể giảm liều insulin
 tĩnh mạch và chuyển tiêm insulin dưới da khi đường huyết xuống dưới 250/dL
 (14 mmol/L)
 b) Cách tính liều insulin tiêm dưới da = 70% của tổng liều insulin truyền tĩnh mạch
 trong 24 giờ (lấy tổng liều insulin trong 6 giờ gần nhất nhân với 4). Nên tiêm
-46
 
 theo phác đồ nhiều mũi (basal – bolus), trong đó insulin nền chiếm khoảng 40-
 50% tổng liều.
@@ -1730,8 +1744,11 @@ trước) khi giảm liều insulin tĩnh mạch. Vẫn nên duy trì insulin tr
 thêm 1 giờ sau khi tiêm mũi insulin nhanh đầu vì ngừng insulin ngay có thể
 khiến BN bị thiếu insulin cấp tính và đưa đến tăng đường huyết và/hoặc nhiễm
 toan ketone trở lại.
-6. Các biến chứng của điều trị:
-6.1. Phù não
+
+### 6. Các biến chứng của điều trị:
+
+#### 6.1. Phù não
+
 a) Xảy ra chủ yếu ở các BN đái tháo đường nhiễm toan ketone trẻ em. Các triệu
 chứng thường xuất hiện trong 12-24 giờ đầu điều trị. Biểu hiện lâm sàng sớm
 nhất là đau đầu, theo sau là rối loạn ý thức, nôn và các triệu chứng thần kinh như
@@ -1742,13 +1759,17 @@ c) Dự phòng bằng cách bù dịch từ từ, và nên truyền thêm glucos
 khi đường huyết giảm. Ở BN có tăng áp lực thẩm thấu nên duy trì đường huyết
 ở mức 250mg/dL (14 mmol/L) cho đến khi áp lực thẩm thấu máu về bình
 thường và BN tỉnh.
-6.2. Các biến chứng khác:
-Rối loạn điện giải, hạ đường huyết, phù phổi do truyền dịch nhiều và nhanh
-47
 
-PHẦN 8: PHÕNG NGỪA VÀ KIỂM SOÁT BIẾN CHỨNG MẠN TÍNH
+#### 6.2. Các biến chứng khác
+
+Rối loạn điện giải, hạ đường huyết, phù phổi do truyền dịch nhiều và nhanh
+
+## PHẦN 8: PHÕNG NGỪA VÀ KIỂM SOÁT BIẾN CHỨNG MẠN TÍNH
+
 1. Biến chứng vi mạch.
-1.1. Biến chứng mắt ĐTĐ:
+
+#### 1.1. Biến chứng mắt ĐTĐ
+
 a) Biến chứng nặng là bệnh võng mạc tăng sinh do ĐTĐ. Có 2 thể bệnh võng mạc
 chính:
 - Bệnh võng mạc không tăng sinh (viêm võng mạc tổn thương nền): giai đoạn
@@ -1769,26 +1790,34 @@ hàng năm và đường huyết được kiểm soát tốt, có thể xem xét
 một lần. Nếu bệnh võng mạc đang tiến triển hoặc đe dọa đến thị lực, phải khám
 mắt thường xuyên hơn.
 KHUYẾN CÁO VỀ BIẾN CHỨNG VÕNG MẠC DO ĐÁI THÁO ĐƯỜNG
-1. Cần tầm soát biến chứng võng mạc cho người bệnh ĐTĐ típ 1 năm năm sau
+
+### 1. Cần tầm soát biến chứng võng mạc cho người bệnh ĐTĐ típ 1 năm năm sau
+
 khi chẩn đoán; cần tầm sóat biến chứng võng mạc cho người bệnh ĐTĐ típ 2
 ngay thời điểm chẩn đoán. Phụ nữ được chẩn đoán ĐTĐ típ 1 và típ 2 cần
 được tầm soát biến chứng võng mạc trước khi có thai hay chuẩn bị mang thai.
 Không cần tầm soát biến chứng võng mạc cho phụ nữ được chẩn đoán ĐTĐ
 thai kỳ.
-2. Nếu lần tầm soát đầu tiên cho kết quả bình thường (không có biến chứng võng
+
+### 2. Nếu lần tầm soát đầu tiên cho kết quả bình thường (không có biến chứng võng
+
 mạc do ĐTĐ), người bệnh sẽ được tầm soát mỗi 1-2 năm một lần. Theo dõi sát
 hơn sẽ do bác sĩ chuyên khoa mắt quyết định.
-3. Kỹ thuật viên hay bác sĩ chuyên khoa ĐTĐ được đào tạo và huấn luyện có thể
+
+### 3. Kỹ thuật viên hay bác sĩ chuyên khoa ĐTĐ được đào tạo và huấn luyện có thể
+
 tầm soát bệnh lý võng mạc định kỳ. Bác sĩ chuyên khoa mắt sẽ hội ý và cho ý
 kiến trong những trường hợp khó hay có biến chứng võng mạc nặng.
-4. Kiểm soát tốt đường huyết và huyết áp giúp ngăn ngừa và làm chậm diễn tiến
+
+### 4. Kiểm soát tốt đường huyết và huyết áp giúp ngăn ngừa và làm chậm diễn tiến
+
 của biến chứng võng mạc. Nếu có bằng chứng biến chứng võng mạc không
 tăng sinh mức độ nhẹ, fenofibrate 145-200 mg/ngày được chỉ định mà không
 cần có tăng triglycerides. Laser quang đông và anti- VEGF được chỉ định và
 thực hiện bởi bác sĩ chuyên khoa mắt.
-48
 
-1.2. Biến chứng thận:
+#### 1.2. Biến chứng thận
+
 a) Ít nhất mỗi năm một lần đánh giá albumin niệu và mức lọc cầu thận ở tất cả các
 BN ĐTĐ típ 2, không kể đang điều trị như thế nào
 b) BN có albumin niệu > 30 mg/g creatinine và/ hoặc mức lọc cầu thận eGFR< 60
@@ -1802,74 +1831,80 @@ giảm nguy cơ tiến triển bệnh thận mạn và biến cố tim mạch ho
 e) BN có bệnh thận mạn có gia tăng nguy cơ gặp biến cố tim mạch, sử dụng GLP-1
 RA có thể giảm nguy cơ tiến triển almumin niệu và biến cố tim mạch hoặc cả
 hai.
-Bảng 8. Các xét nghiệm đánh giá và theo dõi biểu hiện của biến chứng thận do
-ĐTĐ (ngoài ACR và độ thanh lọc cầu thận ước tính)
-Biến chứng của bệnh thận mạn Đánh giá lâm sàng và cận lâm sàng
-Tăng huyết áp Huyết áp và cân nặng
-Quá tải dịch Bệnh sử, khám lâm sàng, cân nặng
-Rối loạn điện giải Khám lâm sàng, điện tâm đồ, điện giải đồ
-Toan chuyển hóa Khám lâm sàng, điện giải đồ, khí máu
-Thiếu máu Sắt, hemoglobin
-Bệnh xương do chuyển hóa Calci, Phosphor, vitamin D, PTH máu
-KHUYẾN CÁO VỀ BIẾN CHỨNG THẬN DO ĐÁI THÁO ĐƯỜNG
-1. Cần tầm soát biến chứng thận cho người bệnh ĐTĐ típ 1 sau 5 năm và
-người bệnh ĐTĐ típ 2 ngay khi chẩn đoán. Tỷ số A/C niệu là xét nghiệm
-tầm soát hiệu quả nhất. Tầm soát và đánh giá lại tối thiểu 6-12 tháng một
-lần. BN có tỷ số A/C > 30mg/g và/hoặc eGFR < 60mL/ph/1,73m2 da được
-định nghĩa là bệnh thận do ĐTĐ và theo dõi sát hơn (mỗi 6 tháng)
-2. Kiểm soát đường huyết chặt chẽ là nền tảng để phòng ngừa và làm chậm
-biến chứng thận do ĐTĐ. Metformin là thuốc lựa chọn đầu tay trừ khi có
-chống chỉ định (eGFR < 30mL/ph/1,73m2 da). Ức chế SGLT-2 được chỉ
-định là thuốc hàng thứ nhì khi có tỷ số A/C > 30 mg/g. Nếu có nguy cơ cao
-tim mạch kèm theo, đồng vận thụ thể GLP-1 được xem xét chỉ định.
-3. Thuốc ức chế men chuyển hay ức chế thụ thể angiotensin II được chỉ định
-trên người bệnh có tăng huyết áp có/không có albumin niệu. Không kết hợp
-hai thuốc và không khuyến cáo trên người bệnh không tăng huyết áp để
-phòng ngừa nguyên phát bệnh thận do ĐTĐ. Kiểm tra định kỳ creatinine
-huyết thanh và kali ở người bệnh có dùng ức chế men chuyển hay ức chế thụ
-thể angiotensin II.
-4. Chế độ ăn với khẩu phần đạm xấp xỉ 0,8 g/kg cân nặng/ngày được khuyến
-cáo cho người bệnh thận do ĐTĐ không lọc thận. Hạn chế natri < 2.300
-mg/ngày và hạn chế kali.
-49
+**Bảng 8: Các xét nghiệm đánh giá và theo dõi biến chứng thận do ĐTĐ**
 
-2. Bệnh lý mạch máu lớn:
+
+| Biến chứng của bệnh thận mạn | Đánh giá lâm sàng và cận lâm sàng |
+| :--- | :--- |
+| Tăng huyết áp | Huyết áp và cân nặng |
+| Quá tải dịch | Bệnh sử, khám lâm sàng, cân nặng |
+| Rối loạn điện giải | Khám lâm sàng, điện tâm đồ, điện giải đồ |
+| Toan chuyển hóa | Khám lâm sàng, điện giải đồ, khí máu |
+| Thiếu máu | Sắt, hemoglobin |
+| Bệnh xương do chuyển hóa | Calci, Phosphor, vitamin D, PTH máu |
+| KHUYẾN CÁO VỀ BIẾN CHỨNG THẬN DO ĐÁI THÁO ĐƯỜNG |  |
+| 1. Cần tầm soát biến chứng thận cho người bệnh ĐTĐ típ 1 sau 5 năm và<br>người bệnh ĐTĐ típ 2 ngay khi chẩn đoán. Tỷ số A/C niệu là xét nghiệm<br>tầm soát hiệu quả nhất. Tầm soát và đánh giá lại tối thiểu 6-12 tháng một<br>lần. BN có tỷ số A/C > 30mg/g và/hoặc eGFR < 60mL/ph/1,73m2 da được<br>định nghĩa là bệnh thận do ĐTĐ và theo dõi sát hơn (mỗi 6 tháng) |  |
+| 2. Kiểm soát đường huyết chặt chẽ là nền tảng để phòng ngừa và làm chậm<br>biến chứng thận do ĐTĐ. Metformin là thuốc lựa chọn đầu tay trừ khi có<br>chống chỉ định (eGFR < 30mL/ph/1,73m2 da). Ức chế SGLT-2 được chỉ<br>định là thuốc hàng thứ nhì khi có tỷ số A/C > 30 mg/g. Nếu có nguy cơ cao<br>tim mạch kèm theo, đồng vận thụ thể GLP-1 được xem xét chỉ định. |  |
+| 3. Thuốc ức chế men chuyển hay ức chế thụ thể angiotensin II được chỉ định<br>trên người bệnh có tăng huyết áp có/không có albumin niệu. Không kết hợp<br>hai thuốc và không khuyến cáo trên người bệnh không tăng huyết áp để<br>phòng ngừa nguyên phát bệnh thận do ĐTĐ. Kiểm tra định kỳ creatinine<br>huyết thanh và kali ở người bệnh có dùng ức chế men chuyển hay ức chế thụ<br>thể angiotensin II. |  |
+| 4. Chế độ ăn với khẩu phần đạm xấp xỉ 0,8 g/kg cân nặng/ngày được khuyến<br>cáo cho người bệnh thận do ĐTĐ không lọc thận. Hạn chế natri < 2.300<br>mg/ngày và hạn chế kali. |  |
+
+
+
+### 2. Bệnh lý mạch máu lớn:
+
 Xơ vữa động mạch sớm lan rộng ảnh hưởng đến các mạch máu xa
-2.1. Bệnh lý mạch vành:
+
+#### 2.1. Bệnh lý mạch vành
+
 Người ĐTĐ tăng gấp 2-3 lần người không ĐTĐ
 - Triệu chứng: Cơn đau thắt ngực điển hình hoặc chỉ biểu hiện trên ĐTĐ
 Nhồi máu cơ tim: Điển hình hoặc tình cờ khi thấy NMCT cũ trên ECG.
-2.2. Tăng huyc tìn:
+
+#### 2.2. Tăng huyc tìn
+
 xem điều trị tăng huyết áp cho người bệnh đái tháo đường
-2.3. Bệnh mạch máu ngoại biên:
+
+#### 2.3. Bệnh mạch máu ngoại biên
+
 Triệu chứng: Đau cách hồi, đau chân ở tư thế nằm, chân lạnh, tím ở phần chi dưới
 và ngón chân, teo cơ liên đốt, hoại thư. Hoại thư gồm 2 loại: hoại thư khô ngọn
 chi: hoại tử không nhiễm khuẩn tiên lượng tốt. Hoại thư ướt: có viêm nhiễm kèm
 theo (tiên lượng xấu). Chẩn đoán xác định dựa vào: doppler mạch chi, chụp mạch
-3. Biến chứng thần kinh:
+
+### 3. Biến chứng thần kinh:
+
 Tất cả BN cần được đánh giá về bệnh thần kinh ngoại biên tại thời điểm bắt đầu
 được chẩn đoán đoán ĐTĐ típ 2 và 5 năm sau khi chẩn đoán bệnh tiểu đường típ 1,
 sau đó ít nhất mỗi năm một lần.
 KHUYẾN CÁO VỀ BIẾN CHỨNG THẦN KINH DO ĐÁI THÁO ĐƯỜNG
-1. Người bệnh ĐTĐ típ 1 sau chẩn đoán 5 năm và người bệnh ĐTD típ 2 ngay
+
+### 1. Người bệnh ĐTĐ típ 1 sau chẩn đoán 5 năm và người bệnh ĐTD típ 2 ngay
+
 thời điểm chẩn đoán cần được tầm soát biến chứng thần kinh tối thiểu một năm
 một lần.
-2. Hỏi bệnh sử, khám lâm sàng và các test đơn giản dùng để đánh giá biến chứng
+
+### 2. Hỏi bệnh sử, khám lâm sàng và các test đơn giản dùng để đánh giá biến chứng
+
 thần kinh do ĐTĐ. Khám cảm giác đau và cảm giác nhiệt được dùng để chẩn
 đoán biến chứng thần kinh sợi trục nhỏ. Monofilament 10g và rung âm thoa
 128 Hz được dùng để chẩn đoán biến chứng thần kinh sợi trục lớn và cảm giác
 bảo vệ. Cần khám các biến chứng thần kinh tự chủ do ĐTĐ.
-3. Kiểm soát đường huyết chặt chẽ được xem là nền tảng của việc phòng ngừa và
+
+### 3. Kiểm soát đường huyết chặt chẽ được xem là nền tảng của việc phòng ngừa và
+
 làm chậm diễn tiến của biến chứng thần kinh do ĐTĐ.
-4. Các thuốc giảm đau thần kinh như pregabalin, gabapentin, duloxetine được
+
+### 4. Các thuốc giảm đau thần kinh như pregabalin, gabapentin, duloxetine được
+
 khuyến cáo để khởi trị các triệu chứng đau do biến chứng thần kinh ĐTĐ.
-4. Bàn chân người ĐTĐ:
+
+### 4. Bàn chân người ĐTĐ:
+
 a) Tổn thương bàn chân bắt đầu ở những ngón chân, ô mô ngón bị mất cảm giác,
 đặc biệt những nơi ngón đã bị biến dạng và/ hoặc thiếu máu. Những ngón chân
 dễ bị chấn thương, dễ hình thành những cục chai, ổ loét, nhiễm trùng và hoại
 thư. Tổn thương thần kinh gây giảm tiết mồ hôi và khô da, làm da người bệnh
 dễ nứt nẻ, loét và hoại tử.
-50
 
 b) Triệu chứng bàn chân thường gặp:
 - Đau về đêm, thậm chí đau cách hồi, lạnh chi, chậm đổ đầy máu tĩnh mạch sau
@@ -1891,22 +1926,30 @@ tổn thương xương.
 d) Thực hiện đánh giá bàn chân toàn diện ít nhất mỗi năm một lần để xác định các
 yếu tố nguy cơ của loét và cắt cụt chi.
 e) Tất cả các BN ĐTĐ phải được kiểm tra bàn chân vào mỗi lần khám bệnh.
-51
 
-PHẦN 9: HƯỚNG DẪN SỬ DỤNG INSULIN
+## PHẦN 9: HƯỚNG DẪN SỬ DỤNG INSULIN
+
 KIỂM SOÁT ĐÁI THÁO ĐƯỜNG TRONG THỜI KỲ MANG THAI
-1. MỤC TIÊU ĐIỀU TRỊ ĐÁI THÁO ĐƯỜNG THAI KỲ
+
+### 1. MỤC TIÊU ĐIỀU TRỊ ĐÁI THÁO ĐƯỜNG THAI KỲ
+
 Mục đích của điều trị đái tháo đường thai kỳ (ĐTĐTK) là phòng tránh các tác động
 bất lợi của tăng đường huyết đối với mẹ và con trong thai kỳ cũng như về lâu dài
 sau khi mẹ sinh con, đồng thời vẫn đảm bảo được sự tăng trưởng và sự phát triển
 bình thường của thai.
-Bảng 9: Các mục tiêu đường huyết trong thai kỳ
-Chỉ số Mục tiêu 2 3
-HbA1c < 6%
-Đường huyết đói < 95 mg/dL (5,3 mmol/L), VÀ
-Đường huyết sau ăn
-- Đường huyết sau ăn 01 giờ < 140 mg/dL (7,8 mmol/L), HOẶC
-- Đường huyết sau ăn 02 giờ < 120 mg/dL (6,7 mmol/L)
+**Bảng 9: Các mục tiêu đường huyết trong thai kỳ**
+
+
+| Chỉ số | Mục tiêu |
+| :--- | :--- |
+| HbA1c | < 6% |
+| Đường huyết đói | < 95 mg/dL (5,3 mmol/L), VÀ |
+| Đường huyết sau ăn |  |
+| - Đường huyết sau ăn 01 giờ | < 140 mg/dL (7,8 mmol/L), HOẶC |
+| - Đường huyết sau ăn 02 giờ | < 120 mg/dL (6,7 mmol/L) |
+
+
+
 a) Đối với ĐTĐTK: Đường huyết ở các thời điểm khác nhau trong ngày là chỉ số
 quan trọng, giúp đánh giá sớm kết quá điều trị và thời điểm đường huyết chưa
 đạt mục tiêu để điều chỉnh điều trị cho phù hợp. Chỉ số HbA1c có giá trị thứ yếu
@@ -1925,14 +1968,14 @@ chọn glucose huyết sau ăn 1 hoặc 2 giờ tùy theo sự thuận tiện c�
 huyết trước bữa ăn kế tiếp có thể cần theo dõi thêm ở BN có tiêm insulin nhanh
 trước bữa ăn. Nếu glucose đạt mục tiêu ổn định, có thể giảm bớt số lần đo
 glucose máu.
-2. Điều trị b ng thuốc
-2.1. Thuốc được chấp thuận sử dụng
-2
+
+### 2. Điều trị b ng thuốc
+
+#### 2.1. Thuốc được chấp thuận sử dụng
+
 ADA 2020; Standards of Medical Care in Diabetes - 2020. Diabetes Care 2020;43(Suppl. 1):S14-S31
-3
 American College of Obstetricians and Gynecologists. Gestational diabetes mellitus (Practice Bulletin No. 137). Obstet Gynecol
 2013;122:406–416
-52
 
 Ở Việt Nam cũng như hầu hết các nơi khác trên thế giới insulin là duy nhất được
 chính thức chấp thuận cho điều trị tăng đường huyết ở phụ nữ mang thai mắc ĐTĐ.
@@ -1946,21 +1989,23 @@ b) Chế độ tiêm insulin nhiều mũi trong ngày hoặc bơm truyền insul
 tục đều có thể được sử dụng.
 c) Insulin được chỉ định ngay sau khi thay đổi lối sống và chế độ dinh dưỡng
 chưa giúp đạt được mục tiêu đường huyết.
-Bảng 10: Các loại insulin được chỉ định sử dụng theo phân loại thai kỳ
-Phân loại thai kỳ
-Nhóm Loại insulin
-theo FDA (*)
-Aspart B
-B
-Insulin analog tác dụng nhanh Lispro
-C
-Glulisine
-Detemir B
-Insulin analog tác dụng kéo dài
-Glargine Không có dữ liệu
-Degludec trên phụ nữ mang thai
-2.2. Điều trị đối với ĐTĐTK
-2.2.1. Chế độ ăn và luyện tập
+**Bảng 10: Các loại insulin được chỉ định sử dụng theo phân loại thai kỳ**
+
+
+| Nhóm | Loại insulin | Phân loại thai kỳ theo FDA |
+| :--- | :--- | :--- |
+| Insulin analog tác dụng nhanh | Aspart | B |
+|  | Lispro | B |
+|  | Glulisine | C |
+| Insulin analog tác dụng kéo dài | Detemir | B |
+|  | Glargine<br>Degludec | Không có dữ liệu<br>trên phụ nữ mang thai |
+
+
+
+#### 2.2. Điều trị đối với ĐTĐTK
+
+##### 2.2.1. Chế độ ăn và luyện tập
+
 80-90% thai phụ bị ĐTĐTK có thể kiểm soát đường huyết b ng chế độ ăn và
 luyện tập.
 Cần tránh tăng cân quá mức trong thời kỳ mang thai đối với phụ nữ ĐTĐ thai kỳ.
@@ -1969,16 +2014,19 @@ Sự tăng cân khi mang thai phụ thuộc vào chỉ số BMI trước khi man
 • Tăng 11,5–16 kg đối với cân nặng bình thường (BMI 18,5–24,9 kg / m2)
 • Tăng 7–11,5 kg đối với người thừa cân (BMI 25–29,9 kg / m2)
 • Tăng 5–9 kg đối với người béo phì (BMI ≥30,0 kg / m2)
-53
 
 Hoạt động thể lực giúp cải thiện kiểm soát đường huyết ở phụ nữ GDM. Thường
 được chấp nhận với khuyến nghị là tập thể dục đều đặn hàng ngày cường độ vừa
 phải (đi bộ 30 phút / ngày hoặc hơn — nếu không có chống chỉ định sản khoa).
-2.2.2. Chỉ định điều trị Insulin
+
+##### 2.2.2. Chỉ định điều trị Insulin
+
 Đường huyết không đạt mục tiêu: Đường huyết không đạt mục tiêu điều trị sau khi
 áp dụng điều trị dinh dư ng và luyện tập trong 1 – 2 tuần khi có trên 20% kết quả
 đường huyết trên mức mục tiêu.
-2.2.2. Chế độ và liều insulin
+
+##### 2.2.2. Chế độ và liều insulin
+
 a) Chế độ và liều insulin cần được căn cứ vào đặc điểm (thời điểm tăng) và mức
 tăng đường huyết, tình trạng kháng insulin.
 b) Nếu chỉ có tăng đường huyết lúc đói buổi sáng: Chỉ dùng insulin nền (NPH hoặc
@@ -1994,14 +2042,19 @@ d) Nếu có tăng cả đường huyết lúc đói buổi sáng và sau bữa 
 nền – insulin nhanh vào bữa ăn như trên.
 e) Nếu có hạ đường huyết cần tìm nguyên nhân và xử lý nếu có. Nếu không có
 nguyên nhân rõ ràng, giảm 15-20% liều insulin liên quan hạ đường huyết.
-2.3. Điều trị insulin với các thể ĐTĐ khác được phát hiện khi mang thai
-2.3.1. Các thể ĐTĐ khác được phát hiện khi mang thai
+
+#### 2.3. Điều trị insulin với các thể ĐTĐ khác được phát hiện khi mang thai
+
+##### 2.3.1. Các thể ĐTĐ khác được phát hiện khi mang thai
+
 a) ĐTĐ mang thai (Diabetes in pregnancy) được chẩn đoán theo tiêu chuẩn của
 WHO với glucose huyết tương lúc đói ≥ 7 mmol/L (126 mg/dL); và/hoặc
 glucose huyết tương 2 giờ sau uống 75g glucose ≥ 11,1 mmol/L)
 b) ĐTĐ không được chẩn đoán trước mang thai (chủ yếu là ĐTĐ típ 2) có glucose
 huyết đạt ngư ng chẩn đoán ĐTĐ ngoài thai kỳ.
-5.3.2. Điều trị insulin
+
+##### 5.3.2. Điều trị insulin
+
 a) Các thể ĐTĐ này cần được điều trị insulin ngay sau khi chẩn đoán.
 b) Thường phải dùng chế độ insulin nền – bữa ăn ngoại trừ một số ít các trường
 hợp chỉ có tăng đường huyết sau ăn thì chỉ dùng insulin nhanh trước các bữa ăn
@@ -2011,7 +2064,6 @@ kháng insulin. Trong 3 tháng đầu thai kỳ liều 0,7 đơn vị / kg / ng�
 tháng giữa thai kỳ liều 0,8 đơn vị / kg / ngày và trong 3 tháng cuối thai kỳ liều
 Insulin là 0,9–1,0 đơn vị / kg / ngày. Tuy nhiên liều này không nhất thiết phải
 phù hợp với tất cả các thai phụ có ĐTĐ.
-54
 
 d) Phân bố:
 - Insulin nền chiếm 40-50% tổng liều, chia 1 – 2 lần/ngày
@@ -2022,35 +2074,33 @@ f) Chỉnh liều insulin bữa ăn: căn cứ đường huyết sau bữa ăn; 
 3 ngày cho đến khi đạt mục tiêu.
 g) Nếu có hạ đường huyết cần tìm nguyên nhân và xử lý nếu có. Nếu không có
 nguyên nhân rõ ràng, giảm 15-20% liều insulin liên quan hạ đường huyết.
-55
 
-PHẦN 10: KHUYẾN CÁO THEO DÕI ĐƯỜNG HUYẾT MAO MẠCH
+## PHẦN 10: KHUYẾN CÁO THEO DÕI ĐƯỜNG HUYẾT MAO MẠCH
+
 Để đánh giá kết quả điều trị đái tháo đường, bắt buộc phải dựa vào kết quả đo
 đường huyết, mao mạch hoặc tĩnh mạch. Đo đường huyết mao mạch có ưu điểm
 đơn giản, rẻ tiền và cho kết quả nhanh. Số lần đo đường huyết cần thiết là khác
 nhau giữa các BN.
-1. Chỉ định cho BN nội trú (tại các khoa thường, không phải khoa Hồi sức tích
+
+### 1. Chỉ định cho BN nội trú (tại các khoa thường, không phải khoa Hồi sức tích
+
 cực)
-Bảng 12: Chỉ định đo đường huyết mao mạch cho BN ĐTĐ nội trú
-Đối tượng BN Tần xuất đo chính Đo thêm
-ĐTĐ típ 11 4 lần/ngày: Trước 3 bữa ăn và lúc Có triệu chứng hạ
-đi ngủ (trước 4 mũi tiêm insulin) đường huyết
-ĐTĐ típ 2 không dùng 1 – 2 lần/ ngày, trước ăn sáng và/ Có triệu chứng hạ
-thuốc2 hoặc tối đường huyết
-Nếu ĐH trong 2-3 ngày ổn thì
-giảm xuống 1-2 lần/ tuần
-ĐTĐ típ 2 dùng thuốc 2 lần/ ngày, trước ăn sáng và tối. Có triệu chứng hạ
-uống3 đường huyết
-Nếu ĐH trong 2-3 ngày ổn: Đo 1
-lần/ngày
-ĐTĐ típ 2 tiêm 2 mũi 3 lần/ngày, trước 3 bữa ăn. Đo lúc Có triệu chứng hạ
-insulin hỗn hợp/ngày4 đi ngủ 1-2 lần/ tuần đường huyết
-ĐTĐ típ 2 tiêm 3-4 Đo 4 lần/ngày, trước 3 bữa ăn và Có triệu chứng hạ
-mũi insulin/ ngày5 lúc đi ngủ đường huyết
-Nếu các nhóm BN 1, 2, 3, 4 tiến triển nặng, có nhiễm trùng nặng, có dùng
-Corticoid, hoặc phải phẫu thuật…thì nên đo ít nhất 4 lần/ngày: trước 3 bữa ăn và
-lúc đi ngủ
-2. Chỉ định cho BN ngoại trú
+**Bảng 12: Chỉ định đo đường huyết mao mạch cho BN ĐTĐ nội trú**
+
+
+| Đối tượng BN | Tần xuất đo chính | Đo thêm |
+| :--- | :--- | :--- |
+| ĐTĐ típ 11 | 4 lần/ngày: Trước 3 bữa ăn và lúc<br>đi ngủ (trước 4 mũi tiêm insulin) | Có triệu chứng hạ<br>đường huyết |
+| ĐTĐ típ 2 không dùng<br>thuốc2 | 1 – 2 lần/ ngày, trước ăn sáng và/<br>hoặc tối<br>Nếu ĐH trong 2-3 ngày ổn thì<br>giảm xuống 1-2 lần/ tuần | Có triệu chứng hạ<br>đường huyết |
+| ĐTĐ típ 2 dùng thuốc<br>uống3 | 2 lần/ ngày, trước ăn sáng và tối.<br>Nếu ĐH trong 2-3 ngày ổn: Đo 1<br>lần/ngày | Có triệu chứng hạ<br>đường huyết |
+| ĐTĐ típ 2 tiêm 2 mũi<br>insulin hỗn hợp/ngày4 | 3 lần/ngày, trước 3 bữa ăn. Đo lúc<br>đi ngủ 1-2 lần/ tuần | Có triệu chứng hạ<br>đường huyết |
+| ĐTĐ típ 2 tiêm 3-4<br>mũi insulin/ ngày5 | Đo 4 lần/ngày, trước 3 bữa ăn và<br>lúc đi ngủ | Có triệu chứng hạ<br>đường huyết |
+| Nếu các nhóm BN 1, 2, 3, 4 tiến triển nặng, có nhiễm trùng nặng, có dùng<br>Corticoid, hoặc phải phẫu thuật…thì nên đo ít nhất 4 lần/ngày: trước 3 bữa ăn và<br>lúc đi ngủ |  |  |
+
+
+
+### 2. Chỉ định cho BN ngoại trú
+
 - Các BN ĐTĐ típ 1 nên được đo đường huyết ít nhất 4 lần/ ngày, vào trước các
 bữa ăn và lúc đi ngủ.
 - Những BN ĐTĐ típ 2 điều trị bằng các thuốc không phải là insulin hay
@@ -2062,21 +2112,24 @@ giá hiệu quả của điều trị và thay đổi lối sống.
 lúc đi ngủ
  Điều trị insulin thông thường, tiêm 2 – 3 mũi/ngày: đo 3 lần/ngày vào trước
 3 bữa ăn. Đo thêm 1-2 lần/ tuần vào lúc đi ngủ
-56
 
  Điều trị insulin nền cộng với insulin trước bữa ăn hoặc insulin nền phối hợp
 với thuốc uống: Đo 2 lần/ngày vào trước bữa ăn sáng và tối
 BN nên đo thêm khi có các dấu hiệu của hạ đường huyết hoặc khi thay đổi chế
 độ ăn, chế độ luyện tập. Còn sau khi đường huyết đã được kiểm soát tốt thì có
 thể giảm bớt số lần đo đường huyết.
-3. Chỉ định cho BN đái tháo đường thai kỳ:
+
+### 3. Chỉ định cho BN đái tháo đường thai kỳ:
+
 - Những BN điều trị bằng chế độ ăn: nên đo đường huyết 1 – 2 lần/ngày vào các
 thời điểm trước ăn sáng, và sau ăn các bữa sáng – trưa – tối. Ưu tiên đo đường
 huyết sau ăn 1h.
 - Những BN điều trị insulin: nên đo đường huyết 6 lần/ngày vào trước và sau ăn 3
 bữa chính. Những BN điều trị insulin nhiều mũi hoặc nghén nhiều nên đo thêm
 đường huyết lúc đi ngủ hoặc nữa đêm.
-4. Chỉ định đo đường huyết liên tục (continuous glucose monitoring – CGM)
+
+### 4. Chỉ định đo đường huyết liên tục (continuous glucose monitoring – CGM)
+
 cho những BN đái tháo đường:
 - Thường xuyên hạ đường huyết (glucose <3,9 mmol/L) hoặc hạ đường huyết
 không có triệu chứng
@@ -2086,11 +2139,13 @@ không có triệu chứng
 - Bất kể BN nào có HbA1c ≥ 7,0% và có điều kiện sử dụng CGM
 - BN đang nằm viện điều trị vì bệnh cấp tính cần theo dõi sát đường huyết
 - Những BN có mong muốn quản lý bệnh ĐTĐ tốt hơn
-57
 
-PHỤ LỤC 01: CÁC NHÓM THUỐC HẠ GLUCOSE MÁU ĐƯỜNG
+## PHỤ LỤC 01: CÁC NHÓM THUỐC HẠ GLUCOSE MÁU ĐƯỜNG
+
 UỐNG VÀ THUỐC DẠNG TIÊM KHÔNG THU C NHÓM INSULIN
-1. Sulfonylurea
+
+### 1. Sulfonylurea
+
 Cơ chế tác dụng: Nhóm sulfonylurea có chứa nhân sulfonic acid urea, khi thay đổi
 cấu trúc hóa học sẽ cho ra các loại chế phẩm khác nhau về hoạt tính. Thuốc kích
 thích tế bào beta tụy tiết insulin. Thuốc gắn vào kênh kali phụ thuộc ATP (K )
@@ -2130,14 +2185,15 @@ Tóm lại:
 Cơ chế tác dụng chính của sulfonylurea là tăng tiết insulin ở tế bào beta tụy. Do đó
 tác dụng phụ chính của thuốc là hạ glucose máu và tăng cân. Cần chú ý khi dùng
 cho BN lớn tuổi vì có nguy cơ hạ glucose máu cao hơn do BN dễ bỏ ăn, ăn kém và
-58
 
 có chức năng thận suy giảm. Đa số các thuốc thải qua thận nên cần chú ý giảm liều
 hay ngưng thuốc khi BN có suy thận. Nếu thuốc được chuyển hóa ở gan, cần ngưng
 khi có suy tế bào gan. Thuốc được dùng trước ăn 30 phút.
 Hiệu quả hạ glucose máu tối ưu của thuốc đạt ở liều bằng nửa liều tối đa cho phép.
 Cần thận trọng khi dùng liều cao hơn vì có thể làm tăng tác dụng phụ.
-2. Metformin
+
+### 2. Metformin
+
 Là thuốc duy nhất trong nhóm biguanide còn được sử dụng hiện nay. Thuốc khác
 trong nhóm là phenformin đã bị cấm dùng vì tăng nguy cơ nhiễm acid lactic.
 Cơ chế tác dụng: giảm sản xuất glucose ở gan. Có tác dụng yếu trên tăng hiệu ứng
@@ -2165,18 +2221,21 @@ Cách dùng: dùng trước hoặc sau ăn, nên khởi đầu ở liều thấp
 chậm (XR) có thể giảm tác dụng phụ trên đường tiêu hóa
 Metformin thường được lựa chọn là thuốc khởi đầu điều trị ở BN đái tháo đường típ
 2.
-3. Glinides
+
+### 3. Glinides
+
 Hiện có tại Việt Nam: Repaglinide hàm lượng 0,5-1-2mg
 Cơ chế tác dụng tương tự như sulfonylurea. Thuốc làm giảm HbA1c từ 1 – 1,5%.
 Thuốc được hấp thu nhanh ở ruột, chuyển hoá hoàn toàn ở gan và thải qua mật, do
 đó thời gian bán hủy ngắn dưới 1 giờ. Thuốc làm tăng tiết insulin nhanh nên liều
 thường dùng là 0,5-1 mg uống trước các bữa ăn 15 phút. Liều tối đa 16 mg/ngày.
-59
 
 Tác dụng chủ yếu của thuốc là giảm glucose huyết sau ăn. Thuốc cũng làm tăng cân
 và có nguy cơ hạ glucose máu tuy thấp hơn nhóm sulfonylurea. Do thời gian bán
 hủy ngắn, thuốc có thể dùng ở người già, khi suy thận.
-4. Thiazolidinedione (TZD hay glitazone)
+
+### 4. Thiazolidinedione (TZD hay glitazone)
+
 Cơ chế tác dụng: Hoạt hóa thụ thể PPAR, tăng biểu lộ chất chuyên chở glucose
 loại 1-4 (GLUT1 và GLUT4) giảm nồng độ acid béo trong máu, giảm sản suất
 glucose tại gan, tăng adiponectin và giảm sự phóng thích resistin từ tế bào m , tăng
@@ -2199,7 +2258,9 @@ pioglitazone 15-45 mg/ngày.
 Cần theo dõi chức năng gan trước khi điều trị và định kỳ sau đó. Chống chỉ định:
 suy tim độ III-IV theo Hiệp Hội Tim New York (NYHA), bệnh gan đang hoạt động,
 enzyme gan ALT tăng gấp 2,5 giới hạn trên của trị số bình thường.
-5. Ức chế enzyme -glucosidase
+
+### 5. Ức chế enzyme -glucosidase
+
 Cơ chế tác dụng: thuốc cạnh tranh và ức chế tác dụng của enzyme thủy phân đường
 phức thành đường đơn, do đó làm chậm hấp thu carbohydrat từ ruột. Giảm HbA1c
 từ 0,5 – 0,8%
@@ -2211,11 +2272,12 @@ Uống thuốc ngay trước ăn hoặc ngay sau miếng ăn đầu tiên. Bữa
 carbohydrat.
 Thuốc hiện có tại Việt Nam: Acarbose, hàm lượng 50 mg. Liều đầu có thể từ 25 mg
 uống ngay đầu bữa ăn, 3 lần/ngày.
-6. Thuốc có tác dụng Incretin
+
+### 6. Thuốc có tác dụng Incretin
+
 Thuốc có tác dụng incretin làm tăng tiết insulin tùy thuộc mức glucose và ít nguy cơ
 gây hạ glucose máu. Ruột tiết ra nhiều loại incretin, hormon ở ruột có tác dụng tăng
 tiết insulin sau ăn bao gồm glucagon like peptide-1 (GLP-1) và glucose dependent
-60
 
 insulinotropic polypeptide (GIP). Nhóm này gồm 2 loại: thuốc đồng vận thụ thể
 GLP-1 dạng tiêm (glucagon like peptide 1 receptor analog- GLP-1RA) và thuốc ức
@@ -2259,7 +2321,6 @@ glucagon không thích hợp theo cách phụ thuộc glucose. GLP-1 RA làm ch�
 làm rỗng dạ dày, làm giảm cân nặng và khối lượng chất béo trong cơ thể qua cơ
 chế bao gồm làm giảm cảm giác đói và giảm năng lượng nạp vào. Ngoài ra, thụ thể
 GLP-1 cũng có mặt tại một số vị trí cụ thể ở tim, hệ thống mạch máu, hệ thống
-61
 
 miễn dịch và thận, ngăn ngừa tiến triển và giảm viêm mảng xơ vữa động mạch chủ
 - Dạng tiêm dưới da: Liraglutide một lần/một ngày (OD – once daily). Hiện tại
@@ -2300,9 +2361,9 @@ tủy hoặc bệnh đa u tuyến nội tiết loại 2.
 65 tuổi hoặc suy thận nhẹ, trung bình, nặng hoặc suy gan nhẹ, trung bình.
 Liraglutide có thể sử dụng khi mức lọc cầu thận ước tính eGFR≥15
 mL/phút/1.73m2
-62
 
-7. Thuốc ức chế kênh đồng vận chuyển Natri-glucose SGLT2 (Sodium Glucose
+### 7. Thuốc ức chế kênh đồng vận chuyển Natri-glucose SGLT2 (Sodium Glucose
+
 Transporter 2)
 Glucose được lọc qua cầu thận sau đó được tái hấp thu chủ yếu ở ống thận gần dưới
 tác dụng của kênh đồng vận chuyển Natri-glucose (Sodium Glucose CoTransporters
@@ -2344,7 +2405,6 @@ minh rằng các thuốc ức chế SGLT2 có tác dụng bảo vệ thận ( gi
 và giảm tiến triển của bệnh thận mạn, giảm tử vong do bệnh thận), độc lập với
 tác dụng kiểm soát đường huyết ở các BN ĐTĐ típ 2. Đặc biệt, nghiên cứu
 DAPA - CKD cho thấy trên nền điều trị chuẩn tối ưu với thuốc ức chế men
-63
 
 chuyển và thuốc ức chế thụ thể, dapagliflozin làm giảm tỷ lệ biến cố gộp trên
 thận (bao gồm giảm duy trì ≥ 50% độ lọc cầu thận ước tính eGFR hoặc bệnh
@@ -2356,7 +2416,9 @@ chất và từng quốc gia, vui lòng tham khảo thông tin kê toa của cá
 SGLT2 tại Việt Nam để khởi trị hay tiếp tục điều trị với Ức chế SGLT2).
 Tác dụng phụ chính: nhiễm khuẩn hoặc nhiễm nấm sinh dục, nhiễm toan ceton
 (hiếm gặp ở ĐTĐ típ 2), nguy cơ giảm thể tích tuần hoàn …
-8. Các loại thuốc viên phối hợp
+
+### 8. Các loại thuốc viên phối hợp
+
 Do bản chất đa dạng của cơ chế bệnh sinh ĐTĐ típ 2, việc phối hợp thuốc trong
 điều trị sẽ mang lại hiệu quả giảm glucose huyết tốt hơn, đồng thời giảm tác dụng
 phụ khi tăng liều một loại thuốc đến tối đa. Nguyên tắc phối hợp là không phối hợp
@@ -2372,219 +2434,51 @@ Pioglitazone/Metformin, Empagliflozin/Metformin và Dapagliflozin/ Metformin
 dạng phóng thích chậm (XR).
 Metformin dạng phóng thích chậm (XR) giúp chỉ phải uống thuốc một lần/ ngày và
 giúp giảm tác dụng phụ trên đường tiêu hóa.
-Bảng 13: Tóm tắt ưu nhược điểm của các thuốc viên hạ glucose máu đường
-uống và thuốc tiêm không thuộc nhóm insulin
-Nhóm thuốc Cơ chế tác Ưu điểm
-Nhược điểm
-dụng
-Sulfonylurea Kích thích tiết Được sử dụng lâu năm
-Hạ glucose máu
-insulin  nguy cơ mạch máu nhỏ
-Tăng cân
- nguy cơ tim mạch và tử vong
-Biguanide Giảm sản xuất Được sử dụng lâu năm
-Chống chỉ định ở BN suy
-glucose ở gan Dùng đơn độc không gây hạ
-thận (chống chỉ định tuyệt
-Có tác dụng glucose máu
-đối khi eGFR < 30
-incretin yếu Không thay đổi cân nặng, có thể
-mL/phút)
-giảm cân
-Rối loạn tiêu hóa: đau
- LDL-cholesterol
-bụng, tiêu chảy
- triglycerides
- nguy cơ tim mạch và tử vong Nhiễm acid lactic
-Pioglitazone Hoạt hóa thụ Dùng đơn độc không gây hạ
-Tăng cân
-(TZD) glucose máu
-64
+**Bảng 13: Tóm tắt ưu nhược điểm của các thuốc viên hạ glucose máu đường uống và thuốc tiêm không thuộc nhóm insulin**
 
-| Nhóm thuốc  | Cơ  | chế  | tác  | Ưu điểm  |     |     |     |     |     |     |     |
-| ----------- | --- | ---- | ---- | -------- | --- | --- | --- | --- | --- | --- | --- |
-Nhược điểm
-dụng
-|     | thể PPAR  |     |     |  triglycerides,   |     |     |     |     |     |     |     |
-| --- | ---------- | --- | --- | ------------------ | --- | --- | --- | --- | --- | --- | --- |
-Phù/Suy tim
-|     | Tăng nhạy cảm  |     |     |  HDL-cholesterol  |     |     |     |     |     |     |     |
-| --- | -------------- | --- | --- | ------------------ | --- | --- | --- | --- | --- | --- | --- |
-Gãy xương
-với insulin
-K bàng quang
-| Ức chế  | Làm  | chậm  | hấp  | Dùng         | đơn  | độc  | không  | gây  | hạ         |             |       |
-| ------- | ---- | ----- | ---- | ------------ | ---- | ---- | ------ | ---- | ---------- | ----------- | ----- |
-|         |      |       |      |              |      |      |        |      | Rối  loạn  | tiêu  hóa:  | sình  |
-|         | thu  |       |      | glucose máu  |      |      |        |      |            |             |       |
-enzyme  -
-bụng, đầy hơi, tiêu phân
-|     | carbohydrate  |     |     | ở  Tác dụng tại chỗ  |     |     |     |     |     |     |     |
-| --- | ------------- | --- | --- | -------------------- | --- | --- | --- | --- | --- | --- | --- |
-glucosidase
-lỏng
-ruột
- Glucose huyết sau ăn
-Giảm HbA1c 0,5 – 0.8%
-| Ức chế enzym  | Ức chế DPP-4  |     |     | Dùng  | đơn  | độc  | không  | gây  | hạ  |     |     |
-| ------------- | ------------- | --- | --- | ----- | ---- | ---- | ------ | ---- | --- | --- | --- |
-Giảm HbA1c 0,5 – 1%
-| DPP-4  | Làm tăng GLP- |     |     | glucose máu  |     |     |     |     |     |     |     |
-| ------ | ------------- | --- | --- | ------------ | --- | --- | --- | --- | --- | --- | --- |
-Có thể gây dị ứng, ngứa,
-|     | 1   |     |     | Dung nạp tốt  |     |     |     |     |          |             |       |
-| --- | --- | --- | --- | ------------- | --- | --- | --- | --- | -------- | ----------- | ----- |
-|     |     |     |     |               |     |     |     |     | nổi  mề  | đay,  phù,  | viêm  |
-hầu họng, nhiễm trùng hô
-hấp trên, đau khớp
-Chưa biết tính an toàn lâu
-dài
-| Nhóm  ức  | chế  Ức  | chế  | tác  | Dùng đơn độc ít gây hạ glucose  |     |     |     |     |     |     |     |
-| --------- | -------- | ---- | ---- | ------------------------------- | --- | --- | --- | --- | --- | --- | --- |
-Giảm HbA1c 0,5-1%
-| kênh đồng vận  | dụng  | của  | kênh  | máu  |     |     |     |     |     |     |     |
-| -------------- | ----- | ---- | ----- | ---- | --- | --- | --- | --- | --- | --- | --- |
-chuyển  Natri- đồng  vận  Giảm cân, giảm huyết áp  Nhiễm  nấm  đường  niệu
-glucose  chuyển  SGLT2  Giảm  biến cố tim mạch chính ở  dục, nhiễm trùng tiết niệu,
-SGLT2  tại  ống  lượn  BN  ĐTĐ  típ  2  có  nguy  cơ  tim  nhiễm  ceton  acid  (hiếm
-gần  ở  thận,  mạch cao, rất cao và tiền sử bệnh  gặp),  mất  xương
-|     | giúp        | tăng  | thải  | lý tim mạch do xơ vữa.            |                |        |       |              | (canagliflozin)  |     |     |
-| --- | ----------- | ----- | ----- | --------------------------------- | -------------- | ------ | ----- | ------------ | ---------------- | --- | --- |
-|     | glucose     |       | qua   | Giảm tỷ lệ nhập viện do suy tim   |                |        |       |              |                  |     |     |
-|     | đường tiểu  |       |       | và tử vong tim mạch đồng thời dự  |                |        |       |              |                  |     |     |
-|     |             |       |       | phòng                             | xuất hiện suy  |        |       | tim  bảo vệ  |                  |     |     |
-|     |             |       |       | thận                              | (thoái         | triển  | giảm  | albumin      |                  |     |     |
-niệu và giảm tiến triển bệnh thận
-mạn và bệnh thận giai đoạn cuối)
-Thuốc  đồng  Kích  thích  sự  Đơn  trị  hoặc  phối  hợp  với  các
-Giảm HbA1c 0,6-1,5%
-vận  thụ  thể  tiết  insulin  và  thuốc hạ đường huyết uống hoặc
-GLP-1  làm giảm sự tiết  phối hợp insulin  Buồn nôn, nôn, viêm tụy
-|     | glucagon không  |      |       | Giảm                 | HbA1c,  |         | đường      | huyết  | đói,  cấp.  |            |           |
-| --- | --------------- | ---- | ----- | -------------------- | ------- | ------- | ---------- | ------ | ----------- | ---------- | --------- |
-|     | thích           | hợp  | theo  | đường huyết sau ăn,  |         |         |            |        |             |            |           |
-|     |                 |      |       |                      |         |         |            |        | Không       | dùng  khi  | có  tiền  |
-|     | cách phụ thuộc  |      |       | Tăng                 | tí      | lệ  BN  | đat  được  | HbA1c  |             |            |           |
-sử gia đình ung thư giáp
-|     | glucose.   |     |     | mục tiêu < 7% và < 6,5%  |     |     |     |     |     |     |     |
-| --- | ---------- | --- | --- | ------------------------ | --- | --- | --- | --- | --- | --- | --- |
-dạng tủy, bệnh đa u tuyến
-|     | Làm  | chậm  | sự  | Cải thiện chức năng tế bào beta  |     |     |     |     |     |     |     |
-| --- | ---- | ----- | --- | -------------------------------- | --- | --- | --- | --- | --- | --- | --- |
-nội tiết loại 2
-|     | làm              | rỗng   | dạ    | Giảm                                 | cân,  | giảm       | huyết      | áp     | Dùng    |     |     |
-| --- | ---------------- | ------ | ----- | ------------------------------------ | ----- | ---------- | ---------- | ------ | ------- | --- | --- |
-|     | dày,             | làm    | giảm  | đơn độc ít gây hạ glucose máu        |       |            |            |        |         |     |     |
-|     | cân              | nặng   | và    | Giảm nhu cầu sử dụng insulin         |       |            |            |        |         |     |     |
-|     | khối lượng chất  |        |       | Giảm                                 | biến  | cố         | tim  mạch  |        | chính,  |     |     |
-|     | béo              | trong  | cơ    | biến                                 | cố    | tim  mạch  | mở         | rộng,  | tử      |     |     |
-|     | thể qua cơ chế   |        |       | vong do mọi nguyên nhân, nhập        |       |            |            |        |         |     |     |
-|     | bao              | gồm    | làm   | viên do suy tim và các kết cục trên  |       |            |            |        |         |     |     |
-65
 
-| Nhóm thuốc  | Cơ  | chế  | tác  Ưu điểm  |     |     |     |     |     |     |
-| ----------- | --- | ---- | ------------- | --- | --- | --- | --- | --- | --- |
-Nhược điểm
-dụng
-|     | giảm            | cảm   | giác  thận ở BN ĐTĐ típ 2 có bệnh tim  |        |        |       |            |     |     |
-| --- | --------------- | ----- | -------------------------------------- | ------ | ------ | ----- | ---------- | --- | --- |
-|     | đói             | và    | giảm  mạch do xơ vữa hoặc nguy cơ tim  |        |        |       |            |     |     |
-|     | năng lượng nạp  |       | mạch cao/ rất cao                      |        |        |       |            |     |     |
-|     | vào.            |       | Dễ sử dụng, không cần chỉnh liều       |        |        |       |            |     |     |
-|     | Ngăn ngừa tiến  |       | trên BN > 65 tuổi, hoặc suy thận       |        |        |       |            |     |     |
-|     | triển           | và    | giảm  nhẹ,                             | trung  | bình,  | nặng  | hoặc  suy  |     |     |
-|     | viêm            | mảng  | xơ  gan nhẹ,  trung bình               |        |        |       |            |     |     |
-vữa động mạch
-chủ
-Bảng 14: Tóm tắt liều d ng các thuốc viên hạ glucose máu uống
+| Nhóm thuốc | Cơ chế tác dụng | Ưu điểm | Nhược điểm |
+| :--- | :--- | :--- | :--- |
+|  | thể PPARγ<br>Tăng nhạy cảm<br>với insulin | ↓ triglycerides,<br>↑ HDL-cholesterol | Phù/Suy tim<br>Gãy xương<br>K bàng quang |
+| Ức chế<br>enzyme α-<br>glucosidase | Làm chậm hấp<br>thu<br>carbohydrate ở<br>ruột | Dùng đơn độc không gây hạ<br>glucose máu<br>Tác dụng tại chỗ<br>↓ Glucose huyết sau ăn | Rối loạn tiêu hóa: sình<br>bụng, đầy hơi, tiêu phân<br>lỏng<br>Giảm HbA1c 0,5 – 0.8% |
+| Ức chế enzym<br>DPP-4 | Ức chế DPP-4<br>Làm tăng GLP-<br>1 | Dùng đơn độc không gây hạ<br>glucose máu<br>Dung nạp tốt | Giảm HbA1c 0,5 – 1%<br>Có thể gây dị ứng, ngứa,<br>nổi mề đay, phù, viêm<br>hầu họng, nhiễm trùng hô<br>hấp trên, đau khớp<br>Chưa biết tính an toàn lâu<br>dài |
+| Nhóm ức chế<br>kênh đồng vận<br>chuyển Natri-<br>glucose<br>SGLT2 | Ức chế tác<br>dụng của kênh<br>đồng vận<br>chuyển SGLT2<br>tại ống lượn<br>gần ở thận,<br>giúp tăng thải<br>glucose qua<br>đường tiểu | Dùng đơn độc ít gây hạ glucose<br>máu<br>Giảm cân, giảm huyết áp<br>Giảm biến cố tim mạch chính ở<br>BN ĐTĐ típ 2 có nguy cơ tim<br>mạch cao, rất cao và tiền sử bệnh<br>lý tim mạch do xơ vữa.<br>Giảm tỷ lệ nhập viện do suy tim<br>và tử vong tim mạch đồng thời dự<br>phòng xuất hiện suy tim bảo vệ<br>thận (thoái triển giảm albumin<br>niệu và giảm tiến triển bệnh thận<br>mạn và bệnh thận giai đoạn cuối) | Giảm HbA1c 0,5-1%<br>Nhiễm nấm đường niệu<br>dục, nhiễm trùng tiết niệu,<br>nhiễm ceton acid (hiếm<br>gặp), mất xương<br>(canagliflozin) |
+| Thuốc đồng<br>vận thụ thể<br>GLP-1 | Kích thích sự<br>tiết insulin và<br>làm giảm sự tiết<br>glucagon không<br>thích hợp theo<br>cách phụ thuộc<br>glucose.<br>Làm chậm sự<br>làm rỗng dạ<br>dày, làm giảm<br>cân nặng và<br>khối lượng chất<br>béo trong cơ<br>thể qua cơ chế<br>bao gồm làm<br>giảm cảm giác<br>đói và giảm<br>năng lượng nạp<br>vào.<br>Ngăn ngừa tiến<br>triển và giảm<br>viêm mảng xơ<br>vữa động mạch<br>chủ | Đơn trị hoặc phối hợp với các<br>thuốc hạ đường huyết uống hoặc<br>phối hợp insulin<br>Giảm HbA1c, đường huyết đói,<br>đường huyết sau ăn,<br>Tăng tí lệ BN đat được HbA1c<br>mục tiêu < 7% và < 6,5%<br>Cải thiện chức năng tế bào beta<br>Giảm cân, giảm huyết áp Dùng<br>đơn độc ít gây hạ glucose máu<br>Giảm nhu cầu sử dụng insulin<br>Giảm biến cố tim mạch chính,<br>biến cố tim mạch mở rộng, tử<br>vong do mọi nguyên nhân, nhập<br>viên do suy tim và các kết cục trên<br>thận ở BN ĐTĐ típ 2 có bệnh tim<br>mạch do xơ vữa hoặc nguy cơ tim<br>mạch cao/ rất cao<br>Dễ sử dụng, không cần chỉnh liều<br>trên BN > 65 tuổi, hoặc suy thận<br>nhẹ, trung bình, nặng hoặc suy<br>gan nhẹ, trung bình | Giảm HbA1c 0,6-1,5%<br>Buồn nôn, nôn, viêm tụy<br>cấp.<br>Không dùng khi có tiền<br>sử gia đình ung thư giáp<br>dạng tủy, bệnh đa u tuyến<br>nội tiết loại 2 |
 
-| Thuốc  |     | Hàm lượng  |     |     | Liều mỗi ngày  |     |     | Thời gian tác dụng  |     |
-| ------ | --- | ---------- | --- | --- | -------------- | --- | --- | ------------------- | --- |
-Sulfonylurea
-| Glimepiride  |     | 1-2 và 4 mg  |     |     | 1-4  mg/ngày  |       | liều  | thông  24 giờ  |     |
-| ------------ | --- | ------------ | --- | --- | ------------- | ----- | ----- | -------------- | --- |
-|              |     |              |     |     | thường.       | Liều  | tối   | đa             |     |
-8mg/ngày
-| Gliclazide  |     | 80 mg  |     |     | 40mg-320                   |     | mg  | viên  12 giờ  |     |
-| ----------- | --- | ------ | --- | --- | -------------------------- | --- | --- | ------------- | --- |
-|             |     |        |     |     | thường, chia uống 2-3 lần  |     |     |               |     |
-30-60  mg  dạng  30-120  mg  dạng  phóng  24  giờ,  dạng  phóng
-|     |     | phóng thích chậm  |     |     | thích  | chậm,  | uống  | 1  thích chậm  |     |
-| --- | --- | ----------------- | --- | --- | ------ | ------ | ----- | -------------- | --- |
-lần/ngày
-| Glipizide  |     | 5-10 mg           |     |       | Viên  thường               |          | 2,5-40   | mg  6-12 giờ       |        |
-| ---------- | --- | ----------------- | --- | ----- | -------------------------- | -------- | -------- | ------------------ | ------ |
-|            |     |                   |     |       | uống 30 phút trước khi ăn  |          |          |                    |        |
-|            |     |                   |     |       | 1 hoặc 2 lần/ngày          |          |          | Dạng  phóng        | thích  |
-|            |     | 2,5-5-10          | mg  | dạng  | Dạng  phóng                |          | thích    | chậm  chậm 24 giờ  |        |
-|            |     | phóng thích chậm  |     |       | 2,5  -10                   | mg/ngày  | uống     | 1                  |        |
-|            |     |                   |     |       | lần.  Liều                 |          | tối  đa  | 20                 |        |
-mg/ngày uống 1 lần
-| Repaglinide  |     | 0,5-1-2 mg  |     |     | 0,5-4 mg/ngày chia uống  |     |     | 3 giờ  |     |
-| ------------ | --- | ----------- | --- | --- | ------------------------ | --- | --- | ------ | --- |
-trước các bữa ăn
-Thuốc tăng nhạy cảm với insulin
-Metformin  500-850-1000mg  1-2,5  gam,  uống  1  viên  7-12 giờ
-|     |     |     |     |     | sau ăn, ngày 2-3 lần  |     |     |     |     |
-| --- | --- | --- | --- | --- | --------------------- | --- | --- | --- | --- |
-Dạng  phóng  thích  Dạng phóng thích chậm:  Dạng  phóng  thích
-chậm:500-750 mg  500-2000 mg/ngày uống 1  chậm: kéo dài 24 giờ
-lần
-| Pioglitazone  |     | 15-30-45 mg/ngày  |     |     | 15-45 mg/ngày  |     |     | 24 giờ  |     |
-| ------------- | --- | ----------------- | --- | --- | -------------- | --- | --- | ------- | --- |
-Thuốc ức chế enzyme  alpha glucosidase
-| Acarbose   |     | 50-100 mg  |     |     | 25-100mg                 |     | uống  | 3  4 giờ  |     |
-| ---------- | --- | ---------- | --- | --- | ------------------------ | --- | ----- | --------- | --- |
-|            |     |            |     |     | lần/ngày ngay trước bữa  |     |       |           |     |
-ăn hoặc ngay sau miếng
-ăn đầu tiên
-Nhóm ức chế enzyme   DPP-4
-66
 
-| Thuốc        | Hàm lượng  | Liều mỗi ngày  |         | Thời gian tác dụng  |
-| ------------ | ---------- | -------------- | ------- | ------------------- |
-| Sitagliptin  | 50-100mg   | Liều           | thường  | dùng  24 giờ        |
-100mg/ngày
-Khi độ lọc cầu thận còn
-|     |     | 30-50  | mL/1  phút:  | 50  |
-| --- | --- | ------ | ------------ | --- |
-mg/ngày
-Khi độ lọc cầu thận còn
-30mL/1 phút: 25 mg/ngày
-| Saxagliptin  | 2,5-5mg  | 2,5- 5mg/ngày, uống 1 lần  |              | 24 giờ    |
-| ------------ | -------- | -------------------------- | ------------ | --------- |
-|              |          | Giảm                       | liều  đến    | 2,5       |
-|              |          | mg/ngày                    | khi  độ      | lọc  cầu  |
-|              |          | thận  ≤                    | 50mL/1phút   | hoặc      |
-|              |          | dùng                       | cùng  thuốc  | ức  chế   |
-|              |          | CYP3A4/5                   | mạnh         | thí  dụ   |
-ketoconazole
-| Vildagliptin  | 50 mg  | 50 mg uống 1-2 lần/ngày.  |            | 24 giờ    |
-| ------------- | ------ | ------------------------- | ---------- | --------- |
-|               |        | Chống                     | chỉ  định  | khi       |
-|               |        | AST/ALT                   | tăng       | gấp  2,5  |
-|               |        | giới  hạn                 | trên  của  | bình      |
-hường
-| Linagliptin   | 5mg  | 5 mg uống 1 lần/ngày  |     | 24 giờ  |
-| ------------- | ---- | --------------------- | --- | ------- |
-Thuốc ức chế kênh SGLT2
-Dapagliflozin  5-10 mg  10 mg/ngày, uống 1 lần.       2 4 giờ
-5 mg khi có suy gan nặng,
-nếu dung nạp có thể tăng
-liều lên 10 mg
-| Empagliflozin  | 10-25 mg  | Liều  | khởi  đầu  | 10  24 giờ  |
-| -------------- | --------- | ----- | ---------- | ----------- |
-mg/ngày, có thể tăng lên
-25mg/ngày, uống 1 lần
-|     |     | Suy  | gan  nặng:  | Không  |
-| --- | --- | ---- | ----------- | ------ |
-khuyến cáo
 
-67
+**Bảng 14: Tóm tắt liều dùng các thuốc viên hạ glucose máu uống**
 
-PHỤ LỤC 02: CÁC LOẠI INSULIN
-1. Các loại insulin
-1.1. Theo cấu trúc phân tử:
+
+| Thuốc | Hàm lượng | Liều mỗi ngày | Thời gian tác dụng |
+| :--- | :--- | :--- | :--- |
+| Sulfonylurea |  |  |  |
+| Glimepiride | 1-2 và 4 mg | 1-4 mg/ngày liều thông<br>thường. Liều tối đa<br>8mg/ngày | 24 giờ |
+| Gliclazide | 80 mg<br>30-60 mg dạng<br>phóng thích chậm | 40mg-320 mg viên<br>thường, chia uống 2-3 lần<br>30-120 mg dạng phóng<br>thích chậm, uống 1<br>lần/ngày | 12 giờ<br>24 giờ, dạng phóng<br>thích chậm |
+| Glipizide | 5-10 mg<br>2,5-5-10 mg dạng<br>phóng thích chậm | Viên thường 2,5-40 mg<br>uống 30 phút trước khi ăn<br>1 hoặc 2 lần/ngày<br>Dạng phóng thích chậm<br>2,5 -10 mg/ngày uống 1<br>lần. Liều tối đa 20<br>mg/ngày uống 1 lần | 6-12 giờ<br>Dạng phóng thích<br>chậm 24 giờ |
+| Repaglinide | 0,5-1-2 mg | 0,5-4 mg/ngày chia uống<br>trước các bữa ăn | 3 giờ |
+| Thuốc tăng nhạy cảm với insulin |  |  |  |
+| Metformin | 500-850-1000mg<br>Dạng phóng thích<br>chậm:500-750 mg | 1-2,5 gam, uống 1 viên<br>sau ăn, ngày 2-3 lần<br>Dạng phóng thích chậm:<br>500-2000 mg/ngày uống 1<br>lần | 7-12 giờ<br>Dạng phóng thích<br>chậm: kéo dài 24 giờ |
+| Pioglitazone | 15-30-45 mg/ngày | 15-45 mg/ngày | 24 giờ |
+| Thuốc ức chế enzyme alpha glucosidase |  |  |  |
+| Acarbose | 50-100 mg | 25-100mg uống 3<br>lần/ngày ngay trước bữa<br>ăn hoặc ngay sau miếng<br>ăn đầu tiên | 4 giờ |
+| Nhóm ức chế enzyme DPP-4 |  |  |  |
+| Sitagliptin | 50-100mg | Liều thường dùng<br>100mg/ngày<br>Khi độ lọc cầu thận còn<br>30-50 mL/1 phút: 50<br>mg/ngày<br>Khi độ lọc cầu thận còn<br>30mL/1 phút: 25 mg/ngày | 24 giờ |
+| Saxagliptin | 2,5-5mg | 2,5- 5mg/ngày, uống 1 lần<br>Giảm liều đến 2,5<br>mg/ngày khi độ lọc cầu<br>thận ≤ 50mL/1phút hoặc<br>dùng cùng thuốc ức chế<br>CYP3A4/5 mạnh thí dụ<br>ketoconazole | 24 giờ |
+| Vildagliptin | 50 mg | 50 mg uống 1-2 lần/ngày.<br>Chống chỉ định khi<br>AST/ALT tăng gấp 2,5<br>giới hạn trên của bình<br>hường | 24 giờ |
+| Linagliptin | 5mg | 5 mg uống 1 lần/ngày | 24 giờ |
+| Thuốc ức chế kênh SGLT2 |  |  |  |
+| Dapagliflozin | 5-10 mg | 10 mg/ngày, uống 1 lần.<br>5 mg khi có suy gan nặng,<br>nếu dung nạp có thể tăng<br>liều lên 10 mg | 2 4 giờ |
+| Empagliflozin | 10-25 mg | Liều khởi đầu 10<br>mg/ngày, có thể tăng lên<br>25mg/ngày, uống 1 lần<br>Suy gan nặng: Không<br>khuyến cáo | 24 giờ |
+
+
+
+## PHỤ LỤC 02: CÁC LOẠI INSULIN
+
+### 1. Các loại insulin
+
+#### 1.1. Theo cấu trúc phân tử
+
 - Insulin người4/human insulin/insulin thường/regular insulin: được tổng hợp
 bằng phương pháp tái tổ hợp DNA, rất tinh khiết, ít gây dị ứng và đề kháng do
 tự miễn và loạn dư ng mô m tại chỗ tiêm. Thuốc cũng có thể bảo quản ở nhiệt
@@ -2597,7 +2491,9 @@ cấu trúc bằng cách thay thế một vài acid amin hoặc gắn thêm chu�
 - Ví dụ về một số insulin analog gồm insulin tác dụng nhanh như Aspart, Lispro,
 Glulisine và loại tác dụng kéo dài như Detemir, Glargine. Hiện nay, insulin
 Degludec tác dụng dài đã được cấp phép lưu hành ở Việt Nam.
-1.2. Theo cơ chế tác dụng:
+
+#### 1.2. Theo cơ chế tác dụng
+
 a) Insulin tác dụng nhanh, ngắn:
 - Insulin người (regular insulin) là loại tinh thể insulin zinc hòa tan, tác dụng 30
 phút sau khi tiêm dưới da, và kéo dài 5- 7 giờ với liều thường dùng, liều càng
@@ -2619,7 +2515,6 @@ phần đầu của bữa ăn.
 b) Insulin tác dụng trung bình, trung gian:
 4 Insulin người hay còn có các thuật ngữ khác tương đương trong điều trị là human insulin, insulin thường,
 regular insulin
-68
 
 NPH (Neutral Protamine Hagedorn hoặc Isophane Insulin): thuốc có tác dụng kéo
 dài nhờ phối hợp 2 phần insulin zinc hòa tan với 1 phần protamine zinc insulin. Sau
@@ -2662,10 +2557,11 @@ các bữa ăn. Hiện có các loại:
 - 75% NPL(neutral protamine lispro)/25% Insulin Lispro
 5 Thuật ngữ insulin trộn, hỗn hợp có ý nghĩa tương đương với insulin trộn trước, insulin trộn sẵn, insulin 2
 pha hay premix
-69
 
 - 50% NPL(neutral protamine lispro)/50% Insulin Lispro
-2. Ký hiệu và nồng độ insulin
+
+### 2. Ký hiệu và nồng độ insulin
+
 Một lọ insulin có 10 mL, với các nồng độ khác nhau. Hiện trên thị trường có 2 loại
 là 40 IU/mL (U 40-một lọ 10 mL có 400 đơn vị) và 100 IU/mL (U100- một lọ 10
 mL có 1000 đơn vị). Chú ý phải dùng loại ống tiêm phù hợp với nồng độ thuốc:
@@ -2677,7 +2573,9 @@ muốn.
 Liều Insulin khi tiêm tính theo đơn vị, không tính theo mL.
 Hiện nay có loại bút tiêm insulin cho human insulin, insulin analog, mỗi bút tiêm có
 300 đơn vị insulin. Có loại 450 đơn vị.
-3. Bảo quản
+
+### 3. Bảo quản
+
 Tốt nhất để ở 2-80C sẽ giữ được tới khi hết hạn sử dụng. Nếu không có tủ lạnh có
 thể để ở nhiệt phòng <300C cho phép giữ được 1 tháng mà không giảm tác dụng đối
 với các loại insulin sản xuất bằng phương pháp tái tổ hợp DNA.
@@ -2685,22 +2583,24 @@ Nếu insulin để ở nhiệt độ > 300C sẽ giảm tác dụng. Luôn cố
 môi trường thoáng mát, không tiếp xúc trực tiếp với ánh sáng mặt trời. Nếu dùng đá
 lạnh cần chú ý không được làm đông lạnh insulin. Không được để trong ngăn đá
 làm hỏng insulin.
-4. Sinh khả dụng của các loại insulin
-Bảng 15: Sinh khả dụng của các loại insulin
-Loại insulin Khởi đầu tác Đỉnh tác dụng Thời gian kéo dài
-dụng
-tác dụng
-Insulin aspart, 5-15 phút 30-90 phút 3-4 giờ
-lispro, glulisine
-Human regular 30-60 phút 2 giờ 6-8 giờ
-Human NPH 2-4 giờ 6 -7 giờ 10-20 giờ
-Insulin glargine 30-60 phút Không đỉnh 24 giờ
-Insulin detemir 30-60 phút Không đỉnh 24 giờ
-Insulin degludec 30-90 phút Không đỉnh 42 giờ
-Chú thích: Thời gian tác dụng của insulin có thể thay đổi tùy cơ địa BN, vị trí tiêm
-chích. Thời gian trên dựa vào kết quả của các thử nghiệm lâm sàng.
-5. Các loại insulin hiện có tại Việt Nam:
-70
+
+### 4. Sinh khả dụng của các loại insulin
+
+**Bảng 15: Sinh khả dụng của các loại insulin**
+
+
+| Loại insulin | Khởi đầu tác dụng | Đỉnh tác dụng | Thời gian kéo dài tác dụng |
+| :--- | :--- | :--- | :--- |
+| Insulin aspart,<br>lispro, glulisine | 5-15 phút | 30-90 phút | 3-4 giờ |
+| Human regular | 30-60 phút | 2 giờ | 6-8 giờ |
+| Human NPH | 2-4 giờ | 6 -7 giờ | 10-20 giờ |
+| Insulin glargine | 30-60 phút | Không đỉnh | 24 giờ |
+| Insulin detemir | 30-60 phút | Không đỉnh | 24 giờ |
+| Insulin degludec | 30-90 phút | Không đỉnh | 42 giờ |
+
+
+
+### 5. Các loại insulin hiện có tại Việt Nam:
 
 Bảng 16: Các loại Insulin hiện có tại Việt Nam
 Insulin analog tác dụng nhanh, ngắn
@@ -2722,7 +2622,9 @@ Insulin analog trộn, hỗn hợp
 - 70% Insulin Aspart Protamine/30% Insulin Aspart hòa tan
 - 50% Insulin Aspart Protamine/50% Insulin Aspart hòa tan
 - 70% insulin Degludec/30% insulin Aspart
-6. Cách sử dụng insulin
+
+### 6. Cách sử dụng insulin
+
 - Insulin là thuốc có tác dụng hạ glucose máu mạnh nhất. Không có giới hạn trong
 việc giảm HbA1c.
 - Không có giới hạn liều insulin.
@@ -2743,9 +2645,9 @@ Lispro, Glulisine, hoặc Regular insulin).
 - Có thể dùng insulin trộn sẵn, thường insulin trộn sẵn tiêm 2 lần/ngày vào bữa ăn
 sáng và chiều. Một số Insulin trộn sẵn loại analog có thể tiêm 3 lần/ngày.
 - Điều chỉnh liều insulin mỗi 3-4 ngày.
-71
 
-7. Tác dụng phụ
+### 7. Tác dụng phụ
+
 a) Hạ glucose máu:
 Hạ glucose máu là biến chứng thường gặp nhất khi tiêm insulin. Có thể gặp trong
 các trường hợp: tiêm quá liều insulin, bỏ bữa ăn hoặc ăn muộn sau tiêm insulin, vận
@@ -2780,55 +2682,40 @@ c) Dị ứng insulin: ngày nay rất hiếm gặp với loại insulin ngườ
 d) Loạn dưỡng mô mỡ: teo mô m hoặc phì đại mô m . Phòng ngừa: luân chuyển
 vị trí tiêm.
 e) Tăng cân
-8. Giáo dục BN và người nhà về sử dụng insulin
+
+### 8. Giáo dục BN và người nhà về sử dụng insulin
+
 Giáo dục BN và người nhà về các nội dung sau:
 - Cách tự tiêm insulin tại nhà (dùng bút tiêm, ống tiêm)
 - Nhận biết và phòng tránh các yếu tố nguy cơ hạ glucose máu.
 - Biết cách tự theo dõi glucose huyết tại nhà.
 - Biết xử trí sớm cơn hạ glucose máu.
-72
 
-PHỤ LỤC 03: DANH MỤC THUỐC THIẾT YẾU ĐIỀU TRỊ
-ĐÁI THÁO ĐƯỜNG TÍP 2
+## PHỤ LỤC 03: DANH MỤC THUỐC THIẾT YẾU ĐIỀU TRỊ ĐÁI THÁO ĐƯỜNG
 
-Cập nhật Gói điều trị thiết yếu cho các bệnh không lây nhiễm (WHO Package of
-Essential NCD Interventions – WHO PEN) và Thông tư 45/2013/TT-BYT về Danh
-mục thiết yếu tân dược lần VI để kiểm soát đường huyết cho những người mắc đái
-tháo đường típ 2 bao gồm: chế độ ăn uống, hoạt động thể chất và metformin là lựa
-chọn điều trị đầu tay; sulfonylurea là điều trị hàng hai (hoặc điều trị đầu tay nếu
-metformin chống chỉ định); và insulin là điều trị hàng thứ ba.
-Bảng : Danh mục thuốc thiết yếu điều trị ĐTĐ típ 2
-| STT  Tên thuốc  | Đường  Dạng bào chế  | Hàm lượng,   |
-| --------------- | -------------------- | ------------ |
-|                 | d ng                 | nồng độ      |
-| 1  Metformin    | Uống  Viên           | 500 mg, 850  |
-mg
-| 2  Gliclazid                 | Uống  Viên  | 30 mg, 80 mg  |
-| ---------------------------- | ----------- | ------------- |
-| 3  Glibenclamid: nguy cơ hạ  | Uống  Viên  | 2,5 mg; 5 mg  |
-đường huyết cao, cần thận
-trọng khi sử dụng.
-Chống chỉ định với người
->60 tuổi
-| 4  Insulin  | Tiêm  Dung dịch  | 40 IU/mL, 100  |
-| ----------- | ---------------- | -------------- |
-IU/mL
-5  Insulin (tác dụng trung  Tiêm  Hỗn dịch với kẽm  100 IU/mL, 40
-| bình)  | hoặc Isophan  | IU/mL  |
-| ------ | ------------- | ------ |
-insulin
-| 6  Acarbose  | Uống  Viên  | 50 mg, 100 mg  |
-| ------------ | ----------- | -------------- |
 
-73
+| STT | Tên thuốc | Đường dùng | Dạng bào chế | Hàm lượng, nồng độ |
+| :--- | :--- | :--- | :--- | :--- |
+| 1 | Metformin | Uống | Viên | 500 mg, 850<br>mg |
+| 2 | Gliclazid | Uống | Viên | 30 mg, 80 mg |
+| 3 | Glibenclamid: nguy cơ hạ<br>đường huyết cao, cần thận<br>trọng khi sử dụng.<br>Chống chỉ định với người<br>>60 tuổi | Uống | Viên | 2,5 mg; 5 mg |
+| 4 | Insulin | Tiêm | Dung dịch | 40 IU/mL, 100<br>IU/mL |
+| 5 | Insulin (tác dụng trung<br>bình) | Tiêm | Hỗn dịch với kẽm<br>hoặc Isophan<br>insulin | 100 IU/mL, 40<br>IU/mL |
+| 6 | Acarbose | Uống | Viên | 50 mg, 100 mg |
+
+
 
 TÀI LIỆU THAM KHẢO
 1. Bộ Y tế, Vụ Bảo vệ bà mẹ - trẻ em, 2019. Hướng dẫn quốc gia dự phòng và
 kiểm soát đái tháo đường thai kỳ.
-2. ACC/AHA 2019
+
+### 2. ACC/AHA 2019
+
 3. ACOG Practice Bulletin No. 190: Gestational Diabetes Mellitus; Obstet
 Gynecol. 2018 Feb;131(2):e49-e64.
-4. ADA 2020
+
+### 4. ADA 2020
+
 5. ADA 2020; Standards of Medical Care in Diabetes - 2020. Diabetes Care
 2020;43(Suppl. 1):S14-S31
 6. ADA. Diabetes Care in the Hospital: Standards of Medical Care in Diabeted
@@ -2848,29 +2735,37 @@ Standards of medical care in diabetes – 2020, Diabetes care, 44 (supple): 193 
 12. Amir Qaseem et al. Oral Pharmacologic treatment of Típe 2 Diabetes Mellitus:
 A Clinical Practice Guideline Update From the American College of Physician.
 Annals of Internal Medicine January 2017: DOI: 10.7326/M16-1860
-13. Atlas IDF 9
+
+### 13. Atlas IDF 9
+
 14. Bogun M and Inzucchi SE, 2013. Inpatient Management of Diabetes and
 Hyperglycemia. Clinical Therapeutics; 35: 724-733.
-15. Consensus Statement by The American Association of Clinical Endocrinologists
+
+### 15. Consensus Statement by The American Association of Clinical Endocrinologists
+
 and American College of Endocrinology on the Comprehensive Típe 2 Diabetes
 Management Algorithm – 2017 Executive Summary .Endocrine Practice 2017;
 23 (No.2).
 16. Current Medical Diagnosis and Treatment 2017. Lange edition
 17. Guidelines điều trị ĐTĐ của Anh quốc, Canada,các nước khối ASEAN, Ấn độ.
 18. 20th WHO Model List of Essential Medicines (March 2017).
-74
 
-19. EMA, Guideline on Potency Labelling for Insulin Analogue containing products
+### 19. EMA, Guideline on Potency Labelling for Insulin Analogue containing products
+
 with particular reference to the use of ―international units‖ or ―units‖ (April
 2005)
 20. Esra Karslioglu French, Amy C Donihi, Mary T Korytkowski. Diabetic
 ketoacidosis and hyperosmolar hyperglycemic syndrome: review of acute
 decompensated diabetes in adult patients.
 BMJ 2019; 365 doi: https://doi.org/10.1136/bmj.l1114 (Published 29 May 2019)
-21. ESC/EASD 2019
+
+### 21. ESC/EASD 2019
+
 22. Inzucchi SE. Management of Hyperglycemia in the Hospital Setting, N Engl J
 Med 2006;355:1903-11.
-23. IDF GDM Model of Care – implementation protocol – IDF 2015
+
+### 23. IDF GDM Model of Care – implementation protocol – IDF 2015
+
 24. Moghissi et al, 2009. American Association of Clinical Endocrinologists and
 Americal Diabetes Association Consensus Statement on Inpatient Glycemic
 Control. Diabetes Care; 32(6): 1119-1131.
@@ -2880,6 +2775,7 @@ Guideline J Clin Endocrinol and Metab; 97(1): 16-38.
 26. Umpierrez G, Korytkowski M. Diabetic emergenciesdketoacidosis,
 hyperglycaemic hyperosmolar state and hypoglycaemia. Nat Rev Endocrinol
 2016;12:222–232
-27. Gestational Diabetes Mellitus - An Overview with Some Recent Advances
+
+### 27. Gestational Diabetes Mellitus - An Overview with Some Recent Advances
+
 October 1st 2018.
-75

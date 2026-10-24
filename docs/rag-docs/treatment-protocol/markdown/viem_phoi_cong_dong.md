@@ -38,7 +38,6 @@ Nơi nhận: KT. BỘ TRƯỞNG
 - Lưu: VT, KCB.
 Trần Văn Thuấn
 
-1
 HƯỚNG DẪN CHẨN ĐOÁN VÀ ĐIỀU TRỊ
 VIÊM PHỔI MẮC PHẢI CỘNG ĐỒNG
 Ở NGƯỜI LỚN
@@ -286,16 +285,19 @@ U/TTM Uống/Truyền tĩnh mạch
 VK Vi khuẩn
 VPMPCĐ Viêm phổi mắc phải cộng đồng
 
-1
-CHƯƠNG 1. TỔNG QUAN VIÊM PHỔI MẮC PHẢI CỘNG ĐỒNG
-1.1. Định nghĩa
+## CHƯƠNG 1. TỔNG QUAN VIÊM PHỔI MẮC PHẢI CỘNG ĐỒNG
+
+### 1.1. Định nghĩa
+
 Viêm phổi mắc phải cộng đồng (VPMPCĐ) được định nghĩa là tình trạng nhiễm trùng
 phổi cấp tính xảy ra ở người đang sống trong cộng đồng [1]. Biểu hiện của viêm phổi từ
 nhẹ với các triệu chứng sốt, ho khạc đờm đến rất nặng như suy hô hấp cấp tiến triển,
 nhiễm khuẩn huyết [2, 3].
 Đây là bệnh lý thường gặp trong thực hành lâm sàng. Trong hướng dẫn này chúng tôi
 chỉ đề cập tới viêm phổi mắc phải cộng đồng ở người lớn.
-1.2. Dịch tễ học VPMPCĐ
+
+### 1.2. Dịch tễ học VPMPCĐ
+
 VPMPCĐ là một bệnh phổ biến ảnh hưởng đến khoảng 450 triệu người mỗi năm và xảy
 ra trên toàn thế giới. Đây là một trong những nguyên nhân chính gây ra 4 triệu ca tử
 vong hàng năm (7% tổng số tử vong trên thế giới) [4]. Tỷ lệ tử vong cao nhất ở trẻ dưới
@@ -315,8 +317,11 @@ hàng thứ tư sau: bệnh phổi tắc nghẽn mạn tính, lao, ung thư ph�
 mắc viêm phổi ở nước ta là 561/100.000 người dân, đứng hàng thứ hai sau tăng huyết
 áp, tỷ lệ tử vong do viêm phổi là 1,32/100.000 người dân, đứng hàng đầu trong các
 nguyên nhân gây tử vong [8].
-1.3. Nguyên nhân và các yếu tố nguy cơ
-1.3.1. Nguyên nhân thường gặp
+
+### 1.3. Nguyên nhân và các yếu tố nguy cơ
+
+#### 1.3.1. Nguyên nhân thường gặp
+
 Vi khuẩn Gram dương: Streptococcus pneumoniae, methicillin susceptible
 Staphylococcus aureus, Streptococcus pyogenes, và các Streptococci khác. Vi khuẩn
 Gram âm: Haemophilus influenzae, Moraxella catarrhalis, Enterobacterales (ví dụ
@@ -324,18 +329,21 @@ Klebsiella pneumoniae). Vi khuẩn không điển hình: Legionella pneumophila,
 Mycoplasma pneumoniae, Chlamydophila pneumoniae. Các virus hô hấp: Influenza
 virus, SARS-CoV-2, respiratory syncytial virus, parainfluenza virus, human meta
 pneumovirus, rhinoviruses, common human coronaviruses [1].
-1.3.2. Nguyên nhân ít gặp
+
+#### 1.3.2. Nguyên nhân ít gặp
+
 Vi khuẩn Gram dương: S. aureus kháng methicillin, Nocardia species, Rhodococcus
 equi. Vi khuẩn Gram âm: Enterobacterales, bao gồm vi khuẩn tiết beta-lactamases phổ
 rộng hoặc Enterobacterales kháng carbapenem; các vi khuẩn không lên men (ví dụ
 
-2
 Pseudomonas hoặc Acinetobacter); Francisella tularensis. Vi khuẩn không điển hình:
 Chlamydia psittaci, Coxiella burnetii. Virus: Cytomegalovirus, Herpes simplex virus,
 Varicella zoster virus, MERS-CoV. Nấm: Pneumocystis jirovecii, Aspergillus
 spp.Mucorales, Histoplasma spp., Cryptococcusspp., Blastomyces spp., Coccidioides
 spp.. Ký sinh trùng: Strongyloides stercoralis, Toxoplasma gondii [1].
-1.3.3. Yếu tố nguy cơ và yếu tố thuận lợi của VPMPCĐ
+
+#### 1.3.3. Yếu tố nguy cơ và yếu tố thuận lợi của VPMPCĐ
+
 Các yếu tố nguy cơ:
 Các yếu tố nguy cơ dẫn đến VPMPCĐ bao gồm những yếu tố sau:[2, 9]
 - Tuổi cao: nguy cơ mắc VPMPCĐ tăng theo tuổi. Tỷ lệ nhập viện hàng năm do
@@ -363,7 +371,9 @@ trú cho người vô gia cư), thu nhập thấp và tiếp xúc với các ch�
 (ví dụ: dung môi, sơn hoặc xăng).
 - Sự kết hợp nhiều yếu tố nguy cơ, chẳng hạn hút thuốc, COPD và suy tim sung huyết
 góp phần làm tăng nguy cơ VPMPCĐ.
-1.4. Cơ chế bệnh sinh
+
+### 1.4. Cơ chế bệnh sinh
+
 Cơ chế bệnh sinh của viêm phổi mắc phải cộng đồng khá phức tạp và liên quan đến sự
 tương tác giữa tác nhân gây bệnh, khả năng bảo vệ của cơ thể và các yếu tố từ môi
 trường. Viêm phổi mắc phải cộng đồng thường xuất hiện khi có sự kết hợp của ba yếu
@@ -373,8 +383,8 @@ này kích hoạt phản ứng viêm tại phế nang, làm tích tụ dịch vi
 nhu mô phổi, từ đó gây tổn thương mô phổi và làm giảm hiệu quả trao đổi khí của hệ hô
 hấp.
 
-3
-1.4.1. Đường lây nhiễm
+#### 1.4.1. Đường lây nhiễm
+
 Các tác nhân gây viêm phổi có thể xâm nhập vào phổi theo những đường sau đây:
 - Đường hô hấp: Hít phải vi khuẩn ở môi trường bên ngoài. Hít phải vi khuẩn từ ổ
 nhiễm khuẩn của đường hô hấp trên. Đây là con đường lây nhiễm phổ biến nhất.
@@ -385,7 +395,9 @@ gặp.
 - Đường bạch huyết: một số vi khuẩn (P. aeruginosa, Klebsiella pneumoniae, S.
 aureus) có thể tới phổi theo đường bạch huyết, chúng thường gây viêm phổi hoại tử
 và áp xe phổi, với nhiều ổ nhỏ đường kính dưới 2 cm.
-1.4.2. Quá trình gây bệnh
+
+#### 1.4.2. Quá trình gây bệnh
+
 Khi các vi sinh vật xâm nhập vào phổi, đại thực bào phế nang và sự có mặt của vi hệ
 khu trú trong đường hô hấp có vai trò ngăn chặn sự nhân lên của vi sinh vật gây bệnh.
 Khi cơ chế này không thể ngăn chặn được, đại thực bào phế nang tiết ra các chất hóa
@@ -413,10 +425,12 @@ bia, hút thuốc, bệnh phổi tắc nghẽn mạn tính…
 với vi sinh vật có độc lực mạnh hoặc tiếp xúc với một lượng lớn vi sinh vật gây
 bệnh.
 
-4
-CHƯƠNG 2. CÁC CĂN NGUYÊN GÂY BỆNH VÀ CÁC PHƯƠNG
+## CHƯƠNG 2. CÁC CĂN NGUYÊN GÂY BỆNH VÀ CÁC PHƯƠNG
+
 PHÁP CHẨN ĐOÁN VI SINH
-2.1. Đặc điểm của các căn nguyên gây VPMPCĐ
+
+### 2.1. Đặc điểm của các căn nguyên gây VPMPCĐ
+
 Các nghiên cứu tổng quan gần đây về tác nhân gây VPMPCĐ cho thấy Streptococcus
 pneumoniae vẫn được coi là căn nguyên VPMPCĐ thường gặp nhất, tiếp đến là
 Haemophilus influenzae, Staphylococcus aureus, Moraxella catarrhalis, Pseudomonas
@@ -432,7 +446,9 @@ phân tử, đặc biệt là các xét nghiệm đa tác nhân với độ nh�
 việc sử dụng vắc xin phòng S. pneumoniae rộng rãi đã làm thay đổi sự hiểu biết về các
 căn nguyên gây VPMPCĐ [5, 13]. Do vậy, khi nói về căn nguyên gây viêm phổi cần đề
 cập đến kỹ thuật sử dụng cho chẩn đoán.
-2.1.1. Căn nguyên vi khuẩn
+
+#### 2.1.1. Căn nguyên vi khuẩn
+
 Nhiều nghiên cứu về các người bệnh VPMPCĐ cho thấy hầu hết căn nguyên phát hiện
 được là vi khuẩn.
 - S. pneumoniae chiếm 75% trong số các tác nhân gây VPMPCĐ ở thời kỳ tiền kháng
@@ -458,7 +474,6 @@ pneumoniae cao nhất ở trẻ em lứa tuổi đến trường, ở nhóm tân
 [23-25]. Phương pháp chẩn đoán huyết thanh học không phân biệt được tình trạng
 đã nhiễm hay đang nhiễm C. pneumoniae. Các nghiên cứu gần đây sử dụng kỹ thuật
 
-5
 sinh học phân tử phát hiện được C. pneumoniae dưới 1% các ca VPMPCĐ [8, 10].
 Không như các nhiễm trùng hô hấp khác có đỉnh mắc vào các tháng mùa đông, nhiễm
 trùng C. pneumoniae không khác biệt theo mùa.
@@ -504,13 +519,14 @@ cáo và dự phòng nhiễm trùng huyết hoặc viêm màng não.
 + Burkholderia pseudomallei là một căn nguyên VPMPCĐ quan trọng ở các nước
 thuộc vùng dịch tễ như Đông Nam Á và Bắc Úc. Rất khó có thể phân biệt được
 
-6
 VPMPCĐ do B. pseudomallei với VPMPCĐ do các tác nhân khác về triệu chứng
 lâm sàng và hình ảnh chụp phổi. Tỷ lệ tử vong rất cao (46,7%) nếu không được
 chẩn đoán và điều trị kịp thời. Vi khuẩn có mặt phổ biến trong đất và nước bề mặt
 ở các vùng dịch tễ lưu hành cho nên các nước trong khu vực dịch tễ cần đặc biệt
 lưu ý đến căn nguyên B. pseudomallei [36].
-2.1.2. Căn nguyên virus
+
+#### 2.1.2. Căn nguyên virus
+
 Tỷ lệ các căn nguyên virus được báo cáo ở các nghiên cứu khác nhau rất khác nhau, phụ
 thuộc vào kỹ thuật chẩn đoán được sử dụng. Các nghiên cứu sử dụng kỹ thuật PCR, đặc
 biệt là multiplex PCR có thể đưa ra tỷ lệ virus gây VPMPCĐ cao hơn so với thực tế vì
@@ -550,7 +566,6 @@ vụ dịch MERS ở Hàn Quốc năm 2015. Tháng 12 năm 2019, Coronavirus m�
 gọi SARS-CoV-2 lần đầu tiên xuất hiện tại Vũ Hán, Trung Quốc. Với khả năng lây
 nhiễm cao, thời gian ủ bệnh kéo dài, SARS-CoV-2 đã gây đại dịch trên toàn thế giới,
 
-7
 gây ảnh hưởng nặng nề về y tế và kinh tế của các quốc gia trên toàn thế giới [42].
 (Tham khảo chi tiết tại “Hướng dẫn chẩn đoán và điều trị viêm đường hô hấp cấp do
 SARS-CoV-2 (COVID-19)” của Bộ Y tế).
@@ -559,14 +574,18 @@ Ngày càng có nhiều bằng chứng nghiên cứu cho thấy vai trò gây VP
 này [39, 43].
 - Các virus khác cũng có thể gặp như các Coronavirus khác (HcoV - Human
 Coronavirus), Hantavirus, Varicella-zoster virus.
-2.1.3. Căn nguyên nấm
+
+#### 2.1.3. Căn nguyên nấm
+
 Nấm rất hiếm khi gây VPMPCĐ ở những người có hệ miễn dịch bình thường nhưng có
 một số loài nấm như Histoplasma capsulatum, Coccidioides spp., Blastomyces
 dermatitidis có thể gây viêm phổi cho cả người bệnh suy giảm miễn dịch và cả người
 có hệ miễn dịch bình thường sống hoặc đến các khu vực dịch tễ của các loài nấm đó
 [44]. (Tham khảo tài liệu “Hướng dẫn chẩn đoán và điều trị nhiễm nấm xâm lấn của Bộ
 Y tế”).
-2.1.4. Tình hình kháng thuốc của một số vi khuẩn gây VPMPCĐ
+
+#### 2.1.4. Tình hình kháng thuốc của một số vi khuẩn gây VPMPCĐ
+
 Trong các tác nhân gây VPMPCĐ, có khoảng 6% là các vi khuẩn đa kháng thuốc. Vi
 khuẩn đa kháng thuốc thường gặp nhất là S. aureus và P. aeruginosa.
 Nghiên cứu gần đây của châu Âu cho thấy có đến 3,3 – 7,6% căn nguyên đa kháng phân
@@ -594,8 +613,8 @@ kháng thuốc, đặc biệt tăng nhanh ở các serotype không có vắc xin
 đa kháng, hay gặp nhất là serotype 19A và mới nổi lên một số serotype khác nữa là 6B,
 6C, 14, 15B/C, 19F và 23A [51, 52].
 
-8
-2.1.5. Căn nguyên gây VPMPCĐ ở Việt Nam
+#### 2.1.5. Căn nguyên gây VPMPCĐ ở Việt Nam
+
 Nghiên cứu tại bệnh viện Khánh Hoà trên 154 người bệnh VPMPCĐ phải nhập viện
 bằng phương pháp nuôi cấy cho thấy các căn nguyên vi khuẩn thường gặp nhất là H.
 influenzae, S. pneumoniae, M. catarrhalis, P. aeruginosa, S. aureus và K. pneumoniae.
@@ -640,8 +659,8 @@ giải kết quả nên cũng có sự khác biệt không nhỏ giữa các ngh
 có các nghiên cứu được thiết kế chặt chẽ cũng như thống nhất về phương pháp để có
 được hình ảnh căn nguyên VPMPCĐ chính xác hơn.
 
-9
-2.2. Các phương pháp chẩn đoán vi sinh VPMPCĐ
+### 2.2. Các phương pháp chẩn đoán vi sinh VPMPCĐ
+
 Mặc dù có sự đồng thuận cao về lý thuyết là điều trị sẽ tốt nhất khi xác định được căn
 nguyên gây bệnh nhưng về thực hành còn nhiều tranh cãi về giá trị của các xét nghiệm
 chẩn đoán căn nguyên VPMPCĐ do độ nhạy của các xét nghiệm, tỷ lệ lợi ích/chi phí
@@ -650,7 +669,9 @@ ngực Mỹ thống nhất không xét nghiệm vi sinh thường quy cho chẩn
 người bệnh điều trị ngoại trú. Với những người bệnh VPMPCĐ phải nhập viện và những
 người bệnh ngoại trú mà kết quả chẩn đoán có thay đổi phác đồ điều trị thì cần làm các
 xét nghiệm vi sinh chẩn đoán [29, 59].
-2.2.1. Chọn lựa xét nghiệm dựa trên đặc điểm người bệnh
+
+#### 2.2.1. Chọn lựa xét nghiệm dựa trên đặc điểm người bệnh
+
 - Với những người bệnh VPMPCĐ được phân loại là (i) người bệnh có VPMPCĐ
 nặng, đặc biệt là khi người bệnh có đặt nội khí quản; hoặc (ii) người bệnh được điều
 trị theo kinh nghiệm theo hướng MRSA hoặc P. aeruginosa; hoặc (iii) người bệnh
@@ -669,7 +690,9 @@ hiện xét nghiệm phát hiện các virus này cho cả người bệnh ngo�
 nội trú vì kết quả xét nghiệm có ý nghĩa cho việc lựa chọn phác đồ điều trị tối ưu.
 Xét nghiệm sinh học phân tử có giá trị chẩn đoán tốt hơn các xét nghiệm test nhanh
 phát hiện kháng nguyên virus.
-2.2.2. Các kỹ thuật xét nghiệm
+
+#### 2.2.2. Các kỹ thuật xét nghiệm
+
 a. Cấy máu
 Cấy máu được khuyến cáo cho các người bệnh VPMPCĐ phải nhập viện điều trị. Mặc
 dù tỷ lệ cấy máu dương tính khá thấp ở những người bệnh VPMPCĐ phải nhập viện
@@ -684,7 +707,6 @@ mỗi chai cấy 8-10 ml máu với người lớn, thể tích máu lấy ở t
 [60]. Có thể cấy máu nhiều lần tùy theo diễn biến lâm sàng của người bệnh.
 b. Nhuộm Gram và nuôi cấy đờm/dịch tiết đường hô hấp
 
-10
 Bệnh phẩm đờm có thể chỉ định nhuộm Gram và nuôi cấy nhưng tỷ lệ phát hiện được
 căn nguyên gây bệnh (10-86%) rất khác nhau ở các nghiên cứu khác nhau [50]. Phải lấy
 được tối thiểu 1-2 ml đờm có nhầy - mủ hoặc nhầy máu, nên lấy đờm trước khi điều trị
@@ -732,7 +754,6 @@ trùng như bệnh phẩm đường hô hấp vì loại bệnh phẩm này thư
 khuẩn vi hệ đường hô hấp trên. Mặc dù có thể cung cấp cả các thông tin về gen kháng
 thuốc nhưng các thông tin này cũng không đầy đủ hết, nhất là ở các vi khuẩn Gram âm
 
-11
 [58]. PCR phát hiện đơn tác nhân hoặc PCR phát hiện đồng thời nhiều căn nguyên gây
 VPMPCĐ bao gồm cả virus và vi khuẩn đã được sử dụng rộng rãi. Các xét nghiệm đa
 tác nhân giúp tăng khả năng phát hiện các vi sinh vật có ở trong mẫu bệnh phẩm dịch
@@ -791,7 +812,6 @@ giải ra các phân loại nhạy cảm (S), đề kháng (R) hay đề kháng 
 | điều trị ở người bệnh có IgM dương tính ngay khi nhập viện kém hơn ở những người |
 | bệnh có IgM âm tính [65] |
 
-12
 hay là cá thể hoá điều trị và những trường hợp kháng sinh có liều độc và liều điều trị
 gần nhau. Có những vấn đề liên quan đến kháng sinh đồ mà các bác sĩ lâm sàng cũng
 cần biết đó là kết quả kháng sinh đồ bị ảnh hưởng bởi rất nhiều yếu tố như sự chính xác
@@ -808,162 +828,47 @@ quả. Do vậy, khi tham khảo các nghiên cứu khác nhau về mức độ 
 sinh, các bác sĩ lâm sàng cũng nên biết kỹ thuật kháng sinh đồ nào được thực hiện và
 tiêu chuẩn phiên giải nào được sử dụng để có được nhận định chính xác về các kết quả
 nghiên cứu.
-Bảng 2.1. Tóm tắt các xét nghiệm vi sinh trên người bệnh VPMPCĐ
-Xét nghiệm Bệnh phẩm Chỉ định
-Nhuộm Gram, nuôi cấy Đờm/dịch phế Người bệnh viêm phổi điều trị nội trú
-tìm vi khuẩn quản Người bệnh có nguy cơ cao nhiễm vi
-khuẩn đa kháng hoặc các tác nhân không
-thường gặp.
-AFB, PCR (Gene Xpert, Đờm/dịch phế Để loại trừ lao phổi
-Hain test…), nuôi cấy tìm quản
-vi khuẩn lao
-Soi tìm nấm, nuôi cấy Đờm/dịch phế Người bệnh suy giảm miễn dịch, nghi ngờ
-nấm quản nhiễm nấm
-Cấy máu Máu Người bệnh viêm phổi nặng, nghi ngờ
-nhiễm khuẩn huyết
-Test nhanh phát hiện Dịch tỵ hầu Người bệnh nghi ngờ viêm phổi do virus
-kháng nguyên virus cúm, hoặc có yếu tố dịch tễ
-SAR-COV2, RSV
-Sinh học phân tử (PCR) Đờm/dịch phế Người bệnh viêm phổi nặng không đáp
-quản/dịch tỵ ứng với điều trị ban đầu
-hầu Người bệnh nghi ngờ nhiễm các tác nhân
-như nấm, M. pneumoniae, C.
-pneumoniae, Legionella spp., virus
-đường hô hấp
-Huyết thanh chẩn đoán Máu Người bệnh nghi ngờ nhiễm các tác nhân
-như nấm, M. pneumoniae, C.
-pneumoniae, Legionella spp.,
+**Bảng 2.1. Tóm tắt các xét nghiệm vi sinh trên người bệnh VPMPCĐ**
+
 
 | Xét nghiệm | Bệnh phẩm | Chỉ định |
 | :--- | :--- | :--- |
-| Nhuộm Gram, nuôi cấy tìm vi khuẩn | Đờm/dịch phế quản | Người bệnh viêm phổi điều trị nội trú Người bệnh có nguy cơ cao nhiễm vi khuẩn đa kháng hoặc các tác nhân không thường gặp. |
-| AFB, PCR (Gene Xpert, Hain test…), nuôi cấy tìm vi khuẩn lao | Đờm/dịch phế quản | Để loại trừ lao phổi |
-| Soi tìm nấm, nuôi cấy nấm | Đờm/dịch phế quản | Người bệnh suy giảm miễn dịch, nghi ngờ nhiễm nấm |
-| Cấy máu | Máu | Người bệnh viêm phổi nặng, nghi ngờ nhiễm khuẩn huyết |
-| Test nhanh phát hiện kháng nguyên virus cúm, SAR-COV2, RSV | Dịch tỵ hầu | Người bệnh nghi ngờ viêm phổi do virus hoặc có yếu tố dịch tễ |
-| Sinh học phân tử (PCR) | Đờm/dịch phế quản/dịch tỵ hầu | Người bệnh viêm phổi nặng không đáp ứng với điều trị ban đầu Người bệnh nghi ngờ nhiễm các tác nhân như nấm, M. pneumoniae, C. pneumoniae, Legionella spp., virus đường hô hấp |
-| Huyết thanh chẩn đoán | Máu | Người bệnh nghi ngờ nhiễm các tác nhân như nấm, M. pneumoniae, C. pneumoniae, Legionella spp., |
+| Nhuộm Gram, nuôi cấy<br>tìm vi khuẩn | Đờm/dịch phế<br>quản | Người bệnh viêm phổi điều trị nội trú<br>Người bệnh có nguy cơ cao nhiễm vi<br>khuẩn đa kháng hoặc các tác nhân không<br>thường gặp. |
+| AFB, PCR (Gene Xpert,<br>Hain test…), nuôi cấy tìm<br>vi khuẩn lao | Đờm/dịch phế<br>quản | Để loại trừ lao phổi |
+| Soi tìm nấm, nuôi cấy<br>nấm | Đờm/dịch phế<br>quản | Người bệnh suy giảm miễn dịch, nghi ngờ<br>nhiễm nấm |
+| Cấy máu | Máu | Người bệnh viêm phổi nặng, nghi ngờ<br>nhiễm khuẩn huyết |
+| Test nhanh phát hiện<br>kháng nguyên virus cúm,<br>SAR-COV2, RSV | Dịch tỵ hầu | Người bệnh nghi ngờ viêm phổi do virus<br>hoặc có yếu tố dịch tễ |
+| Sinh học phân tử (PCR) | Đờm/dịch phế<br>quản/dịch tỵ<br>hầu | Người bệnh viêm phổi nặng không đáp<br>ứng với điều trị ban đầu<br>Người bệnh nghi ngờ nhiễm các tác nhân<br>như nấm, M. pneumoniae, C.<br>pneumoniae, Legionella spp., virus<br>đường hô hấp |
+| Huyết thanh chẩn đoán | Máu | Người bệnh nghi ngờ nhiễm các tác nhân<br>như nấm, M. pneumoniae, C.<br>pneumoniae, Legionella spp., |
 
-13
-Cấy dịch màng phổi Dịch màng Người bệnh viêm phổi có tràn dịch màng
-phổi phổi
-Kháng nguyên chẩn đoán Nước tiểu Người bệnh viêm phổi nặng hoặc nghi
-Legionella pneumophila, ngờ nhiễm Legionella pneumophila hoặc
-S. pneumoniae có yếu tố dịch tễ
-Bảng 2.2. Tóm tắt về tác nhân VPMPCĐ và các phương pháp
-chẩn đoán vi sinh [66]
-Tác nhân Phương pháp chẩn Bệnh phẩm tối ưu Điều kiện vận chuyển và
-đoán bảo quản tối ưu
-S. pneumoniae Nhuộm Gram, nuôi Đờm, dịch hút phế Nhiệt độ phòng, tối đa
-cấy quản được 2 giờ hoặc 4oC tối đa
-được 24 giờ
-Phát hiện kháng Nước tiểu Nhiệt độ phòng, tối đa
-nguyên trong nước được 24 giờ hoặc 2 – 8oC
-tiểu tối đa được 14 ngày
-S. aureus Nhuộm Gram, nuôi Đờm, dịch hút phế Nhiệt độ phòng, tối đa
-H. influenzae cấy quản được 2 giờ hoặc 4oC tối đa
-được 24 giờ
-Enterobacterales
-P. aeruginosae
-Legionella spp. Phát hiện kháng Nước tiểu Nhiệt độ phòng, tối đa
-nguyên trong nước được 24 giờ hoặc 2 – 8oC
-tiểu tối đa được 14 ngày
-Nuôi cấy trên môi Đờm, dịch hút phế Nhiệt độ phòng, tối đa
-trường chọn lọc quản được 2 giờ hoặc 4oC tối đa
-được 24 giờ
-Sinh học phân tử Đờm, dịch hút phế Nhiệt độ phòng, tối đa
-(PCR) quản được 2 giờ hoặc 4oC tối đa
-được 24 giờ
-M. pneumoniae Sinh học phân tử Tăm bông ngoáy Môi trường vận chuyển ở
-(PCR) họng, tăm bông 4oC tối đa được 48 giờ,
-thấm dịch tỵ hầu, hoặc -70oC được trên 48
-dịch hút phế quản, giờ
-dịch rửa phế quản
-phế nang
-Phát hiện IgM, IgG Huyết thanh Nhiệt độ phòng, tối đa
-được 24 giờ hoặc 4oC tối
-đa được trên 24 giờ
-C. pneumoniae Sinh học phân tử Tăm bông thấm Môi trường vận chuyển ở
-(PCR) dịch tỵ hầu, dịch 4oC tối đa được 48 giờ,
-súc họng, đờm, hoặc -70oC được trên 48
-dịch hút phế quản giờ
 
-| Cấy dịch màng phổi | Dịch màng phổi | Người bệnh viêm phổi có tràn dịch màng phổi |
-| :--- | :--- | :--- |
-| Kháng nguyên chẩn đoán Legionella pneumophila, S. pneumoniae | Nước tiểu | Người bệnh viêm phổi nặng hoặc nghi ngờ nhiễm Legionella pneumophila hoặc có yếu tố dịch tễ |
 
-| Tác nhân | Phương pháp chẩn đoán | Bệnh phẩm tối ưu | Điều kiện vận chuyển và bảo quản tối ưu |
+**Bảng 2.2. Tóm tắt về tác nhân VPMPCĐ và các phương pháp chẩn đoán vi sinh**
+
+
+| Tác nhân | Phương pháp chẩn đoán | Bệnh phẩm tối ưu | Điều kiện vận chuyển & bảo quản |
 | :--- | :--- | :--- | :--- |
-| S. pneumoniae | Nhuộm Gram, nuôi cấy | Đờm, dịch hút phế quản | Nhiệt độ phòng, tối đa được 2 giờ hoặc 4oC tối đa được 24 giờ |
-|  | Phát hiện kháng nguyên trong nước tiểu | Nước tiểu | Nhiệt độ phòng, tối đa được 24 giờ hoặc 2 – 8oC tối đa được 14 ngày |
-| S. aureus H. influenzae Enterobacterales P. aeruginosae | Nhuộm Gram, nuôi cấy | Đờm, dịch hút phế quản | Nhiệt độ phòng, tối đa được 2 giờ hoặc 4oC tối đa được 24 giờ |
-| Legionella spp. | Phát hiện kháng nguyên trong nước tiểu | Nước tiểu | Nhiệt độ phòng, tối đa được 24 giờ hoặc 2 – 8oC tối đa được 14 ngày |
-|  | Nuôi cấy trên môi trường chọn lọc | Đờm, dịch hút phế quản | Nhiệt độ phòng, tối đa được 2 giờ hoặc 4oC tối đa được 24 giờ |
-|  | Sinh học phân tử (PCR) | Đờm, dịch hút phế quản | Nhiệt độ phòng, tối đa được 2 giờ hoặc 4oC tối đa được 24 giờ |
-| M. pneumoniae | Sinh học phân tử (PCR) | Tăm bông ngoáy họng, tăm bông thấm dịch tỵ hầu, dịch hút phế quản, dịch rửa phế quản phế nang | Môi trường vận chuyển ở 4oC tối đa được 48 giờ, hoặc -70oC được trên 48 giờ |
-|  | Phát hiện IgM, IgG | Huyết thanh | Nhiệt độ phòng, tối đa được 24 giờ hoặc 4oC tối đa được trên 24 giờ |
-| C. pneumoniae | Sinh học phân tử (PCR) | Tăm bông thấm dịch tỵ hầu, dịch súc họng, đờm, dịch hút phế quản | Môi trường vận chuyển ở 4oC tối đa được 48 giờ, hoặc -70oC được trên 48 giờ |
+| S. pneumoniae | Nhuộm Gram, nuôi<br>cấy | Đờm, dịch hút phế<br>quản | Nhiệt độ phòng, tối đa<br>được 2 giờ hoặc 4oC tối đa<br>được 24 giờ |
+|  | Phát hiện kháng<br>nguyên trong nước<br>tiểu | Nước tiểu | Nhiệt độ phòng, tối đa<br>được 24 giờ hoặc 2 – 8oC<br>tối đa được 14 ngày |
+| S. aureus<br>H. influenzae<br>Enterobacterales<br>P. aeruginosae | Nhuộm Gram, nuôi<br>cấy | Đờm, dịch hút phế<br>quản | Nhiệt độ phòng, tối đa<br>được 2 giờ hoặc 4oC tối đa<br>được 24 giờ |
+| Legionella spp. | Phát hiện kháng<br>nguyên trong nước<br>tiểu | Nước tiểu | Nhiệt độ phòng, tối đa<br>được 24 giờ hoặc 2 – 8oC<br>tối đa được 14 ngày |
+|  | Nuôi cấy trên môi<br>trường chọn lọc | Đờm, dịch hút phế<br>quản | Nhiệt độ phòng, tối đa<br>được 2 giờ hoặc 4oC tối đa<br>được 24 giờ |
+|  | Sinh học phân tử<br>(PCR) | Đờm, dịch hút phế<br>quản | Nhiệt độ phòng, tối đa<br>được 2 giờ hoặc 4oC tối đa<br>được 24 giờ |
+| M. pneumoniae | Sinh học phân tử<br>(PCR) | Tăm bông ngoáy<br>họng, tăm bông<br>thấm dịch tỵ hầu,<br>dịch hút phế quản,<br>dịch rửa phế quản<br>phế nang | Môi trường vận chuyển ở<br>4oC tối đa được 48 giờ,<br>hoặc -70oC được trên 48<br>giờ |
+|  | Phát hiện IgM, IgG | Huyết thanh | Nhiệt độ phòng, tối đa<br>được 24 giờ hoặc 4oC tối<br>đa được trên 24 giờ |
+| C. pneumoniae | Sinh học phân tử<br>(PCR) | Tăm bông thấm<br>dịch tỵ hầu, dịch<br>súc họng, đờm,<br>dịch hút phế quản | Môi trường vận chuyển ở<br>4oC tối đa được 48 giờ,<br>hoặc -70oC được trên 48<br>giờ |
+|  | Phát hiện hiệu giá<br>IgM, động lực kháng<br>thể IgG (hai mẫu<br>huyết thanh lấy cách<br>nhau 2-3 tuần) | Huyết thanh | Nhiệt độ phòng, tối đa<br>được 24 giờ hoặc 4oC tối<br>đa được trên 24 giờ |
+| Influenza virus A, B<br>RSV<br>SARS-CoV-2 | Test nhanh phát hiện<br>kháng nguyên<br>Sinh học phân tử<br>(PCR) | Dịch ngoáy mũi, tăm bông ngoáy họng, tăm<br>bông thấm dịch tỵ hầu, dịch hút tỵ hầu dịch hút<br>phế quản, dịch rửa phế quản-phế nang.<br>Bảo quản, vận chuyển trong môi trường vận<br>chuyển virus ở nhiệt độ phòng, tối đa được dưới<br>2 giờ, 2-8oC tối đa được 5 ngày, hoặc ở -70 oC<br>được trên 5 ngày. |  |
+| Parainfluenza virus<br>Adenovirus<br>Human<br>metapneumovirus<br>Coronavirus khác<br>Rhinovirus<br>Entero virus | Sinh học phân tử<br>(PCR) |  |  |
 
-14
-Tác nhân Phương pháp chẩn Bệnh phẩm tối ưu Điều kiện vận chuyển và
-đoán bảo quản tối ưu
-Phát hiện hiệu giá Huyết thanh Nhiệt độ phòng, tối đa
-IgM, động lực kháng được 24 giờ hoặc 4oC tối
-thể IgG (hai mẫu đa được trên 24 giờ
-huyết thanh lấy cách
-nhau 2-3 tuần)
-Test nhanh phát hiện Dịch ngoáy mũi, tăm bông ngoáy họng, tăm
-Influenza virus A, B
-kháng nguyên bông thấm dịch tỵ hầu, dịch hút tỵ hầu dịch hút
-RSV
-Sinh học phân tử phế quản, dịch rửa phế quản-phế nang.
-SARS-CoV-2
-(PCR) Bảo quản, vận chuyển trong môi trường vận
-chuyển virus ở nhiệt độ phòng, tối đa được dưới
-Parainfluenza virus Sinh học phân tử
-2 giờ, 2-8oC tối đa được 5 ngày, hoặc ở -70 oC
-Adenovirus (PCR)
-được trên 5 ngày.
-Human
-metapneumovirus
-Coronavirus khác
-Rhinovirus
-Entero virus
-Những điểm cần nhớ
-- Vi khuẩn gây viêm phổi thường gặp là: Streptococcus pneumoniae, Haemophilus
-influenzae, Staphylococcus aureus, Enterobacterales, Pseudomonas aeruginosa,
-Mycoplasma pneumoniae, Legionella spp., Chlamydophila và Moraxella catarrhalis.
-- Virus gây viêm phổi thường gặp là Influenza A virus, Influenza B virus, RSV,
-Adenovirus và các Coronavirus.
-- Không khuyến cáo xét nghiệm vi sinh cho người bệnh VPMPCĐ ngoại trú.
-- Người bệnh VPMPCĐ nội trú, những người bệnh ngoại trú mà kết quả xét nghiệm vi
-sinh có thể thay đổi phác đồ điều trị cần lấy đờm tốt nhất vào buổi sáng sớm để nhuộm
-Gram và cấy. Bệnh phẩm đờm: lấy tối thiểu 1-2ml có nhầy - mủ hoặc nhầy máu, sau
-khi lấy cần vận chuyển đến phòng xét nghiệm trong vòng 2 tiếng. Kết quả nuôi cấy
-đờm được phiên giải dựa trên mức độ vi khuẩn mọc (1+, 2+, 3+, 4+), sự phù hợp lâm
-sàng và mối liên quan với nhuộm Gram.
-- Cấy máu có thể hữu ích đặc biệt ở người bệnh viêm phổi nặng, người bệnh nguy cơ
-cao viêm phổi do MRSA hoặc P. aeruginosa. Cấy máu tốt nhất trước khi dùng kháng
-sinh, khi có người bệnh có cơn gai rét hoặc sốt ≥38,5oC. Mỗi lần cấy máu, cần cấy tối
-thiểu 2 vị trí và cấy vào 2 chai (một chai hiếu khí, một chai kị khí), mỗi chai cấy 8-10
-ml.
-- Các tác nhân virus và vi khuẩn không điển hình có thể được chẩn đoán bằng nuôi cấy,
-test nhanh phát hiện kháng nguyên, phát hiện kháng thể đặc hiệu hoặc bằng kỹ thuật
-sinh học phân tử (PCR).
 
-| Tác nhân | Phương pháp chẩn đoán | Bệnh phẩm tối ưu | Điều kiện vận chuyển và bảo quản tối ưu |
-| :--- | :--- | :--- | :--- |
-|  | Phát hiện hiệu giá IgM, động lực kháng thể IgG (hai mẫu huyết thanh lấy cách nhau 2-3 tuần) | Huyết thanh | Nhiệt độ phòng, tối đa được 24 giờ hoặc 4oC tối đa được trên 24 giờ |
-| Influenza virus A, B RSV SARS-CoV-2 | Test nhanh phát hiện kháng nguyên Sinh học phân tử (PCR) | Dịch ngoáy mũi, tăm bông ngoáy họng, tăm bông thấm dịch tỵ hầu, dịch hút tỵ hầu dịch hút phế quản, dịch rửa phế quản-phế nang. Bảo quản, vận chuyển trong môi trường vận chuyển virus ở nhiệt độ phòng, tối đa được dưới 2 giờ, 2-8oC tối đa được 5 ngày, hoặc ở -70 oC được trên 5 ngày. |  |
-| Parainfluenza virus Adenovirus Human metapneumovirus Coronavirus khác Rhinovirus Entero virus | Sinh học phân tử (PCR) |  |  |
 
-15
-- Kháng sinh đồ cho biết chủng vi khuẩn nhạy cảm (S), đề kháng (R) hay đề kháng trung
-gian (I) với một kháng sinh nào đó. Xác định nồng độ ức chế tối thiểu của kháng sinh
-(MIC), có thể giúp hiệu chỉnh liều kháng sinh.
 CHƯƠNG 3. CHẨN ĐOÁN VIÊM PHỔI MẮC PHẢI CỘNG ĐỒNG
-3.1. Chẩn đoán xác định viêm phổi
-3.1.1. Lâm sàng
+
+### 3.1. Chẩn đoán xác định viêm phổi
+
+#### 3.1.1. Lâm sàng
+
 - Triệu chứng cơ năng:
 + Khởi phát cấp tính trong vài ngày.
 + Triệu chứng điển hình: sốt cao, rét run, ho khạc đờm mủ, đau ngực kiểu màng
@@ -986,7 +891,9 @@ tuổi và trẻ em với các triệu chứng âm thầm hơn bao gồm: sốt 
 khan, cảm giác mệt mỏi như triệu chứng nhiễm virus. Khám không rõ hội chứng
 đông đặc, thấy rải rác ran nổ. Tuy nhiên các triệu chứng lâm sàng không đặc hiệu
 cho thể bệnh.
-3.1.2. Xét nghiệm máu
+
+#### 3.1.2. Xét nghiệm máu
+
 - Công thức máu có tăng số lượng bạch cầu (> 10 Giga/lít), tăng ưu thế tế bào đa nhân
 trung tính. Hoặc số lượng bạch cầu giảm (< 4,4 Giga/lít).
 - Tốc độ máu lắng tăng
@@ -995,14 +902,15 @@ trung tính. Hoặc số lượng bạch cầu giảm (< 4,4 Giga/lít).
 + Định lượng procalcitonin máu nên được chỉ định ở người bệnh nghi ngờ nhiễm
 khuẩn đường hô hấp dưới nhập viện
 
-16
 + Định lượng procalcitonin nên được thực hiện trong 24h đầu nhập viện, vào ngày
 thứ 3 và vào ngày thứ 5 – 7 điều trị kháng sinh. Tần suất định lượng procalcitonin
 thay đổi phụ thuộc vào đánh giá lâm sàng trên người bệnh cụ thể.
 + Xem xét ngừng hoặc xuống thang kháng sinh khi ngưỡng procalcitonin máu dưới
 0.25 mg/dl hoặc giá trị nồng độ procalcitonin máu giảm 80% so với ban đầu và
 cần đánh giá phối hợp với đáp ứng lâm sàng.
-3.1.3. X-quang ngực
+
+#### 3.1.3. X-quang ngực
+
 - X-quang ngực là cận lâm sàng quan trọng trong bệnh viêm phổi. Hình ảnh tổn
 thương trên X-quang ngực của VPMPCĐ:
 + Tổn thương phế nang: hình mờ tương đối đồng nhất chiếm một thùy hoặc phân
@@ -1033,12 +941,13 @@ hoặc ung thư di căn phổi; (6) Xẹp phổi; (7) Viêm phổi sau xạ tr�
 mô phổi không do nhiễm trùng (viêm mạch máu phổi, viêm phế nang do dị ứng,
 viêm mô kẽ phổi do miễn dịch bao gồm phản ứng thuốc); (9) Tăng tế bào ái toan
 ở phổi; (10) Viêm tiểu phế quản tắc nghẽn.
-3.1.4. Chụp cắt lớp vi tính ngực
+
+#### 3.1.4. Chụp cắt lớp vi tính ngực
+
 - Chụp cắt lớp vi tính ngực được chỉ định ở người bệnh VPMPCĐ trong những trường
 hợp sau:
 + Viêm phổi nặng và diễn biến phức tạp.
 
-17
 + Viêm phổi ở người bệnh suy giảm miễn dịch.
 + Viêm phổi tái phát hoặc không điều trị dứt điểm được.
 + Người bệnh nghi ngờ mắc viêm phổi trên lâm sàng nhưng hình ảnh X quang ngực
@@ -1089,8 +998,8 @@ triển của người bệnh mắc VPMPCĐ do virus SARS-CoV-2.
 | cắt lớp vi tính ngực có thể đánh giá được mức độ nghiêm trọng và theo dõi tiến |
 | triển của người bệnh mắc VPMPCĐ do virus SARS-CoV-2. |
 
-18
-3.1.5. Siêu âm lồng ngực
+#### 3.1.5. Siêu âm lồng ngực
+
 Ngày nay, siêu âm lồng ngực là xét nghiệm cận lâm sàng được chỉ định trong chẩn đoán
 viêm phổi vì tính chính xác trong chẩn đoán, thuận tiện và chi phí thấp.
 Trên siêu âm, đường B (B line) là vệt sáng dạng đuôi sao chổi mà bản chất được cho là
@@ -1103,7 +1012,9 @@ Biểu hiện của viêm phổi trên siêu âm lồng ngực là các hình �
 dịch màng phổi. Siêu âm lồng ngực còn có vai trò trong theo dõi đáp ứng điều trị, như
 bệnh thuyên giảm nếu những hình ảnh đông đặc nhỏ hơn và giảm dần sự hiện diện và
 số lượng của dịch màng phổi trong quá trình điều trị.
-3.1.6. Nội soi phế quản
+
+#### 3.1.6. Nội soi phế quản
+
 Nội soi phế quản ống mềm là một kỹ thuật quan trọng trong chẩn đoán và điều trị các
 bệnh lý đường hô hấp dưới cho phép lấy bệnh phẩm trực tiếp từ phế quản/phế nang giúp
 tăng độ chính xác trong chẩn đoán căn nguyên gây bệnh. Nhưng nội soi phế quản không
@@ -1117,11 +1028,15 @@ hội
 - Viêm phổi có biến chứng nặng như tràn dịch màng phổi, áp xe phổi
 - Cần chẩn đoán phân biệt với những bệnh lý khác: lao phổi, u phổi, dị vật đường
 thở,…
-3.2. Chẩn đoán mức độ nặng VPMPCĐ
+
+### 3.2. Chẩn đoán mức độ nặng VPMPCĐ
+
 - Mức độ nặng của viêm phổi có ý nghĩa quyết định:
 + Nơi điều trị: Ngoại trú; khoa Nội hoặc khoa Hô hấp; Khoa Điều trị tích cực
 + Chọn phác đồ điều trị kháng sinh theo kinh nghiệm.
-3.2.1. Thang điểm CURB-65 của BTS
+
+#### 3.2.1. Thang điểm CURB-65 của BTS
+
 - Các chỉ số trong thang điểm (mỗi chỉ số tính 1 điểm nếu có):
 + Confusion – Thay đổi tri giác mới xuất hiện
 + Uremia – Ure máu > 7 mmol/L
@@ -1154,7 +1069,6 @@ thở,…
 | + Blood pressure – Huyết áp tâm thu < 90 và/hoặc huyết áp tâm trương ≤ 60 mmHg |
 | + Age – Tuổi ≥ 65 |
 
-19
 - Ý nghĩa lâm sàng thang điểm CURB – 65:
 + Tiên lượng tử vong trong 30 ngày cho người bệnh có điểm số CURB-65 lần lượt
 là: nhóm 1 (0 – 1 điểm): 1,5%; nhóm 2 (2 điểm): 9,2%; nhóm 3 (3 – 5 điểm):
@@ -1171,7 +1085,9 @@ bệnh nhập viện hay điều trị ngoại trú cần sự đánh giá linh 
 + Một phiên bản đơn giản hơn của thang điểm CURB-65 là CRB-65 không cần xét
 nghiệm ure máu đã được đề xuất, tạo điều kiện thuận lợi hơn cho thực hành ngoài
 bệnh viện. Với thang điểm này nếu có 1-2 yếu tố thì cần cân nhắc nhập viện.
-3.2.2. Chỉ số tiên lượng nặng viêm phổi PSI (Pneumonia Severity Index)
+
+#### 3.2.2. Chỉ số tiên lượng nặng viêm phổi PSI (Pneumonia Severity Index)
+
 - Các yếu tố nguy cơ được dùng để đánh giá mức độ nặng (Bảng 3.1) gồm:
 + (1) Tuổi;
 + (2) Đặc điểm dân số học (giới tính, nơi ở);
@@ -1179,49 +1095,11 @@ bệnh viện. Với thang điểm này nếu có 1-2 yếu tố thì cần cân
 bệnh thận);
 + (4) Đặc điểm khám lâm sàng (tri giác, tần số thở, huyết áp, thân nhiệt, mạch);
 + (5) Kết quả xét nghiệm (pH máu, BUN, natri máu, đường máu, Hct, PaO , tràn
-2
 dịch màng phổi trên X-quang hay siêu âm).
-Bảng 3.1. Chỉ số tiên lượng nặng viêm phổi mắc phải cộng đồng (PSI)
-Tiêu chí Điểm
-Đặc điểm dân số học
-Nam Tuổi (tính bằng năm)
-Nữ Tuổi (tính bằng năm) – 10
-Sống ở nhà dưỡng lão/điều dưỡng + 10
-Bệnh đồng mắc
-Bệnh ung thư + 30
-Bệnh gan + 20
-Suy tim ứ huyết + 10
-Bệnh mạch máu não + 10
-Bệnh thận + 10
-Triệu chứng thực thể
+**Bảng 3.1. Chỉ số tiên lượng nặng viêm phổi mắc phải cộng đồng (PSI)**
 
-| + Tiên lượng tử vong trong 30 ngày cho người bệnh có điểm số CURB-65 lần lượt |
-| :--- |
-| là: nhóm 1 (0 – 1 điểm): 1,5%; nhóm 2 (2 điểm): 9,2%; nhóm 3 (3 – 5 điểm): |
-| 22%. |
-| + Điều trị ngoại trú được chỉ định cho nhóm 1; điều trị nội trú ngắn hạn hoặc điều |
-| trị ngoại trú có kiểm soát được chỉ định cho nhóm 2; điều trị nội trú được chỉ định |
-| cho nhóm 3 trong đó điều trị tại khoa ICU được chỉ định cho nhóm 3 nhưng có |
-| điểm CURB-65 từ 4 - 5. |
-| + Thang điểm CURB–65 đơn giản, dễ nhớ, chỉ có một thông số cận lâm sàng là |
-| Ure vì thế rất tiện dụng để sử dụng trong chẩn đoán mức độ nặng VPMPCĐ tại |
-| lần khám đầu tiên tại phòng khám ngoại trú. Tuy nhiên, việc quyết định cho người |
-| bệnh nhập viện hay điều trị ngoại trú cần sự đánh giá linh hoạt, kết hợp các đặc |
-| điểm của từng người bệnh và các yếu tố tiên lượng. |
-| + Một phiên bản đơn giản hơn của thang điểm CURB-65 là CRB-65 không cần xét |
-| nghiệm ure máu đã được đề xuất, tạo điều kiện thuận lợi hơn cho thực hành ngoài |
-| bệnh viện. Với thang điểm này nếu có 1-2 yếu tố thì cần cân nhắc nhập viện. |
 
-| + (1) Tuổi; |
-| :--- |
-| + (2) Đặc điểm dân số học (giới tính, nơi ở); |
-| + (3) Bệnh đồng mắc (ung thư, bệnh gan, suy tim ứ huyết, bệnh mạch máu não, |
-| bệnh thận); |
-| + (4) Đặc điểm khám lâm sàng (tri giác, tần số thở, huyết áp, thân nhiệt, mạch); |
-| + (5) Kết quả xét nghiệm (pH máu, BUN, natri máu, đường máu, Hct, PaO , tràn 2 |
-| dịch màng phổi trên X-quang hay siêu âm). |
-
-| Tiêu chí | Điểm |
+| Tiêu chí đánh giá | Điểm số quy định |
 | :--- | :--- |
 | Đặc điểm dân số học |  |
 | Nam | Tuổi (tính bằng năm) |
@@ -1234,33 +1112,39 @@ Triệu chứng thực thể
 | Bệnh mạch máu não | + 10 |
 | Bệnh thận | + 10 |
 | Triệu chứng thực thể |  |
+| Thay đổi tri giác | + 20 |
+| Tần số thở ≥ 30 lần/phút | + 20 |
+| Huyết áp tâm thu < 90 mmHg | + 20 |
+| Thân nhiệt < 35oC hoặc ≥ 40oC | + 15 |
+| Mạch ≥ 125 lần/phút | + 10 |
+| Kết quả xét nghiệm |  |
+| pH < 7,35 | + 30 |
+| BUN ≥30 mg/dl (11 mmol/L) | + 20 |
+| Hematocrit < 30% | + 10 |
+| Na+ máu < 130 mmol/L | + 20 |
+| Đường máu ≥ 250 mg/dl (14 mmol/L) | + 10 |
+| PaO < 60 mmHg hoặc SpO < 90%<br>2 2 | + 10 |
+| Tràn dịch màng phổi | + 10 |
 
-20
-Tiêu chí Điểm
-Thay đổi tri giác + 20
-Tần số thở ≥ 30 lần/phút + 20
-Huyết áp tâm thu < 90 mmHg + 20
-Thân nhiệt < 35oC hoặc ≥ 40oC + 15
-Mạch ≥ 125 lần/phút + 10
-Kết quả xét nghiệm
-pH < 7,35 + 30
-BUN ≥30 mg/dl (11 mmol/L) + 20
-Hematocrit < 30% + 10
-Na+ máu < 130 mmol/L + 20
-Đường máu ≥ 250 mg/dl (14 mmol/L) + 10
-PaO < 60 mmHg hoặc SpO < 90% + 10
-2 2
-Tràn dịch màng phổi + 10
-Ý nghĩa lâm sàng thang điểm PSI:
-PSI FINE Tiên lượng tử vong 30 ngày Điều trị
-≤70 I-II <1% Ngoại trú
-71-90 III 2,8% Nội trú ngắn hạn
-91-130 IV 8,2-9,3% Nội trú
->130 V 27-31,3% ICU
-Tiêu chuẩn PSI nhìn chung phức tạp, cần nhiều thông số cận lâm sàng, điểm tổng cộng
-đòi hỏi phải tính toán vì thế trên thực hành lâm sàng không được ứng dụng nhiều bằng
-thang điểm CURB-65.
-3.2.3. Tiêu chuẩn nhập khoa Điều trị tích cực của ATS
+
+
+**Bảng phân tầng điều trị theo PSI:**
+
+
+| PSI | FINE | Tiên lượng tử vong 30 ngày | Điều trị |
+| :--- | :--- | :--- | :--- |
+| ≤70 | I-II | <1% | Ngoại trú |
+| 71-90 | III | 2,8% | Nội trú ngắn hạn |
+| 91-130 | IV | 8,2-9,3% | Nội trú |
+| >130 | V | 27-31,3% | ICU |
+| Tiêu chuẩn PSI nhìn chung phức tạp, cần nhiều thông số cận lâm sàng, điểm tổng cộng |  |  |  |
+| đòi hỏi phải tính toán vì thế trên thực hành lâm sàng không được ứng dụng nhiều bằng |  |  |  |
+| thang điểm CURB-65. |  |  |  |
+
+
+
+Tiêu chuẩn nhập khoa Điều trị tích cực của ATS
+
 Các tiêu chí dùng trong đánh giá nhập khoa Điều trị tích cực của VPMPCĐ gồm 2 tiêu
 chuẩn chính và 9 tiêu chuẩn phụ:
 Nội dung
@@ -1310,15 +1194,17 @@ Tiêu chuẩn phụ 1. Tần số thở ≥30 lần/phút
 | Tiêu chuẩn chính | 1. Suy hô hấp cần phải thông khí cơ học 2. Sốc nhiễm khuẩn cần phải dùng thuốc vận mạch |
 | Tiêu chuẩn phụ | 1. Tần số thở ≥30 lần/phút 2. PaO / FiO ≤250 2 2 3. tổn thương nhiều thùy phổi trên phim X-quang 4. Lú lẫn, mất định hướng 5. Ure máu (BUN ≥20 mg/dL) 6. Bạch cầu máu < 4000/ mm3 7. Giảm tiểu cầu (<100.000/ mm3) 8. Hạ thân nhiệt (<36oC) 9. Hạ huyết áp cần phải bù dịch tích cực. |
 
-21
 Ý nghĩa lâm sàng thang điểm ATS: Chỉ định nhập khoa Điều trị tích cực cho người bệnh
 có ≥ 3 tiêu chuẩn phụ hay ≥ 1 tiêu chuẩn chính.
 *Ngoài các thang điểm nêu trên việc phân tầng người bệnh điều trị ngoại trú hay nội trú
 cần phải linh hoạt dựa vào thực tế của người bệnh. Ví dụ như: tổn thương phổi nhiều
 thuỳ, có tràn dịch màng phổi kèm theo, người bệnh không sử dụng được thuốc đuờng
 uống hoặc không tự chăm sóc hoặc không có người chăm sóc ở nhà…
-3.3. Chẩn đoán căn nguyên gây viêm phổi
-3.3.1. Chẩn đoán xác định tác nhân gây viêm phổi dựa trên kết quả vi sinh
+
+### 3.3. Chẩn đoán căn nguyên gây viêm phổi
+
+#### 3.3.1. Chẩn đoán xác định tác nhân gây viêm phổi dựa trên kết quả vi sinh
+
 - Tính tin cậy của kết quả vi sinh thay đổi tùy theo loại bệnh phẩm và phương pháp
 cấy.
 - Chẩn đoán xác định tác nhân “chắc chắn” khi:
@@ -1337,7 +1223,9 @@ dương tính.
 triển mạnh + kết quả nhuộm soi đờm phù hợp;
 + Vi khuẩn phân lập được khi cấy đờm không phải là loại vi khuẩn gây bệnh thường
 gặp + phát triển yếu + kết quả nhuộm soi đờm phù hợp.
-3.3.2. Chẩn đoán tác nhân gây bệnh dựa trên kinh nghiệm
+
+#### 3.3.2. Chẩn đoán tác nhân gây bệnh dựa trên kinh nghiệm
+
 Việc chẩn đoán căn nguyên có ý nghĩa quan trọng trong việc lựa chọn phác đồ điều trị
 cho người bệnh. Tuy nhiên, khi xét nghiệm vi sinh không được thực hiện vì không cần
 thiết/không khả thi hoặc khi xét nghiệm vi sinh đã được thực hiện nhưng kết quả chưa
@@ -1374,7 +1262,6 @@ hoạt, bệnh đồng mắc (tại phổi và toàn thân).
 | + Vi khuẩn phân lập được khi cấy đờm không phải là loại vi khuẩn gây bệnh thường |
 | gặp + phát triển yếu + kết quả nhuộm soi đờm phù hợp. |
 
-22
 VPMPCĐ mức độ nhẹ, điều trị ngoại trú
 Streptococcus pneumoniae
 Haemophilus influenzae
@@ -1422,7 +1309,6 @@ aureus hoặc Streptococcus pneumoniae.
 | VPMPCĐ mức độ nặng, điều trị tại ICU |
 | Streptococcus pneumoniae Vi khuẩn Gram âm đường ruột Staphylococcus aureus Legionella spp. Mycoplasma pneumoniae Pseudomonas aeruginosa Virus hô hấp: Influenza virus, Parainfluenza virus, Respiratory syncytial virus (RSV), Adenovirus, Coronavirus, SARS-CoV2, Metapneumovirus, Human metapneumovirus (HMPV) |
 
-23
 Khi đánh giá trên từng trường hợp cụ thể, cân nhắc toàn bộ các yếu tố vừa kể trên có thể
 giúp chẩn đoán tác nhân vi khuẩn. Tập hợp các yếu tố giúp tiên đoán một tác nhân vi
 khuẩn nào đó được gọi là các yếu tố nguy cơ để nhiễm vi khuẩn đó. (Bảng 2.2)
@@ -1455,15 +1341,17 @@ Bệnh phổi mạn tính, đái tháo đường
 Sử dụng kháng sinh trước đó
 Pseudomonas Bệnh phổi cấu trúc như bệnh xơ nang, giãn phế quản, bệnh phổi tắc
 aeruginosa nghẽn mạn tính nặng (FEV < 30%)
-1
 Tiền sử nhiễm Pseudomonas aeruginosa
 Nằm viện và sử dụng kháng sinh tĩnh mạch trong vòng 90 ngày
 Acinetobacter Nghiện rượu, tuổi già, bệnh nội khoa nặng
 baumannii
 Vi khuẩn kỵ khí Bệnh phổi: ung thư phổi, giãn phế quản, nhồi máu phổi, viêm phổi
 hít. Nhiễm khuẩn kỵ khí vùng hầu họng
-3.4. Chẩn đoán phân biệt
-3.4.1. Lao phổi
+
+### 3.4. Chẩn đoán phân biệt
+
+#### 3.4.1. Lao phổi
+
 - Tiền sử tiếp xúc với người mắc lao.
 
 | Tác nhân | Yếu tố nguy cơ |
@@ -1477,7 +1365,6 @@ hít. Nhiễm khuẩn kỵ khí vùng hầu họng
 | Acinetobacter baumannii | Nghiện rượu, tuổi già, bệnh nội khoa nặng |
 | Vi khuẩn kỵ khí | Bệnh phổi: ung thư phổi, giãn phế quản, nhồi máu phổi, viêm phổi hít. Nhiễm khuẩn kỵ khí vùng hầu họng |
 
-24
 - Ho khạc đờm kéo dài, có thể ho máu, sốt nhẹ về chiều, gầy sút cân.
 - X-quang ngực có tổn thương nghi lao (nốt, thâm nhiễm, hang xơ). Có khi tổn thương
 trên X quang ngực không điển hình, nhất là ở người suy giảm miễn dịch (HIV/AIDS,
@@ -1485,7 +1372,9 @@ dùng corticoid kéo dài....).
 - Chẩn đoán xác định: Tìm thấy trực khuẩn kháng cồn - toan (AFB) trong đờm hoặc
 dịch phế quản qua nhuộm soi trực tiếp, genExpert MTB dương tính, nuôi cấy MGIT
 dương tính MTB.
-3.4.2. Tắc động mạch phổi
+
+#### 3.4.2. Tắc động mạch phổi
+
 - Có yếu tố nguy cơ: người bệnh sau đẻ, sau phẫu thuật ở vùng tiểu khung, sau chấn
 thương, gãy xương, bất động lâu ngày, viêm tắc tĩnh mạch chi dưới, dùng thuốc tránh
 thai.
@@ -1497,7 +1386,9 @@ block nhánh phải.
 - D-dimer máu tăng cao.
 - Chụp cắt lớp vi tính có tiêm thuốc cản quang tĩnh mạch có thể phát hiện vị trí động
 mạch phổi bị tắc.
-3.4.3. Ung thư phổi
+
+#### 3.4.3. Ung thư phổi
+
 - Thường gặp ở người > 50 tuổi, có tiền sử nghiện thuốc lá, gia đình có người mắc
 ung thư.
 - Ho khạc đờm lẫn máu, sút cân.
@@ -1506,21 +1397,28 @@ ung thư.
 - Nên chú ý những trường hợp nghi ngờ hoặc sau khi điều trị hết tình trạng nhiễm
 trùng mà tổn thương phổi không cải thiện sau 1 tháng hoặc viêm phổi tái phát ở cùng
 một vị trí.
-3.4.4. Giãn phế quản bội nhiễm
+
+#### 3.4.4. Giãn phế quản bội nhiễm
+
 - Người bệnh có tiền sử ho khạc đờm mủ kéo dài, sốt.
 - Khám phổi: Có ran ẩm, ran nổ cố định.
 - Cần chụp phim cắt lớp vi tính lồng ngực lớp mỏng 1mm độ phân giải cao để chẩn
 đoán.
-3.4.5. Viêm phổi với cơ chế tự miễn do dùng thuốc
+
+#### 3.4.5. Viêm phổi với cơ chế tự miễn do dùng thuốc
+
 - Hỏi kỹ tiền sử dùng thuốc, đặc biệt chú ý tới các thuốc hay gây viêm phổi như
 amiodaron...
 - Các triệu chứng sẽ giảm hoặc mất đi khi ngừng thuốc sớm.
-3.4.6. Phù phổi bán cấp không điển hình
+
+#### 3.4.6. Phù phổi bán cấp không điển hình
+
 - Điều trị thuốc lợi tiểu
 
-25
 - Chụp lại phim X quang phổi đánh giá tổn thương.
-3.4.7. Viêm phổi do hít
+
+#### 3.4.7. Viêm phổi do hít
+
 Hay gặp: viêm phổi do sặc dầu
 - Gặp ở những người dùng thuốc nhỏ mũi có tinh dầu, giọt dầu lọt vào phổi. Người
 hít phải xăng, dầu hỏa, dầu mazut.
@@ -1528,7 +1426,9 @@ hít phải xăng, dầu hỏa, dầu mazut.
 dội, ho sặc sụa. Sau vài ngày ho khạc đờm có máu và mủ.
 - Khám: hội chứng đông đặc phổi.
 - X-quang phổi: có hình mờ đều thuỳ dưới hoặc một bên phổi, có khi cả hai bên.
-3.4.8. Hội chứng Loeffler phổi
+
+#### 3.4.8. Hội chứng Loeffler phổi
+
 - Là tổn thương dạng thâm nhiễm phổi thay đổi nhanh.
 - Triệu chứng cơ năng có thể thấy: khó thở, ho, khò khè, sốt.
 - Triệu chứng thực thể có thể thấy: hội chứng đông đặc, tiếng cọ màng phổi.
@@ -1536,11 +1436,15 @@ dội, ho sặc sụa. Sau vài ngày ho khạc đờm có máu và mủ.
 - Nguyên nhân: do ký sinh trùng trong chu kỳ phát triển đi qua phổi gây viêm phổi
 hoặc tiếp xúc với những chất gây dị ứng.
 - Xquang ngực: có nhiều dải mờ đa dạng và biến mất sau một tuần lễ.
-3.5. Chẩn đoán biến chứng
+
+### 3.5. Chẩn đoán biến chứng
+
 Viêm phổi có thể gây các biến chứng tại phổi, trong lồng ngực và biến chứng xa: suy hô
 hấp, nhiễm khuẩn huyết, sốc nhiễm trùng, áp xe phổi, tràn mủ màng phổi, tràn khí màng
 phổi, viêm màng ngoài tim, viêm nội tâm mạc,…
-3.5.1. Biến chứng tại phổi
+
+#### 3.5.1. Biến chứng tại phổi
+
 - Bệnh có thể lan rộng ra hai hoặc nhiều thùy phổi, người bệnh khó thở nhiều hơn, tím
 môi; mạch nhanh, người bệnh có thể tử vong trong tình trạng suy hô hấp, sốc nhiễm
 trùng.
@@ -1548,7 +1452,9 @@ trùng.
 - Áp xe phổi: rất thường gặp, có thể do dùng kháng sinh không hiệu quả, người bệnh
 sốt dai dẳng, khạc nhiều đờm có mủ. X quang ngực có 1 hoặc nhiều hình hang với
 mức nước, mức hơi.
-3.5.2. Biến chứng trong lồng ngực
+
+#### 3.5.2. Biến chứng trong lồng ngực
+
 - Tràn khí màng phổi, trung thất: thường do nguyên nhân S. aureus.
 - Tràn dịch màng phổi: viêm phổi dưới màng phổi gây tràn dịch màng phổi. Dịch
 thường màu vàng chanh nhạt, hết nhanh dưới điều trị, thường do S. pneumoniae.
@@ -1557,8 +1463,8 @@ trong trường hợp viêm phổi màng phổi, hoặc do chọc dò màng ph�
 - Viêm màng ngoài tim: triệu chứng đau vùng trước tim, nghe có tiếng cọ màng tim,
 thường là viêm màng tim có mủ.
 
-26
-3.5.3. Biến chứng xa
+#### 3.5.3. Biến chứng xa
+
 - Viêm nội tâm mạc cấp tính do S. pneumoniae: biến chứng này hiếm gặp, người bệnh
 có cơn sốt rét run, lách to.
 - Viêm khớp do S. pneumoniae: gặp ở người trẻ tuổi, thường chỉ bị một khớp sưng,
@@ -1572,8 +1478,11 @@ khác.
 - Sốc nhiễm trùng: trường hợp nặng, thường xảy ra ở những người bệnh có cơ địa đặc
 biệt như đái tháo đường, suy thận, suy tim… tình trạng sốc kéo dài có thể gây hội
 chứng suy đa phủ tạng.
-3.6. Đặc điểm lâm sàng của một số nguyên nhân thường gặp gây VPMPCĐ
-3.6.1. Viêm phổi do S. aureus
+
+### 3.6. Đặc điểm lâm sàng của một số nguyên nhân thường gặp gây VPMPCĐ
+
+#### 3.6.1. Viêm phổi do S. aureus
+
 - Tiền sử: nhiễm trùng ngoài da, đặt catheter tĩnh mạch trung tâm, nhiễm virus cúm…
 - Lâm sàng: Khởi đầu đột ngột, sốt cao, rét run, mạch nhanh, khó thở, đau ngực, toàn
 thân suy sụp nhanh. Ho khạc đờm nhầy mủ vàng. Khám phổi có ran ẩm, ran nổ rải
@@ -1581,13 +1490,17 @@ rác, gõ đục.
 - X-quang ngực: tổn thương phổi lan tỏa và biến đổi nhanh, vùng tổn thương có nhiều
 ổ áp xe nhỏ.
 - Chẩn đoán xác định nhờ cấy đờm, cấy máu tìm thấy S. aureus.
-3.6.2. Viêm phổi do Klebsiella pneumoniae
+
+#### 3.6.2. Viêm phổi do Klebsiella pneumoniae
+
 - Bệnh xảy ra ở người già yếu, nghiện rượu.
 - Lâm sàng: Toàn thân mệt lả, có thể kèm theo nhiễm khuẩn huyết, sốc nhiễm khuẩn.
 Sốt nhẹ, ho khạc đờm vàng hoặc xanh hoặc đờm mủ.
 - X-quang phổi: tổn thương lan rộng nhiều thuỳ, có nhiều ổ áp xe nhỏ, rồi tạo nên ổ
 áp xe lớn, viền mỏng, có mức nước. Thường có tràn mủ màng phổi kèm theo.
-3.6.3. Viêm phổi do Pseudomonas aeruginosa
+
+#### 3.6.3. Viêm phổi do Pseudomonas aeruginosa
+
 - Viêm phổi do vi khuẩn này gặp 6 – 11% ở cộng đồng. Tỷ lệ tử vong cao: 31 – 90%.
 - Pseudomonas có ngoại độc tố A là loại độc tố mạnh.
 - Chẩn đoán dựa vào tình trạng người bệnh nhiễm độc: vẻ mặt lo âu, lú lẫn, sốt cao,
@@ -1597,8 +1510,8 @@ viêm phổi có tràn dịch màng phổi.
 dịch màng phổi và có nhiều ổ áp xe nhỏ ở phổi.
 - Cấy đờm, dịch phế quản, cấy máu ra Pseudomonas aeruginosa
 
-27
-3.6.4. Viêm phổi do Burkholderia pseudomallei
+#### 3.6.4. Viêm phổi do Burkholderia pseudomallei
+
 - B. pseudomallei sống trong đất và nước bề mặt ở các quốc gia khu vực Đông Nam
 Á và Bắc Australia. Bệnh thường gặp vào mùa mưa. Tại Việt Nam, bệnh gặp tỷ lệ
 cao từ tháng 9 đến tháng 11.
@@ -1623,7 +1536,9 @@ nhanh. Trường hợp melioidosis mạn tính có thể gặp các tổn thươ
 do lao, có hạch trung thất nhưng hiếm khi canxi hóa và tràn dịch màng phổi đơn
 thuần.
 - Cấy đờm, dịch phế quản, cấy máu ra B. pseudomallei
-3.6.5. Viêm phổi ở người suy giảm miễn dịch
+
+#### 3.6.5. Viêm phổi ở người suy giảm miễn dịch
+
 - Người thiếu gamma globulin máu dễ bị viêm phổi do S. pneumoniae, Haemophilus
 influenzae.
 - Khi giảm bạch cầu trung tính máu, thường bị viêm phổi do P. aeruginosa và S.
@@ -1643,7 +1558,6 @@ căn nguyên vi sinh, cơ địa của người bệnh...
 | lâm sàng đa dạng, các triệu chứng biểu hiện từ mức độ nhẹ đến nặng, tùy thuộc vào |
 | căn nguyên vi sinh, cơ địa của người bệnh... |
 
-28
 2. Thực hành lâm sàng cần áp dụng linh hoạt các thang điểm đánh giá mức độ nặng,
 các yếu tố nguy cơ của người bệnh để phân loại mức độ nặng và đánh giá tiên lượng
 người bệnh VPMPCĐ.
@@ -1679,10 +1593,12 @@ một số tình huống đặc biệt (bảng ở trên).
 |  | VPMPCĐ cần nhập viện điều trị tại khoa nội hoặc khoa điều trị tích cực hoặc trong |  |
 |  | một số tình huống đặc biệt (bảng ở trên). |  |
 
-29
-CHƯƠNG 4. DƯỢC LÝ LÂM SÀNG SỬ DỤNG KHÁNG SINH HỢP LÝ
+## CHƯƠNG 4. DƯỢC LÝ LÂM SÀNG SỬ DỤNG KHÁNG SINH HỢP LÝ
+
 TRONG ĐIỀU TRỊ VIÊM PHỔI CỘNG ĐỒNG
-4.1. Lựa chọn kháng sinh dựa trên phổ kháng khuẩn
+
+### 4.1. Lựa chọn kháng sinh dựa trên phổ kháng khuẩn
+
 Lựa chọn kháng sinh theo kinh nghiệm dựa trên tác nhân gây bệnh kết hợp với phổ
 kháng khuẩn của kháng sinh và khả năng xâm nhập cơ quan đích (dịch lót biểu mô phế
 nang và đại thực bào phế nang). Do các tác nhân vi khuẩn gây ra VPMPCĐ thường đồng
@@ -1724,7 +1640,6 @@ kháng sinh macrolid hoặc fluoroquinolon.
 Ở những người bệnh VPMPCĐ mức độ nặng cần điều trị tại ICU, nên cân nhắc sử dụng
 các phác đồ kết hợp kháng sinh β-lactam với macrolid hoặc fluoroquinolon truyền tĩnh
 
-30
 mạch. Việc cân nhắc phối hợp macrolid hay fluoroquinolon nên dựa trên đánh giá cân
 bằng nguy cơ/lợi ích, chi phí, tương tác thuốc và nguy cơ đề kháng. Khuyến cáo của
 Hiệp hội Vi sinh lâm sàng và Bệnh truyền nhiễm Châu Âu (ESCMID) năm 2023, ưu
@@ -1780,64 +1695,33 @@ nhân gây VPMPCĐ thường gặp bao gồm các cầu khuẩn Gram dương hi�
 | Giảm nhận thức | 2 |
 | Sốt | -1 |
 
-31
 Enterobacteriaceae không sinh β-lactamase. Thuốc có hoạt lực mạnh chống lại các
 chủng Streptococcus pneumoniae kháng penicillin và MRSA. Vì vậy, kháng sinh này có
 thể sử dụng trong các trường hợp VPMPCĐ do các chủng S. pneumoniae đề kháng ở
 mức độ cao với penicillin hoặc là lựa chọn thay thế cho vancomycin hay linezolid để
 điều trị viêm phổi do MRSA tuy nhiên còn cần thêm các dữ liệu từ thử nghiệm lâm sàng
 ngẫu nhiên có đối chứng.
-4.2. Lựa chọn và tối ưu hóa chế độ liều dựa trên đặc điểm dược động học/dược
+
+### 4.2. Lựa chọn và tối ưu hóa chế độ liều dựa trên đặc điểm dược động học/dược
+
 lực học và chức năng thận của người bệnh
 Tối ưu hóa chế độ liều kháng sinh dựa trên đặc điểm dược động học/dược lực học
 (PK/PD) góp phần tăng hiệu quả điều trị và giảm nguy cơ kháng thuốc. Dựa vào các đặc
 điểm PK/PD, các kháng sinh điều trị VPMPCĐ được chia làm ba nhóm: phụ thuộc thời
 gian, phụ thuộc nồng độ và phụ thuộc vào tổng lượng thuốc vào cơ thể [68-70].
-Bảng 4.2. Phân loại nhóm kháng sinh theo đặc điểm PK/PD và đề xuất
-chiến lược tối ưu liều
-Nhóm kháng
-Nhóm kháng
-sinh phân Thông số PK/PD Chiến lược tối ưu hóa sử
-sinh hoặc
-loại theo đặc đặc trưng dụng
-thuốc cụ thể
-điểm PK/PD
-Phụ thuộc Tỷ lệ % giữa thời β-lactam Tăng liều
-thời gian gian kháng sinh có Linezolid Tăng tần suất đưa thuốc trong
-nồng độ trong máu ngày
-vượt quá giá trị MIC
-Cân nhắc truyền kéo dài hoặc
-so với khoảng thời
-truyền liên tục trong trường
-gian đưa liều
-hợp nhiễm khuẩn nặng hoặc
-(%T>MIC)
-trên người bệnh nặng
-Phụ thuộc Tỷ lệ giữa nồng độ Aminoglycosid Sử dụng liều tối đa có hiệu
-nồng độ tối đa của thuốc trong quả kết hợp với giãn cách
-máu so với giá trị khoảng đưa liều để giảm
-MIC (Cmax/MIC). thiểu độc tính
-Phụ thuộc Tỷ lệ giữa tổng lượng Fluoroquinolon Tăng tổng liều trong 24 giờ
-vào tổng thuốc trong cơ thể Macrolid
-lượng thuốc (tính bằng AUC) so
-Vancomycin
-vào cơ thể với giá trị MIC
-(AUC/MIC)
-Chế độ liều kháng sinh cần hiệu chỉnh dựa trên chức năng thận của người bệnh. Việc
-hiệu chỉnh liều đặc biệt quan trọng với các kháng sinh có khoảng điều trị hẹp, những
-người bệnh đang sử dụng đồng thời các thuốc khác cũng có độc tính trên thận hoặc đang
-có các bệnh lý thận hoặc bệnh nền tăng nguy cơ độc tính trên thận. Thông tin chi tiết về
-liều dùng và hiệu chỉnh liều ở người bệnh suy thận của các kháng sinh sử dụng trong
-điều trị VPMPCĐ được trình bày trong Phụ lục 1 [71-73].
+**Bảng 4.2. Phân loại nhóm kháng sinh theo đặc điểm PK/PD và đề xuất chiến lược tối ưu liều**
 
-| Nhóm kháng sinh phân loại theo đặc điểm PK/PD | Thông số PK/PD đặc trưng | Nhóm kháng sinh hoặc thuốc cụ thể | Chiến lược tối ưu hóa sử dụng |
+
+| Nhóm kháng<br>sinh phân<br>loại theo đặc<br>điểm PK/PD | Thông số PK/PD<br>đặc trưng | Nhóm kháng<br>sinh hoặc<br>thuốc cụ thể | Chiến lược tối ưu hóa sử<br>dụng |
 | :--- | :--- | :--- | :--- |
-| Phụ thuộc thời gian | Tỷ lệ % giữa thời gian kháng sinh có nồng độ trong máu vượt quá giá trị MIC so với khoảng thời gian đưa liều (%T>MIC) | β-lactam Linezolid | Tăng liều Tăng tần suất đưa thuốc trong ngày Cân nhắc truyền kéo dài hoặc truyền liên tục trong trường hợp nhiễm khuẩn nặng hoặc trên người bệnh nặng |
-| Phụ thuộc nồng độ | Tỷ lệ giữa nồng độ tối đa của thuốc trong máu so với giá trị MIC (Cmax/MIC). | Aminoglycosid | Sử dụng liều tối đa có hiệu quả kết hợp với giãn cách khoảng đưa liều để giảm thiểu độc tính |
-| Phụ thuộc vào tổng lượng thuốc vào cơ thể | Tỷ lệ giữa tổng lượng thuốc trong cơ thể (tính bằng AUC) so với giá trị MIC (AUC/MIC) | Fluoroquinolon Macrolid Vancomycin | Tăng tổng liều trong 24 giờ |
+| Phụ thuộc<br>thời gian | Tỷ lệ % giữa thời<br>gian kháng sinh có<br>nồng độ trong máu<br>vượt quá giá trị MIC<br>so với khoảng thời<br>gian đưa liều<br>(%T>MIC) | β-lactam<br>Linezolid | Tăng liều<br>Tăng tần suất đưa thuốc trong<br>ngày<br>Cân nhắc truyền kéo dài hoặc<br>truyền liên tục trong trường<br>hợp nhiễm khuẩn nặng hoặc<br>trên người bệnh nặng |
+| Phụ thuộc<br>nồng độ | Tỷ lệ giữa nồng độ<br>tối đa của thuốc trong<br>máu so với giá trị<br>MIC (Cmax/MIC). | Aminoglycosid | Sử dụng liều tối đa có hiệu<br>quả kết hợp với giãn cách<br>khoảng đưa liều để giảm<br>thiểu độc tính |
+| Phụ thuộc<br>vào tổng<br>lượng thuốc<br>vào cơ thể | Tỷ lệ giữa tổng lượng<br>thuốc trong cơ thể<br>(tính bằng AUC) so<br>với giá trị MIC<br>(AUC/MIC) | Fluoroquinolon<br>Macrolid<br>Vancomycin | Tăng tổng liều trong 24 giờ |
 
-32
+
+
 4.3. Lựa chọn kháng sinh dựa trên khả năng xâm nhập vào cơ quan đích
+
 Khả năng xâm nhập của kháng sinh vào cơ quan đích cũng là yếu tố ảnh hưởng đến việc
 lựa chọn kháng sinh mặc dù thông số này không dễ dàng xác định trên người bệnh. Khả
 năng này phụ thuộc vào đặc điểm của kháng sinh (ví dụ: tính thân lipid, kích thước phân
@@ -1846,7 +1730,9 @@ trạng viêm, áp xe) [70]. Trong VPMPCĐ, cơ quan đích kháng sinh cần x�
 lót biểu mô phế nang (với vi khuẩn ngoại bào) và đại thực bào phế nang (với vi khuẩn
 nội bào). Chi tiết tỷ lệ nồng độ kháng sinh trong dịch lót biểu mô phế nang so với nồng
 độ trong huyết thanh được trình bày trong Phụ lục 2 [68].
-4.4. Cân nhắc về tương tác thuốc khi lựa chọn kháng sinh
+
+### 4.4. Cân nhắc về tương tác thuốc khi lựa chọn kháng sinh
+
 Hai nhóm kháng sinh được kê đơn phổ biến trong điều trị VPMPCĐ là macrolid và FQ
 đều tiềm tàng nguy cơ tương tác với nhiều nhóm thuốc khác, thông qua cơ chế tương
 tác dược động học (ức chế hệ enzyme CYP450 chuyển hoá thuốc) và dược lực học (kéo
@@ -1857,7 +1743,9 @@ có thể dẫn đến hôn mê).
 Chi tiết các tương tác thuốc ở mức độ chống chỉ định liên quan đến kháng sinh điều trị
 VPMPCĐ, kèm theo hậu quả và cách xử trí của các cặp tương tác này được trình bày
 trong Phụ lục 3 [73, 74].
-4.5. Nguyên tắc chuyển đổi kháng sinh đường tĩnh mạch sang đường uống
+
+### 4.5. Nguyên tắc chuyển đổi kháng sinh đường tĩnh mạch sang đường uống
+
 Người bệnh VPMPCĐ điều trị nội trú có thể chuyển đổi kháng sinh đường tĩnh mạch
 sang các kháng sinh đường uống tương đương sau khi có cải thiện về mặt lâm sàng hoặc
 cắt sốt. Chuyển đổi đường tĩnh mạch (IV) sang đường uống (PO) giúp gồm giảm chi phí
@@ -1877,7 +1765,6 @@ Tùy theo đặc điểm dược động học, các kháng sinh chuyển đổi
 đường uống có thể được chia thành 04 nhóm tương ứng với các nguyên tắc chuyển đổi
 riêng (Bảng 4.3).
 
-33
 Bảng 4.3. Hướng dẫn chuyển đổi đường tĩnh mạch/đường uống với một số nhóm
 kháng sinh
 Nhóm Định nghĩa Kháng sinh
@@ -1915,7 +1802,6 @@ uống được trình bày trong (Bảng 4.4).
 | Nhóm 3 | Kháng sinh có sinh khả dụng đường uống cao (>90%) nhưng có liều tối đa đường uống thấp hơn so với liều đường tiêm (do dung nạp tiêu hóa kém) | Amoxicillin Cephalexin Clindamycin |
 | Nhóm 4 | Kháng sinh có sinh khả dụng đường uống thấp hơn và liều tối đa thấp hơn đường tiêm | Cefuroxim |
 
-34
 Bảng 4.4. Hướng dẫn chuyển đổi đường tĩnh mạch/đường uống
 với một số kháng sinh
 Kháng sinh tĩnh mạch Kháng sinh đường uống
@@ -1981,7 +1867,6 @@ Linezolid 600mg mỗi 12 giờ Linezolid 600mg mỗi 12 giờ
 | Vancomycin (liều theo khuyến cáo) | Linezolid 600mg mỗi 12 giờ |
 | Linezolid 600mg mỗi 12 giờ | Linezolid 600mg mỗi 12 giờ |
 
-35
 Kháng sinh tĩnh mạch Kháng sinh đường uống
 Clindamycin 600mg mỗi 8 giờ Clindamycin 300 - 450 mg mỗi 6 giờ
 Metronidazol 500 mg mỗi 8 giờ Metronidazol 500 mg mỗi 8 giờ
@@ -2010,9 +1895,10 @@ lâm sàng hoặc cắt sốt.
 | Metronidazol 500 mg mỗi 8 giờ | Metronidazol 500 mg mỗi 8 giờ |
 | Sulfamethoxazol/trimethoprim 5-20 mg/kg/ngày (chia liều mỗi 6-12 giờ) (liều tính theo trimethoprim) | Sulfamethoxazol/trimethoprim 5-20 mg/kg/ngày (chia liều mỗi 6-12 giờ) (liều tính theo trimethoprim) |
 
-36
-CHƯƠNG 5. ĐIỀU TRỊ VIÊM PHỔI MẮC PHẢI CỘNG ĐỒNG
-5.1. Mục tiêu điều trị
+## CHƯƠNG 5. ĐIỀU TRỊ VIÊM PHỔI MẮC PHẢI CỘNG ĐỒNG
+
+### 5.1. Mục tiêu điều trị
+
 Đạt hiệu quả lâm sàng tối ưu:
 - Khỏi bệnh, tránh biến chứng, giảm tỷ lệ nhập viện và thời gian nằm viện
 - Giảm tỷ lệ tử vong
@@ -2021,7 +1907,9 @@ CHƯƠNG 5. ĐIỀU TRỊ VIÊM PHỔI MẮC PHẢI CỘNG ĐỒNG
 Nhiều hướng dẫn điều trị VPMPCĐ trên thế giới phân tầng người bệnh dựa vào yếu tố
 nguy cơ mắc vi khuẩn kháng thuốc, bệnh đồng mắc, khả năng vi khuẩn gây bệnh và
 mức độ nặng của bệnh [65].
-5.2. Nguyên tắc điều trị kháng sinh
+
+### 5.2. Nguyên tắc điều trị kháng sinh
+
 Tuân thủ các nguyên tắc điều trị kháng sinh giúp tối ưu hóa hiệu quả điều trị và giảm
 thiểu nguy cơ biến chứng [65, 77]:
 - Cần điều trị kháng sinh sớm trong 4 giờ đầu nhập viện dựa theo kinh nghiệm, khi có
@@ -2045,20 +1933,23 @@ hơn cần thay đổi phác đồ.
 - Chuyển sang đường uống khi người bệnh cải thiện ho, khó thở, hết sốt 2 lần cách 8
 giờ và người bệnh uống được.
 - Xuất viện: khi ổn định lâm sàng và chuyển sang kháng sinh uống cho đủ liệu trình.
-5.3. Điều trị ban đầu theo kinh nghiệm
+
+### 5.3. Điều trị ban đầu theo kinh nghiệm
+
 Khi lựa chọn kháng sinh theo kinh nghiệm, nên cân nhắc phổ vi khuẩn và mức độ kháng
 thuốc theo dịch tễ tại bệnh viện và khu vực, dựa trên kháng sinh đồ hiện có, để tăng hiệu
 quả điều trị ban đầu và hạn chế kháng thuốc.
 Điều trị kháng sinh ban đầu theo kinh nghiệm nên hướng đến những tác nhân thường
 
-37
 gặp ngoài cộng đồng như S. pneumoniae, H. influenzae và M. catarrhalis. Kháng sinh
 có hiệu quả là betalactam/ức chế beta-lactamase +/- macrolid hay quinolone hô hấp
 (levofloxacin, moxifloxacin) [65, 77].
 Trước khi lựa chọn phác đồ điều trị cần đánh giá và phân loại người bệnh theo các mức
 độ nặng và nhóm nguy cơ. (Xem chi tiết trong Chương 3: Chẩn đoán viêm phổi mắc
 phải cộng đồng).
-5.3.1. Người bệnh VPMPCĐ mức độ nhẹ, điều trị ngoại trú
+
+#### 5.3.1. Người bệnh VPMPCĐ mức độ nhẹ, điều trị ngoại trú
+
 Nguyên nhân thường gặp: S. pneumoniae, M. pneumoniae, C. pneumoniae (một mình
 hay nhiễm trùng kết hợp), H. influenzae, virus hô hấp [65, 77, 79].
 ● Người bệnh < 65 tuổi, không có bệnh đi kèm, không dùng kháng sinh trong 3 tháng
@@ -2093,10 +1984,11 @@ nghiệm dương tính với cúm, không phụ thuộc vào thời gian bệnh 
 Những người bệnh này nếu toàn trạng suy kiệt, X quang ngực có những tổn thương nặng
 (thâm nhiễm > 1 thuỳ, tổn thương hoại tử, tràn dịch màng phổi, tổn thương tiến triển
 
-38
 trong 48-72 giờ) thì nên cho người bệnh nhập viện điều trị nội trú với kháng sinh đường
 tĩnh mạch, mặc dù thang điểm PSI hay CURB-65 chưa đủ tiêu chuẩn nhập viện.
-5.3.2. Người bệnh VPMPCĐ nhập viện
+
+#### 5.3.2. Người bệnh VPMPCĐ nhập viện
+
 Những người bệnh nặng cần làm ngay xét nghiệm đờm (nhuộm gram, cấy) trước khi
 điều trị kháng sinh. Cần làm thêm xét nghiệm nhanh như multiplex PCR để phát hiện vi
 khuẩn, nấm, virus nhằm hướng dẫn điều trị kháng sinh.
@@ -2134,7 +2026,6 @@ Covid trước khi quyết định điều trị. Liều khởi đầu: hydrocor
 quyết định giảm liều với tổng thời gian điều trị từ 8-14 ngày [96].
 Vi khuẩn gây bệnh cần hết sức lưu ý nguy cơ nhiễm S. aureus và P. aeruginosa.
 
-39
 Kháng sinh cần sử dụng là carbapenem thế hệ 1 (không bao phủ Pseudomonas) hay thế
 hệ 2 kết hợp fluoroquinolon hay macrolid +/- thuốc bao phủ S. aureus nếu chưa loại trừ
 (vancomycin, teicoplanin, linezolid). Ưu tiên kết hợp beta lactam phổ rộng
@@ -2143,481 +2034,34 @@ macrolid.
 Khi nghi ngờ P. aeruginosa, nên phối hợp beta lactam +/- ức chế beta-lactamase chống
 Pseudomonas kết hợp quinolon chống Pseudomonas hay aminoglycosid (Bảng 5.1)
 [1,7].
-Bảng 5.1. Những điểm cần nhớ điều trị VPMPCĐ
-Người bệnh VPMPCĐ mức độ nhẹ ngoại trú:
-- Amoxicillin đơn thuần hay kết hợp với ức chế beta-lactamase (nếu nghi ngờ H.
-influenzae, M. catarrhalis): amoxicillin/acid clavulanic. Nếu nhiều khả năng VK
-không điển hình thì chọn azithromycin hay clarithromycin.
-- Quinolone hô hấp (levofloxacin, moxifloxacin) nếu dị ứng với betalactam.
-- Nếu nghi ngờ S. pneumoniae kháng thuốc: amoxicillin liều cao hoặc quinolon hô hấp.
-- BN lớn tuổi có bệnh đồng mắc, suy giảm miễn dịch: kết hợp betalactam/ức chế beta-
-lactamase hoặc cephalosporin phổ rộng (cefpodoxim, cefdinir, cefditoren...) và
-macrolid; hoặc quinolon hô hấp đơn trị.
-Người bệnh VPMPCĐ trung bình, nặng nội trú, không nằm ICU
-- Beta lactam +/- ức chế beta-lactamase (amoxicillin/acid clavulanic; ampicillin,
-amoxicillin/sulbactam), kháng sinh cephalosporin (cefotaxim, ceftriaxon, ceftarolin),
-ertapenem + macrolid/quinolon truyền tĩnh mạch (TTM). Lưu ý ưu tiên truyền kháng
-sinh tĩnh mạch, tránh không tiêm kháng sinh tĩnh mạch để giảm nguy cơ tai biến khi
-tiêm truyền. Những người bệnh có nguy cơ nhiễm P. aeruginosa cần chọn những beta
-lactam chống Pseudomonas.
-- Quinolone hô hấp (moxifloxacin, levofloxacin) +/- beta lactam như trên.
-Người bệnh VPMPCĐ mức độ nặng, nằm ICU
-Beta Lactam phổ rộng +/- ức chế beta-lactamase, ertapenem, ceftazidim, ceftriaxon,
-cefepim, ceftarolin … kết hợp macrolid hay quinolone TTM.
-Nếu có nguy cơ nhiễm Pseudomonas:
-- Một beta lactam chống Pseudomonas [piperacillin/tazobactam, ceftazidim, cefepim,
-imipenem, meropenem, doripenem] + ciprofloxacin hoặc levofloxacin.
-- Betalactam kể trên + 1 kháng sinh aminoglycosid và azithromycin/clarithromycin.
-Nếu có nguy cơ nhiễm S. aureus kháng methicillin cộng đồng (CA-MRSA):
-- Thêm vancomycin, teicoplanin hay linezolid
-5.4. Điều trị khi có kết quả vi sinh
-5.4.1. Vi khuẩn có kết quả kháng sinh đồ
-Dựa vào kháng sinh đồ. Nếu người bệnh có đáp ứng điều trị tốt thì không cần thay đổi
-kháng sinh đang sử dụng mặc dù kháng sinh đồ cho kết quả kháng sinh đang dùng bị đề
-kháng. Dựa vào kháng sinh đồ có thể xuống thang kháng sinh nếu có thể được.
+**Bảng 5.1. Những điểm cần nhớ điều trị VPMPCĐ**
 
-| Người bệnh VPMPCĐ mức độ nhẹ ngoại trú: - Amoxicillin đơn thuần hay kết hợp với ức chế beta-lactamase (nếu nghi ngờ H. influenzae, M. catarrhalis): amoxicillin/acid clavulanic. Nếu nhiều khả năng VK không điển hình thì chọn azithromycin hay clarithromycin. - Quinolone hô hấp (levofloxacin, moxifloxacin) nếu dị ứng với betalactam. - Nếu nghi ngờ S. pneumoniae kháng thuốc: amoxicillin liều cao hoặc quinolon hô hấp. - BN lớn tuổi có bệnh đồng mắc, suy giảm miễn dịch: kết hợp betalactam/ức chế beta- lactamase hoặc cephalosporin phổ rộng (cefpodoxim, cefdinir, cefditoren...) và macrolid; hoặc quinolon hô hấp đơn trị. |
+
+| Người bệnh VPMPCĐ mức độ nhẹ ngoại trú:<br>- Amoxicillin đơn thuần hay kết hợp với ức chế beta-lactamase (nếu nghi ngờ H.<br>influenzae, M. catarrhalis): amoxicillin/acid clavulanic. Nếu nhiều khả năng VK<br>không điển hình thì chọn azithromycin hay clarithromycin.<br>- Quinolone hô hấp (levofloxacin, moxifloxacin) nếu dị ứng với betalactam.<br>- Nếu nghi ngờ S. pneumoniae kháng thuốc: amoxicillin liều cao hoặc quinolon hô hấp.<br>- BN lớn tuổi có bệnh đồng mắc, suy giảm miễn dịch: kết hợp betalactam/ức chế beta-<br>lactamase hoặc cephalosporin phổ rộng (cefpodoxim, cefdinir, cefditoren...) và<br>macrolid; hoặc quinolon hô hấp đơn trị. |
 | :--- |
-| Người bệnh VPMPCĐ trung bình, nặng nội trú, không nằm ICU - Beta lactam +/- ức chế beta-lactamase (amoxicillin/acid clavulanic; ampicillin, amoxicillin/sulbactam), kháng sinh cephalosporin (cefotaxim, ceftriaxon, ceftarolin), ertapenem + macrolid/quinolon truyền tĩnh mạch (TTM). Lưu ý ưu tiên truyền kháng sinh tĩnh mạch, tránh không tiêm kháng sinh tĩnh mạch để giảm nguy cơ tai biến khi tiêm truyền. Những người bệnh có nguy cơ nhiễm P. aeruginosa cần chọn những beta lactam chống Pseudomonas. - Quinolone hô hấp (moxifloxacin, levofloxacin) +/- beta lactam như trên. |
-| Người bệnh VPMPCĐ mức độ nặng, nằm ICU Beta Lactam phổ rộng +/- ức chế beta-lactamase, ertapenem, ceftazidim, ceftriaxon, cefepim, ceftarolin … kết hợp macrolid hay quinolone TTM. Nếu có nguy cơ nhiễm Pseudomonas: - Một beta lactam chống Pseudomonas [piperacillin/tazobactam, ceftazidim, cefepim, imipenem, meropenem, doripenem] + ciprofloxacin hoặc levofloxacin. - Betalactam kể trên + 1 kháng sinh aminoglycosid và azithromycin/clarithromycin. Nếu có nguy cơ nhiễm S. aureus kháng methicillin cộng đồng (CA-MRSA): - Thêm vancomycin, teicoplanin hay linezolid |
+| Người bệnh VPMPCĐ trung bình, nặng nội trú, không nằm ICU<br>- Beta lactam +/- ức chế beta-lactamase (amoxicillin/acid clavulanic; ampicillin,<br>amoxicillin/sulbactam), kháng sinh cephalosporin (cefotaxim, ceftriaxon, ceftarolin),<br>ertapenem + macrolid/quinolon truyền tĩnh mạch (TTM). Lưu ý ưu tiên truyền kháng<br>sinh tĩnh mạch, tránh không tiêm kháng sinh tĩnh mạch để giảm nguy cơ tai biến khi<br>tiêm truyền. Những người bệnh có nguy cơ nhiễm P. aeruginosa cần chọn những beta<br>lactam chống Pseudomonas.<br>- Quinolone hô hấp (moxifloxacin, levofloxacin) +/- beta lactam như trên. |
+| Người bệnh VPMPCĐ mức độ nặng, nằm ICU<br>Beta Lactam phổ rộng +/- ức chế beta-lactamase, ertapenem, ceftazidim, ceftriaxon,<br>cefepim, ceftarolin … kết hợp macrolid hay quinolone TTM.<br>Nếu có nguy cơ nhiễm Pseudomonas:<br>- Một beta lactam chống Pseudomonas [piperacillin/tazobactam, ceftazidim, cefepim,<br>imipenem, meropenem, doripenem] + ciprofloxacin hoặc levofloxacin.<br>- Betalactam kể trên + 1 kháng sinh aminoglycosid và azithromycin/clarithromycin.<br>Nếu có nguy cơ nhiễm S. aureus kháng methicillin cộng đồng (CA-MRSA):<br>- Thêm vancomycin, teicoplanin hay linezolid |
 
-40
-5.4.1.1. Streptococcus pneumoniae
-- Điều trị cho đến khi người bệnh không còn sốt 3-5 ngày (tối thiểu 5 ngày).
-- Do có sự gia tăng tỷ lệ đề kháng nên kháng sinh macrolid cần được thử nghiệm
-kháng sinh đồ trước khi sử dụng điều trị.
-Đặc điểm Lựa chọn đầu tay Lựa chọn khác
-nhạy cảm
-kháng sinh
-Nhạy cảm Có thể lựa chọn kháng sinh tĩnh mạch hoặc Nếu dị ứng Beta-lactam
-Penicillin uống Moxifloxacin 400mg U/TTM mỗi
-(MIC ≤ ▪ Kháng sinh tĩnh mạch 24h Hoặc levofloxacin 750mg
-2µg/ml) Penicillin G 2MIU truyền tĩnh mạch (TTM) U/TTM mỗi 24h.
-mỗi 4h Hoặc linezolid 600mg uống/TTM
-Hoặc ceftriaxon 1-2g TTM mỗi 24h mỗi 12h
-Hoặc cefotaxim 2g TTM mỗi 8h Hoặc clindamycin 600mg TTM mỗi
-8h.
-▪ Kháng sinh uống
-Amoxicillin 1g uống 3 lần/ngày
-Hoặc doxycyclin 100mg uống 2 lần/ngày.
-Trung gian Vancomycin 15-20mg/kg TTM 8-12h (đặc
-hoặc đề biệt là trong các trường hợp MIC Penicillin
-kháng với ≥ 8 µg/ml).
-Penicillin Hoặc ceftarolin 600mg TTM mỗi 12h
-(MIC >
-4µg/ml)
-5.4.1.2. Haemophilus influenzae và Moraxella catarrhalis
-- Thời gian điều trị: 5-7 ngày
-- Người bệnh có thể chuyển sang điều trị thuốc uống khi lâm sàng cải thiện và người
-bệnh có thể uống được.
-Đặc điểm nhạy Lựa chọn đầu tay Lựa chọn khác
-cảm kháng
-sinh
-Nhạy cảm với Ampicillin 2g truyền tĩnh Cotrimoxazol (TMP-SMX) 5-
-Ampicillin, mạch (TTM) mỗi 6h 10mg/kg (liều dựa trên trimethoprim,
-Amoxicillin Hoặc amoxicillin 1g uống TMP) TTM/uống mỗi 12h
-(beta- mỗi 8h. Hoặc doxycyclin 100mg uống 2
-lactamase âm lần/ngày
-tính)
-Hoặc azithromycin 500mg x 1 lần vào
-Kháng Ceftriaxon 1g TTM mỗi 12h ngày 1, sau đó 250mg lần/ngày x 4
-Ampicillin, Hoặc amoxicillin/acid ngày (hoặc 500 mg/ngày trong 3 ngày)
-Amoxicillin clavulanic 875/125 mg uống Hoặc ciprofloxacin 400mg TM mỗi
-(beta- 2 lần/ngày. 12h (hoặc 500mg uống 2 lần/ngày)
-lactamase
-Hoặc levofloxacin 750mg uống/TM
-dương tính)
-mỗi 24h
 
-| Đặc điểm nhạy cảm kháng sinh | Lựa chọn đầu tay | Lựa chọn khác |
-| :--- | :--- | :--- |
-| Nhạy cảm Penicillin (MIC ≤ 2µg/ml) | Có thể lựa chọn kháng sinh tĩnh mạch hoặc uống ▪ Kháng sinh tĩnh mạch Penicillin G 2MIU truyền tĩnh mạch (TTM) mỗi 4h Hoặc ceftriaxon 1-2g TTM mỗi 24h Hoặc cefotaxim 2g TTM mỗi 8h ▪ Kháng sinh uống Amoxicillin 1g uống 3 lần/ngày Hoặc doxycyclin 100mg uống 2 lần/ngày. | Nếu dị ứng Beta-lactam Moxifloxacin 400mg U/TTM mỗi 24h Hoặc levofloxacin 750mg U/TTM mỗi 24h. Hoặc linezolid 600mg uống/TTM mỗi 12h Hoặc clindamycin 600mg TTM mỗi 8h. |
-| Trung gian hoặc đề kháng với Penicillin (MIC > 4µg/ml) | Vancomycin 15-20mg/kg TTM 8-12h (đặc biệt là trong các trường hợp MIC Penicillin ≥ 8 µg/ml). Hoặc ceftarolin 600mg TTM mỗi 12h |  |
 
-| Đặc điểm nhạy cảm kháng sinh | Lựa chọn đầu tay | Lựa chọn khác |
-| :--- | :--- | :--- |
-| Nhạy cảm với Ampicillin, Amoxicillin (beta- lactamase âm tính) | Ampicillin 2g truyền tĩnh mạch (TTM) mỗi 6h Hoặc amoxicillin 1g uống mỗi 8h. | Cotrimoxazol (TMP-SMX) 5- 10mg/kg (liều dựa trên trimethoprim, TMP) TTM/uống mỗi 12h Hoặc doxycyclin 100mg uống 2 lần/ngày Hoặc azithromycin 500mg x 1 lần vào ngày 1, sau đó 250mg lần/ngày x 4 ngày (hoặc 500 mg/ngày trong 3 ngày) Hoặc ciprofloxacin 400mg TM mỗi 12h (hoặc 500mg uống 2 lần/ngày) Hoặc levofloxacin 750mg uống/TM mỗi 24h |
-| Kháng Ampicillin, Amoxicillin (beta- lactamase dương tính) | Ceftriaxon 1g TTM mỗi 12h Hoặc amoxicillin/acid clavulanic 875/125 mg uống 2 lần/ngày. |  |
-
-41
-5.4.1.3. Klebsiella pneumoniae
-Những trường hợp trung bình – nặng cần điều trị kháng sinh đường tĩnh mạch.
-Đặc điểm nhạy Lựa chọn đầu tay Lựa chọn khác
-cảm kháng sinh
-Nhạy cảm với 1 Ceftriaxon 1g TTM mỗi 12h TMP-SMX TTM
-trong các nhóm Hoặc Piperacillin/tazobactam 3,375g 10mg/kg/ngày (tính theo
-KS: - 4,5 g liều tải TTM trong 30 phút, lặp TMP) chia 2-3 lần.
-Cephalosporin lại mỗi 6h Hoặc Amoxicillin/acid
-thế hệ 3(ESBL Hoặc ciprofloxacin 400mg TTM mỗi clavulanic 1,2-2,4g TM mỗi
-âm tính) 12h 8h
-Beta-lactam Hoặc levofloxacin 750mg TTM mỗi Hoặc gentamicin hoặc
-phối hợp với ức 24h (hoặc 500 mg TTM mỗi 12 h) tobramycin 7mg/kg mỗi 24h,
-chế beta- amikacin liều 15-20 mg/kg
-lactamase (điều chỉnh liều theo chức
-Quinolon năng thận, nếu có điều kiện
-chỉnh liều theo định lượng
-nồng độ thuốc trong máu).
-Kháng sinh đường uống:
-Ciprofloxacin 500mg uống mỗi 12h
-Hoặc levofloxacin 750mg uống mỗi 24h (hoặc 500 mg uống mỗi 12
-h)
-Đề kháng với các Vi khuẩn ESBL (-):
-nhóm KS: Cefepim 1-2g TTM mỗi 8h
-Cephalosporin Vi khuẩn ESBL (+):
-thế hệ 3 (ESBL
-Ertapenem 1g TTM mỗi 24h Hoặc
-âm hoặc
-imipenem 0,5g TTM mỗi 6h
-dương)
-Hoặc Meropenem 1g TTM mỗi 8h
-Beta-lactam
-Lưu ý: Các chủng vi khuẩn sinh men
-phối hợp với ức
-ESBL có thể nhạy cảm
-chế beta-
-piperacillin/tazobactam in vitro
-lactamase
-nhưng không đáp ứng điều trị, do đó
-Quinolon
-không khuyến cáo sử dụng.
-VÀ nhạy cảm với
-carbapenem
-5.4.1.4. Pseudomonas aeruginosa
-Lựa chọn kháng sinh điều trị thay đổi theo kết quả nhạy cảm kháng sinh, độ nặng của
-bệnh và tình trạng miễn dịch của người bệnh [59, 65, 77, 80]:
-- Đơn trị liệu: đối với người bệnh có huyết động hoặc nồng độ oxy máu thích hợp.
-- Phối hợp kháng sinh: khi người bệnh có hạ huyết áp, khó duy trì nồng độ oxy
-máu thích hợp; kết quả cấy ra Pseudomonas nhưng không có kết quả kháng sinh
-đồ; và kháng sinh đồ tích lũy cho thấy tỷ lệ vi khuẩn đa kháng thuốc ≥ 10-15%.
-
-| Đặc điểm nhạy cảm kháng sinh | Lựa chọn đầu tay | Lựa chọn khác |
-| :--- | :--- | :--- |
-| Nhạy cảm với 1 trong các nhóm KS: Cephalosporin thế hệ 3(ESBL âm tính) Beta-lactam phối hợp với ức chế beta- lactamase Quinolon | Ceftriaxon 1g TTM mỗi 12h Hoặc Piperacillin/tazobactam 3,375g - 4,5 g liều tải TTM trong 30 phút, lặp lại mỗi 6h Hoặc ciprofloxacin 400mg TTM mỗi 12h Hoặc levofloxacin 750mg TTM mỗi 24h (hoặc 500 mg TTM mỗi 12 h) | TMP-SMX TTM 10mg/kg/ngày (tính theo TMP) chia 2-3 lần. Hoặc Amoxicillin/acid clavulanic 1,2-2,4g TM mỗi 8h Hoặc gentamicin hoặc tobramycin 7mg/kg mỗi 24h, amikacin liều 15-20 mg/kg (điều chỉnh liều theo chức năng thận, nếu có điều kiện chỉnh liều theo định lượng nồng độ thuốc trong máu). |
-|  | Kháng sinh đường uống: Ciprofloxacin 500mg uống mỗi 12h Hoặc levofloxacin 750mg uống mỗi 24h (hoặc 500 mg uống mỗi 12 h) |  |
-| Đề kháng với các nhóm KS: Cephalosporin thế hệ 3 (ESBL âm hoặc dương) Beta-lactam phối hợp với ức chế beta- lactamase Quinolon VÀ nhạy cảm với carbapenem | Vi khuẩn ESBL (-): Cefepim 1-2g TTM mỗi 8h Vi khuẩn ESBL (+): Ertapenem 1g TTM mỗi 24h Hoặc imipenem 0,5g TTM mỗi 6h Hoặc Meropenem 1g TTM mỗi 8h Lưu ý: Các chủng vi khuẩn sinh men ESBL có thể nhạy cảm piperacillin/tazobactam in vitro nhưng không đáp ứng điều trị, do đó không khuyến cáo sử dụng. |  |
-
-42
-Đặc điểm nhạy Lựa chọn đầu tay Lựa chọn khác
-cảm kháng sinh
-Nhạy cảm với Đơn trị liệu với một trong các Levofloxacin 750mg truyền
-nhiều nhóm kháng sinh: TM mỗi 24h (hoặc 500 mg
-kháng sinh Piperacillin/tazobactam 4,5g TTM TTM mỗi 12 h)
-liều tải, sau đó 4h: 4,5g TTM mỗi Hoặc ciprofloxacin 400mg
-6h truyền TM mỗi 8h
-Hoặc ceftazidim 2g TTM mỗi 8h Hoặc imipenem/cilastatin 1g
-Hoặc cefepim 2g TTM mỗi 12h truyền TTM mỗi 8h
-Hoặc meropenem 1- 2 g TTM mỗi Đối với người bệnh dị ứng beta-
-8h. lactam nặng qua trung gian IgE
-aztreonam 2g TTM mỗi 6h.
-Kháng với Meropenem 1-2 g TTM mỗi 8h Ceftolozan/tazobactam 3g
-ceftazidime, Hoặc ceftazidim/avibactam 2,5g TTM (trong 1h) mỗi 8h. Hoặc
-cefepime TTM mỗi 8h imipenem/cilastatin/relebactam
-(có thể do men 1,25 g TTM mỗi 6h.
-beta-lactamase)
-Lưu ý:
-- Pseudomonas aeruginosa có thể phát sinh đề kháng kháng sinh trong quá trình điều
-trị, cần cấy kiểm tra sau khi dùng kháng sinh 72 giờ [80].
-- Đối với các trường hợp viêm phổi do Pseudomonas trên người bệnh xơ nang (cystic
-fibrosis), FDA chấp nhận phun khí dung dự phòng với:
-+ Colistin 50-75mg (1,5-2,25 MUI), 2 lần/ngày
-+ Tobramycin 300mg, 2 lần/ngày
-+ Aztreonam 75mg, 3 lần/ngày
-5.4.1.5. Staphylococcus aureus [59, 65, 77]
-- Thời gian điều trị: 7-14 ngày, nếu người bệnh có nhiễm khuẩn huyết có thể điều trị
-kéo dài đến 4 tuần.
-Đặc điểm Lựa chọn đầu tay Lựa chọn khác
-nhạy cảm
-kháng sinh
-MSSA Theo kháng sinh đồ Cefazolin 2g TTM mỗi 8h
-Hoặc oxacillin 2g TTM mỗi 4h. Dị ứng với Beta-lactam:
-Vancomycin 15-20mg/kg TTM mỗi
-Ceftarolin: 600mg mỗi 12 giờ 8-12h để đạt AUC 24 mục tiêu 400-
-TTM 600 µg/ml x h (hiệu chỉnh liều theo
-mức lọc cầu thận, tốt nhất thông qua
-định lượng nồng độ thuốc trong máu
-nếu có điều kiện triển khai)
-Hoặc linezolid 600mg uống/TM
-mỗi 12h.
-
-| Đặc điểm nhạy cảm kháng sinh | Lựa chọn đầu tay | Lựa chọn khác |
-| :--- | :--- | :--- |
-| Nhạy cảm với nhiều nhóm kháng sinh | Đơn trị liệu với một trong các kháng sinh: Piperacillin/tazobactam 4,5g TTM liều tải, sau đó 4h: 4,5g TTM mỗi 6h Hoặc ceftazidim 2g TTM mỗi 8h Hoặc cefepim 2g TTM mỗi 12h Hoặc meropenem 1- 2 g TTM mỗi 8h. | Levofloxacin 750mg truyền TM mỗi 24h (hoặc 500 mg TTM mỗi 12 h) Hoặc ciprofloxacin 400mg truyền TM mỗi 8h Hoặc imipenem/cilastatin 1g truyền TTM mỗi 8h Đối với người bệnh dị ứng beta- lactam nặng qua trung gian IgE aztreonam 2g TTM mỗi 6h. |
-| Kháng với ceftazidime, cefepime (có thể do men beta-lactamase) | Meropenem 1-2 g TTM mỗi 8h Hoặc ceftazidim/avibactam 2,5g TTM mỗi 8h | Ceftolozan/tazobactam 3g TTM (trong 1h) mỗi 8h. Hoặc imipenem/cilastatin/relebactam 1,25 g TTM mỗi 6h. |
-
-| Đặc điểm nhạy cảm kháng sinh | Lựa chọn đầu tay | Lựa chọn khác |
-| :--- | :--- | :--- |
-| MSSA | Theo kháng sinh đồ Hoặc oxacillin 2g TTM mỗi 4h. Ceftarolin: 600mg mỗi 12 giờ TTM | Cefazolin 2g TTM mỗi 8h Dị ứng với Beta-lactam: Vancomycin 15-20mg/kg TTM mỗi 8-12h để đạt AUC mục tiêu 400- 24 600 µg/ml x h (hiệu chỉnh liều theo mức lọc cầu thận, tốt nhất thông qua định lượng nồng độ thuốc trong máu nếu có điều kiện triển khai) Hoặc linezolid 600mg uống/TM mỗi 12h. |
-
-43
-MRSA Vancomycin 15-20mg/kg TTM Ceftarolin 600mg TM mỗi 8h
-mỗi 8-12h để đạt AUC mục tiêu (không được chấp nhận bởi FDA)
-24
-400-600 µg/ml x h
-Hoặc Teicoplanin 6 mg/kg (hoặc
-800 mg) mỗi 12 h, dùng 3 liều cho
-liều tải, sau đó liều duy trì 6
-mg/kg (hoặc 800 mg) mỗi 24 h
-TTM.
-Hoặc linezolid 600mg uống/TTM
-mỗi 12h.
-5.4.1.6. Melioidosis
-- Giai đoạn tấn công: 2 tuần. Nếu viêm nhiều thuỳ phổi thì kháng sinh tĩnh mạch kéo
-dài đến 3 tuần. Hoặc nếu đi kèm các tổn thương khác giai đoạn tấn công có thể kéo
-dài:
-+ Có nhiễm khuẩn huyết và viêm phổi 1 thuỳ: 3 tuần
-+ Có nhiễm khuẩn huyết và viêm phổi nhiều thuỳ: 4 tuần
-+ Có kèm viêm mủ khớp, áp xe sâu: 4 tuần
-+ Có kèm viêm xương: 6 tuần
-- Giai đoạn duy trì: 3 tháng. Nếu đi kèm viêm xương giai đoạn duy trì có thể kéo
-dài 6 tuần
-Giai đoạn điều trị tấn công Giai đoạn điều trị duy trì
-Ceftazidim 2g TTM mỗi 6h TMP-SMX 6-8mg/kg uống (theo liều
-Hoặc meropenem 1-2g TTM trong 3h, lặp TMP) 2 lần/ngày
-lại mỗi 8h. Hoặc doxycyclin 100mg uống 2 lần/ngày
-Đối với phụ nữ có thai:
-Amoxicillin/acid clavulanic 20mg/5mg/
-kg uống 3 lần/ngày.
-5.4.1.7. Viêm phổi không điển hình (Chlamydia pneumoniae, Legionella
-pneumophila, Mycoplasma pneumoniae)
-Lựa chọn đầu tay Lựa chọn khác
-Chlamydia Doxycyclin 100mg U/TTM 2 lần/ngày Levofloxacin 750mg U/TTM mỗi
-pneumoniae x 14 ngày 24h x 5-7 ngày
-Hoặc azithromycin 500mg U/TTM
-vào ngày 1, sau đó 250mg U mỗi ngày
-x 4 ngày (hoặc 500 mg/ngày x 3 ngày)
-Hoặc clarithromycin 500mg
-U 2 lần/ngày x 10 ngày.
-Legionella Levofloxacin 750mg U/TTM mỗi 24h Doxycyclin 100mg U/TTM 2
-pneumophila Hoặc moxifloxacin 400mg U/TTM lần/ngày.
-mỗi 24h
-Hoặc azithromycin 500mg U/TTM
-mỗi 24h.
-Lưu ý: thời gian điều trị 7-10 ngày đối với người bệnh có hệ miễn dịch bình
-
-| Giai đoạn điều trị tấn công | Giai đoạn điều trị duy trì |
-| :--- | :--- |
-| Ceftazidim 2g TTM mỗi 6h Hoặc meropenem 1-2g TTM trong 3h, lặp lại mỗi 8h. | TMP-SMX 6-8mg/kg uống (theo liều TMP) 2 lần/ngày Hoặc doxycyclin 100mg uống 2 lần/ngày Đối với phụ nữ có thai: Amoxicillin/acid clavulanic 20mg/5mg/ kg uống 3 lần/ngày. |
-
-|  | Lựa chọn đầu tay | Lựa chọn khác |
-| :--- | :--- | :--- |
-| Chlamydia pneumoniae | Doxycyclin 100mg U/TTM 2 lần/ngày x 14 ngày Hoặc azithromycin 500mg U/TTM vào ngày 1, sau đó 250mg U mỗi ngày x 4 ngày (hoặc 500 mg/ngày x 3 ngày) Hoặc clarithromycin 500mg U 2 lần/ngày x 10 ngày. | Levofloxacin 750mg U/TTM mỗi 24h x 5-7 ngày |
-| Legionella pneumophila | Levofloxacin 750mg U/TTM mỗi 24h Hoặc moxifloxacin 400mg U/TTM mỗi 24h Hoặc azithromycin 500mg U/TTM mỗi 24h. | Doxycyclin 100mg U/TTM 2 lần/ngày. |
-|  | Lưu ý: thời gian điều trị 7-10 ngày đối với người bệnh có hệ miễn dịch bình |  |
-
-44
-thường; và kéo dài hơn (14-21 ngày) trên người bệnh nhiễm trùng nặng hoặc
-cơ địa suy giảm miễn dịch.
-Mycoplasma Doxycycline 100mg U/TTM 2 Azithromycin 500mg U/TTM vào
-pneumoniae lần/ngày x 7-10 ngày ngày 1, sau đó 250mg U mỗi ngày x
-Hoặc Minocycline 200mg U/TTM 4 ngày, thời gian điều trị có thể kéo
-x 1 liều, sau đó 100mg U/TTM 2 dài 7-14 ngày nếu điều trị đích theo
-lần/ngày. hướng Mycoplasma
-Hoặc clarithromycin 500mg
-2 lần/ngày x 10 ngày.
-Hoặc levofloxacin 750mg U/TTM x
-5 ngày.
-5.4.1.8. Viêm phổi do virus cúm
-Liệu pháp kháng virus nên được sử dụng cho những người bệnh có nguy cơ cao,
-bệnh cảnh nghiêm trọng, và cho tất cả người bệnh nằm viện vì cúm.
-- Người bệnh ngoại trú: liệu pháp kháng virus có hiệu quả khi được sử dụng trong
-vòng 48h sau khi xuất hiện triệu chứng.
-▪ Oseltamivir: Người trưởng thành (75mg uống 2 lần/ngày x 5 ngày)
-▪ Zanamivir: phun khí dung
-- Người bệnh bị cúm nặng cần phải điều trị nội trú [59, 65]:
-+ Liệu pháp kháng virus vẫn có hiệu quả ngay cả khi bắt đầu điều trị ở ngày thứ 5
-sau khi xuất hiện triệu chứng (mặc dù hiệu quả có thể tốt hơn khi người bệnh được
-điều trị sớm).
-+ Ở những người bệnh có cơ địa suy giảm miễn dịch và bệnh cảnh nghiêm trọng thì
-virus có thể tái bản dài hơn do đó:
-o Liệu pháp oseltamivir nên được sử dụng (bất kể thời gian kéo dài của triệu
-chứng cúm)
-o Xem xét kéo dài thời gian sử dụng oseltamivir (có thể lên đến 10 ngày)
-+ Tránh sử dụng corticosteroid trừ khi người bệnh có những chỉ định cho các bệnh
-lý khác kèm theo.
-+ Nếu người bệnh không thể uống: peramivir 600mg TM một lần (nếu
-CrCL >60ml/phút).
-Nếu xét nghiệm có Covid dương tính, điều trị theo hướng dẫn của Bộ Y tế đã ban
-hành.
-5.5. Xử trí khi người bệnh không đáp ứng với điều trị
-5.5.1. Thất bại điều trị
-a. Khái niệm
-Thất bại điều trị được định nghĩa là tình trạng lâm sàng không đáp ứng đầy đủ với liệu
-pháp kháng sinh điều trị.
-Thất bại điều trị trong bệnh viêm phổi mắc phải tại cộng đồng chiếm khoảng 10% đến
-15% và có thể làm gia tăng tỷ lệ tử vong lên gấp 5 lần.
-
-|  | thường; và kéo dài hơn (14-21 ngày) trên người bệnh nhiễm trùng nặng hoặc cơ địa suy giảm miễn dịch. |  |
-| :--- | :--- | :--- |
-| Mycoplasma pneumoniae | Doxycycline 100mg U/TTM 2 lần/ngày x 7-10 ngày Hoặc Minocycline 200mg U/TTM x 1 liều, sau đó 100mg U/TTM 2 lần/ngày. | Azithromycin 500mg U/TTM vào ngày 1, sau đó 250mg U mỗi ngày x 4 ngày, thời gian điều trị có thể kéo dài 7-14 ngày nếu điều trị đích theo hướng Mycoplasma Hoặc clarithromycin 500mg 2 lần/ngày x 10 ngày. Hoặc levofloxacin 750mg U/TTM x 5 ngày. |
-
-45
-b. Phân loại
-Thất bại điều trị sớm: được định nghĩa là tình trạng lâm sàng xấu đi trong vòng 72 giờ
-đầu sau điều trị kháng sinh do một hoặc nhiều nguyên nhân sau: huyết động không ổn
-định; xuất hiện mới hoặc gia tăng mức suy giảm chức năng hô hấp cần thở máy, tổn
-thương phổi tiến triển hoặc xuất hiện các tổn thương mới trên X quang.
-Thất bại điều trị muộn: được định nghĩa là sốt dai dẳng hoặc tái phát và các triệu chứng
-hoặc huyết động không ổn định, sự phát triển hoặc suy giảm chức năng hô hấp (PaO
-2
-<8 kPa (60mmHg) hoặc độ bão hòa SpO < 90% với FiO 21%), tổn thương phổi tiến
-2 2
-triển hoặc xuất hiện các tổn thương mới trên X quang sau 72 giờ đầu điều trị bằng kháng
-sinh.
-c. Phương pháp đánh giá nguyên nhân thất bại điều trị
-Đánh giá chủ yếu dựa trên đáp ứng lâm sàng sau khi khởi đầu điều trị để phát hiện kịp
-thời thất bại điều trị sớm do các bất thường trong xét nghiệm cận lâm sàng có thể tồn tại
-lâu hơn, ví dụ như hình ảnh thâm nhiễm phổi có thể tồn tại đến 6 tuần.
-Ngoài ra cần xem xét thêm về yếu tố cơ địa của người bệnh (tuổi già, bệnh lý đồng
-mắc … có thể làm kéo dài thời gian cải thiện dấu hiệu lâm sàng) và nguyên nhân gây
-bệnh (bệnh không do nhiễm trùng, đánh giá sai tác nhân vi sinh vật gây bệnh…) [59,
-65, 81].
-5.5.2. Cách xử trí khi có thất bại điều trị
-5.5.2.1. Đánh giá tình trạng người bệnh
-Sử dụng các thang điểm như CURB-65, PSI và tiêu chuẩn nhập ICU để xác định mức
-độ nghiêm trọng của VPMPCĐ từ đó đưa ra quyết định mức độ chăm sóc thích hợp như
-(tiếp tục điều trị ngoại trú, nhập viện, nhập khoa hồi sức tích cực) cho người bệnh.
-5.5.2.2. Xác định nguyên nhân gây thất bại điều trị
-a. Xem lại chẩn đoán:
-- Tác nhân gây bệnh là vi sinh vật:
-+ Do vi khuẩn:
-● Dự đoán loại vi khuẩn không đúng
-● Vi khuẩn kháng thuốc
-● Do đồng nhiễm với tác nhân gây bệnh khác
-● Dùng thuốc kháng sinh không phù hợp (liều dùng, đường dùng, tương tác với thuốc
-khác làm giảm hiệu quả điều trị của thuốc, người bệnh không tuân thủ đúng chỉ
-định…)
-+ Do vi sinh vật không phải vi khuẩn:
-● Do lao, nấm hay ký sinh trùng
-- Tác nhân gây bệnh không do vi sinh vật:
-+ Do ung thư, bệnh lý dị ứng miễn dịch, nhiễm độc cấp, nhồi máu cơ tim, phù phổi
-do suy tim cấp, thuyên tắc phổi, viêm phổi hít, viêm phế quản…
-
-46
-b. Khảo sát các bệnh đồng mắc đi kèm làm kéo dài đáp ứng điều trị (đái tháo đường,
-suy thận mạn, suy giảm miễn dịch, lao ngoài phổi, dị ứng thuốc đang dùng…)
-c. Khảo sát các biến chứng của bệnh mới xuất hiện: tràn dịch màng phổi, mủ màng
-phổi, nhiễm khuẩn thứ phát, áp xe phổi...
-d. Xét nghiệm:
-Tùy theo nguyên nhân nghi ngờ sau khi khảo sát nguyên nhân gây thất bại điều trị để
-quyết định thực hiện các xét nghiệm hỗ trợ chẩn đoán xác định và chẩn đoán phân biệt,
-ví dụ [4]:
-- Huyết học: công thức máu, số lượng và thành phần bạch cầu máu…
-- Vi sinh: soi tươi và cấy tìm vi khuẩn, nấm hay vi khuẩn lao… các loại bệnh phẩm
-như: đờm, máu, dịch màng phổi, mủ màng phổi…
-- Sinh học phân tử: xét nghiệm PCR tìm vi khuẩn, virus, nấm...
-- Sinh hóa: CRP, PCT, huyết thanh chẩn đoán vi khuẩn không điển hình, tầm soát các
-dấu ấn ung thư…
-- Chẩn đoán hình ảnh: X Quang ngực, CT scan ngực… khảo sát tổn thương phổi.
-- Nội soi phế quản: rửa phế quản phế nang, tế bào, sinh thiết nhu mô phổi.
-5.5.2.3. Điều trị
-Tùy theo việc xác định nguyên nhân thất bại để đưa ra kế hoạch điều trị thích hợp. Trong
-phần này, chúng tôi chỉ đưa ra khuyến nghị cho các trường hợp người bệnh được xác
-định VPMPCĐ do vi khuẩn nhưng điều trị thất bại.
-Liệu pháp kháng sinh
-Trước khi quyết định thay đổi kháng sinh cần đánh giá lại nguy cơ nhiễm khuẩn của mỗi
-người bệnh nhằm mục tiêu dự đoán chính xác loại vi khuẩn gây bệnh từ đó đưa ra quyết
-định chọn lựa kháng sinh hợp lý dựa trên cơ sở tình trạng kháng thuốc kháng sinh của
-vi khuẩn và bệnh cảnh lâm sàng thực tế của mỗi người bệnh.
-
-47
-Không đáp ứng với điều trị Có độ trễ dự kiến do yếu tố nhân khẩu học
-của người bệnh và mức độ nặng
-- Tuổi cao
-- Bệnh đồng mắc: COPD, suy tim
-- Viêm phổi nặng
-Khai thác kĩ tiền sử
-Khám lâm sàng
-Điện tim
-X- Quang ngực
-Làm lại xét nghiệm vi sinh
-Còn tồn tại nhiễm trùng
-Tiếp tục điều trị phác đồ hiện tại.
-Đánh giá lại hàng ngày, đảm bảo các xét
-nghiệm vi sinh được thực hiện
-Đảm bảo sử dụng liệu pháp Tràn dịch màng phổi
-kháng sinh phù hợp
-Siêu âm và chọc dịch
-Sàng lọc lại các căn nguyên vi Nghi ngờ nguyên nhân
-màng phổi
-sinh không nhiễm trùng
-Yếu tố nguy cơ cho mầm bệnh Yếu tố nguy cơ cho CT động mạch phổi (nghi Gợi ý bệnh phổi kẽ hoặc
-kháng thuốc nhiễm trùng cơ hội ngờ tắc động mạch phổi) ung thư
-Sơ đồ xử trí khi người bệnh không đáp ứng điều trị
-5.6. Điều trị viêm phổi mắc phải cộng đồng sau xuất viện
-5.6.1. Điều trị và theo dõi sau xuất viện
-Người bệnh VPMPCĐ trước khi xuất viện cần được đánh giá toàn diện về lâm sàng, sự
-ổn định của các bệnh đồng mắc, khả năng uống thuốc và chăm sóc tại nhà để có phác
-đồ nối tiếp thích hợp, phòng nguy cơ tái nhập viện do VPMPCĐ.
-5.6.2. Điều trị tiếp theo sau xuất viện
-- Thời gian điều trị VPMPCĐ nên cá thể hóa dựa trên đáp ứng lâm sàng, chỉ số
-procalcitonin động học (xem chỉ định xét nghiệm PCT), căn nguyên vi sinh, có hay
-không có biến chứng của VPMPCĐ và cơ địa của người bệnh cũng như các bệnh
-đồng mắc. Đối với những người bệnh VPMPCĐ có đáp ứng lâm sàng tốt trong vòng
-2 đến 3 ngày đầu điều trị, thời gian điều trị bằng kháng sinh thường là 5 đến 7 ngày.
-- Thời gian điều trị cần kéo dài hơn ngay cả khi người bệnh ổn định về lâm sàng và
-có nồng độ procalcitonin thấp. Những trường hợp này bao gồm người bệnh đáp ứng
-lâm sàng chậm hơn, nhiễm S. aureus, vi khuẩn gram âm, Burkholderia pseudomallei
-hoặc các mầm bệnh ít phổ biến khác; hoặc khi phác đồ kháng sinh ban đầu không có
-tác dụng chống lại mầm bệnh được xác định sau đó, có biến chứng của VPMPCĐ
-như viêm phổi hoại tử, viêm phổi màng phổi, mủ màng phổi hoặc có các nhiễm trùng
-khác ngoài phổi, cơ địa suy giảm miễn dịch, có bệnh lý phổi đồng mắc.
-+ Những người bệnh cải thiện lâm sàng chậm cần kéo dài thời gian dùng kháng sinh
-và cần tìm nguyên nhân của việc đáp ứng chậm này.
-+ Người bệnh suy giảm miễn dịch cần được xem xét kỹ về lâm sàng, đặc điểm tổn
-thương trên chẩn đoán hình ảnh, các xét nghiệm vi sinh để đánh giá nguy cơ nhiễm
-vi khuẩn kháng thuốc và các căn nguyên vi sinh vật đặc biệt để quyết định lựa chọn
-
-48
-phác đồ điều trị nối tiếp thích hợp sau khi xuất viện. Thời gian điều trị có thể kéo
-dài đến 10-14 ngày nếu tình trạng miễn dịch bị suy giảm đáng kể.
-+ VPMPCĐ kèm viêm màng phổi kế cận cần tiếp tục điều trị kháng sinh và theo dõi
-sát đáp ứng lâm sàng và tình trạng dịch màng phổi với X Quang ngực thường quy
-và siêu âm màng phổi để kịp thời phát hiện biến chứng viêm mủ màng phổi hoặc
-gia tăng lượng dịch màng phổi.
-+ Thời gian điều trị với một số căn nguyên vi khuẩn đặc biệt [82, 83]:
-VPMPCĐ do S. aureus: liệu trình điều trị từ 7-21 ngày tùy mức độ nghiêm trọng.
-Nếu có nhiễm khuẩn huyết thời gian dùng kháng sinh có thể trên 4 tuần. Liệu pháp ngắn
-hạn có thể là 14 ngày nếu đáp ứng các tiêu chí: 1) cấy máu sau 2-4 ngày âm tính và
-người bệnh hết sốt trong 72 giờ; 2) không có viêm nội tâm mạc (được đánh giá với siêu
-âm tim qua thực quản); 3) không có các thiết bị cấy ghép trên cơ thể; 4) không có ổ
-nhiễm trùng di bệnh khác. Không nên dừng kháng sinh sớm ở bệnh có nhiều bệnh lý
-đồng mắc như đái tháo đường, bệnh gan hoặc thận tiến triển, suy giảm miễn dịch [82,
-84].
-VPMPCĐ do Pseudomonas aeruginosa: Thời gian điều trị kháng sinh tối ưu đối
-với VPMPCĐ do P. aeruginosa là không chắc chắn. Liệu trình điều trị nên cá thể hóa
-thời gian dựa trên các bệnh đi kèm và tình trạng của người bệnh, đáp ứng ban đầu với
-điều trị và tính nhạy cảm của chủng phân lập lây nhiễm. Những người bệnh không có
-bệnh đi kèm đáng kể, giảm sốt và cải thiện lâm sàng trong tuần đầu điều trị và những
-người bị nhiễm chủng P. aeruginosa nhạy cảm, có thể được điều trị bằng phác đồ ngắn
-từ 7 đến 10 ngày. Thời gian điều trị dài hơn (từ 10 đến 21 ngày) có thể được chỉ định
-cho những người bệnh có các tình trạng tiềm ẩn nghiêm trọng, nhiễm trùng máu đồng
-thời, đáp ứng kém hoặc chậm với điều trị, và/hoặc nhạy cảm một phần hoặc đa kháng
-thuốc.
-VPMPCĐ do Burkholderia pseudomallei: thời gian dùng kháng sinh sau xuất
-viện từ 3-6 tháng tùy thuộc việc có viêm tủy xương, biến chứng thần kinh hay không.
-Kháng sinh có thể lựa chọn là trimethoprim-sulfamethoxazol hoặc doxycyclin.
-- Lựa chọn kháng sinh đường uống sau khi xuất viện dựa trên đáp ứng lâm sàng, căn
-nguyên vi sinh vật, bệnh phổi cấu trúc của người bệnh và các bệnh đồng mắc khác
-nếu có (tham khảo Bảng hướng dẫn chuyển đổi đường TTM/uống với một số
-kháng sinh).
-5.6.3. Theo dõi sau xuất viện
-Những người bệnh đã xuất viện do VPMPCĐ nên tái khám thường trong vòng một
-tuần. Tái khám tiếp theo là cần thiết để đánh giá lâm sàng và khả năng thuyên giảm của
-các tổn thương phổi và loại trừ các căn nguyên khác trong trường hợp tổn thương phổi
-không thoái triển, đặc biệt là ung thư phổi ở những người bệnh có nguy cơ (lớn tuổi,
-tiền sử hút thuốc, …) [59, 65].
-
-49
 CHƯƠNG 6. PHÒNG BỆNH VIÊM PHỔI MẮC PHẢI CỘNG ĐỒNG
-6.1. Các biện pháp dự phòng chung
+
+### 6.1. Các biện pháp dự phòng chung
+
 - Điều trị triệt để các ổ nhiễm khuẩn vùng tai mũi họng, răng miệng.
 - Quản lý triệt để các bệnh lý nền của người bệnh: đái tháo đường, bệnh phổi tắc nghẽn
 mạn tính, bệnh gan thận mạn tính.
 - Loại bỏ các kích thích có hại sức khỏe: thuốc lá, thuốc lào, rượu bia.
 - Giữ ấm cổ ngực trong mùa lạnh
 - Hình thành miễn dịch chủ động bằng cách tiêm chủng vacxin chống virus, vi khuẩn.
-6.2. Tiêm phòng vắc xin: thực hiện theo hướng dẫn của Bộ Y tế.
-6.3. Cai thuốc lá: Thực hiện theo hướng dẫn hiện hành.
+
+### 6.2. Tiêm phòng vắc xin
+
+thực hiện theo hướng dẫn của Bộ Y tế.
+
+### 6.3. Cai thuốc lá
+
+Thực hiện theo hướng dẫn hiện hành.
 Những điểm cần nhớ:
 Dự phòng VPMPCĐ cần:
 - Điều trị triệt để các ổ nhiễm khuẩn vùng tai mũi họng, răng miệng, quản lý triệt để
@@ -2626,7 +2070,6 @@ các bệnh lý nền của người bệnh.
 - Tiêm phòng theo hướng dẫn của Bộ Y tế
 - Tư vấn cai thuốc lá.
 
-50
 TÀI LIỆU THAM KHẢO
 1. File TM, Ramirez JA. Community-Acquired Pneumonia. O’Malley PG, editor. N
 Engl J Med. 2023 Aug 17;389(7):632–41. doi:10.1056/NEJMcp2303286
@@ -2663,7 +2106,6 @@ systematic review. Pneumonia. 2020 Dec;12(1):11. doi:10.1186/s41479-020-00074-3
 12. UpToDate Inc. Epidemiology, pathogenesis, and microbiology of community-
 acquired pneumonia in adults. 2019.
 
-51
 13. Wunderink RG, Waterer G. Advances in the causes and management of community
 acquired pneumonia in adults. BMJ. 2017 Jul 10;j2471. doi:10.1136/bmj.j2471
 14. Musher DM, Thorner AR. Community-Acquired Pneumonia. N Engl J Med. 2014
@@ -2701,7 +2143,6 @@ community-acquired pneumonia treated in an ambulatory setting. Respiratory Medic
 23. Johansson N, Kalin M, Tiveljung‐Lindell A, Giske CG, Hedlund J. Etiology of
 Community‐Acquired Pneumonia: Increased Microbiological Yield with New
 
-52
 Diagnostic Methods. CLIN INFECT DIS. 2010 Jan 15;50(2):202–9.
 doi:10.1086/648678
 24. Cilloniz C, Ewig S, Polverino E, Marcos MA, Esquinas C, Gabarrus A, et al.
@@ -2739,7 +2180,6 @@ Infectious Diseases. 2005 Jan 1;40(1):100–7. doi:10.1086/427148
 33. Vayalumkal JV, Whittingham H, Vanderkooi O, Stewart TE, Low DE, Mulvey M,
 et al. Necrotizing pneumonia and septic shock: suspecting CA-MRSA in patients
 
-53
 presenting to Canadian emergency departments. CJEM. 2007 Jul;9(4):300–3.
 doi:10.1017/s1481803500015219 PubMed PMID: 17626697.
 34. Muller MP, Low DE, Green KA, Simor AE, Loeb M, Gregson D, et al. Clinical and
@@ -2777,7 +2217,6 @@ PMCID: PMC7156162.
 43. Hayden FG. Editorial Response: Rhinovirus Pneumonia: A Clinical Entity? CLIN
 INFECT DIS. 1999 Sep;29(3):533–5. doi:10.1086/598628
 
-54
 44. Hage CA, Knox KS, Wheat LJ. Endemic mycoses: Overlooked causes of
 community acquired pneumonia. Respiratory Medicine. 2012 Jun;106(6):769–76.
 doi:10.1016/j.rmed.2012.02.004
@@ -2814,7 +2253,6 @@ incidence and aetiology of hospitalised community-acquired pneumonia among
 Vietnamese adults: a prospective surveillance in Central Vietnam. BMC Infect Dis. 2013
 Dec;13(1):296. doi:10.1186/1471-2334-13-296
 
-55
 54. Tạ Thị Diệu N, Nguyễn Văn K, Nguyễn Vũ T. Nghiên cứu đặc điểm lâm sàng, cận
 lâm sàng và căn nguyên của viêm phổi mắc phải tại cộng đồng [Luận án Tiến sĩ Y học].
 2016.
@@ -2851,7 +2289,6 @@ American Society for Microbiology (ASM). Clinical Infectious Diseases. 2024 Mar
 Pneumonia in Adults: from Classical Bacteriology to Host Transcriptional Signatures.
 Clin Microbiol Rev. 2022 Dec 21;35(4):e00015-22. doi:10.1128/cmr.00015-22
 
-56
 64. Lee WJ, Huang EY, Tsai CM, Kuo KC, Huang YC, Hsieh KS, et al. Role of Serum
 Mycoplasma pneumoniae IgA, IgM, and IgG in the Diagnosis of Mycoplasma
 pneumoniae-Related Pneumonia in School-Age Children and Adolescents. Rosenberg
@@ -2889,7 +2326,6 @@ https://www.taylorfrancis.com/books/9780429863646 doi:10.1201/9780429460418
 74. IBM Corporation [Internet]. Available from:
 https://www.micromedexsolutions.com/
 
-57
 75. Mandell LA, Wunderink RG, Anzueto A, Bartlett JG, Campbell GD, Dean NC, et
 al. Infectious Diseases Society of America/American Thoracic Society Consensus
 Guidelines on the Management of Community-Acquired Pneumonia in Adults. Clinical
@@ -2926,7 +2362,6 @@ Mar;13(3):e061023. doi:10.1136/bmjopen-2022-061023
 al. Prevention and Control of Seasonal Influenza with Vaccines: Recommendations of
 the Advisory Committee on Immunization Practices — United States, 2022–23
 
-58
 Influenza Season. MMWR Recomm Rep. 2022 Aug 26;71(1):1–28.
 doi:10.15585/mmwr.rr7101a1
 86. Kobayashi M, Pilishvili T, Farrar JL, Leidner AJ, Gierke R, Prasad N, et al.
@@ -2963,7 +2398,6 @@ Factors Associated with Potentially Antibiotic-Resistant Pathogens in Community-
 Acquired Pneumonia. Annals of the American Thoracic Society. 2015 Feb 1;12(2):153–
 60. doi:10.1513/AnnalsATS.201407-305OC
 
-59
 95. Leber AL. Clinical Microbiology Procedures Handbook, Multi-Volume. 5th ed.
 Newark: ASM Press; 2023. 1 p. (ASM Bks).
 96. Dinh A, Barbier F, Bedos JP, Blot M, Cattoir V, Claessens YE, et al. Update of
@@ -2993,8 +2427,8 @@ Recommendations of the Advisory Committee on Immunization Practices — United
 States, 2022. MMWR Morb Mortal Wkly Rep. 2022 Jan 21;71(3):80–4.
 doi:10.15585/mmwr.mm7103a2
 
-60
-PHỤ LỤC 1. Liều thường dùng và hiệu chỉnh liều kháng sinh
+## PHỤ LỤC 1. Liều thường dùng và hiệu chỉnh liều kháng sinh
+
 ở người bệnh suy thận
 Đường Liều theo độ thanh thải creatinin (Clcr) (ml/ph)
 TT Tên thuốc Liều thường dùng
@@ -3014,7 +2448,6 @@ mỗi 12h
 Uống 875 mg mỗi 12h 875mg mỗi 12h 500 mg mỗi 24h
 Amoxicillin/acid 10-30: 500 mg
 clavulanic mỗi 12h
-4
 (tính theo liều 30-50: 1 g mỗi 8h
 amoxicilin) Tĩnh 10-30: 1 g x 1 1 g x 1 lần, sau đó,
 1g mỗi 8h 1g mỗi 8h
@@ -3067,7 +2500,6 @@ mạch
 | 15 | Ceftriaxon | Tĩnh mạch | 1-2 g mỗi 24h |  | Không cần hiệu chỉnh liều |  |
 | 16 | Ceftazidim | Tĩnh mạch | 2 g mỗi 8h | 2 g mỗi 8-12h | 2 g mỗi 12-24h | 2 g mỗi 24-48h |
 
-61
 Đường Liều theo độ thanh thải creatinin (Clcr) (ml/ph)
 TT Tên thuốc Liều thường dùng
 dùng >50-90 10-50 <10
@@ -3136,7 +2568,6 @@ mạch 24h 12 mg/kg mỗi 4 mg/kg mỗi 24h 4 mg/kg mỗi 48h
 | độ thuốc trong máu nếu điều kiện cho phép) |  |  |  |  |  |  |
 | 25 | Amikacin | Tĩnh mạch | 15-20 mg/kg mỗi 24h | 60-80 ml/ph: 12 mg/kg mỗi 24h 40-60 ml/ph: | 30-40 ml/ph: 4 mg/kg mỗi 24h 20-30 ml/ph: | 10-20 ml/ph: 4 mg/kg mỗi 48h 0-10 ml/ph |
 
-62
 Đường Liều theo độ thanh thải creatinin (Clcr) (ml/ph)
 TT Tên thuốc Liều thường dùng
 dùng >50-90 10-50 <10
@@ -3202,7 +2633,6 @@ mạch
 | 31 | Erythromycin | Uống | 500 mg mỗi 6h, tối đa 4g/ngày | Không cần hiệu chỉnh liều cho người bệnh suy thận |  |  |
 | 32 | Clarithromycin | Uống, Tĩnh mạch | 500 mg mỗi 12h | 500 mg mỗi 12h | 500 mg mỗi 12- 24h | 500 mg mỗi 24h |
 
-63
 Đường Liều theo độ thanh thải creatinin (Clcr) (ml/ph)
 TT Tên thuốc Liều thường dùng
 dùng >50-90 10-50 <10
@@ -3263,8 +2693,8 @@ liều mỗi 12h)
 |  |  | Uống | 300-450 mg mỗi 6h | Không cần hiệu chỉnh liều cho người bệnh suy thận |  |  |
 | 40 | Sulfamethoxazol/tri methoprim (liều tính theo trimethoprim) | Uống, Tĩnh mạch | 5-20 mg/kg/ngày (chia liều mỗi 6- 12h) | 5-20 mg/kg/ngày (chia liều mỗi 6- 12h) | 30-50: 5-20 mg/kg/ngày (chia liều mỗi 6-12h) 10-29: 5-10 mg/kg/ngày (chia liều mỗi 12h) | Không khuyến cáo (nhưng nếu sử dụng, 5-10 mg/kg mỗi 24h) |
 
-64
-PHỤ LỤC 2. Nồng độ kháng sinh trong huyết thanh và trong ELF
+## PHỤ LỤC 2. Nồng độ kháng sinh trong huyết thanh và trong ELF
+
 của một số kháng sinh
 STT Kháng sinh Chế độ liều Tỷ lệ nồng độ Khả năng đạt đích
 thuốc trong ELF: dược lực học trong
@@ -3317,7 +2747,6 @@ mg x 4 liều (uống) 8 giờ: 13,2 mg/L)
 | 7 | Levofloxacin | 750 mg/ngày x 5 liều (truyền tĩnh mạch) | 4 giờ: 0,9 12 giờ: 0,5 | Trung bình (MIC ≤ 1 mg/L) |
 |  |  | 500 mg liều đơn (uống) | 1 giờ: 0,8 ± 0,4 4 giờ: 0,6 ± 0,5 8 giờ: 0,7 ± 0,3 12 giờ: 0,5 ± 0,6 | Thấp |
 
-65
 STT Kháng sinh Chế độ liều Tỷ lệ nồng độ Khả năng đạt đích
 thuốc trong ELF: dược lực học trong
 nồng độ trong ELF
@@ -3357,8 +2786,8 @@ x 2 ngày
 | 11 | Linezolid | 600 mỗi 12h x 2 ngày (truyền tĩnh mạch) | 1 giờ: 1,1 ± 0,3 12 giờ: 1,0 ± 0,3 | Trung bình (MIC < 4 mg/L) |
 |  |  | 600 mg (liều tải), 1200 mg/ngày (truyền liên tục) x 2 ngày | 1,0 (0,8 - 1,1) | Trung bình (MIC < 4 mg/L) |
 
-66
-PHỤ LỤC 3. Danh mục tương tác thuốc chống chỉ định với các kháng sinh
+## PHỤ LỤC 3. Danh mục tương tác thuốc chống chỉ định với các kháng sinh
+
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 Kháng sinh β-lactam
 1 Ceftriaxon Calci Hình thành tủa Tạo kết tủa tại 1. Chống chỉ định sử
@@ -3406,7 +2835,6 @@ buộc sử dụng kháng
 | 2 |  | Kháng sinh nhóm macrolid: erythromycin clarithromycin | Domperidon | Kháng sinh nhóm macrolid ức chế CYP3A4 làm giảm chuyển hóa của domperidon | Tăng nồng độ domperidon trong huyết thanh, tăng nguy cơ kéo dài khoảng QT | Chống chỉ định phối hợp |  |
 | 3 |  | Kháng sinh nhóm macrolid: erythromycin clarithromycin | Ivabradin | Kháng sinh nhóm macrolid ức chế mạnh CYP3A4 làm giảm chuyển hóa của ivabradin. | Tăng nồng độ ivabradin trong huyết thanh, tăng nguy cơ kéo dài khoảng QT và chậm nhịp tim | Chống chỉ định phối hợp. Cân nhắc thay đổi sang các thuốc nhóm khác có cùng chỉ định và ít có nguy cơ tương tác hơn: Trong trường hợp bắt buộc sử dụng kháng |  |
 
-67
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 sinh macrolid: thay
 erythromycin,
@@ -3454,7 +2882,6 @@ atorvastatin).
 | 4 | Kháng sinh nhóm macrolid: clarithromycin | Ticagrelor | Clarithromycin ức chế CYP3A4 mạnh làm giảm chuyển hóa của ticagrelor | Tăng nồng độ của ticagrelor trong huyết thanh, tăng nguy cơ xuất huyết | Chống chỉ định phối hợp. Cân nhắc thay đổi sang các thuốc nhóm khác có cùng chỉ định và ít có nguy cơ tương tác hơn: Trong trường hợp bắt buộc sử dụng kháng sinh macrolid, thay clarithromycin bằng azithromycin. |
 | 5 | Kháng sinh nhóm macrolid: erythromycin clarithromycin | Dẫn chất statin: simvastatin lovastatin | Kháng sinh nhóm macrolid ức chế mạnh CYP3A4 làm giảm chuyển hóa của dẫn chất statin | Tăng nồng độ của dẫn chất statin trong huyết thanh, tăng nguy cơ bệnh cơ hoặc tiêu cơ vân cấp | Chống chỉ định phối hợp. Cân nhắc thay đổi sang các thuốc nhóm khác có cùng chỉ định và ít có nguy cơ tương tác hơn. - Trong trường hợp bắt buộc sử dụng dẫn chất statin, thay simvastatin/lovastati n bằng các dẫn chất statin khác (lưu ý, khi sử dụng đồng thời với clarithromycin, liều pravastatin không vượt quá 40 mg/ngày, fluvastatin không vượt quá 20 mg/ngày, thận trọng khi phối hợp với atorvastatin). - Trong trường hợp |
 
-68
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 bắt buộc sử dụng
 kháng sinh macrolid:
@@ -3501,7 +2928,6 @@ máu), nhịp tim chậm,
 | 6 | Kháng sinh nhóm macrolid: erythromycin clarithromycin | Alcaloid nấm cựa gà: dihydroergota min Ergotamin Egometrin Methylergom etrin | Kháng sinh nhóm macrolid ức chế mạnh CYP3A4 làm giảm chuyển hóa của alcaloid nấm cựa gà | Tăng nồng độ của alcaloid nấm cựa gà trong huyết thanh, tăng nguy cơ độc tính (nôn, buồn nôn, hoại tử đầu chi, thiếu máu cục bộ do co thắt mạch…) | Chống chỉ định phối hợp. |
 | 7 | Kháng sinh nhóm macrolid: erythromycin clarithromycin | Fluconazol | Hiệp đồng tăng tác dụng | Tăng nguy cơ kéo dài khoảng QT, xoắn đỉnh | 1. Chống chỉ định phối hợp ở các người bệnh có hội chứng QT kéo dài do di truyền hoặc mắc phải. 2. Trên các đối tượng người bệnh khác, tốt nhất nên tránh phối hợp các thuốc này. Trong trường hợp cần thiết phối hợp, cần đánh giá cẩn thận nguy cơ/lợi ích và lượng giá các yếu tố nguy cơ trên từng người bệnh, đặc biệt là rối loạn điện giải (hạ kali máu, hạ magie máu, hạ calci máu), nhịp tim chậm, |
 
-69
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 nữ giới trước khi
 quyết định kê đơn.
@@ -3550,7 +2976,6 @@ Trong trường hợp
 | 9 | Kháng sinh nhóm macrolid: azithromycin roxithromycin spiramycin | Domperidon | Hiệp đồng tăng tác dụng | Tăng nguy cơ kéo dài khoảng QT, xoắn đỉnh | Chống chỉ định phối hợp. |
 | 10 | Kháng sinh nhóm macrolid: azithromycin clarithromycin | Haloperidol | Hiệp đồng tăng tác dụng | Tăng nguy cơ kéo dài khoảng QT, xoắn đỉnh | 1. Chống chỉ định phối hợp ở các người bệnh có hội chứng QT kéo dài do di truyền hoặc mắc phải. 2. Trên các đối tượng người bệnh khác, tốt nhất nên tránh phối hợp các thuốc này. Trong trường hợp |
 
-70
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 cần thiết phối hợp,
 cần đánh giá cẩn thận
@@ -3598,7 +3023,6 @@ clarithromycin gp, làm giảm nồng độ ms và saquinavir ở
 | 11 | Kháng sinh nhóm macrolid: azithromycin clarithromycin erythromycin | Thioridazin | Hiệp đồng tăng tác dụng | Tăng nguy cơ kéo dài khoảng QT, xoắn đỉnh | 1. Chống chỉ định phối hợp ở các người bệnh có hội chứng QT kéo dài do di truyền hoặc mắc phải. 2. Trên các đối tượng người bệnh khác, tốt nhất nên tránh phối hợp các thuốc này. Trong trường hợp cần thiết phối hợp, cần đánh giá cẩn thận nguy cơ/lợi ích và lượng giá các yếu tố nguy cơ trên từng người bệnh, đặc biệt là rối loạn điện giải (hạ kali máu, hạ magie máu, hạ calci máu), nhịp tim chậm, nữ giới trước khi quyết định kê đơn. |
 | 12 | Kháng sinh nhóm macrolid: erythromycin clarithromycin | Saquinavir/rit onavir | Kháng sinh macrolid ức chế CYP3A4 và P- gp, làm giảm | Tăng nồng độ kháng sinh macrolid tăng nồng độ | 1. Chống chỉ định phối hợp ở người bệnh có QTc > 450 ms và saquinavir ở |
 
-71
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 chuyển hóa và saquinavir, dạng phối hợp
 thải trừ tăng nguy cơ ritonavir.
@@ -3647,7 +3071,6 @@ dihydropyridi làm giảm nguy cơ hạ sang các thuốc nhóm
 | 14 | Kháng sinh nhóm macrolid: clarithromycin | Tolvaptan | Clarithromycin ức chế CYP3A4 mạnh làm giảm chuyển hóa của tolvaptan | Tăng nồng độ tolvaptan trong huyết thanh, tăng nguy cơ tác dụng không mong muốn (tăng nồng độ natri huyết thanh, đa niệu, khát nước, giảm thể tích tuần hoàn...) | Chống chỉ định phối hợp. Cân nhắc thay đổi sang các thuốc nhóm khác có cùng chỉ định và ít có nguy cơ tương tác hơn: Trong trường hợp bắt buộc sử dụng kháng sinh macrolid, thay clarithromycin bằng azithromycin. |
 | 15 | Kháng sinh nhóm macrolid: clarithromycin | Thuốc chẹn kênh calci nhóm dihydropyridi | Clarithromycin ức chế CYP3A4 mạnh làm giảm | Tăng nồng độ lercanidipin/fe lodipin, tăng nguy cơ hạ | Chống chỉ định phối hợp. Cân nhắc thay đổi sang các thuốc nhóm |
 
-72
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 n: chuyển hóa của huyết áp khác có cùng chỉ
 Felodipin felodipin hoặc nghiêm trọng định và ít có nguy cơ
@@ -3697,7 +3120,6 @@ Moxifloxacin
 |  | Kháng sinh fluoroquinolon |  |  |  |  |  |  |
 | 18 |  | Kháng sinh nhóm fluoroquinolon: Ciprofloxacin Levofloxacin Moxifloxacin | Domperidon | Hiệp đồng tăng tác dụng | Tăng nguy cơ kéo dài khoảng QT, xoắn đỉnh | Chống chỉ định phối hợp. |  |
 
-73
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 19 Kháng sinh Thioridazin Hiệp đồng tăng Tăng nguy cơ 1. Chống chỉ định
 nhóm tác dụng kéo dài khoảng phối hợp ở các người
@@ -3744,7 +3166,6 @@ nguy cơ trên từng
 | 19 | Kháng sinh nhóm fluoroquinolon: Ciprofloxacin Levofloxacin Moxifloxacin | Thioridazin | Hiệp đồng tăng tác dụng | Tăng nguy cơ kéo dài khoảng QT, xoắn đỉnh | 1. Chống chỉ định phối hợp ở các người bệnh có hội chứng QT kéo dài do di truyền hoặc mắc phải. 2. Trên các đối tượng người bệnh khác, tốt nhất nên tránh phối hợp các thuốc này. Trong trường hợp cần thiết phối hợp, cần đánh giá cẩn thận nguy cơ/lợi ích và lượng giá các yếu tố nguy cơ trên từng người bệnh, đặc biệt là rối loạn điện giải (hạ kali máu, hạ magie máu, hạ calci máu), nhịp tim chậm, nữ giới trước khi quyết định kê đơn. |
 | 20 | Kháng sinh nhóm fluoroquinolon: Levofloxacin | Haloperidol | Hiệp đồng tăng tác dụng | Tăng nguy cơ kéo dài khoảng QT, xoắn đỉnh | 1. Chống chỉ định phối hợp ở các người bệnh có hội chứng QT kéo dài do di truyền hoặc mắc phải. 2. Trên các đối tượng người bệnh khác, tốt nhất nên tránh phối hợp các thuốc này. Trong trường hợp cần thiết phối hợp, cần đánh giá cẩn thận nguy cơ/lợi ích và lượng giá các yếu tố nguy cơ trên từng |
 
-74
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 người bệnh, đặc biệt
 là rối loạn điện giải
@@ -3792,7 +3213,6 @@ tim chậm...)
 | 21 | Kháng sinh nhóm fluoroquinolon: Moxifloxacin | Amiodaron Citalopram Clorpromazin Escitalopram Haloperidol Piperaquin/di hydroartemisi nin (piperaquin) Sotalol | Hiệp đồng tăng tác dụng | Tăng nguy cơ kéo dài khoảng QT, xoắn đỉnh | 1. Chống chỉ định phối hợp ở các người bệnh có hội chứng QT kéo dài do di truyền hoặc mắc phải. 2. Trên các đối tượng người bệnh khác, tốt nhất nên tránh phối hợp các thuốc này. Trong trường hợp cần thiết phối hợp, cần đánh giá cẩn thận nguy cơ/lợi ích và lượng giá các yếu tố nguy cơ trên từng người bệnh, đặc biệt là rối loạn điện giải (hạ kali máu, hạ magie máu, hạ calci máu), nhịp tim chậm, nữ giới trước khi quyết định kê đơn. |
 | 22 | Kháng sinh nhóm fluoroquinolon: Ciprofloxacin | Tizanidin | Ciprofloxacin ức chế CYP1A2 mạnh làm giảm chuyển hóa của tizanidin | Tăng nồng độ của tizanidin trong huyết thanh, tăng nguy cơ tác dụng bất lợi (hạ huyết áp, buồn ngủ, nhịp tim chậm...) | Chống chỉ định phối hợp |
 
-75
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 23 Kháng sinh Duloxetin Ciprofloxacin Tăng nồng độ Chống chỉ định phối
 nhóm ức chế của duloxetin hợp
@@ -3841,7 +3261,6 @@ nhanh, tăng chỉ định và ít có nguy
 |  | Linezolid |  |  |  |  |  |  |
 | 25 |  | Linezolid | Thuốc chống trầm cảm ba vòng (TCA) Amitriptylin Clomipramin | Hiệp đồng tác dụng serotonin. | Tăng nguy cơ hội chứng serotonin (sốt cao, rối loạn nhận thức, tăng phản xạ, mất phối hợp, rung giật cơ, cứng cơ, co giật, nhịp tim nhanh, tăng | 1. Cố gắng tránh sử dụng đồng thời linezolid và thuốc chồng trầm cảm ba vòng. Tốt nhất các thuốc này nên sử dụng cách nhau 2 tuần. Cân nhắc thay đổi sang các thuốc nhóm khác có cùng chỉ định và ít có nguy |  |
 
-76
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 huyết áp, tăng cơ tương tác hơn.
 thân nhiệt, vã 2. Trong hợp không
@@ -3888,7 +3307,6 @@ hoặc khẩn cấp bằng
 |  |  |  |  | huyết áp, tăng thân nhiệt, vã mồ hôi, ảo giác, kích động hoặc bồn chồn…) | cơ tương tác hơn. 2. Trong hợp không thể trì hoãn điều trị được 2 tuần, bắt buộc sử dụng dài ngày hoặc khẩn cấp bằng linezolid và không có thuốc khác thay thế, cân bằng lợi ích và nguy cơ xảy ra hội chứng serotonin. Nếu lợi ích vượt trội nguy cơ, vẫn có thể sử dụng đồng thời nhưng cần giám sát chặt chẽ chặt chẽ người bệnh, đặc biệt trong tháng đầu tiên sử dụng đồng thời 2 thuốc. |
 | 26 | Linezolid | Thuốc ức chế tái thu hồi chọn lọc serotonin (SSRI): Paroxetin Fluvoxamin Fluoxetin Sertralin Citalopram Escitalopram Venlafaxin Duloxetin | Hiệp đồng tác dụng serotonin. | Tăng nguy cơ hội chứng serotonin (sốt cao, rối loạn nhận thức, tăng phản xạ, mất phối hợp, rung giật cơ, cứng cơ, co giật, nhịp tim nhanh, tăng huyết áp, tăng thân nhiệt, vã mồ hôi, ảo giác, kích động hoặc bồn chồn…) | 1. Cố gắng tránh sử dụng đồng thời linezolid và thuốc ức chế tái thu hồi chọn lọc serotonin. Tốt nhất các thuốc này nên sử dụng cách nhau 2 tuần (hoặc 5 tuần với fluoxetin). Cân nhắc thay đổi sang các thuốc nhóm khác có cùng chỉ định và ít có nguy cơ tương tác hơn. 2. Trong hợp không thể trì hoãn điều trị được 2 tuần, bắt buộc sử dụng dài ngày hoặc khẩn cấp bằng |
 
-77
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 linezolid và không có
 thuốc khác thay thế,
@@ -3935,7 +3353,6 @@ nhưng cần giám sát
 |  |  |  |  |  | linezolid và không có thuốc khác thay thế, cân bằng lợi ích và nguy cơ xảy ra hội chứng serotonin. Nếu lợi ích vượt trội nguy cơ, vẫn có thể sử dụng đồng thời nhưng cần giám sát chặt chẽ chặt chẽ người bệnh, đặc biệt trong tháng đầu tiên sử dụng đồng thời 2 thuốc. |
 | 27 | Linezolid | Dẫn chất triptan: Sumatriptan | Hiệp đồng tác dụng serotonin. | Tăng nguy cơ hội chứng serotonin (sốt cao, rối loạn nhận thức, tăng phản xạ, mất phối hợp, rung giật cơ, cứng cơ, co giật, nhịp tim nhanh, tăng huyết áp, tăng thân nhiệt, vã mồ hôi, ảo giác, kích động hoặc bồn chồn…) | 1. Cố gắng tránh sử dụng đồng thời linezolid và dẫn chất triptan. Tốt nhất các thuốc này nên sử dụng cách nhau 2 tuần. Cân nhắc thay đổi sang các thuốc nhóm khác có cùng chỉ định và ít có nguy cơ tương tác hơn. 2. Trong hợp không thể trì hoãn điều trị được 2 tuần, bắt buộc sử dụng dài ngày hoặc khẩn cấp bằng linezolid và không có thuốc khác thay thế, cân bằng lợi ích và nguy cơ xảy ra hội chứng serotonin. Nếu lợi ích vượt trội nguy cơ, vẫn có thể sử dụng đồng thời nhưng cần giám sát |
 
-78
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 chặt chẽ chặt chẽ
 người bệnh, đặc biệt
@@ -3982,7 +3399,6 @@ nhưng cần giám sát
 |  |  |  |  |  | chặt chẽ chặt chẽ người bệnh, đặc biệt trong tháng đầu tiên sử dụng đồng thời 2 thuốc. |
 | 28 | Linezolid | Dẫn chất opioid: Pethidin Tramadol Fentanyl Dextromethor phan Methadon | Hiệp đồng tác dụng serotonin. | Tăng nguy cơ hội chứng serotonin (sốt cao, rối loạn nhận thức, tăng phản xạ, mất phối hợp, rung giật cơ, cứng cơ, co giật, nhịp tim nhanh, tăng huyết áp, tăng thân nhiệt, vã mồ hôi, ảo giác, kích động hoặc bồn chồn…) | 1. Cố gắng tránh sử dụng đồng thời linezolid và dẫn chất opioid. Tốt nhất các thuốc này nên sử dụng cách nhau 2 tuần. Cân nhắc thay đổi sang các thuốc nhóm khác có cùng chỉ định và ít có nguy cơ tương tác hơn. Trong trường hợp bắt buộc sử dụng opioid, có thể đổi sang các opiod khác không có hoạt tính ức chế thu hồi serotonin (morphin, codein, oxycodon, buprenorphin) 2. Trong hợp không thể trì hoãn điều trị được 2 tuần, bắt buộc sử dụng dài ngày hoặc khẩn cấp bằng linezolid và không có thuốc khác thay thế, cân bằng lợi ích và nguy cơ xảy ra hội chứng serotonin. Nếu lợi ích vượt trội nguy cơ, vẫn có thể sử dụng đồng thời nhưng cần giám sát |
 
-79
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 chặt chẽ chặt chẽ
 người bệnh, đặc biệt
@@ -4030,7 +3446,6 @@ Parkinson: noradrenalin xuất hiện cơn dụng
 | 29 | Linezolid | Thuốc khác: Trazodon Bupropion Mirtazapin Methylphenid at Milnacipran Carbamazepi n Doxylamin | Hiệp đồng tác dụng serotonin. | Tăng nguy cơ hội chứng serotonin (sốt cao, rối loạn nhận thức, tăng phản xạ, mất phối hợp, rung giật cơ, cứng cơ, co giật, nhịp tim nhanh, tăng huyết áp, tăng thân nhiệt, vã mồ hôi, ảo giác, kích động hoặc bồn chồn…) | 1. Cố gắng tránh sử dụng đồng thời linezolid và các thuốc khác làm tăng nồng độ serotonin. Tốt nhất các thuốc này nên sử dụng cách nhau 2 tuần. Cân nhắc thay đổi sang các thuốc nhóm khác có cùng chỉ định và ít có nguy cơ tương tác hơn. 2. Trong hợp không thể trì hoãn điều trị được 2 tuần, bắt buộc sử dụng dài ngày hoặc khẩn cấp bằng linezolid và không có thuốc khác thay thế, cân bằng lợi ích và nguy cơ xảy ra hội chứng serotonin. Nếu lợi ích vượt trội nguy cơ, vẫn có thể sử dụng đồng thời nhưng cần giám sát chặt chẽ chặt chẽ người bệnh, đặc biệt trong tháng đầu tiên sử dụng đồng thời 2 thuốc. |
 | 30 | Linezolid | Thuốc chống Parkinson: | Tăng tích lũy noradrenalin | Tăng nguy cơ xuất hiện cơn | Chống chỉ định sử dụng |
 
-80
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 Levodopa/car (norepinephrin) tăng huyết áp levodopa/carbidopa
 bidopa và dopamin. (đau đầu, đánh đồng thời hoặc trong
@@ -4076,7 +3491,6 @@ Kháng sinh cyclin
 | 33 |  | Linezolid | Nefopam | Nefopam ức chế thu hồi noradrenalin (norepinephrin) | Tăng nguy cơ kích thích thần kinh trung ương (co giật, ảo giác và kích động) | Chống chỉ định phối hợp. |  |
 |  | Kháng sinh cyclin |  |  |  |  |  |  |
 
-81
 STT Thuốc 1 Thuốc 2 Hậu quả Cơ chế Xử trí
 34 Kháng sinh Dẫn chất Hiệp đồng tăng Tăng nguy cơ Chống chỉ định phối
 tetracyclin: retinoid: độc tính tăng áp nội sọ hợp
@@ -4090,7 +3504,6 @@ loạn thị giác)
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 34 | Kháng sinh tetracyclin: Tetracyclin Doxycyclin Minocyclin Tigecyclin | Dẫn chất retinoid: Acitretin Tretinoin Isotretinoin | Hiệp đồng tăng độc tính | Tăng nguy cơ tăng áp nội sọ lành tính (phù gai thị, đau đầu, buồn nôn và nôn, và rối loạn thị giác) | Chống chỉ định phối hợp |
 
-82
 TÓM TẮT CÁC ĐIỂM CẬP NHẬT CHÍNH
 TRONG HƯỚNG DẪN VPMPCĐ 2026
 Hướng dẫn VPMPCĐ năm 2026 được biên soạn trên cơ sở cập nhật các bằng chứng
@@ -4118,13 +3531,17 @@ dịch bên cạnh tác dụng kháng khuẩn. Đồng thời, thang điểm PES
 phân tầng nguy cơ, qua đó hỗ trợ bác sĩ nhận diện sớm các trường hợp dễ nhiễm vi
 khuẩn kháng thuốc trong khoa ICU.
 4. Cập nhật về điều trị (Chương 5)
-4.1. Điều trị theo mức độ nặng
+
+### 4.1. Điều trị theo mức độ nặng
+
 Phiên bản 2026 mở rộng phạm vi điều trị đối với các người bệnh nặng và rất nặng, cho
 phép chăm sóc tại khoa Hô hấp hoặc Trung tâm Hô hấp trong trường hợp cơ sở có đầy
 đủ năng lực hồi sức cấp cứu. Đây là điều chỉnh phù hợp với thực tế Việt Nam, đặc biệt
 trong bối cảnh hạn chế giường ICU. Trong khi đó, phiên bản hướng dẫn trước chủ yếu
 khuyến cáo điều trị nhóm người bệnh này tại khoa Hồi sức tích cực.
-4.2. Cập nhật về sử dụng corticoid
+
+### 4.2. Cập nhật về sử dụng corticoid
+
 Một điểm nổi bật của hướng dẫn 2026 là phần cập nhật chi tiết hơn về chỉ định corticoid
 trong VPMPCĐ nặng. Nội dung này được xây dựng dựa trên tài liệu cập nhật theo hướng
 dẫn SPILF–SPLF, với sự đồng thuận từ các hội chuyên ngành lớn của Pháp gồm SRLF
@@ -4133,8 +3550,8 @@ hướng dẫn trước vốn chỉ đề cập ngắn gọn việc cân nhắc 
 phiên bản 2026 trình bày cụ thể các chỉ định, liều lượng, thời gian điều trị cũng như
 chống chỉ định, giúp thực hành lâm sàng thống nhất và an toàn hơn.
 
-83
-4.3. Điều trị Chlamydia pneumoniae
+### 4.3. Điều trị Chlamydia pneumoniae
+
 Hướng dẫn mới bổ sung clarithromycin liều 500 mg hai lần mỗi ngày trong 10 ngày như
 lựa chọn điều trị đầu tay cho Chlamydia pneumoniae.
 Kết luận
