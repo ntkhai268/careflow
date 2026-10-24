@@ -155,6 +155,6 @@ class AiClinicalAssistantServiceTest {
         // Then
         assertThat(response).isNotNull();
         assertThat(response.getMode()).isEqualTo("SERVICE_UNAVAILABLE");
-        assertThat(response.getSummary()).contains("Bác sĩ Chồn AI");
+        assertThat(response.getSummary()).contains("Trợ lý AI Lâm Sàng");
     }
 }

@@ -28,13 +28,15 @@ public class AiClinicalAssistantService {
             "Gợi ý hỗ trợ lâm sàng từ CareFlow AI dựa trên Phác đồ điều trị Bộ Y Tế Việt Nam. Bác sĩ chịu trách nhiệm hoàn toàn đối với quyết định chẩn đoán và chỉ định điều trị.";
 
     private static final String SYSTEM_INSTRUCTION =
-            "Bạn là Bác sĩ Chồn AI 🐾 (CareFlow Clinical Assistant) - một chú Chồn bác sĩ vừa thông minh vừa HÀI HƯỚC, DUYÊN DÁNG, chuyên gia hỗ trợ lâm sàng tại bệnh viện!\n\n" +
-            "QUY TẮC PHẢN HỒI (CLINICAL RAG & WITTY RULES):\n" +
-            "1. TÍNH CÁCH HÀI HƯỚC DUYÊN DÁNG: Mở đầu hoặc kết thúc bằng 1 câu đùa dí dỏm, duyên dáng về ngành y để xua tan căng thẳng cho Bác sĩ.\n" +
-            "2. TUÂN THỦ PHÁC ĐỒ BỘ Y TẾ (CLINICAL RAG): Khi ngữ cảnh có cung cấp đoạn trích Phác đồ Bộ Y Tế (Guideline Chunks), bạn BẮT BUỘC phải đối chiếu triệu chứng, gợi ý phân độ/chẩn đoán phân biệt và đề xuất phác đồ thuốc/liều dùng/cận lâm sàng bám sát chuẩn hướng dẫn Bộ Y Tế.\n" +
-            "3. CẢNH BÁO TƯƠNG TÁC THUỐC (DDI) & DỊ ỨNG: Nếu phát hiện nguy cơ tương tác thuốc bất lợi hoặc chống chỉ định, PHẢI cảnh báo nổi bật ngay đầu câu trả lời.\n" +
-            "4. TRÌNH BÀY CHUYÊN MÔN RÕ RÀNG: Dùng các gạch đầu dòng súc tích, **in đậm** các từ khóa quan trọng (tên thuốc, liều dùng, chỉ số sinh tồn, xét nghiệm).\n" +
-            "5. CHỈ HỖ TRỢ Y TẾ: Nếu câu hỏi ngoài lề hoặc độc hại, từ chối hóm hỉnh: \"Em là Bác sĩ Chồn AI 🐾, chỉ rành chuyên môn y tế và chăm sóc bệnh nhân thôi bác sĩ ơi!\"";
+            "Bạn là Trợ lý AI Lâm Sàng CareFlow (CareFlow Clinical Assistant) - chuyên gia hỗ trợ tra cứu phác đồ điều trị và an toàn dùng thuốc tại bệnh viện theo chuẩn Bộ Y Tế Việt Nam.\n\n" +
+            "QUY TẮC PHẢN HỒI LÂM SÀNG:\n" +
+            "1. TÁC PHONG CHUYÊN MÔN NGHIÊM TÚC: Trả lời ngắn gọn, chuẩn xác y khoa, khách quan, trung thực. TUYỆT ĐỐI KHÔNG kể chuyện đùa, không dùng emoji cợt nhả hay nhân cách hóa con vật.\n" +
+            "2. TUÂN THỦ PHÁC ĐỒ BỘ Y TẾ (CLINICAL RAG): Khi có trích dẫn Phác đồ Bộ Y Tế trong ngữ cảnh, đối chiếu trực tiếp triệu chứng, chẩn đoán phân biệt và khuyến nghị điều trị bám sát hướng dẫn Bộ Y Tế.\n" +
+            "3. KIỂM TRA TƯƠNG TÁC THUỐC (DDI) & DỊ ỨNG:\n" +
+            "   - NẾU CA KHÁM CHƯA CÓ ĐƠN THUỐC HOẶC THUỐC ĐANG DÙNG: Báo rõ ràng: \"Hiện tại ca khám chưa có thuốc trong đơn. Bác sĩ vui lòng thêm thuốc để hệ thống đối chiếu tương tác DDI từ Dược thư Quốc gia.\" TUYỆT ĐỐI KHÔNG tự động liệt kê các cặp tương tác thuốc không liên quan.\n" +
+            "   - NẾU ĐÃ CÓ THUỐC ĐƯỢC CHỈ ĐỊNH: Chỉ phân tích và cảnh báo những tương tác thực sự có liên quan giữa các thuốc đang kê hoặc với tiền sử dị ứng của bệnh nhân.\n" +
+            "4. ĐỊNH DẠNG RÕ RÀNG: Dùng các gạch đầu dòng súc tích, **in đậm** các thuật ngữ y khoa, tên thuốc, liều dùng, chỉ số sinh hiệu.\n" +
+            "5. PHẠM VI HỖ TRỢ: Chỉ tập trung vào chuyên môn y tế lâm sàng và an toàn bệnh nhân.";
 
     private final GeminiClientService geminiClientService;
     private final DeepSeekClientService deepSeekClientService;
@@ -77,7 +79,7 @@ public class AiClinicalAssistantService {
                         .summary(aiText)
                         .suggestions(suggestions)
                         .missingInformation(List.of("Tiền sử dị ứng chi tiết", "Thời gian khởi phát triệu chứng chính xác", "Kết quả cận lâm sàng gần nhất"))
-                        .warnings(extractWarningsFromChunks(relevantChunks))
+                        .warnings(extractWarningsFromChunks(relevantChunks, pageData))
                         .disclaimer(MEDICAL_DISCLAIMER)
                         .model(AiModelInfo.builder()
                                 .provider("Google AI Studio (Gemini)")
@@ -103,7 +105,7 @@ public class AiClinicalAssistantService {
                         .summary(dsText)
                         .suggestions(suggestions)
                         .missingInformation(List.of("Tiền sử dị ứng chi tiết", "Thời gian khởi phát triệu chứng chính xác"))
-                        .warnings(extractWarningsFromChunks(relevantChunks))
+                        .warnings(extractWarningsFromChunks(relevantChunks, pageData))
                         .disclaimer(MEDICAL_DISCLAIMER)
                         .model(AiModelInfo.builder()
                                 .provider("DeepSeek AI")
@@ -156,7 +158,7 @@ public class AiClinicalAssistantService {
                         .summary(aiText)
                         .suggestions(suggestions)
                         .missingInformation(List.of())
-                        .warnings(extractWarningsFromChunks(relevantChunks))
+                        .warnings(extractWarningsFromChunks(relevantChunks, pageData))
                         .disclaimer(MEDICAL_DISCLAIMER)
                         .model(AiModelInfo.builder()
                                 .provider("Google AI Studio (Gemini)")
@@ -181,7 +183,7 @@ public class AiClinicalAssistantService {
                         .summary(dsText)
                         .suggestions(suggestions)
                         .missingInformation(List.of())
-                        .warnings(extractWarningsFromChunks(relevantChunks))
+                        .warnings(extractWarningsFromChunks(relevantChunks, pageData))
                         .disclaimer(MEDICAL_DISCLAIMER)
                         .model(AiModelInfo.builder()
                                 .provider("DeepSeek AI")
@@ -287,13 +289,35 @@ public class AiClinicalAssistantService {
         return items;
     }
 
-    private List<String> extractWarningsFromChunks(List<RankedChunk> chunks) {
+    private List<String> extractWarningsFromChunks(List<RankedChunk> chunks, String pageData) {
         List<String> warnings = new ArrayList<>();
-        warnings.add("Kiểm tra tiền sử dị ứng thuốc nhóm Beta-lactam & NSAIDs");
+        if (pageData == null || !pageData.contains("Thuốc đang chỉ định:")) {
+            // Chưa có thuốc trong đơn ca khám -> Không sinh cảnh báo tương tác thuốc DDI
+            return warnings;
+        }
+
+        String medsPart = "";
+        int medIdx = pageData.indexOf("Thuốc đang chỉ định:");
+        if (medIdx != -1) {
+            medsPart = pageData.substring(medIdx).toLowerCase();
+        }
+
         if (chunks != null) {
             for (RankedChunk chunk : chunks) {
                 if ("BYT-QD-5948-DDI".equals(chunk.documentCode()) || chunk.sectionTitle().toLowerCase().contains("tương tác")) {
-                    warnings.add("Cảnh báo tương tác thuốc DDI từ Dược thư Quốc gia: " + chunk.sectionTitle());
+                    String titleLower = chunk.sectionTitle().toLowerCase();
+                    String contentLower = chunk.content().toLowerCase();
+                    boolean isRelevant = false;
+                    for (String med : medsPart.split("[;,\\(\\)]")) {
+                        String cleanMed = med.trim().replaceAll("(?i)(thuốc đang chỉ định:|\\d+mg|\\d+ml|viên|lần|ngày|sau|khi|ăn)", "").trim();
+                        if (cleanMed.length() >= 3 && (titleLower.contains(cleanMed) || contentLower.contains(cleanMed))) {
+                            isRelevant = true;
+                            break;
+                        }
+                    }
+                    if (isRelevant) {
+                        warnings.add("Cảnh báo tương tác thuốc DDI từ Dược thư Quốc gia: " + chunk.sectionTitle());
+                    }
                 }
             }
         }
@@ -303,7 +327,7 @@ public class AiClinicalAssistantService {
     private ClinicalSuggestionResponse buildRuleBasedSuggestions(String interactionId, String consultationId, List<RankedChunk> chunks) {
         List<ClinicalSuggestionItem> suggestions = buildSuggestionsFromChunks(chunks, consultationId);
 
-        String summary = "Bác sĩ Chồn AI 🐾: Hiện tại cổng LLM tạm thời chưa phản hồi, nhưng em đã tìm kiếm được các mục phác đồ Bộ Y Tế liên quan trong kho tri thức của bệnh viện để Bác sĩ tham khảo nhanh bên dưới ạ.";
+        String summary = "Trợ lý AI Lâm Sàng: Hiện tại cổng LLM tạm thời chưa phản hồi, nhưng hệ thống đã tìm kiếm được các mục phác đồ Bộ Y Tế liên quan trong kho tri thức của bệnh viện để Bác sĩ tham khảo nhanh bên dưới.";
 
         ClinicalSuggestionResponse response = ClinicalSuggestionResponse.builder()
                 .interactionId(interactionId)
@@ -311,7 +335,7 @@ public class AiClinicalAssistantService {
                 .summary(summary)
                 .suggestions(suggestions)
                 .missingInformation(List.of())
-                .warnings(extractWarningsFromChunks(chunks))
+                .warnings(extractWarningsFromChunks(chunks, ""))
                 .disclaimer(MEDICAL_DISCLAIMER)
                 .model(AiModelInfo.builder().provider("CareFlow AI").name("careflow-clinical-assistant").version("1.0.0").build())
                 .generatedAt(Instant.now().toString())
@@ -322,7 +346,7 @@ public class AiClinicalAssistantService {
     }
 
     private ClinicalSuggestionResponse buildRuleBasedChat(String interactionId, String consultationId, String message) {
-        String replySummary = "Bác sĩ Chồn AI 🐾: Hiện tại dịch vụ AI đang tạm thời chưa khả dụng. Rất mong Bác sĩ thông cảm và vui lòng sử dụng lại sau.";
+        String replySummary = "Trợ lý AI Lâm Sàng: Hiện tại dịch vụ AI đang tạm thời chưa khả dụng. Rất mong Bác sĩ thông cảm và vui lòng sử dụng lại sau.";
 
         ClinicalSuggestionResponse response = ClinicalSuggestionResponse.builder()
                 .interactionId(interactionId)

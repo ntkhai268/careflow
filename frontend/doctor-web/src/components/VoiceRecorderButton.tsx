@@ -130,13 +130,12 @@ export default function VoiceRecorderButton({
       <div className="flex items-center gap-2">
         <div className="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold bg-purple-100 text-[#6E2582] rounded-md border border-purple-200 shadow-xs">
           <span className="animate-spin inline-block w-3.5 h-3.5 border-2 border-[#6E2582] border-t-transparent rounded-full" />
-          <span>AI đang bóc tách lời khám...</span>
+          <span>Đang xử lý...</span>
         </div>
         <button
           type="button"
           onClick={handleCancelRecording}
           className="px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 border border-card-border rounded-md transition-all cursor-pointer"
-          title="Hủy xử lý và ghi âm lại"
         >
           Hủy
         </button>
@@ -155,23 +154,22 @@ export default function VoiceRecorderButton({
           </span>
         </div>
 
-        {/* Done / Finish recording button */}
+        {/* Done button */}
         <button
           type="button"
           onClick={handleStopRecording}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-md shadow-xs transition-all cursor-pointer"
+          className="px-3 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-md shadow-xs transition-all cursor-pointer"
         >
-          <span>Xong (Bóc tách)</span>
+          Xong
         </button>
 
-        {/* Cancel button to record again immediately */}
+        {/* Cancel button */}
         <button
           type="button"
           onClick={handleCancelRecording}
           className="px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:text-rose-700 bg-white hover:bg-slate-100 border border-card-border rounded-md transition-all cursor-pointer"
-          title="Hủy đoạn ghi âm này để nói lại từ đầu"
         >
-          Hủy & Nói lại
+          Hủy
         </button>
       </div>
     );
@@ -183,11 +181,9 @@ export default function VoiceRecorderButton({
       type="button"
       onClick={handleStartRecording}
       disabled={disabled}
-      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-white hover:bg-purple-50 text-[#6E2582] border border-purple-200 hover:border-purple-300 rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
-      title="Nói để AI tự động điền các chỉ số sinh hiệu, triệu chứng và chẩn đoán"
+      className="px-3.5 py-1.5 text-xs font-semibold bg-white hover:bg-purple-50 text-[#6E2582] border border-purple-200 hover:border-purple-300 rounded-md disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-xs cursor-pointer"
     >
-      <span className="text-sm">🎙️</span>
-      <span>Ghi âm lời khám</span>
+      Ghi âm
     </button>
   );
 }

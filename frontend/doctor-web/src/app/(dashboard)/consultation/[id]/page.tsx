@@ -1041,100 +1041,91 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         {/* Left Column (3/5): Tabbed Clinical & Diagnostic Data */}
         <div className="lg:col-span-3 space-y-4">
           
-          {/* AI Voice Dictation Bar */}
-          {!isConsultationLocked && (
-            <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 bg-purple-50/50 border border-purple-200/80 rounded-lg">
-              <div className="flex items-center gap-2">
-                <div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-xs font-bold text-[#6E2582]">Ghi âm lời khám rảnh tay (STT)</span>
-                    <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-bold border border-purple-200">AI</span>
-                  </div>
-                  <p className="text-[11px] text-[#6A5C70]">Đọc các chỉ số sinh hiệu, triệu chứng hoặc chẩn đoán để AI tự động điền</p>
-                </div>
-              </div>
-              <VoiceRecorderButton
-                onAudioReady={handleVoiceRecorded}
-                disabled={isConsultationLocked}
-              />
-            </div>
-          )}
-
           {/* Navigation Tabs */}
-          <div className="border-b border-card-border flex bg-card-bg rounded-t-lg">
-            <button
-              type="button"
-              onClick={() => setActiveTab("vitals")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-tl-lg ${
-                activeTab === "vitals"
-                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
-              }`}
-            >
-              1. Sinh hiệu
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("clinical")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                activeTab === "clinical"
-                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
-              }`}
-            >
-              2. Triệu chứng & Lâm sàng
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("diagnosis")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                activeTab === "diagnosis"
-                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
-              }`}
-            >
-              3. Chẩn đoán ICD-10
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("labs")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                activeTab === "labs"
-                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
-              }`}
-            >
-              4. Chỉ định Cận lâm sàng ({selectedLabServices.length > 0 ? selectedLabServices.length : existingLabOrders.length})
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("summary")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
-                activeTab === "summary"
-                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
-              }`}
-            >
-              5. Tóm tắt lâm sàng
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setActiveTab("ai");
-                if (!aiResponse) handleGetAiSuggestions();
-              }}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-tr-lg flex items-center gap-1.5 ${
-                activeTab === "ai"
-                  ? "border-[#6E2582] text-[#6E2582] bg-purple-50"
-                  : "border-transparent text-purple-700 hover:text-[#6E2582]"
-              }`}
-            >
-              <svg className="w-3.5 h-3.5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-              <span>Trợ lý AI Lâm sàng</span>
-              <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-black border border-purple-200">RAG</span>
-            </button>
+          <div className="border-b border-card-border flex items-center justify-between bg-card-bg rounded-t-lg pr-3">
+            <div className="flex overflow-x-auto">
+              <button
+                type="button"
+                onClick={() => setActiveTab("vitals")}
+                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-tl-lg ${
+                  activeTab === "vitals"
+                    ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                    : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+                }`}
+              >
+                1. Sinh hiệu
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("clinical")}
+                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+                  activeTab === "clinical"
+                    ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                    : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+                }`}
+              >
+                2. Triệu chứng & Lâm sàng
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("diagnosis")}
+                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+                  activeTab === "diagnosis"
+                    ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                    : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+                }`}
+              >
+                3. Chẩn đoán ICD-10
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("labs")}
+                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+                  activeTab === "labs"
+                    ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                    : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+                }`}
+              >
+                4. Chỉ định Cận lâm sàng ({selectedLabServices.length > 0 ? selectedLabServices.length : existingLabOrders.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTab("summary")}
+                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+                  activeTab === "summary"
+                    ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
+                    : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+                }`}
+              >
+                5. Tóm tắt lâm sàng
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setActiveTab("ai");
+                  if (!aiResponse) handleGetAiSuggestions();
+                }}
+                className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-1.5 ${
+                  activeTab === "ai"
+                    ? "border-[#6E2582] text-[#6E2582] bg-purple-50"
+                    : "border-transparent text-purple-700 hover:text-[#6E2582]"
+                }`}
+              >
+                <svg className="w-3.5 h-3.5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>Trợ lý AI Lâm sàng</span>
+                <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-black border border-purple-200">RAG</span>
+              </button>
+            </div>
+            {!isConsultationLocked && (
+              <div className="py-1 flex-shrink-0">
+                <VoiceRecorderButton
+                  onAudioReady={handleVoiceRecorded}
+                  disabled={isConsultationLocked}
+                />
+              </div>
+            )}
           </div>
 
           {/* TAB 1: Vital Signs with Real-time threshold validation */}
@@ -1830,8 +1821,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
               {/* Results Viewport */}
               {!aiLoading && aiResponse && (
                 <div className="space-y-3.5">
-                  {/* DDI & Critical Warnings Alert (if any) */}
-                  {aiResponse.warnings && aiResponse.warnings.some(w => w.includes("DDI") || w.toLowerCase().includes("tương tác")) && (
+                  {/* DDI & Critical Warnings Alert (Only shown if medications have actually been prescribed) */}
+                  {prescriptionItems.length > 0 && aiResponse.warnings && aiResponse.warnings.some(w => w.includes("DDI") || w.toLowerCase().includes("tương tác")) && (
                     <div className="p-3 bg-amber-50/90 border-l-3 border-amber-500 rounded-r-md space-y-1">
                       <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
                         <span>Cảnh báo tương tác thuốc (Dược Thư Quốc Gia):</span>
