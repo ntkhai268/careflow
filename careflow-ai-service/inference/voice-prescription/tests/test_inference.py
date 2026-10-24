@@ -87,3 +87,15 @@ def test_worker_auth_health_and_text_over_real_http():
         try:assert engine.run(payload)[0]==429
         finally:engine.slot.release()
     finally:server.shutdown();server.server_close();t.join()
+
+
+def test_explicit_strength_matches_full_catalog_name_without_guessing():
+    catalog=[dict(code='AML5',name='Amlodipine 5mg',unit='viên',active=True)]
+    r=infer('Cho Amlodipine 5 mg.',catalog,'v1')
+    assert r['items'][0]['medicineCode']=='AML5'
+    assert r['prescriptionDraft']['items'][0]['dosage'] is None
+    assert r['prescriptionDraft']['items'][0]['unmappedFields']['strength']=='5 mg'
+    r=infer('Cho Amlodipine 10 mg.',catalog,'v1')
+    assert not r['prescriptionDraft']['items']
+    r=infer('Cho Amlodipine.',catalog,'v1')
+    assert not r['prescriptionDraft']['items']

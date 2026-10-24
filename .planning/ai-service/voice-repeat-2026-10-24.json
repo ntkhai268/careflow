@@ -1,0 +1,164 @@
+{
+  "status": "PASS_FOR_DESCRIBED_SCOPE",
+  "date": "2026-10-24T06:38:14.192205+00:00",
+  "branch": "feature/dangkhoii/release-r7",
+  "base": "907cba222c299329de6d87f9acbb9ec3b9e4c4f8",
+  "uncommitted": true,
+  "scope": [
+    "Repeat microphone capture/stop and append audio or text into same DRAFT",
+    "One shared editable prescription section, one whole-order acknowledgement",
+    "Preserve clinician edits and durable job/revision source idempotency"
+  ],
+  "sourceSha256": {
+    "frontend/doctor-web/src/components/NamedMedicineReview.tsx": "f3b7bac573dc77fb69edcf77ae534c4487e0072c90615f19b9641d20c1f41955",
+    "frontend/doctor-web/src/components/VoicePrescriptionPreview.tsx": "a3d273011a04c36e67b14568bf68fa3b7cd92db1b79f93f27d11b81fbdca1862",
+    "frontend/doctor-web/src/components/VoicePrescriptionPanel.tsx": "beb8310eaba3d4e97e22121c37d90b889f88a286d0536805c5222c31a183819c",
+    "frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx": "ecd3b96a92f827fdebb49b4e6fafa16d1779282dd9bbe1e02d79c3ce93eb84bc",
+    "frontend/doctor-web/src/lib/voice-prescription-api.ts": "668a2f7dd2f47a925fc07b6ebc112cd7d6547178c86f4d446d2a91df2fd27ca1",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/service/PrescriptionAiDraftService.java": "4a9bc6b2e0e6fe3ca0c7c8d232c65a7d54d11db0ec7ec6f6d34fa07abcfb3b1e",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/controller/PrescriptionAiDraftController.java": "2c8d36df7114c5822175c6a6e8931c731af7ae208f5e73ab06e5e64e2d52e546",
+    "careflow-prescription-service/src/main/resources/db/migration/V4__allow_multiple_voice_sources_per_prescription.sql": "48452844157e2dbd701549944596979de290b4b1ce4608cc31294b858b5704d7",
+    "careflow-prescription-service/src/test/java/com/careflow/prescription/service/PrescriptionAiPostgresTest.java": "d9eff998d00af1e60c78b9832ab9f7f23058973d239353cadfafb0576fff33b8",
+    "careflow-prescription-service/src/test/java/com/careflow/prescription/service/PrescriptionVoiceMigrationPostgresTest.java": "40f0ef5ee663524d6a75f523661f9ac086b563de68431ec2a8560ccdb91614c1",
+    ".planning/prescription-service/prescription-db.dbml": "a59e997e27bed081104a70ee30f1768c3b49cba2020f073f3740a342d5eaaa1a"
+  },
+  "tests": {
+    "careflow-common": {
+      "tests": 53,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-prescription-service": {
+      "tests": 129,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "typeScript": "PASS",
+  "targetedEslint": "PASS",
+  "productionWebpackBuild": "PASS",
+  "browser": {
+    "status": "PASS",
+    "checks": [
+      "Real MediaRecorder starts/stops twice; rapid double click opens one stream and closing stops all tracks",
+      "One shared prescription editor and one whole-order checkbox remain single when switching inline/dialog",
+      "New recorded WAV through actual ASR appends to the same draft, preserves unsaved doctor edits, resets whole-order review and blocks premature signing",
+      "Any row edit resets the whole-order acknowledgement; Sign focuses the one shared review control",
+      "Permission denial preserves the pending clip; closing during delayed permission ends the late stream without reopening the dialog",
+      "Recording works again after cancellation; repeated upload with double Save adds once; reload preserves three rows and prior edits",
+      "Logout stops every synthetic microphone track; no uncaught UI errors"
+    ],
+    "actualMediaRecorder": true,
+    "microphoneInput": "synthetic MediaStream from prerecorded TTS WAV",
+    "physicalMicrophone": false,
+    "actualInference": true,
+    "actualClinicalApis": true,
+    "mockedResponses": false,
+    "uncaughtErrors": 0,
+    "sourceRequests": 3,
+    "checkedAt": "2026-10-24T06:33:44.396Z"
+  },
+  "browserFinal": {
+    "status": "PASS",
+    "preSignChecks": [
+      "Expanded editor opens usable real-catalog add/reselect drawers by dismissing native voice dialog",
+      "Removing a repeated drug resets whole-order review; acknowledgement persists all remaining rows across save/reload",
+      "Real release API returned CONFIRMED for reviewed same prescription"
+    ],
+    "checks": [
+      "Signed multi-source prescription locks all recording/upload/transcript/editing controls and removes acknowledgement checkbox",
+      "Reviewed multi-source draft signs and completes the own synthetic consultation through real clinical APIs"
+    ],
+    "actualClinicalApis": true,
+    "mockedResponses": false,
+    "uncaughtErrors": 0,
+    "harnessCorrection": "Signed MedicineEditor fields are inside collapsed details; assert disabled on input selector, not visible-only role locator",
+    "checkedAt": "2026-10-24T06:36:37.827Z"
+  },
+  "api": {
+    "status": "PASS",
+    "threeSourceRetriesSamePrescription": true,
+    "itemCountUnchanged": 3,
+    "doctorEditPreserved": true,
+    "staffDenied": 403
+  },
+  "userCaseReadOnly": {
+    "status": "PASS",
+    "reviewVisibleOnUserCase": true,
+    "clinicalWrites": 0,
+    "screenshotContainsOnlyMedicineReview": true
+  },
+  "migration": {
+    "version": "4",
+    "privateDatabaseBackupBeforeUpdate": true,
+    "before": {
+      "prescriptions": 63,
+      "sources": 11,
+      "version": "3",
+      "unique_constraint": 1
+    },
+    "after": {
+      "prescriptions": 63,
+      "sources": 11,
+      "version": "4",
+      "unique_constraint": 0,
+      "source_index": 1
+    },
+    "scratchV3toV4UpgradeTest": "PASS; existing source retained, second source same prescription accepted, duplicate job/revision rejected",
+    "rollback": "Prior JAR backed up; V4 is backward compatible; no destructive DB restore performed"
+  },
+  "fixtureCleanup": {
+    "status": "PASS",
+    "onlyOwnSyntheticData": true,
+    "prescriptions": 64,
+    "sources": 14,
+    "own_prescriptions": 1,
+    "own_sources": 3,
+    "own_items": 2,
+    "own_status": "DISPENSED",
+    "activePharmacyEntryAbsent": true
+  },
+  "runtime": {
+    "webUrl": "http://localhost:5173",
+    "webBuildId": "4NXwhnXOd9-OINpVOvpvE",
+    "prescription": {
+      "status": "PASS",
+      "service": "prescription-service",
+      "port": 18087,
+      "httpsHealth": 200,
+      "sha256": "1ee7a6495c19516d75263c25590351122d1bdd510e91448c150d5d2c7dde9050",
+      "schemaChanged": true,
+      "secretRotation": false
+    },
+    "allBackendHealthChecks": "PASS",
+    "AI": "Existing Docker API and native GPU worker unchanged"
+  },
+  "gitnexus": {
+    "boundTo": "release-r7 worktree",
+    "refreshed": true,
+    "preEditImpact": "MedicineEditor/CRUD/save/append LOW; JSX/dynamic UNKNOWN supplemented by literal caller verification",
+    "detectChanges": {
+      "changed_count": 213,
+      "affected_count": 40,
+      "changed_files": 64,
+      "risk_level": "critical"
+    },
+    "completeResultArrays": true,
+    "partial": false,
+    "truncated": false,
+    "riskExplanation": "CRITICAL describes all accumulated uncommitted R6/R7 changes across64 files, not only this fix.40 affected flows reviewed; regression verification scoped to voice/Rx/consultation, not full R7.",
+    "indexLimit": "Analyzer process ranking/branching omitted some flows; no absent caller/flow treated as proof of safety"
+  },
+  "fullAcceptance": false,
+  "notVerified": [
+    "Physical microphone/device/browser matrix",
+    "Clinical accuracy or medical appropriateness",
+    "Full R7 regression",
+    "Concurrent stale ordinary PUT from multiple tabs"
+  ],
+  "noCommitOrPush": true,
+  "noSecretRotation": true,
+  "noExternalAI": true
+}

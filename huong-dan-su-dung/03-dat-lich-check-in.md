@@ -1,5 +1,7 @@
 # 03 — Đặt lịch → phiếu → check-in → hàng đợi
 
+**R7:** lịch đã hủy không được cấp lại phiếu chờ khi sự kiện xác nhận đến muộn, kể cả sau restart. Nếu vừa mất phản hồi đặt lịch, tải lại lịch trước; gửi lại cùng yêu cầu phải giữ cùng mã thao tác để không đặt trùng. Xem [bàn giao R7](25-nghiem-thu-va-ban-giao-r7.md).
+
 [Quay về mục lục](README.md) · [Tài khoản](01-tai-khoan-va-du-lieu.md) · [Tiếp: khám](04-kham-khong-cls.md)
 
 ## Chuẩn bị

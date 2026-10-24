@@ -1,0 +1,46 @@
+services:
+  ai-api:
+    image: careflow/ai-api:voice-r7
+    build:
+      context: .
+      dockerfile: careflow-ai-service/Dockerfile.runtime
+    container_name: careflow-r7-ai-api
+    labels:
+      com.careflow.owner: dangkhoii
+      com.careflow.component: voice-ai-api
+    init: true
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    cpus: 2
+    mem_limit: 768m
+    pids_limit: 128
+    ports:
+      - "127.0.0.1:${CAREFLOW_AI_PORT:-18093}:8092"
+    environment:
+      SPRING_PROFILES_ACTIVE: secure
+      SPRING_CONFIG_ADDITIONAL_LOCATION: file:/run/careflow/runtime.yml
+    volumes:
+      - type: bind
+        source: ${CAREFLOW_AI_CONFIG:?Set the private AI config path}
+        target: /run/careflow/runtime.yml
+        read_only: true
+      - type: bind
+        source: ${CAREFLOW_AI_TLS_DIR:?Set the private AI TLS directory}
+        target: /run/careflow/tls
+        read_only: true
+    tmpfs:
+      - /tmp:size=128m,mode=1777
+    extra_hosts:
+      - careflow-identity-service:host-gateway
+      - careflow-patient-service:host-gateway
+      - careflow-appointment-service:host-gateway
+      - careflow-queue-service:host-gateway
+      - careflow-notification-service:host-gateway
+      - careflow-emr-service:host-gateway
+      - careflow-lab-service:host-gateway
+      - careflow-consultation-service:host-gateway
+      - careflow-prescription-service:host-gateway
+      - careflow-hospital-directory-service:host-gateway
+      - ai-service:host-gateway

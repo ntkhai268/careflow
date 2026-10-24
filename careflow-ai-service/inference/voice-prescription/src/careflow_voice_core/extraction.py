@@ -4,7 +4,7 @@ import re
 import time
 import unicodedata
 
-from .catalog import Catalog
+from .catalog import Catalog, Mention, is_drug_term
 from .models import FIELDS, Evidence, Extraction, Item
 from .text import NUMBER_PATTERN, STRENGTH_PATTERN, fold, key, number, strength
 
@@ -22,12 +22,14 @@ FREQUENCY = re.compile(rf"\b(?:moi\s+)?ngay\s+(?:dung\s+)?{NUMBER_PATTERN}\s+lan
 AS_NEEDED = re.compile(
     r"\b(?:(?:dung|uong)\s+khi\s+|khi\s+can\b)[^.;\n]*?(?=\s+(?:toi\s+(?:dinh\s+)?ke|so luong|luong|chi lay|chi cap|moi lan|cac lan|khong uong|a\s)|$)"
 )
-TIMING = re.compile(r"\b(?:vao\s+)?buoi\s+(?:sang|trua|chieu|toi)\b")
+TIMING = re.compile(r"\b(?:vao\s+)?buoi\s+(?:sang|trua|chieu|toi)(?:\s*(?:,\s*|va\s+)(?:vao\s+)?(?:buoi\s+)?(?:sang|trua|chieu|toi))*\b")
 MIN_INTERVAL = re.compile(rf"\b(?:cac lan (?:uong|dung)\s+)?cach nhau\s+it nhat\s+{NUMBER_PATTERN}\s*(?:gio|tieng)\b")
 MAX_DAILY_DOSE = re.compile(rf"\bkhong\s+(?:uong|dung)\s+qua\s+{NUMBER_PATTERN}\s*(?:vien|goi|ong|ml|giot)\s+trong\s+(?:vong\s+)?(?:24|hai muoi bon)\s*(?:gio|tieng)\b")
 SCHEDULE = re.compile(r"\b(?:buoi\s+)?(?:sang|trua|chieu|toi)\s+(?:va\s+)?(?:buoi\s+)?(?:sang|trua|chieu|toi)\b")
-CONTINUATION = re.compile(r"^\s*(?:thuoc\b|uong\b|moi lan\b|moi ngay\b|ngay\b|sang\b|toi\b|lieu\b|so luong\b|luong\b|tong\b|cap\b|lay\b|chi dung\b)")
-DURATION = re.compile(rf"\b(?:trong|dung trong)\s+{NUMBER_PATTERN}\s+(?:ngay|tuan|thang)\b")
+CONTINUATION = re.compile(r"^\s*(?:thuoc\b|uong\b|moi lan\b|moi ngay\b|ngay\b|sang\b|toi\b|lieu\b|so luong\b|luong\b|tong\b|cap\b|lay\b|chi dung\b|cac lan\b|khong\s+(?:uong|dung)\s+qua\b)")
+CONTINUATION = re.compile(CONTINUATION.pattern + rf"|^\s*(?:trong\b|dung\s+trong\b|nay\s+{NUMBER_PATTERN}\s+lan\b|{NUMBER_PATTERN}\s*(?:vien|goi|ong|ml)\b)")
+DURATION = re.compile(rf"\b(?:trong|dung trong)\s+(?P<count>{NUMBER_PATTERN})\s+(?P<period>ngay|tuan|thang)\b")
+NUMBERED_MEDICINE = re.compile(rf"\b(?:thuoc\s+)?thu\s+(?:nhat|nhi|tu|{NUMBER_PATTERN})\s+la\b")
 FORM = re.compile(r"\b(?:vien nang|vien nen|hon dich|dung dich|siro)\b")
 ROUTE = re.compile(r"\b(?:duong uong|duong boi|duong tiem|uong|boi ngoai da|nho mat|nho mui)\b")
 HISTORY = re.compile(r"\b(?:tung|tien su|truoc day|trong ho so|dang dung|dang uong|benh nhan ke|di ung|da dung|da uong)\b")
@@ -102,9 +104,9 @@ def parse_fields(item: Item, transcript: str, start: int, end: int, *, recap: bo
             matches.extend(AS_NEEDED.finditer(folded))
             matches.sort(key=lambda match: match.start())
             # 'khi cần' restates PRN; retain the explicit symptom condition.
-            specific_prn = [m for m in matches if m.re is AS_NEEDED and fold(m[0]).strip() != "khi can"]
+            specific_prn = [m for m in matches if m.re is AS_NEEDED and _prn_condition(m[0])]
             if specific_prn:
-                matches = [m for m in matches if fold(m[0]).strip() != "khi can"]
+                matches = [m for m in matches if _prn_condition(m[0]) != ""]
         if not matches:
             continue
         selected = matches[-1]
@@ -130,12 +132,23 @@ def parse_fields(item: Item, transcript: str, start: int, end: int, *, recap: bo
                 item.evidence.pop("quantity_unit", None)
             if re.search(r"\bthanh vien\b", folded[selected.start():selected.end() + 15]):
                 item.issues.append("ASR ghi 'thành viên' ở số lượng; cần nghe lại và xác nhận đơn vị cấp.")
+        elif field == "duration" and selected["period"] == "ngay":
+            days = number(selected["count"])
+            if days > 0 and days.is_integer():
+                value = f"{int(days)} ngày"
         elif field == "dosage_form":
             value = DISPLAY_FORMS[selected[0]]
         elif field == "route":
             value = DISPLAY_ROUTES[selected[0]]
         previous = item.evidence.get(field)
-        if previous and field_value(field, str(getattr(item, field))) != field_value(field, str(value)) and field not in item.field_conflicts:
+        prn_expansion = False
+        if field == "frequency" and previous and field not in item.field_conflicts:
+            old_prn, new_prn = _prn_condition(str(item.frequency)), _prn_condition(str(value))
+            if old_prn is not None and new_prn is not None:
+                if old_prn and (not new_prn or old_prn == new_prn):
+                    continue
+                prn_expansion = not old_prn and bool(new_prn)
+        if previous and not prn_expansion and field_value(field, str(getattr(item, field))) != field_value(field, str(value)) and field not in item.field_conflicts:
             bridge = fold(transcript[previous.end:start + selected.end()])
             if not CORRECTION.search(bridge):
                 _conflict(item, field, [previous, Evidence.at(transcript, start + selected.start(), start + selected.end())],
@@ -156,6 +169,14 @@ def _clauses(transcript: str):
     folded = fold(transcript)
     boundaries = [(m.start(), m.end()) for m in BOUNDARY.finditer(folded)]
     boundaries.extend((m.start(), m.start()) for m in DISCOURSE_BOUNDARY.finditer(folded))
+    # Numbered names delimit medicines even when ASR misses punctuation.
+    # Keep negative/history/hypothetical wording with its medicine.
+    base_boundaries = list(boundaries)
+    for mention in NUMBERED_MEDICINE.finditer(folded):
+        previous = max((end for _, end in base_boundaries if end <= mention.start()), default=0)
+        prefix = folded[previous:mention.start()]
+        if STRENGTH_PATTERN.search(prefix) and not any(p.search(prefix) for p in (HISTORY, NEGATION, UNCERTAIN)):
+            boundaries.append((mention.start(), mention.start()))
     for begin, end in sorted(boundaries):
         if begin < start:
             continue
@@ -164,6 +185,18 @@ def _clauses(transcript: str):
         start = end
     if transcript[start:].strip():
         yield start, len(transcript)
+
+
+def _prn_condition(value: str) -> str | None:
+    folded = fold(value).strip(" ,:;.")
+    match = re.fullmatch(r"(?:(?:chi\s+)?(?:dung|uong)\s+)?khi\s+(.+)", folded)
+    if not match:
+        return None
+    condition = match[1]
+    if condition == "can":
+        return ""
+    # Addressing the patient does not change the explicitly spoken condition.
+    return re.sub(r"^(?:(?:benh nhan|chi|anh|em|ban|ong|ba)\s+)?(?:bi\s+)?", "", condition)
 
 
 def field_value(field: str, value: str):
@@ -176,7 +209,8 @@ def field_value(field: str, value: str):
     if field == "dose":
         folded = re.sub(r"\bmoi lan\s+(?:uong|dung)\s+", "moi lan ", folded)
     if field == "frequency" and not FREQUENCY.fullmatch(folded):
-        return folded
+        condition = _prn_condition(value)
+        return ("prn", condition) if condition is not None else folded
     return re.sub(NUMBER_PATTERN, lambda m: f"{number(m[0]):g}", folded) if field in (
         "dose", "frequency", "duration", "min_interval", "max_daily_dose"
     ) else folded
@@ -191,12 +225,16 @@ def merge_recap(previous: Item, recap: Item) -> None:
             _conflict(previous, field, recap.field_conflicts[field], f"Đọc lại đơn có thông tin {field} mâu thuẫn; cần xác nhận.")
         elif value is not None and field not in previous.field_conflicts:
             old = getattr(previous, field)
-            # A shorter PRN recap may omit qualifiers; retain the full first instruction.
-            if field == "frequency" and old and AS_NEEDED.search(fold(old)) and AS_NEEDED.search(fold(value)):
-                if fold(old).strip() != fold(value).strip():
-                    _conflict(previous, field, [previous.evidence[field], recap.evidence[field]],
-                              "Điều kiện dùng khi cần được đọc lại khác lời; cần đối chiếu transcript và xác nhận.")
-                continue
+            if field == "frequency" and old:
+                old_prn, new_prn = _prn_condition(str(old)), _prn_condition(str(value))
+                if old_prn is not None and new_prn is not None:
+                    if not old_prn and new_prn:
+                        previous.frequency = value
+                        previous.evidence[field] = recap.evidence[field]
+                    elif old_prn and new_prn and old_prn != new_prn:
+                        _conflict(previous, field, [previous.evidence[field], recap.evidence[field]],
+                                  "Điều kiện dùng khi cần được đọc lại khác lời; cần đối chiếu transcript và xác nhận.")
+                    continue
             if old is not None and field_value(field, str(old)) != field_value(field, str(value)):
                 _conflict(previous, field, [previous.evidence[field], recap.evidence[field]],
                           f"Đọc lại đơn khác {field} đã kê; cần xác nhận.")
@@ -223,6 +261,41 @@ def _same_name(left: Item, right: str, catalog: Catalog) -> bool:
     return bool(a & b) or key(left.spoken_name) == key(right) or equivalent
 
 
+# A medicine can be dictated without an action word or numbered introduction.
+NAME_STOP_WORDS = set("thuoc thu la ke them cho toi chi anh em benh nhan moi lan uong dung lieu ham luong so tong cap lay vien goi ong chai lo hop ngay tuan thang buoi sang trua chieu vao va trong duong mot hai ba bon tu nam sau bay tam chin nhat nhi".split())
+
+
+def medicine_mentions(clause: str, catalog: Catalog) -> list[Mention]:
+    found = catalog.mentions(clause)
+    folded = fold(clause)
+    candidates = []
+    for dosage in STRENGTH_PATTERN.finditer(folded):
+        tokens = list(re.finditer(r"(?<![a-z0-9-])[a-z][a-z0-9-]*", folded[:dosage.start()]))
+        cursor = dosage.start()
+        name_tokens = []
+        for token in reversed(tokens):
+            gap = folded[token.end():cursor]
+            if (gap.strip(" ,:\t") if not name_tokens else gap.strip()) or token[0] in NAME_STOP_WORDS:
+                break
+            name_tokens.append(token)
+            cursor = token.start()
+        if not name_tokens or len(name_tokens) > 5:
+            continue
+        begin, end = name_tokens[-1].start(), name_tokens[0].end()
+        name = clause[begin:end]
+        if len(name) <= 65 and is_drug_term(name):
+            candidates.append((begin, end, dosage.end()))
+    for index, (begin, end, dosage_end) in enumerate(candidates):
+        field_end = candidates[index+1][0] if index+1 < len(candidates) else len(clause)
+        fields = folded[dosage_end:field_end]
+        # A bare medicine line may continue with its frequency in the next sentence.
+        if folded[:begin].strip() and not (FREQUENCY.search(fields) or AS_NEEDED.search(fields)):
+            continue
+        if not any(begin < old.end() and end > old.start() for old in found):
+            found.append(Mention(clause[begin:end], begin, end))
+    return sorted(found, key=lambda mention: mention.start())
+
+
 class RulesExtractor:
     name = "rules-v3"
 
@@ -245,7 +318,7 @@ class RulesExtractor:
                 recap_mode = True
             elif DISCOURSE_BOUNDARY.match(folded.lstrip()) and not HISTORY.search(folded) and not NEGATION.search(folded):
                 recap_mode = False
-            mentions = self.catalog.mentions(clause)
+            mentions = medicine_mentions(clause, self.catalog)
             if HISTORY.search(folded) or UNCERTAIN.search(folded):
                 warnings.append(f"Đoạn tiền sử/giả định chưa đưa vào nháp: {clause.strip()}")
                 continuation_target = None
@@ -273,8 +346,23 @@ class RulesExtractor:
                     warnings.append(f"Cần chỉ rõ thuốc được thay thế: {clause.strip()}")
                     continue
             if not mentions:
-                if CORRECTION.search(folded) and len(items) == 1 and (QUANTITY.search(folded) or QUANTITY_CORRECTION.search(folded)):
-                    parse_fields(items[0], transcript, start, end)
+                spoken_strength = STRENGTH_PATTERN.search(folded)
+                prescribed_unknown = re.search(
+                    rf"\b(?:ke|them|(?:thuoc\s+)?thu\s+(?:nhat|nhi|tu|{NUMBER_PATTERN})\s+la)\s+(?:cho\s+(?:chi|anh|em|benh nhan)\s+)?(?:thuoc\s+)?(?P<name>[a-z][a-z -]{{1,64}}?)\s*$",
+                    folded[:spoken_strength.start()],
+                ) if spoken_strength else None
+                if prescribed_unknown:
+                    name_start, name_end = prescribed_unknown.span("name")
+                    item = Item(spoken_name=clause[name_start:name_end].strip())
+                    item.evidence["spoken_name"] = Evidence.at(transcript, start + name_start, start + name_end)
+                    item.issues.append("Tên thuốc chưa khớp danh mục; cần kiểm tra tên và hàm lượng trước khi lưu.")
+                    parse_fields(item, transcript, start + name_end, end)
+                    items.append(item)
+                    continuation_target = item
+                    continue
+                correction_target = continuation_target if continuation_target in items else items[0] if len(items) == 1 else None
+                if CORRECTION.search(folded) and correction_target is not None and (QUANTITY.search(folded) or QUANTITY_CORRECTION.search(folded)):
+                    parse_fields(correction_target, transcript, start, end)
                 elif continuation_target is not None and continuation_target in items and CONTINUATION.search(folded):
                     parse_fields(continuation_target, transcript, start, end)
                 else:

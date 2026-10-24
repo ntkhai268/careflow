@@ -1,5 +1,7 @@
 # Deployment, Eureka và vận hành — Kế hoạch hoàn thiện
 
+**CURRENT21/10/2026 — R7:** [bàn giao kỹ thuật và ma trận18ca](r7-acceptance-2026-10-21.md) cập nhật hiện trạng kiểm thử, migration, restore và rollout. Các mục vận hành production chưa có bằng chứng vẫn mở; bảng đề xuất ngày14/10 bên dưới là baseline lịch sử.
+
 Ngày: 2026-10-14. Baseline: develop / 8bf77e2. Trạng thái: đề xuất, chưa triển khai.
 Theo [kế hoạch tổng](../system-completion-plan.md); G0–G5 tương ứng các giai đoạn trong kế hoạch tổng. Không dùng bảng này để xác nhận tính năng đã làm xong.
 

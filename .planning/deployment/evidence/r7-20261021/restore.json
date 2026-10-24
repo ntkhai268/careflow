@@ -1,0 +1,95 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "scope": "Owned local PostgreSQL consistent snapshots; scratch restores, table counts and content hashes; no restore over live databases",
+  "databases": [
+    {
+      "database": "careflow_appointment",
+      "tables": 7,
+      "rows": 224,
+      "archiveSha256": "9e547e6055763a44ed82d894c0f362a0327fd0dfecba33332117c327805de62c",
+      "status": "PASS"
+    },
+    {
+      "database": "careflow_consultation",
+      "tables": 7,
+      "rows": 157,
+      "archiveSha256": "b8de538e29e6feae869f4ffcc33924d3b8d81f706460a6f2d5c477052eead3a6",
+      "status": "PASS"
+    },
+    {
+      "database": "careflow_emr",
+      "tables": 1,
+      "rows": 8,
+      "archiveSha256": "b901aafcb515d59133451c60c6307f99744b40076d09ee83a0996310728a1bb3",
+      "status": "PASS"
+    },
+    {
+      "database": "careflow_hospital_directory",
+      "tables": 6,
+      "rows": 64,
+      "archiveSha256": "0612f9bda1f1a8b79512bd9866d889f29f9ac22b6fe1aa6cda848891e334cb25",
+      "status": "PASS"
+    },
+    {
+      "database": "careflow_identity",
+      "tables": 22,
+      "rows": 2085,
+      "archiveSha256": "c919f8a2a905905ba6acbb48d30dc356afb9d9a694c568f571e9e5671c8d1e49",
+      "status": "PASS"
+    },
+    {
+      "database": "careflow_lab",
+      "tables": 5,
+      "rows": 17,
+      "archiveSha256": "508a3129f41cc7ca75129e53264f0ce4ba8ba4ea00791293133ec511722d68bf",
+      "status": "PASS"
+    },
+    {
+      "database": "careflow_notification_audit",
+      "tables": 6,
+      "rows": 559,
+      "archiveSha256": "032f06955b8011ceb607e4a16af292e941ccfa1d2cc940b4f6709368d324bde3",
+      "status": "PASS"
+    },
+    {
+      "database": "careflow_patient",
+      "tables": 11,
+      "rows": 205,
+      "archiveSha256": "9697d73cfcc55d7983eed58b0b317280cd116cc3d9ea561682457144f5942e47",
+      "status": "PASS"
+    },
+    {
+      "database": "careflow_prescription",
+      "tables": 6,
+      "rows": 169,
+      "archiveSha256": "3722448a2944e9b152daae15c4d6353b63b3659e3beab88fc505a3eea3f8c1f7",
+      "status": "PASS"
+    },
+    {
+      "database": "careflow_queue",
+      "tables": 11,
+      "rows": 696,
+      "archiveSha256": "ad12b05e7b1dd0e513c5b004e3dc56311eef81920d87d5c919be8d77f222794e",
+      "status": "PASS"
+    },
+    {
+      "database": "careflow_r5_analytics",
+      "tables": 6,
+      "rows": 511,
+      "archiveSha256": "7137bcbfd2f1e3f350109fa7e556594ec9dcd77044463b37d24c4b714fceaf7b",
+      "status": "PASS"
+    },
+    {
+      "database": "careflow_r6_ai",
+      "tables": 6,
+      "rows": 27,
+      "archiveSha256": "e921cb084ebe39ad1455f909c24d36ef764e92932c1f9f0a16b43d4fda8f1107",
+      "status": "PASS"
+    }
+  ],
+  "attachmentFilesVerified": 4,
+  "contentKeyFilesBackedUp": 19,
+  "fullProductionDR": false
+}

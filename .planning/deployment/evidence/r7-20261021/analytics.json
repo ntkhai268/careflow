@@ -1,0 +1,118 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "scope": "Fresh R7 Analytics scratch database; real read-only source APIs, isolated RabbitMQ and temporary Gateway; original operational DBs unchanged",
+  "checks": [
+    {
+      "name": "ADMIN-only report/reconcile/rebuild; forged role header cannot elevate doctor/patient",
+      "status": "PASS"
+    },
+    {
+      "name": "Source exports require caller certificate/key and bound page size",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual source pagination traverses every page with whitelist-only operational data",
+      "status": "PASS"
+    },
+    {
+      "name": "Every headline, rate, timing/percentile and quality KPI agrees with independent authorized source exports after reconciliation",
+      "status": "PASS"
+    },
+    {
+      "name": "Authenticated journal rebuild preserves every summary KPI/timing field",
+      "status": "PASS"
+    },
+    {
+      "name": "Invalid/missing ranges rejected; empty cohort is explicit; internal export not public through Gateway",
+      "status": "PASS"
+    },
+    {
+      "name": "Real isolated RabbitMQ duplicate and late created hints produce two receipts for three deliveries and preserve current cancellation/all metrics",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual Analytics JVM stop/restart:503 during outage, all persisted KPI/timing fields unchanged after recovery",
+      "status": "PASS"
+    }
+  ],
+  "oracle": {
+    "booked": 53,
+    "arrived": 64,
+    "scheduledArrivals": 28,
+    "walkIns": 36,
+    "completed": 25,
+    "cancelledBookings": 18,
+    "missedVisits": 4,
+    "missedCalls": 4,
+    "reviewQueueEntries": 3,
+    "cancellationPercent": 33.96,
+    "initialWait": {
+      "samples": 30,
+      "meanMinutes": 1.41,
+      "p50Minutes": 0.04,
+      "p95Minutes": 8.41
+    },
+    "reviewWait": {
+      "samples": 3,
+      "meanMinutes": 7.29,
+      "p50Minutes": 8.4,
+      "p95Minutes": 9.2
+    },
+    "consultationDuration": {
+      "samples": 22,
+      "meanMinutes": 10.89,
+      "p50Minutes": 1.25,
+      "p95Minutes": 59.99
+    },
+    "excludedWaitSamples": 0,
+    "excludedDurationSamples": 3,
+    "consultationsMissingContext": 3
+  },
+  "actualNineKpis": {
+    "booked": 53,
+    "arrived": 64,
+    "scheduledArrivals": 28,
+    "walkIns": 36,
+    "completed": 25,
+    "cancelledBookings": 18,
+    "missedVisits": 4,
+    "missedCalls": 4,
+    "reviewQueueEntries": 3,
+    "cancellationPercent": 33.96,
+    "initialWait": {
+      "samples": 30,
+      "meanMinutes": 1.41,
+      "p50Minutes": 0.04,
+      "p95Minutes": 8.41
+    },
+    "reviewWait": {
+      "samples": 3,
+      "meanMinutes": 7.29,
+      "p50Minutes": 8.4,
+      "p95Minutes": 9.2
+    },
+    "consultationDuration": {
+      "samples": 22,
+      "meanMinutes": 10.89,
+      "p50Minutes": 1.25,
+      "p95Minutes": 59.99
+    },
+    "excludedWaitSamples": 0,
+    "excludedDurationSamples": 3,
+    "consultationsMissingContext": 3
+  },
+  "allSummaryFieldsPreservedByRebuild": true,
+  "sourceRowCounts": {
+    "APPOINTMENT": 67,
+    "QUEUE": 93,
+    "CONSULTATION": 82
+  },
+  "sourceSnapshotSha256": "25b310efb2f7b75efc659abc9c6761d5bca515e5bad0854fa35538aa559b2012",
+  "brokerReplay": "PASS",
+  "uniqueReplayReceipts": 2,
+  "publishedReplayDeliveries": 3,
+  "jvmRestartPreservesEverySummaryField": true,
+  "actualJvmOutageStatus": 503
+}

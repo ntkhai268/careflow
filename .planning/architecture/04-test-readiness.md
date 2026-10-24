@@ -1,5 +1,10 @@
 # Điều kiện kiểm thử và phụ thuộc — R0-1.0
 
+**CURRENT21/10/2026 — R7:** backend1.000/1.000 không skip sau bản vá xung đột ghi và thứ tự sự kiện hủy; E08–E10/E13–E15 đã kiểm lại qua API thật trên DB scratch. Queue V14/DBML bổ sung dấu hủy bền vững; nâng từ V13 không đổi dữ liệu lượt khám. Artifact backend/web/native cùng worktree, iPhone21 đã cài/mở, restore scratch và phục hồi runtime sau reboot. [Biên bản R7](../deployment/r7-acceptance-2026-10-21.md) và ma trận18ca ghi phần còn OPEN; mốc R0/R5/R6 bên dưới là lịch sử. Không quy đổi test hoặc bản cài thành nghiệm thu phần cứng/push/chuyên môn.
+
+**CURRENT21/10/2026 — R6:** đã kiểm Java199/Python12, Gateway/mTLS/worker local và browser với dữ liệu tổng hợp. [Biên bản R6](../ai-service/r6-acceptance-2026-10-21.md) nêu phần tích hợp đã đạt và phần chuyên môn/mic thật còn mở; không dùng bảng baseline để suy ra AI vẫn chỉ có prototype hoặc đã đạt chất lượng lâm sàng.
+
+
 **Cập nhật R5 ngày21/10/2026:** Analytics đã có module/runtime,30 test service (14 PostgreSQL thật),3 test guard export, đối soát API/broker/browser và restart. [Biên bản R5](../analytics-service/r5-acceptance-2026-10-21.md) cập nhật hiện trạng; bảng R0 dưới đây giữ lịch sử baseline, không mô tả tình trạng Analytics hiện nay.
 
 ## 1. Ranh giới môi trường

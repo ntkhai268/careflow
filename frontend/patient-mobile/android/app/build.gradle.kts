@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -7,6 +9,20 @@ plugins {
 
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
+}
+
+val releaseKeyPath = providers.environmentVariable("CAREFLOW_ANDROID_KEY_PROPERTIES").orNull
+val releaseKeys = Properties()
+if (releaseKeyPath != null) {
+    val keyFile = file(releaseKeyPath)
+    require(keyFile.isFile) { "CAREFLOW_ANDROID_KEY_PROPERTIES must point to a private signing properties file" }
+    keyFile.inputStream().use { releaseKeys.load(it) }
+    for (key in listOf("storeFile", "storePassword", "keyAlias", "keyPassword")) {
+        require(!releaseKeys.getProperty(key).isNullOrBlank()) { "Missing Android signing property: $key" }
+    }
+}
+if (gradle.startParameter.taskNames.any { it.contains("Release", ignoreCase = true) }) {
+    require(releaseKeyPath != null) { "Release requires CAREFLOW_ANDROID_KEY_PROPERTIES; debug signing is not allowed" }
 }
 
 android {
@@ -31,11 +47,20 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (releaseKeyPath != null) {
+            create("release") {
+                storeFile = file(releaseKeys.getProperty("storeFile"))
+                storePassword = releaseKeys.getProperty("storePassword")
+                keyAlias = releaseKeys.getProperty("keyAlias")
+                keyPassword = releaseKeys.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.findByName("release")
         }
     }
 }

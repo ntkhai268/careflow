@@ -129,6 +129,11 @@
                 {
                   "uri": "https://careflow-analytics-service:8091"
                 }
+              ],
+              "ai-service": [
+                {
+                  "uri": "https://careflow-ai-service:8092"
+                }
               ]
             }
           }

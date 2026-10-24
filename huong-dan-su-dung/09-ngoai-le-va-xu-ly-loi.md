@@ -13,11 +13,14 @@
 |---|---|
 | Web 200 nhưng API không chạy | Kiểm tra Mobile→Gateway và backend health; Web 200 mới chứng minh frontend được phục vụ |
 | Gateway không kết nối | Đúng HTTPS localhost:18080 của runtime này, CA và tiến trình; không đổi sang 8080/HTTP để né TLS |
+| 503 dịch vụ chưa sẵn sàng | R7 trả503 khi Gateway không kết nối/phân giải được upstream. Chờ service phục hồi, tải lại trạng thái trước khi lặp thao tác ghi; không reset dữ liệu hoặc đổi quyền để né lỗi |
 | 401 | Đăng nhập lại nếu phiên hết/thu hồi, kiểm tra đúng máy/Gateway; MFA đã gỡ, API MFA cũ trả 410 |
+| 400 “Lịch khám đã được hủy trước đó” sau khi thử lại | Tải lại lịch để xác nhận CANCELLED; lần hủy lặp không tạo lịch/phiếu mới. Không đặt lại chỉ để xử lý phản hồi bị mất |
 | 403 | Đúng vai trò, chủ hồ sơ, phân công khoa/phòng/điểm phục vụ và bác sĩ phụ trách hiện tại |
 | 404 phiếu sau đặt lịch | Chờ consumer ngắn rồi tải lại; nếu kéo dài kiểm tra sự kiện và trùng lượt, không tạo lịch liên tiếp |
 | Không thấy bệnh nhân trên bác sĩ | Đã check-in, đúng ngày/phiên/phòng; phân công bác sĩ và phiếu có khớp không |
 | 409 gọi/bắt đầu/nhận bàn giao | Tải lại trạng thái; kiểm tra ca đang phục vụ, yêu cầu chờ, giới hạn gọi và thay đổi phân công |
+| 409 dữ liệu đã thay đổi khi hai phiên cùng ghi | R7 trả lỗi xung đột cho phiên thua thay vì500. Tải lại dữ liệu trước khi chọn thao tác tiếp; không lặp vô hạn hoặc tự tạo thêm lượt |
 | 409 resume/hoàn tất CLS | Chờ đủ kết quả; đọc và xác nhận các order đã phát hành trước khi hoàn tất ca |
 | 422 chỉ định | Chọn mã và điểm từ danh mục thật, không gửi mã tùy ý |
 | 422 bàn giao | Hồ sơ bác sĩ đang hoạt động, cùng khoa/phòng và có liên kết phiếu hợp lệ |

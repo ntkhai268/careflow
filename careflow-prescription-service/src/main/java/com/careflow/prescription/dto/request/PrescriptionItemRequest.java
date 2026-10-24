@@ -24,4 +24,5 @@ public class PrescriptionItemRequest {
     private Integer duration;
     private Integer quantity;
     private String notes;
+    private java.util.Map<String,String> details;
 }

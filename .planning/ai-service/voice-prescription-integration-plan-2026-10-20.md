@@ -1,5 +1,8 @@
 # Kế hoạch bàn giao Voice Prescription vào AI Service
 
+**Cập nhật CURRENT21/10/2026:** đã triển khai tích hợp kỹ thuật R6 trên nhánh AI riêng. [Biên bản và giới hạn nghiệm thu](r6-acceptance-2026-10-21.md) thay thế trạng thái chưa tích hợp bên dưới; phần kế hoạch gốc giữ làm lịch sử thiết kế. Chưa nghiệm thu chất lượng lâm sàng/giọng bác sĩ độc lập.
+
+
 Ngày20/10/2026. Trạng thái: **đề xuất tích hợp, chưa triển khai**. Phạm vi đã chốt theo yêu cầu: bác sĩ bật ghi âm AI trên web → bấm **Lưu toa nháp** → hệ thống dừng ghi âm, xử lý AI và lưu toa **DRAFT** → bác sĩ chỉnh sửa/thêm/xóa thành phần ngay trong toa nháp → lưu cập nhật → chủ động ký khi đã kiểm tra đầy đủ. Không có bước duyệt AI riêng bắt buộc trước khi lưu nháp. Đây là một năng lực của AI Clinical Assistant, không thay thế chatbot gợi ý phác đồ R6.
 
 ## 1. Hiện trạng đã đọc và giới hạn

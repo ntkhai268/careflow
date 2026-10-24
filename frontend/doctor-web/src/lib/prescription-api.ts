@@ -2,14 +2,15 @@ import { api } from "./api";
 
 export interface PrescriptionItemRequest {
   medicineName: string;
-  medicineCode: string;
+  medicineCode: string | null;
   unit: string;
-  dosage: string;
-  frequency: string;
-  timing: string;
-  duration: number;
-  quantity: number;
+  dosage: string | null;
+  frequency: string | null;
+  timing: string | null;
+  duration: number | null;
+  quantity: number | null;
   notes?: string;
+  details?: Record<string,string>;
 }
 
 export interface CreatePrescriptionRequest {
@@ -36,14 +37,15 @@ export interface AmendPrescriptionRequest {
 export interface PrescriptionItemResponse {
   id: string;
   medicineName: string;
-  medicineCode: string;
+  medicineCode: string | null;
   unit: string;
-  dosage: string;
-  frequency: string;
-  timing: string;
-  duration: number;
-  quantity: number;
+  dosage: string | null;
+  frequency: string | null;
+  timing: string | null;
+  duration: number | null;
+  quantity: number | null;
   notes?: string;
+  details?: Record<string,string>;
   createdAt: string;
 }
 

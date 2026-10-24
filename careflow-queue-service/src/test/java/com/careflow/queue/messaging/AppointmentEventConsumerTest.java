@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -32,13 +33,14 @@ class AppointmentEventConsumerTest {
     @Mock QueueEntryRepository entries;
     @Mock QueueManagementService queueService;
     @Mock QueueEventService events;
+    @Mock JdbcTemplate jdbc;
 
     private AppointmentEventConsumer consumer;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
-        consumer = new AppointmentEventConsumer(processedEvents, entries, queueService, events);
+        consumer = new AppointmentEventConsumer(processedEvents, entries, queueService, events, jdbc);
     }
 
     @Test

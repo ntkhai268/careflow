@@ -22,7 +22,22 @@ public class VoiceConfiguration {
     @EnableScheduling
     @ConditionalOnProperty(name="careflow.voice.enabled",havingValue="true")
     static class Enabled {
-        @Bean(destroyMethod="close") HikariDataSource voiceDataSource(VoiceProperties p) {
+        @Bean VoiceJobStore voiceJobStore(HikariDataSource source,ObjectMapper mapper,VoiceProperties p) {
+            VoiceJobStore store=new VoiceJobStore(source,mapper,p);store.recover();return store;
+        }
+        @Bean VoiceDependencies voiceDependencies(VoiceProperties p,ObjectMapper mapper,Environment env,org.springframework.beans.factory.ObjectProvider<com.careflow.common.security.InternalTlsMaterial> tls) {
+            if(env.matchesProfiles("secure","prod","production")&&p.isAllowLoopbackHttp())throw new IllegalArgumentException("Loopback HTTP is not supported in secure deployment");
+            return new VoiceRemoteClient(p,mapper,tls.getIfAvailable()==null?null:tls.getIfAvailable().context());
+        }
+        @Bean VoiceJobService voiceJobService(VoiceJobStore store,VoiceDependencies deps,ObjectMapper mapper,VoiceProperties p){return new VoiceJobService(store,deps,mapper,p);}
+    }
+    @Configuration
+    @EnableScheduling
+    @org.springframework.boot.autoconfigure.condition.ConditionalOnExpression("${careflow.voice.enabled:false} or ${careflow.clinical.enabled:false}")
+    static class Persistence {
+        @Bean(destroyMethod="close") HikariDataSource voiceDataSource(VoiceProperties p,Environment env) {
+            if(env.matchesProfiles("secure","prod","production")&&p.getContentKey().isBlank())throw new IllegalArgumentException("Secure AI persistence requires an independent content key");
+            if(env.matchesProfiles("prod","production")&&!p.getJdbcUrl().contains("sslmode=verify-full"))throw new IllegalArgumentException("AI PostgreSQL requires verified TLS");
             if(p.getQueueCapacity()<1||p.getQueueCapacity()>64||p.getPerDoctorCapacity()<1||p.getTtlSeconds()<60
                     ||p.getInferenceTimeoutSeconds()<1||p.getInferenceTimeoutSeconds()>=p.getTtlSeconds())throw new IllegalArgumentException("Invalid voice limits");
             HikariConfig config=new HikariConfig();config.setJdbcUrl(p.getJdbcUrl());config.setUsername(p.getDbUser());config.setPassword(p.getDbPassword());
@@ -32,13 +47,5 @@ public class VoiceConfiguration {
             catch(RuntimeException e){source.close();throw e;}
             return source;
         }
-        @Bean VoiceJobStore voiceJobStore(HikariDataSource source,ObjectMapper mapper,VoiceProperties p) {
-            VoiceJobStore store=new VoiceJobStore(source,mapper,p);store.recover();return store;
-        }
-        @Bean VoiceDependencies voiceDependencies(VoiceProperties p,ObjectMapper mapper,Environment env) {
-            if(env.matchesProfiles("secure","prod","production")&&p.isAllowLoopbackHttp())throw new IllegalArgumentException("Loopback HTTP is not supported in secure deployment");
-            return new VoiceRemoteClient(p,mapper);
-        }
-        @Bean VoiceJobService voiceJobService(VoiceJobStore store,VoiceDependencies deps,ObjectMapper mapper,VoiceProperties p){return new VoiceJobService(store,deps,mapper,p);}
     }
 }

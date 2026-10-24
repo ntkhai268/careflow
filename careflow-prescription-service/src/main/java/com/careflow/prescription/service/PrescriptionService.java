@@ -48,6 +48,7 @@ public class PrescriptionService {
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
     @org.springframework.beans.factory.annotation.Autowired private PrescriptionEventOutbox eventOutbox;
+    @org.springframework.beans.factory.annotation.Autowired private PrescriptionAiReleaseGuard aiReleaseGuard;
 
     @Transactional
     public PrescriptionResponse createPrescription(CreatePrescriptionRequest request,
@@ -90,6 +91,10 @@ public class PrescriptionService {
     private void validateMedicineItems(CreatePrescriptionRequest request) {
         if (request.getItems() == null) return;
         for (var item : request.getItems()) {
+            if (item.getMedicineCode() == null || item.getMedicineCode().isBlank()) {
+                validateNamedDraft(item);
+                continue;
+            }
             boolean valid = drugRepository.existsByCode(item.getMedicineCode());
             if (!valid) {
                 throw new BusinessException(400, "Thuốc " + item.getMedicineName() + " (Mã: " + item.getMedicineCode() + ") không nằm trong danh mục được phép kê của bệnh viện.");
@@ -104,10 +109,24 @@ public class PrescriptionService {
     private void validateAmendmentMedicineItems(AmendPrescriptionRequest request) {
         if (request.getItems() == null) return;
         for (PrescriptionItemRequest item : request.getItems()) {
+            if (item.getMedicineCode() == null || item.getMedicineCode().isBlank()) {
+                validateNamedDraft(item);
+                continue;
+            }
             if (!drugRepository.existsByCode(item.getMedicineCode())) {
                 throw new BusinessException(400, "Medicine is not in the hospital catalog: "
                         + item.getMedicineCode());
             }
+        }
+    }
+
+    private void validateNamedDraft(PrescriptionItemRequest item) {
+        if (item.getMedicineName() == null || item.getMedicineName().isBlank() || item.getMedicineName().length() > 255) {
+            throw new BusinessException(422, "Nhập tên thuốc trước khi lưu toa nháp.");
+        }
+        item.setMedicineCode(null);
+        if (item.getQuantity() != null && item.getQuantity() <= 0 || item.getDuration() != null && item.getDuration() <= 0) {
+            throw new BusinessException(422, "Số lượng và số ngày phải lớn hơn 0 hoặc để trống khi chưa xác định.");
         }
     }
 
@@ -240,6 +259,7 @@ public class PrescriptionService {
             validateConsultationStatus(prescription.getConsultationId(), prescription.getPatientId(), prescription.getDoctorId());
         }
 
+        if(aiReleaseGuard!=null)aiReleaseGuard.validate(prescription);
         prescription.setStatus(PrescriptionStatus.CONFIRMED);
         prescription.setDispensingServicePointId(directoryClient.getActivePharmacyServicePointId());
         prescription.setConfirmedAt(Instant.now());

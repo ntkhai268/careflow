@@ -18,11 +18,14 @@ public class VoiceJobStore {
     private final TransactionTemplate tx;
     private final ObjectMapper mapper;
     private final VoiceProperties properties;
+    private final com.careflow.ai.clinical.ClinicalCipher cipher;
     private final UUID instanceId=UUID.randomUUID();
     public VoiceJobStore(DataSource source,ObjectMapper mapper,VoiceProperties properties) {
         jdbc=new JdbcTemplate(source);tx=new TransactionTemplate(new DataSourceTransactionManager(source));
-        this.mapper=mapper;this.properties=properties;
+        this.mapper=mapper;this.properties=properties;cipher=properties.getContentKey().isBlank()?null:new com.careflow.ai.clinical.ClinicalCipher(properties.getContentKey());
     }
+    private String seal(String value,UUID id,String field){return value==null?null:cipher==null?value:"ENC1:"+cipher.encrypt(value,id+":"+field);}
+    private String open(String value,UUID id,String field){if(value==null)return null;if(!value.startsWith("ENC1:")){if(cipher!=null)throw new IllegalStateException("Unencrypted voice content needs controlled migration");return value;}if(cipher==null)throw new IllegalStateException("Voice content key is unavailable");return cipher.decrypt(value.substring(5),id+":"+field);}
     private JsonNode parse(String value) {
         try {return value==null?null:mapper.readTree(value);} catch(Exception e) {throw new IllegalStateException("Stored voice result is invalid");}
     }
@@ -30,7 +33,7 @@ public class VoiceJobStore {
         return new Job(rs.getObject("id",UUID.class),rs.getObject("consultation_id",UUID.class),
                 rs.getObject("actor_id",UUID.class),rs.getLong("version"),rs.getInt("transcript_revision"),
                 rs.getString("state"),rs.getString("idempotency_key"),rs.getString("request_hash"),
-                rs.getString("input_json"),parse(rs.getString("result_json")),rs.getString("error_code"),
+                open(rs.getString("input_json"),rs.getObject("id",UUID.class),"input"),parse(open(rs.getString("result_json"),rs.getObject("id",UUID.class),"result")),rs.getString("error_code"),
                 rs.getString("correlation_id"),rs.getObject("created_at",OffsetDateTime.class).toInstant(),
                 rs.getObject("expires_at",OffsetDateTime.class).toInstant());
     }
@@ -55,7 +58,7 @@ public class VoiceJobStore {
             capacity(actor.userId());
             UUID id=UUID.randomUUID();Instant now=Instant.now();
             jdbc.update("INSERT INTO voice_prescription_jobs(id,consultation_id,actor_id,state,idempotency_key,request_hash,input_json,correlation_id,created_at,expires_at,lease_owner,lease_until) VALUES(?,?,?,'QUEUED',?,?,?,?,?,?,?,?)",
-                id,consultation,actor.userId(),key,hash,input,actor.correlationId(),OffsetDateTime.ofInstant(now,ZoneOffset.UTC),OffsetDateTime.ofInstant(now.plusSeconds(properties.getTtlSeconds()),ZoneOffset.UTC),instanceId,OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(30));
+                id,consultation,actor.userId(),key,hash,seal(input,id,"input"),actor.correlationId(),OffsetDateTime.ofInstant(now,ZoneOffset.UTC),OffsetDateTime.ofInstant(now.plusSeconds(properties.getTtlSeconds()),ZoneOffset.UTC),instanceId,OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(30));
             audit(get(id),"CREATED");return get(id);
         });
     }
@@ -68,7 +71,7 @@ public class VoiceJobStore {
     public void finish(Job job,String state,JsonNode result,String error) {
         tx.executeWithoutResult(status->{
             int n=jdbc.update("UPDATE voice_prescription_jobs SET state=?,version=version+1,result_json=?,input_json=NULL,error_code=? WHERE id=? AND version=? AND state IN ('QUEUED','RUNNING') AND expires_at>?",
-                state,result==null?null:result.toString(),error,job.jobId(),job.version(),OffsetDateTime.now(ZoneOffset.UTC));
+                state,result==null?null:seal(result.toString(),job.jobId(),"result"),error,job.jobId(),job.version(),OffsetDateTime.now(ZoneOffset.UTC));
             if(n==1)audit(get(job.jobId()),state);
         });
     }
@@ -77,7 +80,7 @@ public class VoiceJobStore {
             jdbc.queryForObject("SELECT id FROM voice_prescription_capacity WHERE id=1 FOR UPDATE",Integer.class);
             capacity(job.actorId());
             int n=jdbc.update("UPDATE voice_prescription_jobs SET state='QUEUED',version=version+1,transcript_revision=transcript_revision+1,input_json=?,result_json=NULL,error_code=NULL,lease_owner=?,lease_until=? WHERE id=? AND version=? AND state='SUCCEEDED' AND expires_at>?",
-                    input,instanceId,OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(30),job.jobId(),expected,OffsetDateTime.now(ZoneOffset.UTC));
+                    seal(input,job.jobId(),"input"),instanceId,OffsetDateTime.now(ZoneOffset.UTC).plusSeconds(30),job.jobId(),expected,OffsetDateTime.now(ZoneOffset.UTC));
             if(n!=1)throw new BusinessException(409,"Phiên bản đã thay đổi hoặc công việc không thể sửa");
             audit(get(job.jobId()),"REVISED");return get(job.jobId());
         });

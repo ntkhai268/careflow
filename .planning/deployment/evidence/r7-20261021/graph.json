@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "REVIEW_REQUIRED",
+  "summary": {
+    "changed_count": 178,
+    "affected_count": 39,
+    "changed_files": 59,
+    "risk_level": "critical"
+  },
+  "partial": false,
+  "truncated": false,
+  "completeSymbolListingCaptured": true,
+  "completeProcessListingCaptured": true,
+  "rawResultSha256": "16ed5369b3f8aa709cd982af14302702caf963efcc72951de4cc9020460e72e2",
+  "indexStats": {
+    "files": 1474,
+    "nodes": 20923,
+    "edges": 49075,
+    "communities": 866,
+    "processes": 852,
+    "embeddings": 0
+  },
+  "ftsRebuild": "PASS after forced rebuild",
+  "limitations": "Includes carried R6 changes. UNKNOWN framework/cross-language and untracked/new-file coverage require manual review; risk CRITICAL remains."
+}

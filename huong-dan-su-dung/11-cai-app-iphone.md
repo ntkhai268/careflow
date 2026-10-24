@@ -4,7 +4,11 @@
 
 ## Phạm vi bản cài trên Mac này
 
-**Bản hiện tại: 1.0.0 (20)** đã ký, cài đè và mở trên iPhone ngày21/10/2026. Bản này chứa source native R3/R4; thao tác picker/Face ID và push nền vẫn phải nghiệm thu riêng. Cấu hình Firebase/APNs còn thiếu, xem [trang21](21-thong-bao-va-dong-bo-r4.md) và [biên bản R4](../.planning/notification-service/r4-acceptance-2026-10-21.md). Các mốc phiên bản cũ bên dưới là lịch sử.
+**Bản hiện tại: 1.0.0 (25)** đã ký, cài đè và mở trên iPhone 11 Pro Max ngày24/10/2026 từ nguồn R7 hiện tại. Đã đối chiếu mã trong `lib/` với worktree `feature/dangkhoii/release-r7`, giữ bundle ID và cài đè không gỡ app. Deployment target iOS15 đồng bộ trong project/Pods. Bản chẩn đoán tạm24 đã kiểm trực tiếp trên iPhone: HTTPS200, khóa Secure Enclave/ký yêu cầu, đăng nhập API200, AuthService đăng nhập và đọc đúng danh tính. Sau kiểm tra đã cài bản thường25, target `lib/main.dart`, có CA đúng trong bundle và không còn entrypoint/tham số tài khoản chẩn đoán. Không đổi mật khẩu hoặc backend. Thao tác picker/Face ID/GPS và push nền vẫn phải nghiệm thu riêng. Firebase/APNs và entitlement push còn thiếu; xem [trang21](21-thong-bao-va-dong-bo-r4.md) và [bàn giao R7](25-nghiem-thu-va-ban-giao-r7.md). Bản build mới ở `~/Library/Developer/CareFlow/r7-20261021/mobile/app`; các mốc dùng staging cũ bên dưới là lịch sử.
+
+Provisioning của bản25 vẫn hết hạn **25/10/2026 lúc15:04 giờ Việt Nam**, đã đọc trực tiếp từ bundle ký. Xcode dùng lại profile còn hiệu lực; cài lại không tự kéo dài hạn profile. Sau mốc này cần ký/cài lại với profile còn hạn để tiếp tục mở app bằng Personal Team.
+
+**Lỗi đóng gói bản22:** cấu hình có `LOCAL_TEST_CA_ASSET` nhưng file CA không được khai báo trong assets của `pubspec.yaml`, nên không có trong bundle. App lỗi khi nạp CA trước lúc gửi đăng nhập và hiện thông báo chung; tài khoản/mật khẩu vẫn hợp lệ. Đã sửa khai báo assets trong staging riêng và kiểm file CA/hash/chữ ký trước khi cài bản25. Chứng chỉ của môi trường test và cấu hình ký vẫn nằm ngoài Git; không tắt xác minh HTTPS để tránh lỗi.
 
 Chuẩn bị ngày **18/10/2026**, từ `frontend/patient-mobile` tại `develop@e5fc9c1`, với bản sửa đăng nhập ở nhánh `feature/dangkhoii/patient-mobile-ios-login`, Flutter 3.41.6, Xcode 27.1 và CocoaPods 1.17.0. Bản sao để build nằm ngoài Git tại `~/Library/Developer/CareFlow/iphone11pm-20261018/app`; cấu hình ký, endpoint và CA thử nghiệm riêng của Mac không nằm trong source. Bản này dùng iOS 15 trở lên và tên hiển thị **CareFlow**.
 
@@ -53,17 +57,32 @@ CA có hiệu lực 30 ngày từ khi tạo. Đổi IP trên cùng mạng không
 
 ## Cài bản Release và mở từ biểu tượng
 
-Sau khi Team và thiết bị sẵn sàng, dùng Terminal:
+Sau khi Team và thiết bị sẵn sàng, kiểm tra staging có file CA tại `assets/certificates/local-test-ca.pem`. Trong `pubspec.yaml` của staging riêng trên Mac, bổ sung file này vào danh sách `flutter.assets`:
+
+```yaml
+flutter:
+  assets:
+    - assets/images/
+    - assets/icons/
+    - assets/certificates/local-test-ca.pem
+```
+
+Giữ khai báo CA riêng này khi đồng bộ lại source vào staging. Không chép chứng chỉ/cấu hình private của Mac vào source Git. Sau đó dùng Terminal; các kiểm tra sau build phải đạt trước khi cài:
 
 ```sh
-cd ~/Library/Developer/CareFlow/iphone11pm-20261018/app
+set -e
+cd ~/Library/Developer/CareFlow/r7-20261021/mobile/app
 flutter devices
-flutter build ios --release --config-only --no-pub --target=lib/main.dart --build-number=16 --dart-define-from-file=../build-config.json
-xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -destination "id=<device-id>" -allowProvisioningUpdates -allowProvisioningDeviceRegistration -quiet BUILD_DIR="$PWD/build/ios"
+flutter pub get --offline
+flutter build ios --release --config-only --no-pub --target=lib/main.dart --build-number=25 --dart-define-from-file="$HOME/Library/Developer/CareFlow/r0-20261019/build-config.private.json"
+xcodebuild -workspace ios/Runner.xcworkspace -scheme Runner -configuration Release -destination "id=<device-id>" -allowProvisioningUpdates -allowProvisioningDeviceRegistration -quiet BUILD_DIR="$PWD/build/ios" DEVELOPMENT_TEAM="<Team-ID>" CODE_SIGN_STYLE=Automatic
+test -f build/ios/Release-iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/certificates/local-test-ca.pem
+cmp assets/certificates/local-test-ca.pem build/ios/Release-iphoneos/Runner.app/Frameworks/App.framework/flutter_assets/assets/certificates/local-test-ca.pem
+codesign --verify --deep --strict build/ios/Release-iphoneos/Runner.app
 xcrun devicectl device install app --device <device-id> build/ios/Release-iphoneos/Runner.app
 ```
 
-Thay `<device-id>` bằng ID của iPhone trong danh sách. Trên Xcode 27 của Mac này, bundle tạo ở `Release-iphoneos`; dùng lệnh cài trực tiếp phía trên để tránh lỗi Flutter tìm nhầm `build/ios/iphoneos/Runner.app`. Nếu iPhone yêu cầu tin cậy nhà phát triển, xác nhận tài khoản ký tại **Cài đặt chung → VPN & Quản lý thiết bị** rồi mở lại.
+Thay `<device-id>` bằng ID của iPhone trong danh sách, `<Team-ID>` bằng Team đã ký bản đang cài để giữ cùng định danh ứng dụng. Lệnh trên dùng staging và cấu hình riêng có sẵn trên Mac này. Trên Xcode 27 của Mac này, bundle tạo ở `Release-iphoneos`; dùng lệnh cài trực tiếp phía trên để tránh lỗi Flutter tìm nhầm `build/ios/iphoneos/Runner.app`. Nếu iPhone yêu cầu tin cậy nhà phát triển, xác nhận tài khoản ký tại **Cài đặt chung → VPN & Quản lý thiết bị** rồi mở lại.
 
 Kết quả cần kiểm tra trên điện thoại:
 

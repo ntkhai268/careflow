@@ -1,7 +1,14 @@
-// CareFlow queue — physical schema verified against isolated PostgreSQL migrations, 2026-10-20.
+// CareFlow queue — base schema verified 2026-10-20; V14 cancellation markers verified on PostgreSQL 2026-10-21.
 // Partial indexes and CHECK/FK constraints are retained as SQL notes below each table.
 Project CareFlow_Queue {
   database_type: 'PostgreSQL'
+}
+
+Table queue.appointment_cancellations {
+  appointment_id uuid [pk]
+  cancellation_event_id uuid
+  cancelled_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  note: 'V14: durable cancellation marker, including cancellation received before ticket creation. No cross-service FK. Backfills existing cancelled tickets; confirmation/cancellation processing is serialized per appointment. Not cleared by daily queue seeding.'
 }
 
 Table queue.hospital_check_in_configs {

@@ -7,6 +7,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import time
 import wave
 
 
@@ -50,16 +51,17 @@ class LocalRuntime:
                        releaseId=manifest['releaseId'],adapterSha256=digest(adapter/'adapters.safetensors'),backend='mlx')
         self.ready=True
 
-    def transcribe(self, payload):
-        try:return self.executor.submit(self._transcribe,payload).result(timeout=150)
+    def transcribe(self, payload, context=''):
+        try:return self.executor.submit(self._transcribe,payload,context).result(timeout=150)
         except FutureTimeout:
             # A running native model cannot be safely killed as a Python thread.
             # Fail readiness and admit no further audio until an operator restarts it.
             self.ready=False
             raise RuntimeError('MODEL_DEADLINE_EXCEEDED') from None
 
-    def _transcribe(self,payload):
+    def _transcribe(self,payload,context):
         if not self.ready:raise RuntimeError('MODEL_UNAVAILABLE')
+        started=time.perf_counter()
         with tempfile.TemporaryDirectory(prefix='careflow-voice-') as directory:
             source=Path(directory)/'input.audio';target=Path(directory)/'normalized.wav'
             source.write_bytes(payload)
@@ -73,6 +75,10 @@ class LocalRuntime:
                 duration=wav.getnframes()/16000
                 samples=array.array('h',wav.readframes(wav.getnframes()))
             if not .15<=duration<=180 or not samples or max(map(abs,samples))<20:raise ValueError('INVALID_AUDIO')
-            return self.session.transcribe(str(target),language='Vietnamese',context='',max_new_tokens=768).text.strip()
+            decoded=time.perf_counter()
+            text=self.session.transcribe(str(target),language='Vietnamese',context=context,return_timestamps=False).text.strip()
+            if not text:raise ValueError('EMPTY_TRANSCRIPT')
+            return {'text':text,'decodeMs':round((decoded-started)*1000,2),
+                    'asrMs':round((time.perf_counter()-decoded)*1000,2),'audioDurationSeconds':round(duration,2)}
 
     def close(self):self.executor.shutdown(wait=True)

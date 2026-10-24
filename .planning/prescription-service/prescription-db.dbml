@@ -51,6 +51,7 @@ Table public.prescription_items {
   duration integer
   quantity integer
   notes text
+  details jsonb [note: 'Optional named voice fields: strength,dosageForm,route,minInterval,maxDailyDose; manualReview=confirmed records doctor acknowledgement for an uncoded named medicine']
   note: '''
 FOREIGN KEY (prescription_id) REFERENCES prescriptions(id)
 CREATE UNIQUE INDEX prescription_items_pkey ON public.prescription_items USING btree (id)
@@ -90,3 +91,17 @@ CREATE INDEX idx_prescription_consultation ON public.prescriptions USING btree (
 }
 
 Ref: public.prescription_items.prescription_id > public.prescriptions.id
+Table public.prescription_ai_sources {
+  job_id uuid [not null, note: 'External AI job reference']
+  transcript_revision integer [not null, note: 'CHECK >0']
+  prescription_id uuid [not null, note: 'Multiple recording jobs can append to the same draft; each job/revision is linked once']
+  consultation_id uuid [not null]
+  actor_id uuid [not null]
+  result_hash varchar(64) [not null]
+  created_at timestamptz [not null]
+  indexes {
+    (job_id,transcript_revision) [pk]
+    prescription_id
+  }
+}
+Ref: public.prescription_ai_sources.prescription_id > public.prescriptions.id

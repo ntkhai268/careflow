@@ -6,9 +6,11 @@ import hmac
 import json
 import os
 import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from careflow_voice_core.inference import infer, SCHEMA
+from careflow_voice_core.inference import infer, SCHEMA, catalog_entries
+from careflow_voice_core.catalog import Catalog
 from .runtime import LocalRuntime
 
 MIMES={'audio/wav','audio/x-wav','audio/webm','audio/ogg','audio/mp4','audio/mpeg','video/webm','audio/flac'}
@@ -41,6 +43,7 @@ class Engine:
     def run(self,data):
         if not self.slot.acquire(blocking=False):return 429,{'error':{'code':'WORKER_BUSY'}}
         try:
+            started=time.perf_counter();audio_timings={}
             if data.get('schemaVersion')!=SCHEMA:raise ValueError('UNSUPPORTED_SCHEMA')
             text=data.get('transcript');audio=data.get('audioBase64')
             if (text is not None)==(audio is not None):raise ValueError('EXACTLY_ONE_INPUT_REQUIRED')
@@ -51,9 +54,15 @@ class Engine:
                 try:payload=base64.b64decode(audio,validate=True)
                 except (ValueError,TypeError,binascii.Error):raise ValueError('INVALID_AUDIO') from None
                 if not payload or len(payload)>MAX_AUDIO:return 413,{'error':{'code':'AUDIO_TOO_LARGE'}}
-                text=self.runtime.transcribe(payload)
+                context=Catalog(catalog_entries(data.get('medicines'),data.get('catalogVersion'))).vocabulary()
+                transcription=self.runtime.transcribe(payload,context=context)
+                text=transcription['text'];audio_timings={k:v for k,v in transcription.items() if k!='text'}
+            extraction_started=time.perf_counter()
             result=infer(text,data.get('medicines'),data.get('catalogVersion'),data.get('transcriptRevision',1))
             result['modelInfo'].update(self.runtime.info if audio is not None else {'asrModel':None,'backend':'text'})
+            result['modelInfo']['contextUsed']=audio is not None and bool(context)
+            result['timings']={**audio_timings,'extractionMs':round((time.perf_counter()-extraction_started)*1000,2),
+                               'totalMs':round((time.perf_counter()-started)*1000,2)}
             return 200,result
         except ValueError as error:
             code=str(error) if str(error).isupper() and len(str(error))<80 else 'INVALID_INPUT'
@@ -100,6 +109,15 @@ def main():
         try:runtime.initialize()
         except Exception:print('Model initialization failed; readiness remains unavailable.',flush=True)
     server=BoundedHTTPServer((args.host,args.port),handler(engine))
+    certificate=os.getenv('VOICE_TLS_CERT')
+    if certificate:
+        import ssl
+        context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+        context.minimum_version=ssl.TLSVersion.TLSv1_2
+        context.load_cert_chain(certificate,os.environ['VOICE_TLS_KEY'])
+        context.load_verify_locations(cafile=os.environ['VOICE_TLS_CA'])
+        context.verify_mode=ssl.CERT_REQUIRED
+        server.socket=context.wrap_socket(server.socket,server_side=True)
     try:server.serve_forever()
     finally:server.server_close();runtime.close()
 

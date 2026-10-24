@@ -1,6 +1,6 @@
 # Kế hoạch đáp ứng đầy đủ yêu cầu CareFlow
 
-Ngày lập: 19/10/2026. Trạng thái: **R0 đã hoàn thành chuẩn hóa; R1 đã triển khai kỹ thuật trên môi trường test, còn nghiệm thu iPhone/passkey vật lý; R2 đã triển khai kỹ thuật trên môi trường test, còn nghiệm thu thiết bị; R3 đã triển khai/kiểm tra API và web, còn nghiệm thu thao tác native; R4 đang triển khai/kiểm thử kỹ thuật, push thật còn phụ thuộc Firebase/APNs; R5–R7 vẫn là kế hoạch**. Biên bản: [baseline R0](architecture/05-r0-baseline-results.md).
+Ngày lập:19/10/2026; cập nhật21/10/2026. **R0 chuẩn hóa; R1–R5 đã triển khai kỹ thuật, các giới hạn thiết bị/push giữ nguyên; R6 đã tích hợp AI local, chưa nghiệm thu chuyên môn/giọng bác sĩ; R7 đã kiểm thử và bàn giao kỹ thuật, nghiệm thu đầy đủ OPEN**. Xem [biên bản R7 và18ca](deployment/r7-acceptance-2026-10-21.md), [R6](ai-service/r6-acceptance-2026-10-21.md), [R5](analytics-service/r5-acceptance-2026-10-21.md), [baseline R0](architecture/05-r0-baseline-results.md). Các tiêu chí từng đợt bên dưới giữ vai trò chuẩn nghiệm thu, không được tự đánh dấu đạt từ số test.
 
 Nguồn đối chiếu: [báo cáo kiểm tra yêu cầu](requirement-coverage-audit-2026-10-19.md). Kế hoạch này điều phối việc khép kín toàn bộ yêu cầu đề tài; [kế hoạch mobile trước đây](product-completion-plan-2026-10-19.md) và các biên bản đợt1/2 giữ vai trò lịch sử. Dùng mã R0–R7 để tránh nhầm với các đợt đã triển khai.
 
@@ -141,7 +141,9 @@ Tạo `careflow-analytics-service`, module/build/deployment/Gateway route và d�
 
 ### R6 — Hoàn thiện yêu cầu Chatbot gợi ý phác đồ
 
-**Năng lực bổ sung theo yêu cầu20/10/2026:** nhập đơn thuốc bằng giọng nói từ prototype local, xem [kế hoạch bàn giao Voice Prescription](ai-service/voice-prescription-integration-plan-2026-10-20.md). Đây là kế hoạch VP0–VP4, chưa triển khai tích hợp hoặc mở AI cho dữ liệu thật. Luồng đã chốt: bác sĩ bật ghi âm AI trên web → bấm Lưu toa nháp (dừng ghi âm, xử lý AI và lưu DRAFT) → chỉnh sửa/thêm/xóa các thành phần trong toa nháp → lưu cập nhật → ký riêng sau kiểm tra. Không bắt duyệt AI riêng trước khi lưu nháp; Prescription tiếp tục sở hữu lưu/cập nhật/ký toa. Nhánh này không thay thế tiêu chí chatbot/phác đồ R6 bên dưới và không chứng minh model đã đạt bằng benchmark TTS.
+**Cập nhật21/10/2026:** đã triển khai tích hợp kỹ thuật local cho tra cứu nguồn có duyệt, context/quyền/lưu vết mã hóa và luồng web ghi âm → lưu DRAFT → chỉnh → ký riêng. Xem [biên bản R6](ai-service/r6-acceptance-2026-10-21.md). R6-01/R6-05 còn chờ tài liệu và nghiệm thu chuyên môn/giọng bác sĩ độc lập; không đánh dấu hoàn tất toàn bộ R6.
+
+**Năng lực bổ sung theo yêu cầu20/10/2026:** nhập đơn thuốc bằng giọng nói từ prototype local, xem [kế hoạch bàn giao Voice Prescription](ai-service/voice-prescription-integration-plan-2026-10-20.md). Luồng VP đã được tích hợp kỹ thuật ở R6; chưa mở để sử dụng trên bệnh án thật hoặc xác nhận chất lượng chuyên môn. Luồng đã chốt: bác sĩ bật ghi âm AI trên web → bấm Lưu toa nháp (dừng ghi âm, xử lý AI và lưu DRAFT) → chỉnh sửa/thêm/xóa các thành phần trong toa nháp → lưu cập nhật → ký riêng sau kiểm tra. Không bắt duyệt AI riêng trước khi lưu nháp; Prescription tiếp tục sở hữu lưu/cập nhật/ký toa. Nhánh này không thay thế tiêu chí chatbot/phác đồ R6 bên dưới và không chứng minh model đã đạt bằng benchmark TTS.
 
 | ID | Việc làm | Nghiệm thu |
 |---|---|---|

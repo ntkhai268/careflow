@@ -1,5 +1,5 @@
 server:
-  port: 8091
+  port: 8092
 
 spring:
   autoconfigure:
@@ -49,13 +49,14 @@ management:
 careflow:
   voice:
     enabled: ${VOICE_PRESCRIPTION_ENABLED:false}
+    content-key: ${AI_CONTENT_KEY:}
     jdbc-url: ${VOICE_DB_URL:jdbc:postgresql://100.116.233.60:5432/careflow_ai}
     db-user: ${VOICE_DB_USER:}
     db-password: ${VOICE_DB_PASSWORD:}
-    identity-url: ${VOICE_IDENTITY_URL:http://127.0.0.1:8081}
-    consultation-url: ${VOICE_CONSULTATION_URL:http://127.0.0.1:8088}
-    prescription-url: ${VOICE_PRESCRIPTION_URL:http://127.0.0.1:8089}
-    worker-url: ${VOICE_WORKER_URL:http://127.0.0.1:8770}
+    identity-url: ${VOICE_IDENTITY_URL:https://careflow-identity-service:8081}
+    consultation-url: ${VOICE_CONSULTATION_URL:https://careflow-consultation-service:8086}
+    prescription-url: ${VOICE_PRESCRIPTION_URL:https://careflow-prescription-service:8087}
+    worker-url: ${VOICE_WORKER_URL:https://voice-worker:8770}
     worker-token: ${VOICE_WORKER_TOKEN:}
     caller-name: ai-service
     caller-key: ${VOICE_CALLER_KEY:}
@@ -65,3 +66,9 @@ careflow:
     ttl-seconds: 900
     dependency-timeout-seconds: 5
     inference-timeout-seconds: 210
+
+  clinical:
+    enabled: ${CLINICAL_AI_ENABLED:false}
+    content-key: ${AI_CONTENT_KEY:}
+    retention-days: ${AI_CONTENT_RETENTION_DAYS:7}
+    allow-synthetic: ${AI_ALLOW_SYNTHETIC:false}

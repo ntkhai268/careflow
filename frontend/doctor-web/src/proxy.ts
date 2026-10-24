@@ -10,6 +10,7 @@ export function proxy(request: NextRequest) {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
     "style-src 'self' 'unsafe-inline'", // Existing React style attributes and chart layouts.
     "img-src 'self' blob: data:",
+    "media-src 'self' blob:",
     "font-src 'self'",
     `connect-src 'self' ${apiOrigin} ${wsOrigin}${dev ? " ws://localhost:* http://localhost:*" : ""}`,
     "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'",

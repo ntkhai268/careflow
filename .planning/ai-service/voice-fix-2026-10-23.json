@@ -1,0 +1,59 @@
+{
+  "checkedAt": "2026-10-23T15:15:39.317532+00:00",
+  "scope": "Voice parser and web diagnostics patch over uncommitted R6/R7; not full R7 acceptance",
+  "status": "PASS",
+  "fullAcceptance": false,
+  "baseCommit": "907cba222c299329de6d87f9acbb9ec3b9e4c4f8",
+  "branch": "feature/dangkhoii/release-r7",
+  "sourceFilesSha256": {
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/extraction.py": "4c361d9400c5bfba080e52b14ff39b5a407cf1c4b4107fea13da6a28fffb550f",
+    "careflow-ai-service/inference/voice-prescription/tests/test_prn_recap.py": "e5cea3225c8ea88b4c736ed4667d191c5b77a8fe3b969f8e2adfe4cc6ec08ace",
+    "careflow-ai-service/inference/voice-prescription/tests/test_unknown_prescribed_medicine.py": "957521b7b8e8d6bf4e12079972a01b6951b494f0dc17e4d74b2373d8032395d7",
+    "frontend/doctor-web/src/components/VoicePrescriptionPanel.tsx": "e3de9cbb7350f509b7992e96a73c23df02c330a5f5ad391a5a5154fccf5633c7",
+    "frontend/doctor-web/src/components/VoiceResultReview.tsx": "870f6f365b5162d7ba4efd62fd4f8cb53861107e02d003e6859b9df6720c7903",
+    "frontend/doctor-web/src/lib/voice-prescription-api.ts": "0d47e4090b373817361e54a18c4ebd31697cff22a10841a4dc457edb884f15f7"
+  },
+  "web": {
+    "buildId": "Wf4cZ0dYRo1Rvw8YBbz3j",
+    "artifactSha256": "793261d40d3565407dbfa1aa45b2b8ec46f400ee2ec1e9f04330b9ee1b78e7be",
+    "fileCountExcludingCache": 380,
+    "typecheck": "PASS",
+    "targetedEslint": "PASS",
+    "productionBuild": "PASS",
+    "browserChecks": [
+      "Missing strength shows exact catalog candidate and does not submit a draft",
+      "Unknown prescribed medicine remains visible and blocks silently saving the recognized subset",
+      "Genuinely conflicting frequencies show both spoken instructions and do not save",
+      "Corrected transcript revision saves a real editable draft with PRN evidence and six tablets",
+      "Reload retains the same draft and protects it from a new recording",
+      "No uncaught JavaScript errors"
+    ]
+  },
+  "worker": {
+    "tests": 29,
+    "failed": 0,
+    "skipped": 0,
+    "modelChanged": false
+  },
+  "apiChecks": [
+    "Original synthetic long transcript now retains out-of-catalog Loratadin and correctly resolves Paracetamol PRN/quantity/max daily dose",
+    "Direct server still rejects unresolved medicine and creates no partial extra prescription",
+    "Own synthetic verification draft cancelled and verification consultation/queue completed through normal API",
+    "User Doctor An case remains IN_PROGRESS with no prescription, ready for a fresh recording"
+  ],
+  "physicalMicrophoneVerified": false,
+  "clinicalQualityVerified": false,
+  "schemaChanged": false,
+  "secretRotation": false,
+  "oldCandidateEvidenceReused": false,
+  "committed": false,
+  "graph": {
+    "changed_count": 152,
+    "affected_count": 50,
+    "changed_files": 63,
+    "risk_level": "critical",
+    "partial": false,
+    "truncated": false,
+    "scope": "All carried R6/R7 changes plus voice patch; untracked files reviewed separately"
+  }
+}

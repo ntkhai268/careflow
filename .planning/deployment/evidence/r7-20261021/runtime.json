@@ -1,0 +1,115 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "scope": "Owned local test deployment; actual HTTPS health plus artifact hashes and role-bound API checks, not production or multi-host acceptance",
+  "services": [
+    {
+      "service": "careflow-identity-service",
+      "port": 18081,
+      "httpsHealth": 200,
+      "deployedJarSha256": "6f6e1f82ec5866ae8667881bcd2a4e2b3e844725307682fddb21f7dad77509c4",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-hospital-directory-service",
+      "port": 18090,
+      "httpsHealth": 200,
+      "deployedJarSha256": "61819bc5cb1935c0b87f4479fd91b9684c88c4a90bed9a703914c6dcea1183fb",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-api-gateway",
+      "port": 18080,
+      "httpsHealth": 200,
+      "deployedJarSha256": "eb75aaf6c3ee66b9d2f3aa7c88e794a945cc95d1258dce1d8f0a2f678f4d3521",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-patient-service",
+      "port": 18082,
+      "httpsHealth": 200,
+      "deployedJarSha256": "80aa03c979f9c8796c498a52ca1aee5cd67844358043b5a583a97ce18e8a7a1a",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-consultation-service",
+      "port": 18086,
+      "httpsHealth": 200,
+      "deployedJarSha256": "451b4cea30e6e6922732e6a5b5d318603c299d7ce65b5a01666e681d9fb8c14b",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-emr-service",
+      "port": 18088,
+      "httpsHealth": 200,
+      "deployedJarSha256": "dad80994e46efc8b727aedddba7abe68c0d7432531fba0c489cf2f52c3061064",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-prescription-service",
+      "port": 18087,
+      "httpsHealth": 200,
+      "deployedJarSha256": "93a51885ae08610f373c66e901cd71ce64f533afdbcef222c3b1b55961c5b803",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-lab-service",
+      "port": 18089,
+      "httpsHealth": 200,
+      "deployedJarSha256": "b7cefbbd990e4e1bcdbcbc072e9bd458e4aeaecab7340c31a59ec557ab4fc2df",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-appointment-service",
+      "port": 18083,
+      "httpsHealth": 200,
+      "deployedJarSha256": "c023f9c6b2e468b428ff5bc90f8a419cdb9bde8b24c7ffbd1a52213042f04fa5",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-identity-session-secondary",
+      "port": 18092,
+      "httpsHealth": 200,
+      "deployedJarSha256": "6f6e1f82ec5866ae8667881bcd2a4e2b3e844725307682fddb21f7dad77509c4",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-queue-service",
+      "port": 18084,
+      "httpsHealth": 200,
+      "deployedJarSha256": "64215cf1467b7a60240101a2f519fdc4c9254cf83bb85cb7072dfda53b4e63b0",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-notification-service",
+      "port": 18085,
+      "httpsHealth": 200,
+      "deployedJarSha256": "2d0afa7c50e04bb68f87fc6de836cfe5d738a20dd844d2a85fb7a5534ddd80b6",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-analytics-service",
+      "port": 18091,
+      "httpsHealth": 200,
+      "deployedJarSha256": "10861bcb1ea0ae4283e36621a81e43f0e07bd76f5b6c9bf9ebbfd0ea8195a29c",
+      "privateEnvironmentUnchanged": true
+    },
+    {
+      "service": "careflow-ai-service",
+      "port": 18093,
+      "httpsHealth": 200,
+      "deployedJarSha256": "9f9f1ebe4fb2a9514a8151e4e43747b57aead66eafa1c0485e3e4686b11c08f2",
+      "privateEnvironmentUnchanged": true
+    }
+  ],
+  "serviceCount": 14,
+  "hospitalWeb": 200,
+  "localVoiceWorkerReady": true,
+  "nativeBridgeHttps": 200,
+  "eurekaRuntime": "Not running; static service discovery in this environment",
+  "savedRuntimeSnapshot": true,
+  "launcherStartWithoutEmulatorBuild": "PASS",
+  "rebootRecovery": "PASS; existing DB volumes and keys preserved; no restore over live databases",
+  "strictTlsValidation": "PASS on Python3.14 after renewing AI/Analytics leaf extensions; CA and existing private keys unchanged; test certificates only"
+}

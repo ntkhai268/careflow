@@ -20,12 +20,13 @@ SAVED = Path.home() / 'Library/Application Support/CareFlow/mac-demo'
 STATE = AUDIT / 'state.json'
 NAMES = ['identity-service', 'hospital-directory-service', 'patient-service', 'appointment-service',
          'queue-service', 'consultation-service', 'prescription-service', 'emr-service', 'lab-service',
-         'notification-service', 'analytics-service', 'api-gateway']
+         'notification-service', 'analytics-service', 'ai-service', 'api-gateway']
 PORTS = dict(zip(['api-gateway', 'identity-service', 'patient-service', 'appointment-service',
                   'queue-service', 'notification-service', 'consultation-service', 'prescription-service',
                   'emr-service', 'lab-service', 'hospital-directory-service'], range(18080, 18091)))
 PORTS['analytics-service'] = 18091
 PORTS['identity-session-secondary'] = 18092
+PORTS['ai-service'] = 18093
 CONTAINERS = ['careflow-dangkhoii-auth-audit-postgres', 'careflow-dangkhoii-auth-audit-rabbitmq']
 
 
@@ -87,6 +88,7 @@ def snapshot():
     selected.extend(Path(v['jar']) for k, v in state['services'].items() if k.removeprefix('careflow-') in PORTS)
     private = AUDIT / 'security-hardening'
     selected.extend(private / name for name in ['private-config.json', 'jwt-private.pem', 'jwt-public.pem'])
+    selected.append(private / 'ai-container.json')
     selected.extend((private / 'tls').glob('*'))
     selected.extend((AUDIT / 'uploads').rglob('*'))
     manifest = {}
@@ -164,6 +166,33 @@ def spawn(command, cwd, env, label):
                                 stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
 
 
+def ai_container(start_if_stopped=False):
+    descriptor = AUDIT / 'security-hardening/ai-container.json'
+    if not descriptor.exists():
+        return None
+    expected = json.loads(descriptor.read_text())
+    if expected.get('name') != 'careflow-r7-ai-api' or not expected.get('image_id', '').startswith('sha256:'):
+        raise RuntimeError('Invalid owned AI container descriptor')
+    result = run(['docker', 'inspect', expected['name']])
+    if result.returncode:
+        raise RuntimeError('Không tìm thấy container AI đã provision; không tự tạo hoặc thay image.')
+    container = json.loads(result.stdout)[0]
+    labels = container['Config'].get('Labels') or {}
+    bindings = container['HostConfig'].get('PortBindings') or {}
+    if (container['Image'] != expected['image_id'] or labels.get('com.careflow.owner') != 'dangkhoii'
+            or labels.get('com.careflow.component') != 'voice-ai-api'
+            or bindings.get('8092/tcp') != [{'HostIp': '127.0.0.1', 'HostPort': '18093'}]):
+        raise RuntimeError('Container AI không khớp image/owner/cổng loopback đã ghi nhận.')
+    running = container['State']['Running']
+    if not running and start_if_stopped:
+        if run(['docker', 'start', expected['name']]).returncode:
+            raise RuntimeError('Không khởi động được container AI đã provision')
+        running = True
+    if running and start_if_stopped:
+        wait_ready('https://localhost:18093/actuator/health', context=tls_context())
+    return running
+
+
 def start():
     restore_missing()
     if run(['docker', 'info']).returncode:
@@ -186,8 +215,14 @@ def start():
     java = shutil.which('java') or '/Library/Java/JavaVirtualMachines/temurin-25.jdk/Contents/Home/bin/java'
     for short in [*NAMES, 'identity-session-secondary']:
         name = 'careflow-' + short
+        if short == 'ai-service' and name not in state['services']:
+            print('Bỏ qua AI: môi trường chưa được provision R6.', flush=True)
+            continue
         info = state['services'][name]
         port = PORTS[short]
+        if short == 'ai-service' and ai_container(start_if_stopped=True) is not None:
+            print('Đang chạy: ai-service (Docker)', flush=True)
+            continue
         current = listener(port)
         url = f'https://localhost:{port}/actuator/health'
         if current:
@@ -208,6 +243,9 @@ def start():
         ('mobile-emulator', 3000, ROOT / 'careflow-mobile-emulator-service', [shutil.which('node'), 'server.mjs']),
         ('hospital-web', 5173, ROOT / 'frontend/doctor-web', [shutil.which('node'), 'node_modules/next/dist/bin/next', 'start', '--hostname', '127.0.0.1', '--port', '5173']),
     ]:
+        if port == 3000 and not (directory / 'app/build/web/main.dart.js').exists():
+            print('Bỏ qua giả lập web: chưa build; backend và app iPhone hoạt động độc lập.', flush=True)
+            continue
         current = listener(port)
         if current:
             cwd = run(['lsof', '-a', '-p', str(current), '-d', 'cwd', '-Fn']).stdout.splitlines()
@@ -220,14 +258,16 @@ def start():
                 raise RuntimeError('Chưa có bản build giao diện: ' + label)
             env = {**os.environ, 'NODE_EXTRA_CA_CERTS': str(AUDIT / 'security-hardening/tls/ca.crt'),
                    'CAREFLOW_GATEWAY_URL': 'https://localhost:18080', 'CAREFLOW_GATEWAY': 'https://localhost:18080',
+                   'CAREFLOW_WEB_ORIGIN': 'http://localhost:5173',
                    'CAREFLOW_CA_FILE': str(AUDIT / 'security-hardening/tls/ca.crt'), 'PORT': str(port)}
             child = spawn(command, directory, env, label)
             current = child.pid
             wait_ready(f'http://localhost:{port}/', child)
         private_json(AUDIT / 'security-hardening' / (label + '.json'), {'pid': current, 'cwd': str(directory)})
-    if not health('http://localhost:3000/__emulator/health'):
+    emulator_built = (ROOT / 'careflow-mobile-emulator-service/app/build/web/main.dart.js').exists()
+    if emulator_built and not health('http://localhost:3000/__emulator/health'):
         raise RuntimeError('Giao diện mở nhưng chưa kết nối được Gateway')
-    print('\nSẵn sàng: http://localhost:3000 và http://localhost:5173/login', flush=True)
+    print('\nSẵn sàng: http://localhost:5173/login' + (' và http://localhost:3000' if emulator_built else ''), flush=True)
 
 
 def status():
@@ -239,11 +279,18 @@ def status():
     context = tls_context()
     ready = True
     for name, port in PORTS.items():
-        ok = health(f'https://localhost:{port}/actuator/health', context)
+        if name == 'ai-service' and 'careflow-ai-service' not in state['services']:
+            print('TẮT  ai-service: chưa provision R6', flush=True)
+            continue
+        container_running = ai_container() if name == 'ai-service' else None
+        ok = container_running is not False and health(f'https://localhost:{port}/actuator/health', context)
         ready &= ok
-        print(('OK   ' if ok else 'LỖI  ') + name + ' :' + str(port), flush=True)
+        print(('OK   ' if ok else 'LỖI  ') + name + ' :' + str(port) + (' (Docker)' if container_running is not None else ''), flush=True)
     for name, url in [('Mobile → Gateway', 'http://localhost:3000/__emulator/health'),
                       ('Hospital Web', 'http://localhost:5173/login')]:
+        if name == 'Mobile → Gateway' and not (ROOT / 'careflow-mobile-emulator-service/app/build/web/main.dart.js').exists():
+            print('TẮT  giả lập web: chưa build; kiểm tra iPhone riêng theo hướng dẫn11.', flush=True)
+            continue
         ok = health(url)
         ready &= ok
         print(('OK   ' if ok else 'LỖI  ') + name, flush=True)

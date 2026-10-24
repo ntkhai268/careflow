@@ -19,7 +19,11 @@ export interface AiModelInfo {
   version: string;
 }
 
+export interface ClinicalCitation {sourceId:string;title:string;revision:string;url:string;contentHash:string;reviewedAt:string;quote:string;synthetic:boolean}
+
 export interface ClinicalSuggestionResponse {
+  consultationId?:string;
+  citations?:ClinicalCitation[];
   interactionId: string;
   mode: string;
   summary: string;
@@ -61,9 +65,6 @@ export const aiApi = {
     return api.post<ClinicalSuggestionResponse>("/api/ai/clinical-suggestions", {
       consultationId,
       question: question || "Gợi ý chẩn đoán phân biệt và dữ liệu còn thiếu",
-      pageRoute: context?.pageRoute,
-      pageTitle: context?.pageTitle,
-      pageData: context?.pageData,
     });
   },
 
@@ -79,9 +80,6 @@ export const aiApi = {
       consultationId,
       message,
       parentInteractionId: parentId,
-      pageRoute: context?.pageRoute,
-      pageTitle: context?.pageTitle,
-      pageData: context?.pageData,
     });
   },
 

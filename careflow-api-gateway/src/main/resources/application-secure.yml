@@ -61,3 +61,7 @@ spring:
               uri: lb://hospital-directory-service
               predicates:
                 - Path=/api/directory/**
+            - id: secure-ai-service
+              uri: lb://ai-service
+              predicates:
+                - Path=/api/ai/**

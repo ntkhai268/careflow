@@ -20,6 +20,12 @@ import ConfirmModal from "@/components/ConfirmModal";
 import UploadedHealthRecords from "@/components/UploadedHealthRecords";
 import FollowUpFields from "@/components/FollowUpFields";
 import FollowUpAppointmentPanel from "@/components/FollowUpAppointmentPanel";
+import VoicePrescriptionPanel,{VoiceDraftHandle} from "@/components/VoicePrescriptionPanel";
+import PrescriptionDetailsEditor from "@/components/PrescriptionDetailsEditor";
+import NamedMedicineReview from "@/components/NamedMedicineReview";
+import VoicePrescriptionPreview from "@/components/VoicePrescriptionPreview";
+import {prescriptionItemErrors,prescriptionFieldId,PrescriptionRequiredField} from "@/lib/prescription-validation";
+import ClinicalCitations from "@/components/ClinicalCitations";
 
 const ICD10_CATALOG = [
   { code: "K21.9", name: "Bệnh trào ngược dạ dày - thực quản không có viêm thực quản" },
@@ -112,6 +118,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [icdSearchQuery, setIcdSearchQuery] = useState("");
   const [showIcdDropdown, setShowIcdDropdown] = useState(false);
 
+  const voiceDraft=useRef<VoiceDraftHandle>(null);
+  const savingDraft=useRef(false);
+  const [medDetails,setMedDetails]=useState<Record<string,string>>({});
   // Prescription states
   const [prescriptionId, setPrescriptionId] = useState<string | null>(null);
   const [prescriptionItems, setPrescriptionItems] = useState<PrescriptionItemRequest[]>([]);
@@ -129,7 +138,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
   // Drawer & Autocomplete UI states for Medicine Form
   const [isMedicineDrawerOpen, setIsMedicineDrawerOpen] = useState(false);
-  const [editingMedicineCode, setEditingMedicineCode] = useState<string | null>(null);
+  const [editingMedicineIndex, setEditingMedicineIndex] = useState<number | null>(null);
 
   const [medicines, setMedicines] = useState<MedicineCatalogItem[]>([]);
   const [medSearchQuery, setMedSearchQuery] = useState("");
@@ -271,7 +280,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             timing: item.timing,
             duration: item.duration,
             quantity: item.quantity,
-            notes: item.notes
+            notes: item.notes,
+            details: item.details
           })));
           }
         }
@@ -343,7 +353,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   );
 
   const openAddMedicineDrawer = () => {
-    setEditingMedicineCode(null);
+    voiceDraft.current?.collapse();
+    setEditingMedicineIndex(null);
+    setMedDetails({});
     setSelectedMedicine(null);
     setMedSearchQuery("");
     setMedDosage("1 viên / lần");
@@ -357,37 +369,42 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   };
 
   const openEditMedicineDrawer = (item: PrescriptionItemRequest) => {
-    setEditingMedicineCode(item.medicineCode);
+    voiceDraft.current?.collapse();
+    setEditingMedicineIndex(prescriptionItems.indexOf(item));
     const catalogItem = medicines.find(m => m.code === item.medicineCode) || {
-      code: item.medicineCode,
+      code: item.medicineCode || "",
       name: item.medicineName,
       unit: item.unit,
       description: ""
     };
     setSelectedMedicine(catalogItem);
     setMedSearchQuery(item.medicineName);
-    setMedDosage(item.dosage);
-    setMedFrequency(item.frequency);
-    setMedTiming(item.timing);
-    setMedDuration(item.duration.toString());
-    setMedQuantity(item.quantity.toString());
+    setMedDosage(item.dosage??"");
+    setMedFrequency(item.frequency??"");
+    setMedTiming(item.timing??"");
+    setMedDuration(item.duration?.toString()??"");
+    setMedQuantity(item.quantity?.toString()??"");
+    setMedDetails(item.details||{});
     setMedNotes(item.notes || "");
     if (item.notes) setShowMedNotesInput(true);
     setIsMedicineDrawerOpen(true);
   };
 
+  const withoutReview=(items:PrescriptionItemRequest[])=>items.map(item=>{const details={...item.details};delete details.manualReview;return {...item,details};});
+  const editPrescriptionItems=(items:PrescriptionItemRequest[])=>setPrescriptionItems(withoutReview(items));
+
   const executeSaveMedicine = (newItem: PrescriptionItemRequest) => {
-    if (editingMedicineCode) {
-      setPrescriptionItems(prescriptionItems.map(item => item.medicineCode === editingMedicineCode ? newItem : item));
+    if (editingMedicineIndex !== null) {
+      editPrescriptionItems(prescriptionItems.map((item,index) => index === editingMedicineIndex ? newItem : item));
       showToast(`Đã cập nhật thuốc ${newItem.medicineName}`);
     } else {
       if (prescriptionItems.some(item => item.medicineCode === newItem.medicineCode)) {
-        setPrescriptionItems(prescriptionItems.map(item => item.medicineCode === newItem.medicineCode ? newItem : item));
+        editPrescriptionItems(prescriptionItems.map(item => item.medicineCode === newItem.medicineCode ? newItem : item));
         showToast(`Thuốc ${newItem.medicineName} đã có trong đơn. Hệ thống đã cập nhật lại số lượng và liều dùng mới.`, "warning");
         setIsMedicineDrawerOpen(false);
         return;
       }
-      setPrescriptionItems([...prescriptionItems, newItem]);
+      editPrescriptionItems([...prescriptionItems, newItem]);
       showToast(`Đã thêm ${newItem.medicineName} vào đơn thuốc`);
     }
     setIsMedicineDrawerOpen(false);
@@ -406,9 +423,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       dosage: medDosage,
       frequency: medFrequency,
       timing: medTiming,
-      duration: parseInt(medDuration) || 1,
-      quantity: parseInt(medQuantity) || 1,
-      notes: medNotes
+      duration: medDuration.trim()?Number(medDuration):null,
+      quantity: medQuantity.trim()?Number(medQuantity):null,
+      notes: medNotes,
+      details: medDetails
     };
 
     // Check CRITICAL (Level 1) allergy conflict
@@ -437,34 +455,30 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     executeSaveMedicine(newItem);
   };
 
-  const removeMedicine = (code: string, name: string) => {
-    const updatedItems = prescriptionItems.filter(item => item.medicineCode !== code);
-    setPrescriptionItems(updatedItems);
+  const removeMedicine = (index: number, name: string) => {
+    const updatedItems = prescriptionItems.filter((_,i) => i !== index);
+    editPrescriptionItems(updatedItems);
     showToast(`Đã xóa ${name} khỏi đơn thuốc`, "warning");
 
-    // If no medicines left in prescription, clear draft prescription state
-    if (updatedItems.length === 0) {
-      setPrescriptionId(null);
-      setPrescriptionStatus(null);
-    }
+    // Keep the persisted draft identity when editing the last item.
   };
 
   const clearAllMedicines = () => {
-    setPrescriptionItems([]);
-    setPrescriptionId(null);
-    setPrescriptionStatus(null);
+    editPrescriptionItems([]);
     showToast("Đã xóa toàn bộ đơn thuốc nháp", "warning");
   };
 
   // Save draft
   const saveDraft = async () => {
-    if (!user) return false;
+    if (!user || isSaving || savingDraft.current) return false;
     if(followUpDate && prescriptionItems.length>0 && (!prescriptionId || prescriptionStatus==="DRAFT") && (!followUpDepartment || !followUpTimeSlot)){
       showToast("Chọn khoa và ca tái khám còn chỗ trước khi lưu toa.","warning");return false;
     }
+    savingDraft.current=true;
     setIsSaving(true);
 
     try {
+      await voiceDraft.current?.stop();
       const consultationUpdate: UpdateConsultationRequest = {
         temperature: parseFloat(temperature) || undefined,
         bloodPressure: bloodPressure || undefined,
@@ -480,7 +494,15 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       };
       await consultationApi.updateConsultation(consultationId, consultationUpdate);
 
-      if (prescriptionItems.length > 0 && (!prescriptionId || prescriptionStatus === "DRAFT")) {
+      if(prescriptionId&&prescriptionStatus==="DRAFT"&&prescriptionItems.length>0&&voiceDraft.current?.pending()){
+        await prescriptionApi.updatePrescription(prescriptionId,{consultationId,patientId:consultation!.patientId,doctorId:user.id,diagnosis,notes:prescriptionNotes,followUpDate:followUpDate||undefined,followUpDepartment:followUpDate?followUpDepartment:undefined,followUpTimeSlot:followUpDate?followUpTimeSlot:undefined,items:prescriptionItems});
+      }
+      const fromVoice=await voiceDraft.current?.save(!!prescriptionId&&prescriptionStatus==="DRAFT"&&prescriptionItems.length===0);
+      const targetId=fromVoice?.id||prescriptionId;
+      const targetItems=fromVoice?withoutReview(fromVoice.items):prescriptionItems;
+      if(fromVoice){setPrescriptionId(fromVoice.id);setPrescriptionStatus(fromVoice.status);setPrescriptionItems(targetItems);}
+      if(targetId && targetItems.length===0)throw new Error("Toa nháp cần ít nhất một thuốc. Thêm thuốc hoặc hủy toa, không tạo lại mã toa.");
+      if (targetItems.length > 0 && (!targetId || (fromVoice?.status||prescriptionStatus) === "DRAFT")) {
         const prescriptionData = {
           consultationId,
           patientId: consultation!.patientId,
@@ -490,11 +512,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           followUpDate: followUpDate || undefined,
           followUpDepartment: followUpDate ? followUpDepartment : undefined,
           followUpTimeSlot: followUpDate ? followUpTimeSlot : undefined,
-          items: prescriptionItems
+          items: targetItems
         };
 
-        if (prescriptionId) {
-          const res = await prescriptionApi.updatePrescription(prescriptionId, prescriptionData);
+        if (targetId) {
+          const res = await prescriptionApi.updatePrescription(targetId, prescriptionData);
           setPrescriptionStatus(res.data.status);
         } else {
           const res = await prescriptionApi.createPrescription(prescriptionData);
@@ -510,13 +532,33 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       showToast(err instanceof Error ? err.message : "Đã xảy ra lỗi khi lưu thông tin.", "danger");
       return false;
     } finally {
+      savingDraft.current=false;
       setIsSaving(false);
     }
   };
 
+  const focusMissingPrescriptionField=()=>{
+    for(let index=0;index<prescriptionItems.length;index++){
+      const errors=prescriptionItemErrors(prescriptionItems[index]);
+      const key=Object.keys(errors)[0] as PrescriptionRequiredField|undefined;
+      if(!key)continue;
+      const input=document.getElementById(prescriptionFieldId(index,key));
+      const editor=input?.closest("details");if(editor)editor.open=true;
+      input?.scrollIntoView({behavior:"smooth",block:"center"});input?.focus({preventScroll:true});
+      return {index,message:errors[key]};
+    }
+    return null;
+  };
+
   // Action to execute confirm prescription
   const executeConfirmPrescription = async () => {
-    if (!prescriptionId) return;
+    if (!prescriptionId || isSaving) return;
+    if(voiceDraft.current?.pending()){
+      setConfirmModalConfig(previous=>({...previous,isOpen:false}));
+      voiceDraft.current.open("Lưu đoạn ghi âm mới và kiểm tra các thuốc vừa thêm trước khi ký.");
+      return;
+    }
+    if (!(await saveDraft())) return;
     setIsSaving(true);
     try {
       const res = await prescriptionApi.confirmPrescription(prescriptionId);
@@ -525,7 +567,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         ? "Toa đã ký. Lịch tái khám chưa được xác nhận; kiểm tra trạng thái và thử lại."
         : "Toa đã ký; hệ thống đang chuyển thông tin đến quầy thuốc.",res.data.followUpDate && res.data.followUpStatus!=="SCHEDULED"?"warning":"success");
     } catch (err) {
-      showToast(err instanceof Error ? err.message : "Đã xảy ra lỗi khi ký đơn thuốc.", "danger");
+      const message=err instanceof Error ? err.message : "Đã xảy ra lỗi khi ký đơn thuốc.";
+      showToast(message, "danger");
+      voiceDraft.current?.open(message);
+      requestAnimationFrame(()=>requestAnimationFrame(()=>focusMissingPrescriptionField()));
     } finally {
       setIsSaving(false);
       setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
@@ -536,6 +581,23 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const confirmPrescription = () => {
     if (!prescriptionId) {
       showToast("Vui lòng thêm thuốc và lưu nháp đơn trước khi ký xác nhận.", "warning");
+      return;
+    }
+    if(voiceDraft.current?.pending()){
+      voiceDraft.current.open("Lưu đoạn ghi âm mới và kiểm tra các thuốc vừa thêm trước khi ký.");
+      return;
+    }
+
+    const missing=focusMissingPrescriptionField();
+    if(missing){
+      showToast(`Thuốc ${missing.index+1}: ${missing.message} Các ô cần bổ sung đã được đánh dấu đỏ.`,"warning");
+      return;
+    }
+
+    if(prescriptionItems.some(item=>!item.medicineName?.trim()||!item.unit?.trim()||item.details?.manualReview!=="confirmed")){
+      showToast("Kiểm tra các dòng thuốc rồi xác nhận toàn bộ đơn thuốc ở cuối danh sách trước khi ký.","warning");
+      document.getElementById("prescription-review")?.scrollIntoView({behavior:"smooth",block:"center"});
+      document.getElementById("prescription-review-confirm")?.focus({preventScroll:true});
       return;
     }
 
@@ -578,14 +640,14 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const handleGetAiSuggestions = async (promptQuestion?: string) => {
     setAiLoading(true);
     try {
-      const res = await aiApi.getClinicalSuggestions(consultationId, promptQuestion || "Gợi ý chẩn đoán phân biệt và dữ liệu còn thiếu");
+      const res = await aiApi.getClinicalSuggestions(consultationId, promptQuestion || "Tra cứu hướng dẫn phù hợp và dữ liệu còn thiếu");
       if (res.data) {
         setAiResponse(res.data);
         setAiChatHistory(prev => [
           ...prev,
           {
             sender: "user",
-            text: promptQuestion || "Gợi ý chẩn đoán phân biệt và dữ liệu còn thiếu",
+            text: promptQuestion || "Tra cứu hướng dẫn phù hợp và dữ liệu còn thiếu",
             time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
           },
           {
@@ -596,8 +658,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           },
         ]);
       }
-    } catch {
-      showToast("Không thể kết nối AI Service.", "danger");
+    } catch (error) {
+      setAiResponse(null);
+      showToast(getErrorMessage(error,"Trợ lý chưa sẵn sàng."), "danger");
     } finally {
       setAiLoading(false);
     }
@@ -634,8 +697,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           },
         ]);
       }
-    } catch {
-      showToast("AI Service chưa sẵn sàng.", "danger");
+    } catch (error) {
+      setAiResponse(null);
+      showToast(getErrorMessage(error,"Trợ lý chưa sẵn sàng."), "danger");
     } finally {
       setAiLoading(false);
     }
@@ -643,6 +707,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
   // Complete Consultation trigger
   const completeConsultation = () => {
+    if (voiceDraft.current?.pending()) {
+      voiceDraft.current.open();
+      showToast("Lưu toa nháp và kiểm tra các dòng thuốc trước khi ký và hoàn tất phiên khám.", "warning");
+      return;
+    }
     if (prescriptionItems.length > 0 && prescriptionStatus !== "CONFIRMED" && prescriptionStatus !== "DISPENSED") {
       showToast("Vui lòng KÝ và XÁC NHẬN đơn thuốc trước khi hoàn tất phiên khám.", "warning");
       if (typeof window !== "undefined") {
@@ -1546,11 +1615,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     <h3 className="font-extrabold text-sm tracking-wide">Trợ Lý Lâm Sàng AI CareFlow</h3>
                   </div>
                   <span className="text-[10px] bg-purple-700/60 border border-purple-400/40 text-purple-200 px-2 py-0.5 rounded font-mono font-semibold">
-                    CareFlow Rule Engine v1.0
+                    Tra cứu nguồn local
                   </span>
                 </div>
                 <p className="text-xs text-purple-100/90 leading-relaxed">
-                  Phân tích triệu chứng, gợi ý chẩn đoán phân biệt, phát hiện cảnh báo tương tác thuốc và dữ liệu lâm sàng còn thiếu.
+                  Đối chiếu các đoạn hướng dẫn đã được rà soát, theo khoa và ngữ cảnh ca khám. Bác sĩ đánh giá căn cứ và quyết định chuyên môn.
                 </p>
               </div>
 
@@ -1562,25 +1631,25 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 <div className="flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => handleGetAiSuggestions("Gợi ý các khả năng chẩn đoán phân biệt cần cân nhắc")}
+                    onClick={() => handleGetAiSuggestions("Tra cứu hướng dẫn đánh giá triệu chứng hiện tại")}
                     disabled={aiLoading}
                     className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-900 border border-purple-200 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
                   >
-                    <span>💡 Gợi ý Chẩn đoán Phân biệt</span>
+                    <span>💡 Hướng dẫn đánh giá triệu chứng</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => handleGetAiSuggestions("Cảnh báo yếu tố dị ứng và tương tác thuốc nhóm Penicillin & NSAIDs")}
+                    onClick={() => handleGetAiSuggestions("Tra cứu chống chỉ định và yếu tố dị ứng trong nguồn đã duyệt")}
                     disabled={aiLoading}
                     className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-900 border border-rose-200 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
                   >
-                    <span>⚠️ Cảnh báo Tương tác & Dị ứng</span>
+                    <span>⚠️ Tra cứu chống chỉ định</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => handleGetAiSuggestions("Kiểm tra dữ liệu lâm sàng và xét nghiệm còn thiếu")}
+                    onClick={() => handleGetAiSuggestions("Tra cứu dữ liệu lâm sàng cần bổ sung")}
                     disabled={aiLoading}
                     className="px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
                   >
@@ -1589,11 +1658,11 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
                   <button
                     type="button"
-                    onClick={() => handleGetAiSuggestions("Đề xuất các chỉ định Cận lâm sàng khẩn cấp")}
+                    onClick={() => handleGetAiSuggestions("Tra cứu chỉ định xét nghiệm trong nguồn đã duyệt")}
                     disabled={aiLoading}
                     className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 text-xs font-semibold rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
                   >
-                    <span>🔬 Đề xuất Cận lâm sàng</span>
+                    <span>🔬 Hướng dẫn xét nghiệm</span>
                   </button>
                 </div>
               </div>
@@ -1603,36 +1672,28 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 <div className="p-8 text-center bg-purple-50/50 border border-purple-100 rounded-xl space-y-3">
                   <div className="w-8 h-8 border-3 border-purple-600 border-t-transparent rounded-full animate-spin mx-auto" />
                   <p className="text-xs font-bold text-purple-800 animate-pulse">
-                    CareFlow AI đang tổng hợp EMR và phân tích dữ liệu lâm sàng...
+                    Đang kiểm tra ngữ cảnh và tra cứu nguồn đã duyệt...
                   </p>
                 </div>
               ) : aiResponse && (
                 <div className="space-y-4 border border-card-border bg-white p-4 rounded-xl shadow-sm">
                   {/* Summary */}
                   <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                    <span className="text-[11px] font-bold text-purple-900 uppercase tracking-wider block">Tóm tắt phân tích:</span>
+                    <span className="text-[11px] font-bold text-purple-900 uppercase tracking-wider block">Kết quả tra cứu:</span>
                     <div className="text-xs font-medium text-purple-950 mt-1">{renderFormattedAiText(aiResponse.summary)}</div>
+                    <ClinicalCitations response={aiResponse}/>
                   </div>
 
                   {/* Suggestions list with evidence & copy action */}
                   {aiResponse.suggestions && aiResponse.suggestions.length > 0 && (
                     <div className="space-y-2">
-                      <span className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide block">💡 Gợi ý Chẩn đoán & Hướng xử lý:</span>
+                      <span className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide block">💡 Nguồn hướng dẫn phù hợp:</span>
                       <div className="space-y-2">
                         {aiResponse.suggestions.map((item, idx) => (
                           <div key={idx} className="p-3 bg-gray-50 border border-card-border rounded-lg space-y-2">
                             <div className="flex items-start justify-between gap-3">
                               <p className="text-xs font-semibold text-slate-800">{item.text}</p>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setDiagnosis(item.text);
-                                  showToast(`Đã sao chép gợi ý AI vào ô Chẩn đoán: ${item.text}`, "success");
-                                }}
-                                className="px-2.5 py-1 text-[11px] font-bold text-purple-800 bg-purple-100 hover:bg-purple-200 border border-purple-300 rounded transition-all flex-shrink-0 cursor-pointer"
-                              >
-                                + Áp dụng vào Chẩn đoán
-                              </button>
+
                             </div>
                             {item.evidenceRefs && item.evidenceRefs.length > 0 && (
                               <div className="flex items-center gap-1.5 text-[10px]">
@@ -1726,13 +1787,14 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         {/* Right Column (2/5): Prescription List & Actions */}
         <div className="lg:col-span-2 space-y-6">
           
+          <VoicePrescriptionPanel key={`${user?.id}:${consultationId}`} ref={voiceDraft} consultationId={consultationId} actorId={user?.id||""} prescriptionId={prescriptionId} disabled={isConsultationLocked||isSaving} hasPrescription={!!prescriptionId} canEdit={prescriptionStatus==="DRAFT"} onSaveDraft={saveDraft}>
           {/* Main Prescription Container */}
           <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-lg flex flex-col justify-between min-h-[420px]">
             <div>
               <div className="flex justify-between items-center border-b border-card-border pb-3 mb-4">
                 <div>
                   <h2 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide">
-                    Danh sách Đơn thuốc
+                    Đơn thuốc
                   </h2>
                   <p className="text-[10px] text-[#6A5C70]">Tổng số thuốc: {prescriptionItems.length}</p>
                 </div>
@@ -1741,6 +1803,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     <button
                       type="button"
                       onClick={clearAllMedicines}
+                      disabled={isSaving}
                       className="text-[11px] font-medium text-slate-400 hover:text-rose-600 transition-colors hover:underline flex items-center gap-1 cursor-pointer"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1753,6 +1816,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     <button
                       type="button"
                       onClick={openAddMedicineDrawer}
+                      disabled={isSaving}
                       className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-3 py-1.5 text-xs transition-all flex items-center gap-1.5 rounded-md shadow-sm"
                     >
                       + THÊM THUỐC
@@ -1761,74 +1825,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 </div>
               </div>
 
-              {/* Prescription Items List or Empty State */}
-              {prescriptionItems.length === 0 ? (
-                <div className="border-2 border-dashed border-card-border p-8 text-center bg-[#FAF8FA] space-y-3 rounded-lg my-4">
-                  <div className="w-10 h-10 border border-primary-300 bg-white flex items-center justify-center mx-auto text-primary-600 font-bold text-lg rounded-md">
-                    Rx
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-[#2B1D30]">Chưa có thuốc nào trong đơn</p>
-                    <p className="text-xs text-[#6A5C70]">Nhấn nút bên dưới để mở công cụ kê đơn thuốc cho bệnh nhân</p>
-                  </div>
-                  {!isPrescriptionLocked && (
-                    <button
-                      type="button"
-                      onClick={openAddMedicineDrawer}
-                      className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2 text-xs transition-all rounded-md inline-block mt-2"
-                    >
-                      + THÊM THUỐC ĐẦU TIÊN
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="space-y-3 max-h-[320px] overflow-y-auto pr-1">
-                  {prescriptionItems.map((item, index) => (
-                    <div key={item.medicineCode} className="border border-card-border p-3 bg-white flex justify-between items-start hover:border-primary-400 transition-all rounded-md">
-                      <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-bold text-primary-600">{index + 1}.</span>
-                          <span className="font-bold text-sm text-[#2B1D30]">{item.medicineName}</span>
-                        </div>
-                        <p className="text-xs text-[#6A5C70]">
-                          Mã: <span className="font-mono">{item.medicineCode}</span> | Số lượng: <strong className="text-[#2B1D30]">{item.quantity} {item.unit}</strong> ({item.duration} ngày)
-                        </p>
-                        <p className="text-xs text-[#6A5C70] font-medium">
-                          Liều: {item.dosage} · {item.frequency} · {item.timing}
-                        </p>
-                        {item.notes && <p className="text-xs text-amber-700 bg-amber-50 p-1 border border-amber-200 mt-1 rounded-sm">Ghi chú: {item.notes}</p>}
-                      </div>
+              <VoicePrescriptionPreview result={null} saved items={prescriptionItems} disabled={isSaving||isPrescriptionLocked} canEdit={!isPrescriptionLocked} onChange={(index,item)=>editPrescriptionItems(prescriptionItems.map((row,i)=>i===index?item:row))} onRemove={index=>removeMedicine(index,prescriptionItems[index].medicineName)} onEditCatalog={openEditMedicineDrawer}/>
+              {!isPrescriptionLocked&&<NamedMedicineReview items={prescriptionItems} disabled={isSaving} onChange={setPrescriptionItems}/>}
 
-                      {!isPrescriptionLocked && (
-                        <div className="flex items-center gap-3">
-                          <button
-                            type="button"
-                            onClick={() => openEditMedicineDrawer(item)}
-                            className="text-[11px] font-medium text-slate-500 hover:text-primary-700 flex items-center gap-1 transition-colors cursor-pointer"
-                            title="Sửa thông tin thuốc"
-                          >
-                            <svg className="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                            </svg>
-                            <span>Sửa</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeMedicine(item.medicineCode, item.medicineName)}
-                            className="text-[11px] font-medium text-slate-400 hover:text-rose-600 flex items-center gap-1 transition-colors cursor-pointer"
-                            title="Xóa khỏi đơn"
-                          >
-                            <svg className="w-3.5 h-3.5 text-slate-400 hover:text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                            </svg>
-                            <span>Xóa</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Progressive Disclosure: General Notes for Prescription */}
@@ -1855,7 +1854,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                     )}
                   </div>
                   <textarea
-                    disabled={isPrescriptionLocked}
+                    disabled={isPrescriptionLocked||isSaving}
                     value={prescriptionNotes}
                     onChange={(e) => setPrescriptionNotes(e.target.value)}
                     rows={2}
@@ -1866,6 +1865,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
               )}
             </div>
           </div>
+
+          </VoicePrescriptionPanel>
 
           {/* Follow-up Date Panel */}
           <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] space-y-3 rounded-lg">
@@ -1894,7 +1895,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             
               <div className="shrink-0 flex justify-between items-center border-b border-card-border pb-3">
                 <h3 id="medicine-drawer-title" className="text-base font-bold text-[#2B1D30] uppercase tracking-wide">
-                  {editingMedicineCode ? "Cập nhật thông tin thuốc" : "Thêm thuốc vào đơn kê"}
+                  {editingMedicineIndex !== null ? "Cập nhật thông tin thuốc" : "Thêm thuốc vào đơn kê"}
                 </h3>
                 <button
                   type="button"
@@ -2010,6 +2011,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 </div>
               </div>
 
+              <PrescriptionDetailsEditor value={medDetails} onChange={setMedDetails}/>
               {/* Progressive Disclosure: Medicine Note */}
               <div>
                 {!showMedNotesInput && !medNotes ? (
@@ -2050,7 +2052,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 onClick={saveMedicineToPrescription}
                 className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 text-xs transition-all rounded-md shadow-sm"
               >
-                {editingMedicineCode ? "LƯU CẬP NHẬT" : "XÁC NHẬN THÊM"}
+                {editingMedicineIndex !== null ? "LƯU CẬP NHẬT" : "XÁC NHẬN THÊM"}
               </button>
             </div>
 
@@ -2073,7 +2075,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
               disabled={isSaving}
               className="whitespace-nowrap border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md"
             >
-              {isSaving ? "ĐANG LƯU..." : "LƯU NHÁP ĐƠN"}
+              {isSaving ? "ĐANG LƯU..." : "LƯU TOA NHÁP"}
             </button>
           )}
           
@@ -2125,7 +2127,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             </div>
             <div className="max-h-[160px] overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
               {prescriptionItems.map((item, idx) => (
-                <div key={item.medicineCode} className="text-xs text-[#6A5C70] font-medium leading-relaxed">
+                <div key={idx} className="text-xs text-[#6A5C70] font-medium leading-relaxed">
                   <span className="font-bold text-[#2B1D30]">{idx + 1}. {item.medicineName}</span>{" "}
                   <span className="text-gray-900 font-semibold">x{item.quantity} {item.unit}</span>{" "}
                   <span className="text-gray-500">({item.frequency})</span>{" "}

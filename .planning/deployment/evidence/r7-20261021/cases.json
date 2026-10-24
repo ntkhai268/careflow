@@ -1,0 +1,440 @@
+{
+  "candidateId": "r7-929e88327e54c311",
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "scope": "Full requirements R7; no user waiver of device, push or clinical acceptance",
+  "fullAcceptance": false,
+  "cases": [
+    {
+      "id": "E01",
+      "status": "PARTIAL",
+      "scope": "Email registration on physical mobile",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Backend PostgreSQL registration regressions pass; UI/email flow on iPhone21 unverified",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "native.json",
+          "sha256": "4e2356e93bf3f9a2b89beb7b906d5a6724e0d7adba78b3d74ce12da60d6c9126"
+        }
+      ]
+    },
+    {
+      "id": "E02",
+      "status": "PARTIAL",
+      "scope": "Email password recovery, logout and biometric login",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Recovery/biometric widget tests and bound API/logout pass; actual Face ID and email flow unverified",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "native.json",
+          "sha256": "4e2356e93bf3f9a2b89beb7b906d5a6724e0d7adba78b3d74ce12da60d6c9126"
+        },
+        {
+          "path": "security-api.json",
+          "sha256": "7dc033afc873a39faa30a023dbad464bc96de58839eab6b705a52efecb1fd367"
+        }
+      ]
+    },
+    {
+      "id": "E03",
+      "status": "PARTIAL",
+      "scope": "On-device OCR/QR and in-person verification",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Local-document backend/tests present; physical camera/in-person acceptance not repeated",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "native.json",
+          "sha256": "4e2356e93bf3f9a2b89beb7b906d5a6724e0d7adba78b3d74ce12da60d6c9126"
+        }
+      ]
+    },
+    {
+      "id": "E04",
+      "status": "PARTIAL",
+      "scope": "Admin accounts, assignments, passkey and device lock",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "PostgreSQL permissions and web session tests pass; physical authenticator/device lock verification missing",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "security-api.json",
+          "sha256": "7dc033afc873a39faa30a023dbad464bc96de58839eab6b705a52efecb1fd367"
+        },
+        {
+          "path": "web.json",
+          "sha256": "05adec76522dda823833b525a388ba38ea58d65a02a451839fed8539801066e5"
+        }
+      ]
+    },
+    {
+      "id": "E05",
+      "status": "PARTIAL",
+      "scope": "Booking to check-in, consultation, prescription and mobile",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Backend regressions and earlier cloned E2E; fresh full physical mobile evidence missing",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "rehearsal-history.json",
+          "sha256": "4e8d3df9f3b1d5fb3a54821cb835c895dc283eb43619cf579113128accc7ec26"
+        },
+        {
+          "path": "native.json",
+          "sha256": "4e2356e93bf3f9a2b89beb7b906d5a6724e0d7adba78b3d74ce12da60d6c9126"
+        }
+      ]
+    },
+    {
+      "id": "E06",
+      "status": "PARTIAL",
+      "scope": "Lab execution, release, review and mobile result",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Backend regressions and cloned history; actual native result journey unverified",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "rehearsal-history.json",
+          "sha256": "4e8d3df9f3b1d5fb3a54821cb835c895dc283eb43619cf579113128accc7ec26"
+        }
+      ]
+    },
+    {
+      "id": "E07",
+      "status": "PARTIAL",
+      "scope": "Upload, doctor access, denied unrelated user and account switch",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Backend and API ownership checks pass; native picker/download and full journey need verification",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "security-api.json",
+          "sha256": "7dc033afc873a39faa30a023dbad464bc96de58839eab6b705a52efecb1fd367"
+        },
+        {
+          "path": "native.json",
+          "sha256": "4e2356e93bf3f9a2b89beb7b906d5a6724e0d7adba78b3d74ce12da60d6c9126"
+        }
+      ]
+    },
+    {
+      "id": "E08",
+      "status": "PASS",
+      "scope": "Registered and unregistered walk-in to assigned-doctor completion through actual APIs",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Synthetic no-account profile never assigned to staff; both paths intake, concurrent consultation create, diagnosis guard, finalization and replay pass; no fake appointment; wrong patient denied",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "walkin-schedule.json",
+          "sha256": "67740a5b879bb8c643e1e558949c485b2347682ac4b92964abb7299c18c4b977"
+        }
+      ]
+    },
+    {
+      "id": "E09",
+      "status": "PASS",
+      "scope": "Recall/MISSED/requeue in every initial-visit policy and competing bound sessions",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Front/back plus both manual positions, three-call limit, separate MISSED lane, concurrent intake/call replay and200/409 requeue race, real next ordering and pause enforcement pass",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "queue-policy.json",
+          "sha256": "19457cb5e17be1d11cbe53e370e676f880249648c6e464c4bf65530fb841bc12"
+        }
+      ]
+    },
+    {
+      "id": "E10",
+      "status": "PASS",
+      "scope": "Persisted schedule and queue policy affect actual availability/booking/ticket flow",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Reload/version/role guard, standard and exception windows, closed day/full slot, idempotent reservation, incompatible edits rejected, broker ticket/pause/cancellation freeing capacity pass",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "walkin-schedule.json",
+          "sha256": "67740a5b879bb8c643e1e558949c485b2347682ac4b92964abb7299c18c4b977"
+        },
+        {
+          "path": "queue-policy.json",
+          "sha256": "19457cb5e17be1d11cbe53e370e676f880249648c6e464c4bf65530fb841bc12"
+        }
+      ]
+    },
+    {
+      "id": "E11",
+      "status": "PARTIAL",
+      "scope": "Follow-up appears on mobile and produces a new visit on correct day",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Backend/clone follow-up checks; native actual-date acceptance missing",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "rehearsal-history.json",
+          "sha256": "4e8d3df9f3b1d5fb3a54821cb835c895dc283eb43619cf579113128accc7ec26"
+        },
+        {
+          "path": "native.json",
+          "sha256": "4e2356e93bf3f9a2b89beb7b906d5a6724e0d7adba78b3d74ce12da60d6c9126"
+        }
+      ]
+    },
+    {
+      "id": "E12",
+      "status": "BLOCKED",
+      "scope": "Real near-turn/turn push across OS lifecycle and token changes",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Firebase/APNs configuration and aps-environment entitlement absent; no real push claim",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "native.json",
+          "sha256": "4e2356e93bf3f9a2b89beb7b906d5a6724e0d7adba78b3d74ce12da60d6c9126"
+        }
+      ]
+    },
+    {
+      "id": "E13",
+      "status": "PASS",
+      "scope": "Cancellation/retry, response loss, actual upstream outages/restarts and delayed events on isolated test stack",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "TCP body dropped after committed201 recovers one appointment; repeated cancellation400 has unchanged CANCELLED state; true source cancellation delivered before unseen confirmation creates no ticket; durable/restart/concurrent PG regressions, isolated outage503 and actual Analytics restart/replay pass",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "network-late.json",
+          "sha256": "24ca456d88ca5407b33f27483b6b0d3896ddb7d4016447cca1df59f2038a85f7"
+        },
+        {
+          "path": "analytics.json",
+          "sha256": "b0f1f0fc8f61d615aa5fd0261fa123dbeb5578c022cfaa483263d7e8f79969f7"
+        },
+        {
+          "path": "outage-rollback.json",
+          "sha256": "c97ac3f424d9833a690f5ca57de3661fffafd4c55a9cc196466d8a49bdaad9cb"
+        },
+        {
+          "path": "migration.json",
+          "sha256": "6cdfd07e156e8594afaa602d5b7b710372433ba6faff74ac1e83b98739cf0d13"
+        }
+      ]
+    },
+    {
+      "id": "E14",
+      "status": "PASS",
+      "scope": "Handover/revocation/wrong-profile access and confirmed identity plus owner consent workflow through real APIs",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Former doctor still authenticated but loses consultation/profile/Lab/PDF access; receiver cannot sign inherited draft; coordination revocation blocks pending takeover; code and pending proposal grant no ownership, consent grants/revoke removes even earlier appointment access; synthetic review attestation is not physical identity acceptance",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "handover.json",
+          "sha256": "4b882abe22c9ecf991471c904ebb2aa64a7aabd90478714f540eb6d593dc9074"
+        },
+        {
+          "path": "profile-link.json",
+          "sha256": "8ae40d4d680105cad6fd1b314d589fd686f4b176d5bef6c207607e6896a00db7"
+        }
+      ]
+    },
+    {
+      "id": "E15",
+      "status": "PASS",
+      "scope": "Every Analytics KPI reconciles with authorized operational exports after retry/backfill/rebuild and restart",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Independent counts/rate/timing/percentile/quality match source; paginated whitelist-only exports, access/range guards, real duplicate/late broker delivery, journal rebuild and actual JVM restart preserve every summary field",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "analytics.json",
+          "sha256": "b0f1f0fc8f61d615aa5fd0261fa123dbeb5578c022cfaa483263d7e8f79969f7"
+        }
+      ]
+    },
+    {
+      "id": "E16",
+      "status": "PARTIAL",
+      "scope": "Source-grounded clinical assistant, access/context/model failure and professional quality",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "AI31/Python/R6 technical integration; no hospital-reviewed cases, independent doctor voice or clinical sign-off",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "web.json",
+          "sha256": "05adec76522dda823833b525a388ba38ea58d65a02a451839fed8539801066e5"
+        },
+        {
+          "path": "rehearsal-history.json",
+          "sha256": "4e8d3df9f3b1d5fb3a54821cb835c895dc283eb43619cf579113128accc7ec26"
+        }
+      ]
+    },
+    {
+      "id": "E17",
+      "status": "PASS",
+      "scope": "Local candidate build/deploy, additive migration, readiness, scratch backup/restore and limited artifact rollback",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "17 artifacts fingerprinted;14 deployed JVM hashes verified; Queue V13 toV14 backfills22 legacy cancellations without changing queue entries;12 current DB restores match; previous/current Rx preserve scratch table fingerprints; Queue functional downgrade and production DR not claimed",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "manifest.json",
+          "sha256": "1ee6b1db1fbd986da8a98522951304a72fac4e8bc7404c58bd23bf8ee179e6dd"
+        },
+        {
+          "path": "backend.json",
+          "sha256": "97a3d4aff2ecbffd8a6e8ca430ed30481f0d3c7de839a61e796aa63d591c9fac"
+        },
+        {
+          "path": "runtime.json",
+          "sha256": "ef4a1ae44b9080f1db65482fb148f7ecc488136fd5537ed78f21c6ad0e599ed9"
+        },
+        {
+          "path": "restore.json",
+          "sha256": "d342c019601238d3ff91c124ab999a757c51ed99e24fd4b1902f4aa9759697e2"
+        },
+        {
+          "path": "outage-rollback.json",
+          "sha256": "c97ac3f424d9833a690f5ca57de3661fffafd4c55a9cc196466d8a49bdaad9cb"
+        },
+        {
+          "path": "migration.json",
+          "sha256": "6cdfd07e156e8594afaa602d5b7b710372433ba6faff74ac1e83b98739cf0d13"
+        },
+        {
+          "path": "native.json",
+          "sha256": "4e2356e93bf3f9a2b89beb7b906d5a6724e0d7adba78b3d74ce12da60d6c9126"
+        },
+        {
+          "path": "web.json",
+          "sha256": "05adec76522dda823833b525a388ba38ea58d65a02a451839fed8539801066e5"
+        },
+        {
+          "path": "tls.json",
+          "sha256": "e297148d6e2afb4b50f6644d4f7b8d710b1f67c08b6ca6c6e13cac8f5dbbdbdb"
+        }
+      ]
+    },
+    {
+      "id": "E18",
+      "status": "PASS",
+      "scope": "Current source/runtime, migration/DBML, canonical guide and acceptance limits aligned",
+      "expected": "Complete every branch in the R7 acceptance catalog for this candidate, including device/professional checks where applicable",
+      "actual": "Queue V14 DBML columns verified on migrated PostgreSQL; other service DBML equal R6; guides/architecture/report and18-case gate record actual scope/versions and remaining hardware/push/professional checks",
+      "candidateId": "r7-929e88327e54c311",
+      "hardwareVerified": false,
+      "professionalReviewVerified": false,
+      "evidence": [
+        {
+          "path": "documentation.json",
+          "sha256": "947a0ebea8409350db81447baae3314ec5bce96dbd886e83fa1b4258b51dd4c8"
+        },
+        {
+          "path": "graph.json",
+          "sha256": "3be7ef3bbaacf25e9899ea94fb060f74fabdc3f00127312b1c509e6be2733cb5"
+        },
+        {
+          "path": "manifest.json",
+          "sha256": "1ee6b1db1fbd986da8a98522951304a72fac4e8bc7404c58bd23bf8ee179e6dd"
+        },
+        {
+          "path": "migration.json",
+          "sha256": "6cdfd07e156e8594afaa602d5b7b710372433ba6faff74ac1e83b98739cf0d13"
+        }
+      ]
+    }
+  ]
+}

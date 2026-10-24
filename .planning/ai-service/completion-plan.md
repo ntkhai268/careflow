@@ -1,5 +1,8 @@
 # AI Service — Kế hoạch hoàn thiện
 
+**Cập nhật CURRENT21/10/2026:** đã triển khai tích hợp kỹ thuật R6 trên nhánh AI riêng. [Biên bản và giới hạn nghiệm thu](r6-acceptance-2026-10-21.md) thay thế trạng thái chưa tích hợp bên dưới; phần kế hoạch gốc giữ làm lịch sử thiết kế. Chưa nghiệm thu chất lượng lâm sàng/giọng bác sĩ độc lập.
+
+
 Ngày: 2026-10-14. Baseline: develop / 8bf77e2. Trạng thái: đề xuất, chưa triển khai.
 Theo [kế hoạch tổng](../system-completion-plan.md); G0–G5 tương ứng các giai đoạn trong kế hoạch tổng. Không dùng bảng này để xác nhận tính năng đã làm xong.
 

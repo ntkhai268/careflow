@@ -1,0 +1,225 @@
+{
+  "status": "PASS_FOR_DESCRIBED_SCOPE",
+  "date": "2026-10-24T08:15:53.219940+00:00",
+  "branch": "feature/dangkhoii/release-r7",
+  "base": "907cba222c299329de6d87f9acbb9ec3b9e4c4f8",
+  "sourceSha256": {
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/extraction.py": "304fa9e25cd37ea348faf78096537295ad0d48a934af3287c5b5d0a742c0138d",
+    "careflow-ai-service/inference/voice-prescription/tests/test_numbered_prescription.py": "18c434376735ba0a57478156b08723088b3455b6d72c0ff2cb153260b7b4f4f7",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/service/PrescriptionAiDraftService.java": "6309da323e714176c6b7e93fba33ce20ee6ab2d645bf7f1897eea76b169f6c02",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/controller/PrescriptionAiDraftController.java": "cd1626d60310ae979738dc3c4e44e5d143eeb3f49e1cf256ce624161efc05de8",
+    "careflow-prescription-service/src/test/java/com/careflow/prescription/service/PrescriptionAiPostgresTest.java": "67e20d0014e1bbdbdda8d2e85c48df9a95e9264e59b4424269349d3929010a7c",
+    "frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx": "b75ce96c1a7cf4b5dcc757dd03e0d67a27e6f00c91e08f280df4d1d838ab9cbe",
+    "frontend/doctor-web/src/components/VoicePrescriptionPanel.tsx": "a5da48a5c7fa39cd04f81b96c999501ac9ca7899f4fde6579676972d5aeca9ab",
+    "frontend/doctor-web/src/lib/voice-prescription-api.ts": "3717ec45d6ac56bf345be59b987ef753975e69d93cdee09ffc1a77a168d11d50"
+  },
+  "rootCauses": [
+    "Unknown-name fallback only recognized ke/them, not numbered prescription introduction",
+    "Ordinal medicines without punctuation were merged; fields from another medicine contaminated range",
+    "Sentence continuation after ASR fragments was dropped",
+    "Editable adapter received raw Vietnamese duration words for unmatched drugs",
+    "Front-end rejected new voice source when old DRAFT items had all been deleted"
+  ],
+  "reproduction": {
+    "catalogSource": "Current actual hospital master data15 entries",
+    "before": [
+      {
+        "spokenName": "Vitamin C",
+        "strength": null,
+        "quantity": 5.0,
+        "duration": "dùng trong năm ngày",
+        "dose": "mỗi lần uống một viên",
+        "frequency": "ngày một lần",
+        "timing": "vào buổi sáng"
+      },
+      {
+        "spokenName": "Paracetamol",
+        "strength": "500 mg",
+        "quantity": null,
+        "duration": null,
+        "dose": "mỗi lần uống một viên",
+        "frequency": null,
+        "timing": null
+      }
+    ],
+    "after": [
+      {
+        "spokenName": "Vitamin C",
+        "strength": "500 mg",
+        "quantity": 5.0,
+        "duration": "5 ngày",
+        "dose": "mỗi lần uống một viên",
+        "frequency": "ngày một lần",
+        "timing": "vào buổi sáng"
+      },
+      {
+        "spokenName": "Cetirizin",
+        "strength": "10 mg",
+        "quantity": 3.0,
+        "duration": "3 ngày",
+        "dose": null,
+        "frequency": "ngày một lần",
+        "timing": "vào buổi tối"
+      },
+      {
+        "spokenName": "Paracetamol",
+        "strength": "500 mg",
+        "quantity": 6.0,
+        "duration": "3 ngày",
+        "dose": "mỗi lần uống một viên",
+        "frequency": null,
+        "timing": "buổi sáng và buổi tối"
+      },
+      {
+        "spokenName": "Loratadine",
+        "strength": "10 mg",
+        "quantity": 3.0,
+        "duration": "3 ngày",
+        "dose": "mỗi lần uống một viên",
+        "frequency": "ngày một lần",
+        "timing": "buổi sáng"
+      }
+    ],
+    "namesPreserved": 4,
+    "quantity": [
+      5,
+      3,
+      6,
+      3
+    ],
+    "durationDays": [
+      5,
+      3,
+      3,
+      3
+    ],
+    "notGuessed": [
+      "Cetirizin dose from moi lan bon. 1 vien",
+      "Paracetamol frequency from Nay hai lan"
+    ],
+    "evidenceOffsetsChecked": true
+  },
+  "verification": {
+    "workerTests": {
+      "passed": 40,
+      "failed": 0
+    },
+    "backend": {
+      "careflow-common": {
+        "tests": 53,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-prescription-service": {
+        "tests": 131,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "typescript": "PASS",
+    "eslint": "PASS",
+    "productionBuild": "PASS",
+    "browser": {
+      "status": "PASS",
+      "checks": [
+        "Exact supplied transcript produces all four medicines, strengths, quantities and days through real worker/API; clear-all replacement saves on same prescription and double Save adds once",
+        "Only two genuinely ambiguous fields stay red; signing focuses missing Cetirizin dose; ordinary save/reload retains all four without rerunning AI",
+        "Removing one row and adding a new segment preserves edited quantity and remaining rows; default append never resurrects removed medicine",
+        "Clearing all rows then recording real MediaRecorder audio successfully replaces the draft through ASR; no minimum-old-medicine error, no expansion dialog and duration remains nonzero"
+      ],
+      "actualClinicalApis": true,
+      "actualInference": true,
+      "actualMediaRecorder": true,
+      "physicalMicrophone": false,
+      "mockedResponses": false,
+      "sourceRequests": 3,
+      "uncaughtErrors": 0,
+      "checkedAt": "2026-10-24T08:13:53.229Z"
+    },
+    "cleanup": {
+      "status": "PASS",
+      "onlyOwnSyntheticCase": true,
+      "prescriptionStatus": "CANCELLED",
+      "consultationStatus": "COMPLETED",
+      "queueFinalization": {
+        "consultation": {
+          "id": "38ebbd06-c7f8-47e2-bb42-768f6589027b",
+          "appointmentId": null,
+          "queueEntryId": "9c1bb747-b89d-4a17-b79c-26be973784b1",
+          "patientId": "fb236f19-2633-4c52-991c-80310796c382",
+          "patientName": "TEST VOICE FOUR DRUGS",
+          "doctorId": "037f610e-6ed1-4953-b08d-777e46867343",
+          "doctorName": "BS E2E C",
+          "authoredByDoctorId": "037f610e-6ed1-4953-b08d-777e46867343",
+          "authoredByDoctorName": "BS E2E C",
+          "departmentCode": "CO_XUONG_KHOP",
+          "departmentName": "Cơ xương khớp",
+          "temperature": null,
+          "bloodPressure": null,
+          "heartRate": null,
+          "spo2": null,
+          "height": null,
+          "weight": null,
+          "symptoms": "SYNTHETIC editable voice regression",
+          "clinicalNotes": "",
+          "icd10Code": "",
+          "icd10Name": "",
+          "diagnosis": "SYNTHETIC software test only",
+          "status": "COMPLETED",
+          "startedAt": "2026-10-24T15:10:02.820893",
+          "completedAt": "2026-10-24T15:14:48.686171",
+          "createdAt": "2026-10-24T15:10:02.823799",
+          "updatedAt": "2026-10-24T15:11:51.604484"
+        },
+        "queueCompleted": true,
+        "appointmentCompleted": true,
+        "complete": true,
+        "pendingSteps": []
+      }
+    },
+    "harnessCorrection": "Expected saved Vitamin C uses actual master name Vitamin C 500mg after exact strength match; no application failure or forced name substitution"
+  },
+  "runtime": {
+    "web": "http://localhost:5173",
+    "buildId": "4RIA0v_PB0aLOWaNmSjqG",
+    "prescription": {
+      "status": "PASS",
+      "service": "prescription-service",
+      "port": 18087,
+      "httpsHealth": 200,
+      "sha256": "daad322709497be1feb5fda2c4dc3cf4160deb537de9b1b0b32a6b53e48f299d",
+      "schemaChanged": false,
+      "secretRotation": false
+    },
+    "worker": "Native local MLX worker restarted with same model/keys; text/audio exercised through real AI Docker API",
+    "allBackendHealth": "PASS",
+    "schemaChanged": false,
+    "keysChanged": false,
+    "modelWeightsChanged": false,
+    "userCaseModified": false
+  },
+  "gitnexus": {
+    "preEdit": "LOW callers for extract/parse_fields/_clauses/saveSource/saveDraft/voice API; dynamic controller UNKNOWN checked via route/callers",
+    "refreshed": true,
+    "detectChanges": {
+      "changed_count": 225,
+      "affected_count": 40,
+      "changed_files": 67,
+      "risk_level": "critical"
+    },
+    "partial": false,
+    "truncated": false,
+    "completeArrays": true,
+    "riskNote": "CRITICAL is accumulated uncommitted R6/R7 scope across67 files. Verification limited to current voice/Rx/consultation flow, not full R7; index flow ranking/branching incomplete."
+  },
+  "fullAcceptance": false,
+  "noCommitOrPush": true,
+  "limitations": [
+    "ASR inaccuracies are not silently repaired into medical instructions",
+    "No clinical quality evaluation or physical user-microphone verification",
+    "Old saved AI jobs/prescriptions are not automatically reprocessed",
+    "No full R7 regression rerun"
+  ]
+}

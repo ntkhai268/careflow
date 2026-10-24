@@ -12,6 +12,7 @@ const getNavItems = (role?: string) => {
     return [
       { label: "Tổng quan Quản trị", href: "/admin" },
       { label: "Thống kê lượt khám", href: "/admin/analytics" },
+      { label: "Nguồn hướng dẫn AI", href: "/admin/ai-sources" },
       { label: "Quản lý Tài khoản", href: "/admin/accounts" },
       { label: "Bảo mật nhân viên", href: "/admin/security" },
       { label: "Đối chiếu danh tính", href: "/admin/identity" },
@@ -43,6 +44,7 @@ const getNavItems = (role?: string) => {
     { label: "Hàng đợi khám", href: "/dashboard/queue" },
     { label: "Bàn giao ca khám", href: "/dashboard/handovers" },
     { label: "Đơn thuốc", href: "/dashboard/prescriptions" },
+    { label: "Rà soát nguồn AI", href: "/dashboard/ai-sources" },
   ];
 };
 

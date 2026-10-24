@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PARTIAL",
+  "scope": "Narrative recovery of pre-reboot cloned-stack execution; not durable machine-verifiable E2E evidence",
+  "performed": [
+    "14 cloned JVMs healthy against12 restored DBs and isolated broker",
+    "Synthetic upload, lab issue/review, doctor handover, prescription release, follow-up and dispensing",
+    "Former doctor denied consultation/lab/document reads after handover",
+    "Nine Analytics KPIs reconciled with independent source exports"
+  ],
+  "rawTemporaryOutputsLostAfterReboot": true,
+  "freshSubstituteEvidence": [
+    "backend.json",
+    "restore.json",
+    "runtime.json",
+    "outage-rollback.json"
+  ],
+  "fullEndToEndReacceptanceRequired": true
+}

@@ -17,7 +17,7 @@ public class VoiceRouteFilter extends OncePerRequestFilter {
             response.setStatus(413);response.setContentType("application/json;charset=UTF-8");
             mapper.writeValue(response.getOutputStream(),ApiResponse.error(413,"Yêu cầu vượt giới hạn audio"));return;
         }
-        if((voice&&!properties.isEnabled())||(!voice&&path.startsWith("/api/ai/")&&secure)) {
+        if((voice&&!properties.isEnabled())) {
             response.setStatus(503);response.setContentType("application/json;charset=UTF-8");response.setHeader("Cache-Control","no-store");
             mapper.writeValue(response.getOutputStream(),ApiResponse.error(503,"Năng lực AI này chưa được bật cho môi trường hiện tại"));return;
         }

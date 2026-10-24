@@ -1,0 +1,97 @@
+{
+  "checkedAt": "2026-10-24T04:43:35.525740+00:00",
+  "status": "PASS",
+  "scope": "Editable voice prescription drafts and signing/completion UI on owned Mac runtime; synthetic scenarios only",
+  "branch": "feature/dangkhoii/release-r7",
+  "baseCommit": "907cba222c299329de6d87f9acbb9ec3b9e4c4f8",
+  "committed": false,
+  "fullAcceptance": false,
+  "sourceFilesSha256": {
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/controller/PrescriptionAiDraftController.java": "1819a8a4ea98297281378d984a238fa1342cc7a72d4ea811826d6cb505b2eb84",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/service/PrescriptionAiDraftService.java": "1260c489489f35db6d29a94e712a2fb69db141378f3df8b0c3e4c85900c706c0",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/service/PrescriptionAiReleaseGuard.java": "c11f1d6791e81ea37102094f50afcc61b265b7210d920c52926fb5756804d8ac",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/service/PrescriptionDetails.java": "c6a75418160044a26039163715a50358e6b25a56cc184b63b505cbcb80c1d698",
+    "careflow-prescription-service/src/main/java/com/careflow/prescription/service/PrescriptionService.java": "fd98cb518e5b02684327d62d05890bdd59e009b4be6ad078ee9f72bcc1bcd9f3",
+    "careflow-prescription-service/src/test/java/com/careflow/prescription/service/PrescriptionAiPostgresTest.java": "789b9220019ff0c818f55d7bf299238c938f91724a77c4b4933296cc093543bb",
+    "frontend/doctor-web/src/components/VoicePrescriptionPanel.tsx": "4b22d3fd84cfc6e33e3ffea3e240e4b8487a8003e0919b05fb5165c72e1d9e56",
+    "frontend/doctor-web/src/components/VoicePrescriptionPreview.tsx": "af5f217728c8a11ec9070b0d0f29954a4753aa02e8598c533bdc33763cd6b2f4",
+    "frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx": "f874e2df05dae764f85a14a111d7a2fb4567acc1ecf0ec28f7df8cbd6f2268b3",
+    "frontend/doctor-web/src/lib/prescription-api.ts": "e573156aeebd5b3c15f66e6275d1f298646fe358c5f0ab24f3dce7123bc90f9a",
+    "frontend/doctor-web/src/lib/voice-prescription-api.ts": "7d7a77c5846beba534fa56acb11a6f38e57f6ce074d5ac5f9e7fb1686ad7c1fa"
+  },
+  "removedUnusedComponent": "frontend/doctor-web/src/components/VoiceResultReview.tsx",
+  "schemaChanged": false,
+  "secretRotation": false,
+  "modelChanged": false,
+  "asrRerun": false,
+  "inputType": "transcript",
+  "backendTests": {
+    "careflow-common": {
+      "tests": 53,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    },
+    "careflow-prescription-service": {
+      "tests": 123,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0
+    }
+  },
+  "backendJarSha256": "cfe7c372697532e8d949b49b21d2bcb994e4a1ef65fdea3b9212373be49edaf0",
+  "backendHttpsHealth": 200,
+  "web": {
+    "typecheck": "PASS",
+    "targetedEslint": "PASS",
+    "productionBuild": "PASS",
+    "buildId": "s-BECT1AJEzyWIItboTPO",
+    "namedDraftChecks": [
+      "Completing with pending voice opens the editable workspace instead of submitting hidden AI validation",
+      "Actual AI result saves both Loratadin without a catalog code and Paracetamol as one real draft; old diagnostic wall is absent",
+      "Name, strength and quantity are editable directly; two named rows persist on the same draft without catalog substitution",
+      "Deleting one of two rows without catalog codes removes only the selected row",
+      "Reload with an injected AI capability outage keeps saved corrections and the same prescription editable",
+      "Release with missing instructions is rejected by the real server and immediately reopens editable fields",
+      "Manual review resets after a medicine change; editable prescription layout fits desktop and narrow dialog",
+      "Doctor-reviewed named Loratadin is signed successfully without creating a fake catalog entry",
+      "The saved and signed prescription can complete the consultation and synchronize the queue"
+    ],
+    "fullySpecifiedChecks": [
+      "A fully specified catalog medicine saves with exact quantity and duration from spoken words",
+      "Correct AI fields can be signed without editing transcript, medicine fields or a manual-name checkbox",
+      "The already-correct prescription completes the consultation and queue"
+    ],
+    "mockedClinicalResponses": false,
+    "capabilityOutageInjected": true,
+    "uncaughtBrowserErrors": 0,
+    "narrowLayoutScope": "Voice dialog only",
+    "physicalMicrophoneVerified": false
+  },
+  "authorizationChecks": [
+    {
+      "role": "PATIENT",
+      "status": 403
+    },
+    {
+      "role": "OTHER_DOCTOR",
+      "status": 404
+    }
+  ],
+  "fabricatedCatalogCodeRejected": true,
+  "cleanup": {
+    "onlyOwnSyntheticCases": true,
+    "casesCompletedAndDispensed": 4,
+    "activePharmacyEntriesAbsent": true
+  },
+  "graph": {
+    "changed_count": 208,
+    "affected_count": 40,
+    "changed_files": 64,
+    "risk_level": "critical",
+    "partial": false,
+    "truncated": false,
+    "scope": "All carried R6/R7 changes; newly added/untracked/removed-untracked modules also reviewed by source hashes and caller searches"
+  },
+  "clinicalQualityVerified": false
+}

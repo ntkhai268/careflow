@@ -42,6 +42,22 @@ Câu hỏi bí mật đã ngừng hỗ trợ, không dùng để đăng nhập h
 
 Các ca CXK đã hoàn tất dùng để xem lịch sử. Muốn chạy từ đầu, tạo lịch/hồ sơ hợp lệ mới theo ngày thực tế; không mở lại ca đã đóng bằng SQL. Ca gốc cũ bên dưới được giữ nguyên.
 
+## Dữ liệu thử voice — 23/10/2026
+
+Dùng bác sĩ `an@careflow.vn`, mật khẩu demo chung ở đầu trang; phân công Nội tổng quát, ROOM-01. Bệnh nhân thuộc tài khoản `mobile_case03`, cùng mật khẩu demo. Đây là dữ liệu tổng hợp, không phải bệnh án hoặc đơn thuốc điều trị thật.
+
+- **TEST VOICE NOI MOT**, phiếu **NOI-002**: lượt không hẹn đã gọi/bắt đầu khám, Consultation `a681e915-fc33-45cf-b0ad-5e792588e535` đang IN_PROGRESS. Lúc chuẩn bị chưa có toa; mở [ca thử voice](http://localhost:5173/consultation/a681e915-fc33-45cf-b0ad-5e792588e535) để ghi âm và lưu nháp.
+- **TEST VOICE NOI HAI**: hồ sơ dự phòng, chưa đặt lịch/chưa cấp phiếu; chọn hồ sơ này trên app khi muốn tạo lịch mới. ROOM-01 có thêm hai slot **22:00–22:30**, **22:30–23:00 ngày23/10**, mỗi slot5 chỗ lúc kiểm tra. Ngoại lệ chỉ áp dụng ngày này; giữ lịch sáng/chiều và các ngày khác. Slot còn chỗ không đồng nghĩa đã đủ điều kiện check-in.
+- Hai hồ sơ tiếp nhận sơ bộ **TEST VOICE CA MOT/CA HAI** ở ROOM-11: CA MOT đã được bác sĩ C dùng kiểm bản sửa voice, toa thử đã hủy và ca/phiếu đã hoàn tất qua API; CA HAI còn lượt chờ. Không dùng làm ca chính của buổi thử này. Bác sĩ A/B còn ca cũ chưa hoàn tất từ21/10; không hủy/đóng các ca cũ để ép gọi mới.
+
+Đã kiểm qua phiên web thật: bác sĩ An đọc được đúng ca, nút ghi âm/transcript bật; worker local readiness đạt và job transcript nhận đúng MED001. Không lưu sẵn toa để giữ ca trống cho người thử; micro vật lý/độ chính xác giọng nói vẫn cần xác nhận. Sau khi đã lưu toa, sửa toa hiện có; muốn ghi âm lại từ đầu thì hoàn tất ca đúng quy trình và tạo lượt hợp lệ mới. Xem [trang23](23-nhap-toa-giong-noi-ai.md).
+
+Cập nhật24/10: CA HAI ở ROOM-11 và **TEST VOICE PARITY RELOAD** được dùng kiểm audio/Docker/sửa toa/refresh trên ca riêng của bác sĩ C; toa thử hủy, ca/phiếu hoàn tất qua API. Không dùng các ca đó làm lượt mới. Ca chính của bác sĩ An giữ riêng; mở link trực tiếp ở trên nếu ca23/10 không còn trong bộ lọc hôm nay. Slot22:00–23:00 của23/10 đã hết hiệu lực; đặt mới24/10 phải chọn lịch còn chỗ đúng ngày thực tế.
+
+Cập nhật sửa toa24/10: các hồ sơ **TEST VOICE EDITABLE DRAFT**, **TEST VOICE COMPLETE INPUT**, **TEST VOICE EDITABLE FINAL**, **TEST VOICE COMPLETE FINAL** là fixture riêng của bác sĩ C để kiểm sửa thuốc kê bằng tên và trường hợp AI nhận đúng đầy đủ. Các ca đã hoàn tất, toa thử đã cấp phát và hàng chờ phát thuốc kết thúc theo sự kiện; chỉ dùng xem lịch sử, không dùng làm ca đang khám. Không sửa ca chính của bác sĩ An hoặc ca cũ của bác sĩ A/B để chạy kiểm thử.
+
+Hồ sơ **TEST VOICE REVIEW VISIBLE** là fixture riêng kiểm vị trí ô xác nhận thuốc ngày24/10; ca đã hoàn tất, toa đã cấp phát và hàng chờ kết thúc. Không dùng làm ca mới.
+
 ## Dữ liệu cũ để đối chiếu
 
 | Mục đích | Tài khoản | Vai trò/phân công |
@@ -90,3 +106,13 @@ Một lịch tái khám riêng ngày21/10 tạo bằng web từ ca không CLS đ
 Dùng lại tài khoản và hồ sơ SYNTHETIC của R3. Các lịch tổng hợp tạo ngày22/10 để thử inbox/realtime đã được hủy qua API; lịch sử thông báo còn để xem trạng thái hủy. Các installation có appVersion R4_API_TEST chỉ dùng kiểm tra API khi Firebase tắt, đã disable và giữ audit; không phải thiết bị push hoạt động. Lịch thật 07:30 ngày21/10 không bị thay đổi bởi R4. Bản iPhone hiện tại1.0.0(19); cấu hình/giới hạn nghiệm thu xem [trang21](21-thong-bao-va-dong-bo-r4.md).
 
 Cập nhật21/10/2026: bản iPhone1.0.0(20) đã cài/mở. Kiểm tra tiếp R4 chỉ đọc dữ liệu và mở/đóng phiên thử, không thêm lịch/phiếu hay thay tài khoản demo. Xem [biên bản21/10](../.planning/notification-service/r4-acceptance-2026-10-21.md).
+
+Hồ sơ **TEST VOICE REPEAT ORDER** là fixture riêng ngày24/10 kiểm ghi/dừng nhiều lần, thêm ba nguồn vào cùng toa, chỉnh thuốc và xác nhận toàn đơn. Bác sĩ đã xóa dòng đọc lặp trong phép thử; ca hoàn tất, toa cấp phát và hàng chờ kết thúc. Chỉ dùng xem lịch sử, không dùng làm lượt mới.
+
+Hồ sơ **TEST VOICE REQUIRED FIELDS** là fixture riêng ngày24/10 kiểm một thuốc đủ và một thuốc thiếu5trường, đánh dấu đỏ/điều hướng, lưu nháp thiếu, bổ sung rồi ký/hoàn tất. Ca đã hoàn tất, toa đã cấp phát và hàng chờ kết thúc; chỉ dùng xem lịch sử. Không sửa thông tin ca của người dùng để kiểm chức năng.
+
+Hồ sơ **TEST VOICE INLINE DURATION** là fixture riêng ngày24/10 kiểm ghi62giây, thời lượng/nghe/tua, micro im lặng/quyền bị từ chối và hai đoạn qua ASR thật vào cùng toa. Toa nháp đã hủy, ca và hàng chờ đã hoàn tất; chỉ dùng xem lịch sử. Không dùng làm lượt đang khám.
+
+Hồ sơ **TEST VOICE FOUR DRUGS** là fixture riêng ngày24/10 kiểm transcript bốn thuốc, hai ô ASR mơ hồ, giữ sửa/xóa khi thêm đoạn và xóa hết rồi ghi âm thay toa. Toa nháp đã hủy, ca/hàng chờ hoàn tất; chỉ dùng xem lịch sử. Không sửa toa người dùng để tạo kết quả kiểm thử.
+
+Hồ sơ **TEST VOICE PREFIX** là fixture riêng ngày24/10 kiểm từ dẫn bị nghe sai và đọc tên/hàm lượng/tần suất không đánh số. Các phép thử giữ đủ4thuốc và tách đúng2thuốc ngoài catalog cùng câu; toa nháp đã hủy, ca/hàng chờ hoàn tất. Chỉ dùng xem lịch sử.

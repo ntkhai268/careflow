@@ -1,30 +1,25 @@
 # CF-AI-VP v1 — nhập toa bằng giọng nói
 
-Ngày 21/10/2026. Phạm vi triển khai: `careflow-ai-service`, nhánh
-`develop` theo yêu cầu người dùng, không commit/push tự động.
+**Cập nhật ghi nhiều đoạn24/10/2026:** `/api/prescriptions/ai-drafts/editable` nhận thêm `prescriptionId` tùy chọn. Không có target giữ hành vi tạo DRAFT; có target chỉ thêm vào DRAFT cùng patient/consultation do bác sĩ còn phụ trách. Mỗi job/revision có advisory lock và một source link; retry đúng target trả toa hiện tại, khác target trả409. Append khóa hàng Prescription, giữ các dòng/chỉnh sửa cũ, giới hạn tổng50dòng. V4 bỏ unique trên `prescription_ai_sources.prescription_id`, thêm index thường; PK(job_id,transcript_revision) và FK không đổi. DBML đã đồng bộ, migration V3→V4 có kiểm dữ liệu cũ.
+
+Web chỉ có một editor Đơn thuốc trực tiếp trên trang; dialog mở rộng đã bỏ. Một checkbox cuối đơn đánh dấu doctor review cho tất cả dòng, không để AI tự xác nhận. Thêm/xóa/sửa dòng hoặc append bỏ xác nhận toàn đơn trên UI; bản ghi mới chưa lưu chặn ký. Các validator server về tên/mã/cách dùng và xác nhận thuốc không có mã vẫn bắt buộc. Lưu trước các sửa đổi local rồi append giữ chúng trên cùng toa; latch đồng bộ chống nhấp lưu hai lần. Không cam kết xử lý stale ordinary PUT từ nhiều tab. Micro có latch/epoch, stream cấp muộn sau đóng không được bắt đầu; mỗi bản ghi là job riêng, không nối các Blob container. Ký là bước riêng.
+
+**Cập nhật luồng sửa24/10/2026:** Hospital Web dùng POST `/api/prescriptions/ai-drafts/editable` với cùng `jobId/transcriptRevision`. Prescription tạo DRAFT từ mọi dòng đã nhận được tên, kể cả `medicineCode=null`; không chọn candidate gần âm, không thêm Drug/master data. Các trường mâu thuẫn để trống cho bác sĩ sửa trong toa; metadata nguồn/hash và idempotency vẫn giữ. Endpoint `/ai-drafts` cũ giữ chế độ đối chiếu catalog nghiêm ngặt để tương thích client cũ. Hai endpoint dùng chung liên kết job/revision→toa nên không tạo trùng hoặc ghi đè chỉnh sửa khi retry.
+
+Sửa tên/hàm lượng trên UI bỏ liên kết code cũ và xác nhận cũ. Dòng kê bằng tên phải có `details.manualReview="confirmed"` do bác sĩ chọn, đơn vị và đầy đủ cách dùng/số ngày/số lượng trước khi ký. AI không được tự đặt xác nhận này. Validation ký áp dụng ở server kể cả khi gọi API trực tiếp; chỉ bác sĩ phụ trách ca còn hợp lệ được lưu/cập nhật/ký. `details` dùng JSONB hiện có và `medicine_code` đã nullable; không thay schema. Số lượng JSON3.0 được chuyển sang3 chỉ khi giá trị nguyên dương chính xác; không làm tròn giá trị phân số. Toa nháp vẫn sửa được sau khi job hết TTL; transcript gốc tuân theo retention cũ.
+
+**Mốc24/10/2026:** source hiện tại ở worktree `release-r7`; AI API chạy Docker, worker MLX giữ GPU trên Mac. Context dùng tối đa50 tên/4000 ký tự từ snapshot catalog active của Prescription, không dùng transcript chuẩn làm gợi ý. Decode tương ứng prototype, bỏ ép768 token; giữ deadline model150giây và kiểm evidence/schema trước lưu. `result.timings` bổ sung `extractionMs/totalMs` và với audio có `decodeMs/asrMs/audioDurationSeconds`; đây là số đo worker, không gồm Gateway/queue/kiểm quyền/lưu Prescription. `processingMs` cũ vẫn là parser. `modelInfo.contextUsed` cho biết có context hay không. Xem [biên bản mới](voice-parity-docker-2026-10-24.md); hướng dẫn duy nhất tại [trang23](../../huong-dan-su-dung/23-nhap-toa-giong-noi-ai.md)/[trang26](../../huong-dan-su-dung/26-voice-va-docker.md).
+
+Ngày21/10/2026. Phạm vi R6: AI Service, adapter Prescription và Hospital Web trên nhánh `feature/dangkhoii/ai-r6`; chưa commit/push.
 Nguồn thiết kế: kế hoạch `security-integration/.planning/ai-service/voice-prescription-integration-plan-2026-10-20.md`.
 
-## Mức bàn giao
+## Mức bàn giao R6 —21/10/2026
 
-Đã có package Python độc lập và API/job Java có persistence, quyền, version,
-idempotency, lease, quota, TTL và audit. Có kiểm thử HTTP với dependency fixture,
-và kiểm worker cài từ wheel với ASR thật, không mạng ngoài. **Chưa nghiệm thu
-Gateway/Identity/Consultation/Prescription/Web thật cùng nhau**, chưa có test
-giọng bác sĩ độc lập và chưa mở feature trên runtime bệnh viện.
+Đã tích hợp API/job Java, local worker, Gateway và luồng web ghi âm → lưu DRAFT → chỉnh cùng toa → ký riêng. Xem [contract R6](r6-contract-2026-10-21.md), [biên bản](r6-acceptance-2026-10-21.md). Feature mặc định tắt; phép thử Mac chỉ dùng dữ liệu tổng hợp. Giới hạn chuyên môn/giọng bác sĩ vẫn mở.
 
-Checkout gốc chưa tự có toàn bộ R1–R3 chưa commit trong worktree bảo mật. Đặc biệt
-Identity phải có `/api/auth/session` theo contract active-session; thiếu endpoint
-này thì voice phải trả lỗi, không dùng JWT/header tự khai làm fallback. Không
-copy thay đổi liên service từ worktree khác vào checkout này.
+AI chỉ tạo đề xuất. Prescription sở hữu tạo/cập nhật/ký toa, bảng `prescription_ai_sources` bảo đảm cùng job/revision trả cùng toa mà không ghi đè chỉnh sửa sau đó. Endpoint: POST `/api/prescriptions/ai-drafts` với jobId/transcriptRevision. Ký là thao tác riêng, chặn nếu toa nguồn AI thiếu trường bắt buộc. Không cần màn duyệt AI riêng trước DRAFT.
 
-## Ownership và luồng
-
-AI chỉ tạo **đề xuất**, không gọi write API của Prescription/Lab/Consultation.
-Web tương lai điều phối: bác sĩ bật ghi âm → bấm Lưu toa nháp (tự dừng mic) →
-tạo/poll job → Prescription tạo DRAFT → editor của cùng toa → cập nhật → ký riêng.
-Không có bước duyệt AI riêng bắt buộc nếu đầu ra lưu được. `SUCCEEDED` không có
-nghĩa toa đã lưu, ký hoặc cấp phát. Việc liên kết `sourceAiJobId/sourceAiRevision`
-và chống tạo trùng DRAFT thuộc PR Prescription/Web, chưa làm trong service này.
+Secure AI gọi worker và source services qua mTLS, dùng key nội dung riêng để mã hóa input/result/history. Identity kiểm session/role/caller, Consultation kiểm phân công hiện hành. Không đưa user token vào worker hoặc DB.
 
 ## API public
 
@@ -97,16 +92,14 @@ hoạt chất chuẩn, không DAV ID, patientId hoặc EMR.
 
 ## Mapping sang Prescription
 
-Chỉ exact name duy nhất từ snapshot active được đề xuất code tự động. Mơ hồ,
-heuristic gần âm, xung đột hoặc không có thuốc tạo blockers, không tạo DRAFT giả.
+Chỉ tên chính xác duy nhất từ snapshot active (hoặc tên + hàm lượng được nói rõ, bỏ khác biệt khoảng trắng) được đề xuất code tự động. Mơ hồ,
+heuristic gần âm, xung đột hoặc không có thuốc tạo blockers trong proposal tự động; không tạo mã danh mục giả. Blockers này không ngăn endpoint editable lưu dòng kê bằng tên vào DRAFT để bác sĩ sửa.
 Tên/code/unit của proposal lấy từ catalog. `dose→dosage`, frequency/timing giữ
 nguyên. Chỉ quantity nguyên dương và duration biểu đạt rõ số ngày nguyên được
 map Integer; không làm tròn, không đổi tuần/tháng hoặc suy thời gian từ số lượng.
 
 strength/dosageForm/route/minInterval/maxDailyDose được giữ trong `unmappedFields`
-cùng evidence. Có blocker để editor xử lý/mapping contract trước khi auto-save;
-không lặng lẽ bỏ hoặc nhét vào sai field. Prescription vẫn phải kiểm mã thuốc và
-validation riêng khi lưu/cập nhật/ký. Kết quả AI không tự nới validation phát hành.
+cùng evidence. Không lặng lẽ bỏ dòng hoặc nhét vào sai field. Endpoint cũ yêu cầu proposal khớp đầy đủ; endpoint editable giữ các dòng có tên, trường chưa xác định để trống. Prescription kiểm mã được cung cấp, còn thuốc không mã phải được bác sĩ kiểm tra/xác nhận rõ trước khi ký. Cách dùng và các trường bắt buộc vẫn được kiểm ở bước phát hành.
 
 ## Hàng đợi, độ bền và retention
 
@@ -170,3 +163,26 @@ và đối chiếu source được dùng bổ sung. Không commit/push.
 - Test bác sĩ thật độc lập, codec/browser và ngưỡng do phụ trách chuyên môn chốt.
 
 Hướng dẫn thao tác duy nhất: `huong-dan-su-dung/23-nhap-toa-giong-noi-ai.md`.
+
+
+## Sửa thời lượng và UI inline —24/10/2026
+
+MediaRecorder WebM có thể thiếu Duration header (upstream: https://github.com/yusitnikov/fix-webm-duration). Web pin `@fix-webm-duration/fix@1.0.1` MIT, xử lý Blob ngay browser sau stop, đo elapsed bằng performance.now(); không gửi audio sang bên thứ ba. MP4 không sửa. Có cờ finalizing để không ghi mới/ghi đè Blob trong lúc hoàn tất, stop() đợi Blob sửa xong trước submit. Đồng hồ live dùng thời gian đã trôi thay số lần timer. AudioContext/Analyser chỉ đọc RMS để phản hồi micro có tiếng, không lưu mẫu mới; dừng/unmount đóng context và tracks.
+
+Trạng thái hiển thị theo đoạn đang ghi/chưa thêm/đã xử lý, không dựa việc đã có prescriptionId để khẳng định đoạn mới đã lưu. API/retention không thay đổi. Khi lưu thành công metadata sessionStorage dưới actor/consultation thêm audioDurationSeconds hữu hạn>0≤181 (ưu tiên decoder server); không raw audio/transcript. Metadata duration có thể giữ trong cùng tab khi job TTL hết; không là lịch sử bền vững hoặc tổng nhiều đoạn. Không tự suy duration cho job cũ thiếu metadata, không tự tải lại raw audio.
+
+Phát hiện thêm lỗi CSP: không có media-src, nên default-src/self không cho phát blob URL trên trình duyệt thử. Proxy trang thêm duy nhất `media-src self blob:`; không thêm blob vào connect-src, không mở script-src hoặc nguồn media bên ngoài. Regression kiểm header thực và phát/tua HTMLAudioElement, không chỉ kiểm audio Blob hoặc thẻ tồn tại.
+
+
+## Toa đánh số và thay nội dung DRAFT đã xóa —24/10/2026
+
+RulesExtractor tách ranh giới thuốc thứ nhất/hai/ba/tư… có “là”, giữ ngữ cảnh phủ định/tiền sử/giả định trước thuốc. Bổ sung nhận tên ngoài catalog trong vị trí chỉ định đánh số, giữ bằng chứng offset. Chuẩn hóa explicit integer days sang chuỗi “N ngày” ở field duration cho mọi thuốc để adapter editable nhận cả chữ số/chữ Việt; evidence vẫn nguyên văn, tuần/tháng/số lẻ không quy đổi. TIMING giữ lịch nối “và”; rule một lần/ngày kèm hai buổi vẫn xung đột. Câu nối “Này hai lần” chỉ cho nhận các trường rõ còn lại, không tự sửa frequency/dose.
+
+EditableRequest thêm boolean replaceItems mặc địnhfalse. Chỉ dùng true với prescriptionId khi UI đã xóa hết dòng trong DRAFT và đang xử lý nguồn mới; thiếu target400. saveSource lấy khóa nguồn và khóa toa hiện hành như append, kiểm actor/phân công/cùng visit/patient/DRAFT, xây mới items từ nguồn trước khi update; không persist toa rỗng hoặc tạo toa khác. Bản ghi chưa có tên/nguồn lỗi rollback không xóa nội dung cũ. Retry job/revision trả toa hiện tại, không áp lại thay đổi hoặc tạo nguồn trùng. False giữ hành vi append; pre-save local edits chỉ khi còn items. Không đổi schema/retention/strict endpoint hoặc tự ký.
+
+
+## Nhận diện bằng tên/hàm lượng/tần suất —24/10/2026
+
+Tên thuốc không bị ràng buộc với từ dẫn hoặc thứ tự. medicine_mentions bổ sung tên chưa có catalog dựa trên vị trí tên trước strength và frequency/PRN sau đó; bare medicine line có thể nối frequency ở câu tiếp theo. Các field từ sau strength tới tên kế tiếp chỉ gắn với đúng thuốc. Grammar words/numerals không được lấy làm tên, dose-only/strength-only không sinh thuốc. Catalog matching giữ code policy/evidence/retention cũ, không tự chọn thuốc gần giống.
+
+Ordinal cue chấp nhận “thứ … là” dù từ dẫn trước đó sai/mất; không hardcode thay hốt→thuốc hoặc tự chữa transcript. Không tự sửa liều/tần suất chưa rõ. History/negation/hypothetical vẫn được kiểm trước khi thêm items. Không đổi schema/API, chỉ parser của worker native local; dùng cùng model và khóa.

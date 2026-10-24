@@ -16,8 +16,9 @@ class OtherAccountApi extends RecordingApi {
     dynamic data,
     Options? options,
   }) async {
-    if (endpoint != '/auth/login/biometric')
+    if (endpoint != '/auth/login/biometric') {
       return super.post(endpoint, data: data, options: options);
+    }
     calls.add(endpoint);
     return Response(
       requestOptions: RequestOptions(path: endpoint),

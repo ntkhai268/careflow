@@ -11,13 +11,13 @@ function pass(name){checks.push({name,status:'PASS'});console.log('PASS '+name);
 try {
  await page.goto(base+'/login');
  await page.locator('#email').fill('doctor');await page.locator('#password').fill('Password123@');
- const [login]=await Promise.all([page.waitForResponse(r=>new URL(r.url()).pathname==='/api/auth/login'),page.locator('button[type=submit]').click()]);
+ const [login]=await Promise.all([page.waitForResponse(r=>new URL(r.url()).pathname==='/api/session/login'),page.locator('button[type=submit]').click()]);
  assert.equal(login.status(),200);assert.ok(login.request().headers().dpop);pass('production Hospital Web submits real bound doctor login');
  await page.waitForURL('**/dashboard/**');
  const verified=page.waitForResponse(r=>new URL(r.url()).pathname==='/api/auth/me');await page.reload();
  const me=await verified;assert.equal(me.status(),200);assert.ok(me.request().headers().dpop);pass('production reload verifies live session instead of trusting localStorage');
  await page.waitForURL('**/dashboard/**');
- const [logout]=await Promise.all([page.waitForResponse(r=>new URL(r.url()).pathname==='/api/auth/logout'),page.getByTitle('Đăng xuất',{exact:true}).click()]);
+ const [logout]=await Promise.all([page.waitForResponse(r=>new URL(r.url()).pathname==='/api/session/logout'),page.getByTitle('Đăng xuất',{exact:true}).click()]);
  assert.equal(logout.status(),200);assert.ok(logout.request().headers().dpop);await page.waitForURL('**/login');pass('production logout revokes bound session on Identity');
  assert.deepEqual(errors,[]);pass('Hospital Web has no uncaught JavaScript errors');
 } finally {

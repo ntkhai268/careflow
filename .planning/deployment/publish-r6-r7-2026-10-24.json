@@ -1,0 +1,155 @@
+{
+  "status": "VERIFIED_FOR_DEVELOP_PUBLICATION",
+  "checkedAt": "2026-10-24T08:57:35.986140+00:00",
+  "baseCommit": "907cba222c299329de6d87f9acbb9ec3b9e4c4f8",
+  "targetBranch": "develop",
+  "sourceBranch": "feature/dangkhoii/release-r7",
+  "remoteDevelopAtFetch": "907cba222c299329de6d87f9acbb9ec3b9e4c4f8",
+  "sourceFingerprintSha256": "71a966079fe8b4c6138d052c96633ab3d197e66160f5134cf6a89836287a119d",
+  "sourceFilesCount": 1713,
+  "backend": {
+    "command": "scripts/release/verify_backend.py with all isolated PostgreSQL suites enabled",
+    "totals": {
+      "tests": 1012,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "modules": {
+      "careflow-ai-service": {
+        "tests": 31,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-analytics-service": {
+        "tests": 30,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-api-gateway": {
+        "tests": 39,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-appointment-service": {
+        "tests": 87,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-common": {
+        "tests": 53,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-consultation-service": {
+        "tests": 109,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-emr-service": {
+        "tests": 18,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-hospital-directory-service": {
+        "tests": 38,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-identity-service": {
+        "tests": 175,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-lab-service": {
+        "tests": 81,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-notification-service": {
+        "tests": 41,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-patient-service": {
+        "tests": 91,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-prescription-service": {
+        "tests": 131,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "careflow-queue-service": {
+        "tests": 88,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      }
+    },
+    "status": "PASS"
+  },
+  "pythonGuards": {
+    "releaseRestoreAcceptance": 10,
+    "voiceDockerOwnership": 4,
+    "status": "PASS"
+  },
+  "voiceWorker": {
+    "tests": 59,
+    "status": "PASS",
+    "evidence": "../ai-service/voice-name-cues-2026-10-24.json",
+    "rerunDuringPublication": false
+  },
+  "web": {
+    "latestProductionBuild": "PASS, prior verified source; no web implementation changes since",
+    "currentTscAndSessionChecks": "PASS: tsc --noEmit --incremental false, memory-session and expiry regression checks"
+  },
+  "native": {
+    "rerunDuringPublication": false,
+    "latestInstalledIOSBuild": "1.0.0(25)",
+    "physicalFlowsStillOpen": true,
+    "evidenceSource": "../../huong-dan-su-dung/11-cai-app-iphone.md"
+  },
+  "publicationScan": {
+    "files": 167,
+    "privateRuntimeValuesCompared": 19,
+    "secretPatternFindings": [],
+    "scope": "Changed and newly added whole file contents; pattern/exact-value scan, not a guarantee against all sensitive content",
+    "emailCandidateReview": "Asset filenames @1x/@2x/@3x.png and public careflow sender domain; no personal email candidates",
+    "finalWholeFileRescan": "PASS"
+  },
+  "graphReview": {
+    "scope": "all staged and unstaged; including new files",
+    "summary": {
+      "changed_count": 790,
+      "affected_count": 63,
+      "changed_files": 167,
+      "risk_level": "critical"
+    },
+    "returnedSymbols": 790,
+    "returnedProcesses": 63,
+    "partial": false,
+    "truncated": false,
+    "riskNote": "Aggregate CRITICAL across multiple services/clinical flows. All returned63 processes reviewed by affected scope; full backend1012 checks and scoped runtime evidence retained. Index ranking/branching coverage is incomplete; no full production-safety claim."
+  },
+  "handover": "handover-2026-10-24.md",
+  "fullProductionAcceptance": false,
+  "historicalGateRetained": "evidence/r7-20261021/gate.json",
+  "mainNotPushed": true,
+  "privateRuntimeAndKeysExcluded": true,
+  "deploymentTriggered": false
+}

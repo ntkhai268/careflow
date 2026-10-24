@@ -1,0 +1,132 @@
+{
+  "checkedAt": "2026-10-23T17:32:53.359900+00:00",
+  "status": "PASS",
+  "scope": "Voice configuration/UI and AI API Docker integration on owned Mac audit runtime; not full R7 or clinical acceptance",
+  "baseCommit": "907cba222c299329de6d87f9acbb9ec3b9e4c4f8",
+  "branch": "feature/dangkhoii/release-r7",
+  "committed": false,
+  "fullAcceptance": false,
+  "sourceFilesSha256": {
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/inference.py": "c823900019d1a4f7f63a07e367e44bbe6bb0045114719f483f81c45e65ed10e0",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_worker/runtime.py": "f49dbd71c187d7161a3175101d475452687e3968511acb2c026943f4b2261aca",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_worker/server.py": "68f94ffe8ad56a8a6920fb7c7438fd90aea1bc99e982c35c97e9d87000664df7",
+    "careflow-ai-service/inference/voice-prescription/tests/test_audio_context.py": "b81fb8106bc4ec2fbda0c0ace2dd4a608c116b423bd81a6b152afd34ba91a311",
+    "frontend/doctor-web/src/components/VoicePrescriptionPanel.tsx": "fd2646e68b8aa5d3f22014624dd6174dccc980705f264e901158a905bd176f31",
+    "frontend/doctor-web/src/components/VoicePrescriptionPreview.tsx": "a2ad08d29b5b331ecbb7d675042b3bdbb360e76543f3222aecf6e4b693eaae79",
+    "frontend/doctor-web/src/lib/voice-prescription-api.ts": "b862a5efc150bd51dd118bfe4b44760c2eaf3d9555b6533ee270f7470564a676",
+    "frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx": "341c004f97310c8c34b5b88ccc319efb73c06cf7d6341528408b97b73913db32",
+    "careflow-ai-service/Dockerfile.runtime": "eee4102c2a9f6af5d03b488b58c999901b0bbfd8a038c6a32ffb870f62992667",
+    "careflow-ai-service/Dockerfile.runtime.dockerignore": "ab73b1ce9b0873a87042a56595a574be926a61e93ef24890a9258b90589ff04c",
+    "docker-compose.voice.yml": "9c31a3e3545f76eddc28464285f041a9efdfd321b5f8fa48b1cdd359361eb081",
+    "scripts/voice/prepare_docker.py": "52c95d1757d33c779200ac3047d6d3a68c71b00b7a63bb7f716afd966fb73314",
+    "scripts/voice/tests/test_docker.py": "b66e3f7afb4d06e18ff1d18548c31096f34746eea1e2e67091e5547ed7ec3399",
+    "scripts/mac-demo/demo.py": "beea2f0cf4f0e40e267b476b5db6a60baed7f38eba52ecf1ff5d5232468a74a6"
+  },
+  "sameAdapterAsPrototype": true,
+  "adapterSha256": "bdbb694bba9b31cb3d2cec680ea427fd1f96041859b6aec2b1a1cbf10d60f92e",
+  "modelBenchmark": {
+    "scope": "2 prerecorded synthetic training-corpus clips, 2 warm rounds; direct model calls, not end-to-end/clinical/independent benchmark",
+    "summary": {
+      "old-worker-no-context": {
+        "medianMs": 378.84,
+        "meanCer": 0.0098
+      },
+      "prototype-default-context": {
+        "medianMs": 479.54,
+        "meanCer": 0.0098
+      },
+      "hospital-context": {
+        "medianMs": 398.96,
+        "meanCer": 0.0098
+      }
+    },
+    "independentClinicalEvaluation": false
+  },
+  "apiBenchmark": {
+    "scope": "Same synthetic 8-second clip and same warm Mac MLX worker; native vs container AI API, 800ms browser polling interval",
+    "summary": {
+      "native-api": {
+        "samples": 2,
+        "medianJobTotalMs": 1494.5,
+        "medianCreateMs": 192.0
+      },
+      "docker-api": {
+        "samples": 2,
+        "medianJobTotalMs": 2263.5,
+        "medianCreateMs": 395.0
+      }
+    },
+    "loadBenchmark": false
+  },
+  "workerUnitTests": {
+    "passed": 32,
+    "failed": 0,
+    "skipped": 0
+  },
+  "dockerGuardTests": {
+    "passed": 4
+  },
+  "web": {
+    "typecheck": "PASS",
+    "targetedEslint": "PASS",
+    "productionBuild": "PASS",
+    "buildId": "wu_k1fqElcvFx6BvuQzvI",
+    "staticChunksSha256": "e3da526943eb9d3d4115d9f7a516be4b17f889596b117b1a3c723273969eaad2",
+    "staticFileCount": 62,
+    "browserChecks": [
+      "Real WAV upload opens two-column voice workspace and browser audio playback",
+      "Actual local ASR through Docker API creates one real Paracetamol draft without signing",
+      "Paper preview edit button opens existing medicine editor and updates the same draft",
+      "Reload restores authorized original transcript using only job/prescription IDs in session metadata",
+      "Reload retains the saved prescription and expanded workspace fits desktop and narrow viewport",
+      "Editing after transcript restoration preserves the doctor change instead of reapplying the original AI result",
+      "Workspace closes cleanly and no uncaught browser errors occur"
+    ],
+    "audioToDraftMs": 2147,
+    "audioToDraftBoundary": "Button click to successful ai-drafts response; does not include following clinical/Rx update toast",
+    "privacyChecks": [
+      "Escape closes voice workspace and stops every synthetic MediaRecorder stream track",
+      "Navigating away and logging out produce no uncaught JavaScript errors"
+    ],
+    "physicalMicrophoneVerified": false,
+    "narrowLayoutScope": "Voice dialog only; entire hospital mobile shell not accepted"
+  },
+  "docker": {
+    "status": "PASS",
+    "sameJarSha256": "9f9f1ebe4fb2a9514a8151e4e43747b57aead66eafa1c0485e3e4686b11c08f2",
+    "imageId": "sha256:f3cfc4563000ff8f25613cacd6fa0086b5b3bc109b8385dfda642dc5eddb20c3",
+    "primaryLoopbackPort": 18093,
+    "containerPort": 8092,
+    "nonRootUser": "10001:10001",
+    "readOnlyRoot": true,
+    "capDrop": [
+      "ALL"
+    ],
+    "memoryLimitBytes": 805306368,
+    "cpuLimitNano": 2000000000,
+    "httpsMtlsVerified": true,
+    "gpuWorkerRemainsOnMac": true,
+    "schemaChanged": false,
+    "secretRotation": false
+  },
+  "cleanup": {
+    "status": "PASS",
+    "ownVerificationDraftCancelled": true,
+    "ownVerificationConsultationAndQueueCompleted": true,
+    "userCaseStatus": "IN_PROGRESS",
+    "userCasePrescriptionCount": 0,
+    "userCaseNotMutated": true
+  },
+  "graph": {
+    "changed_count": 200,
+    "affected_count": 39,
+    "changed_files": 64,
+    "risk_level": "critical",
+    "partial": false,
+    "truncated": false,
+    "scope": "All carried R6/R7 changes plus this patch; new/untracked files reviewed separately"
+  },
+  "schemaChanged": false,
+  "secretRotation": false,
+  "clinicalQualityVerified": false
+}

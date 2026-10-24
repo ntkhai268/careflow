@@ -34,5 +34,5 @@ RUN mvn -pl careflow-ai-service package -DskipTests -B -q
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/careflow-ai-service/target/*.jar app.jar
-EXPOSE 8090
+EXPOSE 8092
 ENTRYPOINT ["java", "-jar", "app.jar"]

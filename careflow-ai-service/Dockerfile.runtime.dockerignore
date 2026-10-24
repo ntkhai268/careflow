@@ -1,0 +1,6 @@
+**
+!careflow-ai-service/
+careflow-ai-service/**
+!careflow-ai-service/target/
+careflow-ai-service/target/**
+!careflow-ai-service/target/careflow-ai-service-1.0.0-SNAPSHOT.jar

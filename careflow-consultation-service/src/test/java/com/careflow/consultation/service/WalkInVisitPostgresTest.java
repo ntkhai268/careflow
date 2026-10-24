@@ -40,6 +40,8 @@ class WalkInVisitPostgresTest {
         @Bean PatientOwnershipClient owner(){return mock(PatientOwnershipClient.class);}
         @Bean DoctorWorkloadLock locks(JdbcTemplate j){return new DoctorWorkloadLock(j);}
         @Bean ConsultationQueueClient queue(){var q=mock(ConsultationQueueClient.class);when(q.clinicalContext(any())).thenAnswer(call->ApiResponse.success(new ConsultationQueueClient.ClinicalContext(call.getArgument(0),PATIENT,null,"Synthetic Patient","ROOM-01","INITIAL","CALLED",null)));return q;}
+        @Bean ClinicalCompletionGuard completionGuard(){return new ClinicalCompletionGuard(mock(ConsultationPrescriptionClient.class));}
+        @Bean ConsultationEventOutbox eventOutbox(JdbcTemplate jdbc,PlatformTransactionManager manager){return new ConsultationEventOutbox(jdbc,new ObjectMapper().findAndRegisterModules(),mock(RabbitTemplate.class),manager);}
         @Bean ConsultationService service(ConsultationRepository r,ConsultationQueueClient q,DoctorWorkloadLock locks){return new ConsultationService(r,new ConsultationMapper(),mock(RabbitTemplate.class),mock(AppointmentClient.class),q,mock(DirectoryClient.class),locks,mock(ConsultationLabClient.class));}
     }
     @BeforeAll void open(){context=new AnnotationConfigApplicationContext(Config.class);service=context.getBean(ConsultationService.class);jdbc=context.getBean(JdbcTemplate.class);}

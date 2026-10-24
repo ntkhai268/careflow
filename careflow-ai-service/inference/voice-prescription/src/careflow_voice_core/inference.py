@@ -36,10 +36,7 @@ def duration_days(value):
     return exact_integer(number(m[1])) if m else None
 
 
-def infer(transcript, medicines, catalog_version, revision=1):
-    transcript=unicodedata.normalize("NFC",transcript.strip())
-    if not 1<=len(transcript)<=12000 or not isinstance(revision,int) or revision<1:
-        raise ValueError("INVALID_TRANSCRIPT")
+def catalog_entries(medicines, catalog_version):
     if not isinstance(medicines,list) or not 1<=len(medicines)<=10000 or not catalog_version:
         raise ValueError("INVALID_CATALOG")
     entries=[];codes=set()
@@ -55,6 +52,14 @@ def infer(transcript, medicines, catalog_version, revision=1):
                             unit=m.get('unit'),status='active',source='prescription-catalog',
                             checked_at=date.today().isoformat()))
     if not entries:raise ValueError("EMPTY_ACTIVE_CATALOG")
+    return entries
+
+
+def infer(transcript, medicines, catalog_version, revision=1):
+    transcript=unicodedata.normalize("NFC",transcript.strip())
+    if not 1<=len(transcript)<=12000 or not isinstance(revision,int) or revision<1:
+        raise ValueError("INVALID_TRANSCRIPT")
+    entries=catalog_entries(medicines, catalog_version)
     result=RulesExtractor(Catalog(entries)).extract(transcript)
     items=[];draft=[];blockers=[]
     for item in result.items:
@@ -68,7 +73,14 @@ def infer(transcript, medicines, catalog_version, revision=1):
         for evidence in row['evidence'].values():
             if transcript[evidence['start']:evidence['end']]!=evidence['text']:
                 raise ValueError('INVALID_EVIDENCE')
-        exact=[e for e in entries if unicodedata.normalize('NFC',e['name']).casefold()==unicodedata.normalize('NFC',item.spoken_name).casefold()]
+        # Catalog names can include an explicitly spoken strength. Match only the
+        # complete name/strength, ignoring whitespace; never choose a fuzzy candidate.
+        def exact_key(value):
+            return re.sub(r'\s+', '', unicodedata.normalize('NFC', value).casefold())
+        spoken={exact_key(item.spoken_name)}
+        if item.strength:
+            spoken.add(exact_key(item.spoken_name+' '+item.strength))
+        exact=[e for e in entries if exact_key(e['name']) in spoken]
         if len(exact)==1 and item.match_status=='matched' and not item.field_conflicts:
             chosen=exact[0];row['medicineCode']=chosen['id']
             qty=exact_integer(item.quantity);days=duration_days(item.duration)

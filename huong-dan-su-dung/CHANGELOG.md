@@ -1,5 +1,100 @@
 # Lịch sử hướng dẫn sử dụng
 
+## 24/10/2026 — Bàn giao và xuất bản source lên develop
+
+- Tổng hợp các thay đổi R6/R7, voice local, mobile/runtime và bằng chứng đã kiểm; xuất bản theo yêu cầu chủ dự án lên develop, giữ main nguyên trạng.
+- Thêm [file handover](../.planning/deployment/handover-2026-10-24.md) với phạm vi source/runtime, migration, nguồn hướng dẫn, kiểm thử và phần chưa nghiệm thu. Bằng chứng21/10 giữ nguyên candidate lịch sử, không đổi gate OPEN thành PASS do push Git.
+- Khóa/config riêng/model/dataset/audio không thuộc bản Git; tài khoản demo vẫn chỉ quản lý tại trang01. Biên bản kiểm tra xuất bản được ghi riêng theo source hiện hành.
+
+## 24/10/2026 — Nhận thuốc không phụ thuộc từ dẫn hoặc số thứ tự
+
+- Nhận tên/hàm lượng/tần suất khi đọc thẳng, cả tên ngoài catalog, và tách nhiều thuốc trong cùng câu. Không yêu cầu từ “thuốc/kê/thêm” hoặc “thứ nhất/hai”; cụm “thứ tư là” vẫn nhận khi từ trước bị ASR nghe sai thành hốt/hột.
+- Giữ tên và trường rõ, không tự chữa “mỗi lần cố một viên” thành liều chắc chắn; duy trì phủ định/tiền sử/giả định, không nhận số liều đơn lẻ thành thuốc. Hướng dẫn23/contract cập nhật. Worker59/59 đạt; browser/API thật kiểm transcript có hốt, bản bỏ mọi thứ tự, reload cùng toa và hai tên ngoài catalog trong một câu có tần suất riêng. Fixture đã hủy/hoàn tất, không sửa ca người dùng. Phạm vi runtime ghi ở [biên bản](../.planning/ai-service/voice-name-cues-2026-10-24.json), chưa phải nghiệm thu ASR/y khoa hoặc full R7; không đổi Web/API/DB/model/keys, chưa commit/push.
+
+## 24/10/2026 — Giữ đủ thuốc trong cách đọc đánh số và cho ghi lại toa đã xóa hết
+
+- Tái hiện đúng transcript có4tên nhưng chỉ ra2dòng. Sửa tách “thuốc thứ…”, giữ tên ngoài catalog, không cắt mất trường ở câu nối, chuẩn hóa số ngày bằng chữ và giữ lịch sáng/tối. Giữ trống liều/tần suất ASR chưa rõ, không tự chữa thành thông tin kê đơn.
+- Xóa hết dòng trong DRAFT rồi đọc mới dùng chế độ thay thuốc nguyên tử trên cùng toa; không còn yêu cầu phải giữ thuốc cũ và không làm sống lại dòng đã xóa. Mặc định vẫn thêm nếu còn dòng. Kiểm phiên/phân công/trạng thái/nguồn và chống thêm trùng giữ nguyên, không đổi schema.
+- Hướng dẫn23 và contract đồng bộ. Worker40/40 và Common53 + Prescription131 kiểm thử đạt, không skip; TypeScript/lint/build đạt. Browser/API thật giữ đủ4tên, lượng5–3–6–3 và ngày5–3–3–3, chỉ2ô mơ hồ đỏ; lưu/reload không chạy lại AI, append giữ chỉnh sửa và ghi âm sau xóa hết thay đúng cùng toa. Fixture đã hủy/hoàn tất. Kết quả runtime ghi trong [biên bản](../.planning/ai-service/voice-four-drugs-2026-10-24.json); chưa coi là nghiệm thu chuyên môn/ASR tổng quát hoặc full R7, chưa commit/push.
+
+## 24/10/2026 — Bỏ cửa sổ voice, sửa thời lượng0:00
+
+- Ghi âm/nghe lại/transcript/sửa toa trực tiếp trên trang khám, bỏ nút và dialog mở rộng; giữ một danh sách và một xác nhận toàn đơn.
+- Chính sách trang cho phép `media-src 'self' blob:` để audio tạm phát được; giữ giới hạn script/connect/object hiện có. Bộ đếm dựa thời gian thực, sửa duration metadata WebM bằng thư viện MIT chạy local trong browser, giữ MP4. Hiện thời lượng khi dừng và sau xử lý, tách thời gian audio với thời gian nhận dạng; có chỉ báo mức âm thanh và báo chưa phát hiện tiếng rõ. Trạng thái mới phân biệt ghi tạm với thêm thuốc vào DRAFT, bỏ hai đoạn hướng dẫn lặp.
+- Metadata tab thêm số giây của đoạn đã xử lý gần nhất; không lưu audio/transcript vào storage hoặc gửi dịch vụ ngoài. Chưa phải lịch sử/đồng bộ thời lượng nhiều thiết bị. TypeScript/lint/build đạt. Browser thực kiểm bản ghi62.35giây có tiếng, native player nghe/tua/thời lượng; FFmpeg xác minh âm thanh giải mã không đổi sau sửa metadata; ASR thật lưu hai đoạn vào cùng DRAFT, reload giữ số giây, im lặng/quyền từ chối/logout đúng trạng thái. Fixture đã hủy toa/hoàn tất hàng chờ, ca người dùng chỉ đối chiếu đọc. Phạm vi nghiệm thu runtime ghi trong [biên bản](../.planning/ai-service/voice-inline-duration-2026-10-24.json); micro vật lý/chuyên môn/full R7 vẫn mở, chưa commit/push.
+
+## 24/10/2026 — Đánh dấu trực tiếp ô thuốc còn thiếu
+
+- Thêm dấu bắt buộc, viền/nền đỏ và hướng dẫn dưới ô tên/đơn vị/liều/tần suất/thời điểm/số ngày/số lượng còn thiếu hoặc số không hợp lệ; tự hết lỗi khi sửa đúng, không đánh đỏ các ô tùy chọn.
+- Ký khi chưa đủ mở phần chỉnh sửa và tập trung ô đầu tiên cần bổ sung, không gửi yêu cầu ký; lưu nháp vẫn được. Dùng cùng trạng thái trong danh sách/cửa sổ mở rộng, giữ một xác nhận toàn đơn. Không đổi backend/schema/model.
+- TypeScript/lint/build và5 kiểm tra browser qua API thật đạt: đúng ô đỏ ở hai layout, focus phần đang gập, lưu/reload toa thiếu, số/chuỗi không hợp lệ, sửa/lưu/ký/hoàn tất. Fixture đã cấp phát/rời hàng chờ, đối chiếu ca người dùng chỉ đọc. Phạm vi và kết quả runtime được ghi trong [biên bản](../.planning/ai-service/voice-required-fields-2026-10-24.json); không coi là nghiệm thu chuyên môn hoặc full R7. Hướng dẫn23 cập nhật cùng bản web, chưa commit/push.
+
+## 24/10/2026 — Ghi âm nhiều lần, gộp đơn và xác nhận toàn đơn
+
+- Gộp Đơn thuốc/Danh sách Đơn thuốc thành một editor, dùng cùng khu vực khi mở rộng. Chỉ một khung xác nhận cuối danh sách, đại diện toàn đơn; thêm/xóa/sửa thuốc hoặc ghi thêm yêu cầu xác nhận lại.
+- Cho ghi/dừng/ghi lại và thêm nhiều audio/transcript vào cùng DRAFT, giữ các chỉnh sửa; bỏ đoạn mới không xóa toa. Chặn ký khi còn bản ghi chưa lưu và khóa input sau ký. Latch chống nhấp mic/lưu liên tiếp; đóng khi xin quyền không để micro tự bật muộn.
+- Prescription hỗ trợ target DRAFT tùy chọn, khóa append và liên kết source chống trùng; V4/DBML cho nhiều nguồn trên cùng toa, giữ PK/FK. Sao lưu DB trước cập nhật. Common53 + Prescription129 kiểm thử đạt, không skip; TypeScript/lint đạt. Production build và12 kiểm tra browser/API đạt: ghi nhiều lần bằng MediaRecorder/MediaStream tổng hợp, ASR thật, một editor/checkbox, lưu/reload/giữ chỉnh sửa, master-data drawer, ký/khóa/hoàn tất; retry ba nguồn không thêm trùng và STAFF403. Ca thử đã cấp phát/rời hàng chờ, ca người dùng được đối chiếu chỉ đọc. Kết quả runtime ghi ở [biên bản](../.planning/ai-service/voice-repeat-2026-10-24.json); micro vật lý/chuyên môn/full R7 vẫn mở, chưa commit/push.
+
+## 24/10/2026 — Hiển thị rõ xác nhận thuốc kê bằng tên
+
+- Đưa khung Xác nhận trước khi ký ngay dưới từng thuốc ở danh sách toa chính, có ô tên/đơn vị và checkbox; bỏ giới hạn chiều cao cuộn riêng làm khuất phần này. Trong cửa sổ voice, xác nhận nằm ngoài phần chỉnh sửa có thể gập.
+- Ký khi thiếu xác nhận/đơn vị đưa con trỏ tới đúng ô còn thiếu trước khi mở hộp ký. Các vị trí dùng chung trạng thái và lưu vào cùng toa; không đổi API, schema hoặc điều kiện kiểm tra phía server.
+- Hướng dẫn23 cập nhật vị trí mới. TypeScript/lint/production build và7 bước browser/API thật đạt: thấy ô trên danh sách chính, đưa focus đúng chỗ, đồng bộ hai vị trí, giữ sau reload, ký/hoàn tất. Ca mẫu đã cấp phát và kết thúc hàng chờ; đối chiếu chỉ đọc trên ca người dùng, không xác nhận/ký thay.
+
+## 24/10/2026 — Toa giọng nói sửa trực tiếp và hoàn tất ca
+
+- Bỏ khối “Kiểm tra thuốc nhận được” chặn lưu theo catalog; endpoint editable lưu mọi dòng có tên vào DRAFT, giữ nguồn/idempotency, không tự tạo mã hoặc master data. Số lượng JSON nguyên dạng3.0 được nhận chính xác, không làm tròn phân số.
+- Thêm ô sửa tên/hàm lượng/số lượng/đơn vị/liều/tần suất/thời điểm/số ngày/chi tiết ngay trên đơn giấy. Lưu lại cùng toa, reload giữ chỉnh sửa; sửa tên bỏ mã cũ. Thuốc kê bằng tên cần bác sĩ xác nhận đã kiểm tra và đủ cách dùng trước khi ký; server kiểm lại. Thao tác sửa/xóa phân biệt đúng dòng kể cả nhiều dòng không có mã.
+- Chưa lưu bản ghi thì Hoàn tất mở ô nhập toa; ký bị từ chối mở ngay ô sửa và thông báo server. Đã kiểm hai luồng trên ca tổng hợp qua AI/API/web thật: thuốc chưa có mã và thông tin đúng đủ → ký → hoàn tất; ca thử đã phát thuốc và rời hàng chờ qua sự kiện đúng quy trình. Không sửa các ca người dùng đang dùng.
+- Common53 và Prescription123 kiểm thử đạt, không skip; TypeScript/lint/production build đạt,12 bước browser qua API lâm sàng thật (có giả lập riêng lỗi capability để kiểm sửa toa khi AI không sẵn sàng) và kiểm tra quyền mới. Cập nhật trang23/24, contract và mô tả JSONB; không đổi schema/khóa/model, không commit/push. Chuyên môn/micro vật lý/full R7 vẫn mở.
+## 24/10/2026 — Sửa gói CA khiến iPhone không đăng nhập được
+
+- Xác định bản22 thiếu asset CA dù cấu hình yêu cầu nạp CA; kiểm đăng nhập từ Mac trước đó không phát hiện lỗi bundle này. Bổ sung khai báo file CA trong pubspec của staging riêng, giữ CA và cấu hình ký ngoài Git, không bỏ xác minh HTTPS.
+- Chạy bản chẩn đoán24 trực tiếp trên iPhone: HTTPS200, Secure Enclave/ký yêu cầu, API đăng nhập200, AuthService đăng nhập/đọc danh tính đều đạt. Cài đè và mở bản thường1.0.0(25), kiểm CA trùng file nguồn/chữ ký và loại entrypoint/tham số tài khoản chẩn đoán khỏi bản bàn giao. Không đổi mật khẩu, không gỡ app hoặc sửa backend.
+- Bổ sung bước kiểm asset/hash/chữ ký trước cài tại trang11 để tránh lặp lại; Face ID/camera/GPS/push và nghiệm thu R7 đầy đủ vẫn mở.
+
+## 24/10/2026 — Cài lại mobile R7 trên iPhone
+
+- Đối chiếu nguồn mobile R7 với staging, build Release1.0.0(22), kiểm chữ ký, cài đè cùng bundle ID và mở thành công trên iPhone 11 Pro Max; không gỡ app hay sửa logic mobile/backend.
+- Kiểm backend đang hoạt động và cầu nối HTTPS bằng CA của app từ Mac. Chưa nghiệm thu lại Face ID/camera/GPS/đăng nhập bằng thao tác trên điện thoại; provisioning bản22 vẫn hết hạn25/10 lúc15:04 giờ Việt Nam. Cập nhật trang11 với phiên bản và lệnh cài hiện tại.
+
+## 24/10/2026 — Không gian nhập toa và Docker AI API
+
+- Xác nhận adapter trùng checksum prototype; bật context catalog bệnh viện, đồng bộ cấu hình decode, thêm timing thực đo. Giữ15 thuốc active, không nhập catalog tham khảo thành thuốc được phép kê.
+- Thêm cửa sổ nhập/audio/transcript và đơn giấy; tải/nghe lại, xem bằng chứng, mở editor thuốc hiện có. Sửa/reload giữ cùng toa; lấy lại transcript còn hạn qua API bằng metadata mã job/toa theo bác sĩ/ca, không lưu raw transcript/audio/token hoặc áp lại AI lên thay đổi đã sửa.
+- Docker runtime image giới hạn context, non-root/read-only/cap-drop/health mTLS/tài nguyên. API trên18093, GPU worker giữ Mac18370; launcher kiểm owner/image/cổng, snapshot thêm descriptor. Không đổi schema/secret.
+- Worker32/32,4 kiểm tra config/ownership Docker, TypeScript/lint/build đạt; audio thật qua container→DRAFT→sửa/reload, mic lifetime bằng MediaStream tổng hợp. Phép đo nhỏ chưa chứng minh chất lượng lâm sàng/tải production. Cập nhật trang01/23/25/26 và biên bản; chưa commit/push, full R7 OPEN.
+
+## 23/10/2026 — Sửa lỗi đối chiếu toa giọng nói
+
+- Sửa nhận nhầm mâu thuẫn PRN khi “khi cần” được nhắc lại bằng cùng điều kiện có triệu chứng; giữ nguyên điều kiện khác nhau là xung đột. Giữ câu sửa số lượng trên đúng thuốc đang đọc và nhận giới hạn liều tối đa ở câu tiếp theo.
+- Giữ dòng thuốc được kê rõ nhưng chưa có trong catalog để báo cần đối chiếu, tránh bỏ sót khi còn thuốc khác đã khớp. Web hiển thị thuốc/hàm lượng gợi ý từ catalog và trường mâu thuẫn; sửa transcript xong xử lý lại, chưa tự ký hoặc tự chọn thuốc.
+- Worker29/29 đạt; TypeScript/lint/build web đạt. Browser/API thật kiểm thiếu hàm lượng, thuốc ngoài catalog, xung đột thật, sửa revision→DRAFT→reload và server422 khi bỏ qua kiểm tra giao diện. Ca xác minh riêng đã hoàn tất; ca bác sĩ An vẫn đang khám, chưa có toa.
+- Cập nhật trang01/23/25 và mốc nguồn. Runtime web/worker đã cập nhật, giữ khóa/model/DB schema; chưa commit/push. R7 đầy đủ vẫn OPEN; không chuyển chứng cứ candidate21/10 sang source mới.
+
+## 23/10/2026 — Chuẩn bị dữ liệu voice và khung khám tối
+
+- Qua API thật, thêm ngoại lệ22:00–23:00 ngày23/10 cho ROOM-01, hai slot30 phút/mỗi slot5 chỗ; giữ nguyên cửa sổ sáng/chiều và các ngày khác. Availability xác nhận cả hai slot còn chỗ lúc chuẩn bị.
+- Tạo hai hồ sơ tổng hợp thuộc bệnh nhân demo; một lượt không hẹn đang khám bởi bác sĩ An, chưa có toa; hồ sơ còn lại để đặt lịch dự phòng. Hai lượt tiếp nhận sơ bộ ROOM-11 giữ chờ, không sửa ca cũ của bác sĩ A/B. Tài khoản và mã ca chỉ quản lý tại trang01.
+- Cập nhật trang23 với cách mở ca, cho phép micro và đoạn đọc tổng hợp. Kiểm phiên web thật/nút ghi âm, worker readiness và job transcript nhận thuốc trong catalog; chưa nghiệm thu micro vật lý hoặc độ chính xác giọng nói. Không sửa code/schema, không lưu sẵn toa và không thay secret.
+
+## 21/10/2026 — R7: bàn giao kỹ thuật và cổng nghiệm thu
+
+- Thêm trang25, ma trận E01–E18 và bằng chứng gắn candidate; giữ OPEN với phần cứng/push/chuyên môn hoặc nhánh chưa kiểm đủ. Workflow deploy dừng khi thiếu nghiệm thu.
+- Cập nhật runtime R7, iOS1.0.0(21), iOS15/Pods, Android release ký riêng; launcher không bắt buộc build giả lập để dùng iPhone.
+- Bổ sung hướng dẫn503 upstream, kiểm backend/restore scratch, snapshot sau rollout và phục hồi sau reboot; không restore đè DB hoặc đổi key hiện có.
+- Backend cuối đạt1.000/1.000 không skip; Flutter có15 skip ghi riêng; chưa commit/push R7.
+- Kiểm chứng bổ sung E08/E09/E10/E15 bằng service thật và DB scratch: tiếp nhận/hoàn tất, bốn nhánh requeue cạnh tranh, lịch/slot/ngày nghỉ, toàn bộ KPI Analytics và broker replay/rebuild/JVM restart. Xung đột optimistic locking trả409 an toàn thay vì500; cập nhật trang09/25.
+- Sửa sự kiện hủy đến trước xác nhận làm xuất hiện lại phiếu chờ: Queue V14 lưu dấu hủy bền vững, khóa xử lý theo mã lịch; DBML đồng bộ. Kiểm nâng V13→V14 với22 lịch hủy cũ, restart/concurrency và phát lại sự kiện thật. Kiểm E13/E14 gồm mất phản hồi, bàn giao/thu hồi điều phối, PDF, liên kết có consent và thu hồi quyền trên lịch đã có. Cập nhật trang03/09/25 và bằng chứng R7.
+- Chuẩn hóa extension chứng chỉ leaf nội bộ AI/Analytics, giữ CA và khóa; kiểm Python3.14 strict đạt, lưu lại runtime/backup. Ghi đúng hạn provisioning bản21 tại trang11; không thay key Resend.
+
+## 21/10/2026 — R6: trợ lý có nguồn và toa giọng nói local
+
+- Thêm kho nguồn theo phiên bản, ADMIN nhập/thu hồi, DOCTOR rà soát; chatbot chỉ trích nguồn đã duyệt thuộc khoa, không còn fallback phác đồ mẫu.
+- Server kiểm ngữ cảnh/phân công và lịch sử theo bác sĩ/ca; nội dung mã hóa và hết hạn.
+- Web ghi âm → Lưu toa nháp → chỉnh cùng toa → ký riêng; Prescription chống trùng job/revision, giữ trường chi tiết và chặn ký khi còn thiếu.
+- Cập nhật trang23/24, DBML và biên bản kỹ thuật. Chưa có tài liệu/giọng bác sĩ được chuyên gia nghiệm thu; chưa đóng toàn bộ R6. Chưa commit/push các thay đổi R6.
+
 ## 21/10/2026 — Gộp source để phát hành lên develop
 
 - Hợp nhất backend/web R0–R5 và source app native từ các worktree; giữ nguyên các giới hạn nghiệm thu đã ghi.

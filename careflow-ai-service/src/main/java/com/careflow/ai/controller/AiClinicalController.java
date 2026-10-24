@@ -1,48 +1,11 @@
 package com.careflow.ai.controller;
-
-import com.careflow.common.dto.ApiResponse;
-import com.careflow.ai.dto.request.ClinicalChatRequest;
-import com.careflow.ai.dto.request.ClinicalSuggestionRequest;
-import com.careflow.ai.dto.response.ClinicalSuggestionResponse;
-import com.careflow.ai.service.AiClinicalAssistantService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
+import com.careflow.ai.service.AiClinicalAssistantService;import com.careflow.common.dto.ApiResponse;import jakarta.servlet.http.HttpServletRequest;import jakarta.validation.Valid;import jakarta.validation.constraints.*;import org.springframework.web.bind.annotation.*;import org.springframework.http.*;import java.util.*;
 @RestController
 @RequestMapping("/api/ai")
-@RequiredArgsConstructor
-@Slf4j
 public class AiClinicalController {
-
-    private final AiClinicalAssistantService aiClinicalAssistantService;
-
-    @PostMapping("/clinical-suggestions")
-    public ResponseEntity<ApiResponse<ClinicalSuggestionResponse>> getClinicalSuggestions(
-            @Valid @RequestBody ClinicalSuggestionRequest request) {
-        log.info("Received request for clinical suggestions for consultation: {}", request.getConsultationId());
-        ClinicalSuggestionResponse response = aiClinicalAssistantService.getClinicalSuggestions(request);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @PostMapping("/clinical-chat")
-    public ResponseEntity<ApiResponse<ClinicalSuggestionResponse>> processClinicalChat(
-            @Valid @RequestBody ClinicalChatRequest request) {
-        log.info("Received clinical chat request for consultation: {}", request.getConsultationId());
-        ClinicalSuggestionResponse response = aiClinicalAssistantService.processClinicalChat(request);
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
-
-    @GetMapping("/interactions/{interactionId}")
-    public ResponseEntity<ApiResponse<ClinicalSuggestionResponse>> getInteractionById(
-            @PathVariable String interactionId) {
-        log.info("Received request to fetch interaction audit for ID: {}", interactionId);
-        ClinicalSuggestionResponse response = aiClinicalAssistantService.getInteractionById(interactionId);
-        if (response == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(ApiResponse.success(response));
-    }
+    private final AiClinicalAssistantService service;public AiClinicalController(AiClinicalAssistantService service){this.service=service;}
+    public record Question(@NotNull UUID consultationId,@Size(max=2000) String question,@Size(max=2000) String message,UUID parentInteractionId){}
+    @PostMapping({"/clinical-chat","/clinical-suggestions"}) public ResponseEntity<?> ask(@Valid @RequestBody Question q,HttpServletRequest request){return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(ApiResponse.success(service.engine().ask(q.consultationId(),q.message()==null?q.question():q.message(),q.parentInteractionId(),request)));}
+    @GetMapping("/interactions/{id}") public ResponseEntity<?> read(@PathVariable UUID id,HttpServletRequest request){return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(ApiResponse.success(service.engine().read(id,request)));}
+    @GetMapping("/consultations/{id}/interactions") public ResponseEntity<?> history(@PathVariable UUID id,HttpServletRequest request){return ResponseEntity.ok().cacheControl(CacheControl.noStore()).body(ApiResponse.success(service.engine().history(id,request)));}
 }

@@ -32,6 +32,12 @@ jobs:
       cancel-in-progress: false
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Require full R7 acceptance for this source
+        shell: bash
+        run: >-
+          python3 scripts/release/acceptance_gate.py
+          .planning/deployment/evidence/r7-20261021/cases.json
+          --verify-source --output "$RUNNER_TEMP/careflow-r7-acceptance.json"
       - name: Validate private production configuration
         shell: bash
         run: |

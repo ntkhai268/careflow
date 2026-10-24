@@ -45,6 +45,7 @@ class PrescriptionReleasePostgresTest {
         @Bean ConsultationClient consultations(){return mock(ConsultationClient.class);}
         @Bean AppointmentClient appointments(){return mock(AppointmentClient.class);}
         @Bean DirectoryClient directory(){return mock(DirectoryClient.class);}
+        @Bean PrescriptionAiReleaseGuard aiGuard(JdbcTemplate jdbc){return new PrescriptionAiReleaseGuard(jdbc);}
         @Bean PrescriptionMapper mapper(){return new PrescriptionMapper();}
         @Bean PrescriptionEventOutbox outbox(JdbcTemplate jdbc,ObjectMapper json,RabbitTemplate rabbit,PlatformTransactionManager manager){return new PrescriptionEventOutbox(jdbc,json,rabbit,manager);}
         @Bean PrescriptionService prescriptions(PrescriptionRepository repo,DrugRepository drugs,PrescriptionMapper mapper,ConsultationClient consultations,AppointmentClient appointments,DirectoryClient directory,RabbitTemplate rabbit,ObjectMapper json){return new PrescriptionService(repo,drugs,mapper,consultations,appointments,directory,mock(QueueExecutionClient.class),mock(PatientIdentityClient.class),rabbit,json);}

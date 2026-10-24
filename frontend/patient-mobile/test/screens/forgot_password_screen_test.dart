@@ -33,8 +33,9 @@ class RecoveryAuth extends AuthService {
     String code,
   ) async {
     verifications.add([id, code]);
-    if (rejectCode)
+    if (rejectCode) {
       throw Exception('Mã không hợp lệ, đã hết hạn hoặc đã sử dụng.');
+    }
     return {'requestId': id, 'resetToken': 'r' * 43, 'expiresInSeconds': 300};
   }
 

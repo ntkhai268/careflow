@@ -12,7 +12,7 @@ import javax.sql.DataSource;
 import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest(classes=AiApplication.class,webEnvironment=SpringBootTest.WebEnvironment.RANDOM_PORT,
-        properties={"careflow.voice.enabled=false","eureka.client.enabled=false","spring.cloud.discovery.enabled=false","security.caller.name=ai-service",
+        properties={"server.ssl.enabled=false","security.internal.tls.enabled=false","careflow.voice.enabled=false","eureka.client.enabled=false","spring.cloud.discovery.enabled=false","security.caller.name=ai-service",
                 "security.caller.key=disabled-voice-test-only-caller-key-32"})
 @ActiveProfiles("secure")
 class VoiceDisabledApplicationTest {

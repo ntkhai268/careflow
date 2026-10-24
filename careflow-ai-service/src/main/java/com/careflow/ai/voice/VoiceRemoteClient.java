@@ -18,9 +18,12 @@ public class VoiceRemoteClient implements VoiceDependencies {
     private final ObjectMapper mapper;
     private final HttpClient http;
     public VoiceRemoteClient(VoiceProperties p,ObjectMapper mapper) {
+        this(p,mapper,null);
+    }
+    public VoiceRemoteClient(VoiceProperties p,ObjectMapper mapper,javax.net.ssl.SSLContext tls) {
         this.p=p;this.mapper=mapper;
-        http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(p.getDependencyTimeoutSeconds()))
-                .followRedirects(HttpClient.Redirect.NEVER).build();
+        var builder=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(p.getDependencyTimeoutSeconds())).followRedirects(HttpClient.Redirect.NEVER);
+        if(tls!=null)builder.sslContext(tls);http=builder.build();
         for(String endpoint:List.of(p.getIdentityUrl(),p.getConsultationUrl(),p.getPrescriptionUrl(),p.getWorkerUrl())) {
             URI uri=URI.create(endpoint);
             boolean local=Set.of("127.0.0.1","localhost","::1").contains(uri.getHost());
@@ -73,6 +76,11 @@ public class VoiceRemoteClient implements VoiceDependencies {
         } catch(BusinessException e){throw e;}catch(Exception e){throw new BusinessException(401,"Phiên đăng nhập không còn hợp lệ");}
     }
     @Override public Actor authenticate(HttpServletRequest request) {
+        Object verified=request.getAttribute(com.careflow.common.security.ActiveSessionFilter.VERIFIED_PRINCIPAL_ATTRIBUTE);
+        if(verified instanceof com.careflow.common.security.ActiveSessionClient.Principal principal){
+            if(!Boolean.TRUE.equals(principal.active())||!"DOCTOR".equals(principal.role())||!principal.expiresAt().isAfter(Instant.now()))throw new BusinessException(403,"Cần phiên bác sĩ hợp lệ");
+            return new Actor(principal.userId(),request.getHeader("Authorization"),UUID.randomUUID().toString());
+        }
         String correlation;
         try{correlation=UUID.fromString(request.getHeader("X-Correlation-Id")).toString();}catch(Exception e){correlation=UUID.randomUUID().toString();}
         Map<String,String> proof=new HashMap<>();

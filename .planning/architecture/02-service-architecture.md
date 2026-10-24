@@ -1,5 +1,10 @@
 # Kiến trúc Microservices — R0-1.0
 
+**CURRENT21/10/2026 — R7:** đủ12service yêu cầu cùng Directory hỗ trợ đã build/khởi động trên stack test; manifest ghi hash artifact, Gateway trả503 cho lỗi kết nối upstream. Eureka chỉ build, runtime Mac dùng discovery tĩnh. [Biên bản R7](../deployment/r7-acceptance-2026-10-21.md) phân biệt triển khai kỹ thuật với nghiệm thu đầy đủ còn OPEN.
+
+**CURRENT21/10/2026 — R6:** AI đã có tra cứu nguồn local có duyệt, lịch sử mã hóa theo ca và luồng voice → Prescription DRAFT → chỉnh → ký riêng. Xem [biên bản R6](../ai-service/r6-acceptance-2026-10-21.md). Nội dung TARGET AI của baseline bên dưới không còn mô tả đầy đủ trạng thái kỹ thuật hiện tại; chuyên môn vẫn chưa nghiệm thu.
+
+
 Cập nhật Analytics R5 ngày21/10/2026; các dòng chưa có cập nhật riêng giữ phạm vi baseline R0. Xem [biên bản R5](../analytics-service/r5-acceptance-2026-10-21.md).
 
 ## 1. Service và nguồn dữ liệu có thẩm quyền

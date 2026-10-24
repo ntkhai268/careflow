@@ -528,6 +528,59 @@
       "security_opt": [
         "no-new-privileges:true"
       ]
+    },
+    "careflow-ai-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-ai-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8092",
+        "SECURITY_CALLER_KEY": "${AI_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${AI_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${AI_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_ai?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${AI_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${AI_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "SPRING_RABBITMQ_HOST": "${RABBITMQ_HOST:?}",
+        "SPRING_RABBITMQ_PORT": "${RABBITMQ_PORT:-5671}",
+        "SPRING_RABBITMQ_USERNAME": "${AI_RABBITMQ_USERNAME:?}",
+        "SPRING_RABBITMQ_PASSWORD": "${AI_RABBITMQ_PASSWORD:?}",
+        "SPRING_RABBITMQ_SSL_ENABLED": "true",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE": "file:/run/secrets/truststore.p12",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "VOICE_DB_URL": "${AI_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_ai?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "VOICE_DB_USER": "${AI_DB_USERNAME:?}",
+        "VOICE_DB_PASSWORD": "${AI_DB_PASSWORD:?}",
+        "AI_CONTENT_KEY": "${AI_CONTENT_KEY:?}",
+        "VOICE_CALLER_KEY": "${AI_CALLER_KEY:?}",
+        "VOICE_IDENTITY_URL": "https://careflow-identity-service:8081",
+        "VOICE_CONSULTATION_URL": "https://careflow-consultation-service:8086",
+        "VOICE_PRESCRIPTION_URL": "https://careflow-prescription-service:8087",
+        "VOICE_WORKER_URL": "${VOICE_WORKER_URL:?}",
+        "VOICE_WORKER_TOKEN": "${VOICE_WORKER_TOKEN:?}",
+        "CLINICAL_AI_ENABLED": "${CLINICAL_AI_ENABLED:-false}",
+        "VOICE_PRESCRIPTION_ENABLED": "${VOICE_PRESCRIPTION_ENABLED:-false}",
+        "AI_ALLOW_SYNTHETIC": "false"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/ai-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
     }
   },
   "networks": {
