@@ -38,6 +38,7 @@ public class DirectoryService {
     private final RoomRepository roomRepository;
     private final DoctorProfileRepository doctorProfileRepository;
     private final StaffAssignmentRepository staffAssignmentRepository;
+    private final StaffIdentityVerifier staffIdentity;
 
     public boolean hasStaffRoomAccess(UUID userId, String roomId) {
         return userId != null && roomId != null && !roomId.isBlank()
@@ -65,6 +66,7 @@ public class DirectoryService {
         String roomId = req.getRoomId().trim();
         String departmentCode = req.getDepartmentCode().trim();
         validateStaffAssignment(departmentCode, roomId);
+        validateStaffRoleForRoom(req.getUserId(),roomId,!Boolean.FALSE.equals(req.getIsActive()));
         if (staffAssignmentRepository.findByUserIdAndRoomId(req.getUserId(), roomId).isPresent()) {
             throw new BusinessException(409, "Staff assignment đã tồn tại cho user và room này");
         }
@@ -84,6 +86,8 @@ public class DirectoryService {
         String roomId = req.getRoomId().trim();
         String departmentCode = req.getDepartmentCode().trim();
         validateStaffAssignment(departmentCode, roomId);
+        if(!Boolean.FALSE.equals(req.getIsActive()) || !assignment.getUserId().equals(req.getUserId()))
+            validateStaffRoleForRoom(req.getUserId(),roomId,!Boolean.FALSE.equals(req.getIsActive()));
         staffAssignmentRepository.findByUserIdAndRoomId(req.getUserId(), roomId)
                 .filter(existing -> !existing.getId().equals(id))
                 .ifPresent(existing -> {
@@ -206,6 +210,10 @@ public class DirectoryService {
         return doctors.stream().map(this::toDoctorProfileResponse).toList();
     }
 
+    public List<DoctorProfileResponse> getAllDoctorProfilesForAdministration() {
+        return doctorProfileRepository.findAll().stream().map(this::toDoctorProfileResponse).toList();
+    }
+
     public DoctorProfileResponse getDoctorByUserId(UUID userId) {
         DoctorProfile doctor = doctorProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("DoctorProfile", "userId", userId));
@@ -218,8 +226,8 @@ public class DirectoryService {
             throw new BusinessException(400, "Bác sĩ đã có profile cho userId: " + req.getUserId());
         }
         validateDoctorAssignment(req.getDepartmentCode(), req.getAssignedRoomId());
+        staffIdentity.require(req.getUserId(),java.util.Set.of("DOCTOR"),!Boolean.FALSE.equals(req.getIsActive()));
         DoctorProfile profile = DoctorProfile.builder()
-                .id(UUID.randomUUID())
                 .userId(req.getUserId())
                 .fullName(req.getFullName())
                 .title(req.getTitle())
@@ -228,6 +236,7 @@ public class DirectoryService {
                 .specialization(req.getSpecialization())
                 .licenseNumber(req.getLicenseNumber())
                 .isActive(req.getIsActive() != null ? req.getIsActive() : true)
+                .primaryForBooking(Boolean.TRUE.equals(req.getPrimaryForBooking()))
                 .build();
         validateDoctorAssignment(profile.getDepartmentCode(), profile.getAssignedRoomId());
         return toDoctorProfileResponse(doctorProfileRepository.save(profile));
@@ -252,6 +261,7 @@ public class DirectoryService {
         if (req.getSpecialization() != null) {
             profile.setSpecialization(req.getSpecialization());
         }
+        if (req.getPrimaryForBooking() != null) { profile.setPrimaryForBooking(req.getPrimaryForBooking()); }
         if (req.getLicenseNumber() != null) {
             profile.setLicenseNumber(req.getLicenseNumber());
         }
@@ -259,7 +269,18 @@ public class DirectoryService {
             profile.setIsActive(req.getIsActive());
         }
         validateDoctorAssignment(profile.getDepartmentCode(), profile.getAssignedRoomId());
+        if(Boolean.TRUE.equals(profile.getIsActive()))staffIdentity.require(profile.getUserId(),java.util.Set.of("DOCTOR"),true);
         return toDoctorProfileResponse(doctorProfileRepository.save(profile));
+    }
+
+    private void validateStaffRoleForRoom(UUID userId,String roomId,boolean active) {
+        Room room=roomRepository.findById(roomId).orElseThrow(()->new ResourceNotFoundException("Room","id",roomId));
+        String role=switch(room.getRoomType()) {
+            case "LAB","IMAGING" -> "LAB_TECHNICIAN";
+            case "CONSULTATION","PHARMACY" -> "STAFF";
+            default -> throw new BusinessException(409,"Loại phòng không hỗ trợ phân công nhân viên này.");
+        };
+        staffIdentity.require(userId,java.util.Set.of(role),active);
     }
 
     private void validateDoctorAssignment(String departmentCode, String roomId) {
@@ -325,6 +346,7 @@ public class DirectoryService {
         return DoctorProfileResponse.builder()
                 .id(doc.getId())
                 .userId(doc.getUserId())
+                .primaryForBooking(doc.getPrimaryForBooking())
                 .fullName(doc.getFullName())
                 .title(doc.getTitle())
                 .departmentCode(doc.getDepartmentCode())

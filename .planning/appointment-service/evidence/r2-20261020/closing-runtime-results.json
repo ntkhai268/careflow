@@ -1,0 +1,87 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "careflow-identity-service preserves Resend configuration",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-identity-service preserves nested mail/recovery configuration",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-identity-session-secondary preserves Resend configuration",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-identity-session-secondary preserves nested mail/recovery configuration",
+      "status": "PASS"
+    },
+    {
+      "name": "Installed-build staging library equals native R2 source",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-identity-service health",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-hospital-directory-service health",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-api-gateway health",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-patient-service health",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-consultation-service health",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-emr-service health",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-prescription-service health",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-lab-service health",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-appointment-service health",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-identity-session-secondary health",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-queue-service health",
+      "status": "PASS"
+    },
+    {
+      "name": "careflow-notification-service health",
+      "status": "PASS"
+    }
+  ],
+  "healthyServices": [
+    "careflow-identity-service",
+    "careflow-hospital-directory-service",
+    "careflow-api-gateway",
+    "careflow-patient-service",
+    "careflow-consultation-service",
+    "careflow-emr-service",
+    "careflow-prescription-service",
+    "careflow-lab-service",
+    "careflow-appointment-service",
+    "careflow-identity-session-secondary",
+    "careflow-queue-service",
+    "careflow-notification-service"
+  ]
+}

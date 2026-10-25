@@ -1,0 +1,71 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "scope": "Six scratch operational databases; real Gateway/Patient/Queue flow, isolated RabbitMQ; live Identity serves separate bound test sessions, Directory read only; no live account or clinical-data changes",
+  "checks": [
+    {
+      "name": "REQUEUE_FRONT FRONT: reload/version, recall limit, MISSED lane separation, concurrent idempotency/requeue and actual next ordering",
+      "status": "PASS"
+    },
+    {
+      "name": "REQUEUE_BACK BACK: reload/version, recall limit, MISSED lane separation, concurrent idempotency/requeue and actual next ordering",
+      "status": "PASS"
+    },
+    {
+      "name": "REQUIRE_MANUAL FRONT: reload/version, recall limit, MISSED lane separation, concurrent idempotency/requeue and actual next ordering",
+      "status": "PASS"
+    },
+    {
+      "name": "REQUIRE_MANUAL BACK: reload/version, recall limit, MISSED lane separation, concurrent idempotency/requeue and actual next ordering",
+      "status": "PASS"
+    },
+    {
+      "name": "Paused reception persists, keeps read access and rejects new walk-ins/call-next; PATIENT cannot configure or receive",
+      "status": "PASS"
+    }
+  ],
+  "policies": {
+    "REQUEUE_FRONT_FRONT": {
+      "sameIntakeIdOnConcurrentReplay": true,
+      "sameCallResultOnConcurrentReplay": true,
+      "requeueRaceStatuses": [
+        200,
+        409
+      ],
+      "maxCallsEnforced": 3,
+      "observedNextPosition": "FRONT"
+    },
+    "REQUEUE_BACK_BACK": {
+      "sameIntakeIdOnConcurrentReplay": true,
+      "sameCallResultOnConcurrentReplay": true,
+      "requeueRaceStatuses": [
+        200,
+        409
+      ],
+      "maxCallsEnforced": 3,
+      "observedNextPosition": "BACK"
+    },
+    "REQUIRE_MANUAL_FRONT": {
+      "sameIntakeIdOnConcurrentReplay": true,
+      "sameCallResultOnConcurrentReplay": true,
+      "requeueRaceStatuses": [
+        200,
+        409
+      ],
+      "maxCallsEnforced": 3,
+      "observedNextPosition": "FRONT"
+    },
+    "REQUIRE_MANUAL_BACK": {
+      "sameIntakeIdOnConcurrentReplay": true,
+      "sameCallResultOnConcurrentReplay": true,
+      "requeueRaceStatuses": [
+        200,
+        409
+      ],
+      "maxCallsEnforced": 3,
+      "observedNextPosition": "BACK"
+    }
+  },
+  "physicalUiVerified": false
+}

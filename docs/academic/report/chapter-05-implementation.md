@@ -1,5 +1,8 @@
 # CHƯƠNG 5. HIỆN THỰC PHẦN MỀM
 
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Chương này giữ mô tả MVP lịch sử; trạng thái chính xác của bản16 và kết quả R0 xem biên bản baseline. Không dùng đoạn demo phía dưới để xác nhận khả năng runtime hiện hành.
+
+
 Chương này trình bày kết quả hiện thực thiết kế ở Chương 4 thành các service,
 API, giao diện và luồng chạy của CareFlow. Việc mô tả được sắp xếp theo hành
 trình nghiệp vụ để người đọc có thể đối chiếu trực tiếp với các Use Case ở
@@ -14,14 +17,14 @@ RabbitMQ và Notification/WebSocket. Bản này bao phủ hành trình từ đ�
 check-in, ba lane phòng khám, cận lâm sàng, review kết quả, kê toa, quyết toán
 đến phát thuốc. Các adapter trả trước/quyết toán Mobile được xây dựng ở
 `DEMO_MODE` theo đúng biên đã chốt; cổng thanh toán và hoàn tiền production,
-PACS, kho thuốc và AI/Analytics là giới hạn của đề tài. Luồng chỉ xét người bệnh
+PACS và kho thuốc đầy đủ là phần mở rộng; AI/Analytics là phần còn phải hoàn thiện ở R5/R6 để đáp ứng đầy đủ đề bài. Luồng chỉ xét người bệnh
 tự chi trả.
 
 ## 5.2. Môi trường và công cụ phát triển
 
 | Thành phần | Công nghệ sử dụng | Vai trò trong hệ thống |
 |---|---|---|
-| Backend | Java 21, Spring Boot 3.3.5, Spring Data JPA, Spring Security | service nghiệp vụ, REST API, validation và phân quyền |
+| Backend | Java 21, Spring Boot 3.5.16 (baseline R0), Spring Data JPA, Spring Security | service nghiệp vụ, REST API, validation và phân quyền |
 | Gateway/discovery | Spring Cloud Gateway, Eureka | định tuyến, JWT boundary và tìm instance |
 | Cơ sở dữ liệu | PostgreSQL, Flyway | lưu dữ liệu theo service, migration và ràng buộc |
 | Message broker | RabbitMQ | event, retry, dead-letter và tách producer/consumer |

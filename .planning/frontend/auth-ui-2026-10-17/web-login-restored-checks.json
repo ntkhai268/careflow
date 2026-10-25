@@ -1,0 +1,8 @@
+{
+  "originalBanner": true,
+  "originalForm": true,
+  "methodLink": true,
+  "recoveryLink": true,
+  "noHorizontalOverflow390": true,
+  "realPasswordLoginHTTP": 200
+}

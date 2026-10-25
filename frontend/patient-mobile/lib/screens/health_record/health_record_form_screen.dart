@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:dio/dio.dart';
+import '../../providers/auth_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -53,6 +55,41 @@ class _HealthRecordFormScreenState
   DateTime? _selectedDate;
   final List<File> _selectedFiles = [];
   bool _isLoading = false;
+  CancelToken? _uploadCancel;
+  double? _progress;
+  String? _screenOwner;
+  String? get _owner {
+    final auth = ref.read(authProvider);
+    return auth.status == AuthStatus.authenticated ? auth.userId : null;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _screenOwner = _owner;
+  }
+
+  @override
+  void dispose() {
+    _uploadCancel?.cancel();
+    for (final controller in [
+      _titleController,
+      _dateController,
+      _facilityController,
+      _notesController,
+      _bloodSugarController,
+      _bloodPressureController,
+      _heightController,
+      _weightController,
+      _waistController,
+      _pulseController,
+      _temperatureController,
+      _respiratoryRateController,
+    ]) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   void _calculateBmi() {
     setState(() {});
@@ -69,17 +106,33 @@ class _HealthRecordFormScreenState
   }
 
   Future<void> _pickFiles() async {
-    final result = await FilePicker.platform.pickFiles(
-      allowMultiple: true,
-      type: FileType.custom,
-      allowedExtensions: ['png', 'jpg', 'jpeg', 'doc', 'docx', 'pdf'],
-    );
-    if (result != null && result.files.isNotEmpty) {
-      setState(() {
-        _selectedFiles.addAll(
-          result.paths.where((p) => p != null).map((p) => File(p!)),
+    if (_isLoading || _owner != _screenOwner) return;
+    final owner = _owner;
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        allowMultiple: true,
+        type: FileType.custom,
+        allowedExtensions: ['png', 'jpg', 'jpeg', 'pdf'],
+      );
+      if (!mounted || owner != _owner || _isLoading || result == null) return;
+      final picked = result.files.where((f) => f.path != null).toList();
+      if (_selectedFiles.length + picked.length > 5 ||
+          picked.any((f) => f.size <= 0 || f.size > 10 * 1024 * 1024)) {
+        throw const FormatException('Tối đa 5 tệp, mỗi tệp không quá 10MB.');
+      }
+      setState(() => _selectedFiles.addAll(picked.map((f) => File(f.path!))));
+    } catch (error) {
+      if (mounted && owner == _owner) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is FormatException
+                  ? error.message.toString()
+                  : 'Không chọn được tệp. Hãy thử lại.',
+            ),
+          ),
         );
-      });
+      }
     }
   }
 
@@ -90,7 +143,7 @@ class _HealthRecordFormScreenState
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    if (date != null) {
+    if (mounted && _owner == _screenOwner && date != null) {
       setState(() {
         _selectedDate = date;
         _dateController.text =
@@ -100,7 +153,17 @@ class _HealthRecordFormScreenState
   }
 
   Future<void> _submit() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (_isLoading ||
+        _owner == null ||
+        _owner != _screenOwner ||
+        !_formKey.currentState!.validate()) {
+      return;
+    }
+    final owner = _owner;
+    if (ref.read(healthRecordPatientProvider(widget.patientId)).valueOrNull ==
+        null) {
+      return;
+    }
     if (_selectedDate == null) {
       ScaffoldMessenger.of(
         context,
@@ -108,12 +171,18 @@ class _HealthRecordFormScreenState
       return;
     }
 
-    setState(() => _isLoading = true);
+    final cancel = CancelToken();
+    setState(() {
+      _isLoading = true;
+      _uploadCancel = cancel;
+      _progress = null;
+    });
 
     try {
       final data = {
         'title': _titleController.text,
-        'recordDate': _selectedDate!.toIso8601String(),
+        'recordDate':
+            '${_selectedDate!.year.toString().padLeft(4, '0')}-${_selectedDate!.month.toString().padLeft(2, '0')}-${_selectedDate!.day.toString().padLeft(2, '0')}',
         'facilityName': _facilityController.text,
         'notes': _notesController.text,
         'bloodSugar': double.tryParse(_bloodSugarController.text),
@@ -139,11 +208,18 @@ class _HealthRecordFormScreenState
       };
 
       final service = ref.read(healthRecordServiceProvider);
-      await service.create(
+      await service.createWithProgress(
         widget.patientId,
         data,
-        _selectedFiles.isEmpty ? null : _selectedFiles,
+        _selectedFiles.isEmpty ? null : List<File>.from(_selectedFiles),
+        cancel: cancel,
+        progress: (sent, total) {
+          if (mounted && owner == _owner) {
+            setState(() => _progress = total > 0 ? sent / total : null);
+          }
+        },
       );
+      if (!mounted || owner != _owner || cancel.isCancelled) return;
 
       // Invalidate provider so list screen refreshes
       ref.invalidate(healthRecordsProvider(widget.patientId));
@@ -155,27 +231,59 @@ class _HealthRecordFormScreenState
         context.pop();
       }
     } catch (e) {
-      if (mounted) {
+      if (mounted && owner == _owner) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              ApiErrorMessage.from(
-                e,
-                fallback: 'Không thể tạo hồ sơ sức khỏe. Vui lòng thử lại.',
-              ),
+              e is FormatException
+                  ? e.message.toString()
+                  : cancel.isCancelled
+                  ? 'Đã dừng gửi. Tải lại danh sách để kiểm tra hồ sơ đã được lưu hay chưa.'
+                  : ApiErrorMessage.from(
+                      e,
+                      fallback:
+                          'Không thể tạo hồ sơ sức khỏe. Vui lòng thử lại.',
+                    ),
             ),
           ),
         );
       }
     } finally {
       if (mounted) {
-        setState(() => _isLoading = false);
+        setState(() {
+          _isLoading = false;
+          _uploadCancel = null;
+          _progress = null;
+        });
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authProvider.select((auth) => (auth.status, auth.userId)), (
+      previous,
+      next,
+    ) {
+      if (next.$1 != AuthStatus.authenticated || next.$2 != _screenOwner) {
+        _uploadCancel?.cancel('Account changed');
+      }
+    });
+    final auth = ref.watch(authProvider);
+    if (auth.status != AuthStatus.authenticated ||
+        _screenOwner == null ||
+        auth.userId != _screenOwner) {
+      return const Scaffold(
+        body: Center(
+          child: Text(
+            'Phiên đã thay đổi. Mở lại hồ sơ từ tài khoản đang đăng nhập.',
+          ),
+        ),
+      );
+    }
+    final selectedPatient = ref.watch(
+      healthRecordPatientProvider(widget.patientId),
+    );
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -191,6 +299,44 @@ class _HealthRecordFormScreenState
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            selectedPatient.when(
+              loading: () =>
+                  const ListTile(title: Text('Đang xác minh hồ sơ đang chọn…')),
+              error: (error, stack) => ListTile(
+                title: const Text(
+                  'Chưa xác minh được hồ sơ. Không gửi dữ liệu lúc này.',
+                ),
+                trailing: IconButton(
+                  tooltip: 'Tải lại hồ sơ',
+                  icon: const Icon(Icons.refresh),
+                  onPressed: () => ref.invalidate(
+                    healthRecordPatientProvider(widget.patientId),
+                  ),
+                ),
+              ),
+              data: (patient) => ListTile(
+                leading: const Icon(Icons.person_outline),
+                title: Text(patient?.fullName ?? 'Cần đăng nhập lại'),
+                subtitle: Text(
+                  patient?.dateOfBirth == null
+                      ? 'Chưa ghi nhận ngày sinh'
+                      : 'Năm sinh: ${patient!.dateOfBirth!.year}',
+                ),
+              ),
+            ),
+            if (_isLoading) ...[
+              LinearProgressIndicator(value: _progress),
+              const Padding(
+                padding: EdgeInsets.all(8),
+                child: Text(
+                  'Đang gửi và kiểm tra tệp. Chỉ báo thành công sau khi máy chủ xác nhận.',
+                ),
+              ),
+              TextButton(
+                onPressed: () => _uploadCancel?.cancel('User cancelled'),
+                child: const Text('Dừng gửi hồ sơ'),
+              ),
+            ],
             ExpansionTile(
               title: const Text(
                 'Thông tin chung',
@@ -199,15 +345,6 @@ class _HealthRecordFormScreenState
               initiallyExpanded: true,
               childrenPadding: const EdgeInsets.all(16),
               children: [
-                TextFormField(
-                  decoration: const InputDecoration(
-                    labelText: 'Hồ sơ',
-                    border: OutlineInputBorder(),
-                  ),
-                  initialValue: 'Tên bệnh nhân',
-                  readOnly: true,
-                ),
-                const SizedBox(height: 16),
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(
@@ -300,7 +437,7 @@ class _HealthRecordFormScreenState
                 ],
                 const SizedBox(height: 8),
                 const Text(
-                  '*Ghi chú: Định dạng .png, .jpg, .doc, .docx, .pdf',
+                  'PDF, JPEG hoặc PNG · tối đa 5 tệp · 10MB mỗi tệp',
                   style: TextStyle(fontSize: 12, color: Colors.grey),
                 ),
               ],
@@ -508,7 +645,9 @@ class _HealthRecordFormScreenState
                 const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: _isLoading ? null : _submit,
+                    onPressed: _isLoading || selectedPatient.valueOrNull == null
+                        ? null
+                        : _submit,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.orange,
                       padding: const EdgeInsets.symmetric(vertical: 16),

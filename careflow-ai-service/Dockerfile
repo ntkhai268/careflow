@@ -17,6 +17,7 @@ COPY careflow-emr-service/pom.xml careflow-emr-service/pom.xml
 COPY careflow-lab-service/pom.xml careflow-lab-service/pom.xml
 COPY careflow-ai-service/pom.xml careflow-ai-service/pom.xml
 COPY careflow-hospital-directory-service/pom.xml careflow-hospital-directory-service/pom.xml
+COPY careflow-analytics-service/pom.xml careflow-analytics-service/pom.xml
 
 # Install parent POM into Maven local repo
 RUN mvn -N install -DskipTests -B -q
@@ -33,5 +34,5 @@ RUN mvn -pl careflow-ai-service package -DskipTests -B -q
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/careflow-ai-service/target/*.jar app.jar
-EXPOSE 8090
+EXPOSE 8092
 ENTRYPOINT ["java", "-jar", "app.jar"]

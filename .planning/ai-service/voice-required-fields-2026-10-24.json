@@ -1,0 +1,88 @@
+{
+  "status": "PASS_FOR_DESCRIBED_SCOPE",
+  "checkedAt": "2026-10-24T06:50:41.539114+00:00",
+  "branch": "feature/dangkhoii/release-r7",
+  "base": "907cba222c299329de6d87f9acbb9ec3b9e4c4f8",
+  "sourceSha256": {
+    "frontend/doctor-web/src/components/VoicePrescriptionPreview.tsx": "7fc91b74c30e6820af843c046a08c5bafc3bfc3b88ecc44550e63f4e66344664",
+    "frontend/doctor-web/src/lib/prescription-validation.ts": "e7e9931eebe99ad38bf6ba27100f66671ad86685e345033fa210c64bb4f92f3f",
+    "frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx": "855cd74ef18c9d17518e3d9cc1b15fbaa6d7698ffc8d8711519a32a0ceb7f260"
+  },
+  "scope": [
+    "Red inline required-field indicators with per-field messages and aria-invalid/describedby",
+    "First missing field opens/focuses before sign; no premature release call",
+    "Independent error clearing; positive integral quantity/duration; optional fields stay neutral",
+    "Incomplete drafts still save; filled/reviewed prescription signs and consultation completes"
+  ],
+  "typeScript": "PASS",
+  "targetedEslint": "PASS",
+  "productionWebpackBuild": "PASS",
+  "browser": {
+    "status": "PASS",
+    "checks": [
+      "Five missing fields have red borders/backgrounds, per-field guidance and accessible errors; complete row and optional fields stay neutral in both layouts",
+      "Sign opens collapsed editor, scrolls/focuses the first missing field and sends no release request",
+      "Incomplete draft can still save and reload on the same prescription; red fields remain visible",
+      "Each corrected field clears only its own error; whitespace, missing name/unit, zero/negative/fractional numbers remain invalid; whole-order review stays a separate step",
+      "Filled fields and whole-order acknowledgement persist, sign and finalize via actual APIs without uncaught UI errors"
+    ],
+    "actualClinicalApis": true,
+    "mockedResponses": false,
+    "uncaughtErrors": 0,
+    "checkedAt": "2026-10-24T06:49:30.107Z"
+  },
+  "backendErrorReproduction": {
+    "status": "PASS",
+    "ownSyntheticDataOnly": true,
+    "release": 422,
+    "unchangedStatus": "DRAFT",
+    "message": "Toa còn thiếu liều, tần suất, thời điểm, số ngày hoặc số lượng. Bổ sung các ô còn trống trước khi ký."
+  },
+  "fixtureCleanup": {
+    "status": "PASS",
+    "onlyOwnSyntheticCases": true,
+    "results": [
+      {
+        "fixture": "verification-case.json",
+        "consultationStatus": "COMPLETED",
+        "prescriptionStatus": "DISPENSED",
+        "activePharmacyEntryAbsent": true
+      }
+    ]
+  },
+  "userCaseReadOnly": {
+    "status": "PASS",
+    "reviewVisibleOnUserCase": true,
+    "invalidFieldCount": 3,
+    "clinicalWrites": 0
+  },
+  "runtime": {
+    "url": "http://localhost:5173",
+    "webBuildId": "u5LNUpScXajIxr2qYlIVT",
+    "health": "Web and all14 backend service instances PASS",
+    "backendChanged": false,
+    "schemaChanged": false,
+    "modelChanged": false
+  },
+  "gitnexus": {
+    "preEditImpact": "MedicineEditor LOW1 caller; executeConfirmPrescription LOW1 callback; preview/page confirmation UNKNOWN with JSX/callback sites confirmed by text search",
+    "refreshed": true,
+    "detectChanges": {
+      "changed_count": 218,
+      "affected_count": 40,
+      "changed_files": 64,
+      "risk_level": "critical"
+    },
+    "resultPartial": false,
+    "resultTruncated": false,
+    "completeArrays": true,
+    "riskNote": "CRITICAL is for accumulated uncommitted R6/R7 changes, not only current UI fix; no full-project safety claim. Analyzer process ranking/branching is incomplete, missing edges are not read as unused."
+  },
+  "fullAcceptance": false,
+  "noCommitOrPush": true,
+  "limitations": [
+    "No clinical/model quality acceptance",
+    "No physical microphone/device tests in this UI change",
+    "Full R7 regression not rerun"
+  ]
+}

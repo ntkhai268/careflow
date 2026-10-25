@@ -37,6 +37,6 @@ public class FirebaseConfig {
     @ConditionalOnProperty(prefix = "notification.push.firebase", name = "enabled",
             havingValue = "false", matchIfMissing = true)
     PushSender disabledPushSender() {
-        return (token, notification) -> { };
+        return (token, notification, bindingId) -> { };
     }
 }

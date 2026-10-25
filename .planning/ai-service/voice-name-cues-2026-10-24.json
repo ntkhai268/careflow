@@ -1,0 +1,194 @@
+{
+  "status": "PASS_FOR_DESCRIBED_SCOPE",
+  "checkedAt": "2026-10-24T08:45:38.441433+00:00",
+  "branch": "feature/dangkhoii/release-r7",
+  "base": "907cba222c299329de6d87f9acbb9ec3b9e4c4f8",
+  "sourceSha256": {
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/extraction.py": "dc38c0dc186764ab7d6f70318697794e3a145e61b82bb86c9a283d94eff03134",
+    "careflow-ai-service/inference/voice-prescription/tests/test_numbered_prescription.py": "6d7164f1aae3739a10ff424eee5c7a97d9e977e972651d704bc5078d76f23d10"
+  },
+  "scope": [
+    "Name + strength + frequency without prescribing action or ordinal words",
+    "Keep numbered cue even if leading noun wrong/missing",
+    "Mixed unknown names in same clause have separate fields",
+    "Bare name/strength can continue into frequency next sentence",
+    "Keep uncertain dose blank, do not create drug from dose-only/strength-only prose"
+  ],
+  "reproduction": {
+    "wrongPrefix": {
+      "beforeNames": [
+        "Vitamin C",
+        "Cetirizin",
+        "Paracetamol"
+      ],
+      "after": [
+        {
+          "name": "Vitamin C",
+          "strength": "500 mg",
+          "frequency": "ngày một lần",
+          "quantity": 5.0,
+          "duration": "5 ngày",
+          "dose": "mỗi lần uống một viên"
+        },
+        {
+          "name": "Cetirizin",
+          "strength": "10 mg",
+          "frequency": "ngày một lần",
+          "quantity": 3.0,
+          "duration": "3 ngày",
+          "dose": "mỗi lần uống một viên"
+        },
+        {
+          "name": "Paracetamol",
+          "strength": "500 mg",
+          "frequency": "Ngày hai lần",
+          "quantity": 6.0,
+          "duration": "3 ngày",
+          "dose": "mỗi lần uống một viên"
+        },
+        {
+          "name": "Loratadin",
+          "strength": "10 mg",
+          "frequency": "ngày một lần",
+          "quantity": 3.0,
+          "duration": "3 ngày",
+          "dose": null
+        }
+      ]
+    },
+    "noOrdinal": {
+      "beforeNames": [
+        "Vitamin C",
+        "Cetirizin",
+        "Paracetamol"
+      ],
+      "after": [
+        {
+          "name": "Vitamin C",
+          "strength": "500 mg",
+          "frequency": "ngày một lần",
+          "quantity": 5.0,
+          "duration": "5 ngày",
+          "dose": "mỗi lần uống một viên"
+        },
+        {
+          "name": "Cetirizin",
+          "strength": "10 mg",
+          "frequency": "ngày một lần",
+          "quantity": 3.0,
+          "duration": "3 ngày",
+          "dose": "mỗi lần uống một viên"
+        },
+        {
+          "name": "Paracetamol",
+          "strength": "500 mg",
+          "frequency": "Ngày hai lần",
+          "quantity": 6.0,
+          "duration": "3 ngày",
+          "dose": "mỗi lần uống một viên"
+        },
+        {
+          "name": "Loratadin",
+          "strength": "10 mg",
+          "frequency": "ngày một lần",
+          "quantity": 3.0,
+          "duration": "3 ngày",
+          "dose": null
+        }
+      ]
+    }
+  },
+  "tests": {
+    "worker": {
+      "passed": 59,
+      "failed": 0
+    },
+    "browser": {
+      "status": "PASS",
+      "checks": [
+        "Exact latest transcript with Hot thu tu preserves all four drugs; only unclear fourth-drug dose remains red",
+        "Name/strength/frequency without any numbering saves four rows on the same draft and persists on reload",
+        "Two non-catalog bare drug names in one sentence retain separate frequencies and quantities through real worker/API"
+      ],
+      "actualWorker": true,
+      "actualClinicalApis": true,
+      "mockedResponses": false,
+      "uncaughtErrors": 0,
+      "checkedAt": "2026-10-24T08:42:40.857Z"
+    },
+    "cleanup": {
+      "status": "PASS",
+      "onlyOwnSyntheticCase": true,
+      "prescriptionStatus": "CANCELLED",
+      "consultationStatus": "COMPLETED",
+      "queueFinalization": {
+        "consultation": {
+          "id": "554c5a56-09e2-4473-b727-e4b1fcee8b16",
+          "appointmentId": null,
+          "queueEntryId": "064128f4-42a0-48b3-867e-6b6d54bce875",
+          "patientId": "550e478f-7ab9-46aa-9225-d843739c451c",
+          "patientName": "TEST VOICE PREFIX",
+          "doctorId": "037f610e-6ed1-4953-b08d-777e46867343",
+          "doctorName": "BS E2E C",
+          "authoredByDoctorId": "037f610e-6ed1-4953-b08d-777e46867343",
+          "authoredByDoctorName": "BS E2E C",
+          "departmentCode": "CO_XUONG_KHOP",
+          "departmentName": "Cơ xương khớp",
+          "temperature": null,
+          "bloodPressure": null,
+          "heartRate": null,
+          "spo2": null,
+          "height": null,
+          "weight": null,
+          "symptoms": "SYNTHETIC editable voice regression",
+          "clinicalNotes": "",
+          "icd10Code": "",
+          "icd10Name": "",
+          "diagnosis": "SYNTHETIC software test only",
+          "status": "COMPLETED",
+          "startedAt": "2026-10-24T15:34:48.977868",
+          "completedAt": "2026-10-24T15:44:38.842754",
+          "createdAt": "2026-10-24T15:34:48.98275",
+          "updatedAt": "2026-10-24T15:42:36.92673"
+        },
+        "queueCompleted": true,
+        "appointmentCompleted": true,
+        "complete": true,
+        "pendingSteps": []
+      }
+    },
+    "negativeCases": "Negation/history/hypothetical/current use; dose-only and strength-only prose; no guessed dose/frequency"
+  },
+  "runtime": {
+    "workerReady": true,
+    "modelWeightsChanged": false,
+    "keysChanged": false,
+    "AI_API_DockerUnchanged": true,
+    "webBuildUnchanged": true,
+    "backendJarUnchanged": true,
+    "schemaChanged": false,
+    "allServiceHealth": "PASS",
+    "userCaseModified": false
+  },
+  "gitnexus": {
+    "preEditRisk": "LOW: RulesExtractor.extract2 upstream and _clauses3 upstream; added helper is local to extraction",
+    "refreshed": true,
+    "detectChanges": {
+      "changed_count": 227,
+      "affected_count": 40,
+      "changed_files": 67,
+      "risk_level": "critical"
+    },
+    "completeArrays": true,
+    "partial": false,
+    "truncated": false,
+    "riskNote": "CRITICAL covers carried uncommitted R6/R7 across67 files, not a full-project safety claim. Process ranking/branching has incomplete coverage; absent paths not considered unused."
+  },
+  "fullAcceptance": false,
+  "limitations": [
+    "No general ASR accuracy or clinical-quality claim",
+    "No physical microphone testing in this parser change",
+    "Old saved jobs/prescriptions are not automatically reprocessed"
+  ],
+  "noCommitOrPush": true
+}

@@ -134,6 +134,30 @@ class AccountScreen extends ConsumerWidget {
                   onTap: () => context.push('/visit-results'),
                 ),
                 _buildMenuItem(
+                  icon: Icons.shield_outlined,
+                  iconColor: AppColors.primary,
+                  title: 'Bảo mật đăng nhập',
+                  onTap: () => context.push('/account/security'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.phonelink_lock,
+                  iconColor: AppColors.primary,
+                  title: 'Thiết bị sinh trắc học',
+                  onTap: () => context.push('/account/devices'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.verified_user_outlined,
+                  iconColor: AppColors.primary,
+                  title: 'Xác minh danh tính',
+                  onTap: () => context.push('/account/ekyc'),
+                ),
+                _buildMenuItem(
+                  icon: Icons.link,
+                  iconColor: AppColors.primary,
+                  title: 'Liên kết hồ sơ tại viện',
+                  onTap: () => context.push('/account/profile-links'),
+                ),
+                _buildMenuItem(
                   icon: Icons.notifications_none_rounded,
                   iconColor: AppColors.warning,
                   title: 'Thông báo',

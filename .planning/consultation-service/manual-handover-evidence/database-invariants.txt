@@ -1,0 +1,7 @@
+final_case_invariants|t
+manual_handover_status|ACCEPTED|4
+manual_handover_status|CANCELLED|2
+manual_handover_status|REJECTED|1
+new_manual_snapshots_valid|t
+coordinator_cancel_actor|t
+original_NOI010_preserved|t

@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "scope": "Existing V13 Queue dump restored to a new scratch database; actual candidate JVM applies V14; broker listeners disabled for migration isolation, no SQL clinical-state edits",
+  "fromVersion": "13",
+  "toVersion": "14",
+  "legacyCancelledAppointments": 22,
+  "backfilledMarkersMatchEveryLegacyCancelledAppointment": true,
+  "queueEntryContentHashUnchanged": true,
+  "columns": [
+    {
+      "name": "appointment_id",
+      "type": "uuid",
+      "nullable": "NO"
+    },
+    {
+      "name": "cancellation_event_id",
+      "type": "uuid",
+      "nullable": "YES"
+    },
+    {
+      "name": "cancelled_at",
+      "type": "timestamp with time zone",
+      "nullable": "NO"
+    }
+  ],
+  "productionRollbackVerified": false
+}

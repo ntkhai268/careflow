@@ -1,0 +1,193 @@
+{
+  "version": "R0-1.0",
+  "syntheticOnly": true,
+  "seededByR0": false,
+  "datePolicy": "LocalDate.now in Asia/Ho_Chi_Minh; runtime IDs created via authorized APIs per runId",
+  "roles": [
+    "PATIENT_OWNER_A",
+    "PATIENT_OWNER_B",
+    "DOCTOR_A",
+    "DOCTOR_B",
+    "STAFF_RECEPTION",
+    "STAFF_PHARMACY",
+    "LAB_TECHNICIAN",
+    "ADMIN"
+  ],
+  "resources": [
+    "self-profile",
+    "family-profile",
+    "other-owner-profile",
+    "walk-in-unlinked-profile",
+    "two-active-rooms-same-department",
+    "inactive-room",
+    "available-slot",
+    "full-slot",
+    "holiday",
+    "pdf-image-synthetic",
+    "cbc-order",
+    "follow-up-source",
+    "two-installations"
+  ],
+  "credentials": "Only canonical guide01 for public demo; no passwords/tokens/real emails in this manifest",
+  "cases": [
+    {
+      "caseId": "E01",
+      "requirements": [
+        "PAT01",
+        "CORE01"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E02",
+      "requirements": [
+        "CORE01"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E03",
+      "requirements": [
+        "CORE02"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E04",
+      "requirements": [
+        "CORE01"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E05",
+      "requirements": [
+        "PAT03",
+        "PAT05",
+        "PAT08",
+        "DOC02",
+        "DOC03",
+        "CORE03"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E06",
+      "requirements": [
+        "PAT09",
+        "DOC04"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E07",
+      "requirements": [
+        "PAT04",
+        "DOC01"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E08",
+      "requirements": [
+        "CORE04"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E09",
+      "requirements": [
+        "CORE05"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E10",
+      "requirements": [
+        "PAT03",
+        "CORE06"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E11",
+      "requirements": [
+        "PAT10",
+        "DOC05"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E12",
+      "requirements": [
+        "PAT06",
+        "PAT07"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E13",
+      "requirements": [
+        "PAT03",
+        "CORE03"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E14",
+      "requirements": [
+        "PAT02",
+        "DOC01",
+        "CORE01"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E15",
+      "requirements": [
+        "ANALYTICS"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E16",
+      "requirements": [
+        "DOC06"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E17",
+      "requirements": [
+        "REQ02"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    },
+    {
+      "caseId": "E18",
+      "requirements": [
+        "REQ01",
+        "REQ02"
+      ],
+      "status": "PLANNED_NOT_EXECUTED_BY_R0",
+      "requiredEnvironment": "physical iPhone + real API for native cases; isolated integration environment for concurrency; expert review for E16"
+    }
+  ]
+}

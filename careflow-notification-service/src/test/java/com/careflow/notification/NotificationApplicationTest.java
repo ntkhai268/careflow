@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest(properties = {
+        "security.caller.name=notification-service",
+        "security.caller.key=notification-test-credential-not-for-runtime-0123456789",
         "spring.datasource.url=jdbc:h2:mem:notification;MODE=PostgreSQL;INIT=CREATE SCHEMA IF NOT EXISTS notification",
         "spring.datasource.username=sa",
         "spring.datasource.password=",

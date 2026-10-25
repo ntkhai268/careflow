@@ -1,0 +1,24 @@
+{
+  "job": "web",
+  "passed": true,
+  "steps": [
+    {
+      "command": [
+        "npm",
+        "ci"
+      ],
+      "exitCode": 0
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "firstAttempt": "failed using node_modules symlink outside Turbopack root; resolved with npm ci in scratch",
+  "runtimeChanged": false,
+  "testsExecuted": false
+}

@@ -19,4 +19,6 @@ public class UpdateDoctorProfileRequest {
     private String specialization;
     private String licenseNumber;
     private Boolean isActive;
+
+    private Boolean primaryForBooking;
 }

@@ -1,0 +1,101 @@
+{
+  "schemaVersion": "careflow.voice-prescription.v1",
+  "transcript": "😀 Cho Paracetamol, số lượng sáu viên.",
+  "transcriptRevision": 1,
+  "transcriptHash": "1b3e51eb7ef135a0559b3ae1f11ac5ed55691688e757f3c5cb5b861442122792",
+  "catalogVersion": "synthetic-hospital-v1",
+  "items": [
+    {
+      "spokenName": "Paracetamol",
+      "strength": null,
+      "dosageForm": null,
+      "quantity": 6.0,
+      "quantityUnit": "viên",
+      "dose": null,
+      "frequency": null,
+      "route": null,
+      "duration": null,
+      "timing": null,
+      "minInterval": null,
+      "maxDailyDose": null,
+      "normalizedName": null,
+      "matchStatus": "matched",
+      "medicineCode": "PARA",
+      "candidates": [
+        {
+          "medicineCode": "PARA",
+          "name": "Paracetamol",
+          "unit": "viên"
+        }
+      ],
+      "issues": [
+        "Chưa nghe rõ/chưa nói: hàm lượng, liều mỗi lần, tần suất, đường dùng."
+      ],
+      "fieldConflicts": {},
+      "missingFields": [
+        "strength",
+        "dosageForm",
+        "dose",
+        "frequency",
+        "route",
+        "duration",
+        "timing",
+        "minInterval",
+        "maxDailyDose"
+      ],
+      "evidence": {
+        "spokenName": {
+          "text": "Paracetamol",
+          "start": 6,
+          "end": 17,
+          "transcriptRevision": 1,
+          "transcriptHash": "1b3e51eb7ef135a0559b3ae1f11ac5ed55691688e757f3c5cb5b861442122792",
+          "offsetUnit": "unicode_codepoint"
+        },
+        "quantityUnit": {
+          "text": "viên",
+          "start": 32,
+          "end": 36,
+          "transcriptRevision": 1,
+          "transcriptHash": "1b3e51eb7ef135a0559b3ae1f11ac5ed55691688e757f3c5cb5b861442122792",
+          "offsetUnit": "unicode_codepoint"
+        },
+        "quantity": {
+          "text": "số lượng sáu viên",
+          "start": 19,
+          "end": 36,
+          "transcriptRevision": 1,
+          "transcriptHash": "1b3e51eb7ef135a0559b3ae1f11ac5ed55691688e757f3c5cb5b861442122792",
+          "offsetUnit": "unicode_codepoint"
+        }
+      }
+    }
+  ],
+  "warnings": [
+    "Có phần trước tên thuốc chưa được hiểu: 😀 Cho"
+  ],
+  "modelInfo": {
+    "extractor": "rules-v3",
+    "clinicalValidation": false
+  },
+  "prescriptionDraft": {
+    "items": [
+      {
+        "medicineCode": "PARA",
+        "medicineName": "Paracetamol",
+        "unit": "viên",
+        "dosage": null,
+        "frequency": null,
+        "timing": null,
+        "duration": null,
+        "quantity": 6,
+        "notes": null,
+        "unmappedFields": {},
+        "sourceItemIndex": 0
+      }
+    ],
+    "blockers": [],
+    "canSaveWithoutCorrection": true
+  },
+  "processingMs": 0.49
+}

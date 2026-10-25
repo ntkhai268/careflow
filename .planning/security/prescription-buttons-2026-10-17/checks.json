@@ -1,0 +1,88 @@
+{
+  "checkedAt": "2026-10-17T07:26:28.575Z",
+  "realApi": true,
+  "drawer": [
+    {
+      "size": {
+        "width": 800,
+        "height": 500
+      },
+      "drawer": true,
+      "title": true
+    },
+    {
+      "size": {
+        "width": 960,
+        "height": 533
+      },
+      "drawer": true,
+      "title": true
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 600
+      },
+      "drawer": true,
+      "title": true
+    },
+    {
+      "size": {
+        "width": 1280,
+        "height": 650
+      },
+      "drawer": true,
+      "title": true
+    },
+    {
+      "size": {
+        "width": 1440,
+        "height": 800
+      },
+      "drawer": true,
+      "title": true
+    }
+  ],
+  "footer": [
+    {
+      "size": {
+        "width": 800,
+        "height": 500
+      },
+      "allThreeButtonsUsable": true
+    },
+    {
+      "size": {
+        "width": 960,
+        "height": 533
+      },
+      "allThreeButtonsUsable": true
+    },
+    {
+      "size": {
+        "width": 1024,
+        "height": 600
+      },
+      "allThreeButtonsUsable": true
+    },
+    {
+      "size": {
+        "width": 1280,
+        "height": 650
+      },
+      "allThreeButtonsUsable": true
+    },
+    {
+      "size": {
+        "width": 1440,
+        "height": 800
+      },
+      "allThreeButtonsUsable": true
+    }
+  ],
+  "signConfirmationVisible": true,
+  "draftSavedViaUi": true,
+  "signedByThisLayoutTest": false,
+  "completedByThisLayoutTest": false,
+  "browserErrors": []
+}

@@ -1,0 +1,14 @@
+{
+  "capturedAt": "2026-10-19T17:01:54.035619+00:00",
+  "markdownFilesChecked": 25,
+  "localLinksChecked": 114,
+  "missingLinks": [],
+  "jsonEvidenceParsed": 10,
+  "jsonExamplesParsed": 2,
+  "requirementIdsChecked": 24,
+  "missingRequirementIds": [],
+  "useCases": 22,
+  "fixtureCases": 18,
+  "buildInputDrift": [],
+  "status": "PASS"
+}

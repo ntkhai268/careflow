@@ -34,6 +34,19 @@ class QueueService {
     }
   }
 
+  Future<PatientQueueStatus> getForAppointment(String appointmentId) async {
+    try {
+      final response = await _api.get(
+        '${ApiConfig.queues}/tickets/appointment/$appointmentId/status',
+      );
+      return PatientQueueStatus.fromJson(
+        Map<String, dynamic>.from(response.data['data'] as Map),
+      );
+    } on DioException catch (error) {
+      throw _mapError(error, notFound: 'Phiếu khám đang được hệ thống cấp.');
+    }
+  }
+
   Future<PatientQueueStatus> getCurrent(String patientId) async {
     try {
       final response = await _api.get(
@@ -69,7 +82,8 @@ class QueueService {
       throw _mapError(
         error,
         notFound: 'Không tìm thấy lịch hẹn để check-in.',
-        fallback: 'Không thể check-in. Hãy đảm bảo bạn đang ở trong khuôn viên bệnh viện.',
+        fallback:
+            'Không thể check-in. Hãy đảm bảo bạn đang ở trong khuôn viên bệnh viện.',
       );
     }
   }
@@ -84,10 +98,7 @@ class QueueService {
       return QueueServiceException(notFound, statusCode: status);
     }
     return QueueServiceException(
-      ApiErrorMessage.from(
-        error,
-        fallback: fallback,
-      ),
+      ApiErrorMessage.from(error, fallback: fallback),
       statusCode: status,
     );
   }
@@ -105,6 +116,5 @@ final queueTicketProvider = FutureProvider.autoDispose
 
 final appointmentQueueStatusProvider = FutureProvider.autoDispose
     .family<PatientQueueStatus, String>((ref, appointmentId) async {
-      final ticket = await ref.watch(queueTicketProvider(appointmentId).future);
-      return ref.watch(queueServiceProvider).getCurrent(ticket.patientId);
+      return ref.watch(queueServiceProvider).getForAppointment(appointmentId);
     });

@@ -1,0 +1,36 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "scope": "Six scratch operational DBs and real seven-service Gateway flow; bound test sessions use live Identity, Directory read only; no live account/clinical data mutation",
+  "checks": [
+    {
+      "name": "Assigned source doctor reads the real uploaded PDF and creates a real draft/Lab order in one synthetic visit",
+      "status": "PASS"
+    },
+    {
+      "name": "Pending receiver has no clinical/profile/file access; repeated pending request is stable and wrong receiver/ADMIN cannot accept",
+      "status": "PASS"
+    },
+    {
+      "name": "Concurrent acceptance keeps original authorship and immediately revokes former doctor clinical/profile/Lab/PDF read/write with their still-active token",
+      "status": "PASS"
+    },
+    {
+      "name": "Receiver reads exactly the same uploaded bytes and inherited Lab/draft without signing another doctor draft; unrelated patient remains denied",
+      "status": "PASS"
+    },
+    {
+      "name": "Revoking medical coordination invalidates a pending exceptional handover without changing current responsibility",
+      "status": "PASS"
+    },
+    {
+      "name": "Authorized return handover, draft/order cancellation and finalization finish through normal commands in scratch DBs",
+      "status": "PASS"
+    }
+  ],
+  "uploadedPdfSha256": "4c8fc1a7c301e3cb7a23b6504b25e7c0dbf50b7be33ebca12f4f9ee70a1884be",
+  "sourceDoctorStillAuthenticatedWhenDenied": true,
+  "sqlStateManipulation": false,
+  "physicalUiVerified": false
+}

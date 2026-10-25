@@ -1,0 +1,34 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "scope": "Scratch Identity/Directory/Patient/Appointment databases and real Gateway; mail explicitly disabled only in cloned Identity, no live account changes, no SQL state overrides; identity review inputs are synthetic workflow fixtures, not physical eKYC acceptance",
+  "checks": [
+    {
+      "name": "A one-time code and matching self-declared profile cannot grant access before confirmed identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Synthetic in-person workflow requires separate reviewer and all review attestations; no real document/provider or physical verification claimed",
+      "status": "PASS"
+    },
+    {
+      "name": "Confirmed-match proposal still grants no ownership until the correct owner consents; other account cannot approve",
+      "status": "PASS"
+    },
+    {
+      "name": "Explicit owner consent grants exactly the intended profile and replay is stable; other account remains denied",
+      "status": "PASS"
+    },
+    {
+      "name": "Consumed authorization token cannot link a second profile",
+      "status": "PASS"
+    },
+    {
+      "name": "Revocation removes profile and pre-existing appointment access immediately, preserves administrative record/history and replays safely",
+      "status": "PASS"
+    }
+  ],
+  "physicalIdentityVerified": false,
+  "externalProviderCalls": false
+}

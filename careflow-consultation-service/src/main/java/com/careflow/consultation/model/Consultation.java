@@ -25,11 +25,30 @@ public class Consultation extends BaseEntity {
 
     private UUID appointmentId;
 
+    @Column(name="queue_entry_id", unique=true)
+    private UUID queueEntryId;
+
     @Column(nullable = false)
     private UUID patientId;
 
+    @Column(length = 150)
+    private String patientName;
+
     @Column(nullable = false)
     private UUID doctorId;
+
+    private UUID responsibleDoctorId;
+
+    @Column(length = 150)
+    private String responsibleDoctorName;
+
+    @Version
+    @Builder.Default
+    private Long version = 0L;
+
+    public UUID currentDoctorId() { return responsibleDoctorId == null ? doctorId : responsibleDoctorId; }
+
+    public String currentDoctorName() { return responsibleDoctorId == null ? doctorName : responsibleDoctorName; }
 
     // --- Doctor Profile Snapshot (Pháp lý Y tế) ---
     @Column(length = 150)
@@ -69,10 +88,10 @@ public class Consultation extends BaseEntity {
 
     // --- Chẩn đoán (Diagnosis) ---
 
-    @Column(length = 10)
+    @Column(name="icd10_code", length = 10)
     private String icd10Code;
 
-    @Column(length = 500)
+    @Column(name="icd10_name", length = 500)
     private String icd10Name;
 
     @Column(columnDefinition = "TEXT")

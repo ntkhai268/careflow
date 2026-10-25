@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "checks": [
+    "Verified ADMIN-only GET/reconcile/rebuild; doctor and patient denied even with forged role header",
+    "Source APIs enforce analytics certificate, caller key and page bounds",
+    "Real source pagination is complete and every row contains only approved operational fields",
+    "Nine headline metrics match an independent count over all three authorized source exports",
+    "Invalid range rejected, verified empty range is empty and internal exports are not routed publicly",
+    "Real RabbitMQ duplicate and late created hints cannot undo a source cancellation or change counts",
+    "Authenticated rebuild from Analytics journal preserves all live metrics"
+  ]
+}

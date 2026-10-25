@@ -1,0 +1,11 @@
+const assert=require('node:assert/strict');const fs=require('node:fs');
+const ts=require('../../frontend/doctor-web/node_modules/typescript');
+const code=ts.transpileModule(fs.readFileSync(require('node:path').join(__dirname,'../../frontend/doctor-web/src/lib/patient-display.ts'),'utf8'),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+const context={exports:{}};new Function('exports',code)(context.exports);const {patientAge,visitTime}=context.exports;
+const today=new Date('2026-10-19T18:00:00Z');
+assert.equal(patientAge('2000-10-20',today),26);assert.equal(patientAge('2000-10-21',today),25);
+assert.equal(patientAge(null,today),null);assert.equal(patientAge('2026-10-21',today),null);
+assert.equal(patientAge('2001-02-29',today),null);assert.equal(patientAge('2000-02-29',today),26);
+assert.equal(patientAge('invalid',today),null);assert.equal(visitTime(null),'—');assert.equal(visitTime('invalid'),'—');
+assert.equal(visitTime('2026-10-20T03:30:00Z'),'10:30');
+console.log('PASS 10 patient age/time boundary assertions; missing or invalid values remain unknown.');

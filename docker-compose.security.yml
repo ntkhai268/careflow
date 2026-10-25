@@ -1,0 +1,595 @@
+{
+  "name": "careflow-secure",
+  "services": {
+    "careflow-api-gateway": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-api-gateway/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8080",
+        "SECURITY_CALLER_KEY": "${API_GATEWAY_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${API_GATEWAY_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SERVER_SSL_CLIENT_AUTH": "none",
+        "CAREFLOW_WEB_ORIGIN": "${CAREFLOW_WEB_ORIGIN:?}",
+        "SERVER_MAX_HTTP_REQUEST_HEADER_SIZE": "16KB",
+        "SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_HTTPCLIENT_CONNECT_TIMEOUT": "5000",
+        "SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_HTTPCLIENT_RESPONSE_TIMEOUT": "20s",
+        "SERVER_FORWARD_HEADERS_STRATEGY": "none",
+        "SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_HTTPCLIENT_SSL_KEY_STORE": "file:/run/secrets/tls.p12",
+        "SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_HTTPCLIENT_SSL_KEY_STORE_TYPE": "PKCS12",
+        "SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_HTTPCLIENT_SSL_KEY_STORE_PASSWORD": "${API_GATEWAY_TLS_PASSWORD:?}",
+        "SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_HTTPCLIENT_SSL_KEY_PASSWORD": "${API_GATEWAY_TLS_PASSWORD:?}",
+        "SPRING_CLOUD_GATEWAY_SERVER_WEBFLUX_HTTPCLIENT_SSL_TRUSTED_X509_CERTIFICATES_0": "file:/run/secrets/ca.crt"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/api-gateway.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "ports": [
+        "${CAREFLOW_GATEWAY_BIND:-127.0.0.1}:${CAREFLOW_GATEWAY_PORT:-8443}:8080"
+      ]
+    },
+    "careflow-identity-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-identity-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8081",
+        "SECURITY_CALLER_KEY": "${IDENTITY_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${IDENTITY_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SECURITY_JWT_PRIVATE_KEY_FILE": "/run/secrets/jwt-private.pem",
+        "SECURITY_JWT_PUBLIC_KEY_FILE": "/run/secrets/jwt-public.pem",
+        "SECURITY_JWT_KEY_ID": "${JWT_KEY_ID:?}",
+        "SECURITY_CALLERS_JSON": "${SECURITY_CALLERS_JSON:?}",
+        "SPRING_DATASOURCE_URL": "${IDENTITY_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_identity?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${IDENTITY_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${IDENTITY_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "RESEND_API_KEY": "${RESEND_API_KEY:?}",
+        "RESEND_FROM": "CareFlow <careflow@supersignal-resend.id.vn>",
+        "RECOVERY_OUTBOX_KEY_FILE": "/run/secrets/recovery-outbox.key",
+        "SECURITY_AUTH_REQUIRE_STAFF_PASSKEY": "true",
+        "SECURITY_AUTH_PUBLIC_REGISTRATION_ENABLED": "false",
+        "SECURITY_PASSKEY_RP_ID": "${CAREFLOW_PASSKEY_RP_ID:?}",
+        "SECURITY_PASSKEY_ORIGINS": "${CAREFLOW_WEB_ORIGIN:?}"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/identity-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/jwt-private.pem:/run/secrets/jwt-private.pem:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/jwt-public.pem:/run/secrets/jwt-public.pem:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/recovery-outbox.key:/run/secrets/recovery-outbox.key:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "careflow-patient-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-patient-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8082",
+        "SECURITY_CALLER_KEY": "${PATIENT_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${PATIENT_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${PATIENT_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_patient?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${PATIENT_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${PATIENT_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "SPRING_RABBITMQ_HOST": "${RABBITMQ_HOST:?}",
+        "SPRING_RABBITMQ_PORT": "${RABBITMQ_PORT:-5671}",
+        "SPRING_RABBITMQ_USERNAME": "${PATIENT_RABBITMQ_USERNAME:?}",
+        "SPRING_RABBITMQ_PASSWORD": "${PATIENT_RABBITMQ_PASSWORD:?}",
+        "SPRING_RABBITMQ_SSL_ENABLED": "true",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE": "file:/run/secrets/truststore.p12",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_FILE_SCANNER_HOST": "clamav",
+        "SECURITY_FILE_SCAN_REQUIRED": "true",
+        "FILE_UPLOAD_DIR": "/app/uploads/health-records"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/patient-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro",
+        "patient-files:/app/uploads/health-records"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "careflow-appointment-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-appointment-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8083",
+        "SECURITY_CALLER_KEY": "${APPOINTMENT_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${APPOINTMENT_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${APPOINTMENT_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_appointment?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${APPOINTMENT_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${APPOINTMENT_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "SPRING_RABBITMQ_HOST": "${RABBITMQ_HOST:?}",
+        "SPRING_RABBITMQ_PORT": "${RABBITMQ_PORT:-5671}",
+        "SPRING_RABBITMQ_USERNAME": "${APPOINTMENT_RABBITMQ_USERNAME:?}",
+        "SPRING_RABBITMQ_PASSWORD": "${APPOINTMENT_RABBITMQ_PASSWORD:?}",
+        "SPRING_RABBITMQ_SSL_ENABLED": "true",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE": "file:/run/secrets/truststore.p12",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_ANALYTICS_EXPORT_KEY": "${ANALYTICS_CALLER_KEY:?}"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/appointment-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "careflow-queue-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-queue-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8084",
+        "SECURITY_CALLER_KEY": "${QUEUE_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${QUEUE_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${QUEUE_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_queue?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${QUEUE_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${QUEUE_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "SPRING_RABBITMQ_HOST": "${RABBITMQ_HOST:?}",
+        "SPRING_RABBITMQ_PORT": "${RABBITMQ_PORT:-5671}",
+        "SPRING_RABBITMQ_USERNAME": "${QUEUE_RABBITMQ_USERNAME:?}",
+        "SPRING_RABBITMQ_PASSWORD": "${QUEUE_RABBITMQ_PASSWORD:?}",
+        "SPRING_RABBITMQ_SSL_ENABLED": "true",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE": "file:/run/secrets/truststore.p12",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_ANALYTICS_EXPORT_KEY": "${ANALYTICS_CALLER_KEY:?}"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/queue-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "careflow-notification-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-notification-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8085",
+        "SECURITY_CALLER_KEY": "${NOTIFICATION_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${NOTIFICATION_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${NOTIFICATION_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_notification?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${NOTIFICATION_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${NOTIFICATION_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "SPRING_RABBITMQ_HOST": "${RABBITMQ_HOST:?}",
+        "SPRING_RABBITMQ_PORT": "${RABBITMQ_PORT:-5671}",
+        "SPRING_RABBITMQ_USERNAME": "${NOTIFICATION_RABBITMQ_USERNAME:?}",
+        "SPRING_RABBITMQ_PASSWORD": "${NOTIFICATION_RABBITMQ_PASSWORD:?}",
+        "SPRING_RABBITMQ_SSL_ENABLED": "true",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE": "file:/run/secrets/truststore.p12",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/notification-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "careflow-consultation-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-consultation-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8086",
+        "SECURITY_CALLER_KEY": "${CONSULTATION_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${CONSULTATION_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${CONSULTATION_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_consultation?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${CONSULTATION_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${CONSULTATION_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "SPRING_RABBITMQ_HOST": "${RABBITMQ_HOST:?}",
+        "SPRING_RABBITMQ_PORT": "${RABBITMQ_PORT:-5671}",
+        "SPRING_RABBITMQ_USERNAME": "${CONSULTATION_RABBITMQ_USERNAME:?}",
+        "SPRING_RABBITMQ_PASSWORD": "${CONSULTATION_RABBITMQ_PASSWORD:?}",
+        "SPRING_RABBITMQ_SSL_ENABLED": "true",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE": "file:/run/secrets/truststore.p12",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_ANALYTICS_EXPORT_KEY": "${ANALYTICS_CALLER_KEY:?}"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/consultation-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "careflow-prescription-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-prescription-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8087",
+        "SECURITY_CALLER_KEY": "${PRESCRIPTION_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${PRESCRIPTION_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${PRESCRIPTION_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_prescription?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${PRESCRIPTION_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${PRESCRIPTION_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "SPRING_RABBITMQ_HOST": "${RABBITMQ_HOST:?}",
+        "SPRING_RABBITMQ_PORT": "${RABBITMQ_PORT:-5671}",
+        "SPRING_RABBITMQ_USERNAME": "${PRESCRIPTION_RABBITMQ_USERNAME:?}",
+        "SPRING_RABBITMQ_PASSWORD": "${PRESCRIPTION_RABBITMQ_PASSWORD:?}",
+        "SPRING_RABBITMQ_SSL_ENABLED": "true",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE": "file:/run/secrets/truststore.p12",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/prescription-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "careflow-emr-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-emr-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8088",
+        "SECURITY_CALLER_KEY": "${EMR_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${EMR_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${EMR_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_emr?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${EMR_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${EMR_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "SPRING_RABBITMQ_HOST": "${RABBITMQ_HOST:?}",
+        "SPRING_RABBITMQ_PORT": "${RABBITMQ_PORT:-5671}",
+        "SPRING_RABBITMQ_USERNAME": "${EMR_RABBITMQ_USERNAME:?}",
+        "SPRING_RABBITMQ_PASSWORD": "${EMR_RABBITMQ_PASSWORD:?}",
+        "SPRING_RABBITMQ_SSL_ENABLED": "true",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE": "file:/run/secrets/truststore.p12",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/emr-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "careflow-lab-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-lab-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8089",
+        "SECURITY_CALLER_KEY": "${LAB_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${LAB_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${LAB_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_lab?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${LAB_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${LAB_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "SPRING_RABBITMQ_HOST": "${RABBITMQ_HOST:?}",
+        "SPRING_RABBITMQ_PORT": "${RABBITMQ_PORT:-5671}",
+        "SPRING_RABBITMQ_USERNAME": "${LAB_RABBITMQ_USERNAME:?}",
+        "SPRING_RABBITMQ_PASSWORD": "${LAB_RABBITMQ_PASSWORD:?}",
+        "SPRING_RABBITMQ_SSL_ENABLED": "true",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE": "file:/run/secrets/truststore.p12",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/lab-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "careflow-hospital-directory-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-hospital-directory-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8090",
+        "SECURITY_CALLER_KEY": "${HOSPITAL_DIRECTORY_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${HOSPITAL_DIRECTORY_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${HOSPITAL_DIRECTORY_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_hospital_directory?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${HOSPITAL_DIRECTORY_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${HOSPITAL_DIRECTORY_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/hospital-directory-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "clamav": {
+      "image": "clamav/clamav:stable",
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "volumes": [
+        "clamav-signatures:/var/lib/clamav"
+      ],
+      "mem_limit": "3g"
+    },
+    "careflow-doctor-web": {
+      "build": {
+        "context": ".",
+        "dockerfile": "frontend/doctor-web/Dockerfile",
+        "args": {
+          "NEXT_PUBLIC_API_URL": "${CAREFLOW_API_ORIGIN:?}"
+        }
+      },
+      "environment": {
+        "NODE_ENV": "production",
+        "CAREFLOW_WEB_ORIGIN": "${CAREFLOW_WEB_ORIGIN:?}",
+        "CAREFLOW_GATEWAY_URL": "${CAREFLOW_API_ORIGIN:?}",
+        "NEXT_PUBLIC_API_URL": "${CAREFLOW_API_ORIGIN:?}"
+      },
+      "ports": [
+        "127.0.0.1:${CAREFLOW_WEB_PORT:-3000}:3000"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "careflow-analytics-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-analytics-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8091",
+        "SECURITY_CALLER_KEY": "${ANALYTICS_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${ANALYTICS_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${ANALYTICS_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_analytics?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${ANALYTICS_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${ANALYTICS_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "SPRING_RABBITMQ_HOST": "${RABBITMQ_HOST:?}",
+        "SPRING_RABBITMQ_PORT": "${RABBITMQ_PORT:-5671}",
+        "SPRING_RABBITMQ_USERNAME": "${ANALYTICS_RABBITMQ_USERNAME:?}",
+        "SPRING_RABBITMQ_PASSWORD": "${ANALYTICS_RABBITMQ_PASSWORD:?}",
+        "SPRING_RABBITMQ_SSL_ENABLED": "true",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE": "file:/run/secrets/truststore.p12",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "ANALYTICS_DEMO_ENABLED": "false",
+        "ANALYTICS_SYNC_ENABLED": "true"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/analytics-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    },
+    "careflow-ai-service": {
+      "build": {
+        "context": ".",
+        "dockerfile": "careflow-ai-service/Dockerfile"
+      },
+      "environment": {
+        "SPRING_PROFILES_ACTIVE": "secure,production",
+        "SERVER_PORT": "8092",
+        "SECURITY_CALLER_KEY": "${AI_CALLER_KEY:?}",
+        "CAREFLOW_TLS_KEYSTORE_PASSWORD": "${AI_TLS_PASSWORD:?}",
+        "CAREFLOW_TLS_TRUSTSTORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "SECURITY_DPOP_PUBLIC_ORIGINS": "${CAREFLOW_API_ORIGIN:?}",
+        "SPRING_DATASOURCE_URL": "${AI_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_ai?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "SPRING_DATASOURCE_USERNAME": "${AI_DB_USERNAME:?}",
+        "SPRING_DATASOURCE_PASSWORD": "${AI_DB_PASSWORD:?}",
+        "SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE": "5",
+        "SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE": "1",
+        "SPRING_JPA_SHOW_SQL": "false",
+        "SPRING_RABBITMQ_HOST": "${RABBITMQ_HOST:?}",
+        "SPRING_RABBITMQ_PORT": "${RABBITMQ_PORT:-5671}",
+        "SPRING_RABBITMQ_USERNAME": "${AI_RABBITMQ_USERNAME:?}",
+        "SPRING_RABBITMQ_PASSWORD": "${AI_RABBITMQ_PASSWORD:?}",
+        "SPRING_RABBITMQ_SSL_ENABLED": "true",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE": "file:/run/secrets/truststore.p12",
+        "SPRING_RABBITMQ_SSL_TRUST_STORE_PASSWORD": "${TLS_TRUSTSTORE_PASSWORD:?}",
+        "VOICE_DB_URL": "${AI_DB_URL:-jdbc:postgresql://100.116.233.60:5432/careflow_ai?sslmode=verify-full&sslrootcert=/run/secrets/db-ca.crt}",
+        "VOICE_DB_USER": "${AI_DB_USERNAME:?}",
+        "VOICE_DB_PASSWORD": "${AI_DB_PASSWORD:?}",
+        "AI_CONTENT_KEY": "${AI_CONTENT_KEY:?}",
+        "VOICE_CALLER_KEY": "${AI_CALLER_KEY:?}",
+        "VOICE_IDENTITY_URL": "https://careflow-identity-service:8081",
+        "VOICE_CONSULTATION_URL": "https://careflow-consultation-service:8086",
+        "VOICE_PRESCRIPTION_URL": "https://careflow-prescription-service:8087",
+        "VOICE_WORKER_URL": "${VOICE_WORKER_URL:?}",
+        "VOICE_WORKER_TOKEN": "${VOICE_WORKER_TOKEN:?}",
+        "CLINICAL_AI_ENABLED": "${CLINICAL_AI_ENABLED:-false}",
+        "VOICE_PRESCRIPTION_ENABLED": "${VOICE_PRESCRIPTION_ENABLED:-false}",
+        "AI_ALLOW_SYNTHETIC": "false"
+      },
+      "volumes": [
+        "${CAREFLOW_SECURITY_DIR:?}/ai-service.p12:/run/secrets/tls.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/truststore.p12:/run/secrets/truststore.p12:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/ca.crt:/run/secrets/ca.crt:ro",
+        "${CAREFLOW_SECURITY_DIR:?}/db-ca.crt:/run/secrets/db-ca.crt:ro"
+      ],
+      "networks": [
+        "careflow-private"
+      ],
+      "restart": "unless-stopped",
+      "security_opt": [
+        "no-new-privileges:true"
+      ]
+    }
+  },
+  "networks": {
+    "careflow-private": {
+      "driver": "bridge"
+    }
+  },
+  "volumes": {
+    "clamav-signatures": {},
+    "patient-files": {}
+  }
+}

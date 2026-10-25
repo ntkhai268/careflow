@@ -249,7 +249,7 @@ services:
       dockerfile: careflow-ai-service/Dockerfile
     container_name: careflow-ai-service
     ports:
-      - "8091:8091"
+      - "8092:8092"
     environment:
       SPRING_RABBITMQ_HOST: careflow-rabbitmq
       SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER:-admin}

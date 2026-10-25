@@ -1,0 +1,26 @@
+{
+  "source": "prototype_round1_existing_benchmark",
+  "evaluationKind": "synthetic_dev_only",
+  "humanTestSamples": 0,
+  "ASR": {
+    "baseline": {
+      "samples": 999,
+      "wer": 0.2974122755545124,
+      "cer": 0.2077085872824762,
+      "drug_name_recall": 0.003355704697986577
+    },
+    "adapted": {
+      "samples": 999,
+      "wer": 0.11380706489848609,
+      "cer": 0.07121544110498725,
+      "drug_name_recall": 0.15855704697986578
+    }
+  },
+  "pipeline": {
+    "samples": 339,
+    "positiveSamples": 313,
+    "positiveFullDraftExact": 0,
+    "emptyOrderExact": 26
+  },
+  "note": "Historical result retained; passing contract fixtures or a new worker smoke test does not replace this quality evaluation."
+}

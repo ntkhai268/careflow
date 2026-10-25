@@ -1,0 +1,20 @@
+{
+  "schemaVersion": "careflow.voice-prescription.v1",
+  "transcriptRevision": 1,
+  "transcript": "😀 Cho Paracetamol, số lượng sáu viên.",
+  "catalogVersion": "synthetic-hospital-v1",
+  "medicines": [
+    {
+      "code": "PARA",
+      "name": "Paracetamol",
+      "unit": "viên",
+      "active": true
+    },
+    {
+      "code": "LORA",
+      "name": "Loratadin",
+      "unit": "viên",
+      "active": true
+    }
+  ]
+}

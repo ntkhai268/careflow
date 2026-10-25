@@ -13,6 +13,8 @@ import 'package:careflow_patient/services/api_service.dart';
 import 'package:careflow_patient/services/appointment_service.dart';
 import 'package:careflow_patient/services/auth_service.dart';
 import 'package:careflow_patient/services/patient_service.dart';
+import 'package:careflow_patient/services/notification_service.dart';
+import 'package:careflow_patient/services/notification_resource_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -30,6 +32,7 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            demoModeProvider.overrideWithValue(true),
             authProvider.overrideWith((ref) => auth),
             patientProvider.overrideWith(
               (ref) => SwitchablePatientNotifier(patientA, ref),
@@ -79,6 +82,11 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
+            demoModeProvider.overrideWithValue(false),
+            notificationServiceProvider.overrideWithValue(
+              EmptyNotificationService(),
+            ),
+            notificationUnreadCountProvider.overrideWith((ref) async => 0),
             authProvider.overrideWith((ref) => auth),
             patientProvider.overrideWith(
               (ref) => patient = RestoringPatientNotifier(patientA, ref),
@@ -107,6 +115,7 @@ void main() {
       )..state = AsyncData(journeyFor('patient-a', unreadCount: 2));
       final container = ProviderContainer(
         overrides: [
+          demoModeProvider.overrideWithValue(true),
           authProvider.overrideWith((ref) => auth),
           patientProvider.overrideWith(
             (ref) => patient = SwitchablePatientNotifier(patientA, ref),
@@ -275,4 +284,10 @@ class InProgressJourneyRepository implements JourneyRepository {
 
   @override
   Future<void> reset(PatientJourney journey) => throw UnimplementedError();
+}
+
+class EmptyNotificationService extends NotificationService {
+  EmptyNotificationService() : super(ApiService());
+  @override
+  Future<List<Map<String, dynamic>>> inbox({int limit = 50}) async => const [];
 }

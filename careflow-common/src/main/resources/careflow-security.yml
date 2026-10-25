@@ -1,0 +1,172 @@
+{
+  "server": {
+    "ssl": {
+      "enabled": true,
+      "key-store": "file:/run/secrets/tls.p12",
+      "key-store-type": "PKCS12",
+      "key-store-password": "${CAREFLOW_TLS_KEYSTORE_PASSWORD}",
+      "trust-store": "file:/run/secrets/truststore.p12",
+      "trust-store-type": "PKCS12",
+      "trust-store-password": "${CAREFLOW_TLS_TRUSTSTORE_PASSWORD}",
+      "client-auth": "need",
+      "enabled-protocols": [
+        "TLSv1.3",
+        "TLSv1.2"
+      ]
+    },
+    "max-http-request-header-size": "16KB",
+    "error": {
+      "include-message": "never",
+      "include-stacktrace": "never",
+      "include-binding-errors": "never"
+    }
+  },
+  "security": {
+    "audit": {
+      "allow-loopback-http": false
+    },
+    "caller": {
+      "name": "${spring.application.name}",
+      "key": "${SECURITY_CALLER_KEY}"
+    },
+    "internal": {
+      "tls": {
+        "enabled": true,
+        "key-store": "/run/secrets/tls.p12",
+        "key-store-password": "${CAREFLOW_TLS_KEYSTORE_PASSWORD}",
+        "trust-store": "/run/secrets/truststore.p12",
+        "trust-store-password": "${CAREFLOW_TLS_TRUSTSTORE_PASSWORD}"
+      }
+    }
+  },
+  "app": {
+    "identity-service": {
+      "url": "https://careflow-identity-service:8081"
+    },
+    "patient-service": {
+      "url": "https://careflow-patient-service:8082"
+    },
+    "queue-service": {
+      "url": "https://careflow-queue-service:8084"
+    },
+    "consultation-service": {
+      "url": "https://careflow-consultation-service:8086"
+    },
+    "directory-service": {
+      "url": "https://careflow-hospital-directory-service:8090"
+    },
+    "appointment-service": {
+      "url": "https://careflow-appointment-service:8083"
+    }
+  },
+  "eureka": {
+    "client": {
+      "enabled": false
+    }
+  },
+  "spring": {
+    "jpa": {
+      "hibernate": {
+        "ddl-auto": "validate"
+      }
+    },
+    "cloud": {
+      "discovery": {
+        "client": {
+          "simple": {
+            "instances": {
+              "identity-service": [
+                {
+                  "uri": "https://careflow-identity-service:8081"
+                }
+              ],
+              "patient-service": [
+                {
+                  "uri": "https://careflow-patient-service:8082"
+                }
+              ],
+              "appointment-service": [
+                {
+                  "uri": "https://careflow-appointment-service:8083"
+                }
+              ],
+              "queue-service": [
+                {
+                  "uri": "https://careflow-queue-service:8084"
+                }
+              ],
+              "notification-service": [
+                {
+                  "uri": "https://careflow-notification-service:8085"
+                }
+              ],
+              "consultation-service": [
+                {
+                  "uri": "https://careflow-consultation-service:8086"
+                }
+              ],
+              "prescription-service": [
+                {
+                  "uri": "https://careflow-prescription-service:8087"
+                }
+              ],
+              "emr-service": [
+                {
+                  "uri": "https://careflow-emr-service:8088"
+                }
+              ],
+              "lab-service": [
+                {
+                  "uri": "https://careflow-lab-service:8089"
+                }
+              ],
+              "hospital-directory-service": [
+                {
+                  "uri": "https://careflow-hospital-directory-service:8090"
+                }
+              ],
+              "analytics-service": [
+                {
+                  "uri": "https://careflow-analytics-service:8091"
+                }
+              ],
+              "ai-service": [
+                {
+                  "uri": "https://careflow-ai-service:8092"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "servlet": {
+      "multipart": {
+        "max-file-size": "10MB",
+        "max-request-size": "52MB"
+      }
+    }
+  },
+  "management": {
+    "endpoints": {
+      "web": {
+        "exposure": {
+          "include": "health"
+        }
+      }
+    },
+    "endpoint": {
+      "health": {
+        "show-details": "never"
+      }
+    }
+  },
+  "springdoc": {
+    "api-docs": {
+      "enabled": false
+    },
+    "swagger-ui": {
+      "enabled": false
+    }
+  }
+}

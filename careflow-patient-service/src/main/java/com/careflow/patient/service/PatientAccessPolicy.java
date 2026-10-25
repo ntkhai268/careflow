@@ -20,7 +20,7 @@ final class PatientAccessPolicy {
 
     void requireRead(UUID requesterId, String role, Patient patient) {
         requireAuthenticated(requesterId, role);
-        if (isAdmin(role) || requesterId.equals(patient.getUserId())) {
+        if (isPatient(role) && requesterId.equals(patient.getUserId())) {
             return;
         }
         throw forbidden("You are not allowed to view this patient profile");
@@ -28,7 +28,7 @@ final class PatientAccessPolicy {
 
     void requireClinicalRead(UUID requesterId, String role, Patient patient, boolean assigned) {
         requireAuthenticated(requesterId, role);
-        if (isAdmin(role) || requesterId.equals(patient.getUserId())
+        if (isPatient(role) && requesterId.equals(patient.getUserId())
                 || (isDoctor(role) && assigned)) {
             return;
         }
@@ -45,7 +45,7 @@ final class PatientAccessPolicy {
 
     void requireUpdate(UUID requesterId, String role, Patient patient) {
         requireAuthenticated(requesterId, role);
-        if (isAdmin(role) || isStaff(role) || requesterId.equals(patient.getUserId())) {
+        if (isPatient(role) && requesterId.equals(patient.getUserId())) {
             return;
         }
         throw forbidden("You are not allowed to update this patient profile");

@@ -28,9 +28,7 @@ public class ConsultationController {
             @Valid @RequestBody CreateConsultationRequest request,
             @RequestHeader(value = AppConstants.HEADER_USER_ID, required = false) UUID actorUserId,
             @RequestHeader(value = AppConstants.HEADER_USER_ROLE, required = false) String actorRole) {
-        ConsultationResponse response = actorUserId == null
-                ? consultationService.createConsultation(request)
-                : consultationService.createConsultation(request, actorUserId, actorRole);
+        ConsultationResponse response = consultationService.createConsultation(request, actorUserId, actorRole);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Consultation created successfully", response));
     }
@@ -45,16 +43,21 @@ public class ConsultationController {
     }
 
     @GetMapping("/{id}/status")
-    public ResponseEntity<ApiResponse<String>> getConsultationStatus(@PathVariable UUID id) {
-        String status = consultationService.getConsultationStatus(id);
+    public ResponseEntity<ApiResponse<String>> getConsultationStatus(
+            @PathVariable UUID id,
+            @RequestHeader(value = AppConstants.HEADER_USER_ID, required = false) UUID actorUserId,
+            @RequestHeader(value = AppConstants.HEADER_USER_ROLE, required = false) String actorRole) {
+        String status = consultationService.getConsultation(id, actorUserId, actorRole).getStatus().name();
         return ResponseEntity.ok(ApiResponse.success("Success", status));
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<ApiResponse<ConsultationResponse>> updateConsultation(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateConsultationRequest request) {
-        ConsultationResponse response = consultationService.updateConsultation(id, request);
+            @Valid @RequestBody UpdateConsultationRequest request,
+            @RequestHeader(value = AppConstants.HEADER_USER_ID, required = false) UUID actorUserId,
+            @RequestHeader(value = AppConstants.HEADER_USER_ROLE, required = false) String actorRole) {
+        ConsultationResponse response = consultationService.updateClinicalData(id, request, actorUserId, actorRole);
         return ResponseEntity.ok(ApiResponse.success("Consultation updated successfully", response));
     }
 
@@ -89,8 +92,10 @@ public class ConsultationController {
     @PutMapping("/{id}/status")
     public ResponseEntity<ApiResponse<ConsultationResponse>> updateStatus(
             @PathVariable UUID id,
-            @Valid @RequestBody UpdateConsultationStatusRequest request) {
-        ConsultationResponse response = consultationService.updateStatus(id, request);
+            @Valid @RequestBody UpdateConsultationStatusRequest request,
+            @RequestHeader(value = AppConstants.HEADER_USER_ID, required = false) UUID actorUserId,
+            @RequestHeader(value = AppConstants.HEADER_USER_ROLE, required = false) String actorRole) {
+        ConsultationResponse response = consultationService.updateStatus(id, request, actorUserId, actorRole);
         return ResponseEntity.ok(ApiResponse.success("Consultation status updated successfully", response));
     }
 
@@ -99,16 +104,17 @@ public class ConsultationController {
             @PathVariable UUID id,
             @RequestHeader(value = AppConstants.HEADER_USER_ID, required = false) UUID actorUserId,
             @RequestHeader(value = AppConstants.HEADER_USER_ROLE, required = false) String actorRole) {
-        ConsultationResponse response = actorUserId == null
-                ? consultationService.completeConsultation(id)
-                : consultationService.completeConsultation(id, actorUserId, actorRole);
+        ConsultationResponse response = consultationService.completeConsultation(id, actorUserId, actorRole);
         return ResponseEntity.ok(ApiResponse.success("Consultation completed successfully", response));
     }
 
     @PutMapping("/{id}/complete")
-    public ResponseEntity<ApiResponse<ConsultationResponse>> completeConsultationLegacy(@PathVariable UUID id) {
+    public ResponseEntity<ApiResponse<ConsultationResponse>> completeConsultationLegacy(
+            @PathVariable UUID id,
+            @RequestHeader(value = AppConstants.HEADER_USER_ID, required = false) UUID actorUserId,
+            @RequestHeader(value = AppConstants.HEADER_USER_ROLE, required = false) String actorRole) {
         return ResponseEntity.ok(ApiResponse.success("Consultation completed successfully",
-                consultationService.completeConsultation(id)));
+                consultationService.completeConsultation(id, actorUserId, actorRole)));
     }
 
     @GetMapping("/patient/{patientId}")

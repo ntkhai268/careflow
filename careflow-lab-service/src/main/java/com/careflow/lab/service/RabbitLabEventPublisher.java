@@ -9,6 +9,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class RabbitLabEventPublisher implements LabEventPublisher {
     private final RabbitTemplate rabbitTemplate;
+    @org.springframework.beans.factory.annotation.Autowired private LabEventOutbox outbox;
 
     public RabbitLabEventPublisher(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
@@ -16,13 +17,13 @@ public class RabbitLabEventPublisher implements LabEventPublisher {
 
     @Override
     public void publishReadyForExecution(EventEnvelope envelope) {
-        rabbitTemplate.convertAndSend(AppConstants.EXCHANGE_LAB,
-                AppConstants.RK_LAB_ORDER_READY, envelope);
+        if(outbox!=null)outbox.append(envelope.aggregateId(),envelope.eventType(),AppConstants.RK_LAB_ORDER_READY,envelope);
+        else rabbitTemplate.convertAndSend(AppConstants.EXCHANGE_LAB,AppConstants.RK_LAB_ORDER_READY,envelope);
     }
 
     @Override
     public void publishAllRequiredResultsAvailable(EventEnvelope envelope) {
-        rabbitTemplate.convertAndSend(AppConstants.EXCHANGE_LAB,
-                AppConstants.RK_LAB_ALL_REQUIRED_RESULTS_AVAILABLE, envelope);
+        if(outbox!=null)outbox.append(envelope.aggregateId(),envelope.eventType(),AppConstants.RK_LAB_ALL_REQUIRED_RESULTS_AVAILABLE,envelope);
+        else rabbitTemplate.convertAndSend(AppConstants.EXCHANGE_LAB,AppConstants.RK_LAB_ALL_REQUIRED_RESULTS_AVAILABLE,envelope);
     }
 }

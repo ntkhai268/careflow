@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-10-20T04:02:34.462Z",
+  "environment": "deployed owned local web/BFF/Gateway/Identity/Directory",
+  "syntheticFaultInjection": "503 only for retry/unknown-state regression",
+  "accountsCreated": 0,
+  "checks": [
+    {
+      "name": "Deployed R1 list and Directory assignments load through actual web/BFF/Gateway",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual password demo session cannot create internal accounts and UI preserves server refusal",
+      "status": "PASS"
+    },
+    {
+      "name": "Account list outage offers retry and is never presented as an empty directory",
+      "status": "PASS"
+    },
+    {
+      "name": "Account retry restores actual deployed Identity list",
+      "status": "PASS"
+    },
+    {
+      "name": "Directory outage preserves Identity data and explicitly marks assignment status unknown",
+      "status": "PASS"
+    },
+    {
+      "name": "DOCTOR sees AccessDenied 403 and cannot open admin account data",
+      "status": "PASS"
+    }
+  ]
+}

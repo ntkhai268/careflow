@@ -22,7 +22,7 @@ public class AiVoiceProcessingService {
     public VoiceClinicalFieldsResponse processVoiceToFields(MultipartFile audioFile) {
         log.info("Processing audio recording for clinical field extraction...");
         String transcript = elevenLabsClientService.transcribeAudio(audioFile);
-        log.info("Transcript obtained: '{}'", transcript);
+        // Clinical transcript must never be written to application logs.
 
         VoiceExtractedFields extractedFields = geminiClientService.extractClinicalFieldsFromTranscript(transcript);
 

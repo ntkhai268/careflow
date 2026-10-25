@@ -4,6 +4,7 @@ import com.careflow.common.dto.ApiResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -30,6 +31,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
         return ResponseEntity.status(ex.getStatus())
                 .body(ApiResponse.error(ex.getStatus(), ex.getMessage()));
+    }
+
+    @ExceptionHandler(OptimisticLockingFailureException.class)
+    public ResponseEntity<ApiResponse<Void>> handleConcurrentUpdate(OptimisticLockingFailureException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(409, "Dữ liệu đã thay đổi. Vui lòng tải lại trước khi thử lại."));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

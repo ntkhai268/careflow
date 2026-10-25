@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/api_service.dart';
+import '../../services/biometric_session_store.dart';
 import '../../widgets/careflow_button.dart';
 import '../../widgets/careflow_text_field.dart';
 
@@ -18,12 +20,50 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _accountFocus = FocusNode();
   final _passwordFocus = FocusNode();
+
+  String? _biometricAccount;
+  BiometricCapability? _biometricCapability;
+  bool _allowAccountPrefill = true;
+
+  bool get _canUseBiometrics =>
+      _biometricAccount != null &&
+      _biometricCapability?.available == true &&
+      _emailController.text.trim().toLowerCase() ==
+          _biometricAccount!.trim().toLowerCase();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadBiometrics();
+  }
+
+  Future<void> _loadBiometrics() async {
+    final sessions = ref.read(apiServiceProvider).sessions;
+    try {
+      final account = await sessions.account();
+      final capability = await sessions.vault.capability();
+      if (mounted) {
+        setState(() {
+          _biometricAccount = account;
+          _biometricCapability = capability;
+          if (_allowAccountPrefill && _emailController.text.isEmpty) {
+            _emailController.text = account ?? '';
+          }
+          _allowAccountPrefill = false;
+        });
+      }
+    } catch (_) {
+      /* Password and question login remain available. */
+    }
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
+    _accountFocus.dispose();
     _passwordFocus.dispose();
     super.dispose();
   }
@@ -36,9 +76,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     }
   }
 
+  void _changeAccount(String value) {
+    setState(() {
+      _allowAccountPrefill = false;
+      _passwordController.clear();
+    });
+  }
+
+  void _useAnotherAccount() {
+    _emailController.clear();
+    _changeAccount('');
+    _accountFocus.requestFocus();
+  }
+
+  void _handleBiometricLogin() {
+    if (!_canUseBiometrics ||
+        ref.read(authProvider).status == AuthStatus.loading) {
+      return;
+    }
+    FocusScope.of(context).unfocus();
+    ref.read(authProvider.notifier).alternativeLogin('biometric', '', '', '');
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
+    final isLoading = authState.status == AuthStatus.loading;
+    final showBiometrics = _canUseBiometrics;
 
     // Navigate on success
     ref.listen<AuthState>(authProvider, (prev, next) {
@@ -57,6 +121,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           ),
         );
         ref.read(authProvider.notifier).clearError();
+        _loadBiometrics();
       }
     });
 
@@ -145,6 +210,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   label: 'Tên đăng nhập hoặc email',
                   hint: 'Nhập tên đăng nhập hoặc email',
                   controller: _emailController,
+                  focusNode: _accountFocus,
+                  enabled: !isLoading,
+                  onChanged: _changeAccount,
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: Icons.email_outlined,
                   textInputAction: TextInputAction.next,
@@ -156,27 +224,81 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     return null;
                   },
                 ),
-                const SizedBox(height: 20),
+                if (showBiometrics)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: isLoading ? null : _useAnotherAccount,
+                      child: const Text('Dùng tài khoản khác'),
+                    ),
+                  )
+                else
+                  const SizedBox(height: 20),
 
                 // Password
-                CareFlowTextField(
-                  label: 'Mật khẩu',
-                  hint: 'Nhập mật khẩu',
-                  controller: _passwordController,
-                  obscureText: true,
-                  prefixIcon: Icons.lock_outlined,
-                  focusNode: _passwordFocus,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _handleLogin(),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập mật khẩu';
-                    }
-                    if (value.length < 8) {
-                      return 'Mật khẩu phải có ít nhất 8 ký tự';
-                    }
-                    return null;
-                  },
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Mật khẩu',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: CareFlowTextField(
+                        hint: 'Nhập mật khẩu',
+                        controller: _passwordController,
+                        enabled: !isLoading,
+                        obscureText: true,
+                        prefixIcon: Icons.lock_outlined,
+                        focusNode: _passwordFocus,
+                        textInputAction: TextInputAction.done,
+                        onFieldSubmitted: (_) => _handleLogin(),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Vui lòng nhập mật khẩu';
+                          }
+                          if (value.length < 8) {
+                            return 'Mật khẩu phải có ít nhất 8 ký tự';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    if (showBiometrics) ...[
+                      const SizedBox(width: 12),
+                      IconButton.filledTonal(
+                        key: const ValueKey('biometric-login'),
+                        tooltip:
+                            'Đăng nhập bằng ${_biometricCapability!.label}',
+                        onPressed: isLoading ? null : _handleBiometricLogin,
+                        style: IconButton.styleFrom(
+                          fixedSize: const Size(56, 56),
+                          backgroundColor: AppColors.primarySurface,
+                          foregroundColor: AppColors.primary,
+                          side: BorderSide(
+                            color: AppColors.primary.withValues(alpha: 0.2),
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppRadius.md),
+                          ),
+                        ),
+                        icon: Icon(
+                          _biometricCapability!.label == 'Face ID'
+                              ? Icons.face_outlined
+                              : Icons.fingerprint_rounded,
+                          size: 30,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 12),
 
@@ -185,7 +307,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      // TODO: Forgot password flow
+                      context.go('/login/recovery');
                     },
                     child: const Text('Quên mật khẩu?'),
                   ),
@@ -202,8 +324,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 const SizedBox(height: 24),
 
                 // Register link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     Text(
                       'Chưa có tài khoản? ',

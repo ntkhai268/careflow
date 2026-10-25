@@ -1,66 +1,200 @@
-// CareFlow - Patient Service Database Design (DBML)
-// Schema: careflow_patient
-
-Project CareFlow_Patient_Service {
+// CareFlow patient — physical schema verified against isolated PostgreSQL migrations, 2026-10-20.
+// Partial indexes and CHECK/FK constraints are retained as SQL notes below each table.
+Project CareFlow_Patient {
   database_type: 'PostgreSQL'
-  note: 'Database Schema cho dịch vụ Quản lý Hồ sơ Bệnh nhân (CareFlow Patient Service)'
 }
 
-Enum Gender {
-  MALE [note: 'Nam']
-  FEMALE [note: 'Nữ']
-  OTHER [note: 'Khác']
-}
-
-Table patients {
-  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
-  user_id uuid [not null, note: 'Khóa ngoại tham chiếu tài khoản User (Identity Service); một tài khoản có thể quản lý nhiều hồ sơ']
-  full_name varchar(100) [not null, note: 'Họ và tên bệnh nhân']
-  date_of_birth date [note: 'Ngày tháng năm sinh']
-  gender Gender [note: 'Giới tính (MALE, FEMALE, OTHER)']
-  phone varchar(15) [note: 'Số điện thoại liên lạc']
-  id_card_number varchar(20) [note: 'Số CMND / CCCD; có thể được khai báo lại trên tài khoản khác']
-  insurance_number varchar(20) [note: 'Số thẻ BHYT']
-  occupation varchar(100) [note: 'Nghề nghiệp']
-  address varchar(500) [note: 'Địa chỉ thường trú']
-  avatar_url varchar(255) [note: 'URL ảnh đại diện']
-
-  // Tiền sử & Dị ứng (Clinical Background)
-  allergy_notes varchar(500) [note: 'Ghi chú dị ứng thuốc / thực phẩm (ví dụ: Dị ứng Penicillin, Aspirin)']
-  medical_history varchar(1000) [note: 'Tiền sử bệnh mạn tính / bệnh nền (ví dụ: Tăng huyết áp, Đái tháo đường týp 2)']
-
-  // Audit
-  created_at timestamptz [not null, note: 'Thời điểm tạo bản ghi']
-  updated_at timestamptz [not null, note: 'Thời điểm cập nhật gần nhất']
-
-  indexes {
-    user_id [name: 'idx_patient_user_id', note: 'Index tra cứu bệnh nhân theo userId']
-    id_card_number [name: 'idx_patient_id_card', note: 'Index tra cứu theo CMND/CCCD']
-    (user_id, id_card_number) [name: 'uk_patient_user_id_card_number', unique, note: 'Chỉ ngăn trùng CCCD trong cùng một tài khoản']
-  }
-}
-
-Enum AllergySeverity {
-  CRITICAL [note: 'Nguy hiểm cao: Sốc phản vệ, dị ứng nặng (Bắt buộc chặn kê đơn)']
-  WARNING [note: 'Cần lưu ý: Dị ứng nhẹ, tương tác nhẹ (Hiển thị cảnh báo inline)']
-  INFO [note: 'Thông tin: Tiền sử bệnh, ghi chú nền (Hiển thị dạng tham khảo)']
-}
-
-Table patient_allergies {
-  id uuid [pk, note: 'Khóa chính UUID']
-  patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bảng patients']
-  allergy_name varchar(100) [not null, note: 'Tên chất/thuốc dị ứng (ví dụ: Penicillin, Phấn hoa)']
-  allergy_group varchar(100) [note: 'Nhóm chất dị ứng (ví dụ: Beta-lactam, Food, Environment)']
-  severity AllergySeverity [not null, note: 'Mức độ nghiêm trọng (CRITICAL, WARNING, INFO)']
-  reaction varchar(255) [note: 'Biểu hiện/Phản ứng (ví dụ: Nổi mề đai, sốc phản vệ)']
-  confirmed_by varchar(100) [note: 'Tên bác sĩ hoặc nguồn xác nhận']
+Table public.health_record_files {
+  id uuid [pk]
+  health_record_id uuid [not null]
+  file_name varchar(255) [not null]
+  stored_path varchar(500) [not null]
+  file_size bigint
+  content_type varchar(100)
   created_at timestamptz [not null]
   updated_at timestamptz [not null]
-
-  indexes {
-    patient_id [name: 'idx_patient_allergies_patient', note: 'Index tra cứu dị ứng theo bệnh nhân']
-  }
+  note: '''
+FOREIGN KEY (health_record_id) REFERENCES health_records(id) ON DELETE CASCADE
+CREATE INDEX idx_health_record_file_record ON public.health_record_files USING btree (health_record_id)
+CREATE UNIQUE INDEX health_record_files_pkey ON public.health_record_files USING btree (id)
+'''
 }
 
-Ref: patient_allergies.patient_id > patients.id
+Table public.health_records {
+  id uuid [pk]
+  patient_id uuid [not null]
+  title varchar(255) [not null]
+  record_date date [not null]
+  facility_name varchar(255) [not null]
+  notes text
+  blood_sugar numeric(5,2)
+  blood_pressure varchar(10)
+  height_cm numeric(5,1)
+  weight_kg numeric(5,1)
+  bmi numeric(4,1)
+  waist_cm numeric(5,1)
+  blood_type varchar(5)
+  pulse integer
+  temperature numeric(4,1)
+  respiratory_rate integer
+  drug_allergy varchar(15)
+  chemical_allergy varchar(15)
+  food_allergy varchar(15)
+  heart_disease varchar(15)
+  hypertension varchar(15)
+  mental_illness varchar(15)
+  cancer varchar(15)
+  asthma varchar(15)
+  epilepsy varchar(15)
+  tuberculosis varchar(15)
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  note: '''
+FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+CREATE UNIQUE INDEX health_records_pkey ON public.health_records USING btree (id)
+CREATE INDEX idx_health_record_patient ON public.health_records USING btree (patient_id)
+CREATE INDEX idx_health_record_date ON public.health_records USING btree (record_date)
+'''
+}
 
+Table public.patient_allergies {
+  id uuid [pk]
+  patient_id uuid [not null]
+  allergy_name varchar(100) [not null]
+  allergy_group varchar(100)
+  severity varchar(20) [not null]
+  reaction varchar(255)
+  confirmed_by varchar(100)
+  created_at timestamptz
+  updated_at timestamptz
+  note: '''
+FOREIGN KEY (patient_id) REFERENCES patients(id) ON DELETE CASCADE
+CREATE UNIQUE INDEX patient_allergies_pkey ON public.patient_allergies USING btree (id)
+CREATE INDEX idx_patient_allergies_patient ON public.patient_allergies USING btree (patient_id)
+'''
+}
+
+Table public.patient_link_authorizations {
+  id uuid [pk]
+  user_id uuid [not null]
+  token_hash character(64) [not null]
+  expires_at timestamptz [not null]
+  used_at timestamptz
+  created_at timestamptz [not null]
+  note: '''
+UNIQUE (token_hash)
+CREATE UNIQUE INDEX patient_link_authorizations_pkey ON public.patient_link_authorizations USING btree (id)
+CREATE UNIQUE INDEX patient_link_authorizations_token_hash_key ON public.patient_link_authorizations USING btree (token_hash)
+CREATE INDEX idx_patient_link_authorization_owner ON public.patient_link_authorizations USING btree (user_id, created_at)
+'''
+}
+
+Table public.patient_profile_link_audit {
+  id uuid [pk]
+  link_id uuid
+  actor_id uuid [not null]
+  action varchar(40) [not null]
+  created_at timestamptz [not null]
+  note: '''
+FOREIGN KEY (link_id) REFERENCES patient_profile_links(id)
+CREATE UNIQUE INDEX patient_profile_link_audit_pkey ON public.patient_profile_link_audit USING btree (id)
+'''
+}
+
+Table public.patient_profile_links {
+  id uuid [pk]
+  patient_id uuid [not null]
+  owner_id uuid [not null]
+  room_id varchar(50) [not null]
+  requested_by uuid [not null]
+  identity_check_id uuid [not null]
+  reference varchar(80) [not null]
+  status varchar(30) [not null]
+  expires_at timestamptz [not null]
+  decided_by uuid
+  decided_at timestamptz
+  created_at timestamptz [not null]
+  note: '''
+CHECK (((status)::text = ANY ((ARRAY['PENDING_OWNER'::character varying, 'LINKED'::character varying, 'DUPLICATE_REVIEW'::character varying, 'REJECTED'::character varying, 'EXPIRED'::character varying, 'REVOKED'::character varying])::text[])))
+FOREIGN KEY (patient_id) REFERENCES patients(id)
+CREATE UNIQUE INDEX patient_profile_links_pkey ON public.patient_profile_links USING btree (id)
+CREATE UNIQUE INDEX uq_profile_link_open ON public.patient_profile_links USING btree (patient_id) WHERE ((status)::text = ANY ((ARRAY['PENDING_OWNER'::character varying, 'LINKED'::character varying, 'DUPLICATE_REVIEW'::character varying])::text[]))
+CREATE INDEX idx_profile_link_owner ON public.patient_profile_links USING btree (owner_id, created_at)
+CREATE INDEX idx_profile_link_room ON public.patient_profile_links USING btree (room_id, created_at)
+'''
+}
+
+Table public.patient_reception_audit {
+  id uuid [pk]
+  actor_id uuid [not null]
+  room_id varchar(50) [not null]
+  action varchar(32) [not null]
+  patient_id uuid
+  created_at timestamptz [not null]
+  note: '''
+FOREIGN KEY (patient_id) REFERENCES patients(id)
+CREATE UNIQUE INDEX patient_reception_audit_pkey ON public.patient_reception_audit USING btree (id)
+CREATE INDEX idx_reception_audit_actor ON public.patient_reception_audit USING btree (actor_id, created_at)
+'''
+}
+
+Table public.patient_reception_commands {
+  actor_id uuid [not null]
+  request_id uuid [not null]
+  fingerprint varchar(64) [not null]
+  patient_id uuid [not null]
+  created_at timestamptz [not null]
+  indexes {
+    (actor_id, request_id) [pk]
+  }
+  note: '''
+FOREIGN KEY (patient_id) REFERENCES patients(id)
+CREATE UNIQUE INDEX patient_reception_commands_pkey ON public.patient_reception_commands USING btree (actor_id, request_id)
+'''
+}
+
+Table public.patient_reception_search_rate {
+  actor_id uuid [not null]
+  window_at timestamptz [not null]
+  attempts integer [not null]
+  indexes {
+    (actor_id, window_at) [pk]
+  }
+  note: '''
+CREATE UNIQUE INDEX patient_reception_search_rate_pkey ON public.patient_reception_search_rate USING btree (actor_id, window_at)
+'''
+}
+
+Table public.patients {
+  id uuid [pk]
+  user_id uuid
+  full_name varchar(100) [not null]
+  date_of_birth date
+  gender varchar(10)
+  phone varchar(15)
+  id_card_number varchar(20)
+  insurance_number varchar(20)
+  occupation varchar(100)
+  address varchar(500)
+  avatar_url varchar(255)
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  allergy_notes varchar(500)
+  medical_history varchar(1000)
+  reception_created_by_user_id uuid
+  reception_room_id varchar(50)
+  note: '''
+CREATE UNIQUE INDEX patients_pkey ON public.patients USING btree (id)
+CREATE INDEX idx_patient_user_id ON public.patients USING btree (user_id)
+CREATE INDEX idx_patient_id_card ON public.patients USING btree (id_card_number)
+CREATE UNIQUE INDEX uk_patient_user_id_card_number ON public.patients USING btree (user_id, id_card_number) WHERE (id_card_number IS NOT NULL)
+'''
+}
+
+Ref: public.health_record_files.health_record_id > public.health_records.id
+Ref: public.health_records.patient_id > public.patients.id
+Ref: public.patient_allergies.patient_id > public.patients.id
+Ref: public.patient_profile_link_audit.link_id > public.patient_profile_links.id
+Ref: public.patient_profile_links.patient_id > public.patients.id
+Ref: public.patient_reception_audit.patient_id > public.patients.id
+Ref: public.patient_reception_commands.patient_id > public.patients.id

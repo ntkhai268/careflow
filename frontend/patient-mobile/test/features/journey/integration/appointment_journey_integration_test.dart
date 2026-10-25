@@ -1,3 +1,4 @@
+import 'package:careflow_patient/services/service_catalog_service.dart';
 import 'package:careflow_patient/features/journey/application/journey_controller.dart';
 import 'package:careflow_patient/features/journey/application/journey_providers.dart';
 import 'package:careflow_patient/features/journey/data/journey_repository.dart';
@@ -50,9 +51,10 @@ void main() {
           paymentStore: paymentStore,
         ),
       );
+      await tester.pump();
 
-      expect(find.text('Thanh toán trực tuyến'), findsOneWidget);
-      expect(find.text('Thanh toán tại bệnh viện'), findsNothing);
+      expect(find.text('Thanh toán trực tuyến'), findsNothing);
+      expect(find.textContaining('Thanh toán tại bệnh viện'), findsOneWidget);
 
       await tester.tap(
         find.widgetWithText(ElevatedButton, 'Xác nhận đặt khám'),
@@ -63,10 +65,7 @@ void main() {
       expect(service.createCalls, 1);
       expect(repository.bootstrapAppointments, [appointment]);
       expect(repository.bootstrapPatientIds, ['patient-1']);
-      expect(
-        paymentStore.receipts['apt-1']?.status,
-        AppointmentPaymentStatus.paid,
-      );
+      expect(paymentStore.receipts, isEmpty);
       expect(find.text('Đặt khám thành công!'), findsOneWidget);
 
       await tester.tap(find.text('Xem phiếu khám'));
@@ -109,6 +108,7 @@ void main() {
         demoMode: false,
       ),
     );
+    await tester.pump();
 
     expect(find.text('Chi phí khám dự kiến'), findsOneWidget);
     expect(find.text('Thanh toán trực tuyến'), findsNothing);
@@ -140,6 +140,7 @@ void main() {
         patientOverride: patient,
       ),
     );
+    await tester.pump();
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('open-journey-apt-1')), findsNothing);
@@ -162,6 +163,7 @@ void main() {
           patientOverride: patient,
         ),
       );
+      await tester.pump();
       await tester.pumpAndSettle();
 
       expect(service.getAppointmentsCalls, 1);
@@ -194,6 +196,7 @@ void main() {
     await tester.pumpWidget(
       integrationApp(router: router, service: service, repository: repository),
     );
+    await tester.pump();
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('open-journey-detail')), findsOneWidget);
@@ -227,6 +230,7 @@ void main() {
           repository: repository,
         ),
       );
+      await tester.pump();
 
       await tester.tap(
         find.widgetWithText(ElevatedButton, 'Xác nhận đặt khám'),
@@ -261,6 +265,7 @@ void main() {
     await tester.pumpWidget(
       integrationApp(router: router, service: service, repository: repository),
     );
+    await tester.pump();
 
     await tester.tap(find.widgetWithText(ElevatedButton, 'Xác nhận đặt khám'));
     await tester.pump();
@@ -298,6 +303,7 @@ void main() {
           controller: controller,
         ),
       );
+      await tester.pump();
       await tester.tap(
         find.widgetWithText(ElevatedButton, 'Xác nhận đặt khám'),
       );
@@ -339,6 +345,7 @@ void main() {
           repository: repository,
         ),
       );
+      await tester.pump();
       await tester.tap(
         find.widgetWithText(ElevatedButton, 'Xác nhận đặt khám'),
       );
@@ -371,6 +378,7 @@ void main() {
           repository: repository,
         ),
       );
+      await tester.pump();
       await tester.pumpAndSettle();
 
       expect(find.byKey(const Key('open-journey-detail')), findsNothing);
@@ -392,6 +400,7 @@ void main() {
     await tester.pumpWidget(
       integrationApp(router: router, service: service, repository: repository),
     );
+    await tester.pump();
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('open-journey-detail')), findsNothing);
@@ -417,6 +426,7 @@ void main() {
           repository: repository,
         ),
       );
+      await tester.pump();
       await tester.pumpAndSettle();
 
       for (final appointment in appointments) {
@@ -441,6 +451,7 @@ void main() {
     await tester.pumpWidget(
       integrationApp(router: router, service: service, repository: repository),
     );
+    await tester.pump();
     await tester.pumpAndSettle();
 
     expect(find.text('Bạn không có quyền xem phiếu khám này.'), findsOneWidget);
@@ -478,6 +489,7 @@ void main() {
         controller: controller,
       ),
     );
+    await tester.pump();
     await tester.pumpAndSettle();
     await tester.tap(find.text('Hủy lịch khám'));
     await tester.pumpAndSettle();
@@ -520,6 +532,7 @@ void main() {
           controller: controller,
         ),
       );
+      await tester.pump();
       await tester.pumpAndSettle();
       await tester.tap(find.text('Hủy lịch khám'));
       await tester.pumpAndSettle();
@@ -563,6 +576,7 @@ Widget integrationApp({
         (ref) => SeededAuthNotifier(scopedPatient.userId),
       ),
       appointmentServiceProvider.overrideWithValue(service),
+      serviceCatalogServiceProvider.overrideWithValue(TestServiceCatalog()),
       appointmentPaymentStoreProvider.overrideWithValue(
         paymentStore ?? InMemoryAppointmentPaymentStore(),
       ),
@@ -770,4 +784,19 @@ class SeededAuthNotifier extends AuthNotifier {
     : super(AuthService(ApiService(), useMock: true)) {
     state = AuthState(status: AuthStatus.authenticated, userId: userId);
   }
+}
+
+class TestServiceCatalog extends ServiceCatalogService {
+  TestServiceCatalog() : super(ApiService());
+  @override
+  Future<List<ServicePrice>> list() async => [
+    ServicePrice.fromJson({
+      'code': 'GENERAL_CONSULTATION',
+      'name': 'Khám thường',
+      'description': 'Test fixture',
+      'amount': 180000,
+      'currency': 'VND',
+      'version': 3,
+    }),
+  ];
 }

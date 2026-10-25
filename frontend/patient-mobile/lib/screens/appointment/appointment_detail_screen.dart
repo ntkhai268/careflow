@@ -7,6 +7,7 @@ import '../../features/journey/application/journey_providers.dart';
 import '../../models/appointment.dart';
 import '../../models/appointment_payment.dart';
 import '../../services/appointment_service.dart';
+import '../../services/notification_refresh.dart';
 import '../../services/appointment_payment_store.dart';
 import '../../utils/api_error_message.dart';
 
@@ -30,6 +31,7 @@ class _AppointmentDetailScreenState
   bool _isLoading = true;
   bool _isCancelling = false;
   String? _error;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -38,6 +40,7 @@ class _AppointmentDetailScreenState
   }
 
   Future<void> _loadAppointment() async {
+    final generation = ++_loadGeneration;
     setState(() {
       _isLoading = true;
       _error = null;
@@ -55,7 +58,7 @@ class _AppointmentDetailScreenState
       final appointment = await service.getAppointmentById(
         widget.appointmentId,
       );
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       final currentScope = ref.read(journeyAccountScopeProvider);
       if (currentScope != scope || appointment.patientId != scope.patientId) {
         setState(() {
@@ -76,13 +79,18 @@ class _AppointmentDetailScreenState
           // a real appointment when local storage is unavailable.
         }
       }
+      if (!mounted ||
+          generation != _loadGeneration ||
+          scope != ref.read(journeyAccountScopeProvider)) {
+        return;
+      }
       setState(() {
         _appointment = appointment;
         _paymentReceipt = paymentReceipt;
         _isLoading = false;
       });
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
       setState(() {
         _error = ApiErrorMessage.from(
           e,
@@ -198,6 +206,10 @@ class _AppointmentDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(
+      notificationRefreshRevisionProvider,
+      (_, _) => _loadAppointment(),
+    );
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -349,6 +361,29 @@ class _AppointmentDetailScreenState
                 const SizedBox(height: AppSpacing.base),
                 if (_paymentReceipt != null) ...[
                   _buildPaymentCard(_paymentReceipt!),
+                  const SizedBox(height: AppSpacing.base),
+                ],
+                if (appt.quotedAmount != null) ...[
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            appt.serviceName ?? 'Dịch vụ khám',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          Text(
+                            'Báo giá khi đặt lịch: ${_formatCurrency(appt.quotedAmount!)}',
+                          ),
+                          const Text(
+                            'Thanh toán theo hướng dẫn của bệnh viện. Báo giá không phải xác nhận đã thanh toán.',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                   const SizedBox(height: AppSpacing.base),
                 ],
                 if (_canOpenVisitTicket(appt)) ...[

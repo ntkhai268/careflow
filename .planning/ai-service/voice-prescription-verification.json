@@ -1,0 +1,151 @@
+{
+  "checkedAt": "2026-10-21T03:34:33.346236+00:00",
+  "repository": "/Users/dangkhoii/careflow",
+  "branch": "develop",
+  "javaTests": [
+    {
+      "name": "com.careflow.ai.voice.VoiceDisabledApplicationTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.careflow.ai.voice.VoiceRouteFilterTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.careflow.ai.voice.VoiceHttpIntegrationTest",
+      "tests": "2",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    },
+    {
+      "name": "com.careflow.ai.voice.VoiceJobTest",
+      "tests": "8",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0"
+    }
+  ],
+  "javaTestsPassed": 13,
+  "pythonTestsPassed": 11,
+  "contractFixtures": {
+    "evaluationKind": "synthetic_contract_fixtures_not_clinical_benchmark",
+    "samples": 6,
+    "passed": 6,
+    "results": [
+      {
+        "id": "vp-1",
+        "passed": true
+      },
+      {
+        "id": "vp-2",
+        "passed": true
+      },
+      {
+        "id": "vp-3",
+        "passed": true
+      },
+      {
+        "id": "vp-4",
+        "passed": true
+      },
+      {
+        "id": "vp-5",
+        "passed": true
+      },
+      {
+        "id": "vp-6",
+        "passed": true
+      }
+    ],
+    "humanTestSamples": 0
+  },
+  "installedWheelLiveTest": {
+    "passed": true,
+    "installed_from_wheel": true,
+    "offline_network_enforced": true,
+    "release_id": "asr-round2-20261020-local",
+    "source_audio_type": "synthetic_tts_dev_fixture",
+    "input_audio_seconds": 6.744,
+    "transcript_nonempty": true,
+    "returned_schema": "careflow.voice-prescription.v1",
+    "audio_invalid_status": 422,
+    "elapsed_seconds": 4.041,
+    "clinical_quality_claim": false
+  },
+  "gitnexus": {
+    "legacyImpact": "LOW",
+    "legacyDirectCaller": "AiVoiceController.processVoiceToFields",
+    "newValidatorImpact": "HIGH",
+    "newValidatorAffectedFlows": [
+      "audio",
+      "text",
+      "revise"
+    ],
+    "newValidatorNoFurtherEditsAfterHighImpact": true,
+    "indexRefreshed": true,
+    "partialCoverageNote": "Graph reports unresolved receiver typing; low/zero shared axes do not waive HIGH risk",
+    "detectChangesWholeDirtyCheckout": {},
+    "detectChangesScopeNote": "Includes pre-existing uncommitted changes outside AI; not claimed as a clean or AI-only diff."
+  },
+  "featureDefaultEnabled": false,
+  "remoteDatabaseTouched": false,
+  "productionRuntimeEnabled": false,
+  "frontendChanged": false,
+  "committed": false,
+  "pushed": false,
+  "verificationScope": "Java HTTP tests use isolated H2 and fixture Identity/Consultation/Prescription/worker; live offline Python worker uses real MLX round2 adapter on synthetic audio. Not a hospital E2E or clinical quality gate.",
+  "filesSha256": {
+    "careflow-ai-service/inference/voice-prescription/.gitignore": "b0242782b836bdea28476493923766cb8e838ef470cf136b593a1d9ebfc4c7d5",
+    "careflow-ai-service/inference/voice-prescription/MANIFEST.in": "8ea4aee7a3ffdf3e2d0b8f06e3c1d8aa26cb9ceebf1eba0e554c9e0859b11e78",
+    "careflow-ai-service/inference/voice-prescription/contracts/evaluation-baseline.json": "5df3d96285daf991eba7250bc2e26b4c7a56122333465f539f8cbc7fb293ecde",
+    "careflow-ai-service/inference/voice-prescription/contracts/openapi.yaml": "cbddadbef62dcfec0bda0714639733cfbd2da5966d438b9c9ad09ef69c1789c5",
+    "careflow-ai-service/inference/voice-prescription/contracts/request-text.example.json": "6680426f814f2a13a69c03f48b8e6a4128afb3b1be7515f977e67b9d063a27cd",
+    "careflow-ai-service/inference/voice-prescription/contracts/result.example.json": "5f976ae2da1db22ecc09266d4733572a3837af024221d8f9e7a391666ebdbafd",
+    "careflow-ai-service/inference/voice-prescription/contracts/result.schema.json": "3d201b931c562e73e874a7f388e815645d60847806e3d24f20d048d7e8519740",
+    "careflow-ai-service/inference/voice-prescription/contracts/source-provenance.json": "6998c109c9662c4eec0c6ef9a2ebbff3bfb383950e95940baade6ed20ebe0994",
+    "careflow-ai-service/inference/voice-prescription/contracts/synthetic-fixtures.jsonl": "852e5cc21321bce22d37056a8cdad64b8b473c6c6c5c6df2f1b96acf2501fe5d",
+    "careflow-ai-service/inference/voice-prescription/model-manifest.example.json": "3f0b9b04d9d682bf544933e0a831af3b22085e8014c09f3d2ffa9cf1c86c91f5",
+    "careflow-ai-service/inference/voice-prescription/pyproject.toml": "6336c1f5187db096095d7a754af57b396d5424f98d7eaec45400a8527e137aad",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/__init__.py": "bd3972496ef75108064f67d4ea906cf02ee692080b30201c0b56ed700437600c",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/aliases.py": "ca5b535ee7b15c013f3661ee7cda2388b27ee913541a86bbf944159bf4269163",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/catalog.py": "bdf6c3f834cd2ee569bd8162546df64fbb9117e10d0511d933de182d0ad66669",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/extraction.py": "154ddc4ac01a9eb36d8435715f6af4c54e8befa2a92fbf6c0357db449280a678",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/inference.py": "cb8a0629deb58a238ebe153aa6f86157b07dfad30646824e6901378bc4330729",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/models.py": "e4d304413a8bf7b8727348bf09a48d48218c5bbc2678a3b8e311a3345fd3ba63",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/phonetics.py": "4a308b8dc07f695350f48183a45fc5fc2e318b0ae5e8dd1e452e459477b4e1b2",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_core/text.py": "78548a2db18e811ad8ad2e51118ef6858a00af34425907bace667bd333d1d4e3",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_worker/__init__.py": "c7dfe872aaf2814a75eb154e99484fe81448ce88b0ffb2606c3a022a0b6cbc1e",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_worker/runtime.py": "292922a456805982aa7fb63b93b1330c51f6803062d38f472f23d9a2d9cf521a",
+    "careflow-ai-service/inference/voice-prescription/src/careflow_voice_worker/server.py": "405e780cc4a4c1972941ca1767cf515e97b6056de1c918075257c57335b41702",
+    "careflow-ai-service/inference/voice-prescription/tests/test_inference.py": "d1c1fc4956ff2c22e613857ab25b6d1af61e8bf0937480da821e0dca485a3cc6",
+    "careflow-ai-service/inference/voice-prescription/tools/evaluate_fixtures.py": "e961c38c70555db3b1283883f1f546891350fb53d53f839f245e5b4072c4bdea",
+    "careflow-ai-service/inference/voice-prescription/tools/provision_model.py": "bb4cce76308e6b2c6a6b659fb71e8750b18ed05e3c48fe45943d522bed3bdeab",
+    "careflow-ai-service/inference/voice-prescription/uv.lock": "6ab01b31980a7bba2c53bff490918d8c3541352c89e998a98ab4e246d6591b94",
+    "careflow-ai-service/src/main/java/com/careflow/ai/voice/VoiceConfiguration.java": "a65ff896ec5ea0f96577c94f9afd0d1e0d8037532a7f95f060ac32d017c112a6",
+    "careflow-ai-service/src/main/java/com/careflow/ai/voice/VoiceDependencies.java": "27fe9696f27023483da6705110c82d728875730a04edbeac0ed6756ca257b0d3",
+    "careflow-ai-service/src/main/java/com/careflow/ai/voice/VoiceExceptionHandler.java": "32afcd6294d7c48f989e5acf75aff205b5772aeab80722bdc83fbe971a9698b6",
+    "careflow-ai-service/src/main/java/com/careflow/ai/voice/VoiceJobService.java": "ed67564b4ebad15bc65a1aa67308f1eca360437ff30aedc8573985a728a6e6e9",
+    "careflow-ai-service/src/main/java/com/careflow/ai/voice/VoiceJobStore.java": "40b5d48c75c58a757ec75cd04520b72fd57a56361196f38b7f180e1835254d6e",
+    "careflow-ai-service/src/main/java/com/careflow/ai/voice/VoicePrescriptionController.java": "18b55137ef3703ee6dc5b750e43334405b6da334671da03c164f81aff4b2b409",
+    "careflow-ai-service/src/main/java/com/careflow/ai/voice/VoiceProperties.java": "7c8ae5e86f6632c035d3dfa7517859bc17df790a3ba4b16a850c8a0b9dc9b226",
+    "careflow-ai-service/src/main/java/com/careflow/ai/voice/VoiceRemoteClient.java": "401614372633d09ab86ec8b03677dc9355552ef6a2e0f22b5db073da419956df",
+    "careflow-ai-service/src/main/java/com/careflow/ai/voice/VoiceResultValidator.java": "6f49927cf0c197e4bcd60aa2ccb6f5d9e3c9d9cf2f6dd775ecfe6546e57b4d1b",
+    "careflow-ai-service/src/main/java/com/careflow/ai/voice/VoiceRouteFilter.java": "d06c2938846b0b8e77706409c445b292d3abbd8a0f18f2e81e0ede316dad996f",
+    "careflow-ai-service/src/main/java/com/careflow/ai/voice/VoiceTypes.java": "3ed58e896023a53dc7e1fca16d3d08bb2dd04b4cfdc82d062a8d4cc7ba412a7b",
+    "careflow-ai-service/src/main/resources/db/voice-migration/V1__voice_prescription_jobs.sql": "1e0e3eaf1708695b502cbb1c812a0c0858bc3fab8f462767e74e269c2c7052e2",
+    "careflow-ai-service/src/test/java/com/careflow/ai/voice/VoiceDisabledApplicationTest.java": "ba6bd7f305d510aae2cca26ba8a6e463b0ba22df3c1dbc81c3612d23cefd5909",
+    "careflow-ai-service/src/test/java/com/careflow/ai/voice/VoiceHttpIntegrationTest.java": "fd62344b47adbbdf0104ab00d5fd595b66142536701c5bbafbac3b650ef88331",
+    "careflow-ai-service/src/test/java/com/careflow/ai/voice/VoiceJobTest.java": "0ad344e17e3eb37e78d4603064ece11a535c053ca0d58cab468cf7c3c1c58e88",
+    "careflow-ai-service/src/test/java/com/careflow/ai/voice/VoiceRouteFilterTest.java": "12e2862334c3b7fd70b642f584f4fdfcbc3d93a4083e23f583e8812c911ea96f",
+    "careflow-ai-service/pom.xml": "7ce34f49bb3a3b4316dff033086aefa742db4f6b6796088a2fe5f46da37299fd",
+    "careflow-ai-service/src/main/resources/application.yml": "3b3db2dc439876188fe1149aece72ca7f037c8e9e9b36fc1cc632f6ed1688ba5",
+    "careflow-ai-service/src/main/java/com/careflow/ai/service/AiVoiceProcessingService.java": "5e94000f0b6b548eaa95bc3ed0a3af09acb8c52076590ee4c478cb59ee6bdca9"
+  }
+}

@@ -47,7 +47,6 @@ management:
         include: health,info
 
 jwt:
-  secret: ${JWT_SECRET:careflow-demo-jwt-secret-key-2026-must-be-at-least-256-bits-long}
   issuer: careflow-identity
 
 notification:

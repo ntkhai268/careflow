@@ -29,6 +29,11 @@ public class LabOrder extends BaseEntity {
     @Column(name = "ordered_by_doctor_id", nullable = false)
     private UUID orderedByDoctorId;
 
+    @Column(name="source_queue_entry_id") private UUID sourceQueueEntryId;
+    @Column(name="source_verified_by") private UUID sourceVerifiedBy;
+    @Column(name="source_verified_at") private java.time.Instant sourceVerifiedAt;
+    @Version @Column(nullable=false) private Long version;
+
     @Column(name = "department_id")
     private UUID departmentId;
 

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/health_record_provider.dart';
 import '../../utils/api_error_message.dart';
+import '../../providers/auth_provider.dart';
 
 class HealthRecordListScreen extends ConsumerWidget {
   final String patientId;
@@ -20,6 +21,35 @@ class HealthRecordListScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final auth = ref.watch(authProvider);
+    final selected = ref.watch(healthRecordPatientProvider(patientId));
+    if (auth.status != AuthStatus.authenticated) {
+      return const Scaffold(
+        body: Center(child: Text('Cần đăng nhập để xem hồ sơ.')),
+      );
+    }
+    final patient = selected.valueOrNull;
+    if (selected.isLoading || patient == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Hồ sơ sức khỏe')),
+        body: selected.isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text('Chưa xác minh được quyền xem hồ sơ.'),
+                    TextButton(
+                      onPressed: () => ref.invalidate(
+                        healthRecordPatientProvider(patientId),
+                      ),
+                      child: const Text('Thử lại'),
+                    ),
+                  ],
+                ),
+              ),
+      );
+    }
     final healthRecordsAsync = ref.watch(healthRecordsProvider(patientId));
 
     return Scaffold(
@@ -51,7 +81,7 @@ class HealthRecordListScreen extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        patientName,
+                        patient.fullName,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -59,7 +89,11 @@ class HealthRecordListScreen extends ConsumerWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '$patientGender - $patientBirthYear',
+                        '${patient.gender == 'FEMALE'
+                            ? 'Nữ'
+                            : patient.gender == 'MALE'
+                            ? 'Nam'
+                            : 'Khác'}${patient.dateOfBirth == null ? '' : ' · ${patient.dateOfBirth!.year}'}',
                         style: const TextStyle(
                           color: Colors.grey,
                           fontSize: 14,

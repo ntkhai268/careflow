@@ -5,13 +5,15 @@ import { directoryApi, DepartmentItem, RoomItem, DoctorProfileItem } from "@/lib
 
 export default function AdminDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
+  const [error,setError] = useState("");
+  const [retry,setRetry] = useState(0);
   const [departments, setDepartments] = useState<DepartmentItem[] | null>(null);
   const [rooms, setRooms] = useState<RoomItem[] | null>(null);
   const [doctors, setDoctors] = useState<DoctorProfileItem[] | null>(null);
 
   useEffect(() => {
     async function loadRealData() {
-      setIsLoading(true);
+      setIsLoading(true);setError("");
       try {
         const [deptList, roomList, docList] = await Promise.all([
           directoryApi.getDepartments(),
@@ -22,19 +24,18 @@ export default function AdminDashboardPage() {
         setRooms(roomList ?? []);
         setDoctors(docList ?? []);
       } catch {
-        setDepartments([]);
-        setRooms([]);
-        setDoctors([]);
+        setDepartments(null);setRooms(null);setDoctors(null);
+        setError("Không tải được dữ liệu danh mục từ Directory. Chưa thể xác định số lượng khoa, phòng và bác sĩ.");
       } finally {
         setIsLoading(false);
       }
     }
     loadRealData();
-  }, []);
+  }, [retry]);
 
-  const totalDepts = (departments ?? []).length;
-  const totalRooms = (rooms ?? []).length;
-  const totalDoctors = (doctors ?? []).length;
+  const totalDepts = departments?.length;
+  const totalRooms = rooms?.length;
+  const totalDoctors = doctors?.length;
 
   return (
     <div className="space-y-6 pb-12">
@@ -52,6 +53,7 @@ export default function AdminDashboardPage() {
         </p>
       </div>
 
+      {error&&<div role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">{error} <button className="ml-3 underline" onClick={()=>setRetry(value=>value+1)}>Thử lại danh mục</button></div>}
       {/* Real Master Data Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <div className="border border-card-border bg-card-bg p-4 rounded-xl shadow-sm">
@@ -59,7 +61,7 @@ export default function AdminDashboardPage() {
           {isLoading ? (
             <div className="h-8 bg-gray-100 rounded-md animate-pulse mt-1" />
           ) : (
-            <p className="text-2xl font-extrabold text-purple-700 mt-1">{totalDepts} khoa</p>
+            <p className="text-2xl font-extrabold text-purple-700 mt-1">{totalDepts ?? "—"} khoa</p>
           )}
         </div>
 
@@ -68,7 +70,7 @@ export default function AdminDashboardPage() {
           {isLoading ? (
             <div className="h-8 bg-gray-100 rounded-md animate-pulse mt-1" />
           ) : (
-            <p className="text-2xl font-extrabold text-emerald-600 mt-1">{totalRooms} phòng</p>
+            <p className="text-2xl font-extrabold text-emerald-600 mt-1">{totalRooms ?? "—"} phòng</p>
           )}
         </div>
 
@@ -77,15 +79,15 @@ export default function AdminDashboardPage() {
           {isLoading ? (
             <div className="h-8 bg-gray-100 rounded-md animate-pulse mt-1" />
           ) : (
-            <p className="text-2xl font-extrabold text-[#6E2582] mt-1">{totalDoctors} bác sĩ</p>
+            <p className="text-2xl font-extrabold text-[#6E2582] mt-1">{totalDoctors ?? "—"} bác sĩ</p>
           )}
         </div>
 
         <div className="border border-card-border bg-card-bg p-4 rounded-xl shadow-sm">
-          <p className="text-[11px] font-bold text-[#6A5C70] uppercase">Trạng thái CSDL Remote</p>
+          <p className="text-[11px] font-bold text-[#6A5C70] uppercase">Nguồn dữ liệu danh mục</p>
           <div className="flex items-center gap-2 mt-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-xs font-bold text-emerald-700">Đã kết nối PostgreSQL</span>
+            <span className={`w-2 h-2 rounded-full ${error||isLoading?"bg-slate-400":"bg-emerald-500"}`} />
+            <span className="text-xs font-bold text-emerald-700">{isLoading?"Đang tải từ Directory":error?"Chưa tải được danh mục":"Đã tải dữ liệu từ Directory API"}</span>
           </div>
         </div>
       </div>
@@ -96,7 +98,7 @@ export default function AdminDashboardPage() {
         <div className="border border-card-border bg-card-bg p-5 rounded-xl shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-[#2B1D30]">Danh sách Khoa chuyên môn trong Hệ thống</h2>
-            <span className="text-xs font-bold text-purple-700">{totalDepts} khoa</span>
+            <span className="text-xs font-bold text-purple-700">{totalDepts ?? "—"} khoa</span>
           </div>
 
           {isLoading ? (
@@ -105,7 +107,7 @@ export default function AdminDashboardPage() {
                 <div key={i} className="h-12 bg-purple-50 rounded-lg animate-pulse" />
               ))}
             </div>
-          ) : totalDepts === 0 ? (
+          ) : error ? (<p className="text-sm text-amber-800">Chưa tải được danh sách khoa.</p>) : totalDepts === 0 ? (
             <p className="text-xs text-gray-500 text-center py-4">Chưa có khoa nào trong CSDL</p>
           ) : (
             <div className="space-y-2 text-xs max-h-72 overflow-y-auto">
@@ -129,7 +131,7 @@ export default function AdminDashboardPage() {
         <div className="border border-card-border bg-card-bg p-5 rounded-xl shadow-sm space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-[#2B1D30]">Danh sách Phòng khám & Cận lâm sàng</h2>
-            <span className="text-xs font-bold text-emerald-700">{totalRooms} phòng</span>
+            <span className="text-xs font-bold text-emerald-700">{totalRooms ?? "—"} phòng</span>
           </div>
 
           {isLoading ? (
@@ -138,7 +140,7 @@ export default function AdminDashboardPage() {
                 <div key={i} className="h-12 bg-gray-50 rounded-lg animate-pulse" />
               ))}
             </div>
-          ) : totalRooms === 0 ? (
+          ) : error ? (<p className="text-sm text-amber-800">Chưa tải được danh sách phòng.</p>) : totalRooms === 0 ? (
             <p className="text-xs text-gray-500 text-center py-4">Chưa có phòng nào trong CSDL</p>
           ) : (
             <div className="space-y-2 text-xs max-h-72 overflow-y-auto">

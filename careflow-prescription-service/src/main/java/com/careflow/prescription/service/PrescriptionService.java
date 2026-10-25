@@ -47,6 +47,8 @@ public class PrescriptionService {
     private final PatientIdentityClient patientIdentityClient;
     private final RabbitTemplate rabbitTemplate;
     private final ObjectMapper objectMapper;
+    @org.springframework.beans.factory.annotation.Autowired private PrescriptionEventOutbox eventOutbox;
+    @org.springframework.beans.factory.annotation.Autowired private PrescriptionAiReleaseGuard aiReleaseGuard;
 
     @Transactional
     public PrescriptionResponse createPrescription(CreatePrescriptionRequest request,
@@ -65,9 +67,23 @@ public class PrescriptionService {
         }
     }
 
-    private void validateConsultationStatus(UUID consultationId) {
-        String status = consultationClient.getConsultationStatus(consultationId);
-        if (status != null && (status.equalsIgnoreCase("COMPLETED") || status.equalsIgnoreCase("CANCELLED"))) {
+    private String verifiedConsultationStatus(UUID consultationId, UUID patientId, UUID doctorId) {
+        var context = consultationClient.getConsultation(consultationId);
+        if (context == null || !consultationId.equals(context.id()) || context.patientId() == null
+                || context.doctorId() == null || context.status() == null
+                || !java.util.Set.of("IN_PROGRESS", "AWAITING_CLS", "AWAITING_REVIEW", "READY_TO_COMPLETE",
+                    "COMPLETED", "CANCELLED", "TRANSFERRED").contains(context.status())) {
+            throw new BusinessException(503, "Consultation identity and status could not be verified");
+        }
+        if (!doctorId.equals(context.doctorId()) || !patientId.equals(context.patientId())) {
+            throw new BusinessException(403, "Prescription patient and doctor must match the consultation");
+        }
+        return context.status();
+    }
+
+    private void validateConsultationStatus(UUID consultationId, UUID patientId, UUID doctorId) {
+        String status = verifiedConsultationStatus(consultationId, patientId, doctorId);
+        if (status.equals("COMPLETED") || status.equals("CANCELLED") || status.equals("TRANSFERRED")) {
             throw new BusinessException(400, "Không thể thao tác đơn thuốc vì phiên khám đã hoàn tất hoặc bị hủy (Trạng thái: " + status + ")");
         }
     }
@@ -75,6 +91,10 @@ public class PrescriptionService {
     private void validateMedicineItems(CreatePrescriptionRequest request) {
         if (request.getItems() == null) return;
         for (var item : request.getItems()) {
+            if (item.getMedicineCode() == null || item.getMedicineCode().isBlank()) {
+                validateNamedDraft(item);
+                continue;
+            }
             boolean valid = drugRepository.existsByCode(item.getMedicineCode());
             if (!valid) {
                 throw new BusinessException(400, "Thuốc " + item.getMedicineName() + " (Mã: " + item.getMedicineCode() + ") không nằm trong danh mục được phép kê của bệnh viện.");
@@ -89,6 +109,10 @@ public class PrescriptionService {
     private void validateAmendmentMedicineItems(AmendPrescriptionRequest request) {
         if (request.getItems() == null) return;
         for (PrescriptionItemRequest item : request.getItems()) {
+            if (item.getMedicineCode() == null || item.getMedicineCode().isBlank()) {
+                validateNamedDraft(item);
+                continue;
+            }
             if (!drugRepository.existsByCode(item.getMedicineCode())) {
                 throw new BusinessException(400, "Medicine is not in the hospital catalog: "
                         + item.getMedicineCode());
@@ -96,9 +120,19 @@ public class PrescriptionService {
         }
     }
 
-    private void validateCompletedConsultationForAmendment(UUID consultationId) {
-        String status = consultationClient.getConsultationStatus(consultationId);
-        if (status != null && status.equalsIgnoreCase("CANCELLED")) {
+    private void validateNamedDraft(PrescriptionItemRequest item) {
+        if (item.getMedicineName() == null || item.getMedicineName().isBlank() || item.getMedicineName().length() > 255) {
+            throw new BusinessException(422, "Nhập tên thuốc trước khi lưu toa nháp.");
+        }
+        item.setMedicineCode(null);
+        if (item.getQuantity() != null && item.getQuantity() <= 0 || item.getDuration() != null && item.getDuration() <= 0) {
+            throw new BusinessException(422, "Số lượng và số ngày phải lớn hơn 0 hoặc để trống khi chưa xác định.");
+        }
+    }
+
+    private void validateCompletedConsultationForAmendment(UUID consultationId, UUID patientId, UUID doctorId) {
+        String status = verifiedConsultationStatus(consultationId, patientId, doctorId);
+        if (status.equals("CANCELLED") || status.equals("TRANSFERRED")) {
             throw new BusinessException(400, "Cannot amend a prescription for a cancelled consultation");
         }
     }
@@ -106,7 +140,7 @@ public class PrescriptionService {
     @Transactional
     public PrescriptionResponse createPrescription(CreatePrescriptionRequest request) {
         // Validate consultation status
-        validateConsultationStatus(request.getConsultationId());
+        validateConsultationStatus(request.getConsultationId(), request.getPatientId(), request.getDoctorId());
 
         // Validate medicine codes
         validateMedicineItems(request);
@@ -118,6 +152,8 @@ public class PrescriptionService {
                 .diagnosis(request.getDiagnosis())
                 .notes(request.getNotes())
                 .followUpDate(request.getFollowUpDate())
+                .followUpDepartment(request.getFollowUpDepartment()).followUpTimeSlot(request.getFollowUpTimeSlot())
+                .followUpStatus(request.getFollowUpDate()==null?"NOT_REQUESTED":"PENDING")
                 .status(PrescriptionStatus.DRAFT)
                 .build();
 
@@ -154,14 +190,14 @@ public class PrescriptionService {
      */
     @Transactional
     public PrescriptionResponse updatePrescription(UUID id, CreatePrescriptionRequest request) {
-        Prescription prescription = findPrescriptionOrThrow(id);
+        Prescription prescription = findPrescriptionForUpdateOrThrow(id);
 
         if (prescription.getStatus() != PrescriptionStatus.DRAFT) {
             throw new BusinessException(400, "Cannot update prescription with status: " + prescription.getStatus());
         }
 
         // Validate consultation status
-        validateConsultationStatus(prescription.getConsultationId());
+        validateConsultationStatus(prescription.getConsultationId(), prescription.getPatientId(), prescription.getDoctorId());
 
         // Validate medicine codes
         validateMedicineItems(request);
@@ -170,6 +206,10 @@ public class PrescriptionService {
         prescription.setDiagnosis(request.getDiagnosis());
         prescription.setNotes(request.getNotes());
         prescription.setFollowUpDate(request.getFollowUpDate());
+        prescription.setFollowUpDepartment(request.getFollowUpDepartment());
+        prescription.setFollowUpTimeSlot(request.getFollowUpTimeSlot());
+        prescription.setFollowUpStatus(request.getFollowUpDate()==null?"NOT_REQUESTED":"PENDING");
+        prescription.setFollowUpAppointmentId(null);prescription.setFollowUpErrorCode(null);
 
         // Xóa items cũ, thêm items mới
         prescription.clearItems();
@@ -191,10 +231,17 @@ public class PrescriptionService {
      */
     @Transactional
     public PrescriptionResponse confirmPrescription(UUID id, UUID actorUserId, String actorRole) {
-        Prescription prescription = findPrescriptionOrThrow(id);
         requireDoctor(actorUserId, actorRole);
+        Prescription prescription = findPrescriptionForUpdateOrThrow(id);
         if (!actorUserId.equals(prescription.getDoctorId())) {
             throw new BusinessException(403, "Doctor is not assigned to this prescription");
+        }
+
+        if (prescription.getStatus() == PrescriptionStatus.CONFIRMED
+                || prescription.getStatus() == PrescriptionStatus.DISPENSED) {
+            validateCompletedConsultationForAmendment(prescription.getConsultationId(),
+                    prescription.getPatientId(), prescription.getDoctorId());
+            return prescriptionMapper.toResponse(prescription);
         }
 
         if (prescription.getStatus() != PrescriptionStatus.DRAFT) {
@@ -207,11 +254,12 @@ public class PrescriptionService {
 
         // Validate consultation status
         if (prescription.getReplacesPrescriptionId() != null) {
-            validateCompletedConsultationForAmendment(prescription.getConsultationId());
+            validateCompletedConsultationForAmendment(prescription.getConsultationId(), prescription.getPatientId(), prescription.getDoctorId());
         } else {
-            validateConsultationStatus(prescription.getConsultationId());
+            validateConsultationStatus(prescription.getConsultationId(), prescription.getPatientId(), prescription.getDoctorId());
         }
 
+        if(aiReleaseGuard!=null)aiReleaseGuard.validate(prescription);
         prescription.setStatus(PrescriptionStatus.CONFIRMED);
         prescription.setDispensingServicePointId(directoryClient.getActivePharmacyServicePointId());
         prescription.setConfirmedAt(Instant.now());
@@ -233,20 +281,7 @@ public class PrescriptionService {
         EventEnvelope envelope = new EventEnvelope(
                 UUID.randomUUID(), "PrescriptionIssued", 1, saved.getId(), 1,
                 Instant.now(), "prescription-service", saved.getId().toString(), payload);
-        rabbitTemplate.convertAndSend(AppConstants.EXCHANGE_PRESCRIPTION,
-                AppConstants.RK_PRESCRIPTION_ISSUED, envelope);
-
-        // Tự động kích hoạt tạo lịch hẹn tái khám nếu có followUpDate
-        if (saved.getFollowUpDate() != null) {
-            appointmentClient.createFollowUpAppointment(
-                    saved.getPatientId(),
-                    saved.getDoctorId(),
-                    saved.getConsultationId(),
-                    saved.getFollowUpDate(),
-                    saved.getNotes(),
-                    actorUserId
-            );
-        }
+        appendEvent(saved,AppConstants.RK_PRESCRIPTION_ISSUED,envelope);
 
         return response;
     }
@@ -255,15 +290,17 @@ public class PrescriptionService {
     public PrescriptionResponse cancelPrescription(UUID id, String reason,
                                                    UUID actorUserId, String actorRole) {
         if (actorUserId == null || actorRole == null
-                || (!AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole)
-                && !AppConstants.ROLE_ADMIN.equalsIgnoreCase(actorRole))) {
-            throw new BusinessException(403, "Doctor or ADMIN access is required");
+                || !AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole)) {
+            throw new BusinessException(403, "Assigned doctor access is required");
         }
 
-        Prescription prescription = findPrescriptionOrThrow(id);
+        Prescription prescription = findPrescriptionForUpdateOrThrow(id);
         if (AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole)
                 && !actorUserId.equals(prescription.getDoctorId())) {
             throw new BusinessException(403, "Only the assigned doctor can cancel this prescription");
+        }
+        if (AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole) && !canRead(prescription, actorUserId, actorRole)) {
+            throw new BusinessException(403, "Doctor is no longer responsible for this consultation");
         }
         if (prescription.getStatus() == PrescriptionStatus.CANCELLED) {
             return prescriptionMapper.toResponse(prescription);
@@ -292,9 +329,14 @@ public class PrescriptionService {
     public PrescriptionResponse updatePrescription(UUID id, CreatePrescriptionRequest request,
                                                    UUID actorUserId, String actorRole) {
         requireDoctor(actorUserId, actorRole);
-        Prescription prescription = findPrescriptionOrThrow(id);
+        Prescription prescription = findPrescriptionForUpdateOrThrow(id);
         if (!actorUserId.equals(prescription.getDoctorId())) {
             throw new BusinessException(403, "Only the assigned doctor can update this prescription");
+        }
+        if ((request.getDoctorId() != null && !actorUserId.equals(request.getDoctorId()))
+                || !prescription.getPatientId().equals(request.getPatientId())
+                || !prescription.getConsultationId().equals(request.getConsultationId())) {
+            throw new BusinessException(403, "Cannot change the prescription patient, doctor or consultation");
         }
         request.setDoctorId(actorUserId);
         return updatePrescription(id, request);
@@ -304,7 +346,7 @@ public class PrescriptionService {
     public PrescriptionResponse amendPrescription(UUID id, AmendPrescriptionRequest request,
                                                   UUID actorUserId, String actorRole) {
         requireDoctor(actorUserId, actorRole);
-        Prescription original = findPrescriptionOrThrow(id);
+        Prescription original = findPrescriptionForUpdateOrThrow(id);
         if (!actorUserId.equals(original.getDoctorId())) {
             throw new BusinessException(403, "Only the assigned doctor can amend this prescription");
         }
@@ -312,6 +354,7 @@ public class PrescriptionService {
             throw new BusinessException(409, "Only a confirmed prescription can be amended");
         }
 
+        validateCompletedConsultationForAmendment(original.getConsultationId(), original.getPatientId(), original.getDoctorId());
         validateAmendmentMedicineItems(request);
         Prescription replacement = Prescription.builder()
                 .consultationId(original.getConsultationId())
@@ -320,6 +363,8 @@ public class PrescriptionService {
                 .diagnosis(request.getDiagnosis())
                 .notes(request.getNotes())
                 .followUpDate(request.getFollowUpDate())
+                .followUpDepartment(request.getFollowUpDepartment()).followUpTimeSlot(request.getFollowUpTimeSlot())
+                .followUpStatus(request.getFollowUpDate()==null?"NOT_REQUESTED":"PENDING")
                 .replacesPrescriptionId(original.getId())
                 .status(PrescriptionStatus.DRAFT)
                 .build();
@@ -352,20 +397,21 @@ public class PrescriptionService {
                 prescription.getCancelledAt() == null ? Instant.now() : prescription.getCancelledAt(),
                 "prescription-service", prescription.getId().toString(),
                 objectMapper.valueToTree(eventPayload));
-        rabbitTemplate.convertAndSend(AppConstants.EXCHANGE_PRESCRIPTION,
-                AppConstants.RK_PRESCRIPTION_CANCELLED, envelope);
+        appendEvent(prescription,AppConstants.RK_PRESCRIPTION_CANCELLED,envelope);
     }
 
     @Transactional
     public PrescriptionResponse dispensePrescription(UUID id, UUID actorUserId, String actorRole,
                                                       String correlationId) {
         if (actorUserId == null || actorRole == null
-                || !(AppConstants.ROLE_STAFF.equalsIgnoreCase(actorRole)
-                || AppConstants.ROLE_ADMIN.equalsIgnoreCase(actorRole))) {
-            throw new BusinessException(403, "Pharmacy staff or ADMIN access is required");
+                || !AppConstants.ROLE_STAFF.equalsIgnoreCase(actorRole)) {
+            throw new BusinessException(403, "Assigned pharmacy staff access is required");
         }
 
-        Prescription prescription = findPrescriptionOrThrow(id);
+        Prescription prescription = findPrescriptionForUpdateOrThrow(id);
+        if(prescription.getStatus()==PrescriptionStatus.DISPENSED
+                && !actorUserId.equals(prescription.getDispensedByUserId()))
+            throw new BusinessException(403,"Only the dispensing staff member may repeat this operation");
         if (prescription.getStatus() == PrescriptionStatus.DISPENSED) {
             boolean changed = false;
             if (prescription.getDispensingServicePointId() == null
@@ -426,14 +472,12 @@ public class PrescriptionService {
         EventEnvelope envelope = new EventEnvelope(
                 UUID.randomUUID(), "PrescriptionDispensed", 1, saved.getId(), 1,
                 dispensedAt, "prescription-service", correlationId, objectMapper.valueToTree(eventPayload));
-        rabbitTemplate.convertAndSend(AppConstants.EXCHANGE_PRESCRIPTION,
-                "prescription.dispensed", envelope);
+        appendEvent(saved,"prescription.dispensed",envelope);
         return prescriptionMapper.toResponse(saved);
     }
 
     public PrescriptionResponse confirmPrescription(UUID id) {
-        Prescription prescription = findPrescriptionOrThrow(id);
-        return confirmPrescription(id, prescription.getDoctorId(), AppConstants.ROLE_DOCTOR);
+        return confirmPrescription(id, null, null);
     }
 
     /**
@@ -449,6 +493,7 @@ public class PrescriptionService {
 
     @Transactional(readOnly = true)
     public List<PrescriptionResponse> getByConsultation(UUID consultationId, UUID actorUserId, String actorRole) {
+        requireClinicalReader(actorUserId, actorRole);
         return prescriptionRepository.findByConsultationId(consultationId).stream()
                 .filter(prescription -> canRead(prescription, actorUserId, actorRole))
                 .map(prescriptionMapper::toResponse)
@@ -468,29 +513,22 @@ public class PrescriptionService {
 
     @Transactional(readOnly = true)
     public List<PrescriptionResponse> getByPatient(UUID patientId, UUID actorUserId, String actorRole) {
+        requireClinicalReader(actorUserId, actorRole);
+        patientIdentityClient.requirePatientAccess(patientId, actorUserId, actorRole);
         if (AppConstants.ROLE_PATIENT.equalsIgnoreCase(actorRole)) {
-            UUID ownPatientId = patientIdentityClient.patientIdForUser(actorUserId, actorRole);
-            if (!patientId.equals(ownPatientId)) {
-                throw new BusinessException(403, "Cannot read another patient's prescriptions");
-            }
             return prescriptionRepository.findByPatientIdOrderByCreatedAtDesc(patientId)
                     .stream()
                     .filter(value -> value.getStatus() == PrescriptionStatus.CONFIRMED
                             || value.getStatus() == PrescriptionStatus.DISPENSED)
                     .map(prescriptionMapper::toResponse)
                     .toList();
-        } else if (!AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole)
-                && !AppConstants.ROLE_ADMIN.equalsIgnoreCase(actorRole)) {
-            throw new BusinessException(403, "Prescription history access is not allowed");
-        }
-        if (AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole)) {
+        } else {
             return prescriptionRepository.findByPatientIdOrderByCreatedAtDesc(patientId)
                     .stream()
                     .filter(value -> actorUserId.equals(value.getDoctorId()))
                     .map(prescriptionMapper::toResponse)
                     .toList();
         }
-        return getByPatient(patientId);
     }
 
     /**
@@ -504,6 +542,11 @@ public class PrescriptionService {
                 .toList();
     }
 
+    private Prescription findPrescriptionForUpdateOrThrow(UUID id) {
+        return prescriptionRepository.findByIdForUpdate(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Prescription", "id", id));
+    }
+
     private Prescription findPrescriptionOrThrow(UUID id) {
         return prescriptionRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Prescription", "id", id));
@@ -511,17 +554,36 @@ public class PrescriptionService {
 
     private boolean canRead(Prescription prescription, UUID actorUserId, String actorRole) {
         if (actorUserId == null || actorRole == null) return false;
-        if (AppConstants.ROLE_ADMIN.equalsIgnoreCase(actorRole)) return true;
         if (AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole)) {
-            return actorUserId.equals(prescription.getDoctorId());
+            try {
+                var consultation = consultationClient.getConsultation(prescription.getConsultationId());
+                if (consultation == null) throw new BusinessException(503, "Cannot verify current consultation responsibility");
+                return actorUserId.equals(consultation.doctorId())
+                        && prescription.getPatientId().equals(consultation.patientId());
+            } catch (BusinessException exception) {
+                if (exception.getStatus() == 403 || exception.getStatus() == 404) return false;
+                throw exception;
+            }
         }
         if (AppConstants.ROLE_PATIENT.equalsIgnoreCase(actorRole)) {
-            UUID ownPatientId = patientIdentityClient.patientIdForUser(actorUserId, actorRole);
-            return ownPatientId.equals(prescription.getPatientId())
-                    && (prescription.getStatus() == PrescriptionStatus.CONFIRMED
-                    || prescription.getStatus() == PrescriptionStatus.DISPENSED);
+            if (prescription.getStatus() != PrescriptionStatus.CONFIRMED
+                    && prescription.getStatus() != PrescriptionStatus.DISPENSED) return false;
+            try {
+                patientIdentityClient.requirePatientAccess(prescription.getPatientId(), actorUserId, actorRole);
+            } catch (BusinessException exception) {
+                if (exception.getStatus() == 403 || exception.getStatus() == 404) return false;
+                throw exception;
+            }
+            return true;
         }
         return false;
+    }
+
+    private void requireClinicalReader(UUID actorUserId, String actorRole) {
+        if (actorUserId == null || !(AppConstants.ROLE_PATIENT.equalsIgnoreCase(actorRole)
+                || AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole))) {
+            throw new BusinessException(403, "Patient owner or assigned doctor access is required");
+        }
     }
 
     private void requireReadAccess(Prescription prescription, UUID actorUserId, String actorRole) {
@@ -538,6 +600,12 @@ public class PrescriptionService {
         if (!canRead(prescription, actorUserId, actorRole)) {
             throw new BusinessException(403, "You are not allowed to view this prescription");
         }
+    }
+
+    private void appendEvent(Prescription prescription,String routingKey,EventEnvelope event){
+        // The required production bean joins the JPA transaction; null is only for old manual unit fixtures.
+        if(eventOutbox!=null)eventOutbox.append(prescription.getId(),event.eventType(),routingKey,event);
+        else rabbitTemplate.convertAndSend(AppConstants.EXCHANGE_PRESCRIPTION,routingKey,event);
     }
 
     public record MedicineInfo(String code, String name, String unit, String description) {}

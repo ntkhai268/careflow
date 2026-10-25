@@ -1,0 +1,22 @@
+[
+  {
+    "role": "STAFF",
+    "route": "/admin",
+    "forbidden": true
+  },
+  {
+    "role": "STAFF",
+    "route": "/dashboard/queue",
+    "forbidden": true
+  },
+  {
+    "role": "STAFF",
+    "route": "/consultation/d075ff76-ccd9-4716-b943-7524b794437c",
+    "forbidden": true
+  },
+  {
+    "role": "DOCTOR",
+    "route": "/staff/checkin",
+    "forbidden": true
+  }
+]

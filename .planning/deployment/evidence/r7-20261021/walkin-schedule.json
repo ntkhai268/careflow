@@ -1,0 +1,50 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "scope": "Six cloned operational DBs with real Patient/Appointment/Queue/Consultation/Prescription/Lab/Gateway and isolated RabbitMQ; Identity/Directory are read-only; original business DBs untouched",
+  "checks": {
+    "E08": [
+      {
+        "name": "Reception creates one synthetic unregistered profile on retry, without assigning the staff/admin as owner",
+        "status": "PASS"
+      },
+      {
+        "name": "NO_ACCOUNT: idempotent intake and concurrent consultation create, actual assigned-doctor exam/finalization, no fake appointment, duplicate active intake blocked and unrelated patient denied",
+        "status": "PASS"
+      },
+      {
+        "name": "ACCOUNT: idempotent intake and concurrent consultation create, actual assigned-doctor exam/finalization, no fake appointment, duplicate active intake blocked and unrelated patient denied",
+        "status": "PASS"
+      }
+    ],
+    "E10": [
+      {
+        "name": "Real room schedule reload preserves version/definition; stale update conflicts and PATIENT cannot administer schedule",
+        "status": "PASS"
+      },
+      {
+        "name": "Booking availability reflects configured windows/capacity, closed holiday and explicit exception window",
+        "status": "PASS"
+      },
+      {
+        "name": "Persisted capacity1 becomes full, replay does not reserve twice and full/closed-day bookings are rejected",
+        "status": "PASS"
+      },
+      {
+        "name": "Real broker creates the booked ticket; pausing queue reception preserves it and blocks call-next",
+        "status": "PASS"
+      },
+      {
+        "name": "Schedule edits cannot reduce capacity below existing reservations or remove a booked slot; rejected edits leave the prior revision intact",
+        "status": "PASS"
+      },
+      {
+        "name": "Authorized cancellation restores real slot availability; source test bookings are explicitly cancelled",
+        "status": "PASS"
+      }
+    ]
+  },
+  "physicalUiVerified": false,
+  "sqlStateManipulation": false
+}

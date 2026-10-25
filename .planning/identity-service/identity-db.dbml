@@ -24,9 +24,9 @@ Table identity.users {
   id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
   username varchar(50) [not null, unique, note: 'Tên đăng nhập']
   email varchar(255) [not null, unique, note: 'Địa chỉ Email']
+  email_verified_at timestamptz [note: 'V16: verified signup only; legacy internal/demo accounts retain NULL provenance']
   password_hash varchar(255) [not null, note: 'Mật khẩu đã được mã hóa BCrypt']
   role UserRole [not null, default: 'PATIENT', note: 'Vai trò trong hệ thống (PATIENT, DOCTOR, STAFF, LAB_TECHNICIAN, ADMIN)']
-  title varchar(100) [note: 'Chức danh / Học hàm (ví dụ: Bác sĩ Chuyên khoa I)']
   status UserStatus [not null, default: 'ACTIVE', note: 'Trạng thái tài khoản (ACTIVE, LOCKED, DISABLED)']
   failed_login_attempts int [not null, default: 0, note: 'Số lần đăng nhập sai liên tiếp']
   locked_until timestamptz [note: 'Thời gian hết hiệu lực tạm khóa tài khoản']
@@ -43,9 +43,14 @@ Table identity.users {
 }
 
 Table identity.refresh_tokens {
-  id uuid [pk, note: 'Khóa chính Refresh Token UUID']
+  id uuid [pk, note: 'Khóa chính Refresh Token UUID; access JWT jti tham chiếu phiên hiện tại này']
   user_id uuid [not null, ref: > identity.users.id, note: 'Khóa ngoại tham chiếu đến identity.users(id)']
+  dpop_jkt varchar(43) [note: 'RFC 7638 client public-key thumbprint; required for new sessions']
   token_hash varchar(64) [not null, unique, note: 'Mã hash SHA-256 của Refresh Token']
+  authentication_method varchar(16) [not null, default: 'PASSWORD', note: 'V14: PASSWORD/PASSKEY/BIOMETRIC; production staff sessions must be PASSKEY, including refresh/introspection']
+  authenticated_at timestamptz [not null, note: 'V16: original authentication time, preserved on refresh; sensitive staff actions require PASSKEY within five minutes']
+  last_interactive_at timestamptz [not null, note: 'V16: explicit user activity; patient 30 min/staff 15 min idle; refresh/polling never extends it']
+  absolute_expires_at timestamptz [not null, note: 'V13: inherited unchanged during refresh rotation; legacy inserts default to expires_at via trigger']
   expires_at timestamptz [not null, note: 'Thời điểm Refresh Token hết hạn']
   revoked_at timestamptz [note: 'Thời điểm bị thu hồi/vô hiệu hóa']
   replaced_by_token_hash varchar(64) [note: 'Mã hash của token mới nếu đã xoay vòng (Token Rotation)']
@@ -57,21 +62,219 @@ Table identity.refresh_tokens {
   }
 }
 
-Table identity.doctor_profiles {
-  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
-  user_id uuid [not null, unique, ref: - identity.users.id, note: 'Khóa ngoại 1:1 tham chiếu tới identity.users(id)']
-  full_name varchar(200) [not null, note: 'Họ và tên bác sĩ']
-  license_number varchar(50) [unique, note: 'Số giấy phép hành nghề']
-  specialization varchar(100) [note: 'Chuyên khoa']
-  department varchar(100) [note: 'Khoa làm việc (ví dụ: NOI_TONG_QUAT, NHI)']
-  phone_number varchar(20) [note: 'Số điện thoại liên hệ']
-  bio text [note: 'Tiểu sử / Giới thiệu bác sĩ']
-  avatar_url varchar(500) [note: 'Đường dẫn ảnh đại diện']
-  years_of_experience int [note: 'Số năm kinh nghiệm']
-  created_at timestamptz [not null, note: 'Thời gian tạo hồ sơ']
-  updated_at timestamptz [not null, note: 'Thời gian cập nhật hồ sơ gần nhất']
+// V7 moved doctor_profiles and title to hospital-directory; Identity owns accounts only.
 
-  Indexes {
-    (user_id) [name: 'idx_doctor_profiles_user_id', note: 'Index hỗ trợ tra cứu hồ sơ bác sĩ theo user_id']
+// V8: actual MFA enrollment and sender-constrained session support.
+Table identity.mfa_credentials {
+  user_id uuid [pk, ref: > identity.users.id]
+  secret_ciphertext text [not null, note: 'AES-256-GCM; nonce included; userId as authenticated data']
+  enabled boolean [not null, default: false]
+  pending_expires_at timestamptz
+  last_counter bigint [not null, default: -1]
+  failed_attempts int [not null, default: 0]
+  locked_until timestamptz
+}
+Table identity.mfa_recovery_codes {
+  user_id uuid [not null, ref: > identity.users.id]
+  code_hash varchar(64) [not null, note: 'SHA-256 of random 144-bit code; deleted atomically on use']
+  indexes { (user_id, code_hash) [pk] }
+}
+Table identity.dpop_replays {
+  proof_hash varchar(64) [pk, note: 'SHA-256(jkt:jti); unique across all Identity instances']
+  expires_at timestamptz [not null]
+  indexes { expires_at [name: 'idx_dpop_replays_expiry'] }
+}
+Table identity.security_events {
+  id uuid [pk]
+  user_id uuid [not null, ref: > identity.users.id]
+  event_type varchar(48) [not null]
+  occurred_at timestamptz [not null]
+}
+
+// V9: TOTP retired; legacy mfa tables are retained empty for migration history.
+Table identity.login_questions {
+ user_id uuid [pk, ref: > identity.users.id]
+ question_id varchar(20) [not null]
+ answer_hash varchar(100) [not null, note: 'BCrypt; no plaintext answer']
+}
+Table identity.passkeys {
+ credential_id text [pk]
+ user_id uuid [not null, ref: > identity.users.id]
+ public_key_cose text [not null]
+ signature_count bigint [not null]
+ created_at timestamptz [not null]
+}
+Table identity.login_challenges {
+ id uuid [pk]
+ user_id uuid [not null, ref: > identity.users.id]
+ kind varchar(20) [not null]
+ staff_grant_id uuid [ref: > identity.staff_passkey_grants.id, note: 'V16: required for staff registration challenges']
+ request_json text [not null]
+ dpop_jkt varchar(43) [not null]
+ expires_at timestamptz [not null, note: '2 minutes; atomic single use; bound to client key']
+}
+
+// V10: email-only forgot password. Ephemeral records are issued on demand, never seeded.
+Table identity.password_reset_codes {
+ email_fingerprint varchar(64) [pk, note: 'SHA-256 of normalized email; shared resend quota including unknown emails']
+ challenge_id uuid [unique, note: 'Rotated on resend; never returns the OTP']
+ user_id uuid [ref: > identity.users.id]
+ code_hash varchar(100) [note: 'BCrypt; six secure random digits; cleared after verification; plaintext never persisted']
+ dpop_jkt varchar(43) [note: 'Only the device requesting the code can confirm it']
+ created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+ last_sent_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+ expires_at timestamptz [note: '5 minutes from issuance']
+ used_at timestamptz [note: 'Atomic single use; all outstanding codes consumed after reset']
+ verified_at timestamptz [note: 'OTP consumed; verification alone does not change password or sessions']
+ reset_token_hash varchar(64) [note: 'V11: SHA-256 of random 256-bit reset permission; no plaintext token']
+ reset_expires_at timestamptz [note: 'Five minutes after verification; one use; same DPoP device key']
+ failed_attempts integer [not null, default: 0, note: 'Maximum five guesses']
+ window_started_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+ send_count integer [not null, default: 0, note: 'Maximum five sends per email/hour; cooldown 60 seconds']
+ delivery_state varchar(16) [not null, default: 'PENDING', note: 'PENDING/SENT/FAILED; SENT means provider acceptance, not inbox delivery']
+ indexes {
+  last_sent_at [name: 'idx_password_reset_cleanup']
+  user_id [name: 'idx_password_reset_user']
+ }
+}
+
+// V12: independent OS-protected device login; issued by explicit enrollment, never seeded.
+Table identity.biometric_devices {
+ id uuid [pk]
+ user_id uuid [not null, ref: > identity.users.id]
+ secret_hash varchar(64) [not null, note: 'SHA-256 of a random 256-bit device credential; not a refresh token']
+ dpop_jkt varchar(43) [not null, note: 'Only this native client key can use the credential']
+ created_at timestamptz [not null]
+ last_used_at timestamptz
+ expires_at timestamptz [not null, note: '90 days from enrollment']
+ revoked_at timestamptz [note: 'Disable/global logout/password reset/admin restriction; ordinary logout preserves registration']
+ indexes {
+  user_id [name: 'idx_biometric_devices_user']
+  (user_id,dpop_jkt) [name: 'idx_biometric_device_active', note: 'SQL UNIQUE partial index WHERE revoked_at IS NULL']
+ }
+}
+
+// V13: operational security state is created on demand, never seeded with credentials.
+Table identity.auth_rate_windows {
+ bucket varchar(120) [pk]
+ hits integer [not null]
+ expires_at timestamptz [not null]
+ indexes { expires_at [name: 'idx_auth_rate_cleanup'] }
+}
+Table identity.recovery_mail_outbox {
+ id uuid [pk]
+ challenge_id uuid [not null]
+ kind varchar(16) [not null, note: 'CODE / CHANGED / SIGNUP / STAFF_INVITE']
+ payload bytea [note: 'AES-256-GCM with random nonce and row ID as AAD; erased after delivery/expiry/failure']
+ attempts integer [not null, default: 0]
+ available_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+ expires_at timestamptz [not null]
+ provider_message_id varchar(100)
+ delivery_status varchar(24) [not null, default: 'QUEUED', note: 'ACCEPTED differs from DELIVERED; signed provider callbacks report terminal failure/delay']
+ state varchar(16) [not null, default: 'PENDING', note: 'PENDING/SENT/FAILED/EXPIRED; pending rows claimed with SKIP LOCKED']
+ created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+ indexes { available_at [name: 'idx_recovery_outbox_pending', note: 'SQL partial index WHERE state=PENDING'] }
+}
+
+// V15: provider verification metadata; no raw photos, OCR or full document number.
+Table identity.ekyc_verifications {
+ id uuid [pk]
+ user_id uuid [not null, ref: > identity.users.id]
+ request_key uuid [not null]
+ payload_fingerprint varchar(64) [not null]
+ status varchar(24) [not null, note: 'PROCESSING/VERIFIED/REJECTED/REVIEW_REQUIRED/ERROR; no automatic medical-record access']
+ consent_version varchar(16) [not null]
+ masked_document_number varchar(20)
+ reason varchar(40)
+ created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+ processed_at timestamptz
+ indexes { (user_id, request_key) [unique] }
+}
+Table identity.ekyc_request_budget {
+ month_start date [pk, note: 'Calendar month in Asia/Ho_Chi_Minh']
+ requests_used int [not null, note: 'Durable committed HTTP reservations, capped at100; includes failed calls and uploads']
+}
+
+// V16: mailbox verification, staff lifecycle and authenticated email delivery events.
+Table identity.signup_challenges {
+ email_fingerprint varchar(64) [pk]
+ request_id uuid [unique]
+ email varchar(255)
+ username varchar(50)
+ password_hash varchar(255) [note: 'BCrypt pending credential; cleared after verification']
+ code_hash varchar(100) [note: 'BCrypt six-digit OTP; five guesses; never reused for password recovery']
+ dpop_jkt varchar(43)
+ eligible boolean [not null, default: false]
+ expires_at timestamptz [note: 'Five minutes']
+ used_at timestamptz
+ failed_attempts integer [not null, default: 0]
+ delivery_state varchar(16) [not null, default: 'PENDING']
+ last_sent_at timestamptz
+ window_started_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+ send_count integer [not null, default: 0, note: 'Five per mailbox/hour; sixty-second cooldown']
+}
+Table identity.staff_passkey_grants {
+ id uuid [pk]
+ user_id uuid [not null, ref: > identity.users.id]
+ token_hash varchar(64) [not null, unique, note: 'SHA-256 random 256-bit email factor']
+ activation_hash varchar(64) [not null, note: 'SHA-256 separate random factor handed over after identity check']
+ failed_attempts integer [not null, default: 0]
+ kind varchar(12) [not null, note: 'ENROLL / RECOVER / BOOTSTRAP']
+ issued_by uuid [ref: > identity.users.id, note: 'NULL only for audited operator bootstrap']
+ identity_check_reference varchar(300) [not null]
+ created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+ expires_at timestamptz [not null, note: 'Fifteen minutes; self-service backup key grant two minutes']
+ used_at timestamptz
+ indexes { (user_id,created_at) [name: 'idx_staff_grant_owner'] }
+}
+Table identity.mail_delivery_events {
+ event_id varchar(150) [pk, note: 'Svix event id; authenticated and idempotent']
+ provider_message_id varchar(100) [not null]
+ delivery_status varchar(24) [not null]
+ occurred_at timestamptz [not null]
+ received_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+ indexes { (provider_message_id,occurred_at) [name: 'idx_mail_events_provider'] }
+}
+
+// V17: locally extracted fields; no document images or selfie uploads. No fake confirmations seeded.
+Table identity.document_checks {
+ id uuid [pk]
+ user_id uuid [not null, ref: > identity.users.id]
+ request_key uuid [not null]
+ payload_fingerprint varchar(64) [not null, note: 'HMAC-SHA256; resubmission binding, not plaintext identity hash']
+ sealed_fields bytea [note: 'AES-256-GCM with dedicated external key and row-ID AAD; erased on review/withdrawal/expiry']
+ masked_document_number varchar(20) [not null]
+ status varchar(24) [not null, default: 'PENDING_REVIEW', note: 'PENDING_REVIEW/CONFIRMED/REJECTED/WITHDRAWN/EXPIRED; original-document review only']
+ reason varchar(40)
+ consent_version varchar(16) [not null, default: '2026-10-19']
+ created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+ reviewed_at timestamptz
+ reviewed_by uuid [ref: > identity.users.id]
+ review_reference varchar(80) [note: 'Desk/audit reference, no personal information']
+ indexes { (user_id,request_key) [unique] }
+}
+// R1 / V18: staff accounts are provisioned by a fresh passkey ADMIN, never seeded with a usable password.
+Table identity.staff_account_provisioning {
+  user_id uuid [pk, ref: > identity.users.id]
+  created_by uuid [not null, ref: > identity.users.id]
+  request_id uuid [not null]
+  request_fingerprint varchar(64) [not null]
+  display_name varchar(100) [not null]
+  created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  indexes {
+    (created_by, request_id) [unique]
+  }
+}
+
+Table identity.staff_account_audit {
+  id uuid [pk]
+  actor_id uuid [not null, ref: > identity.users.id]
+  user_id uuid [not null, ref: > identity.users.id]
+  action varchar(24) [not null, note: 'CREATED / STATUS_CHANGED / ROLE_CHANGED']
+  previous_value varchar(20)
+  new_value varchar(20) [not null]
+  created_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  indexes {
+    (user_id, created_at)
   }
 }

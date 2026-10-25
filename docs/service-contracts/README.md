@@ -1,8 +1,11 @@
 # CareFlow Service Contracts
 
-> Phiên bản chuẩn: `1.1`
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu.
+
+
+> Phiên bản chuẩn: `2.0`
 >
-> Ngày chốt: `2026-08-04`
+> Ngày chốt: `2026-10-15`
 >
 > Phạm vi: MVP khám ngoại trú tại bệnh viện công
 >
@@ -10,7 +13,7 @@
 
 ## 1. Mục đích
 
-Thư mục này là nguồn sự thật chung để con người và AI biết:
+Thư mục này giữ contract chi tiết và lịch sử phiên bản. Scope/ownership chuẩn sau R0 nằm trong `.planning/architecture/`; khi có xung đột, dùng bảng CURRENT/TARGET và biên bản baseline ở đó. Các contract bên dưới giúp con người và AI biết:
 
 - một service chịu trách nhiệm gì và không được làm gì;
 - service sở hữu dữ liệu nào;
@@ -52,13 +55,13 @@ Chỉ tuyên bố hoàn thành khi cung cấp đủ evidence cho gate được y
 | `INTEGRATION_READY` | Tương tác thật với Gateway/RabbitMQ/dependency chạy đúng | Contract test, auth/ownership, idempotency, retry/DLQ hoặc failure handling |
 | `DEMO_READY` | Có thể trình diễn trong hành trình end-to-end | Docker/local run, smoke test, log/correlation, demo scenario và tài liệu vận hành |
 
-Chỉ `DEMO_READY` được ghi là **Done**. Không dùng phần trăm cảm tính như “service hoàn thành 80%”.
+`DEMO_READY` chỉ xác nhận mốc demo theo phạm vi đã thử. Bàn giao đầy đủ phải đạt ma trận R0 và nghiệm thu đúng môi trường; không dùng phần trăm cảm tính hoặc mốc demo để thay nghiệm thu sản phẩm.
 
 ## 4. Quy ước HTTP chung
 
 ### 4.1. Điểm vào và định danh
 
-- Client chỉ gọi qua API Gateway: `http://localhost:8080`.
+- Client chỉ gọi qua API Gateway. Audit hiện tại: `https://localhost:18080`, browser qua emulator `http://localhost:3000` hoặc Hospital Web `http://localhost:5173`. Profile `secure` yêu cầu TLS; không mặc định cổng HTTP 8080 còn hoạt động.
 - JSON dùng `camelCase`; ID dùng UUID; ngày dùng `YYYY-MM-DD`; thời gian dùng ISO-8601 có timezone.
 - Gateway xóa các identity header do client tự gửi, xác thực JWT rồi gắn:
   - `X-User-Id`
@@ -66,17 +69,16 @@ Chỉ `DEMO_READY` được ghi là **Done**. Không dùng phần trăm cảm t�
   - `X-Correlation-Id`
 - Downstream phải kiểm tra role và ownership; không được tin `patientId`, `doctorId` do client gửi.
 - Role mục tiêu của MVP: `PATIENT`, `DOCTOR`, `STAFF`, `LAB_TECHNICIAN`, `ADMIN`.
-- Trong thời gian Identity chưa hỗ trợ `STAFF` và `LAB_TECHNICIAN`, tài khoản demo dùng `ADMIN`;
-  không mở endpoint công khai để né kiểm tra quyền.
+- Identity hiện hỗ trợ `STAFF` và `LAB_TECHNICIAN`; nghiệm thu bằng đúng vai trò/phân công, không dùng `ADMIN` thay thế hoặc mở endpoint công khai để né quyền.
 
 Với synchronous service-to-service query trong MVP:
 
-- service gọi phải chuyển tiếp Bearer token gốc và `X-Correlation-Id`;
+- service gọi phải chuyển tiếp Bearer token gốc và `X-Correlation-Id`, kèm caller credential riêng qua HTTPS/mTLS; provider kiểm tra delegation method/path scope thay cho việc dùng lại DPoP proof của request gốc;
 - request đi qua Gateway hoặc cơ chế service discovery nhưng provider vẫn authorize end-user;
 - không được tự tạo `X-User-Id`/`X-User-Role` để giả làm Gateway;
 - background flow không có end-user token phải dùng event, không mở internal API vô danh.
 
-Service credential/mTLS là nâng cấp production; không được giả vờ đã có trong MVP.
+Security v2 đã bổ sung service credential có scope, mTLS và online session/proof validation; audit HTTPS đã kiểm thử thật. Compose `docker-compose.security.yml` chỉ mới được validate cấu hình, chưa chạy multi-host production. Header user không phải credential. Chi tiết wire protocol và breaking migration tại [Identity v2](02-identity-ekyc.md#6-security-v2--breaking-migration-2026-10-15).
 
 ### 4.2. Response envelope
 

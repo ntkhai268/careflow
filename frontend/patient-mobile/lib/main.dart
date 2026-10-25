@@ -7,6 +7,10 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'config/theme.dart';
 import 'config/router.dart';
 import 'services/push_notification_service.dart';
+import 'widgets/biometric_app_lock.dart';
+import 'config/release_configuration.dart';
+import 'services/medical_file_cache.dart';
+import 'widgets/notification_coordinator.dart';
 
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -15,6 +19,8 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  validateReleaseConfiguration();
+  await MedicalFileCache.instance.initialize();
 
   await FirebaseBootstrap.initialize();
   if (FirebaseBootstrap.isReady) {
@@ -44,7 +50,11 @@ class _CareFlowAppState extends ConsumerState<CareFlowApp> {
   void initState() {
     super.initState();
     if (FirebaseBootstrap.isReady) {
-      ref.read(pushNotificationServiceProvider).initializeHandlers();
+      ref.read(pushNotificationServiceProvider).initializeHandlers().catchError(
+        (Object _) {
+          /* Retry on authenticated bind; inbox remains available. */
+        },
+      );
     }
   }
 
@@ -55,6 +65,9 @@ class _CareFlowAppState extends ConsumerState<CareFlowApp> {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       routerConfig: appRouter,
+      builder: (context, child) => NotificationCoordinator(
+        child: BiometricAppLock(child: child ?? const SizedBox.shrink()),
+      ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

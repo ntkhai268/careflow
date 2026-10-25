@@ -1,0 +1,161 @@
+{
+  "checkedAt": "2026-10-16T03:41:22.549Z",
+  "mock": false,
+  "checks": [
+    {
+      "name": "real owner login",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "other patient login",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "HealthRecords valid RSA via Gateway",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "HealthRecords valid bound token directly over mTLS",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "HealthRecords wrong device key denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "HealthRecords missing proof denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "HealthRecords valid RSA signature with missing subject denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "HealthRecords other patient denied",
+      "status": "PASS",
+      "actual": 403
+    },
+    {
+      "name": "Consultation valid RSA via Gateway",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "Consultation valid bound token directly over mTLS",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "Consultation wrong device key denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "Consultation missing proof denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "Consultation valid RSA signature with missing subject denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "Consultation other patient denied",
+      "status": "PASS",
+      "actual": 403
+    },
+    {
+      "name": "EMR valid RSA via Gateway",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "EMR valid bound token directly over mTLS",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "EMR wrong device key denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "EMR missing proof denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "EMR valid RSA signature with missing subject denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "EMR other patient denied",
+      "status": "PASS",
+      "actual": 403
+    },
+    {
+      "name": "Prescription valid RSA via Gateway",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "Prescription valid bound token directly over mTLS",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "Prescription wrong device key denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "Prescription missing proof denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "Prescription valid RSA signature with missing subject denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "Prescription other patient denied",
+      "status": "PASS",
+      "actual": 403
+    },
+    {
+      "name": "owner logout",
+      "status": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "HealthRecords revoked session denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "Consultation revoked session denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "EMR revoked session denied",
+      "status": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "Prescription revoked session denied",
+      "status": "PASS",
+      "actual": 401
+    }
+  ]
+}

@@ -1,7 +1,6 @@
 package com.careflow.lab.service;
 
 import com.careflow.common.constants.AppConstants;
-import com.careflow.common.dto.ApiResponse;
 import com.careflow.common.event.EventEnvelope;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.common.exception.ResourceNotFoundException;
@@ -10,8 +9,6 @@ import com.careflow.lab.dto.request.LabOrderItemRequest;
 import com.careflow.lab.dto.request.UpdateLabResultRequest;
 import com.careflow.lab.dto.response.LabOrderItemResponse;
 import com.careflow.lab.dto.response.LabOrderResponse;
-import com.careflow.lab.client.PatientIdentityClient;
-import com.careflow.lab.client.QueueExecutionClient;
 import com.careflow.lab.model.*;
 import com.careflow.lab.repository.LabOrderItemRepository;
 import com.careflow.lab.repository.LabOrderRepository;
@@ -26,36 +23,28 @@ import java.util.*;
 @Service
 public class LabOrderService {
     private static final String PRODUCER = "lab-service";
-    private static final Set<String> CLINICAL_COMMAND_ROLES = Set.of(
-            AppConstants.ROLE_DOCTOR, AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
-    private static final Set<String> LAB_COMMAND_ROLES = Set.of(
-            AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_STAFF, AppConstants.ROLE_ADMIN);
-    private static final Set<String> RESULT_FINALIZE_ROLES = Set.of(
-            AppConstants.ROLE_LAB_TECHNICIAN, AppConstants.ROLE_STAFF,
-            AppConstants.ROLE_DOCTOR, AppConstants.ROLE_ADMIN);
+    private static final Set<String> CLINICAL_COMMAND_ROLES = Set.of(AppConstants.ROLE_DOCTOR);
+    private static final Set<String> LAB_COMMAND_ROLES = Set.of(AppConstants.ROLE_LAB_TECHNICIAN);
+    private static final Set<String> RESULT_FINALIZE_ROLES = Set.of(AppConstants.ROLE_LAB_TECHNICIAN);
 
     private final LabOrderRepository orders;
     private final LabOrderItemRepository items;
     private final LabEventPublisher events;
     private final ObjectMapper objectMapper;
-    private final PatientIdentityClient patientIdentityClient;
-    private final QueueExecutionClient queueExecutionClient;
-
-    LabOrderService(LabOrderRepository orders, LabOrderItemRepository items, LabEventPublisher events) {
-        this(orders, items, events, new ObjectMapper().findAndRegisterModules(), null, null);
-    }
+    private final LabAccessService access;
+    private final LabCatalogService catalog;
+    @Autowired private com.careflow.lab.client.LabQueueSourceClient sourceQueues;
 
     @Autowired
     public LabOrderService(LabOrderRepository orders, LabOrderItemRepository items,
                            LabEventPublisher events, ObjectMapper objectMapper,
-                           PatientIdentityClient patientIdentityClient,
-                           QueueExecutionClient queueExecutionClient) {
+                           LabAccessService access, LabCatalogService catalog) {
         this.orders = orders;
         this.items = items;
         this.events = events;
         this.objectMapper = objectMapper;
-        this.patientIdentityClient = patientIdentityClient;
-        this.queueExecutionClient = queueExecutionClient;
+        this.access = Objects.requireNonNull(access);
+        this.catalog = Objects.requireNonNull(catalog);
     }
 
     @Transactional
@@ -69,23 +58,26 @@ public class LabOrderService {
         if (Boolean.TRUE.equals(request.paymentRequired())) {
             throw new BusinessException(400, "Laboratory orders do not support a payment workflow");
         }
+        var context=access.requireConsultation(request.consultationId(), request.patientId(), actorUserId, actorRole, true);
+        UUID source=verifiedSource(context);
+        access.requireServicePoints(request.items());
 
         LabOrder order = new LabOrder();
-        order.setId(UUID.randomUUID());
         order.setConsultationId(request.consultationId());
         order.setPatientId(request.patientId());
         order.setOrderedByDoctorId(actorUserId);
-        order.setDepartmentId(request.departmentId());
+        // The originating visit/Queue owns its department; never trust a client UUID here.
+        order.setDepartmentId(null);
+        order.setSourceQueueEntryId(source);order.setSourceVerifiedBy(actorUserId);order.setSourceVerifiedAt(Instant.now());
         order.setClinicalNote(trimToNull(request.clinicalNote()));
         order.setStatus(LabOrderStatus.ORDERED);
         order.setPaymentStatus(PaymentStatus.NOT_REQUIRED);
         for (LabOrderItemRequest itemRequest : request.items()) {
+            var definition = catalog.requireItem(itemRequest);
             LabOrderItem item = new LabOrderItem();
-            item.setId(UUID.randomUUID());
-            item.setServiceCode(requireText(itemRequest.serviceCode(), "serviceCode"));
-            item.setServiceName(requireText(itemRequest.serviceName(), "serviceName"));
-            item.setServicePointId(requireText(itemRequest.servicePointId(), "servicePointId")
-                    .toUpperCase(Locale.ROOT));
+            item.setServiceCode(definition.serviceCode());
+            item.setServiceName(definition.serviceName());
+            item.setServicePointId(definition.servicePointId());
             item.setRequired(itemRequest.required() == null || itemRequest.required());
             item.setStatus(LabOrderItemStatus.ORDERED);
             order.addItem(item);
@@ -100,26 +92,24 @@ public class LabOrderService {
     public LabOrderResponse getOrder(UUID id, UUID actorUserId, String actorRole) {
         LabOrder order = requireOrder(id);
         enforceReadAccess(order, actorUserId, actorRole);
-        return LabOrderResponse.from(order);
+        return responseForRead(order, actorRole);
     }
 
     @Transactional(readOnly = true)
     public List<LabOrderResponse> getByConsultation(UUID consultationId, UUID actorUserId, String actorRole) {
-        UUID ownPatientId = patientScope(actorUserId, actorRole);
+        var consultation = access.requireConsultation(consultationId, null, actorUserId, actorRole, false);
         return orders.findByConsultationIdOrderByCreatedAtDesc(consultationId).stream()
-                .filter(order -> canRead(order, ownPatientId, actorRole))
+                .filter(order -> consultation.patientId().equals(order.getPatientId()))
                 .map(LabOrderResponse::from)
                 .toList();
     }
 
     @Transactional(readOnly = true)
     public List<LabOrderResponse> getByPatient(UUID patientId, UUID actorUserId, String actorRole) {
-        UUID ownPatientId = patientScope(actorUserId, actorRole);
-        if (isPatient(actorRole) && !patientId.equals(ownPatientId)) {
-            throw new BusinessException(403, "Cannot read another patient's lab orders");
-        }
+        access.requireProfile(patientId, actorUserId, actorRole);
         return orders.findByPatientIdOrderByCreatedAtDesc(patientId).stream()
-                .map(LabOrderResponse::from)
+                .filter(order -> !isPatient(actorRole) || LabAccessService.isPublished(order))
+                .map(order -> responseForRead(order, actorRole))
                 .toList();
     }
 
@@ -128,12 +118,12 @@ public class LabOrderService {
         requireRole(actorRole, LAB_COMMAND_ROLES);
         requireActor(actorUserId);
         LabOrder order = requireOrder(id);
+        access.requireTechnician(order, actorUserId, actorRole, Set.of("IN_PROGRESS"), null);
         if (order.getStatus() == LabOrderStatus.IN_PROGRESS) return LabOrderResponse.from(order);
         if (order.getStatus() != LabOrderStatus.ORDERED && order.getStatus() != LabOrderStatus.QUEUED
                 && order.getStatus() != LabOrderStatus.CALLED) {
             throw invalidTransition(order, LabOrderStatus.IN_PROGRESS);
         }
-        verifyLabQueueEntryIsInProgress(id, actorUserId, actorRole);
         order.setStatus(LabOrderStatus.IN_PROGRESS);
         return LabOrderResponse.from(orders.save(order));
     }
@@ -152,6 +142,7 @@ public class LabOrderService {
         if (item.getOrder() == null || !orderId.equals(item.getOrder().getId())) {
             throw new BusinessException(404, "Lab item does not belong to this order");
         }
+        access.requireTechnician(order, actorUserId, actorRole, Set.of("IN_PROGRESS"), item.getServicePointId());
         item.setResultValue(requireText(request.resultValue(), "resultValue"));
         item.setReferenceRange(trimToNull(request.referenceRange()));
         item.setResultUnit(trimToNull(request.unit()));
@@ -168,6 +159,8 @@ public class LabOrderService {
         requireRole(actorRole, RESULT_FINALIZE_ROLES);
         requireActor(actorUserId);
         LabOrder order = requireOrder(id);
+        access.requireTechnician(order, actorUserId, actorRole, LabAccessService.isPublished(order)
+                ? Set.of("IN_PROGRESS", "COMPLETED") : Set.of("IN_PROGRESS"), null);
         if (order.getStatus() == LabOrderStatus.RESULT_AVAILABLE || order.getStatus() == LabOrderStatus.REVIEWED) {
             return LabOrderResponse.from(order);
         }
@@ -181,6 +174,7 @@ public class LabOrderService {
         if (missingRequired) {
             throw new BusinessException(409, "All required lab items must have valid results before finalization");
         }
+        if(order.getSourceQueueEntryId()==null)throw new BusinessException(409,"Bác sĩ cần đồng bộ phiếu gốc của chỉ định trước khi phát hành kết quả.");
         order.setStatus(LabOrderStatus.RESULT_AVAILABLE);
         LabOrder saved = orders.save(order);
         events.publishAllRequiredResultsAvailable(resultsEnvelope(saved, correlationId));
@@ -192,6 +186,7 @@ public class LabOrderService {
         requireRole(actorRole, CLINICAL_COMMAND_ROLES);
         requireActor(actorUserId);
         LabOrder order = requireOrder(id);
+        access.requireDoctorOrder(order, actorUserId, actorRole);
         if (order.getStatus() == LabOrderStatus.REVIEWED) return LabOrderResponse.from(order);
         if (order.getStatus() != LabOrderStatus.RESULT_AVAILABLE) {
             throw invalidTransition(order, LabOrderStatus.REVIEWED);
@@ -205,6 +200,7 @@ public class LabOrderService {
         requireRole(actorRole, CLINICAL_COMMAND_ROLES);
         requireActor(actorUserId);
         LabOrder order = requireOrder(id);
+        access.requireDoctorOrder(order, actorUserId, actorRole);
         if (order.getStatus() == LabOrderStatus.CANCELLED) return LabOrderResponse.from(order);
         if (order.getStatus() == LabOrderStatus.RESULT_AVAILABLE || order.getStatus() == LabOrderStatus.REVIEWED) {
             throw invalidTransition(order, LabOrderStatus.CANCELLED);
@@ -214,6 +210,29 @@ public class LabOrderService {
                 .filter(item -> item.getStatus() == LabOrderItemStatus.ORDERED)
                 .forEach(item -> item.setStatus(LabOrderItemStatus.CANCELLED));
         return LabOrderResponse.from(orders.save(order));
+    }
+
+    private UUID verifiedSource(com.careflow.lab.client.LabConsultationClient.Context context){
+        if(context==null)throw new BusinessException(503,"Chưa xác minh được ca khám nguồn.");
+        if(context.queueEntryId()!=null)return context.queueEntryId();
+        if(context.appointmentId()!=null && sourceQueues!=null){
+            try{
+                var response=sourceQueues.ticket(context.appointmentId());var ticket=response==null?null:response.getData();
+                if(ticket!=null && ticket.ticketId()!=null && context.appointmentId().equals(ticket.appointmentId()) && context.patientId().equals(ticket.patientId()))return ticket.ticketId();
+            }catch(feign.FeignException e){throw new BusinessException(503,"Chưa đối chiếu được phiếu của lịch khám nguồn.");}
+        }
+        throw new BusinessException(409,"Chưa xác định được phiếu gốc. Không tự chọn lượt gần nhất của bệnh nhân.");
+    }
+
+    @Transactional
+    public LabOrderResponse synchronizeReviewQueue(UUID id,UUID actor,String role,String correlationId){
+        requireRole(role,CLINICAL_COMMAND_ROLES);requireActor(actor);
+        var order=requireOrder(id);var context=access.requireConsultation(order.getConsultationId(),order.getPatientId(),actor,role,false);
+        UUID source=verifiedSource(context);
+        if(order.getSourceQueueEntryId()!=null && !source.equals(order.getSourceQueueEntryId()))throw new BusinessException(409,"Phiếu gốc đã lưu không khớp ca khám; cần kiểm tra tại cơ sở y tế.");
+        if(order.getSourceQueueEntryId()==null){order.setSourceQueueEntryId(source);order.setSourceVerifiedBy(actor);order.setSourceVerifiedAt(Instant.now());orders.save(order);}
+        if(Set.of(LabOrderStatus.RESULT_AVAILABLE,LabOrderStatus.REVIEWED).contains(order.getStatus()))events.publishAllRequiredResultsAvailable(resultsEnvelope(order,correlationId));
+        return LabOrderResponse.from(order);
     }
 
     private EventEnvelope readyEnvelope(LabOrder order, String correlationId) {
@@ -251,6 +270,7 @@ public class LabOrderService {
         payload.put("consultationId", order.getConsultationId());
         payload.put("patientId", order.getPatientId());
         if (order.getDepartmentId() != null) payload.put("departmentId", order.getDepartmentId());
+        if(order.getSourceQueueEntryId()!=null)payload.put("sourceQueueEntryId",order.getSourceQueueEntryId());
         return payload;
     }
 
@@ -267,56 +287,16 @@ public class LabOrderService {
         return orders.findById(id).orElseThrow(() -> new ResourceNotFoundException("LabOrder", "id", id));
     }
 
-    private void verifyLabQueueEntryIsInProgress(UUID labOrderId, UUID actorUserId, String actorRole) {
-        // Unit tests can exercise the aggregate without a running Queue
-        // Service. Production wiring always supplies the client, so a real
-        // lab start cannot bypass the queue claim/start command.
-        if (queueExecutionClient == null) return;
-        ApiResponse<Map<String, Object>> response;
-        try {
-            response = queueExecutionClient.getCurrent(labOrderId, actorUserId, actorRole);
-        } catch (RuntimeException exception) {
-            throw new BusinessException(409, "Lab queue entry is not available");
-        }
-        Map<String, Object> data = response == null ? null : response.getData();
-        if (data == null || !"IN_PROGRESS".equalsIgnoreCase(String.valueOf(data.get("queueStatus")))) {
-            throw new BusinessException(409, "Lab queue entry must be IN_PROGRESS before lab work starts");
-        }
-        Object claimedUser = data.get("calledByUserId");
-        if (claimedUser != null && !actorUserId.toString().equalsIgnoreCase(String.valueOf(claimedUser))) {
-            throw new BusinessException(403, "Lab queue entry is claimed by another technician");
-        }
-        if (data.get("labOrderId") != null
-                && !labOrderId.toString().equalsIgnoreCase(String.valueOf(data.get("labOrderId")))) {
-            throw new BusinessException(422, "Lab queue entry does not belong to this lab order");
-        }
-    }
-
     private void enforceReadAccess(LabOrder order, UUID actorUserId, String actorRole) {
-        UUID ownPatientId = patientScope(actorUserId, actorRole);
-        if (!canRead(order, ownPatientId, actorRole)) {
-            throw new BusinessException(403, "Cannot read another patient's lab order");
-        }
+        access.requireRead(order, actorUserId, actorRole);
     }
 
-    private boolean canRead(LabOrder order, UUID actorUserId, String actorRole) {
-        return !isPatient(actorRole) || order.getPatientId().equals(actorUserId);
-    }
-
-    private UUID patientScope(UUID actorUserId, String actorRole) {
-        if (!isPatient(actorRole)) return null;
-        requireActor(actorUserId);
-        if (patientIdentityClient == null) return actorUserId;
-        try {
-            ApiResponse<Map<String, Object>> response = patientIdentityClient.getByUserId(
-                    actorUserId, actorUserId, actorRole);
-            Object patientId = response == null || response.getData() == null
-                    ? null : response.getData().get("id");
-            if (patientId == null) throw new BusinessException(403, "Unable to verify patient ownership");
-            return UUID.fromString(patientId.toString());
-        } catch (RuntimeException exception) {
-            throw new BusinessException(403, "Unable to verify patient ownership");
-        }
+    private LabOrderResponse responseForRead(LabOrder order, String role) {
+        var response = LabOrderResponse.from(order);
+        if (!isPatient(role)) return response;
+        return new LabOrderResponse(response.id(), response.consultationId(), response.patientId(),
+                response.orderedByDoctorId(), response.departmentId(), response.status(), response.paymentStatus(),
+                null, response.items(), response.createdAt(), response.updatedAt());
     }
 
     private boolean isPatient(String role) {

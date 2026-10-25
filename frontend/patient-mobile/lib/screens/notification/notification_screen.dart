@@ -13,7 +13,7 @@ class NotificationScreen extends ConsumerWidget {
     final appointmentId = ref.watch(activeJourneyProvider)?.appointmentId ?? '';
     return JourneyNotificationScreen(
       appointmentId: appointmentId,
-      useInbox: appointmentId.isEmpty,
+      useInbox: !ref.watch(demoModeProvider) || appointmentId.isEmpty,
     );
   }
 }

@@ -55,11 +55,15 @@ class AppointmentSlotCapacityTest {
     @Mock
     private AppointmentSlotLockRepository slotLockRepository;
 
+    @Mock
+    private com.careflow.appointment.client.AppointmentConsultationClient consultations;
+
     @InjectMocks
     private AppointmentService appointmentService;
 
     @BeforeEach
     void setUpDirectory() {
+        AppointmentPricingFixture.priced(directoryClient);
         when(directoryClient.getDepartmentByCode(Department.NOI_TONG_QUAT.name()))
                 .thenReturn(ApiResponse.success(DepartmentResponse.builder()
                         .code(Department.NOI_TONG_QUAT.name())
@@ -89,18 +93,16 @@ class AppointmentSlotCapacityTest {
     @Test
     void rejectsBookingWhenRoomDoctorSlotIsFull() {
         LocalDate date = LocalDate.now().plusDays(1);
-        when(slotLockRepository.findBySlotKeyForUpdate(anyString()))
-                .thenReturn(Optional.of(AppointmentSlotLock.builder().slotKey("lock").build()));
         when(appointmentRepository.existsByPatientIdAndAppointmentDateAndTimeSlotAndStatusNot(
                 any(), any(), anyString(), any())).thenReturn(false);
         when(appointmentRepository.countByRoomIdAndAppointmentDateAndTimeSlotAndStatusNot(
-                ROOM_ID, date, "07:30-08:30", AppointmentStatus.CANCELLED)).thenReturn(5L);
+                ROOM_ID, date, "07:30-08:00", AppointmentStatus.CANCELLED)).thenReturn(5L);
 
-        CreateAppointmentRequest request = request(date, "7:30 - 8:30");
+        CreateAppointmentRequest request = request(date, "7:30 - 8:00");
 
         assertThatThrownBy(() -> appointmentService.createAppointment(
                 request, UUID.randomUUID(), "trace-capacity", "capacity-key"))
-                .hasMessageContaining("đã đủ 5 người đặt khám");
+                .isInstanceOfSatisfying(com.careflow.common.exception.BusinessException.class,e->assertThat(e.getStatus()).isEqualTo(409));
 
         verify(appointmentRepository, never()).saveAndFlush(any(Appointment.class));
     }

@@ -56,9 +56,7 @@ public class PrescriptionController {
             @PathVariable UUID id,
             @RequestHeader(value = AppConstants.HEADER_USER_ID, required = false) UUID actorUserId,
             @RequestHeader(value = AppConstants.HEADER_USER_ROLE, required = false) String actorRole) {
-        PrescriptionResponse response = actorUserId == null
-                ? prescriptionService.confirmPrescription(id)
-                : prescriptionService.confirmPrescription(id, actorUserId, actorRole);
+        PrescriptionResponse response = prescriptionService.confirmPrescription(id, actorUserId, actorRole);
         return ResponseEntity.ok(ApiResponse.success("Prescription confirmed successfully", response));
     }
 

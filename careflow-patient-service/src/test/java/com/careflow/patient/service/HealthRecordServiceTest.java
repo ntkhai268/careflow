@@ -44,6 +44,9 @@ class HealthRecordServiceTest {
     @Mock
     private FileStorageService fileStorageService;
 
+    @Mock
+    private UploadQuotaService uploadQuotaService;
+
     @InjectMocks
     private HealthRecordService healthRecordService;
 

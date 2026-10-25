@@ -1,0 +1,66 @@
+{
+  "checkedAt": "2026-10-19T03:48:07.762Z",
+  "runtime": "Owned local HTTPS/mTLS stack; local test PostgreSQL only",
+  "mock": false,
+  "externalEmailsSent": 0,
+  "checks": [
+    {
+      "name": "Password login and proof-bound current user",
+      "status": "PASS"
+    },
+    {
+      "name": "Copied access token fails with another device key",
+      "status": "PASS"
+    },
+    {
+      "name": "Device inventory excludes credentials and key thumbprints",
+      "status": "PASS"
+    },
+    {
+      "name": "Logout revokes session while enrolled device can create a new session",
+      "status": "PASS"
+    },
+    {
+      "name": "Stolen biometric token rejected from another proof key",
+      "status": "PASS"
+    },
+    {
+      "name": "Valid enrolled device unlocks temporary password-guess lock",
+      "status": "PASS"
+    },
+    {
+      "name": "Biometric proof cannot bypass administrator-disabled account",
+      "status": "PASS"
+    },
+    {
+      "name": "Remote revoke blocks target device and its sessions, preserving other device",
+      "status": "PASS"
+    },
+    {
+      "name": "Another account cannot revoke this account device",
+      "status": "PASS"
+    },
+    {
+      "name": "Retired question setup, login and recovery all reject with 410",
+      "status": "PASS"
+    },
+    {
+      "name": "Email recovery cannot skip verification; wrong code fails; resend cooldown applies; unknown mailbox sends nothing",
+      "status": "PASS"
+    },
+    {
+      "name": "Refresh replay revokes matching client session while another account remains active",
+      "status": "PASS"
+    },
+    {
+      "name": "Logout all revokes enrolled biometric credential",
+      "status": "PASS"
+    },
+    {
+      "name": "V13/V14 applied on owned loopback test database",
+      "status": "PASS"
+    }
+  ],
+  "physicalSensor": "Requires user confirmation on installed iPhone build 9",
+  "syntheticAccountsCreated": 2
+}

@@ -1,0 +1,47 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "productionWebpackBuildId": "4N6QiJg14SnSeBQIA3msp",
+  "browserChecks": [
+    {
+      "name": "production Hospital Web submits real bound doctor login",
+      "status": "PASS"
+    },
+    {
+      "name": "production reload verifies live session instead of trusting localStorage",
+      "status": "PASS"
+    },
+    {
+      "name": "production logout revokes bound session on Identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Hospital Web has no uncaught JavaScript errors",
+      "status": "PASS"
+    }
+  ],
+  "uncaughtErrors": [],
+  "webSessionMemoryTests": "PASS",
+  "npmProductionVulnerabilities": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "backendDependencies": {
+    "queriedMavenCoordinates": 304,
+    "status": "CONDITIONAL_REVIEW",
+    "expires": "2026-11-18",
+    "advisories": [
+      "GHSA-j9f9-w8pj-32f8",
+      "GHSA-pc63-qcmh-9cmg",
+      "GHSA-9qf2-26p9-2q2q"
+    ],
+    "forbiddenSurfaceGuard": "PASS",
+    "scanLogSha256": "c6c2fcea76826a987ef5e6b23488ae896d102ad16d87d61b2b823dc618870ca4"
+  },
+  "githubVerificationWorkflowExecuted": false
+}

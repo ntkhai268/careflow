@@ -1,0 +1,43 @@
+{
+  "checkedAt": "2026-10-20T11:03:30+0700",
+  "database": "owned loopback PostgreSQL; remote DB untouched",
+  "migration": "V18 success",
+  "deniedCreateNotPersisted": true,
+  "configurationChecks": {
+    "careflow-identity-service": {
+      "privateCredentialsPreserved": true,
+      "onlyAdditionalCallerScope": true
+    },
+    "careflow-identity-session-secondary": {
+      "privateCredentialsPreserved": true,
+      "onlyAdditionalCallerScope": true
+    },
+    "careflow-hospital-directory-service": {
+      "privateCredentialsPreserved": true,
+      "onlyAdditionalCallerScope": false
+    }
+  },
+  "health": [
+    {
+      "port": 18080,
+      "httpStatus": 200
+    },
+    {
+      "port": 18081,
+      "httpStatus": 200
+    },
+    {
+      "port": 18092,
+      "httpStatus": 200
+    },
+    {
+      "port": 18090,
+      "httpStatus": 200
+    }
+  ],
+  "nativeBuild": 16,
+  "resendKeyChanged": false,
+  "actualOutboundEmailInR1": false,
+  "physicalFaceIdAndCameraAcceptance": "PENDING_USER",
+  "physicalStaffPasskeyAcceptance": "PENDING_USER"
+}

@@ -45,4 +45,7 @@ public class PrescriptionItem extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String notes;
+    @org.hibernate.annotations.JdbcTypeCode(org.hibernate.type.SqlTypes.JSON)
+    @Column(columnDefinition="jsonb")
+    private java.util.Map<String,String> details;
 }

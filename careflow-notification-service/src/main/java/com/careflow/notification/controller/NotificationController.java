@@ -58,9 +58,11 @@ public class NotificationController {
     @PutMapping("/devices")
     public ApiResponse<DeviceInstallationResponse> registerDevice(
             @RequestHeader(AppConstants.HEADER_USER_ID) UUID userId,
-            @Valid @RequestBody RegisterDeviceRequest request) {
-        return ApiResponse.success("Thiết bị đã sẵn sàng nhận thông báo đẩy",
-                devices.register(userId, request));
+            @Valid @RequestBody RegisterDeviceRequest request,
+            @RequestAttribute(com.careflow.common.security.ActiveSessionFilter.VERIFIED_PRINCIPAL_ATTRIBUTE) com.careflow.common.security.ActiveSessionClient.Principal principal) {
+        if (!"PATIENT".equals(principal.role())) throw new com.careflow.common.exception.BusinessException(403, "Đăng ký push dành cho tài khoản bệnh nhân.");
+        return ApiResponse.success("Đã đăng ký thiết bị; thông báo phụ thuộc quyền và kết nối của điện thoại",
+                devices.register(principal.userId(), principal.sessionId(), request));
     }
 
     @DeleteMapping("/devices/{deviceId}")

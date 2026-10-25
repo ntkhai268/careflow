@@ -1,0 +1,51 @@
+{
+  "date": "2026-10-19",
+  "scope": "source changes; not deployed; iPhone release 8 not reinstalled",
+  "backend": {
+    "tests": 736,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "postgres": "isolated loopback test database",
+    "java_runtime": 25,
+    "target_java": 21
+  },
+  "mobile": {
+    "passed": 196,
+    "skipped": 12,
+    "failed": 0,
+    "analyze_errors": 0,
+    "analyze_warnings": 0,
+    "preexisting_analyze_infos": 2
+  },
+  "web": {
+    "typescript": "passed",
+    "production_build": "passed",
+    "bff_csp_checks": "passed",
+    "session_memory_race_checks": "passed",
+    "npm_production_advisories": 0
+  },
+  "maven_osv": {
+    "coordinates": 304,
+    "remaining_advisory_ids": [
+      "GHSA-j9f9-w8pj-32f8",
+      "GHSA-pc63-qcmh-9cmg",
+      "GHSA-9qf2-26p9-2q2q"
+    ],
+    "matches": 4,
+    "condition": "Features absent and checked in CI; see dependency-conditions.json",
+    "review_expires": "2026-11-18"
+  },
+  "compose": "syntax passed; real deployment not tested",
+  "migrations": [
+    "V13__auth_abuse_and_recovery_outbox.sql",
+    "V14__session_authentication_method.sql"
+  ],
+  "external_pending": [
+    "Resend key replacement and old-key revocation",
+    "Staff passkey onboarding and recovery acceptance",
+    "Real phone biometric/backup acceptance",
+    "Infrastructure TLS/firewall/restore/audit acceptance",
+    "Non-exportable native signing keys"
+  ]
+}

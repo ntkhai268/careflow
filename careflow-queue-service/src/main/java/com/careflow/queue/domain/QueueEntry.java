@@ -24,6 +24,8 @@ public class QueueEntry {
     @Column(name = "lab_order_id") private UUID labOrderId;
     @Column(name = "prescription_id") private UUID prescriptionId;
     @Column(name = "patient_id", nullable = false) private UUID patientId;
+    @jakarta.persistence.Column(name="patient_name_snapshot",length=150) private String patientNameSnapshot;
+    @Column(name="service_code", length=50) private String serviceCode;
     @Column(name = "user_id") private UUID userId;
     @Enumerated(EnumType.STRING) @Column(name = "queue_type", nullable = false) private QueueType queueType = QueueType.CONSULTATION;
     @Enumerated(EnumType.STRING) @Column(name = "consultation_phase") private ConsultationPhase consultationPhase = ConsultationPhase.INITIAL;

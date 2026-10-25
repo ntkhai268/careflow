@@ -6,6 +6,7 @@ import '../../../config/theme.dart';
 import '../application/journey_providers.dart';
 import '../domain/journey_models.dart';
 import 'journey_date_formatter.dart';
+import '../../../screens/notification/notification_resource_screen.dart';
 
 class JourneyNotificationScreen extends ConsumerWidget {
   const JourneyNotificationScreen({
@@ -82,6 +83,10 @@ class _NotificationScaffold extends StatelessWidget {
   Widget build(BuildContext context) => Scaffold(
     appBar: AppBar(
       title: const Text('Thông báo'),
+      bottom: const PreferredSize(
+        preferredSize: Size.fromHeight(88),
+        child: NotificationConnectionTile(),
+      ),
       actions: [
         IconButton(
           tooltip: 'Tải lại thông báo',
@@ -142,9 +147,26 @@ class _NotificationList extends ConsumerWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(AppSpacing.base),
       physics: const AlwaysScrollableScrollPhysics(),
-      itemCount: newestFirst.length,
+      itemCount: newestFirst.length + (onMarkRead != null ? 1 : 0),
       separatorBuilder: (_, _) => const SizedBox(height: AppSpacing.sm),
       itemBuilder: (context, index) {
+        if (index == newestFirst.length) {
+          return TextButton(
+            onPressed: () async {
+              final success = await ref
+                  .read(patientNotificationInboxProvider.notifier)
+                  .loadMore();
+              if (!success && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Chưa tải được thông báo cũ. Hãy thử lại.'),
+                  ),
+                );
+              }
+            },
+            child: const Text('Tải thông báo cũ hơn'),
+          );
+        }
         final notification = newestFirst[index];
         return _NotificationTile(
           notification: notification,
@@ -169,6 +191,10 @@ class _NotificationList extends ConsumerWidget {
       }
     }
     if (!context.mounted) return;
+    if (onMarkRead != null) {
+      context.push('/notifications/${Uri.encodeComponent(notification.id)}');
+      return;
+    }
     context.push(
       notificationDestination(
         notification: notification,

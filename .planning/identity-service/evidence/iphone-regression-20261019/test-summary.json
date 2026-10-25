@@ -1,0 +1,20 @@
+{
+  "flutter": {
+    "fullPassed": 233,
+    "conditionalSkips": 15,
+    "separatelyPassedHttpFixtures": 14,
+    "totalExecutedPassed": 247,
+    "remainingLegacyDemoSkip": 1
+  },
+  "analyzer": {
+    "errors": 0,
+    "warnings": 0,
+    "preexistingInfo": 2
+  },
+  "androidDebugBuild": true,
+  "iphoneReleaseBuild": "16",
+  "physicalNativeScratchTests": true,
+  "faceIdSensorLoginConfirmedByUser": false,
+  "realDocumentUsed": false,
+  "newProviderCalls": 0
+}

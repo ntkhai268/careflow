@@ -1,0 +1,49 @@
+{
+  "checkedAt": "2026-10-20T04:06:33.300724+00:00",
+  "backend": {
+    "careflow-common": {
+      "tests": 46,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-api-gateway": {
+      "tests": 35,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-identity-service": {
+      "tests": 161,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-hospital-directory-service": {
+      "tests": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "web": {
+    "typecheck": "PASS",
+    "productionWebpackBuild": "PASS",
+    "ageAndTimeBoundaryAssertions": 10
+  },
+  "mobile": {
+    "fullSuitePassed": 233,
+    "fullSuiteSkipped": 15,
+    "conditionalHttpPassedOnSeparateRuns": 14,
+    "remainingSkipped": 1,
+    "remainingReason": "Old separate pharmacy payment demo assertion superseded by settlement test",
+    "physicalFaceIdOrCameraAcceptance": false
+  },
+  "integrationGroups": {
+    "fixtureAccountAndWebAuthn": 6,
+    "deployedRuntimeUi": 6,
+    "clinicalUi": 4,
+    "cookiePasskeyAndTemplates": 3
+  },
+  "outboundEmailInThisRun": false
+}

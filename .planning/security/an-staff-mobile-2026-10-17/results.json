@@ -1,0 +1,64 @@
+{
+  "checkedAt": "2026-10-17T07:05:45.583Z",
+  "baseline": "origin/develop e5fc9c1",
+  "sourceHead": "5a8c6e5 + uncommitted changes",
+  "mock": false,
+  "completed": {
+    "appointmentId": "2e1b1d81-6cae-482d-94d0-15e64e47c174",
+    "consultationId": "d075ff76-ccd9-4716-b943-7524b794437c",
+    "prescriptionId": "76d1db18-56a8-45e1-a23b-cd81f3d7220c",
+    "appointmentStatus": "COMPLETED",
+    "consultationStatus": "COMPLETED",
+    "prescriptionStatus": "DISPENSED"
+  },
+  "guards": [
+    {
+      "role": "STAFF",
+      "route": "/admin",
+      "forbidden": true
+    },
+    {
+      "role": "STAFF",
+      "route": "/dashboard/queue",
+      "forbidden": true
+    },
+    {
+      "role": "STAFF",
+      "route": "/consultation/d075ff76-ccd9-4716-b943-7524b794437c",
+      "forbidden": true
+    },
+    {
+      "role": "DOCTOR",
+      "route": "/staff/checkin",
+      "forbidden": true
+    }
+  ],
+  "browserErrors": [],
+  "reloadVerified": {
+    "doctor": true,
+    "staff": true,
+    "mobile": true
+  },
+  "webBuildId": "GqLR4-OKIbS76mQ8_ayzk",
+  "preparedAtTest": {
+    "appointmentId": "fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "ticketCode": "NOI-003",
+    "date": "2026-10-17",
+    "timeSlot": "15:00-15:30",
+    "queueStatus": "CHECKED_IN"
+  },
+  "latestObserved": {
+    "appointmentId": "fc6ca88c-f583-4064-a9ff-a7760fb6fb46",
+    "ticketCode": "NOI-003",
+    "queueStatus": "IN_PROGRESS",
+    "consultationId": "72e2303c-a82e-4f7a-b542-064f8a986918",
+    "consultationStatus": "IN_PROGRESS",
+    "note": "Moved after preparation during continued demo; retained without reset."
+  },
+  "nativeWindowsVerified": {
+    "doctor": "an@careflow.vn",
+    "staffRole": "STAFF",
+    "mobilePhone01Authenticated": true,
+    "separatePersistentProfiles": true
+  }
+}

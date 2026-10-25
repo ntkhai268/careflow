@@ -1,96 +1,261 @@
-// CareFlow - Queue Management Service Database Design (DBML)
-// Schema: careflow_queue
-
-Project CareFlow_Queue_Service {
+// CareFlow queue — base schema verified 2026-10-20; V14 cancellation markers verified on PostgreSQL 2026-10-21.
+// Partial indexes and CHECK/FK constraints are retained as SQL notes below each table.
+Project CareFlow_Queue {
   database_type: 'PostgreSQL'
-  note: 'Database Schema cho dịch vụ Cấp phiếu & Xếp hàng Khám bệnh (CareFlow Queue Management Service)'
 }
 
-Enum QueueType {
-  INITIAL_CONSULTATION [note: 'Xếp hàng khám ban đầu tại phòng khám']
-  LAB_EXECUTION [note: 'Xếp hàng thực hiện cận lâm sàng (xét nghiệm / siêu âm / CĐHA)']
-  RESULT_REVIEW [note: 'Xếp hàng quay lại bác sĩ đọc kết quả (chèn sau lượt khám ban đầu kế tiếp)']
+Table queue.appointment_cancellations {
+  appointment_id uuid [pk]
+  cancellation_event_id uuid
+  cancelled_at timestamptz [not null, default: `CURRENT_TIMESTAMP`]
+  note: 'V14: durable cancellation marker, including cancellation received before ticket creation. No cross-service FK. Backfills existing cancelled tickets; confirmation/cancellation processing is serialized per appointment. Not cleared by daily queue seeding.'
 }
 
-Enum QueueStatus {
-  TICKET_ISSUED [note: 'Đã cấp phiếu & QR, chưa đến bệnh viện check-in']
-  CHECKED_IN [note: 'Đã check-in thành công, đang nằm trong Active FIFO Queue']
-  QUEUED [note: 'Đang xếp hàng (dành cho Lab Execution & Result Review)']
-  CALLED [note: 'Đã được gọi tên vào phòng/khu phục vụ']
-  IN_PROGRESS [note: 'Đang thực hiện khám/xét nghiệm']
-  COMPLETED [note: 'Đã hoàn tất lượt phục vụ']
-  MISSED [note: 'Bị nhỡ lượt do không có mặt khi gọi']
-  CANCELLED [note: 'Lượt bị hủy']
-  NO_SHOW [note: 'Hết giờ check-in không đến']
-}
-
-Table visit_tickets {
-  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
-  ticket_code varchar(30) [not null, unique, note: 'Mã phiếu điện tử (ví dụ: PK-2026-00125)']
-  appointment_id uuid [not null, unique, note: 'Khóa ngoại tham chiếu lịch hẹn (Appointment Service)']
-  patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bệnh nhân (Patient Service)']
-  queue_number int [not null, note: 'Số thứ tự cấp theo phòng/phiên']
-  department varchar(100) [not null, note: 'Mã khoa (ví dụ: NEUROLOGY)']
-  room_id varchar(50) [not null, note: 'Phòng khám (ví dụ: ROOM-21)']
-  time_slot varchar(50) [not null, note: 'Khung giờ dự kiến']
-  qr_token text [note: 'Không còn phát cho bệnh nhân; Hospital Check-in QR nằm ở phiên/phòng']
-  session_date date [not null, note: 'Ngày khám']
-  session_code varchar(20) [not null, note: 'Phiên khám (MORNING / AFTERNOON)']
-
-  created_at timestamptz [not null]
-  updated_at timestamptz [not null]
-
-  indexes {
-    patient_id [name: 'idx_ticket_patient']
-    appointment_id [name: 'idx_ticket_appointment']
-    (room_id, session_date, session_code) [name: 'idx_ticket_room_session']
-  }
-}
-
-Table queue_entries {
-  id uuid [pk, note: 'Khóa chính UUID']
-  ticket_id uuid [note: 'Tham chiếu visit_tickets (null nếu là lab execution tự động)']
-  patient_id uuid [not null, note: 'Bệnh nhân']
-  room_id varchar(50) [not null, note: 'Mã phòng hoặc khu dịch vụ (ROOM-21, LAB-HEMATOLOGY-01)']
-  queue_type QueueType [not null, note: 'Loại queue (INITIAL_CONSULTATION, LAB_EXECUTION, RESULT_REVIEW)']
-  queue_number int [not null, note: 'Số thứ tự xếp hàng']
-  status QueueStatus [not null, default: 'TICKET_ISSUED', note: 'Trạng thái lượt xếp hàng']
-  session_date date [not null]
-  session_code varchar(20) [not null]
-  
-  // Tham chiếu liên quan
-  lab_order_id uuid [note: 'Tham chiếu chỉ định cận lâm sàng (nếu là LAB_EXECUTION)']
-  consultation_id uuid [note: 'Tham chiếu phiên khám (nếu là RESULT_REVIEW)']
-  
-  called_at timestamptz [note: 'Thời điểm gọi số']
-  checked_in_by_user_id uuid [note: 'Actor xác nhận; patient user khi tự check-in']
-  check_in_method varchar(40) [note: 'PATIENT_QR_GEOFENCE hoặc STAFF_MANUAL/STAFF_QR']
-  check_in_distance_meters double [note: 'Khoảng cách tới tâm Hospital Geofence']
-  check_in_accuracy_meters double [note: 'Độ chính xác vị trí thiết bị tại thời điểm check-in']
-  check_in_latitude double [note: 'Tọa độ audit tối thiểu tại thời điểm check-in']
-  check_in_longitude double [note: 'Tọa độ audit tối thiểu tại thời điểm check-in']
-  started_at timestamptz [note: 'Thời điểm bắt đầu phục vụ']
-  completed_at timestamptz [note: 'Thời điểm hoàn thành']
-  created_at timestamptz [not null]
-  updated_at timestamptz [not null]
-
-  indexes {
-    (room_id, session_date, status) [name: 'idx_queue_active_room']
-    patient_id [name: 'idx_queue_patient']
-  }
-}
-
-Ref: queue_entries.ticket_id > visit_tickets.id
-
-Table hospital_check_in_configs {
+Table queue.hospital_check_in_configs {
   id uuid [pk]
-  facility_code varchar(50) [not null, unique, note: 'Mã cơ sở được Admin quản lý']
+  facility_code varchar(50) [not null]
   facility_name varchar(160) [not null]
-  latitude decimal(9,6) [not null, note: 'Vĩ độ tâm geofence']
-  longitude decimal(9,6) [not null, note: 'Kinh độ tâm geofence']
-  allowed_radius_meters decimal(10,2) [not null, note: 'Bán kính cho phép bệnh nhân check-in']
-  max_accuracy_meters decimal(10,2) [not null, note: 'Sai số GPS tối đa chấp nhận']
+  latitude double [not null]
+  longitude double [not null]
+  allowed_radius_meters double [not null]
+  max_accuracy_meters double [not null]
   version bigint [not null]
   created_at timestamptz [not null]
   updated_at timestamptz [not null]
+  note: '''
+UNIQUE (facility_code)
+CHECK (((latitude >= (('-90'::integer)::numeric)::double precision) AND (latitude <= ((90)::numeric)::double precision)))
+CHECK (((longitude >= (('-180'::integer)::numeric)::double precision) AND (longitude <= ((180)::numeric)::double precision)))
+CHECK ((allowed_radius_meters > ((0)::numeric)::double precision))
+CHECK ((max_accuracy_meters > ((0)::numeric)::double precision))
+CREATE UNIQUE INDEX hospital_check_in_configs_pkey ON queue.hospital_check_in_configs USING btree (id)
+CREATE UNIQUE INDEX hospital_check_in_configs_facility_code_key ON queue.hospital_check_in_configs USING btree (facility_code)
+'''
 }
+
+Table queue.idempotency_records {
+  id uuid [pk]
+  command_name varchar(50) [not null]
+  scope_id uuid [not null]
+  idempotency_key varchar(100) [not null]
+  request_fingerprint varchar(64) [not null]
+  result_entry_id uuid
+  empty_result bool [not null]
+  created_at timestamptz [not null]
+  note: '''
+CHECK ((((empty_result = true) AND (result_entry_id IS NULL)) OR ((empty_result = false) AND (result_entry_id IS NOT NULL))))
+UNIQUE (command_name, scope_id, idempotency_key)
+FOREIGN KEY (result_entry_id) REFERENCES queue.queue_entries(id)
+CREATE UNIQUE INDEX idempotency_records_pkey ON queue.idempotency_records USING btree (id)
+CREATE UNIQUE INDEX uk_queue_idempotency ON queue.idempotency_records USING btree (command_name, scope_id, idempotency_key)
+CREATE INDEX idx_queue_idempotency_created_at ON queue.idempotency_records USING btree (created_at)
+'''
+}
+
+Table queue.outbox_events {
+  event_id uuid [pk]
+  aggregate_type varchar(50) [not null]
+  aggregate_id uuid [not null]
+  event_type varchar(100) [not null]
+  event_version integer [not null]
+  aggregate_version bigint [not null]
+  exchange_name varchar(100) [not null]
+  routing_key varchar(100) [not null]
+  payload jsonb [not null]
+  status varchar(20) [not null]
+  attempts integer [not null]
+  occurred_at timestamptz [not null]
+  next_attempt_at timestamptz [not null]
+  published_at timestamptz
+  last_error text
+  created_at timestamptz [not null]
+  note: '''
+CHECK ((attempts >= 0))
+CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'PUBLISHED'::character varying, 'FAILED'::character varying, 'DEAD'::character varying])::text[])))
+CREATE UNIQUE INDEX outbox_events_pkey ON queue.outbox_events USING btree (event_id)
+CREATE INDEX idx_queue_outbox_pending ON queue.outbox_events USING btree (status, next_attempt_at, created_at)
+CREATE INDEX idx_queue_outbox_aggregate ON queue.outbox_events USING btree (aggregate_id, aggregate_version)
+'''
+}
+
+Table queue.processed_events {
+  event_id uuid [not null]
+  consumer_name varchar(100) [not null]
+  event_type varchar(100) [not null]
+  processed_at timestamptz [not null]
+  indexes {
+    (event_id, consumer_name) [pk]
+  }
+  note: '''
+CREATE UNIQUE INDEX processed_events_pkey ON queue.processed_events USING btree (event_id, consumer_name)
+'''
+}
+
+Table queue.queue_configs {
+  id uuid [pk]
+  department_id uuid [not null]
+  department_name_snapshot varchar(100) [not null]
+  queue_prefix varchar(10) [not null]
+  room_code varchar(50)
+  priority_ratio_n integer [not null]
+  normal_ratio_m integer [not null]
+  avg_consultation_minutes integer [not null]
+  near_turn_threshold integer [not null]
+  missed_policy varchar(30) [not null]
+  scheduler_date date
+  cycle_phase varchar(20) [not null]
+  served_in_phase integer [not null]
+  normal_cursor varchar(20) [not null]
+  is_active bool [not null]
+  version bigint [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  last_served_lane varchar(30)
+  policy_version bigint [not null]
+  note: '''
+CHECK (((missed_policy)::text = ANY ((ARRAY['REQUEUE_FRONT'::character varying, 'REQUEUE_BACK'::character varying, 'REQUIRE_MANUAL'::character varying])::text[])))
+CHECK (((cycle_phase)::text = ANY ((ARRAY['PRIORITY'::character varying, 'NORMAL'::character varying])::text[])))
+CHECK (((normal_cursor)::text = ANY ((ARRAY['APPOINTMENT'::character varying, 'WALK_IN'::character varying])::text[])))
+UNIQUE (id, department_id)
+CHECK ((priority_ratio_n > 0))
+CHECK ((normal_ratio_m > 0))
+CHECK ((avg_consultation_minutes > 0))
+CHECK ((near_turn_threshold > 0))
+CHECK ((served_in_phase >= 0))
+CHECK (((last_served_lane IS NULL) OR ((last_served_lane)::text = ANY ((ARRAY['PRIORITY'::character varying, 'NORMAL'::character varying, 'RESULT_REVIEW'::character varying])::text[]))))
+CREATE UNIQUE INDEX queue_configs_pkey ON queue.queue_configs USING btree (id)
+CREATE UNIQUE INDEX uk_queue_config_context ON queue.queue_configs USING btree (id, department_id)
+CREATE UNIQUE INDEX uk_queue_config_room ON queue.queue_configs USING btree (room_code) WHERE (is_active = true)
+CREATE UNIQUE INDEX uq_queue_config_room ON queue.queue_configs USING btree (room_code) WHERE (room_code IS NOT NULL)
+'''
+}
+
+Table queue.queue_entries {
+  id uuid [pk]
+  queue_config_id uuid
+  department_id uuid
+  appointment_id uuid
+  patient_id uuid [not null]
+  user_id uuid
+  queue_date date [not null]
+  sequence_number integer [not null]
+  queue_number varchar(20) [not null]
+  priority_level varchar(20) [not null]
+  status varchar(20) [not null]
+  checked_in_at timestamptz
+  eligible_since_at timestamptz
+  called_at timestamptz
+  started_at timestamptz
+  completed_at timestamptz
+  missed_at timestamptz
+  cancelled_at timestamptz
+  missed_count integer [not null]
+  estimated_wait_minutes integer
+  version bigint [not null]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  call_attempts integer [not null]
+  near_turn_notified_at timestamptz
+  scheduled_start_at timestamptz
+  checked_in_by_user_id uuid
+  priority_reason_code varchar(50)
+  department_code varchar(50)
+  time_slot varchar(20)
+  room_display_name_snapshot varchar(150)
+  called_by_user_id uuid
+  queue_type varchar(30) [not null]
+  consultation_phase varchar(30)
+  queue_class varchar(20)
+  service_point_id varchar(80)
+  consultation_id uuid
+  lab_order_id uuid
+  prescription_id uuid
+  check_in_method varchar(40)
+  check_in_distance_meters double
+  check_in_accuracy_meters double
+  check_in_latitude double
+  check_in_longitude double
+  patient_name_snapshot varchar(150)
+  service_code varchar(50)
+  note: '''
+CHECK ((sequence_number > 0))
+CHECK (((priority_level)::text = ANY ((ARRAY['EMERGENCY'::character varying, 'PRIORITY'::character varying, 'APPOINTMENT'::character varying, 'WALK_IN'::character varying])::text[])))
+CHECK (((estimated_wait_minutes IS NULL) OR (estimated_wait_minutes >= 0)))
+UNIQUE (appointment_id)
+UNIQUE (queue_config_id, queue_date, queue_number)
+CHECK (((status)::text = ANY ((ARRAY['WAITING'::character varying, 'QUEUED'::character varying, 'CHECKED_IN'::character varying, 'CALLED'::character varying, 'IN_PROGRESS'::character varying, 'COMPLETED'::character varying, 'MISSED'::character varying, 'CANCELLED'::character varying])::text[])))
+CHECK (((queue_type)::text = ANY ((ARRAY['CONSULTATION'::character varying, 'LAB_EXECUTION'::character varying, 'PHARMACY_DISPENSING'::character varying])::text[])))
+CHECK ((call_attempts >= 0))
+CHECK ((missed_count >= 0))
+CHECK (((consultation_phase IS NULL) OR ((consultation_phase)::text = ANY ((ARRAY['INITIAL'::character varying, 'RESULT_REVIEW'::character varying])::text[]))))
+CHECK (((queue_class IS NULL) OR ((queue_class)::text = ANY ((ARRAY['NORMAL'::character varying, 'PRIORITY'::character varying])::text[]))))
+CHECK (((((queue_type)::text = 'CONSULTATION'::text) AND (consultation_phase IS NOT NULL) AND (queue_config_id IS NOT NULL)) OR (((queue_type)::text = ANY ((ARRAY['LAB_EXECUTION'::character varying, 'PHARMACY_DISPENSING'::character varying])::text[])) AND (consultation_phase IS NULL) AND (service_point_id IS NOT NULL))))
+FOREIGN KEY (queue_config_id, department_id) REFERENCES queue.queue_configs(id, department_id)
+CHECK (((check_in_distance_meters IS NULL) OR (check_in_distance_meters >= (0)::double precision)))
+CHECK (((check_in_accuracy_meters IS NULL) OR (check_in_accuracy_meters > (0)::double precision)))
+CHECK (((check_in_latitude IS NULL) OR ((check_in_latitude >= ('-90'::integer)::double precision) AND (check_in_latitude <= (90)::double precision))))
+CHECK (((check_in_longitude IS NULL) OR ((check_in_longitude >= ('-180'::integer)::double precision) AND (check_in_longitude <= (180)::double precision))))
+CREATE UNIQUE INDEX queue_entries_pkey ON queue.queue_entries USING btree (id)
+CREATE UNIQUE INDEX queue_entries_appointment_id_key ON queue.queue_entries USING btree (appointment_id)
+CREATE UNIQUE INDEX uk_queue_number_per_day ON queue.queue_entries USING btree (queue_config_id, queue_date, queue_number)
+CREATE INDEX idx_queue_next_candidate ON queue.queue_entries USING btree (queue_config_id, queue_date, status, priority_level, eligible_since_at, sequence_number)
+CREATE INDEX idx_queue_patient_date ON queue.queue_entries USING btree (patient_id, queue_date)
+CREATE INDEX idx_queue_user_date ON queue.queue_entries USING btree (user_id, queue_date)
+CREATE INDEX idx_queue_scheduled_appointment ON queue.queue_entries USING btree (queue_config_id, queue_date, status, scheduled_start_at) WHERE (appointment_id IS NOT NULL)
+CREATE UNIQUE INDEX uk_queue_active_result_review ON queue.queue_entries USING btree (consultation_id) WHERE (((queue_type)::text = 'CONSULTATION'::text) AND ((consultation_phase)::text = 'RESULT_REVIEW'::text) AND ((status)::text = ANY ((ARRAY['QUEUED'::character varying, 'CALLED'::character varying, 'IN_PROGRESS'::character varying, 'MISSED'::character varying])::text[])))
+CREATE UNIQUE INDEX uk_queue_lab_order_service_point ON queue.queue_entries USING btree (lab_order_id, service_point_id) WHERE ((queue_type)::text = 'LAB_EXECUTION'::text)
+CREATE UNIQUE INDEX uk_queue_prescription_service_point ON queue.queue_entries USING btree (prescription_id) WHERE ((queue_type)::text = 'PHARMACY_DISPENSING'::text)
+CREATE INDEX idx_queue_service_point_active ON queue.queue_entries USING btree (service_point_id, queue_date, status, eligible_since_at, sequence_number)
+CREATE UNIQUE INDEX uk_queue_active_initial_consultation ON queue.queue_entries USING btree (patient_id, department_id, queue_date) WHERE (((queue_type)::text = 'CONSULTATION'::text) AND ((consultation_phase)::text = 'INITIAL'::text) AND ((status)::text = ANY ((ARRAY['CHECKED_IN'::character varying, 'CALLED'::character varying, 'IN_PROGRESS'::character varying, 'MISSED'::character varying])::text[])))
+'''
+}
+
+Table queue.queue_number_sequences {
+  id uuid [pk]
+  queue_config_id uuid [not null]
+  queue_date date [not null]
+  last_number integer [not null]
+  version bigint [not null]
+  updated_at timestamptz [not null]
+  note: '''
+CHECK ((last_number >= 0))
+UNIQUE (queue_config_id, queue_date)
+FOREIGN KEY (queue_config_id) REFERENCES queue.queue_configs(id)
+CREATE UNIQUE INDEX queue_number_sequences_pkey ON queue.queue_number_sequences USING btree (id)
+CREATE UNIQUE INDEX uk_queue_number_sequence ON queue.queue_number_sequences USING btree (queue_config_id, queue_date)
+'''
+}
+
+Table queue.room_policy_audit {
+  id uuid [pk]
+  queue_config_id uuid [not null]
+  actor_id uuid [not null]
+  policy_version bigint [not null]
+  settings jsonb [not null]
+  created_at timestamptz [not null]
+  note: '''
+UNIQUE (queue_config_id, policy_version)
+FOREIGN KEY (queue_config_id) REFERENCES queue.queue_configs(id)
+CREATE UNIQUE INDEX room_policy_audit_pkey ON queue.room_policy_audit USING btree (id)
+CREATE UNIQUE INDEX room_policy_audit_queue_config_id_policy_version_key ON queue.room_policy_audit USING btree (queue_config_id, policy_version)
+'''
+}
+
+Table queue.service_point_sequences {
+  id uuid [pk]
+  service_point_id varchar(80) [not null]
+  queue_date date [not null]
+  last_number integer [not null]
+  version bigint [not null]
+  updated_at timestamptz [not null]
+  note: '''
+CHECK ((last_number >= 0))
+UNIQUE (service_point_id, queue_date)
+CREATE UNIQUE INDEX service_point_sequences_pkey ON queue.service_point_sequences USING btree (id)
+CREATE UNIQUE INDEX uk_service_point_sequence ON queue.service_point_sequences USING btree (service_point_id, queue_date)
+'''
+}
+
+Ref: queue.idempotency_records.result_entry_id > queue.queue_entries.id
+Ref: queue.queue_number_sequences.queue_config_id > queue.queue_configs.id
+Ref: queue.room_policy_audit.queue_config_id > queue.queue_configs.id

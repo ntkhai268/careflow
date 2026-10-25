@@ -12,6 +12,6 @@ import java.util.UUID;
 @FeignClient(name = "lab-service")
 public interface LabClient {
 
-    @GetMapping("/api/labs/patient/{patientId}")
+    @GetMapping("/api/labs/orders/patient/{patientId}")
     ApiResponse<List<Map<String, Object>>> getLabOrdersByPatient(@PathVariable("patientId") UUID patientId);
 }

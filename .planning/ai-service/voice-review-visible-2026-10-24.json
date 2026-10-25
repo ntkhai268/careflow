@@ -1,0 +1,44 @@
+{
+  "status": "PASS",
+  "checkedAt": "2026-10-24T06:04:21.612563+00:00",
+  "scope": "Visible named-medicine acknowledgement on the main prescription page and outside collapsed voice editors",
+  "branch": "feature/dangkhoii/release-r7",
+  "sourceFilesSha256": {
+    "frontend/doctor-web/src/components/NamedMedicineReview.tsx": "c1a699caa70b7707fca6ec88ac7c843730a74bd159c31af32e59f4a328d1cc4e",
+    "frontend/doctor-web/src/components/VoicePrescriptionPreview.tsx": "b03f16c43d86a05ef5576a465f48c8fb05ad2d786b60ef5d088d8351ffe9bc37",
+    "frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx": "4d206523d1cf51ad5b4e9324eeac79e333426d4db33f469577fed564385a4399"
+  },
+  "webBuildId": "eUa9Q0X0G71HEiTAQeFT6",
+  "typecheck": "PASS",
+  "targetedEslint": "PASS",
+  "productionBuild": "PASS",
+  "browserChecks": [
+    "A named drug has a prominent review box directly in the main prescription list, with editable name and unit",
+    "Signing without acknowledgement scrolls and focuses the exact visible checkbox without submitting release",
+    "Missing unit directs focus to the visible unit field and acknowledgement becomes available after it is filled",
+    "Voice and main acknowledgement controls share state; the voice checkbox remains visible when editing fields are collapsed",
+    "Saving the visible acknowledgement persists it on the same draft and reload keeps it checked",
+    "Changing a unit clears old acknowledgement; checking again and signing auto-saves the current review before real release",
+    "The reviewed prescription completes the consultation through real APIs without uncaught UI errors"
+  ],
+  "actualClinicalApis": true,
+  "mockedResponses": false,
+  "uncaughtBrowserErrors": 0,
+  "userCaseReviewVisible": true,
+  "userCaseClinicalWrites": 0,
+  "onlyOwnSyntheticCaseCompletedAndDispensed": true,
+  "backendJarUnchanged": true,
+  "schemaChanged": false,
+  "serverValidationUnchanged": true,
+  "graph": {
+    "changed_count": 210,
+    "affected_count": 40,
+    "changed_files": 64,
+    "risk_level": "critical",
+    "partial": false,
+    "truncated": false,
+    "scope": "All carried R6/R7 changes; new untracked component reviewed separately"
+  },
+  "committed": false,
+  "fullAcceptance": false
+}

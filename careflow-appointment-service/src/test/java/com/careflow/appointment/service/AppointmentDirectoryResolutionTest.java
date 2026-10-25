@@ -39,6 +39,9 @@ class AppointmentDirectoryResolutionTest {
     @Mock
     private PatientClient patientClient;
 
+    @Mock
+    private com.careflow.appointment.client.AppointmentConsultationClient consultations;
+
     @Test
     void appointmentSnapshotsTheActiveDirectoryRoom() {
         UUID directoryDepartmentId = UUID.randomUUID();
@@ -60,7 +63,7 @@ class AppointmentDirectoryResolutionTest {
             return appointment;
         });
 
-        var service = new AppointmentService(appointments, events, directory, patientClient);
+        var service = new AppointmentService(appointments, events, AppointmentPricingFixture.priced(directory), patientClient, null, consultations);
         AppointmentResponse response = service.createAppointment(CreateAppointmentRequest.builder()
                 .patientId(UUID.randomUUID())
                 .patientName("Test Patient")
@@ -91,7 +94,7 @@ class AppointmentDirectoryResolutionTest {
                 DoctorProfileResponse.builder().userId(UUID.randomUUID()).departmentCode("NOI_TONG_QUAT")
                         .assignedRoomId("ROOM-01").isActive(true).build())));
 
-        var service = new AppointmentService(appointments, events, directory, patientClient);
+        var service = new AppointmentService(appointments, events, AppointmentPricingFixture.priced(directory), patientClient, null, consultations);
 
         assertThatThrownBy(() -> service.createAppointment(CreateAppointmentRequest.builder()
                         .patientId(UUID.randomUUID())
@@ -125,13 +128,13 @@ class AppointmentDirectoryResolutionTest {
         when(directory.hasStaffRoomAccess(staffUserId, "ROOM-01"))
                 .thenReturn(ApiResponse.success(true));
 
-        var allowed = new AppointmentService(appointments, events, directory, patientClient)
+        var allowed = new AppointmentService(appointments, events, AppointmentPricingFixture.priced(directory), patientClient, null, consultations)
                 .getAssignmentAccess(patientId, appointmentId, "ROOM-01", staffUserId, "STAFF");
         assertThat(allowed.isAllowed()).isTrue();
 
         when(directory.hasStaffRoomAccess(staffUserId, "ROOM-01"))
                 .thenReturn(ApiResponse.success(false));
-        var denied = new AppointmentService(appointments, events, directory, patientClient)
+        var denied = new AppointmentService(appointments, events, AppointmentPricingFixture.priced(directory), patientClient, null, consultations)
                 .getAssignmentAccess(patientId, appointmentId, "ROOM-01", staffUserId, "STAFF");
         assertThat(denied.isAllowed()).isFalse();
     }

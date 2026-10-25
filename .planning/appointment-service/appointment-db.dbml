@@ -1,59 +1,113 @@
-// CareFlow - Appointment Service Database Design (DBML)
-// Schema: careflow_appointment
-
-Project CareFlow_Appointment_Service {
+// CareFlow appointment — physical schema verified against isolated PostgreSQL migrations, 2026-10-20.
+// Partial indexes and CHECK/FK constraints are retained as SQL notes below each table.
+Project CareFlow_Appointment {
   database_type: 'PostgreSQL'
-  note: 'Database Schema cho dịch vụ Đặt lịch khám & Quản lý Lịch hẹn (CareFlow Appointment Service)'
 }
 
-Enum AppointmentStatus {
-  CONFIRMED [note: 'Đã đặt & tự động xác nhận khi slot hợp lệ']
-  CANCELLED [note: 'Bệnh nhân hoặc nhân viên hủy']
-  FULFILLED [note: 'Đã hoàn tất khám (Consultation Completed)']
-  NO_SHOW [note: 'Quá giờ check-in không đến']
+Table public.appointment_booking_commands {
+  scope_key varchar(255) [pk]
+  fingerprint varchar(64) [not null]
+  appointment_id uuid [not null]
+  created_at timestamptz [not null]
+  note: '''
+FOREIGN KEY (appointment_id) REFERENCES appointments(id)
+CREATE UNIQUE INDEX appointment_booking_commands_pkey ON public.appointment_booking_commands USING btree (scope_key)
+'''
 }
 
-Table appointments {
-  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
-  patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bệnh nhân (Patient Service)']
-  department varchar(100) [not null, note: 'Mã khoa khám (ví dụ: NEUROLOGY, CARDIOLOGY)']
-  doctor_id uuid [note: 'Bác sĩ được chỉ định (nếu có)']
-  room_id varchar(50) [note: 'Mã phòng khám (ví dụ: ROOM-21)']
-  appointment_date date [not null, note: 'Ngày khám (YYYY-MM-DD)']
-  time_slot varchar(50) [not null, note: 'Khung giờ khám (ví dụ: 10:30-11:30)']
-  status AppointmentStatus [not null, default: 'CONFIRMED', note: 'Trạng thái lịch hẹn (CONFIRMED, CANCELLED, FULFILLED, NO_SHOW)']
-  reason text [note: 'Lý do khám bệnh']
-  parent_appointment_id uuid [note: 'Tham chiếu lịch khám trước (nếu là lịch tái khám/follow-up)']
-  
-  // Audit
-  created_at timestamptz [not null, note: 'Thời điểm tạo bản ghi']
-  updated_at timestamptz [not null, note: 'Thời điểm cập nhật']
+Table public.appointment_outbox_events {
+  event_id uuid [pk]
+  aggregate_id uuid [not null]
+  event_type varchar(100) [not null]
+  routing_key varchar(100) [not null]
+  payload jsonb [not null]
+  status varchar(20) [not null]
+  attempts integer [not null]
+  next_attempt_at timestamptz [not null]
+  published_at timestamptz
+  last_error text
+  created_at timestamptz [not null]
+  note: '''
+CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'PUBLISHED'::character varying, 'FAILED'::character varying, 'DEAD'::character varying])::text[])))
+CREATE UNIQUE INDEX appointment_outbox_events_pkey ON public.appointment_outbox_events USING btree (event_id)
+CREATE INDEX idx_appointment_outbox_pending ON public.appointment_outbox_events USING btree (status, next_attempt_at, created_at)
+'''
+}
 
+Table public.appointment_room_schedules {
+  room_id varchar(50) [pk]
+  version bigint [not null]
+  effective_from date [not null]
+  definition jsonb [not null]
+  updated_by uuid
+  updated_at timestamptz [not null]
+  note: '''
+CHECK ((version > 0))
+CREATE UNIQUE INDEX appointment_room_schedules_pkey ON public.appointment_room_schedules USING btree (room_id)
+'''
+}
+
+Table public.appointment_schedule_revisions {
+  room_id varchar(50) [not null]
+  version bigint [not null]
+  effective_from date [not null]
+  definition jsonb [not null]
+  created_by uuid
+  created_at timestamptz [not null]
   indexes {
-    patient_id [name: 'idx_appointment_patient', note: 'Index tra cứu lịch hẹn theo bệnh nhân']
-    (department, appointment_date, time_slot) [name: 'idx_appointment_slot', note: 'Index quản lý capacity khung giờ']
-    status [name: 'idx_appointment_status', note: 'Index lọc theo trạng thái']
+    (room_id, version) [pk]
   }
+  note: '''
+FOREIGN KEY (room_id) REFERENCES appointment_room_schedules(room_id)
+CREATE UNIQUE INDEX appointment_schedule_revisions_pkey ON public.appointment_schedule_revisions USING btree (room_id, version)
+CREATE INDEX idx_schedule_effective ON public.appointment_schedule_revisions USING btree (room_id, effective_from, version DESC)
+'''
 }
 
-Table doctor_schedules {
-  id uuid [pk, note: 'Khóa chính UUID']
-  doctor_id uuid [not null, note: 'Bác sĩ']
-  department varchar(100) [not null, note: 'Khoa']
-  room_id varchar(50) [not null, note: 'Phòng khám gắn với bác sĩ']
-  work_date date [not null, note: 'Ngày làm việc']
-  time_slot varchar(50) [not null, note: 'Khung giờ']
-  max_capacity int [not null, default: 10, note: 'Số lượng bệnh nhân tối đa']
-  booked_count int [not null, default: 0, note: 'Số lượng đã đặt']
-  is_active boolean [not null, default: true, note: 'Trạng thái hoạt động']
+Table public.appointment_slot_locks {
+  slot_key varchar(200) [pk]
+  created_at timestamptz [not null]
+  note: '''
+CREATE UNIQUE INDEX appointment_slot_locks_pkey ON public.appointment_slot_locks USING btree (slot_key)
+'''
+}
 
+Table public.appointments {
+  id uuid [pk]
+  patient_id uuid [not null]
+  patient_name varchar(100)
+  department varchar(30) [not null]
+  doctor_id uuid
+  doctor_name varchar(100)
+  appointment_date date [not null]
+  time_slot varchar(20) [not null]
+  status varchar(20) [not null]
+  reason varchar(500)
+  notes varchar(1000)
+  queue_number varchar(20)
   created_at timestamptz [not null]
   updated_at timestamptz [not null]
-
-  indexes {
-    (doctor_id, work_date) [name: 'idx_schedule_doctor_date']
-    (department, work_date, time_slot) [name: 'idx_schedule_capacity']
-  }
+  owner_user_id uuid [not null]
+  department_id uuid [not null]
+  room_id varchar(50) [not null]
+  room_display_name varchar(150) [not null]
+  source_consultation_id uuid
+  service_code varchar(50)
+  service_name varchar(150)
+  price_version bigint
+  quoted_amount bigint
+  quoted_currency varchar(3)
+  price_effective_at timestamptz
+  note: '''
+CHECK ((quoted_amount >= 0))
+CREATE UNIQUE INDEX appointments_pkey ON public.appointments USING btree (id)
+CREATE INDEX idx_appointment_patient ON public.appointments USING btree (patient_id)
+CREATE INDEX idx_appointment_dept_date ON public.appointments USING btree (department, appointment_date)
+CREATE INDEX idx_appointment_status ON public.appointments USING btree (status)
+CREATE INDEX idx_appointment_owner ON public.appointments USING btree (owner_user_id)
+CREATE INDEX idx_appointment_source_consultation ON public.appointments USING btree (source_consultation_id)
+'''
 }
 
-Ref: appointments.parent_appointment_id > appointments.id
+Ref: public.appointment_booking_commands.appointment_id > public.appointments.id
+Ref: public.appointment_schedule_revisions.room_id > public.appointment_room_schedules.room_id

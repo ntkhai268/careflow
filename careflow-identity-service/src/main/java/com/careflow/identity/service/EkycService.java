@@ -7,8 +7,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Locale;
 import java.util.Set;
 import java.util.UUID;
@@ -20,11 +18,7 @@ public class EkycService {
 
     public EkycResponse verify(UUID userId, MultipartFile image) {
         validateImage(image);
-        String mockDocumentNumber = "MOCK-" + userId.toString()
-                .replace("-", "").substring(0, 12).toUpperCase(Locale.ROOT);
-        return new EkycResponse(
-                UUID.randomUUID(), userId, mockDocumentNumber, "NGUYEN VAN A",
-                LocalDate.of(1999, 1, 1), 0.98, "VERIFIED", true, Instant.now());
+        throw new BusinessException(410, "Luồng eKYC một ảnh đã ngừng. Vui lòng cập nhật ứng dụng để xác minh bằng VNPT.");
     }
 
     void validateImage(MultipartFile image) {

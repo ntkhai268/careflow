@@ -5,6 +5,8 @@ import com.careflow.common.dto.ApiResponse;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.common.exception.ResourceNotFoundException;
 import com.careflow.consultation.client.AppointmentClient;
+import com.careflow.consultation.client.ConsultationQueueClient;
+import feign.FeignException;
 import com.careflow.consultation.client.dto.AppointmentResponse;
 import com.careflow.consultation.client.dto.UpdateAppointmentStatusRequest;
 import com.careflow.consultation.dto.request.CreateConsultationRequest;
@@ -31,12 +33,20 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class ConsultationService {
+    @org.springframework.beans.factory.annotation.Autowired private ConsultationEventOutbox eventOutbox;
+    @org.springframework.beans.factory.annotation.Autowired private ClinicalCompletionGuard completionGuard;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.careflow.common.security.PatientOwnershipClient currentOwners;
 
     private final ConsultationRepository consultationRepository;
     private final ConsultationMapper consultationMapper;
     private final RabbitTemplate rabbitTemplate;
     private final AppointmentClient appointmentClient;
+    private final ConsultationQueueClient queueClient;
     private final com.careflow.consultation.client.DirectoryClient directoryClient;
+    private final com.careflow.consultation.handover.DoctorWorkloadLock workload;
+    private final com.careflow.consultation.client.ConsultationLabClient labs;
 
     /**
      * Tạo phiên khám mới — status mặc định là IN_PROGRESS.
@@ -45,48 +55,31 @@ public class ConsultationService {
     @Transactional
     public ConsultationResponse createConsultation(CreateConsultationRequest request) {
         UUID appointmentId = request.getAppointmentId();
+        if(request.getAppointmentId()==null && request.getQueueEntryId()==null)throw new BusinessException(400,"Cần mã phiếu hàng đợi cho lượt không hẹn trước.");
+        workload.acquire(request.getDoctorId());
+        if(request.getQueueEntryId()!=null){
+            workload.acquireVisit(request.getQueueEntryId());
+            var previous=consultationRepository.findByQueueEntryId(request.getQueueEntryId());
+            if(previous.isPresent()){
+                var existing=previous.get();
+                if(!request.getDoctorId().equals(existing.currentDoctorId()) || !request.getPatientId().equals(existing.getPatientId()) || !java.util.Objects.equals(request.getAppointmentId(),existing.getAppointmentId()))throw new BusinessException(403,"Phiếu đã được gắn với một phiên khám khác.");
+                return consultationMapper.toResponse(existing);
+            }
+        }
+        String patientName = requireStartedQueueContext(request);
 
         // 0. Kiểm tra bác sĩ có phiên khám nào chưa hoàn tất (IN_PROGRESS) hay không
-        List<Consultation> activeConsultations = consultationRepository.findByDoctorIdAndStatus(
+        List<Consultation> activeConsultations = consultationRepository.findCurrentByDoctorAndStatus(
                 request.getDoctorId(), ConsultationStatus.IN_PROGRESS);
         if (!activeConsultations.isEmpty()) {
             Consultation existing = activeConsultations.get(0);
             // If the active consultation is for the SAME patient or SAME appointment, return existing active consultation
-            if (existing.getPatientId().equals(request.getPatientId()) ||
+            if ((existing.getQueueEntryId()!=null && existing.getQueueEntryId().equals(request.getQueueEntryId())) ||
                (existing.getAppointmentId() != null && existing.getAppointmentId().equals(request.getAppointmentId()))) {
                 log.info("Re-entering existing active consultation {} for patient {}", existing.getId(), request.getPatientId());
                 return consultationMapper.toResponse(existing);
             }
             throw new BusinessException(400, "Bác sĩ hiện tại đang có một ca khám chưa hoàn tất. Vui lòng hoàn thành lượt khám hiện tại trước khi gọi bệnh nhân khác.");
-        }
-
-        // 1. Validate Appointment via Feign Client (if appointment exists in appointment-service)
-        try {
-            ApiResponse<AppointmentResponse> apptRes = appointmentClient.getAppointmentById(
-                    appointmentId, request.getDoctorId(), AppConstants.ROLE_DOCTOR);
-            if (apptRes != null && apptRes.getData() != null) {
-                AppointmentResponse appointment = apptRes.getData();
-                String currentStatus = appointment.getStatus();
-
-                if (!"CONFIRMED".equalsIgnoreCase(currentStatus) && !"CHECKED_IN".equalsIgnoreCase(currentStatus) && !"IN_PROGRESS".equalsIgnoreCase(currentStatus)) {
-                    throw new BusinessException(400, String.format(
-                            "Lịch khám không ở trạng thái hợp lệ để bắt đầu khám (hiện tại: %s, yêu cầu: CONFIRMED hoặc CHECKED_IN)",
-                            appointment.getStatusDisplayName() != null ? appointment.getStatusDisplayName() : currentStatus));
-                }
-
-                // 2. Cập nhật trạng thái Appointment sang IN_PROGRESS (nếu chưa phải IN_PROGRESS)
-                if (!"IN_PROGRESS".equalsIgnoreCase(currentStatus)) {
-                    appointmentClient.updateAppointmentStatus(
-                    appointmentId,
-                            UpdateAppointmentStatusRequest.builder().status("IN_PROGRESS").build(),
-                            request.getDoctorId(), AppConstants.ROLE_DOCTOR
-                    );
-                }
-            }
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.warn("Không tìm thấy hoặc không thể kết nối tới Appointment Service cho appointmentId {}, tiếp tục khởi tạo ca khám với thông tin Queue...", appointmentId);
         }
 
         // 2.5 Snapshot Doctor Profile từ Hospital Directory Service (Bảo đảm tính pháp lý y tế)
@@ -109,7 +102,9 @@ public class ConsultationService {
         // 3. Tạo Consultation Entity
         Consultation consultation = Consultation.builder()
                 .appointmentId(appointmentId)
+                .queueEntryId(request.getQueueEntryId())
                 .patientId(request.getPatientId())
+                .patientName(patientName)
                 .doctorId(request.getDoctorId())
                 .doctorName(doctorName)
                 .departmentCode(departmentCode)
@@ -124,6 +119,53 @@ public class ConsultationService {
                 saved.getId(), saved.getPatientId(), saved.getDoctorId(), saved.getAppointmentId());
 
         return consultationMapper.toResponse(saved);
+    }
+
+    private String requireStartedQueueContext(CreateConsultationRequest request) {
+        String verifiedName=null;
+        try {
+            if(request.getQueueEntryId()!=null){
+                var response=queueClient.clinicalContext(request.getQueueEntryId());
+                var context=response==null?null:response.getData();
+                if(context==null)throw new BusinessException(503,"Không thể xác minh lượt khám.");
+                if(!request.getQueueEntryId().equals(context.entryId()) || !request.getPatientId().equals(context.patientId()) || !java.util.Objects.equals(request.getAppointmentId(),context.appointmentId()))throw new BusinessException(403,"Phiếu không khớp phiên khám.");
+                if(!"INITIAL".equals(context.phase()) || !java.util.Set.of("CALLED","IN_PROGRESS").contains(context.status()))throw new BusinessException(409,"Cần gọi bệnh nhân trước khi khám.");
+                verifiedName=context.patientName();
+            }else{
+                var response=queueClient.ticket(request.getAppointmentId());
+                var ticket=response==null?null:response.getData();
+                if(ticket==null)throw new BusinessException(503,"Unable to verify queue context");
+                if(!request.getAppointmentId().equals(ticket.appointmentId()) || !request.getPatientId().equals(ticket.patientId()))throw new BusinessException(403,"Queue entry does not match the consultation");
+                if(!java.util.Set.of("CALLED","IN_PROGRESS").contains(ticket.status()))throw new BusinessException(409,"Patient must be called before starting consultation");
+                request.setQueueEntryId(ticket.ticketId());
+                workload.acquireVisit(ticket.ticketId());
+            }
+        }catch(FeignException error){
+            throw new BusinessException(error.status()==401 || error.status()==403?403:503,"Không thể xác minh phân công/lượt khám.");
+        }
+        if(request.getAppointmentId()==null){
+            if(verifiedName==null || verifiedName.isBlank())throw new BusinessException(409,"Phiếu tiếp nhận chưa có thông tin bệnh nhân đã xác minh.");
+            return verifiedName;
+        }
+        try {
+            var response = appointmentClient.getAppointmentById(request.getAppointmentId(),
+                    request.getDoctorId(), AppConstants.ROLE_DOCTOR);
+            var appointment = response == null ? null : response.getData();
+            if (appointment == null) throw new BusinessException(503, "Unable to verify appointment");
+            if (!request.getPatientId().equals(appointment.getPatientId())
+                    || !request.getDoctorId().equals(appointment.getDoctorId())) {
+                throw new BusinessException(403, "Doctor or patient does not match the appointment");
+            }
+            if (!java.util.Set.of("CONFIRMED", "CHECKED_IN", "IN_PROGRESS").contains(appointment.getStatus())) {
+                throw new BusinessException(409, "Appointment cannot start a consultation");
+            }
+            return appointment.getPatientName();
+        } catch (FeignException error) {
+            if (error.status() == 401 || error.status() == 403) {
+                throw new BusinessException(403, "Doctor is not assigned to this appointment");
+            }
+            throw new BusinessException(503, "Unable to verify appointment");
+        }
     }
 
     /**
@@ -158,6 +200,7 @@ public class ConsultationService {
         if (consultation.getStatus() != ConsultationStatus.IN_PROGRESS) {
             throw new BusinessException(409, "Consultation is not in progress");
         }
+        if(labOrders(consultation).isEmpty())throw new BusinessException(409,"Chưa có chỉ định xét nghiệm để chuyển sang chờ kết quả.");
         consultation.setStatus(ConsultationStatus.AWAITING_CLS);
         Consultation saved = consultationRepository.save(consultation);
         return consultationMapper.toResponse(saved);
@@ -170,9 +213,16 @@ public class ConsultationService {
         if (consultation.getStatus() == ConsultationStatus.IN_PROGRESS) {
             return consultationMapper.toResponse(consultation);
         }
-        if (consultation.getStatus() != ConsultationStatus.AWAITING_REVIEW
-                && consultation.getStatus() != ConsultationStatus.AWAITING_CLS) {
+        if (consultation.getStatus() != ConsultationStatus.AWAITING_REVIEW && consultation.getStatus() != ConsultationStatus.AWAITING_CLS) {
             throw new BusinessException(409, "Consultation is not waiting for review");
+        }
+        var labOrders = labOrders(consultation);
+        if (labOrders.isEmpty() || labOrders.stream().anyMatch(order -> !java.util.Set.of("RESULT_AVAILABLE", "REVIEWED", "CANCELLED").contains(order.status()))) {
+            throw new BusinessException(409, "Required laboratory results are still pending");
+        }
+        workload.acquire(actorUserId);
+        if (!consultationRepository.findCurrentByDoctorAndStatus(actorUserId, ConsultationStatus.IN_PROGRESS).isEmpty()) {
+            throw new BusinessException(409, "Bác sĩ đang có ca khám khác chưa hoàn tất");
         }
         consultation.setStatus(ConsultationStatus.IN_PROGRESS);
         return consultationMapper.toResponse(consultationRepository.save(consultation));
@@ -182,11 +232,30 @@ public class ConsultationService {
     public ConsultationResponse completeConsultation(UUID id, UUID actorUserId, String actorRole) {
         Consultation consultation = findConsultationOrThrow(id);
         requireAssignedDoctor(consultation, actorUserId, actorRole);
+        if(consultation.getStatus()==ConsultationStatus.COMPLETED)return consultationMapper.toResponse(consultation);
+        if(completionGuard!=null)completionGuard.requireReady(consultation);
         if (consultation.getStatus() == ConsultationStatus.AWAITING_CLS
                 || consultation.getStatus() == ConsultationStatus.AWAITING_REVIEW) {
             throw new BusinessException(409, "Required laboratory review is still pending");
         }
+        if (labOrders(consultation).stream().anyMatch(order -> !java.util.Set.of("REVIEWED", "CANCELLED").contains(order.status()))) {
+            throw new BusinessException(409, "Laboratory results must be reviewed before completion");
+        }
         return completeConsultation(id);
+    }
+
+    private List<com.careflow.consultation.client.ConsultationLabClient.Order> labOrders(Consultation consultation) {
+        try {
+            var response = labs.orders(consultation.getId());
+            var orders = response == null ? null : response.getData();
+            if (orders == null || orders.stream().anyMatch(order -> order == null || order.status() == null
+                    || !consultation.getId().equals(order.consultationId()) || !consultation.getPatientId().equals(order.patientId()))) {
+                throw new BusinessException(503, "Unable to verify laboratory results");
+            }
+            return orders;
+        } catch (FeignException exception) {
+            throw new BusinessException(503, "Unable to verify laboratory results");
+        }
     }
 
     private void requireDoctor(UUID actorUserId, String actorRole) {
@@ -195,9 +264,23 @@ public class ConsultationService {
         }
     }
 
+    @Transactional
+    public ConsultationResponse updateStatus(UUID id, UpdateConsultationStatusRequest request,
+                                              UUID actorUserId, String actorRole) {
+        Consultation consultation = findConsultationOrThrow(id);
+        requireAssignedDoctor(consultation, actorUserId, actorRole);
+        return switch (request.getStatus()) {
+            case IN_PROGRESS -> resume(id, actorUserId, actorRole);
+            case AWAITING_CLS -> waitForResults(id, actorUserId, actorRole);
+            case COMPLETED -> completeConsultation(id, actorUserId, actorRole);
+            case CANCELLED -> updateStatus(id, request);
+            default -> throw new BusinessException(409, "Status is managed by the clinical workflow");
+        };
+    }
+
     private void requireAssignedDoctor(Consultation consultation, UUID actorUserId, String actorRole) {
         requireDoctor(actorUserId, actorRole);
-        if (!actorUserId.equals(consultation.getDoctorId())) {
+        if (!actorUserId.equals(consultation.currentDoctorId())) {
             throw new BusinessException(403, "Doctor is not assigned to this consultation");
         }
     }
@@ -274,8 +357,9 @@ public class ConsultationService {
     @Transactional
     public ConsultationResponse completeConsultation(UUID id) {
         Consultation consultation = findConsultationOrThrow(id);
+        if(consultation.getStatus()==ConsultationStatus.COMPLETED)return consultationMapper.toResponse(consultation);
 
-        if (consultation.getStatus() == ConsultationStatus.COMPLETED || consultation.getStatus() == ConsultationStatus.CANCELLED) {
+        if (consultation.getStatus() == ConsultationStatus.CANCELLED) {
             throw new BusinessException(400, "Cannot complete consultation with status: " + consultation.getStatus());
         }
 
@@ -285,15 +369,22 @@ public class ConsultationService {
 
         // Update appointment status to COMPLETED if appointmentId exists
         if (saved.getAppointmentId() != null) {
+            Runnable completeAppointment = () -> {
             try {
-                appointmentClient.updateAppointmentStatus(
-                        saved.getAppointmentId(),
-                        UpdateAppointmentStatusRequest.builder().status("COMPLETED").build(),
-                        saved.getDoctorId(), AppConstants.ROLE_DOCTOR
-                );
+                appointmentClient.completeClinical(new AppointmentClient.ClinicalCompletion(saved.getAppointmentId(),saved.getId()));
             } catch (Exception e) {
                 log.warn("Failed to update appointment status to COMPLETED for appointment {}: {}",
                         saved.getAppointmentId(), e.getMessage());
+            }
+            };
+            // Appointment verifies the committed Consultation state through its own connection.
+            if (org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive()) {
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(
+                    new org.springframework.transaction.support.TransactionSynchronization() {
+                        @Override public void afterCommit() { completeAppointment.run(); }
+                    });
+            } else {
+                completeAppointment.run();
             }
         }
 
@@ -307,6 +398,7 @@ public class ConsultationService {
     }
 
     private void publishCompletedEvent(UUID consultationId, ConsultationResponse response) {
+        if(eventOutbox!=null){eventOutbox.append(consultationId,"ConsultationCompleted",AppConstants.RK_CONSULTATION_COMPLETED,response);return;}
         try {
             rabbitTemplate.convertAndSend(
                 AppConstants.EXCHANGE_CONSULTATION,
@@ -345,7 +437,7 @@ public class ConsultationService {
     public List<ConsultationResponse> getConsultationsByDoctor(
             UUID doctorId, UUID actorUserId, String actorRole) {
         requireClinicalListAccess(doctorId, actorUserId, actorRole);
-        return consultationRepository.findByDoctorIdOrderByCreatedAtDesc(doctorId)
+        return consultationRepository.findCurrentByDoctor(doctorId)
                 .stream()
                 .map(consultationMapper::toResponse)
                 .toList();
@@ -364,7 +456,7 @@ public class ConsultationService {
         java.time.Instant startOfDay = LocalDate.now().atStartOfDay(java.time.ZoneId.systemDefault()).toInstant();
         java.time.Instant endOfDay = LocalDate.now().atTime(LocalTime.MAX).atZone(java.time.ZoneId.systemDefault()).toInstant();
 
-        return consultationRepository.findByDoctorIdAndCreatedAtBetweenOrderByCreatedAtDesc(
+        return consultationRepository.findCurrentByDoctorAndDate(
                         doctorId, startOfDay, endOfDay)
                 .stream()
                 .map(consultationMapper::toResponse)
@@ -392,10 +484,6 @@ public class ConsultationService {
     }
 
     private void requireClinicalListAccess(UUID doctorId, UUID actorUserId, String actorRole) {
-        if (AppConstants.ROLE_ADMIN.equalsIgnoreCase(actorRole)
-                || AppConstants.ROLE_STAFF.equalsIgnoreCase(actorRole)) {
-            return;
-        }
         if (!AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole)
                 || actorUserId == null || !actorUserId.equals(doctorId)) {
             throw new BusinessException(403, "Clinical consultation access is not allowed");
@@ -406,16 +494,13 @@ public class ConsultationService {
         if (actorUserId == null || actorRole == null) {
             throw new BusinessException(403, "Authenticated consultation access is required");
         }
-        if (AppConstants.ROLE_ADMIN.equalsIgnoreCase(actorRole)
-                || AppConstants.ROLE_STAFF.equalsIgnoreCase(actorRole)) {
-            return;
-        }
         if (AppConstants.ROLE_DOCTOR.equalsIgnoreCase(actorRole)) {
-            if (!actorUserId.equals(consultation.getDoctorId())) {
+            if (!actorUserId.equals(consultation.currentDoctorId())) {
                 throw new BusinessException(403, "Doctor is not assigned to this consultation");
             }
             return;
         }
+        if(AppConstants.ROLE_PATIENT.equalsIgnoreCase(actorRole) && currentOwners!=null){currentOwners.require(consultation.getPatientId(),actorUserId);return;}
         if (!AppConstants.ROLE_PATIENT.equalsIgnoreCase(actorRole)
                 || consultation.getAppointmentId() == null) {
             throw new BusinessException(403, "Patient consultation access is not allowed");
@@ -429,6 +514,11 @@ public class ConsultationService {
             }
         } catch (BusinessException exception) {
             throw exception;
+        } catch (FeignException exception) {
+            if (exception.status() == 403 || exception.status() == 404) {
+                throw new BusinessException(403, "Patient consultation access is not allowed");
+            }
+            throw new BusinessException(503, "Unable to verify consultation ownership");
         } catch (Exception exception) {
             throw new BusinessException(503, "Unable to verify consultation ownership");
         }

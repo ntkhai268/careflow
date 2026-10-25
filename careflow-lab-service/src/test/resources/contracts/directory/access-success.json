@@ -1,0 +1,21 @@
+{
+  "status": 200,
+  "message": "Success",
+  "data": [
+    {
+      "id": "LAB-HEMATOLOGY-01",
+      "roomType": "LAB",
+      "isActive": true
+    },
+    {
+      "id": "LAB-INACTIVE",
+      "roomType": "LAB",
+      "isActive": false
+    },
+    {
+      "id": "PHARMACY-MAIN-01",
+      "roomType": "PHARMACY",
+      "isActive": true
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "id": "f1000000-0000-0000-0000-000000000001",
+    "userId": "a1000000-0000-0000-0000-000000000001",
+    "fullName": "Synthetic contract profile"
+  },
+  "timestamp": "2026-10-14T10:00:00Z"
+}

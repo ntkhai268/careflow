@@ -1,5 +1,5 @@
 package com.careflow.ai.service;
-
+import com.careflow.ai.clinical.ClinicalEngine;
 import com.careflow.ai.dto.request.ClinicalChatRequest;
 import com.careflow.ai.dto.request.ClinicalSuggestionRequest;
 import com.careflow.ai.dto.response.AiModelInfo;
@@ -7,8 +7,9 @@ import com.careflow.ai.dto.response.ClinicalSuggestionItem;
 import com.careflow.ai.dto.response.ClinicalSuggestionResponse;
 import com.careflow.ai.dto.response.EvidenceRef;
 import com.careflow.ai.service.ClinicalHybridSearchService.RankedChunk;
-import lombok.RequiredArgsConstructor;
+import com.careflow.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -20,7 +21,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class AiClinicalAssistantService {
 
@@ -41,6 +41,39 @@ public class AiClinicalAssistantService {
     private final GeminiClientService geminiClientService;
     private final DeepSeekClientService deepSeekClientService;
     private final ClinicalHybridSearchService clinicalHybridSearchService;
+    private final ObjectProvider<ClinicalEngine> engines;
+
+    public AiClinicalAssistantService(
+            GeminiClientService geminiClientService,
+            DeepSeekClientService deepSeekClientService,
+            ClinicalHybridSearchService clinicalHybridSearchService,
+            ObjectProvider<ClinicalEngine> engines
+    ) {
+        this.geminiClientService = geminiClientService;
+        this.deepSeekClientService = deepSeekClientService;
+        this.clinicalHybridSearchService = clinicalHybridSearchService;
+        this.engines = engines;
+    }
+
+    public AiClinicalAssistantService(
+            GeminiClientService geminiClientService,
+            DeepSeekClientService deepSeekClientService,
+            ClinicalHybridSearchService clinicalHybridSearchService
+    ) {
+        this(geminiClientService, deepSeekClientService, clinicalHybridSearchService, null);
+    }
+
+    public AiClinicalAssistantService(ObjectProvider<ClinicalEngine> engines) {
+        this(null, null, null, engines);
+    }
+
+    public ClinicalEngine engine() {
+        var value = engines != null ? engines.getIfAvailable() : null;
+        if (value == null) {
+            throw new BusinessException(503, "Trợ lý có nguồn chuyên môn chưa được cấu hình");
+        }
+        return value;
+    }
 
     private final Map<String, ClinicalSuggestionResponse> interactionStore = new ConcurrentHashMap<>();
 
@@ -363,4 +396,5 @@ public class AiClinicalAssistantService {
         interactionStore.put(interactionId, response);
         return response;
     }
+
 }

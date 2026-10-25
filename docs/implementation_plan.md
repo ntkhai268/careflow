@@ -1,5 +1,8 @@
 # Kế hoạch xây dựng hệ thống Medici - Phần mềm trợ giúp khám chữa bệnh
 
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Kế hoạch thực hiện hiện hành là R0–R7 trong `.planning/full-requirements-plan-2026-10-19.md`.
+
+
 ## 1. Phân tích tình huống
 
 | Yếu tố | Thực tế |

@@ -1,0 +1,11 @@
+FROM eclipse-temurin:21-jre-alpine@sha256:b48e02e0ea88d7bfb305335df94923bdef394905f4147dccd52e873cf17b1088
+RUN apk add --no-cache curl && addgroup -S -g 10001 careflow && adduser -S -u 10001 -G careflow careflow
+WORKDIR /app
+# Package the Maven artifact already verified by the release checks.
+COPY --chown=10001:10001 careflow-ai-service/target/careflow-ai-service-1.0.0-SNAPSHOT.jar /app/app.jar
+USER 10001:10001
+ENV JAVA_TOOL_OPTIONS="-XX:ActiveProcessorCount=2 -Xmx384m"
+EXPOSE 8092
+HEALTHCHECK --interval=15s --timeout=5s --start-period=60s --retries=3 \
+  CMD curl --fail --silent --output /dev/null --cacert /run/careflow/tls/ca.crt --cert /run/careflow/tls/ai-service.crt --key /run/careflow/tls/ai-service.key https://localhost:8092/actuator/health || exit 1
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]

@@ -1,0 +1,41 @@
+{
+  "checkedAt": "2026-10-17T05:03:26.459Z",
+  "gateway": "https://localhost:18080",
+  "database": "real local PostgreSQL audit database",
+  "mock": false,
+  "checks": [
+    {
+      "name": "Password-only login returns a real session without MFA",
+      "status": "PASS"
+    },
+    {
+      "name": "Retired MFA API rejects enrollment with 410",
+      "status": "PASS"
+    },
+    {
+      "name": "Question setup requires the current password",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong answer rejected; normalized correct answer establishes a proof-bound session",
+      "status": "PASS"
+    },
+    {
+      "name": "Copied access token cannot be used with a different client key",
+      "status": "PASS"
+    },
+    {
+      "name": "Passkey challenge bound to client, invalid proof rejected, consumed challenge cannot replay",
+      "status": "PASS"
+    },
+    {
+      "name": "Password reset enforces strength, revokes sessions/refresh tokens and replaces the password",
+      "status": "PASS"
+    },
+    {
+      "name": "Five wrong secret answers lock the account and revoke active sessions",
+      "status": "PASS"
+    }
+  ],
+  "biometricHardware": "Not verified by this regression; requires real user verification"
+}

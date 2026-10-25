@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "careflow-voice-runtime"
+version = "1.0.0"
+requires-python = ">=3.11,<3.14"
+description = "Private Vietnamese voice-prescription inference runtime"
+dependencies = []
+
+[project.optional-dependencies]
+mlx = ["mlx==0.32.4; platform_system == 'Darwin'", "mlx-lm==0.32.2", "mlx-qwen3-asr==0.4.4"]
+test = ["pytest>=8,<10"]
+
+[project.scripts]
+careflow-voice-worker = "careflow_voice_worker.server:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

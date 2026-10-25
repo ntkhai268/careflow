@@ -1,0 +1,10 @@
+{
+  "status": 200,
+  "message": "Success",
+  "data": {
+    "id": "f2000000-0000-0000-0000-000000000001",
+    "userId": "a2000000-0000-0000-0000-000000000001",
+    "fullName": "Verified followup patient",
+    "medicalHistory": "Synthetic extra field ignored by clinical client"
+  }
+}

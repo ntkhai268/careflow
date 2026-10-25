@@ -6,6 +6,8 @@ import '../../providers/health_record_provider.dart';
 import '../../models/health_record.dart';
 import '../../config/theme.dart';
 import '../../utils/api_error_message.dart';
+import '../../widgets/health_attachment_tile.dart';
+import '../../providers/auth_provider.dart';
 
 class HealthRecordDetailScreen extends ConsumerStatefulWidget {
   final String patientId;
@@ -54,21 +56,55 @@ class _HealthRecordDetailScreenState
   String? _tuberculosis;
 
   HealthRecord? _record;
+  int _recordGeneration = 0;
+  String? _screenOwner;
+  String? get _owner {
+    final auth = ref.read(authProvider);
+    return auth.status == AuthStatus.authenticated ? auth.userId : null;
+  }
+
+  List<TextEditingController> get _controllers => [
+    _titleController,
+    _facilityController,
+    _notesController,
+    _bloodSugarController,
+    _bloodPressureController,
+    _heightController,
+    _weightController,
+    _waistController,
+    _pulseController,
+    _temperatureController,
+    _respiratoryRateController,
+  ];
+  @override
+  void dispose() {
+    ++_recordGeneration;
+    for (final controller in _controllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   void initState() {
     super.initState();
+    _screenOwner = _owner;
     _loadRecord();
   }
 
   void _loadRecord() {
+    final generation = ++_recordGeneration, owner = _owner;
     _recordFuture = ref
         .read(healthRecordServiceProvider)
-        .getById(widget.patientId, widget.recordId);
-    _recordFuture.then((record) {
-      _record = record;
-      _populateControllers(record);
-    });
+        .getById(widget.patientId, widget.recordId)
+        .then((record) {
+          if (!mounted || generation != _recordGeneration || owner != _owner) {
+            throw StateError('Account changed');
+          }
+          _record = record;
+          _populateControllers(record);
+          return record;
+        });
   }
 
   void _populateControllers(HealthRecord record) {
@@ -120,6 +156,8 @@ class _HealthRecordDetailScreenState
   }
 
   Future<void> _deleteRecord() async {
+    final owner = _owner;
+    if (owner == null || owner != _screenOwner) return;
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -138,7 +176,7 @@ class _HealthRecordDetailScreenState
       ),
     );
 
-    if (confirm == true) {
+    if (mounted && owner == _owner && confirm == true) {
       try {
         await ref
             .read(healthRecordServiceProvider)
@@ -165,6 +203,8 @@ class _HealthRecordDetailScreenState
   }
 
   Future<void> _saveRecord() async {
+    final owner = _owner;
+    if (_isSaving || owner == null || owner != _screenOwner) return;
     setState(() => _isSaving = true);
     try {
       final data = {
@@ -200,6 +240,7 @@ class _HealthRecordDetailScreenState
         widget.recordId,
         data,
       );
+      if (!mounted || owner != _owner) return;
       _record = updated;
       _populateControllers(updated);
       ref.invalidate(healthRecordsProvider(widget.patientId));
@@ -234,6 +275,31 @@ class _HealthRecordDetailScreenState
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(authProvider.select((auth) => (auth.status, auth.userId)), (
+      previous,
+      next,
+    ) {
+      ++_recordGeneration;
+      _record = null;
+      for (final controller in _controllers) {
+        controller.clear();
+      }
+      if (next.$1 == AuthStatus.authenticated && next.$2 == _screenOwner) {
+        setState(_loadRecord);
+      }
+    });
+    final auth = ref.watch(authProvider);
+    if (auth.status != AuthStatus.authenticated ||
+        _screenOwner == null ||
+        auth.userId != _screenOwner) {
+      return const Scaffold(
+        body: Center(
+          child: Text(
+            'Phiên đã thay đổi. Mở lại hồ sơ từ tài khoản đang đăng nhập.',
+          ),
+        ),
+      );
+    }
     return Scaffold(
       backgroundColor: const Color(0xFFF5F7FA),
       appBar: AppBar(
@@ -244,6 +310,11 @@ class _HealthRecordDetailScreenState
         backgroundColor: const Color(0xFF29B6F6),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          IconButton(
+            tooltip: 'Tải lại hồ sơ',
+            onPressed: () => setState(_loadRecord),
+            icon: const Icon(Icons.refresh),
+          ),
           if (!_isEditing)
             IconButton(
               icon: const Icon(Icons.edit, color: Colors.white),
@@ -312,17 +383,9 @@ class _HealthRecordDetailScreenState
                       runSpacing: 8,
                       children: record.files!
                           .map(
-                            (file) => ActionChip(
-                              label: Text(file.fileName),
-                              avatar: const Icon(Icons.attach_file, size: 18),
-                              onPressed: () {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Tải file: ${file.fileName}'),
-                                  ),
-                                );
-                                // TODO: Use url_launcher to open URL
-                              },
+                            (file) => HealthAttachmentTile(
+                              patientId: widget.patientId,
+                              attachment: file,
                             ),
                           )
                           .toList(),

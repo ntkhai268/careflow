@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-10-19T17:29:39.129Z",
+  "environment": "owned local web/BFF/Gateway/backend",
+  "faultInjection": "browser intercept only for explicit 503 UI tests; retry uses real services",
+  "mutatedClinicalRecords": false,
+  "checks": [
+    {
+      "name": "Patient API failure is visible and supplies retry; no fabricated age",
+      "status": "PASS"
+    },
+    {
+      "name": "Patient retry recovers real patient data without modifying clinical records",
+      "status": "PASS"
+    },
+    {
+      "name": "One history dependency outage is shown as unknown, never as empty medical history",
+      "status": "PASS"
+    },
+    {
+      "name": "History retry recovers actual service responses",
+      "status": "PASS"
+    }
+  ]
+}

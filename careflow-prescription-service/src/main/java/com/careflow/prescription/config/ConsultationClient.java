@@ -1,18 +1,23 @@
 package com.careflow.prescription.config;
 
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
+import com.careflow.common.dto.ApiResponse;
+import com.careflow.common.exception.BusinessException;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpMethod;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.RestClientException;
 
 import java.time.Duration;
 import java.util.UUID;
 
 @Component
-@Slf4j
 public class ConsultationClient {
 
     private final RestTemplate restTemplate;
@@ -27,23 +32,32 @@ public class ConsultationClient {
     }
 
     public String getConsultationStatus(UUID consultationId) {
-        try {
-            String url = consultationServiceUrl + "/api/consultations/" + consultationId + "/status";
-            log.info("Fetching consultation status from: {}", url);
-            ResponseEntity<ConsultationApiResponse> response = restTemplate.getForEntity(url, ConsultationApiResponse.class);
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null && response.getBody().getData() != null) {
-                return response.getBody().getData();
-            }
-        } catch (Exception e) {
-            log.error("Failed to fetch consultation status for ID: {}. Error: {}", consultationId, e.getMessage());
-        }
-        // Fallback to null if service call fails or is not found
-        return null;
+        return getConsultation(consultationId).status();
     }
 
-    @Data
-    public static class ConsultationApiResponse {
-        private String message;
-        private String data;
+    public ConsultationContext getConsultation(UUID consultationId) {
+        var headers = PrescriptionRequestHeaders.current();
+        try {
+            ResponseEntity<ApiResponse<ConsultationContext>> response = restTemplate.exchange(
+                    consultationServiceUrl + "/api/consultations/" + consultationId,
+                    HttpMethod.GET, new HttpEntity<>(headers), new ParameterizedTypeReference<>() {});
+            ConsultationContext context = response.getBody() == null ? null : response.getBody().getData();
+            if (context != null && consultationId.equals(context.id()) && context.patientId() != null
+                    && context.doctorId() != null && context.status() != null) {
+                return context;
+            }
+        } catch (HttpStatusCodeException exception) {
+            int status = exception.getStatusCode().value();
+            if (status == 401 || status == 403 || status == 404) {
+                throw new BusinessException(status, "Consultation access could not be verified");
+            }
+            throw new BusinessException(503, "Consultation service is unavailable");
+        } catch (RestClientException exception) {
+            throw new BusinessException(503, "Consultation service is unavailable");
+        }
+        throw new BusinessException(503, "Consultation service returned incomplete identity or status");
     }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record ConsultationContext(UUID id, UUID patientId, UUID doctorId, String status) {}
 }

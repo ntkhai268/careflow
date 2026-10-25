@@ -1,0 +1,15 @@
+{
+  "baselineHeads": {
+    "backendWeb": "5a8c6e5",
+    "native": "e5fc9c1"
+  },
+  "includesUncommittedChanges": true,
+  "sha256": {
+    "careflow-appointment-service": "4bbc955b91b5a66293c84012d641cea3cc106ed9f5f22a61bebb62d878fd9bca",
+    "careflow-queue-service": "8dc4c715474f76b1deea1dbdce5963cda9e441ee4212c06ffe0cf21aee6e1a94",
+    "careflow-consultation-service": "212a57f4b80e78ec5b1c77c2f26e8b690d3d6d5d44b7bea7dc99549b1e8c0df9",
+    "careflow-prescription-service": "110333bdd1b6fa793cc1613a847dd25dfb851c268b2399db676384ce4b25d33b",
+    "careflow-lab-service": "402941ebc4a6237d4e4b2f082a780251388fa0515e1587997e67fc73ce18bcc2",
+    "ios18-Runner": "e688c19e0af8fe08ec5e48c677b7488c880754b189ff774f0a64f300285ff8ff"
+  }
+}

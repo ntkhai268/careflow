@@ -1,0 +1,777 @@
+{
+  "readOnly": true,
+  "databaseScope": "owned loopback15432 only",
+  "entries": [
+    {
+      "service": "careflow-identity-service",
+      "database": "careflow_identity",
+      "schema": "public",
+      "status": "METADATA_CAPTURED",
+      "applied": [
+        {
+          "version": "1",
+          "description": "identity schema",
+          "type": "SQL",
+          "script": "V1__identity_schema.sql",
+          "checksum": 561705728,
+          "success": true
+        },
+        {
+          "version": "2",
+          "description": "refresh tokens",
+          "type": "SQL",
+          "script": "V2__refresh_tokens.sql",
+          "checksum": -1518460644,
+          "success": true
+        },
+        {
+          "version": "3",
+          "description": "add title to users",
+          "type": "SQL",
+          "script": "V3__add_title_to_users.sql",
+          "checksum": -1857447744,
+          "success": true
+        },
+        {
+          "version": "4",
+          "description": "doctor profiles",
+          "type": "SQL",
+          "script": "V4__doctor_profiles.sql",
+          "checksum": 41339837,
+          "success": true
+        },
+        {
+          "version": "5",
+          "description": "add roles lab staff",
+          "type": "SQL",
+          "script": "V5__add_roles_lab_staff.sql",
+          "checksum": -2119121329,
+          "success": true
+        },
+        {
+          "version": "6",
+          "description": "clinical roles",
+          "type": "SQL",
+          "script": "V6__clinical_roles.sql",
+          "checksum": -1209741816,
+          "success": true
+        },
+        {
+          "version": "7",
+          "description": "drop doctor profiles and title",
+          "type": "SQL",
+          "script": "V7__drop_doctor_profiles_and_title.sql",
+          "checksum": 2075173701,
+          "success": true
+        },
+        {
+          "version": "8",
+          "description": "mfa and token binding",
+          "type": "SQL",
+          "script": "V8__mfa_and_token_binding.sql",
+          "checksum": 357714797,
+          "success": true
+        },
+        {
+          "version": "9",
+          "description": "login methods",
+          "type": "SQL",
+          "script": "V9__login_methods.sql",
+          "checksum": -932551291,
+          "success": true
+        },
+        {
+          "version": "10",
+          "description": "email password recovery",
+          "type": "SQL",
+          "script": "V10__email_password_recovery.sql",
+          "checksum": -1795319900,
+          "success": true
+        },
+        {
+          "version": "11",
+          "description": "verified password reset grant",
+          "type": "SQL",
+          "script": "V11__verified_password_reset_grant.sql",
+          "checksum": -905429865,
+          "success": true
+        },
+        {
+          "version": "12",
+          "description": "biometric device login",
+          "type": "SQL",
+          "script": "V12__biometric_device_login.sql",
+          "checksum": 421798936,
+          "success": true
+        },
+        {
+          "version": "13",
+          "description": "auth abuse and recovery outbox",
+          "type": "SQL",
+          "script": "V13__auth_abuse_and_recovery_outbox.sql",
+          "checksum": -1675727589,
+          "success": true
+        },
+        {
+          "version": "14",
+          "description": "session authentication method",
+          "type": "SQL",
+          "script": "V14__session_authentication_method.sql",
+          "checksum": 1082443556,
+          "success": true
+        },
+        {
+          "version": "15",
+          "description": "vnpt ekyc",
+          "type": "SQL",
+          "script": "V15__vnpt_ekyc.sql",
+          "checksum": -1529298164,
+          "success": true
+        },
+        {
+          "version": "16",
+          "description": "account lifecycle",
+          "type": "SQL",
+          "script": "V16__account_lifecycle.sql",
+          "checksum": -2012648803,
+          "success": true
+        },
+        {
+          "version": "17",
+          "description": "local document review",
+          "type": "SQL",
+          "script": "V17__local_document_review.sql",
+          "checksum": 561855841,
+          "success": true
+        }
+      ],
+      "sourceMigrations": [
+        {
+          "script": "V10__email_password_recovery.sql",
+          "sha256": "1501a6b56afee25b861bb8581b72d5bdd6f7b3acbf093a4ef79f03c9bb587b9f"
+        },
+        {
+          "script": "V11__verified_password_reset_grant.sql",
+          "sha256": "7fd85cc0f419f653a34db18d6a9daa36057a99d885131df4817dfcfc8ece944e"
+        },
+        {
+          "script": "V12__biometric_device_login.sql",
+          "sha256": "259e78d2058280eb9de4c547a87b044fa88e08af551405035d83b7c9b11542be"
+        },
+        {
+          "script": "V13__auth_abuse_and_recovery_outbox.sql",
+          "sha256": "e6942bf1354a246ddeb78bb4d0488040275b0c80d1e1cabeff07180b8a93fc81"
+        },
+        {
+          "script": "V14__session_authentication_method.sql",
+          "sha256": "28ca836fd8aac3c0eb4647d20df5e54070ec7240facf9122d845d739d3295041"
+        },
+        {
+          "script": "V15__vnpt_ekyc.sql",
+          "sha256": "4df2aef8049facf8e47d8cb6012017786b7c7b89c6781122d770396c3d22398c"
+        },
+        {
+          "script": "V16__account_lifecycle.sql",
+          "sha256": "99bd5c47dc5ee462a92cf6f25d47dfa0b2991d83b8430a19edf8ed548fa8e21f"
+        },
+        {
+          "script": "V17__local_document_review.sql",
+          "sha256": "5a9cf9a3d2645d9d7add98cc92bc7a999fb4bb9840d05122f78fc5837ce43cb6"
+        },
+        {
+          "script": "V1__identity_schema.sql",
+          "sha256": "82d7d1db8978005d636bd6b2d48a1cb3919674439dc84a27fec04cea799d9033"
+        },
+        {
+          "script": "V2__refresh_tokens.sql",
+          "sha256": "a291abdd0285d58e6fcf08a1a648d6c56a7a78b268ec59da95b384811019ba4a"
+        },
+        {
+          "script": "V3__add_title_to_users.sql",
+          "sha256": "66e7eed8c005a1bf8e850e45798f335f0a49d0cf28a63383c943a17fe20ca1c0"
+        },
+        {
+          "script": "V4__doctor_profiles.sql",
+          "sha256": "7370ffa6d40e409fc762c78fc15a9a9e0483c417c1f3707fa28d994a899b88af"
+        },
+        {
+          "script": "V5__add_roles_lab_staff.sql",
+          "sha256": "199faa1d16459a3a5bd16e4c62ae93990570c7a4221252673af6aa13b093c6a0"
+        },
+        {
+          "script": "V6__clinical_roles.sql",
+          "sha256": "8da8361bcc4ae341c035f3ed28079f2e339f3bf663885275e109c13be37e96ac"
+        },
+        {
+          "script": "V7__drop_doctor_profiles_and_title.sql",
+          "sha256": "c59beeba2cd1b489199438d6c664ee537daf9caf96d7e23eda39f601ff6e9102"
+        },
+        {
+          "script": "V8__mfa_and_token_binding.sql",
+          "sha256": "63db0c955b8adaa70f099a9b18c8ab26cadab8c4ed37f401c070cd06925ad135"
+        },
+        {
+          "script": "V9__login_methods.sql",
+          "sha256": "ba3c71e25ee594ef0d262698b3d66fa8c0da3e20bcacdea455b67d631749140c"
+        }
+      ],
+      "sqlScriptsMissingFromSource": [],
+      "allAppliedSuccessful": true,
+      "fullSchemaOrChecksumValidationPerformed": false
+    },
+    {
+      "service": "careflow-hospital-directory-service",
+      "database": "careflow_hospital_directory",
+      "schema": "public",
+      "status": "METADATA_CAPTURED",
+      "applied": [
+        {
+          "version": "0",
+          "description": "<< Flyway Baseline >>",
+          "type": "BASELINE",
+          "script": "<< Flyway Baseline >>",
+          "checksum": null,
+          "success": true
+        },
+        {
+          "version": "1",
+          "description": "medical service prices",
+          "type": "SQL",
+          "script": "V1__medical_service_prices.sql",
+          "checksum": 1849003763,
+          "success": true
+        }
+      ],
+      "sourceMigrations": [
+        {
+          "script": "V1__medical_service_prices.sql",
+          "sha256": "1dd4941ebf9a2bec879a40956022225ebe395c1466324c4a2e065873672fa478"
+        }
+      ],
+      "sqlScriptsMissingFromSource": [],
+      "allAppliedSuccessful": true,
+      "fullSchemaOrChecksumValidationPerformed": false
+    },
+    {
+      "service": "careflow-patient-service",
+      "database": "careflow_patient",
+      "schema": "public",
+      "status": "METADATA_CAPTURED",
+      "applied": [
+        {
+          "version": "1",
+          "description": "patient schema",
+          "type": "SQL",
+          "script": "V1__patient_schema.sql",
+          "checksum": 1576890596,
+          "success": true
+        },
+        {
+          "version": "2",
+          "description": "health records",
+          "type": "SQL",
+          "script": "V2__health_records.sql",
+          "checksum": -439431356,
+          "success": true
+        },
+        {
+          "version": "3",
+          "description": "add updated at to health record files",
+          "type": "SQL",
+          "script": "V3__add_updated_at_to_health_record_files.sql",
+          "checksum": -739494621,
+          "success": true
+        },
+        {
+          "version": "4",
+          "description": "patient allergies",
+          "type": "SQL",
+          "script": "V4__patient_allergies.sql",
+          "checksum": 74700125,
+          "success": true
+        },
+        {
+          "version": "5",
+          "description": "patient profile fields",
+          "type": "SQL",
+          "script": "V5__patient_profile_fields.sql",
+          "checksum": 1800205860,
+          "success": true
+        },
+        {
+          "version": "6",
+          "description": "allow multiple profiles per user",
+          "type": "SQL",
+          "script": "V6__allow_multiple_profiles_per_user.sql",
+          "checksum": 1165875800,
+          "success": true
+        },
+        {
+          "version": "7",
+          "description": "allow cross account id card reuse",
+          "type": "SQL",
+          "script": "V7__allow_cross_account_id_card_reuse.sql",
+          "checksum": 2028337287,
+          "success": true
+        },
+        {
+          "version": "8",
+          "description": "patients without login accounts",
+          "type": "SQL",
+          "script": "V8__patients_without_login_accounts.sql",
+          "checksum": 340351349,
+          "success": true
+        }
+      ],
+      "sourceMigrations": [
+        {
+          "script": "V1__patient_schema.sql",
+          "sha256": "6031c7777abad2ba498308ce531206b8deef9b25b5f76c2375d2ef3da1ddbdd0"
+        },
+        {
+          "script": "V2__health_records.sql",
+          "sha256": "e3addce52bba3d1225bbbb86fbd25c5e0f685620eaf8bb89bf9509c941ef7c8b"
+        },
+        {
+          "script": "V3__add_updated_at_to_health_record_files.sql",
+          "sha256": "3f96c0f587052a8bb72ef1d1eaffe123b3a1919d7aaccf583cac05c990dda99b"
+        },
+        {
+          "script": "V4__patient_allergies.sql",
+          "sha256": "523a768b8dd3d3787b99cbe89660c8969967ea220ba4fe5fbd1bdf628b7c2d02"
+        },
+        {
+          "script": "V5__patient_profile_fields.sql",
+          "sha256": "090994aad50fab6a46dd085547f0b718c411f6ee1a35f7855038d2e58d619bd1"
+        },
+        {
+          "script": "V6__allow_multiple_profiles_per_user.sql",
+          "sha256": "2142e1c466d9603fba3a31346c4a12a3056c7f224a94d82fad87c3658d80e758"
+        },
+        {
+          "script": "V7__allow_cross_account_id_card_reuse.sql",
+          "sha256": "31da1a5b9b169617a251eac50dbcc6a42a673dbccb0b02ad8537a97899ec5177"
+        },
+        {
+          "script": "V8__patients_without_login_accounts.sql",
+          "sha256": "5dc48e98108ecaabae347068f34a51ece3aed17fdead198dd4511e6e56c9ae32"
+        }
+      ],
+      "sqlScriptsMissingFromSource": [],
+      "allAppliedSuccessful": true,
+      "fullSchemaOrChecksumValidationPerformed": false
+    },
+    {
+      "service": "careflow-consultation-service",
+      "database": "careflow_consultation",
+      "schema": "public",
+      "status": "METADATA_CAPTURED",
+      "applied": [
+        {
+          "version": "0",
+          "description": "<< Flyway Baseline >>",
+          "type": "BASELINE",
+          "script": "<< Flyway Baseline >>",
+          "checksum": null,
+          "success": true
+        },
+        {
+          "version": "1",
+          "description": "clinical handover",
+          "type": "SQL",
+          "script": "V1__clinical_handover.sql",
+          "checksum": -208401508,
+          "success": true
+        },
+        {
+          "version": "2",
+          "description": "handover patient identity snapshot",
+          "type": "SQL",
+          "script": "V2__handover_patient_identity_snapshot.sql",
+          "checksum": 2029499418,
+          "success": true
+        },
+        {
+          "version": "3",
+          "description": "handover clinical snapshot",
+          "type": "SQL",
+          "script": "V3__handover_clinical_snapshot.sql",
+          "checksum": 164268910,
+          "success": true
+        }
+      ],
+      "sourceMigrations": [
+        {
+          "script": "V1__clinical_handover.sql",
+          "sha256": "cad3db7feead2d1b434ff59cad22a96ca65cc1c47d8f59a24b747da4df77ac94"
+        },
+        {
+          "script": "V2__handover_patient_identity_snapshot.sql",
+          "sha256": "246da8468a005dd12fc054515bf70e36ad0161d5d7fe89b8ebdf90afa1c06c9b"
+        },
+        {
+          "script": "V3__handover_clinical_snapshot.sql",
+          "sha256": "7097e3f185cd2638f255f03e4c65b740fd2b0e35d9fe2bc23b640814b978b79b"
+        }
+      ],
+      "sqlScriptsMissingFromSource": [],
+      "allAppliedSuccessful": true,
+      "fullSchemaOrChecksumValidationPerformed": false
+    },
+    {
+      "service": "careflow-emr-service",
+      "database": "careflow_emr",
+      "status": "NO_FLYWAY_HISTORY",
+      "sourceMigrations": [
+        {
+          "script": "V1__init_emr_schema.sql",
+          "sha256": "999b53a990675f9247b299adab6a0f3173f5c0c07a35ead9fb4888cff95519d1"
+        }
+      ],
+      "note": "No schema completeness/upgrade guarantee; Hibernate-managed services require explicit migration baseline before release"
+    },
+    {
+      "service": "careflow-prescription-service",
+      "database": "careflow_prescription",
+      "status": "NO_FLYWAY_HISTORY",
+      "sourceMigrations": [],
+      "note": "No schema completeness/upgrade guarantee; Hibernate-managed services require explicit migration baseline before release"
+    },
+    {
+      "service": "careflow-lab-service",
+      "database": "careflow_lab",
+      "schema": "public",
+      "status": "METADATA_CAPTURED",
+      "applied": [
+        {
+          "version": "1",
+          "description": "lab order schema",
+          "type": "SQL",
+          "script": "V1__lab_order_schema.sql",
+          "checksum": 1294535227,
+          "success": true
+        },
+        {
+          "version": "2",
+          "description": "lab service catalog",
+          "type": "SQL",
+          "script": "V2__lab_service_catalog.sql",
+          "checksum": -1647660433,
+          "success": true
+        }
+      ],
+      "sourceMigrations": [
+        {
+          "script": "V1__lab_order_schema.sql",
+          "sha256": "9a8774c8367d4e405288ba6673fbac312d606eff8ed88cec28cd7a1d4971d249"
+        },
+        {
+          "script": "V2__lab_service_catalog.sql",
+          "sha256": "b3d77aeb33afdf96ea7582b5ec70efaa97100505dcc9b44571cd7c22806d2b8d"
+        }
+      ],
+      "sqlScriptsMissingFromSource": [],
+      "allAppliedSuccessful": true,
+      "fullSchemaOrChecksumValidationPerformed": false
+    },
+    {
+      "service": "careflow-appointment-service",
+      "database": "careflow_appointment",
+      "schema": "public",
+      "status": "METADATA_CAPTURED",
+      "applied": [
+        {
+          "version": "1",
+          "description": "appointment schema",
+          "type": "SQL",
+          "script": "V1__appointment_schema.sql",
+          "checksum": 509285926,
+          "success": true
+        },
+        {
+          "version": "2",
+          "description": "update seed status checked in",
+          "type": "SQL",
+          "script": "V2__update_seed_status_checked_in.sql",
+          "checksum": -528290065,
+          "success": true
+        },
+        {
+          "version": "3",
+          "description": "appointment queue integration",
+          "type": "SQL",
+          "script": "V3__appointment_queue_integration.sql",
+          "checksum": 1265287570,
+          "success": true
+        },
+        {
+          "version": "4",
+          "description": "follow up consultation link",
+          "type": "SQL",
+          "script": "V4__follow_up_consultation_link.sql",
+          "checksum": 491862985,
+          "success": true
+        },
+        {
+          "version": "5",
+          "description": "appointment slot capacity lock",
+          "type": "SQL",
+          "script": "V5__appointment_slot_capacity_lock.sql",
+          "checksum": -768998864,
+          "success": true
+        },
+        {
+          "version": "6",
+          "description": "appointment price snapshot",
+          "type": "SQL",
+          "script": "V6__appointment_price_snapshot.sql",
+          "checksum": 2125921907,
+          "success": true
+        }
+      ],
+      "sourceMigrations": [
+        {
+          "script": "V1__appointment_schema.sql",
+          "sha256": "5b71cc96a4b54e2544e9a9a35f1a4123cb32682a10eeb20637cb6aad466726f7"
+        },
+        {
+          "script": "V2__update_seed_status_checked_in.sql",
+          "sha256": "14cd2d6a495ab16c0397a0dc0a125aea930bed223294d9f58dce77e25a36360d"
+        },
+        {
+          "script": "V3__appointment_queue_integration.sql",
+          "sha256": "84907757418cbe3a46375479ad63517c1eb337d4304d76bb919a2d91c76033c5"
+        },
+        {
+          "script": "V4__follow_up_consultation_link.sql",
+          "sha256": "1b3ab45ad8d5e57a14eb99d0806f00b8f734331740b1ba2d0010b712a577f5fc"
+        },
+        {
+          "script": "V5__appointment_slot_capacity_lock.sql",
+          "sha256": "8121532d3f7fdece4a80dc326b2d1ae00e407038f3619f65ab13f092fb8b0cfc"
+        },
+        {
+          "script": "V6__appointment_price_snapshot.sql",
+          "sha256": "dcf131cb648aae584c5cad00bed24cf73c2a3cdd8d5c53a8a490780ffb8a9da0"
+        }
+      ],
+      "sqlScriptsMissingFromSource": [],
+      "allAppliedSuccessful": true,
+      "fullSchemaOrChecksumValidationPerformed": false
+    },
+    {
+      "service": "careflow-queue-service",
+      "database": "careflow_queue",
+      "schema": "public",
+      "status": "METADATA_CAPTURED",
+      "applied": [
+        {
+          "version": "1",
+          "description": "queue schema",
+          "type": "SQL",
+          "script": "V1__queue_schema.sql",
+          "checksum": -898771389,
+          "success": true
+        },
+        {
+          "version": "2",
+          "description": "queue production hardening",
+          "type": "SQL",
+          "script": "V2__queue_production_hardening.sql",
+          "checksum": 513008172,
+          "success": true
+        },
+        {
+          "version": "3",
+          "description": "protect appointment start time",
+          "type": "SQL",
+          "script": "V3__protect_appointment_start_time.sql",
+          "checksum": 85049524,
+          "success": true
+        },
+        {
+          "version": "4",
+          "description": "initial consultation vertical slice",
+          "type": "SQL",
+          "script": "V4__initial_consultation_vertical_slice.sql",
+          "checksum": -1961215757,
+          "success": true
+        },
+        {
+          "version": "5",
+          "description": "add checked in by user id",
+          "type": "SQL",
+          "script": "V5__add_checked_in_by_user_id.sql",
+          "checksum": 1685222266,
+          "success": true
+        },
+        {
+          "version": "6",
+          "description": "align queue integer types",
+          "type": "SQL",
+          "script": "V6__align_queue_integer_types.sql",
+          "checksum": 298305890,
+          "success": true
+        },
+        {
+          "version": "7",
+          "description": "audit doctor calls",
+          "type": "SQL",
+          "script": "V7__audit_doctor_calls.sql",
+          "checksum": -977269197,
+          "success": true
+        },
+        {
+          "version": "8",
+          "description": "queue contract v1 2",
+          "type": "SQL",
+          "script": "V8__queue_contract_v1_2.sql",
+          "checksum": -725354074,
+          "success": true
+        },
+        {
+          "version": "9",
+          "description": "align queue department ids with directory",
+          "type": "SQL",
+          "script": "V9__align_queue_department_ids_with_directory.sql",
+          "checksum": -1452468420,
+          "success": true
+        },
+        {
+          "version": "10",
+          "description": "patient qr geofence check in audit",
+          "type": "SQL",
+          "script": "V10__patient_qr_geofence_check_in_audit.sql",
+          "checksum": 58324119,
+          "success": true
+        },
+        {
+          "version": "11",
+          "description": "hospital check in config",
+          "type": "SQL",
+          "script": "V11__hospital_check_in_config.sql",
+          "checksum": -1320548143,
+          "success": true
+        },
+        {
+          "version": "12",
+          "description": "align hospital check in numeric types",
+          "type": "SQL",
+          "script": "V12__align_hospital_check_in_numeric_types.sql",
+          "checksum": -256776740,
+          "success": true
+        }
+      ],
+      "sourceMigrations": [
+        {
+          "script": "V10__patient_qr_geofence_check_in_audit.sql",
+          "sha256": "19091a908a23bcb325b593473f1659abefc62ef8ecd7d1b10fcc7338e521e7ec"
+        },
+        {
+          "script": "V11__hospital_check_in_config.sql",
+          "sha256": "6be2f63318c16f13884c2d74d3e90de67477cacb4a351b9b136c64cc57f2f75c"
+        },
+        {
+          "script": "V12__align_hospital_check_in_numeric_types.sql",
+          "sha256": "e2642cf587f32da113a24f0bb03656c8a4e8a77ff183b13082b686d721549903"
+        },
+        {
+          "script": "V1__queue_schema.sql",
+          "sha256": "5bf99c1edad105911588cfca5856fac8e0a804357ea92bab14acf2159eb8f3c2"
+        },
+        {
+          "script": "V2__queue_production_hardening.sql",
+          "sha256": "30765155546a4e6b0004d581590a2a5a0d7986c9494306755f05a3e1829611dd"
+        },
+        {
+          "script": "V3__protect_appointment_start_time.sql",
+          "sha256": "a08a33e4678038a7118afd2c2e9afeec8c3414c09ea01bf4ff738ff18c1e87cc"
+        },
+        {
+          "script": "V4__initial_consultation_vertical_slice.sql",
+          "sha256": "873eadc41ee7fed8cf49051342c525158dd6651dc18d5f1644d168a6464d9908"
+        },
+        {
+          "script": "V5__add_checked_in_by_user_id.sql",
+          "sha256": "ee6bd9d70556df57be4c2c4527c8aa025e81b0f96c5164a1db203be210b6291c"
+        },
+        {
+          "script": "V6__align_queue_integer_types.sql",
+          "sha256": "8d86d390f3ec9ba7819fb22389377032c0c9a59c451893241eb606c30ae45499"
+        },
+        {
+          "script": "V7__audit_doctor_calls.sql",
+          "sha256": "0265fb63fb825fc9da4edb926ebf7f42493a733d14f2f4e1fab64eefd0eec791"
+        },
+        {
+          "script": "V8__queue_contract_v1_2.sql",
+          "sha256": "c981e33bfde837cd41768e6e24cf3827971bcacce5b9683b92c87e8bcce3a1b8"
+        },
+        {
+          "script": "V9__align_queue_department_ids_with_directory.sql",
+          "sha256": "707b5d921b59d0576ec688a8fc94d535a8c3949d0345db84b4972f5a3d133647"
+        }
+      ],
+      "sqlScriptsMissingFromSource": [],
+      "allAppliedSuccessful": true,
+      "fullSchemaOrChecksumValidationPerformed": false
+    },
+    {
+      "service": "careflow-notification-service",
+      "database": "careflow_notification_audit",
+      "schema": "notification",
+      "status": "METADATA_CAPTURED",
+      "applied": [
+        {
+          "version": null,
+          "description": "<< Flyway Schema Creation >>",
+          "type": "SCHEMA",
+          "script": "\"notification\"",
+          "checksum": null,
+          "success": true
+        },
+        {
+          "version": "1",
+          "description": "notification schema",
+          "type": "SQL",
+          "script": "V1__notification_schema.sql",
+          "checksum": -566664493,
+          "success": true
+        },
+        {
+          "version": "2",
+          "description": "firebase device push",
+          "type": "SQL",
+          "script": "V2__firebase_device_push.sql",
+          "checksum": 444619196,
+          "success": true
+        },
+        {
+          "version": "3",
+          "description": "recipient many profiles",
+          "type": "SQL",
+          "script": "V3__recipient_many_profiles.sql",
+          "checksum": -93004495,
+          "success": true
+        }
+      ],
+      "sourceMigrations": [
+        {
+          "script": "V1__notification_schema.sql",
+          "sha256": "fe5cb8a6d14f996da007f55ecc464faccfbafb17e46dbe6f9a01d476f017abbf"
+        },
+        {
+          "script": "V2__firebase_device_push.sql",
+          "sha256": "5be983229a256841abf1a5f1b81dfdbc36d6c1153302d35f5f8b5cdec0fe0130"
+        },
+        {
+          "script": "V3__recipient_many_profiles.sql",
+          "sha256": "4aace71ee10f77c56525f6d82bcfaefd093053101b5f0b9ec7bc2cbc9f5c336a"
+        }
+      ],
+      "sqlScriptsMissingFromSource": [],
+      "allAppliedSuccessful": true,
+      "fullSchemaOrChecksumValidationPerformed": false
+    }
+  ]
+}

@@ -1,5 +1,8 @@
 # Electronic Medical Record Service Contract
 
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Các đoạn MVP/mock cũ phải đọc theo giới hạn và thay đổi tại R0; không loại Analytics/AI khỏi yêu cầu cuối.
+
+
 > Contract ID: `CF-SVC-04` | Version: `1.0` | Module: `careflow-emr-service`
 
 ## 1. Trách nhiệm và ranh giới

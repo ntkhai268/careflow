@@ -1,0 +1,489 @@
+{
+  "security-integration": {
+    "baselineHead": "5a8c6e574c1249ce2a6dc791e7415a2bbc33b006",
+    "includesUncommittedChanges": true,
+    "files": [
+      {
+        "path": ".planning/consultation-service/consultation-db.dbml",
+        "change": "modified",
+        "sha256": "ded6afa3786eed573ac6693ef86e551187417bfd1169c87207f6c5f88f15e510"
+      },
+      {
+        "path": ".planning/consultation-service/r3-acceptance-2026-10-20.md",
+        "change": "added",
+        "sha256": "79500f71e76f09929268add3726a5c3a48032df6f6dc65232bded79b046dfbfe"
+      },
+      {
+        "path": ".planning/consultation-service/r3-evidence-2026-10-20/artifacts.json",
+        "change": "added",
+        "sha256": "d7f2c58d832e0dc3081b2a3a30a5e2fdca6636f361ae9cdc8d3578c27685b0bf"
+      },
+      {
+        "path": ".planning/consultation-service/r3-evidence-2026-10-20/results.json",
+        "change": "added",
+        "sha256": "2eed79ff10bee9a8f3821127d0c4c5b3c71f514f66df2246313fcb6144b5b9f2"
+      },
+      {
+        "path": ".planning/consultation-service/r3-implementation-2026-10-20.md",
+        "change": "added",
+        "sha256": "98cf635f5c1de563505485bb8eb8a2b0007bd3dc03ea5b80d9debce48ddbf297"
+      },
+      {
+        "path": ".planning/full-requirements-plan-2026-10-19.md",
+        "change": "modified",
+        "sha256": "3115112e1e37f9a335d888ab102b016e3f3c7faa4b52ed0119330af72eca6823"
+      },
+      {
+        "path": ".planning/lab-service/lab-db.dbml",
+        "change": "modified",
+        "sha256": "6a936deb08f986b471ad3f3d681860ae148d12c3d2ed5643c8f7e2250a5462c2"
+      },
+      {
+        "path": ".planning/prescription-service/prescription-db.dbml",
+        "change": "modified",
+        "sha256": "6ee5cf96492a8ace3c8b2e12d7133e014f50ec78a00cf5a60ca5eaca05cc78be"
+      },
+      {
+        "path": "careflow-appointment-service/src/main/java/com/careflow/appointment/controller/AppointmentController.java",
+        "change": "modified",
+        "sha256": "b8218f60577dac53837dc95fef09da417dc4271fff08a01da35c3c331b802822"
+      },
+      {
+        "path": "careflow-appointment-service/src/main/java/com/careflow/appointment/controller/ClinicalAppointmentCompletionController.java",
+        "change": "added",
+        "sha256": "51cf2a699561adfd40c95c5c5417afce876d26600192bfc163bbd7b3172936d4"
+      },
+      {
+        "path": "careflow-appointment-service/src/main/java/com/careflow/appointment/controller/FollowUpQueryController.java",
+        "change": "added",
+        "sha256": "e459e14436424cd299313899df34cd70e34b77af94c6a6486519a9939a43dad1"
+      },
+      {
+        "path": "careflow-appointment-service/src/main/java/com/careflow/appointment/service/AppointmentService.java",
+        "change": "modified",
+        "sha256": "75636fb6fbe2cd7fecd6859fa1ebba45c732abc680dbba298160645e34873176"
+      },
+      {
+        "path": "careflow-appointment-service/src/test/java/com/careflow/appointment/service/AppointmentFollowUpAuthorizationTest.java",
+        "change": "modified",
+        "sha256": "25b48a9ac2f83b32fedf8b801b011169d01397f1e156979b964604beda273bda"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/java/com/careflow/consultation/client/AppointmentClient.java",
+        "change": "modified",
+        "sha256": "aa7388f81ddb10257d6978b1701aa597a3c76e136ced0a5bcde1cfaf77a6a3b8"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/java/com/careflow/consultation/client/ConsultationPrescriptionClient.java",
+        "change": "added",
+        "sha256": "c57225494ade902b7d281accdf9332e327c79ee75d893420b36243e476332767"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/java/com/careflow/consultation/client/ConsultationQueueClient.java",
+        "change": "modified",
+        "sha256": "03164ad166747b5f529b92189357f80d5bda12932ea7be0aeb3a64614a2e1248"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/java/com/careflow/consultation/config/ClinicalDeliveryConfiguration.java",
+        "change": "added",
+        "sha256": "5b5ff379b94299b3a5e2e32363808ba46c068216fe048f0d3b8854985d645203"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/java/com/careflow/consultation/controller/ClinicalFinalizationController.java",
+        "change": "added",
+        "sha256": "361508bbd6985f5a255fe86818c193a23e9b3826356aa6a2ac9c1c9976ab058e"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/java/com/careflow/consultation/handover/HandoverService.java",
+        "change": "modified",
+        "sha256": "813738db7646217f3faf0bd0d319cf50b5a876876b4e2fabfcc15d5cadb96d4a"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/java/com/careflow/consultation/service/ClinicalCompletionGuard.java",
+        "change": "added",
+        "sha256": "800ce1433dc88ff0f06e7adc6bb055b459e77651c29cb8f76a0103ffc634bb54"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/java/com/careflow/consultation/service/ClinicalFinalizationService.java",
+        "change": "added",
+        "sha256": "5dd26287a0f8c2fff63661cdaa10f4fb7cf50aea9e7afa800acc7349a4542dc0"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/java/com/careflow/consultation/service/ConsultationEventOutbox.java",
+        "change": "added",
+        "sha256": "b04cd018e1aa7874a3395fc8510e40e2b7a224b8b4d0189f017180d10bde1e4c"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/java/com/careflow/consultation/service/ConsultationService.java",
+        "change": "modified",
+        "sha256": "0263d6b4eba26c91f7acd08b8dd8b935b15784f4494e552e9c6bb85e20865654"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/resources/application.yml",
+        "change": "modified",
+        "sha256": "7cb5092c2b0f100dd555e5b00a64ca9b8c6aad99859518344d6da1da036e5d32"
+      },
+      {
+        "path": "careflow-consultation-service/src/main/resources/db/migration/V6__clinical_completion_outbox.sql",
+        "change": "added",
+        "sha256": "2a5c5683f8fc3243251127c1d46361dc09a6d318b35d708e447bbe1b7274568c"
+      },
+      {
+        "path": "careflow-consultation-service/src/test/java/com/careflow/consultation/service/ClinicalCompletionGuardTest.java",
+        "change": "added",
+        "sha256": "39b6cd82e434f9f6df8ba08ba130fd7677277819208368c8dd9ae6dd616fdd0b"
+      },
+      {
+        "path": "careflow-consultation-service/src/test/java/com/careflow/consultation/service/ClinicalFinalizationTest.java",
+        "change": "added",
+        "sha256": "70857922940e03e86b0069fef409a782d5d85c49d2e0602bcafb9ee122794848"
+      },
+      {
+        "path": "careflow-consultation-service/src/test/java/com/careflow/consultation/service/ConsultationOutboxPostgresTest.java",
+        "change": "added",
+        "sha256": "db362758a93468a60c89e0f34590fde7a8cd404ac3893641433e38c6ee51ba5c"
+      },
+      {
+        "path": "careflow-consultation-service/src/test/java/com/careflow/consultation/service/WalkInHandoverTest.java",
+        "change": "added",
+        "sha256": "be55570a6ad45f0fb4a829277575ab0eb038bb1fdf3663ca86ac02cf3b741565"
+      },
+      {
+        "path": "careflow-lab-service/src/main/java/com/careflow/lab/client/LabConsultationClient.java",
+        "change": "modified",
+        "sha256": "7be39be983a37d92727fc2862bd4383a91e0883a53868c6b774510598323a205"
+      },
+      {
+        "path": "careflow-lab-service/src/main/java/com/careflow/lab/client/LabQueueSourceClient.java",
+        "change": "added",
+        "sha256": "80fe8fbeb38583cc70946be576615eabaf200bca077cbf978e15b79f833d6fb1"
+      },
+      {
+        "path": "careflow-lab-service/src/main/java/com/careflow/lab/config/ClinicalDeliveryConfiguration.java",
+        "change": "added",
+        "sha256": "79b7f117dc75c51cb1d0894e8d25d3ad12ae12181791a95b44b838e0c37dc5bb"
+      },
+      {
+        "path": "careflow-lab-service/src/main/java/com/careflow/lab/controller/LabReviewSynchronizationController.java",
+        "change": "added",
+        "sha256": "a02948eaf6834885abc350135d9f5f470ff0dfda90a1941662d4a52c725fd5bc"
+      },
+      {
+        "path": "careflow-lab-service/src/main/java/com/careflow/lab/model/LabOrder.java",
+        "change": "modified",
+        "sha256": "4367695f48ff0391a3f5a22122034681aff1137d0a46d08063ee806a9170f4b0"
+      },
+      {
+        "path": "careflow-lab-service/src/main/java/com/careflow/lab/service/LabEventOutbox.java",
+        "change": "added",
+        "sha256": "33da938a35951b24f5b16217aaa1cfcee395b65c2503896690fd98b670c2a7f8"
+      },
+      {
+        "path": "careflow-lab-service/src/main/java/com/careflow/lab/service/LabOrderService.java",
+        "change": "modified",
+        "sha256": "5658e389a7cedaaff8aa83580415a251fcb9d118d8126fe66959f21a9c3bf469"
+      },
+      {
+        "path": "careflow-lab-service/src/main/java/com/careflow/lab/service/RabbitLabEventPublisher.java",
+        "change": "modified",
+        "sha256": "2ab56546797c7dca3fd0c822aa30e07ecba88084cead8828eb4642e4a1a3625c"
+      },
+      {
+        "path": "careflow-lab-service/src/main/resources/db/migration/V3__visit_source_and_event_delivery.sql",
+        "change": "added",
+        "sha256": "781a62348211f216e927b501066e210c6f7f05970dcf3cde91e706c6e959f7eb"
+      },
+      {
+        "path": "careflow-lab-service/src/test/java/com/careflow/lab/service/LabCreationPostgresTest.java",
+        "change": "added",
+        "sha256": "199de467a390d4e947e88ea9527486db045cf078950c91e6b261345f23e1854b"
+      },
+      {
+        "path": "careflow-lab-service/src/test/java/com/careflow/lab/service/LabOrderServiceTest.java",
+        "change": "modified",
+        "sha256": "c2c6b3759a9088a749b8259beefa57b3f71bfb005e55fd13eeba1c319ea6940c"
+      },
+      {
+        "path": "careflow-lab-service/src/test/java/com/careflow/lab/service/LabOutboxPostgresTest.java",
+        "change": "added",
+        "sha256": "42569065592dbc751cc508e789a2ee917e7c8124f7fb7fd864f63bac0c2b8062"
+      },
+      {
+        "path": "careflow-prescription-service/pom.xml",
+        "change": "modified",
+        "sha256": "7e4adb5b57d5adf2c7bd0b7b904aab8f6b36b5378ef139d43b59e536da7b647d"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/java/com/careflow/prescription/config/AppointmentClient.java",
+        "change": "modified",
+        "sha256": "fe9c790f88a3ded2f2aee9a4ac7767ba04f0617cd0baca1dee1ceb5bba824797"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/java/com/careflow/prescription/config/ClinicalDeliveryConfiguration.java",
+        "change": "added",
+        "sha256": "a2ac40bf6815a944f7fb2491b7a4b1495aff664e25a0128d79e96614a8ffe7be"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/java/com/careflow/prescription/controller/PrescriptionReleaseController.java",
+        "change": "added",
+        "sha256": "141a127916dff9610d8ede74c50f9ba2e8e65478ceb854c17ddf42f7e60b8761"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/java/com/careflow/prescription/dto/request/AmendPrescriptionRequest.java",
+        "change": "modified",
+        "sha256": "1e39b087c1ec437958cbeb130c6d6b9d128db61dd19075092f67f66d088d35b8"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/java/com/careflow/prescription/dto/request/CreatePrescriptionRequest.java",
+        "change": "modified",
+        "sha256": "53e5e024ea8733f3cf178b5f328796f1ea4f8341574fcffd7907fe3038b5e372"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/java/com/careflow/prescription/dto/response/PrescriptionResponse.java",
+        "change": "modified",
+        "sha256": "0655d451e2eacf7d9a082eecd737e1a53582c4cef44e1f866dfaefa6d5effefd"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/java/com/careflow/prescription/mapper/PrescriptionMapper.java",
+        "change": "modified",
+        "sha256": "769ba72729a973eeedbf9e1c0913714ded80e2f207804151d9724c7930575f87"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/java/com/careflow/prescription/model/Prescription.java",
+        "change": "modified",
+        "sha256": "fd8222182fed5facba99ead9e6096ac0ff8a1c9e0aa4f59f45b3db4789d2051e"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/java/com/careflow/prescription/service/PrescriptionEventOutbox.java",
+        "change": "added",
+        "sha256": "0ca8d5c7ba246dd077fa7253158f013447e4a3e3a48014fb80ede095fd5650f6"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/java/com/careflow/prescription/service/PrescriptionFollowUpService.java",
+        "change": "added",
+        "sha256": "f0c746b5806bbecbf37c8003bc9e558aa1de5284a11fbc6fbc06a7a70155fbe4"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/java/com/careflow/prescription/service/PrescriptionService.java",
+        "change": "modified",
+        "sha256": "9e4028388c2f10b33a3ca58a86a271b70b711a5a0d846e2f368e07fa6244bdf3"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/resources/application.yml",
+        "change": "modified",
+        "sha256": "225eaa3589275a8e7dc8c83d84729720fc15dabb3b0e7cf8f44b85411ad54b1f"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/resources/db/migration/V1__baseline_prescription_schema.sql",
+        "change": "added",
+        "sha256": "ce935fa39019cc9bdae325bd50d34a872b14e5f7d6bc57de1038ca5ee8eac4af"
+      },
+      {
+        "path": "careflow-prescription-service/src/main/resources/db/migration/V2__durable_release_and_follow_up.sql",
+        "change": "added",
+        "sha256": "3ee24e8477c108a2c287514cae6c6baef68c1b42b88cf99c67f6b4e4c4a8234f"
+      },
+      {
+        "path": "careflow-prescription-service/src/test/java/com/careflow/prescription/config/PrescriptionRemainingProviderAuthorizationTest.java",
+        "change": "modified",
+        "sha256": "df15d95f4f5cc423f7213e96df4b1a853bedadcd696b944064158fef9fe37aa5"
+      },
+      {
+        "path": "careflow-prescription-service/src/test/java/com/careflow/prescription/service/PrescriptionReleasePostgresTest.java",
+        "change": "added",
+        "sha256": "c80c175f33c7051af4a4de8fc066f3afd15d89e79562022569a23db4c6f8cb45"
+      },
+      {
+        "path": "careflow-queue-service/src/main/java/com/careflow/queue/controller/QueueAssignmentContextController.java",
+        "change": "added",
+        "sha256": "2a221317db7cf229aeeb6f1337ca6c7973c652865dc622a623a731dd6a6a558b"
+      },
+      {
+        "path": "careflow-queue-service/src/main/java/com/careflow/queue/controller/VisitQueueCompletionController.java",
+        "change": "added",
+        "sha256": "34d671e4047b709ae7c11c27068e4b2d245b6ea1b154b9732c921a59304cf54f"
+      },
+      {
+        "path": "careflow-queue-service/src/main/java/com/careflow/queue/service/QueueManagementService.java",
+        "change": "modified",
+        "sha256": "a444b725919cb9054f9c9a7431b81608fa3f16bb227628ac211aa88f16f4b72e"
+      },
+      {
+        "path": "careflow-queue-service/src/test/java/com/careflow/queue/service/ResultReviewSourceTest.java",
+        "change": "added",
+        "sha256": "0f7ebbd17daf10b95acd737ce492b1c30186c25cf5c09cfe0cb7b8baeaee11ff"
+      },
+      {
+        "path": "frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx",
+        "change": "modified",
+        "sha256": "1fe10aa9cf5e64fb9fec0b231967cc8385791111bd3575650e747d47acf5a4f9"
+      },
+      {
+        "path": "frontend/doctor-web/src/components/FollowUpAppointmentPanel.tsx",
+        "change": "added",
+        "sha256": "5ea800da28060510d0b65de658355715e40294750e5400882f2fc474ef2e8fc4"
+      },
+      {
+        "path": "frontend/doctor-web/src/components/FollowUpFields.tsx",
+        "change": "added",
+        "sha256": "d58297e501b5df4c3f081931308bc17e9be2ef939f97dfe2000b94d3f3cd4100"
+      },
+      {
+        "path": "frontend/doctor-web/src/components/UploadedHealthRecords.tsx",
+        "change": "added",
+        "sha256": "564c9450b169a40a528bf3c776ac3cbb3fa42abe21d6f8c42389b8299afa1f68"
+      },
+      {
+        "path": "frontend/doctor-web/src/lib/consultation-api.ts",
+        "change": "modified",
+        "sha256": "07ebfd1e07717909586c65c2934012aae443a9d97d91cdf068825185d87ae86a"
+      },
+      {
+        "path": "frontend/doctor-web/src/lib/follow-up-api.ts",
+        "change": "added",
+        "sha256": "9c2b088246fbea19310619737f7ea6a2d8a9c40f96958536ccaeabb97d084d93"
+      },
+      {
+        "path": "frontend/doctor-web/src/lib/health-record-api.ts",
+        "change": "added",
+        "sha256": "5979f806bdd854445723579f8e6910a2362fca67265e5651818307905e02240a"
+      },
+      {
+        "path": "frontend/doctor-web/src/lib/lab-api.ts",
+        "change": "modified",
+        "sha256": "ff07e68296dc1b201a94d583749729477fc433668cffac86797b0cd32e0cb235"
+      },
+      {
+        "path": "frontend/doctor-web/src/lib/prescription-api.ts",
+        "change": "modified",
+        "sha256": "1bcd864339c9076e96a39d73e5abd4402937a6dc71cf188271533ef34d4037e5"
+      },
+      {
+        "path": "huong-dan-su-dung/01-tai-khoan-va-du-lieu.md",
+        "change": "modified",
+        "sha256": "8ec2426d7c53da45fa4424a446f02126da2c5999ad80f3bac664a6d9ff29dd29"
+      },
+      {
+        "path": "huong-dan-su-dung/04-kham-khong-cls.md",
+        "change": "modified",
+        "sha256": "0bcaf05613812bb6f213c1b293adbc7e6f32c1f0dd62b91269c5dba6a648bc55"
+      },
+      {
+        "path": "huong-dan-su-dung/05-can-lam-sang.md",
+        "change": "modified",
+        "sha256": "83b391b7850517bdecb5d9af9dc8859c3c0667a4783c7c91de1c228d0420448f"
+      },
+      {
+        "path": "huong-dan-su-dung/06-toa-va-cap-phat-thuoc.md",
+        "change": "modified",
+        "sha256": "1e053d67b35ce9adaf29536b5069e58327174347335854f997bbedf681390adc"
+      },
+      {
+        "path": "huong-dan-su-dung/07-ban-giao-ca-kham.md",
+        "change": "modified",
+        "sha256": "9f0f544382460566e316e0f9e5813bc25d854252103b33be2a9036e8995c3578"
+      },
+      {
+        "path": "huong-dan-su-dung/08-sau-kham.md",
+        "change": "modified",
+        "sha256": "5aa4fd9f2e330d469ae1910586d6062a743469745e5cbcbb22ea8e42920e786a"
+      },
+      {
+        "path": "huong-dan-su-dung/14-tep-thiet-bi-va-bang-gia.md",
+        "change": "modified",
+        "sha256": "749ab39957dfc73d5438066bd64cd973410ef1985cfbb6b1ea60817e2163f1d9"
+      },
+      {
+        "path": "huong-dan-su-dung/20-ho-so-va-hanh-trinh-lam-sang-r3.md",
+        "change": "added",
+        "sha256": "b54cda867e262aeb42e1470cd1cbb92c046cd13018a0c4bbe6495e5b3eb8094f"
+      },
+      {
+        "path": "huong-dan-su-dung/CHANGELOG.md",
+        "change": "modified",
+        "sha256": "4693e366033117757a80a62003fc1470bb1dc77a12a0245fd1073915ba78b69a"
+      },
+      {
+        "path": "huong-dan-su-dung/README.md",
+        "change": "modified",
+        "sha256": "2cfe3adced29853790656e67e4d4116864806ab44b4dd33da9f3f83d38dc313f"
+      }
+    ]
+  },
+  "patient-mobile-ios-login": {
+    "baselineHead": "e5fc9c172cb6a5752e4562fd1b885317fa965ab7",
+    "includesUncommittedChanges": true,
+    "files": [
+      {
+        "path": "frontend/patient-mobile/lib/config/router.dart",
+        "change": "modified",
+        "sha256": "fd3e6a39560f971ea7978f613edeb8bd837fa67953b4a87943d2f294048a4329"
+      },
+      {
+        "path": "frontend/patient-mobile/lib/features/journey/presentation/visit_results_screen.dart",
+        "change": "modified",
+        "sha256": "5817b45532bed735eeca5bbd2fdbea4ae48a06801dca2d7ed9c10079a12e7a90"
+      },
+      {
+        "path": "frontend/patient-mobile/lib/features/journey/presentation/walk_in_results.dart",
+        "change": "added",
+        "sha256": "92fe0fe1c7d69926292d6b00387ed0c40fa48aa6d8b8124903b715b3e0d9d3b6"
+      },
+      {
+        "path": "frontend/patient-mobile/lib/providers/health_record_provider.dart",
+        "change": "modified",
+        "sha256": "6221fd22bd0c3b9a19d64038695436e251e91c7d6a46c7501e3eff205d70d92d"
+      },
+      {
+        "path": "frontend/patient-mobile/lib/screens/health_record/health_record_detail_screen.dart",
+        "change": "modified",
+        "sha256": "0f2c7cdcbc55f0da44aff31f59f4106b21ce1ec945e7afd7be3a1e087dadee36"
+      },
+      {
+        "path": "frontend/patient-mobile/lib/screens/health_record/health_record_form_screen.dart",
+        "change": "modified",
+        "sha256": "77ee9dbf802aca6720031cacd840e2bc4993dc5c2e55f20ccca394417d314159"
+      },
+      {
+        "path": "frontend/patient-mobile/lib/screens/health_record/health_record_list_screen.dart",
+        "change": "modified",
+        "sha256": "9043396113c05bfd959b2b9b6af40edd8f081a83520e16964d767a20286161e5"
+      },
+      {
+        "path": "frontend/patient-mobile/lib/services/api_service.dart",
+        "change": "modified",
+        "sha256": "1f60004addb15d2bce5ab29821c949144345fdcf5298faca71b29e2d87838b12"
+      },
+      {
+        "path": "frontend/patient-mobile/lib/services/health_record_service.dart",
+        "change": "modified",
+        "sha256": "f09f542bca099d0c92183027fc04a60ed0ba4724dabda7b1fcf5e99c58a0f299"
+      },
+      {
+        "path": "frontend/patient-mobile/lib/services/walk_in_history_service.dart",
+        "change": "added",
+        "sha256": "f6791eeca44e69ab7e68b1efbcbb4ae1a9c8019bed85c5dee8f766c2d184c549"
+      },
+      {
+        "path": "frontend/patient-mobile/test/screens/health_record/health_record_list_screen_test.dart",
+        "change": "modified",
+        "sha256": "e98c402b78a5db2cc2c7905a2d55ea8d5c680724624798ed383f97ff349a71b6"
+      },
+      {
+        "path": "frontend/patient-mobile/test/screens/health_record/r3_upload_form_test.dart",
+        "change": "added",
+        "sha256": "7399425c025f984187aa944ab5a03002ed4247841f7dd0d0447b777ea8c929a9"
+      },
+      {
+        "path": "frontend/patient-mobile/test/services/r3_health_upload_test.dart",
+        "change": "added",
+        "sha256": "5bb33039c898d44299557f28c71f776ec88088dfbf4f01e9cf698c9ecb93b905"
+      },
+      {
+        "path": "frontend/patient-mobile/test/services/r3_walk_in_history_test.dart",
+        "change": "added",
+        "sha256": "43c0674b16f877af6f302ae40e1b44e6f46027642518f0f0fd8c163b3a9c662c"
+      }
+    ]
+  }
+}

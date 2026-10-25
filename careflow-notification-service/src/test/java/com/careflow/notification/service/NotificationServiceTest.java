@@ -120,14 +120,8 @@ class NotificationServiceTest {
         ObjectNode payload = mapper.createObjectNode()
                 .put("patientId", patientId.toString())
                 .put("userId", userId.toString());
-        when(recipients.findById(patientId)).thenReturn(Optional.empty());
-
         service.upsertPatientRecipient(event("PatientProfileCreated", payload));
-
-        ArgumentCaptor<PatientRecipientProjection> captor = ArgumentCaptor.forClass(PatientRecipientProjection.class);
-        verify(recipients).save(captor.capture());
-        assertThat(captor.getValue().getPatientId()).isEqualTo(patientId);
-        assertThat(captor.getValue().getUserId()).isEqualTo(userId);
+        verify(recipients).upsert(eq(patientId), eq(userId), any(Instant.class));
     }
 
     @Test

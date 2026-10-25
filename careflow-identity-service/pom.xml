@@ -15,6 +15,11 @@
     <description>Authentication and authorization service for CareFlow</description>
 
     <dependencies>
+        <dependency>
+            <groupId>com.yubico</groupId>
+            <artifactId>webauthn-server-core</artifactId>
+            <version>2.10.1</version>
+        </dependency>
         <!-- CareFlow Common -->
         <dependency>
             <groupId>com.careflow</groupId>
@@ -88,7 +93,7 @@
         <dependency>
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>2.6.0</version>
+            <version>${springdoc-openapi.version}</version>
         </dependency>
 
         <!-- Lombok -->

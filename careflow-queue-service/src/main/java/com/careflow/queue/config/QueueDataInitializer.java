@@ -20,6 +20,7 @@ import java.util.UUID;
 
 @Component
 @Slf4j
+@org.springframework.context.annotation.Profile("demo | test")
 public class QueueDataInitializer implements CommandLineRunner {
     private static final ZoneId HOSPITAL_ZONE = ZoneId.of("Asia/Ho_Chi_Minh");
 

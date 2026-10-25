@@ -1,0 +1,73 @@
+// R6 — AI owns jobs, approved source excerpts and scoped interaction history. No clinical writes.
+Table voice_prescription_capacity {
+  id integer [pk, note: 'Singleton id=1; transactional quota lock']
+}
+Table voice_prescription_jobs {
+  id uuid [pk]
+  consultation_id uuid [not null, note: 'External Consultation reference, authorized on every operation']
+  actor_id uuid [not null, note: 'Verified Identity user, never client header']
+  version bigint [not null, default: 1]
+  transcript_revision integer [not null, default: 1]
+  state varchar(20) [not null, note: 'QUEUED/RUNNING/SUCCEEDED/FAILED/CANCELLED/EXPIRED']
+  idempotency_key varchar(128) [not null]
+  request_hash varchar(64) [not null]
+  input_json text [note: 'AES-256-GCM encrypted text/base64 audio in secure runtime; removed at terminal/expiry']
+  result_json text [note: 'AES-256-GCM encrypted evidence/model/catalog/proposal; TTL 900 seconds']
+  error_code varchar(80)
+  correlation_id varchar(36) [not null]
+  lease_owner uuid
+  lease_until timestamptz
+  created_at timestamptz [not null]
+  expires_at timestamptz [not null]
+  indexes {
+    (actor_id, idempotency_key) [unique]
+    (state, expires_at)
+  }
+}
+Table voice_prescription_audit {
+  id bigint [pk, increment]
+  job_id uuid [not null, note: 'Metadata retained at most 30 days; no public audit route']
+  actor_id uuid [not null]
+  action varchar(40) [not null]
+  version bigint [not null]
+  correlation_id varchar(36) [not null]
+  input_hash varchar(64) [not null]
+  schema_version varchar(80) [not null]
+  catalog_version varchar(64)
+  model_info_json text [note: 'Release/model metadata only; no transcript/audio/credentials']
+  created_at timestamptz [not null]
+  indexes { (job_id, id) }
+}
+
+Table ai_guideline_sources {
+  id uuid [pk]
+  title varchar(200) [not null]
+  revision varchar(80) [not null]
+  department_code varchar(50) [not null]
+  source_url varchar(1000) [not null]
+  content text [not null, note: 'Immutable excerpt, max12000 characters at API']
+  content_hash varchar(64) [not null]
+  status varchar(20) [not null, default: 'DRAFT']
+  synthetic boolean [not null, default: false]
+  imported_by uuid [not null]
+  reviewer_id uuid
+  reviewed_at timestamptz
+  created_at timestamptz [not null]
+  indexes { (department_code,title,revision) [unique] }
+  note: 'CHECK status IN DRAFT/APPROVED/RETIRED; APPROVED requires reviewer/time and reviewer<>imported_by. External Identity IDs.'
+}
+Table ai_clinical_interactions {
+  id uuid [pk]
+  actor_id uuid [not null]
+  consultation_id uuid [not null]
+  parent_id uuid
+  context_hash varchar(64) [not null]
+  content_cipher text [not null, note: 'AES-256-GCM envelope, AAD id:actor:consultation']
+  engine_id varchar(100) [not null]
+  created_at timestamptz [not null]
+  expires_at timestamptz [not null]
+  indexes {
+    (actor_id,consultation_id,created_at) [name: 'idx_ai_interaction_owner', note: 'created_at DESC']
+    expires_at [name: 'idx_ai_interaction_expiry']
+  }
+}

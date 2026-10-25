@@ -1,0 +1,34 @@
+Changes: 147 files, 573 symbols
+Affected processes: 487
+Risk level: critical
+
+Changed symbols:
+  Section GitNexus — Code Intelligence → AGENTS.md
+  Section Always Do → AGENTS.md
+  Section Never Do → AGENTS.md
+  Section Resources → AGENTS.md
+  Section Behavioral Guidelines (LLM Coding) → AGENTS.md
+  Section 4. Goal-Driven Execution → AGENTS.md
+  Section GitNexus — Code Intelligence → CLAUDE.md
+  Section Always Do → CLAUDE.md
+  Section Never Do → CLAUDE.md
+  Section Resources → CLAUDE.md
+  Section CareFlow — Healthcare Platform → README.md
+  Section Hướng dẫn sử dụng → README.md
+  Class JwtAuthenticationFilter → careflow-api-gateway/src/main/java/com/careflow/gateway/security/JwtAuthenticationFilter.java
+  Property sessions → careflow-api-gateway/src/main/java/com/careflow/gateway/security/JwtAuthenticationFilter.java
+  Constructor JwtAuthenticationFilter → careflow-api-gateway/src/main/java/com/careflow/gateway/security/JwtAuthenticationFilter.java
+... and 558 more
+
+Affected execution flows:
+  • DashboardGeneralPage → RefreshAccessToken (6 steps) — changed: loadDashboardData, DashboardGeneralPage, refreshAccessToken, request
+  • DashboardGeneralPage → Request (5 steps) — changed: loadDashboardData, DashboardGeneralPage, request
+  • Question → FindByIdForUpdate (10 steps) — changed: findForUpdate, lockUser, revokeAll, revoke, findByIdForUpdate
+  • Question → InvalidToken (10 steps) — changed: findForUpdate, lockUser, revokeAll, revoke
+  • DashboardGeneralPage → Base64 (9 steps) — changed: loadDashboardData, DashboardGeneralPage, refreshAccessToken, request
+  • DashboardGeneralPage → Bytes (9 steps) — changed: loadDashboardData, DashboardGeneralPage, refreshAccessToken, request
+  • Login → BusinessException (9 steps) — changed: login, findForUpdate, lockUser, revokeAll, revoke, login
+  • Question → FindByTokenHash (9 steps) — changed: findForUpdate, revokeAll, revoke
+  • Question → FindOwnerIdByTokenHash (9 steps) — changed: findOwnerIdByTokenHash, findForUpdate, revokeAll, revoke
+  • Question → Hash (9 steps) — changed: findForUpdate, revokeAll, revoke
+... and 477 more

@@ -1,0 +1,13 @@
+.runtime/
+app/.dart_tool/
+app/build/
+app/.flutter-plugins*
+app/flutter_*.log
+.env*
+.DS_Store
+
+node_modules/
+coverage/
+*.log
+.idea/
+.vscode/

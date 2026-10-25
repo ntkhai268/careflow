@@ -22,6 +22,8 @@ import java.util.UUID;
 
 @Service
 public class NotificationService {
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.careflow.common.security.PatientOwnershipClient currentOwners;
     private static final String USER_DESTINATION = "/queue/notifications";
     private final NotificationRepository notifications;
     private final PatientRecipientRepository recipients;
@@ -44,13 +46,9 @@ public class NotificationService {
         requireEnvelope(envelope);
         if (!"PatientProfileCreated".equals(envelope.eventType())) return;
         UUID patientId = requiredUuid(envelope.payload(), "patientId");
-        UUID userId = requiredUuid(envelope.payload(), "userId");
-        PatientRecipientProjection projection = recipients.findById(patientId)
-                .orElseGet(PatientRecipientProjection::new);
-        projection.setPatientId(patientId);
-        projection.setUserId(userId);
-        projection.setUpdatedAt(envelope.occurredAt() == null ? Instant.now() : envelope.occurredAt());
-        recipients.save(projection);
+        UUID userId = optionalUuid(envelope.payload(), "userId");
+        if (userId == null) return;
+        recipients.upsert(patientId, userId, envelope.occurredAt() == null ? Instant.now() : envelope.occurredAt());
     }
 
     @Transactional
@@ -58,8 +56,14 @@ public class NotificationService {
         requireEnvelope(envelope);
         Template template = template(envelope.eventType(), envelope.payload());
         if (template == null) return Optional.empty();
+        // An explicit null Queue recipient means a real patient without an app account.
+        // Do not route to the receiving staff or retry this legitimate offline case.
+        if (currentOwners==null && "queue-service".equals(envelope.producer())
+                && envelope.payload().has("recipientUserId")
+                && envelope.payload().get("recipientUserId").isNull()) return Optional.empty();
         learnRecipientMapping(envelope.payload(), envelope.occurredAt());
-        UUID recipientUserId = resolveRecipient(envelope.payload());
+        UUID recipientUserId = currentOwners==null?resolveRecipient(envelope.payload()):currentOwners.owner(requiredUuid(envelope.payload(),"patientId"));
+        if(recipientUserId==null)return Optional.empty();
         if (notifications.existsBySourceEventIdAndRecipientUserIdAndType(
                 envelope.eventId(), recipientUserId, template.type())) {
             return Optional.empty();
@@ -68,6 +72,7 @@ public class NotificationService {
         Notification notification = new Notification();
         notification.setId(UUID.randomUUID());
         notification.setRecipientUserId(recipientUserId);
+        notification.setPatientId(optionalUuid(envelope.payload(), "patientId"));
         notification.setSourceEventId(envelope.eventId());
         notification.setSourceEventType(envelope.eventType());
         notification.setType(template.type());
@@ -198,12 +203,7 @@ public class NotificationService {
         UUID userId = optionalUuid(payload, "recipientUserId");
         if (userId == null) userId = optionalUuid(payload, "userId");
         if (patientId == null || userId == null) return;
-        PatientRecipientProjection projection = recipients.findById(patientId)
-                .orElseGet(PatientRecipientProjection::new);
-        projection.setPatientId(patientId);
-        projection.setUserId(userId);
-        projection.setUpdatedAt(occurredAt == null ? Instant.now() : occurredAt);
-        recipients.save(projection);
+        recipients.upsert(patientId, userId, occurredAt == null ? Instant.now() : occurredAt);
     }
 
     private NotificationResponse toResponse(Notification value) {

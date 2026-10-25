@@ -33,6 +33,13 @@ public class DoctorController {
         return ResponseEntity.ok(ApiResponse.success(directoryService.getDoctorByUserId(userId)));
     }
 
+    @GetMapping("/admin")
+    public ResponseEntity<ApiResponse<List<DoctorProfileResponse>>> allDoctorProfiles(
+            @RequestHeader(value="X-User-Role",required=false) String userRole) {
+        checkAdminRole(userRole);
+        return ResponseEntity.ok(ApiResponse.success(directoryService.getAllDoctorProfilesForAdministration()));
+    }
+
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<DoctorProfileResponse>> getMyDoctorProfile(
             @RequestHeader(value = "X-User-Id", required = false) String userIdHeader) {

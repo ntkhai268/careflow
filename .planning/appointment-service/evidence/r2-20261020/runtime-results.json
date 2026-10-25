@@ -1,0 +1,57 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "Room schedule persists with optimistic version and history",
+      "status": "PASS"
+    },
+    {
+      "name": "Patient cannot change administrator schedules",
+      "status": "PASS"
+    },
+    {
+      "name": "Queue policy is persistent, versioned and applied",
+      "status": "PASS"
+    },
+    {
+      "name": "Reception creates/replays/searches minimal unowned profiles without staff ownership",
+      "status": "PASS"
+    },
+    {
+      "name": "Patient and unassigned staff cannot use reception lookup",
+      "status": "PASS"
+    },
+    {
+      "name": "Walk-in intake issues one queue number without an appointment",
+      "status": "PASS"
+    },
+    {
+      "name": "Recall, missed list and manual BACK requeue work through real API",
+      "status": "PASS"
+    },
+    {
+      "name": "Assigned doctor starts/replays walk-in consultation; staff cannot start a medical visit",
+      "status": "PASS"
+    },
+    {
+      "name": "Unlinked account has no medical access",
+      "status": "PASS"
+    },
+    {
+      "name": "Verified document match creates a pending request; code alone and other account cannot grant access",
+      "status": "PASS"
+    },
+    {
+      "name": "Owner approval grants access to the actual walk-in profile and consultation",
+      "status": "PASS"
+    },
+    {
+      "name": "Walk-in diagnosis persists and consultation/queue complete without an appointment",
+      "status": "PASS"
+    },
+    {
+      "name": "Revocation immediately removes patient, consultation and queue access",
+      "status": "PASS"
+    }
+  ]
+}

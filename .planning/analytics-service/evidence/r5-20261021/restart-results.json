@@ -1,0 +1,1 @@
+{"status":"PASS","checks":["Live Analytics JVM restart preserves all metrics in PostgreSQL","Missing report dates return400 through the real Gateway"]}

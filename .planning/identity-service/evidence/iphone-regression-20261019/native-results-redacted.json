@@ -1,0 +1,17 @@
+{
+  "noRealDocumentUsed": true,
+  "accountOrBiometricCredentialAccessed": false,
+  "networkRequests": 0,
+  "legacyReadWorks": true,
+  "oldDeleteLeavesLegacyItem": true,
+  "fixedCleanupWorks": true,
+  "hardwareProtection": "secure_enclave",
+  "stableAcrossLaunches": true,
+  "biometricAvailable": true,
+  "biometricLabel": "Face ID",
+  "nativeOcrWorks": true,
+  "ocrTextNonEmpty": true,
+  "numberParsed": true,
+  "nameParsed": true,
+  "birthParsed": true
+}

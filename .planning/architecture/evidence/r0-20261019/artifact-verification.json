@@ -1,0 +1,166 @@
+{
+  "capturedAt": "2026-10-19T16:59:21.780269+00:00",
+  "sourceChecks": {
+    "backend-web": {
+      "filesChecked": 869,
+      "changedSinceSnapshot": [],
+      "archiveHashMatches": true
+    },
+    "mobile-native": {
+      "filesChecked": 262,
+      "changedSinceSnapshot": [],
+      "archiveHashMatches": true
+    }
+  },
+  "newBackendArtifacts": [
+    {
+      "module": "careflow-common",
+      "sha256": "9ac1aec4754211754369a16b400f9ebd796619e48bd2a2c6b39dd9bfd8f58e6d",
+      "bytes": 39536
+    },
+    {
+      "module": "careflow-eureka-server",
+      "sha256": "1ee4cf400cc91c8d5d5d3f9ec323c8b246bba4106a7f9efe8c7435df73a55f3d",
+      "bytes": 59660687
+    },
+    {
+      "module": "careflow-api-gateway",
+      "sha256": "cf901be13a8c004eb63c71e6ab54b29e855e51481f8732076c3f4be40b199f6e",
+      "bytes": 50987419
+    },
+    {
+      "module": "careflow-identity-service",
+      "sha256": "6dbc08fbb25ef5431c962801572e5b5b26ba30dafebed3f486e7771207c28278",
+      "bytes": 94369173
+    },
+    {
+      "module": "careflow-patient-service",
+      "sha256": "0a1eeaf4a6b2ef50141a0ccd7f05e68d6e7bac99b8cfbd888e611f871734f57e",
+      "bytes": 91893160
+    },
+    {
+      "module": "careflow-appointment-service",
+      "sha256": "ea9a1054a0a9ca947e8a0f0abb54ab5d76be53fcfc3aed92ab6d774a9f827a52",
+      "bytes": 91258217
+    },
+    {
+      "module": "careflow-queue-service",
+      "sha256": "0c6f830cb38e9588b8fb697ff6c9e65e54de258910b96a2480e4b1416de9961f",
+      "bytes": 92362537
+    },
+    {
+      "module": "careflow-notification-service",
+      "sha256": "cf5c71846f3abcdb7395635964adc9a24bf8b3e09b3809b57764419329faee3e",
+      "bytes": 146042466
+    },
+    {
+      "module": "careflow-consultation-service",
+      "sha256": "e99ee98a11459702e57af0f00d9156e76b24f1a983ccecb53c8c09c9c82da89b",
+      "bytes": 91869003
+    },
+    {
+      "module": "careflow-prescription-service",
+      "sha256": "36228f363a41f4b7e7c3d7d9e637e7a95b52fbed8d7a2fa833f091557d669e34",
+      "bytes": 90435132
+    },
+    {
+      "module": "careflow-emr-service",
+      "sha256": "85495f43cb6894446fb140a8b832a93d0ca9d34cb1551cf2882a252b0add435f",
+      "bytes": 91007978
+    },
+    {
+      "module": "careflow-lab-service",
+      "sha256": "6763540ea4f52d57e6261c1cd6405b4257126a0c2128615d42a4c37777f3225b",
+      "bytes": 91191945
+    },
+    {
+      "module": "careflow-ai-service",
+      "sha256": "686f81cc17a3606c3777cddccc2278653fe455a2829c35b91aeac1e7fbe51830",
+      "bytes": 62579753
+    },
+    {
+      "module": "careflow-hospital-directory-service",
+      "sha256": "957daa778165e1f3db482fa739a7629d6e91cfbdb5ec83d4c75b4d085cac8ebb",
+      "bytes": 85634703
+    }
+  ],
+  "runtimeClassComparison": [
+    {
+      "service": "careflow-identity-service",
+      "classCount": 103,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    },
+    {
+      "service": "careflow-hospital-directory-service",
+      "classCount": 47,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    },
+    {
+      "service": "careflow-api-gateway",
+      "classCount": 4,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    },
+    {
+      "service": "careflow-patient-service",
+      "classCount": 58,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    },
+    {
+      "service": "careflow-consultation-service",
+      "classCount": 54,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    },
+    {
+      "service": "careflow-emr-service",
+      "classCount": 29,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    },
+    {
+      "service": "careflow-prescription-service",
+      "classCount": 41,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    },
+    {
+      "service": "careflow-lab-service",
+      "classCount": 30,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    },
+    {
+      "service": "careflow-appointment-service",
+      "classCount": 54,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    },
+    {
+      "service": "careflow-identity-session-secondary",
+      "classCount": 103,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    },
+    {
+      "service": "careflow-queue-service",
+      "classCount": 66,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    },
+    {
+      "service": "careflow-notification-service",
+      "classCount": 40,
+      "applicationClassDigestMatches": true,
+      "scope": "application classes only; not proof of identical libraries or runtime config"
+    }
+  ],
+  "signedIosSnapshotHashMatches": true,
+  "signedIosSnapshotCodesignVerification": {
+    "command": "codesign --verify --deep --strict (private Runner-16.app)",
+    "exitCode": 0
+  }
+}

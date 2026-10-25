@@ -73,7 +73,8 @@ export default function DashboardLayout({
   } else if (pathname.startsWith("/staff") && !isStaff) {
     isAuthorized = false;
     requiredRoleLabel = "Nhân viên Tiếp nhận & Dược (STAFF)";
-  } else if ((pathname.startsWith("/dashboard") || pathname.startsWith("/consultation")) && !isDoctor) {
+  } else if ((pathname.startsWith("/dashboard") || pathname.startsWith("/consultation")) && !isDoctor &&
+      !(pathname === "/dashboard/general" && (isStaff || isLabTech || isAdmin))) {
     isAuthorized = false;
     requiredRoleLabel = "Bác sĩ khám bệnh (DOCTOR)";
   }

@@ -1,0 +1,120 @@
+openapi: 3.1.0
+info:
+  title: CareFlow Voice Prescription
+  version: 1.0.0
+  description: AI proposal only. Prescription DRAFT/save/sign remain owned by Prescription.
+servers:
+  - url: /api/ai/voice-prescription
+security:
+  - doctorSession: []
+paths:
+  /jobs:
+    post:
+      operationId: createVoiceJob
+      parameters:
+        - in: header
+          name: Idempotency-Key
+          required: true
+          schema: {type: string, minLength: 1, maxLength: 128}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [consultationId, transcript]
+              properties:
+                consultationId: {type: string, format: uuid}
+                transcript: {type: string, minLength: 1, maxLength: 12000}
+          multipart/form-data:
+            schema:
+              type: object
+              required: [consultationId, audio]
+              properties:
+                consultationId: {type: string, format: uuid}
+                audio: {type: string, format: binary, description: Maximum 20 MiB / 180 seconds after decode}
+      responses:
+        '202': {$ref: '#/components/responses/Job'}
+        '401': {description: Missing or inactive session}
+        '403': {description: Not the assigned doctor}
+        '409': {description: State or idempotency conflict}
+        '413': {description: Audio too large}
+        '415': {description: Unsupported media}
+        '429': {description: Per-doctor or system queue full}
+        '503': {description: Feature disabled or dependency unavailable}
+  /jobs/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: {type: string, format: uuid}
+    get:
+      operationId: getVoiceJob
+      responses:
+        '200': {$ref: '#/components/responses/Job'}
+        '401': {description: Session revoked/expired}
+        '403': {description: Assignment changed or state disallowed}
+        '404': {description: Job not found or another creator}
+    delete:
+      operationId: cancelVoiceJob
+      description: Cancels AI work and removes content; never deletes a prescription.
+      responses:
+        '200': {$ref: '#/components/responses/Job'}
+  /jobs/{id}/revisions:
+    post:
+      operationId: reviseVoiceTranscript
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: {type: string, format: uuid}
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [expectedVersion, transcript]
+              properties:
+                expectedVersion: {type: integer, minimum: 1}
+                transcript: {type: string, minLength: 1, maxLength: 12000}
+                append: {type: boolean, default: false}
+      responses:
+        '202': {$ref: '#/components/responses/Job'}
+        '409': {description: Stale version or job not SUCCEEDED}
+components:
+  securitySchemes:
+    doctorSession: {type: http, scheme: bearer, description: Verified active Identity session, DOCTOR, assigned consultation}
+  responses:
+    Job:
+      description: AI job. SUCCEEDED is not a saved/signed prescription.
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [status, message, data]
+            properties:
+              status: {type: integer}
+              message: {type: string}
+              timestamp: {type: string, format: date-time}
+              data: {$ref: '#/components/schemas/Job'}
+  schemas:
+    Job:
+      type: object
+      required: [jobId, consultationId, version, transcriptRevision, state, schemaVersion, createdAt, expiresAt]
+      properties:
+        jobId: {type: string, format: uuid}
+        consultationId: {type: string, format: uuid}
+        version: {type: integer, minimum: 1}
+        transcriptRevision: {type: integer, minimum: 1}
+        state: {enum: [QUEUED, RUNNING, SUCCEEDED, FAILED, CANCELLED, EXPIRED]}
+        schemaVersion: {const: careflow.voice-prescription.v1}
+        result:
+          oneOf:
+            - {$ref: './result.schema.json'}
+            - {type: 'null'}
+        errorCode: {type: [string, 'null']}
+        createdAt: {type: string, format: date-time}
+        expiresAt: {type: string, format: date-time}

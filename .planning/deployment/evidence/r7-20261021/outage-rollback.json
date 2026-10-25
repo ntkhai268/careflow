@@ -1,0 +1,19 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "freshAfterReboot": true,
+  "outage": {
+    "scope": "One temporary Gateway; only AI upstream points to intentionally unbound port; original stack left running",
+    "aiUnavailableStatus": 503,
+    "identityStatus": 200,
+    "directoryStatus": 200
+  },
+  "rollback": {
+    "scope": "Previous and candidate Prescription artifacts against existing scratch database, same schema; readiness and all table row/digest fingerprints unchanged",
+    "tablesVerified": 6,
+    "previousJarSha256": "5777b25542fc74ac9bc40d06fb1032048310ff781571f6d2bdb9841bd3337065",
+    "candidateJarSha256": "93a51885ae08610f373c66e901cd71ce64f533afdbcef222c3b1b55961c5b803"
+  },
+  "productionDR": false
+}

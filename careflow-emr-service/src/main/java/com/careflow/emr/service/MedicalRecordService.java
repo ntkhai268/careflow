@@ -80,19 +80,13 @@ public class MedicalRecordService {
     @SuppressWarnings("unchecked")
     public PatientSummaryResponse getPatientSummary(UUID patientId) {
         log.info("[AUDIT LOG] Tra cứu Hồ sơ Bệnh án Điện tử EMR 360° cho Bệnh nhân ID: {}", patientId);
-        // 1. Lấy thông tin Master Medical Record từ EMR DB (nếu chưa có thì tự tạo mới)
+        // 1. Read existing master metadata; a GET must never create a clinical record.
         MedicalRecord record = medicalRecordRepository.findByPatientId(patientId)
-                .orElseGet(() -> {
-                    MedicalRecord newRecord = MedicalRecord.builder()
-                            .patientId(patientId)
-                            .recordNumber(generateRecordNumber())
-                            .bloodType("Chưa rõ")
-                            .medicalHistory("Chưa ghi nhận")
-                            .build();
-                    return medicalRecordRepository.save(newRecord);
-                });
+                .orElse(null);
 
-        PatientSummaryResponse.MedicalRecordInfo recordInfo = PatientSummaryResponse.MedicalRecordInfo.builder()
+        PatientSummaryResponse.MedicalRecordInfo recordInfo = record == null
+                ? PatientSummaryResponse.MedicalRecordInfo.builder().build()
+                : PatientSummaryResponse.MedicalRecordInfo.builder()
                 .id(record.getId())
                 .recordNumber(record.getRecordNumber())
                 .bloodType(record.getBloodType())
@@ -104,6 +98,9 @@ public class MedicalRecordService {
         List<PatientSummaryResponse.AllergyInfo> allergyList = new ArrayList<>();
         try {
             ApiResponse<Map<String, Object>> patientRes = patientClient.getPatientById(patientId);
+            if (patientRes == null || patientRes.getData() == null) {
+                throw new BusinessException(503, "Patient information is unavailable");
+            }
             if (patientRes != null && patientRes.getData() != null) {
                 Map<String, Object> pData = patientRes.getData();
                 patientInfo = PatientSummaryResponse.PatientInfo.builder()
@@ -137,39 +134,52 @@ public class MedicalRecordService {
             }
         } catch (Exception e) {
             log.warn("Failed to fetch patient details for ID {}: {}", patientId, e.getMessage());
+            throw new BusinessException(503, "Patient information is unavailable");
         }
 
         // 3. Gọi Feign Client tới Consultation Service
         List<Object> consultations = new ArrayList<>();
         try {
             ApiResponse<List<Map<String, Object>>> cRes = consultationClient.getConsultationsByPatient(patientId);
+            if (cRes == null || cRes.getData() == null) {
+                throw new BusinessException(503, "Consultation history is unavailable");
+            }
             if (cRes != null && cRes.getData() != null) {
                 consultations.addAll(cRes.getData());
             }
         } catch (Exception e) {
             log.warn("Failed to fetch consultations for patient ID {}: {}", patientId, e.getMessage());
+            throw new BusinessException(503, "Consultation history is unavailable");
         }
 
         // 4. Gọi Feign Client tới Prescription Service
         List<Object> prescriptions = new ArrayList<>();
         try {
             ApiResponse<List<Map<String, Object>>> pRes = prescriptionClient.getPrescriptionsByPatient(patientId);
+            if (pRes == null || pRes.getData() == null) {
+                throw new BusinessException(503, "Prescription history is unavailable");
+            }
             if (pRes != null && pRes.getData() != null) {
                 prescriptions.addAll(pRes.getData());
             }
         } catch (Exception e) {
             log.warn("Failed to fetch prescriptions for patient ID {}: {}", patientId, e.getMessage());
+            throw new BusinessException(503, "Prescription history is unavailable");
         }
 
         // 5. Gọi Feign Client tới Lab Service
         List<Object> labOrders = new ArrayList<>();
         try {
             ApiResponse<List<Map<String, Object>>> lRes = labClient.getLabOrdersByPatient(patientId);
+            if (lRes == null || lRes.getData() == null) {
+                throw new BusinessException(503, "Laboratory history is unavailable");
+            }
             if (lRes != null && lRes.getData() != null) {
                 labOrders.addAll(lRes.getData());
             }
         } catch (Exception e) {
             log.warn("Failed to fetch lab orders for patient ID {}: {}", patientId, e.getMessage());
+            throw new BusinessException(503, "Laboratory history is unavailable");
         }
 
         return PatientSummaryResponse.builder()

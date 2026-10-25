@@ -19,15 +19,18 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@org.springframework.context.annotation.Profile("demo | test")
 public class DataInitializer implements CommandLineRunner {
 
     private final DepartmentRepository departmentRepository;
     private final RoomRepository roomRepository;
     private final DoctorProfileRepository doctorProfileRepository;
     private final StaffAssignmentRepository staffAssignmentRepository;
+    private final com.careflow.directory.service.ServiceCatalogService serviceCatalog;
 
     @Override
     public void run(String... args) {
+        serviceCatalog.seedDemo();
         seedDepartments();
         seedRooms();
         seedDoctorProfiles();

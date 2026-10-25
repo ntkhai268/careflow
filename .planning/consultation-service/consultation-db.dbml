@@ -1,58 +1,131 @@
-// CareFlow - Consultation Service Database Design (DBML)
-// Schema: careflow_consultation
-
-Project CareFlow_Consultation_Service {
+// Optional legacy ICD-10 lookup tables are not required by the consultation migrations; this diagram represents the migrated clinical schema.
+// CareFlow consultation — physical schema verified against isolated PostgreSQL migrations, 2026-10-20.
+// Partial indexes and CHECK/FK constraints are retained as SQL notes below each table.
+Project CareFlow_Consultation {
   database_type: 'PostgreSQL'
-  note: 'Database Schema cho dịch vụ Phân luồng & Quản lý Ca khám (CareFlow Consultation Service)'
 }
 
-Enum ConsultationStatus {
-  IN_PROGRESS [note: 'Đang khám bệnh ban đầu']
-  AWAITING_CLS [note: 'Đã có chỉ định, chờ làm/kết quả cận lâm sàng']
-  AWAITING_REVIEW [note: 'Có kết quả CLS, chờ bác sĩ xem & kết luận']
-  READY_TO_COMPLETE [note: 'Đã đủ dữ liệu, sẵn sàng chốt ca khám']
-  COMPLETED [note: 'Đã hoàn tất ca khám']
-  CANCELLED [note: 'Đã hủy ca khám']
-  TRANSFERRED [note: 'Đã chuyển khoa / chuyển tuyến']
+Table public.consultation_doctor_locks {
+  doctor_id uuid [pk]
+  note: '''
+CREATE UNIQUE INDEX consultation_doctor_locks_pkey ON public.consultation_doctor_locks USING btree (doctor_id)
+'''
 }
 
-Table consultations {
-  id uuid [pk, note: 'Khóa chính UUID ngẫu nhiên']
-  appointment_id uuid [not null, note: 'Khóa ngoại bắt buộc tham chiếu lịch hẹn (Appointment Service)']
-  patient_id uuid [not null, note: 'Khóa ngoại tham chiếu bệnh nhân (Patient Service)']
-  doctor_id uuid [not null, note: 'Khóa ngoại tham chiếu bác sĩ (Identity Service)']
-
-  // Sinh hiệu (Vital Signs)
-  temperature decimal(4,1) [note: 'Nhiệt độ cơ thể (°C), ví dụ: 37.5']
-  blood_pressure varchar(20) [note: 'Huyết áp (mmHg), ví dụ: "120/80"']
-  heart_rate int [note: 'Nhịp tim (lần/phút)']
-  spo2 int [note: 'Độ bão hòa oxy máu (%)']
-  height decimal(5,1) [note: 'Chiều cao (cm)']
-  weight decimal(5,1) [note: 'Cân nặng (kg)']
-
-  // Lâm sàng (Clinical)
-  symptoms text [note: 'Triệu chứng bệnh nhân mô tả']
-  clinical_notes text [note: 'Ghi chú diễn tiến lâm sàng của bác sĩ']
-
-  // Chẩn đoán (Diagnosis)
-  icd10_code varchar(10) [note: 'Mã chuẩn quốc tế ICD-10, ví dụ: J06.9']
-  icd10_name varchar(500) [note: 'Tên bệnh theo chuẩn ICD-10']
-  diagnosis text [note: 'Chẩn đoán chi tiết của bác sĩ']
-
-  // Trạng thái (Status)
-  status ConsultationStatus [not null, default: 'IN_PROGRESS', note: 'Trạng thái ca khám (IN_PROGRESS, AWAITING_CLS, AWAITING_REVIEW, READY_TO_COMPLETE, COMPLETED, CANCELLED, TRANSFERRED)']
-  started_at timestamptz [note: 'Thời điểm bắt đầu ca khám']
-  completed_at timestamptz [note: 'Thời điểm kết thúc ca khám']
-
-  // Audit
-  created_at timestamptz [not null, note: 'Thời điểm tạo bản ghi']
-  updated_at timestamptz [not null, note: 'Thời điểm cập nhật gần nhất']
-
-  indexes {
-    patient_id [name: 'idx_consultation_patient', note: 'Index tra cứu ca khám theo bệnh nhân']
-    doctor_id [name: 'idx_consultation_doctor', note: 'Index tra cứu ca khám theo bác sĩ']
-    appointment_id [name: 'idx_consultation_appointment', note: 'Index tra cứu ca khám theo lịch hẹn']
-    status [name: 'idx_consultation_status', note: 'Index lọc ca khám theo trạng thái']
-    (doctor_id, status) [name: 'idx_consultation_doctor_status', note: 'Index hỗ trợ danh sách khám theo bác sĩ & trạng thái']
-  }
+Table public.consultation_event_outbox {
+  event_id uuid [pk]
+  aggregate_id uuid [not null]
+  event_type varchar(80) [not null]
+  exchange_name varchar(100) [not null]
+  routing_key varchar(100) [not null]
+  payload jsonb [not null]
+  created_at timestamptz [not null]
+  published_at timestamptz
+  attempts integer [not null]
+  next_attempt_at timestamptz [not null]
+  note: '''
+CREATE UNIQUE INDEX consultation_event_outbox_pkey ON public.consultation_event_outbox USING btree (event_id)
+CREATE INDEX idx_consultation_outbox_pending ON public.consultation_event_outbox USING btree (next_attempt_at, created_at) WHERE (published_at IS NULL)
+'''
 }
+
+Table public.consultation_handovers {
+  id uuid [pk]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  consultation_id uuid [not null]
+  patient_id uuid [not null]
+  from_doctor_id uuid [not null]
+  to_doctor_id uuid [not null]
+  initiated_by uuid [not null]
+  from_doctor_name varchar(255)
+  to_doctor_name varchar(255)
+  department_code varchar(255) [not null]
+  room_id varchar(255) [not null]
+  reason text [not null]
+  situation text [not null]
+  background text [not null]
+  assessment text [not null]
+  recommendation text [not null]
+  exceptional bool [not null]
+  status varchar(255) [not null]
+  version bigint [not null]
+  decided_by uuid
+  decided_at timestamptz
+  decision_note text
+  patient_name varchar(100)
+  clinical_snapshot text
+  note: '''
+CHECK ((from_doctor_id <> to_doctor_id))
+CHECK (((status)::text = ANY ((ARRAY['PENDING'::character varying, 'ACCEPTED'::character varying, 'REJECTED'::character varying, 'CANCELLED'::character varying])::text[])))
+FOREIGN KEY (consultation_id) REFERENCES consultations(id)
+CREATE UNIQUE INDEX consultation_handovers_pkey ON public.consultation_handovers USING btree (id)
+CREATE UNIQUE INDEX uq_handover_pending ON public.consultation_handovers USING btree (consultation_id) WHERE ((status)::text = 'PENDING'::text)
+CREATE INDEX idx_handover_receiver ON public.consultation_handovers USING btree (to_doctor_id, created_at)
+'''
+}
+
+Table public.consultations {
+  id uuid [pk]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  appointment_id uuid
+  patient_id uuid [not null]
+  doctor_id uuid [not null]
+  doctor_name varchar(150)
+  department_code varchar(50)
+  department_name varchar(100)
+  temperature numeric(4,1)
+  blood_pressure varchar(20)
+  heart_rate integer
+  spo2 integer
+  height numeric(5,1)
+  weight numeric(5,1)
+  symptoms text
+  clinical_notes text
+  icd10_code varchar(10)
+  icd10_name varchar(500)
+  diagnosis text
+  status varchar(20) [not null]
+  started_at timestamp
+  completed_at timestamp
+  responsible_doctor_id uuid
+  responsible_doctor_name varchar(150)
+  version bigint [not null]
+  patient_name varchar(150)
+  queue_entry_id uuid
+  note: '''
+CREATE UNIQUE INDEX consultations_pkey ON public.consultations USING btree (id)
+CREATE INDEX idx_consultation_responsible ON public.consultations USING btree (responsible_doctor_id, status)
+CREATE UNIQUE INDEX uq_consultation_queue_entry ON public.consultations USING btree (queue_entry_id) WHERE (queue_entry_id IS NOT NULL)
+'''
+}
+
+Table public.handover_coordinator_audit {
+  id uuid [pk]
+  created_at timestamptz [not null]
+  updated_at timestamptz [not null]
+  doctor_id uuid [not null]
+  actor_id uuid [not null]
+  granted bool [not null]
+  reason text [not null]
+  note: '''
+CREATE UNIQUE INDEX handover_coordinator_audit_pkey ON public.handover_coordinator_audit USING btree (id)
+'''
+}
+
+Table public.handover_coordinators {
+  doctor_id uuid [pk]
+  active bool [not null]
+  granted_by uuid [not null]
+  granted_at timestamptz [not null]
+  grant_reason text [not null]
+  revoked_by uuid
+  revoked_at timestamptz
+  revoke_reason text
+  note: '''
+CREATE UNIQUE INDEX handover_coordinators_pkey ON public.handover_coordinators USING btree (doctor_id)
+'''
+}
+
+Ref: public.consultation_handovers.consultation_id > public.consultations.id

@@ -12,6 +12,7 @@ import com.careflow.queue.service.QueueManagementService;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
@@ -30,19 +31,24 @@ public class AppointmentEventConsumer {
     private final QueueEntryRepository entries;
     private final QueueManagementService queueService;
     private final QueueEventService events;
+    private final JdbcTemplate jdbc;
 
     public AppointmentEventConsumer(ProcessedEventRepository processedEvents, QueueEntryRepository entries,
-                                    QueueManagementService queueService, QueueEventService events) {
+                                    QueueManagementService queueService, QueueEventService events, JdbcTemplate jdbc) {
         this.processedEvents = processedEvents;
         this.entries = entries;
         this.queueService = queueService;
         this.events = events;
+        this.jdbc = jdbc;
     }
 
     @RabbitListener(queues = RabbitMqConfig.APPOINTMENT_QUEUE)
     @Transactional
     public void consume(EventEnvelope envelope) {
         validateEnvelope(envelope);
+        UUID appointmentId = requiredUuid(envelope.payload(), "appointmentId");
+        jdbc.queryForList("SELECT pg_advisory_xact_lock(hashtextextended(?,0))",
+                "queue-appointment:" + appointmentId);
         ProcessedEventId eventId = new ProcessedEventId(envelope.eventId(), CONSUMER);
         if (processedEvents.existsById(eventId)) return;
         if ("AppointmentConfirmed".equals(envelope.eventType())) create(envelope);
@@ -58,6 +64,9 @@ public class AppointmentEventConsumer {
     private void create(EventEnvelope envelope) {
         JsonNode payload = envelope.payload();
         UUID appointmentId = requiredUuid(payload, "appointmentId");
+        if (Boolean.TRUE.equals(jdbc.queryForObject(
+                "SELECT EXISTS(SELECT 1 FROM queue.appointment_cancellations WHERE appointment_id=?)",
+                Boolean.class, appointmentId))) return;
         UUID patientId = requiredUuid(payload, "patientId");
         UUID userId = requiredUuid(payload, "userId");
         UUID departmentId = requiredUuid(payload, "departmentId");
@@ -67,7 +76,7 @@ public class AppointmentEventConsumer {
         try { date = LocalDate.parse(requiredText(payload, "appointmentDate")); }
         catch (RuntimeException exception) { throw new BusinessException(422, "appointmentDate không hợp lệ"); }
         LocalTime scheduledStart = parseTimeSlotStart(requiredText(payload, "timeSlot"));
-        QueueConfig config = queueService.requireLockedConfig(departmentId);
+        QueueConfig config = queueService.requireScheduledRoom(roomId,departmentId);
         if (!roomId.equals(config.getRoomCode())) {
             throw new BusinessException(422, "roomId không khớp cấu hình Queue của khoa");
         }
@@ -76,6 +85,7 @@ public class AppointmentEventConsumer {
                 config, date, scheduledStart, requiredText(payload, "timeSlot"),
                 requiredText(payload, "department"), roomDisplayName,
                 appointmentId, patientId, userId);
+        entry.setPatientNameSnapshot(payload.hasNonNull("patientName")?payload.get("patientName").asText():null);
         entries.saveAndFlush(entry);
         events.append(entry, config, "VisitTicketIssued", AppConstants.RK_QUEUE_NUMBER_ASSIGNED,
                 envelope.correlationId(), Map.of(
@@ -86,11 +96,13 @@ public class AppointmentEventConsumer {
 
     private void cancel(EventEnvelope envelope) {
         UUID appointmentId = requiredUuid(envelope.payload(), "appointmentId");
+        jdbc.update("INSERT INTO queue.appointment_cancellations(appointment_id,cancellation_event_id) "
+                + "VALUES (?,?) ON CONFLICT(appointment_id) DO NOTHING", appointmentId, envelope.eventId());
         QueueEntry snapshot = entries.findByAppointmentId(appointmentId).orElse(null);
-        if (snapshot == null || snapshot.getStatus() != QueueStatus.WAITING) return;
-        QueueConfig config = queueService.requireLockedConfig(snapshot.getDepartmentId());
+        if (snapshot == null || !java.util.Set.of(QueueStatus.WAITING,QueueStatus.CHECKED_IN,QueueStatus.CALLED,QueueStatus.MISSED).contains(snapshot.getStatus())) return;
+        QueueConfig config = queueService.requireEntryConfigForEvent(snapshot);
         QueueEntry entry = entries.findFirstByAppointmentId(appointmentId).orElse(null);
-        if (entry == null || entry.getStatus() != QueueStatus.WAITING) return;
+        if (entry == null || !java.util.Set.of(QueueStatus.WAITING,QueueStatus.CHECKED_IN,QueueStatus.CALLED,QueueStatus.MISSED).contains(entry.getStatus())) return;
         entry.setStatus(QueueStatus.CANCELLED);
         entry.setCancelledAt(Instant.now());
         entries.saveAndFlush(entry);

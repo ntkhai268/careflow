@@ -12,6 +12,7 @@ import java.util.UUID;
 @Configuration
 @RequiredArgsConstructor
 @Slf4j
+@org.springframework.context.annotation.Profile("demo | test")
 public class DataInitializer implements CommandLineRunner {
 
     private final MedicalRecordRepository medicalRecordRepository;

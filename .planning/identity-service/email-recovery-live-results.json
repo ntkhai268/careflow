@@ -1,0 +1,50 @@
+{
+  "checkedAt": "2026-10-18T21:56:15+0700",
+  "database": "owned local PostgreSQL audit DB",
+  "provider": "real Resend HTTPS, official labeled delivered sink",
+  "flow": "request → verify code → reset password (V11 / native Release 6)",
+  "checks": [
+    {
+      "name": "Public recovery requires device proof and validates email",
+      "status": "PASS"
+    },
+    {
+      "name": "Unknown email has generic 202 and persisted cooldown without sending",
+      "status": "PASS"
+    },
+    {
+      "name": "Direct password reset without verified permission is rejected",
+      "status": "PASS"
+    },
+    {
+      "name": "Real backend Resend delivery uses CareFlow sender; cooldown, device binding and legacy 410 enforced",
+      "status": "PASS"
+    },
+    {
+      "name": "Five wrong guesses persist and block the correct exhausted code",
+      "status": "PASS"
+    },
+    {
+      "name": "Resend invalidates old UUID; expired codes cannot reset password",
+      "status": "PASS"
+    },
+    {
+      "name": "Code verification is atomic across instances and leaves password/sessions unchanged",
+      "status": "PASS"
+    },
+    {
+      "name": "Two live Identity instances share atomic one-use confirmation",
+      "status": "PASS"
+    },
+    {
+      "name": "Old access/refresh sessions and old password rejected; new password logs in",
+      "status": "PASS"
+    },
+    {
+      "name": "Post-reset CareFlow email contains no password",
+      "status": "PASS"
+    }
+  ],
+  "realInboxVerified": false,
+  "syntheticAccountRemoved": true
+}

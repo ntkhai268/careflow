@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "scope": "Internal test leaf certificates renewed with AKI/SKI, SAN and server/client EKU; modern Python strict chain/hostname validation passes; no TLS verification bypass",
+  "leafs": [
+    {
+      "service": "analytics-service",
+      "caUnchanged": true,
+      "privateKeyUnchanged": true,
+      "serverAndClientPurposeVerified": true
+    },
+    {
+      "service": "ai-service",
+      "caUnchanged": true,
+      "privateKeyUnchanged": true,
+      "serverAndClientPurposeVerified": true
+    }
+  ],
+  "rootCaUnchanged": true,
+  "privateKeysUnchanged": true,
+  "nativeReinstallRequired": false,
+  "strictPythonVersion": "3.14.3",
+  "localVoiceWorkerReady": true,
+  "savedRuntimeAndBackupTlsUpdated": true
+}

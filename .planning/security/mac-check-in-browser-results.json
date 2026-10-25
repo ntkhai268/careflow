@@ -1,0 +1,250 @@
+{
+  "checkedAt": "2026-10-16T04:01:47.219Z",
+  "mock": false,
+  "checks": [
+    {
+      "name": "select actual current-day ticket; no mock, booking or reset",
+      "status": "PASS"
+    },
+    {
+      "name": "emulator exposes Mac E2E guide and real staff/doctor routes",
+      "status": "PASS"
+    },
+    {
+      "name": "real patient logs in on phone 03",
+      "status": "PASS"
+    },
+    {
+      "name": "Staff Web copies actual backend-signed QR; manual-copy fallback is available",
+      "status": "PASS"
+    },
+    {
+      "name": "un-checked-in patient is absent from real doctor queue",
+      "status": "PASS"
+    },
+    {
+      "name": "actual staff-assisted intake writes CHECKED_IN through API",
+      "status": "PASS"
+    },
+    {
+      "name": "same actual patient appears on independently authenticated Doctor Web",
+      "status": "PASS"
+    },
+    {
+      "name": "staff and doctor sessions stay isolated",
+      "status": "PASS"
+    },
+    {
+      "name": "patient reads same checked-in ticket from real Queue",
+      "status": "PASS"
+    },
+    {
+      "name": "existing active doctor consultation preserved; no forced call/start",
+      "status": "PASS"
+    },
+    {
+      "name": "real three-role browser flow has no spurious 401 or JavaScript errors",
+      "status": "PASS"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/user/91166c7e-c0ae-42cb-bc41-e6f4a23af6aa",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/patient/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/patient/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/24f4e43c-2b37-457e-a38a-7f64225aca63",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/tickets/appointment/24f4e43c-2b37-457e-a38a-7f64225aca63",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/patients/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0/current",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/appointment/24f4e43c-2b37-457e-a38a-7f64225aca63",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/patient/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/hospital-check-in-qr",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/directory/rooms",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-01/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/clinical-context/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-01/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/check-in",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-01/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/clinical-context/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0/operational-summary",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-01/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/24f4e43c-2b37-457e-a38a-7f64225aca63",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/24f4e43c-2b37-457e-a38a-7f64225aca63",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/tickets/appointment/24f4e43c-2b37-457e-a38a-7f64225aca63",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/patients/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0/current",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/appointment/24f4e43c-2b37-457e-a38a-7f64225aca63",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/patient/c0e4fd4a-112c-4d7b-8cb9-282eda4506c0",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/tickets/appointment/24f4e43c-2b37-457e-a38a-7f64225aca63",
+      "method": "GET",
+      "status": 200
+    }
+  ],
+  "errors": [],
+  "appointmentId": "24f4e43c-2b37-457e-a38a-7f64225aca63",
+  "ticketCode": "NOI-011"
+}

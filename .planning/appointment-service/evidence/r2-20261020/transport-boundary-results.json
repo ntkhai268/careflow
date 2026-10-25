@@ -1,0 +1,21 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "Gateway certificate cannot impersonate Queue",
+      "status": "PASS"
+    },
+    {
+      "name": "Correct service certificate still requires independent service key",
+      "status": "PASS"
+    },
+    {
+      "name": "Missing client certificate is rejected at TLS handshake or authorization",
+      "status": "PASS"
+    },
+    {
+      "name": "Valid service sees only current patientId and nullable owner after revocation",
+      "status": "PASS"
+    }
+  ]
+}

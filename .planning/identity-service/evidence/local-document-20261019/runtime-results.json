@@ -1,0 +1,32 @@
+{
+  "checkedAt": "2026-10-19T16:00:11.791927+00:00",
+  "health": [
+    {
+      "port": 18080,
+      "httpStatus": 200
+    },
+    {
+      "port": 18081,
+      "httpStatus": 200
+    },
+    {
+      "port": 18092,
+      "httpStatus": 200
+    },
+    {
+      "endpoint": "phone HTTPS bridge",
+      "httpStatus": 200
+    }
+  ],
+  "tlsVerified": true,
+  "migrationVersion": "17",
+  "externalProviderDisabledBothInstances": true,
+  "providerCredentialsRemovedFromRuntime": true,
+  "noVnptAdapterInRunningJars": true,
+  "documentKeyOutsideGit": true,
+  "iphoneBuild": "15",
+  "iphoneInstalledAndLaunched": true,
+  "vnptHistoricalCounter": 4,
+  "newVnptCalls": 0,
+  "realIdentityVerified": false
+}

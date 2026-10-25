@@ -1,0 +1,62 @@
+{
+  "checkedAt": "2026-10-16T03:42:06.205Z",
+  "mock": false,
+  "account": "mobile_case01",
+  "appointmentId": "52106adc-8f8c-4361-a621-1323d946c4db",
+  "ticketCode": "NGO-001",
+  "result": "PASS",
+  "requests": [
+    {
+      "path": "/api/auth/login",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/user/4115c1c6-8845-4fd4-b057-4f3ec3d21c54",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/52106adc-8f8c-4361-a621-1323d946c4db",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/patients/a0022306-bba4-4cfa-b03c-9f68cbd2bc47/current",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/patient/a0022306-bba4-4cfa-b03c-9f68cbd2bc47",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/tickets/appointment/52106adc-8f8c-4361-a621-1323d946c4db",
+      "status": 200
+    }
+  ]
+}

@@ -1,0 +1,184 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "mock": false,
+  "checks": [
+    {
+      "name": "emulator uses real HTTPS Gateway",
+      "result": "PASS",
+      "actual": "https://localhost:18080"
+    },
+    {
+      "name": "real login PATIENT fixture A",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role PATIENT fixture A",
+      "result": "PASS",
+      "actual": "PATIENT"
+    },
+    {
+      "name": "active session PATIENT fixture A",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login PATIENT fixture B",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role PATIENT fixture B",
+      "result": "PASS",
+      "actual": "PATIENT"
+    },
+    {
+      "name": "active session PATIENT fixture B",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login PATIENT fixture C",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role PATIENT fixture C",
+      "result": "PASS",
+      "actual": "PATIENT"
+    },
+    {
+      "name": "active session PATIENT fixture C",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login DOCTOR fixture A",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role DOCTOR fixture A",
+      "result": "PASS",
+      "actual": "DOCTOR"
+    },
+    {
+      "name": "active session DOCTOR fixture A",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login DOCTOR fixture B",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role DOCTOR fixture B",
+      "result": "PASS",
+      "actual": "DOCTOR"
+    },
+    {
+      "name": "active session DOCTOR fixture B",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login STAFF fixture",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role STAFF fixture",
+      "result": "PASS",
+      "actual": "STAFF"
+    },
+    {
+      "name": "active session STAFF fixture",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login LAB fixture",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role LAB fixture",
+      "result": "PASS",
+      "actual": "LAB_TECHNICIAN"
+    },
+    {
+      "name": "active session LAB fixture",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "real login ADMIN fixture",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "actual role ADMIN fixture",
+      "result": "PASS",
+      "actual": "ADMIN"
+    },
+    {
+      "name": "active session ADMIN fixture",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "token copied to different key denied",
+      "result": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "token without cryptographic proof denied",
+      "result": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "new proof accepted",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "same proof replay denied",
+      "result": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "other patient profile denied",
+      "result": "PASS",
+      "actual": 403
+    },
+    {
+      "name": "private Patient rejects forged user headers",
+      "result": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "private Identity requires actual client TLS certificate",
+      "result": "PASS",
+      "actual": true
+    },
+    {
+      "name": "real logout",
+      "result": "PASS",
+      "actual": 200
+    },
+    {
+      "name": "logged-out access denied",
+      "result": "PASS",
+      "actual": 401
+    },
+    {
+      "name": "independent second phone still active",
+      "result": "PASS",
+      "actual": 200
+    }
+  ],
+  "sourceCheckedAt": "2026-10-21T14:56:40.178Z"
+}

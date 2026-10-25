@@ -20,12 +20,14 @@ class ClinicQueueScreen extends ConsumerStatefulWidget {
   ConsumerState<ClinicQueueScreen> createState() => _ClinicQueueScreenState();
 }
 
-class _ClinicQueueScreenState extends ConsumerState<ClinicQueueScreen> {
+class _ClinicQueueScreenState extends ConsumerState<ClinicQueueScreen>
+    with WidgetsBindingObserver {
   Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _refreshTimer = Timer.periodic(const Duration(seconds: 20), (_) {
       if (mounted && ref.read(realQueueEnabledProvider)) {
         ref.invalidate(appointmentQueueStatusProvider(widget.appointmentId));
@@ -36,7 +38,16 @@ class _ClinicQueueScreenState extends ConsumerState<ClinicQueueScreen> {
   @override
   void dispose() {
     _refreshTimer?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        ref.read(realQueueEnabledProvider)) {
+      ref.invalidate(appointmentQueueStatusProvider(widget.appointmentId));
+    }
   }
 
   @override
@@ -114,6 +125,8 @@ class _RealQueueBody extends StatelessWidget {
       'IN_PROGRESS' => 'Bác sĩ đang khám cho bạn',
       'COMPLETED' => 'Lượt khám đã hoàn tất',
       'MISSED' => 'Bạn đã lỡ lượt gọi',
+      'WAITING' || 'TICKET_ISSUED' => 'Bạn chưa check-in',
+      'CANCELLED' => 'Lượt khám đã hủy',
       _ when position != null && position > 1 =>
         'Còn ${position - 1} người phía trước',
       _ => 'Bạn đang ở đầu hàng đợi',
@@ -151,9 +164,14 @@ class _RealQueueBody extends StatelessWidget {
                     queue.roomCode,
                     style: Theme.of(context).textTheme.titleMedium,
                   ),
-                  if (queue.estimatedWaitMinutes case final minutes?) ...[
+                  if (queue.status != 'CANCELLED' &&
+                      queue.status != 'WAITING' &&
+                      queue.status != 'TICKET_ISSUED' &&
+                      queue.estimatedWaitMinutes != null) ...[
                     const SizedBox(height: AppSpacing.xs),
-                    Text('Dự kiến chờ khoảng $minutes phút'),
+                    Text(
+                      'Dự kiến chờ khoảng ${queue.estimatedWaitMinutes} phút',
+                    ),
                   ],
                 ],
               ),

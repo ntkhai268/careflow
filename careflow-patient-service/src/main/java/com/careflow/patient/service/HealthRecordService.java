@@ -28,6 +28,7 @@ public class HealthRecordService {
     private final HealthRecordRepository healthRecordRepository;
     private final PatientRepository patientRepository;
     private final FileStorageService fileStorageService;
+    private final UploadQuotaService uploadQuotaService;
 
     @Transactional
     public HealthRecordResponse create(UUID patientId, CreateHealthRecordRequest request, List<MultipartFile> files, String baseUrl) {
@@ -65,7 +66,22 @@ public class HealthRecordService {
                 .tuberculosis(request.getTuberculosis())
                 .build();
 
+        if(files!=null && (files.size()>5 || files.stream().filter(java.util.Objects::nonNull).mapToLong(MultipartFile::getSize).sum()>50L*1024*1024))
+            throw new BusinessException(413,"Mỗi hồ sơ tối đa 5 tệp, tổng dung lượng tối đa 50MB.");
+        var storedFiles=new java.util.ArrayList<String>();
         if (files != null && !files.isEmpty()) {
+            uploadQuotaService.requireCapacity(patientId,files.stream().filter(java.util.Objects::nonNull).mapToLong(MultipartFile::getSize).sum(),
+                    files.stream().filter(java.util.Objects::nonNull).filter(file->!file.isEmpty()).count());
+            if(org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive())
+                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
+                    @Override public void afterCompletion(int status) {
+                        if(status==STATUS_COMMITTED) return;
+                        for(String stored:storedFiles) {
+                            try { fileStorageService.delete(stored); }
+                            catch(RuntimeException failure) { org.slf4j.LoggerFactory.getLogger(HealthRecordService.class).warn("event=UPLOAD_ROLLBACK_CLEANUP_FAILED"); }
+                        }
+                    }
+                });
             for (MultipartFile file : files) {
                 if (file != null && !file.isEmpty()) {
                     String originalFilename = file.getOriginalFilename();
@@ -73,6 +89,7 @@ public class HealthRecordService {
                         throw new BusinessException(400, "File must have a filename");
                     }
                     String storedPath = fileStorageService.store(file);
+                    storedFiles.add(storedPath);
                     HealthRecordFile recordFile = HealthRecordFile.builder()
                             .fileName(originalFilename)
                             .storedPath(storedPath)

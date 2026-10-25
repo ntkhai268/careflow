@@ -1,0 +1,280 @@
+{
+  "careflow_consultation": [
+    {
+      "id": "f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+      "appointment_id": "e8b34ca9-31f2-4c5c-906a-4924a0880337",
+      "status": "COMPLETED",
+      "original_doctor": "78da2fc2-fcea-45ac-abab-68ddacd19315",
+      "responsible_doctor_id": null
+    },
+    {
+      "id": "931caa7c-c5ec-4e45-ad82-51762674d622",
+      "appointment_id": "c19a296b-58a6-4da5-a7a7-d5280a9a96fa",
+      "status": "COMPLETED",
+      "original_doctor": "78da2fc2-fcea-45ac-abab-68ddacd19315",
+      "responsible_doctor_id": "210e2263-0a37-4c1a-9d1e-f6701ad6e1fc"
+    },
+    {
+      "id": "05d09b0d-77ba-453d-8e49-b5c4cb7e2bd8",
+      "appointment_id": "984f2ea3-500c-4968-8018-022b58065433",
+      "status": "COMPLETED",
+      "original_doctor": "78da2fc2-fcea-45ac-abab-68ddacd19315",
+      "responsible_doctor_id": null
+    },
+    {
+      "id": "7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "appointment_id": "d415b1c9-0336-4d81-9b53-497540794946",
+      "status": "COMPLETED",
+      "original_doctor": "78da2fc2-fcea-45ac-abab-68ddacd19315",
+      "responsible_doctor_id": null
+    }
+  ],
+  "careflow_queue": [
+    {
+      "id": "c145e8cf-ee60-4205-b182-595f33e84fa4",
+      "queue_number": "CXK-001",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": "INITIAL",
+      "queue_type": "CONSULTATION",
+      "consultation_id": null,
+      "appointment_id": "984f2ea3-500c-4968-8018-022b58065433",
+      "lab_order_id": null,
+      "prescription_id": null
+    },
+    {
+      "id": "685f7547-6d80-4be3-8086-43ed9d90a1c2",
+      "queue_number": "CXK-002",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": "INITIAL",
+      "queue_type": "CONSULTATION",
+      "consultation_id": "931caa7c-c5ec-4e45-ad82-51762674d622",
+      "appointment_id": "c19a296b-58a6-4da5-a7a7-d5280a9a96fa",
+      "lab_order_id": null,
+      "prescription_id": null
+    },
+    {
+      "id": "2b3852bd-460a-4b29-85c1-91b30ff99e06",
+      "queue_number": "CXK-002-R",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": "RESULT_REVIEW",
+      "queue_type": "CONSULTATION",
+      "consultation_id": "931caa7c-c5ec-4e45-ad82-51762674d622",
+      "appointment_id": null,
+      "lab_order_id": null,
+      "prescription_id": null
+    },
+    {
+      "id": "f0e01927-2345-4ed2-a7bb-3771dd64b66a",
+      "queue_number": "CXK-003",
+      "queue_date": "2026-10-17",
+      "status": "CANCELLED",
+      "consultation_phase": "INITIAL",
+      "queue_type": "CONSULTATION",
+      "consultation_id": null,
+      "appointment_id": "e89123a9-c970-4901-bf73-cad7862fbf59",
+      "lab_order_id": null,
+      "prescription_id": null
+    },
+    {
+      "id": "7e37994a-6b81-4099-9734-c781c6caddaf",
+      "queue_number": "CXK-004",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": "INITIAL",
+      "queue_type": "CONSULTATION",
+      "consultation_id": "7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "appointment_id": "d415b1c9-0336-4d81-9b53-497540794946",
+      "lab_order_id": null,
+      "prescription_id": null
+    },
+    {
+      "id": "8b05f160-845d-4311-987e-ed2cc2ae6259",
+      "queue_number": "CXK-004-R",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": "RESULT_REVIEW",
+      "queue_type": "CONSULTATION",
+      "consultation_id": "7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "appointment_id": null,
+      "lab_order_id": null,
+      "prescription_id": null
+    },
+    {
+      "id": "bd6b4590-e892-4408-bb7b-1e9500f4772c",
+      "queue_number": "CXK-005",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": "INITIAL",
+      "queue_type": "CONSULTATION",
+      "consultation_id": null,
+      "appointment_id": "e8b34ca9-31f2-4c5c-906a-4924a0880337",
+      "lab_order_id": null,
+      "prescription_id": null
+    },
+    {
+      "id": "326f08c7-7d7f-4021-bddd-dc0e328f1c1d",
+      "queue_number": "LAB-001",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": null,
+      "queue_type": "LAB_EXECUTION",
+      "consultation_id": "7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "appointment_id": null,
+      "lab_order_id": "a1fe4147-eab1-4f8f-8354-633334eaae7c",
+      "prescription_id": null
+    },
+    {
+      "id": "0c29ad86-8df0-4283-89d4-709231eec42e",
+      "queue_number": "LAB-002",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": null,
+      "queue_type": "LAB_EXECUTION",
+      "consultation_id": "931caa7c-c5ec-4e45-ad82-51762674d622",
+      "appointment_id": null,
+      "lab_order_id": "4470563b-22fe-4ec0-ad66-3f3d370f7ff0",
+      "prescription_id": null
+    },
+    {
+      "id": "9cabab2e-59b7-4d0f-adc4-b44c4e8793c5",
+      "queue_number": "RX-001",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": null,
+      "queue_type": "PHARMACY_DISPENSING",
+      "consultation_id": "05d09b0d-77ba-453d-8e49-b5c4cb7e2bd8",
+      "appointment_id": null,
+      "lab_order_id": null,
+      "prescription_id": "b2684058-4d87-4222-a1f2-cbfd38d6198d"
+    },
+    {
+      "id": "096e74f5-bf64-4aef-961e-8b9df48a3be4",
+      "queue_number": "RX-002",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": null,
+      "queue_type": "PHARMACY_DISPENSING",
+      "consultation_id": "7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "appointment_id": null,
+      "lab_order_id": null,
+      "prescription_id": "adaf37f7-9654-449d-b29c-43d3a9c605b5"
+    },
+    {
+      "id": "3e377ba3-1957-4f70-b87a-3e297f5a5903",
+      "queue_number": "RX-003",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": null,
+      "queue_type": "PHARMACY_DISPENSING",
+      "consultation_id": "931caa7c-c5ec-4e45-ad82-51762674d622",
+      "appointment_id": null,
+      "lab_order_id": null,
+      "prescription_id": "96966cc3-1d82-475b-936c-7ad7ffc73a73"
+    },
+    {
+      "id": "e3e1bc75-0358-4138-b4d8-5fb15e4fcffa",
+      "queue_number": "RX-004",
+      "queue_date": "2026-10-17",
+      "status": "COMPLETED",
+      "consultation_phase": null,
+      "queue_type": "PHARMACY_DISPENSING",
+      "consultation_id": "f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+      "appointment_id": null,
+      "lab_order_id": null,
+      "prescription_id": "3ba91901-f338-4f09-8e9a-42b19d0cdeaf"
+    },
+    {
+      "id": "2852c4bd-5af5-4cbd-8de0-417a4670462d",
+      "queue_number": "CXK-001",
+      "queue_date": "2026-10-19",
+      "status": "WAITING",
+      "consultation_phase": "INITIAL",
+      "queue_type": "CONSULTATION",
+      "consultation_id": null,
+      "appointment_id": "03c184b8-f43d-46b5-96d7-9f623b021e54",
+      "lab_order_id": null,
+      "prescription_id": null
+    }
+  ],
+  "careflow_appointment": [
+    {
+      "id": "984f2ea3-500c-4968-8018-022b58065433",
+      "status": "COMPLETED",
+      "source_consultation_id": null
+    },
+    {
+      "id": "e89123a9-c970-4901-bf73-cad7862fbf59",
+      "status": "CANCELLED",
+      "source_consultation_id": null
+    },
+    {
+      "id": "d415b1c9-0336-4d81-9b53-497540794946",
+      "status": "COMPLETED",
+      "source_consultation_id": null
+    },
+    {
+      "id": "c19a296b-58a6-4da5-a7a7-d5280a9a96fa",
+      "status": "COMPLETED",
+      "source_consultation_id": null
+    },
+    {
+      "id": "03c184b8-f43d-46b5-96d7-9f623b021e54",
+      "status": "CONFIRMED",
+      "source_consultation_id": "931caa7c-c5ec-4e45-ad82-51762674d622"
+    },
+    {
+      "id": "e8b34ca9-31f2-4c5c-906a-4924a0880337",
+      "status": "COMPLETED",
+      "source_consultation_id": null
+    }
+  ],
+  "careflow_lab": [
+    {
+      "id": "a1fe4147-eab1-4f8f-8354-633334eaae7c",
+      "consultation_id": "7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "status": "REVIEWED",
+      "ordered_by_doctor_id": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+    },
+    {
+      "id": "4470563b-22fe-4ec0-ad66-3f3d370f7ff0",
+      "consultation_id": "931caa7c-c5ec-4e45-ad82-51762674d622",
+      "status": "REVIEWED",
+      "ordered_by_doctor_id": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+    }
+  ],
+  "careflow_prescription": [
+    {
+      "id": "b2684058-4d87-4222-a1f2-cbfd38d6198d",
+      "consultation_id": "05d09b0d-77ba-453d-8e49-b5c4cb7e2bd8",
+      "status": "DISPENSED",
+      "doctor_id": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+    },
+    {
+      "id": "adaf37f7-9654-449d-b29c-43d3a9c605b5",
+      "consultation_id": "7450d494-f5b0-49f7-b946-8557d3b6e877",
+      "status": "DISPENSED",
+      "doctor_id": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+    },
+    {
+      "id": "ebf1b6c1-da89-4dbf-85d9-d2a6d48548fe",
+      "consultation_id": "931caa7c-c5ec-4e45-ad82-51762674d622",
+      "status": "DRAFT",
+      "doctor_id": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+    },
+    {
+      "id": "96966cc3-1d82-475b-936c-7ad7ffc73a73",
+      "consultation_id": "931caa7c-c5ec-4e45-ad82-51762674d622",
+      "status": "DISPENSED",
+      "doctor_id": "210e2263-0a37-4c1a-9d1e-f6701ad6e1fc"
+    },
+    {
+      "id": "3ba91901-f338-4f09-8e9a-42b19d0cdeaf",
+      "consultation_id": "f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+      "status": "DISPENSED",
+      "doctor_id": "78da2fc2-fcea-45ac-abab-68ddacd19315"
+    }
+  ]
+}

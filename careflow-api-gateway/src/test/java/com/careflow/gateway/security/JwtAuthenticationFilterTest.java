@@ -91,11 +91,11 @@ class JwtAuthenticationFilterTest {
     }
 
     private JwtAuthenticationFilter filter() {
-        return new JwtAuthenticationFilter(SECRET, "careflow-identity", new ObjectMapper());
+        return new JwtAuthenticationFilter(new ObjectMapper(), GatewaySessionTestSupport.activeSession(SECRET));
     }
 
     private String token(UUID userId, String role) {
-        return Jwts.builder().subject(userId.toString()).issuer("careflow-identity")
+        return Jwts.builder().id(UUID.randomUUID().toString()).subject(userId.toString()).issuer("careflow-identity")
                 .claim("role", role).issuedAt(Date.from(Instant.now()))
                 .expiration(Date.from(Instant.now().plusSeconds(60)))
                 .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8))).compact();

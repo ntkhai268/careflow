@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "checks": [
+    {
+      "name": "Persisted room holiday removes real booking availability; restoring definition restores slots",
+      "status": "PASS"
+    },
+    {
+      "name": "Paused reception remains readable and exposes receptionActive=false to the doctor UI",
+      "status": "PASS"
+    },
+    {
+      "name": "A future appointment still receives its WAITING ticket while reception is paused",
+      "status": "PASS"
+    },
+    {
+      "name": "Paused reception rejects a real walk-in intake command",
+      "status": "PASS"
+    },
+    {
+      "name": "Cancellation still invalidates a paused-room ticket",
+      "status": "PASS"
+    },
+    {
+      "name": "Original pre-test room policy restored through its versioned admin API",
+      "status": "PASS"
+    }
+  ]
+}

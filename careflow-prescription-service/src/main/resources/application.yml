@@ -13,6 +13,10 @@ spring:
       minimum-idle: 1
       idle-timeout: 30000
       connection-timeout: 20000
+  flyway:
+    schemas: public
+    baseline-on-migrate: true
+    baseline-version: 0
   jpa:
     hibernate:
       ddl-auto: update
@@ -21,6 +25,8 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
   rabbitmq:
+    publisher-confirm-type: correlated
+    publisher-returns: true
     host: ${RABBITMQ_HOST:100.116.233.60}
     port: ${RABBITMQ_PORT:5672}
     username: ${RABBITMQ_USERNAME:${RABBITMQ_USER:careflow}}

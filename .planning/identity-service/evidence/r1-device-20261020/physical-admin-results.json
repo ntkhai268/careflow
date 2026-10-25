@@ -1,0 +1,24 @@
+{
+  "checkedAt": "2026-10-20T04:25:03.744Z",
+  "stage": "PASS_PHYSICAL_ADMIN_ENROLLMENT_AND_LOGIN",
+  "authenticator": "Actual system WebAuthn; no CDP virtual authenticator",
+  "interceptedNetwork": false,
+  "events": [
+    {
+      "path": "/api/auth/staff-passkeys/enroll/options",
+      "status": 200,
+      "time": "2026-10-20T04:24:39.641Z"
+    },
+    {
+      "path": "/api/auth/staff-passkeys/enroll/finish",
+      "status": 200,
+      "time": "2026-10-20T04:24:56.620Z"
+    },
+    {
+      "path": "/api/session/passkey",
+      "status": 200,
+      "time": "2026-10-20T04:25:01.618Z"
+    }
+  ],
+  "page": "http://localhost:5173/admin/accounts"
+}

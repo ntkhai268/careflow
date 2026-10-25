@@ -1,0 +1,317 @@
+{
+  "date": "2026-10-20",
+  "environment": "Owned local test stack; synthetic data; authenticated APIs, real PostgreSQL/RabbitMQ and browser UI",
+  "status": "TECHNICAL_VERIFICATION_PASSED_DEVICE_ACCEPTANCE_PENDING",
+  "flows": {
+    "noCls": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "Synthetic patient upload persists; staff and a doctor without clinical authority are denied",
+          "status": "PASS"
+        },
+        {
+          "name": "Assigned doctor lists the actual uploaded record and downloads exactly the uploaded PDF bytes",
+          "status": "PASS"
+        },
+        {
+          "name": "Server rejects completion without diagnosis and while the current doctor still has a draft prescription",
+          "status": "PASS"
+        },
+        {
+          "name": "Release signs once and creates one follow-up with the actual department, doctor, slot and source visit",
+          "status": "PASS"
+        },
+        {
+          "name": "Walk-in completion and retry persist the same closed consultation and completed queue entry",
+          "status": "PASS"
+        },
+        {
+          "name": "Patient can retrieve the completed walk-in and its published prescription without a fabricated appointment",
+          "status": "PASS"
+        },
+        {
+          "name": "Distinct same-day follow-up visit and its queue/appointment reconcile successfully through the scoped completion command",
+          "status": "PASS"
+        },
+        {
+          "name": "Durable prescription event reaches the real pharmacy queue and the assigned staff dispenses the test prescription",
+          "status": "PASS"
+        }
+      ],
+      "note": "Initial scoped completion integration returned a truthful partial result. A direct authorized physician completion was used for diagnosis; the repaired scoped finalizer then reconciled successfully. No clinical database state overrides."
+    },
+    "clsHandover": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "Walk-in with a real lab order waits on the same consultation; resume is denied while results are pending",
+          "status": "PASS"
+        },
+        {
+          "name": "Published lab result generates the review ticket bound to the exact original walk-in and patient",
+          "status": "PASS"
+        },
+        {
+          "name": "Former doctor loses consultation, lab review and uploaded-record access after accepted handover",
+          "status": "PASS"
+        },
+        {
+          "name": "Receiving doctor reads the original PDF/results while prescription and order authors remain unchanged",
+          "status": "PASS"
+        },
+        {
+          "name": "Receiving doctor resumes the original visit; completion remains blocked until explicit laboratory review",
+          "status": "PASS"
+        }
+      ]
+    },
+    "webCompletion": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "Receiving doctor downloads the patient PDF through the real web UI with identical SHA-256 and no token URL",
+          "status": "PASS"
+        },
+        {
+          "name": "Published result remains explicitly reviewed after reloading the real web page",
+          "status": "PASS"
+        },
+        {
+          "name": "Web finalization completes the original walk-in, including its review queue, without creating a second consultation",
+          "status": "PASS"
+        }
+      ]
+    },
+    "clsFollowUpAndPharmacy": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "CLS walk-in and both queue stages remain completed after finalization replay; inherited authors and draft are preserved",
+          "status": "PASS"
+        },
+        {
+          "name": "Patient reads exactly one source-linked follow-up assigned to the receiving doctor; former doctor cannot book",
+          "status": "PASS"
+        },
+        {
+          "name": "Follow-up creates a new consultation for the receiving doctor and completes appointment/queue through the scoped finalizer",
+          "status": "PASS"
+        },
+        {
+          "name": "Durable signed-prescription event reaches pharmacy and the receiving doctor prescription is dispensed",
+          "status": "PASS"
+        },
+        {
+          "name": "Patient APIs expose completed walk-in, published lab result and a separate completed follow-up visit",
+          "status": "PASS"
+        }
+      ]
+    },
+    "standaloneFollowUp": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "Standalone follow-up is created from the real web panel, uses actual assignment/available slots and survives reload",
+          "status": "PASS"
+        },
+        {
+          "name": "Patient reads the standalone future booking; test cleanup cancels it through the normal authorized API",
+          "status": "PASS"
+        }
+      ]
+    },
+    "webExplicitReview": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "Receiving doctor downloads the patient PDF through the real web UI with identical SHA-256 and no token URL",
+          "status": "PASS"
+        },
+        {
+          "name": "Doctor explicitly confirms reviewed laboratory results through the visible action",
+          "status": "PASS"
+        }
+      ],
+      "note": "The real web also created/signed the prescription and received a confirmed follow-up. The initial harness then wrongly expected SIGNED rather than the actual CONFIRMED enum; that assertion failed. Subsequent real API checks verify the persisted signed state/booking, and the continued browser completes the same visit. No response interception or SQL state override."
+    },
+    "nativeDetailApi": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "Actual PATIENT endpoint combination used by native walk-in detail returns the completed consultation, released prescription and exact published lab order; inherited draft is excluded",
+          "status": "PASS"
+        }
+      ]
+    }
+  },
+  "runtime": {
+    "status": "PASS",
+    "checks": [
+      {
+        "name": "Global private environment unchanged",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-service caller key material unchanged",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-hospital-directory-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-api-gateway mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-patient-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-consultation-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-emr-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-prescription-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-lab-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-appointment-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-session-secondary caller key material unchanged",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-session-secondary mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-queue-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-notification-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "Native lib equals signed build staging",
+        "status": "PASS"
+      },
+      {
+        "name": "Signed iOS artifact build18",
+        "status": "PASS"
+      },
+      {
+        "name": "iOS codesign verifies",
+        "status": "PASS"
+      }
+    ]
+  },
+  "privateConfiguration": {
+    "status": "PASS",
+    "expectedPathsChanged": [
+      "careflow-identity-service/security/callers/consultation-service/scopes",
+      "careflow-identity-service/security/callers/prescription-service/scopes",
+      "careflow-consultation-service/spring/rabbitmq/publisher-confirm-type",
+      "careflow-consultation-service/spring/rabbitmq/publisher-returns",
+      "careflow-prescription-service/spring/rabbitmq/publisher-confirm-type",
+      "careflow-prescription-service/spring/rabbitmq/publisher-returns",
+      "careflow-lab-service/spring/rabbitmq/publisher-confirm-type",
+      "careflow-lab-service/spring/rabbitmq/publisher-returns",
+      "careflow-appointment-service/spring/rabbitmq/publisher-confirm-type",
+      "careflow-appointment-service/spring/rabbitmq/publisher-returns",
+      "careflow-identity-session-secondary/security/callers/consultation-service/scopes",
+      "careflow-identity-session-secondary/security/callers/prescription-service/scopes",
+      "careflow-queue-service/spring/rabbitmq/publisher-confirm-type",
+      "careflow-queue-service/spring/rabbitmq/publisher-returns"
+    ],
+    "unexpectedPathsChanged": []
+  },
+  "brokerDelivery": [
+    {
+      "module": "prescription",
+      "counts": "PrescriptionDispensed|2|0\nPrescriptionIssued|2|0"
+    },
+    {
+      "module": "consultation",
+      "counts": "ConsultationCompleted|4|0"
+    },
+    {
+      "module": "lab",
+      "counts": "AllRequiredResultsAvailable|1|0\nLabOrderReadyForExecution|1|0"
+    }
+  ],
+  "inbox": {
+    "kind": "array",
+    "keys": null,
+    "rows": 44,
+    "matching": [
+      {
+        "type": "FOLLOW_UP_SCHEDULED",
+        "status": "DELIVERED"
+      },
+      {
+        "type": "APPOINTMENT_CONFIRMED",
+        "status": "DELIVERED"
+      }
+    ]
+  },
+  "mobile": {
+    "version": "1.0.0 (18)",
+    "signedBuild": "PASS",
+    "installed": "NOT_VERIFIED_DEVICE_TUNNEL_UNAVAILABLE",
+    "analysis": "12 edited/new items, no issues",
+    "testsPassed": 250,
+    "testsSkipped": 15,
+    "skips": "14 conditional HTTP-fixture tests and 1 existing pharmacy test; not reported as passed",
+    "physicalAcceptance": "PDF/photo picker, open/share, cancellation/network interruption, account switch and results remain pending",
+    "android": "R3 build/device acceptance not performed"
+  },
+  "webBuild": {
+    "production": "PASS with Next webpack build in isolated directory",
+    "initialBuildFailure": "Default Turbopack cannot resolve a node_modules symlink outside the isolated workspace; no app source changes made to bypass this"
+  },
+  "databaseTests": {
+    "prescriptionRelease": 5,
+    "consultationOutbox": 2,
+    "labOutbox": 2,
+    "labJpaCreation": 3,
+    "database": "isolated PostgreSQL",
+    "brokerAndDependencyFaults": "Controlled mocks for deterministic publisher/HTTP faults within real DB transactions; actual broker/UI flows verified separately"
+  },
+  "gitNexus": {
+    "backendFullWorktree": {
+      "files": 224,
+      "symbols": 419,
+      "affectedProcesses": 836,
+      "risk": "CRITICAL"
+    },
+    "nativeFullWorktree": {
+      "files": 42,
+      "symbols": 180,
+      "affectedProcesses": 9,
+      "risk": "HIGH"
+    },
+    "limitation": "Includes uncommitted R1/R2/preexisting changes, not only R3. Missing Java call edges and truncated flow traversal were manually cross-checked. No commit/push."
+  },
+  "documentation": {
+    "localLinks": "PASS, no broken links",
+    "r3DeltaWhitespace": "PASS",
+    "preexistingFullDiffWhitespace": "One R0 trailing-space warning in docs/service-contracts/README.md; content hash unchanged since start of R3"
+  }
+}

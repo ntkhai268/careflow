@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-10-19T15:13:40.208Z",
+  "provider": "real VNPT Free project",
+  "images": "synthetic non-identity negative control only",
+  "firstStatus": 200,
+  "resultStatus": "REJECTED",
+  "reason": "DOCUMENT_CHECK_FAILED",
+  "requestsBefore": 0,
+  "requestsAfter": 2,
+  "verificationCallsUsed": 2,
+  "checks": [
+    {
+      "name": "Authenticated patient sees VNPT available after loading the verified Free project",
+      "status": "PASS"
+    },
+    {
+      "name": "Real VNPT upload/document check consumes two durable requests and never verifies a non-ID image",
+      "status": "PASS"
+    },
+    {
+      "name": "Replaying the same authenticated upload returns the stored result with zero additional VNPT calls",
+      "status": "PASS"
+    }
+  ]
+}

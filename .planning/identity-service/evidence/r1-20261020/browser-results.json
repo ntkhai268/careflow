@@ -1,0 +1,33 @@
+{
+  "checkedAt": "2026-10-19T17:28:26.342Z",
+  "database": "isolated PostgreSQL",
+  "transport": "Identity and Directory actual TLS/mTLS; browser requests explicitly adapted to fixtures (not full production BFF/Gateway E2E)",
+  "authenticator": "Chrome virtual CTAP2, not physical",
+  "outboundEmail": false,
+  "checks": [
+    {
+      "name": "Real WebAuthn bootstrap and ADMIN passkey session in isolated Identity",
+      "status": "PASS"
+    },
+    {
+      "name": "Persistent account creation, reload, safe idempotent replay and conflicting replay rejection",
+      "status": "PASS"
+    },
+    {
+      "name": "Directory verifies Identity via real mTLS, accepts matching role and refuses wrong or nonexistent user IDs",
+      "status": "PASS"
+    },
+    {
+      "name": "Invitation enrollment and staff passkey login; assigned room access; account administration denied to STAFF",
+      "status": "PASS"
+    },
+    {
+      "name": "Account lock revokes Identity and Directory access; unlock does not restore old sessions; new passkey login succeeds",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual web UI create doctor, real master-data picker assignment, reload persistence, pending passkey and server lock",
+      "status": "PASS"
+    }
+  ]
+}

@@ -17,6 +17,7 @@ COPY careflow-emr-service/pom.xml careflow-emr-service/pom.xml
 COPY careflow-lab-service/pom.xml careflow-lab-service/pom.xml
 COPY careflow-ai-service/pom.xml careflow-ai-service/pom.xml
 COPY careflow-hospital-directory-service/pom.xml careflow-hospital-directory-service/pom.xml
+COPY careflow-analytics-service/pom.xml careflow-analytics-service/pom.xml
 
 # Install parent POM into Maven local repo
 RUN mvn -N install -DskipTests -B -q

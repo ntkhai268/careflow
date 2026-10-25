@@ -39,6 +39,17 @@ public class Prescription extends BaseEntity {
     private String notes;
 
     private LocalDate followUpDate;
+    @Column(length=50)
+    private String followUpDepartment;
+    @Column(length=30)
+    private String followUpTimeSlot;
+    private UUID followUpAppointmentId;
+    @Column(length=50)
+    private String followUpErrorCode;
+    @Builder.Default
+    @Column(length=30,nullable=false)
+    private String followUpStatus = "NOT_REQUESTED";
+
 
     @Column(length = 80)
     private String dispensingServicePointId;

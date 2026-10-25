@@ -1,0 +1,22 @@
+[
+  {
+    "suite": "api_refresh_contract_test",
+    "exitCode": 0
+  },
+  {
+    "suite": "email_recovery_contract_test",
+    "exitCode": 0
+  },
+  {
+    "suite": "biometric_device_contract_test",
+    "exitCode": 0
+  },
+  {
+    "suite": "medical_download_http_test",
+    "exitCode": 0
+  },
+  {
+    "suite": "local_document_http_test",
+    "exitCode": 0
+  }
+]

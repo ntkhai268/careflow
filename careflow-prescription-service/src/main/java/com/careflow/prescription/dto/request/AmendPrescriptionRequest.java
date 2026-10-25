@@ -22,7 +22,13 @@ public class AmendPrescriptionRequest {
 
     private String diagnosis;
     private String notes;
+    @jakarta.validation.constraints.FutureOrPresent
     private LocalDate followUpDate;
+    @jakarta.validation.constraints.Pattern(regexp="[A-Z][A-Z0-9_]{2,49}")
+    private String followUpDepartment;
+    @jakarta.validation.constraints.Pattern(regexp="([01][0-9]|2[0-3]):[0-5][0-9]-([01][0-9]|2[0-3]):[0-5][0-9]")
+    private String followUpTimeSlot;
+
 
     @NotEmpty(message = "Prescription must have at least one medicine item")
     @Valid

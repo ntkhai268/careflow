@@ -15,7 +15,7 @@ public record QueueEntryResponse(
         Instant startedAt, Instant completedAt, Instant missedAt,
         QueueType type, ConsultationPhase consultationPhase, QueueClass queueClass,
         SchedulingLane schedulingLane, String servicePointId,
-        UUID consultationId, UUID labOrderId, UUID prescriptionId) {
+        UUID consultationId, UUID labOrderId, UUID prescriptionId, String patientName) {
 
     public static QueueEntryResponse from(QueueEntry entry, QueueConfigResponse config,
                                           Integer position, Integer wait) {
@@ -35,6 +35,6 @@ public record QueueEntryResponse(
                 entry.getCheckedInAt(), entry.getCalledAt(), entry.getStartedAt(), entry.getCompletedAt(),
                 entry.getMissedAt(), entry.getQueueType(), entry.getConsultationPhase(), entry.getQueueClass(),
                 entry.getSchedulingLane(), entry.getServicePointId(), entry.getConsultationId(),
-                entry.getLabOrderId(), entry.getPrescriptionId());
+                entry.getLabOrderId(), entry.getPrescriptionId(),entry.getPatientNameSnapshot());
     }
 }

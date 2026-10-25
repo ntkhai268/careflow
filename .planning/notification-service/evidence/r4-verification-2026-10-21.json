@@ -1,0 +1,148 @@
+{
+  "date": "2026-10-21",
+  "status": "NATIVE_FOLLOWUP_VERIFIED_PUSH_ACCEPTANCE_PENDING",
+  "changes": [
+    "Clear authenticated UI scope synchronously when locking before async credential cleanup",
+    "Retain notification tap until navigation acknowledgement; retry only after authenticated foreground bind",
+    "Drop pending notification on binding/account mismatch",
+    "Preserve OS callback that arrives while initial-message lookup is pending",
+    "Discard stale bind after SDK initialization when account scope changed"
+  ],
+  "native": {
+    "passed": 272,
+    "skipped": 15,
+    "r4CasesPassed": 22,
+    "skips": "14 conditional HTTP fixture tests and one existing pharmacy test; not counted as passes",
+    "analyze": "All lib + R4 tests: no issues",
+    "version": "1.0.0 (20)",
+    "signedBuild": "PASS",
+    "installedVersionVerified": "PASS",
+    "launch": "PASS",
+    "physicalUiAndPushAcceptance": "PENDING"
+  },
+  "backendTests": {
+    "lastRun": "2026-10-20",
+    "passed": 280,
+    "skipped": 64,
+    "sourceChangedInFollowup": false,
+    "evidence": "r4-verification-2026-10-20.json"
+  },
+  "runtime": {
+    "date": "2026-10-21",
+    "status": "PASS",
+    "checks": [
+      "Authenticated Gateway API and active session",
+      "Existing inbox and owner-scoped detail read",
+      "DPoP STOMP connection and personal subscription",
+      "Logout closes active WebSocket"
+    ],
+    "scope": "Read-only clinical data; only test sessions opened/closed; no new patient/appointment/queue fixture"
+  },
+  "healthAndArtifact": {
+    "status": "PASS",
+    "checks": [
+      {
+        "name": "Global private environment unchanged",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-service caller key material unchanged",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-hospital-directory-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-api-gateway mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-patient-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-consultation-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-emr-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-prescription-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-lab-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-appointment-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-session-secondary caller key material unchanged",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-identity-session-secondary mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-queue-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "careflow-notification-service mTLS health",
+        "status": "PASS"
+      },
+      {
+        "name": "Native lib equals signed build staging",
+        "status": "PASS"
+      },
+      {
+        "name": "Signed iOS artifact build20",
+        "status": "PASS"
+      },
+      {
+        "name": "iOS codesign verifies",
+        "status": "PASS"
+      }
+    ]
+  },
+  "pushPreflight": {
+    "nativeFirebaseEnabled": false,
+    "serverFirebaseEnabled": false,
+    "iosBuildConfigExists": false,
+    "iosSourceConfigExists": false,
+    "androidBuildConfigExists": false,
+    "androidSourceConfigExists": false,
+    "adcEnvFileExists": false,
+    "defaultAdcFileExists": false,
+    "signedProfileHasApsEnvironment": false
+  },
+  "impact": {
+    "AuthNotifier": {
+      "risk": "HIGH",
+      "direct": 22,
+      "resolvedProcesses": 0
+    },
+    "PushNotificationService": {
+      "risk": "MEDIUM",
+      "direct": 4,
+      "resolvedProcesses": 0
+    },
+    "CoordinatorState": {
+      "risk": "LOW",
+      "direct": 1,
+      "resolvedProcesses": 0
+    },
+    "limitation": "lockSession has two unresolved receiver call sites; BiometricAppLock and direct tests were checked manually"
+  },
+  "git": "No add, commit or push"
+}

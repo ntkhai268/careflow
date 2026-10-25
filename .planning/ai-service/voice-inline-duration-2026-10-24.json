@@ -1,0 +1,173 @@
+{
+  "status": "PASS_FOR_DESCRIBED_SCOPE",
+  "checkedAt": "2026-10-24T07:16:11.957951+00:00",
+  "branch": "feature/dangkhoii/release-r7",
+  "base": "907cba222c299329de6d87f9acbb9ec3b9e4c4f8",
+  "sourceSha256": {
+    "frontend/doctor-web/src/components/VoicePrescriptionPanel.tsx": "a5515b4d1dfb88fbf2f08b455c4be9fe3d5a2a87ad647b1679197ba7e42ab328",
+    "frontend/doctor-web/src/proxy.ts": "5b81c8e72635feb807d5c38cb148b408024c989a4de5e87afe0a61c2a064c56b",
+    "frontend/doctor-web/package.json": "b1accb305e84e5ab1ffec5f6312f256503945649b1bf948e7da43d3afc9af129",
+    "frontend/doctor-web/package-lock.json": "d40df853f811b20ea84ceaa8b6d954d12860b9462902c1abe9fee93d6f7755e3"
+  },
+  "rootCauses": [
+    "Audio element rejected blob URL under prior page CSP fallback; playback did not load",
+    "MediaRecorder WebM omitted Duration metadata",
+    "Old timer only shown while recording; helper text mixed existing draft with pending segment"
+  ],
+  "changes": [
+    "Remove expanded button/dialog; inline capture/transcript/shared Rx editor",
+    "Add media-src self blob only; keep connect/script/object policy restrictions",
+    "Measure elapsed using performance.now; repair WebM locally, leave MP4 intact",
+    "Microphone RMS indicator and pending/processed duration status",
+    "Latest processed seconds in actor/visit session metadata; no audio/transcript storage"
+  ],
+  "dependency": {
+    "name": "@fix-webm-duration/fix",
+    "version": "1.0.1",
+    "license": "MIT",
+    "source": "https://github.com/yusitnikov/fix-webm-duration",
+    "processing": "Browser-local; no audio service/network call"
+  },
+  "verification": {
+    "typeScript": "PASS",
+    "targetedEslint": "PASS",
+    "productionWebpackBuild": "PASS",
+    "browser": {
+      "status": "PASS",
+      "checks": [
+        "Another recorded WebM appends to the same draft with finite player duration and real ASR; CSP retains script/connect/object restrictions",
+        "Flowing silent audio shows low-level warning; discarding keeps saved clip duration; denied permission never pretends to record",
+        "Same-tab reload restores processed duration without raw audio; one inline editor and one review remain",
+        "Logout while recording ends all tracks; no uncaught UI errors"
+      ],
+      "metrics": {
+        "appendDuration": 8.7394
+      },
+      "initialChecks": [
+        "Inline recording starts with sound meter, no expansion UI and one stream on double click",
+        "62-second audio has finite player duration and working playback/seek",
+        "Re-recorded corrected WebM saves through real ASR and persists nonzero duration on reload"
+      ],
+      "initialPhaseArtifact": "audio-verification.json",
+      "harnessCorrection": "Silent fixture initially used suspended AudioContext and emitted no frames; resumed oscillator through zero gain now produces flowing silent audio",
+      "actualMediaRecorder": true,
+      "physicalMicrophone": false,
+      "microphoneInput": "prerecorded synthetic TTS and zero-gain oscillator through real MediaStream",
+      "actualInference": true,
+      "actualClinicalApis": true,
+      "mockedResponses": false,
+      "uncaughtErrors": 0,
+      "checkedAt": "2026-10-24T07:14:07.083Z"
+    },
+    "audio": {
+      "status": "PASS",
+      "results": {
+        "minute-raw.webm": {
+          "probe": {
+            "format": {
+              "size": "885875"
+            }
+          },
+          "decodedAudioHash": "SHA256=42f0439b29349d8e7cf708d89deb9a820a557128db8312f749d3a8cff7f85c9c"
+        },
+        "minute-fixed.webm": {
+          "probe": {
+            "format": {
+              "duration": "62.353200",
+              "size": "885881"
+            }
+          },
+          "decodedAudioHash": "SHA256=42f0439b29349d8e7cf708d89deb9a820a557128db8312f749d3a8cff7f85c9c"
+        },
+        "volume": [
+          "mean_volume: -18.5 dB",
+          "max_volume: -3.8 dB"
+        ]
+      },
+      "unchangedDecodedAudio": true
+    },
+    "userCaseReadOnly": {
+      "status": "PASS",
+      "reviewCount": 0,
+      "clinicalWrites": 0,
+      "inlineOnly": true
+    },
+    "cleanup": {
+      "status": "PASS",
+      "onlyOwnSyntheticCase": true,
+      "prescriptionStatus": "CANCELLED",
+      "consultationStatus": "COMPLETED",
+      "queueFinalization": {
+        "consultation": {
+          "id": "6e1bdc79-c635-4c32-846c-bcab6c549cd0",
+          "appointmentId": null,
+          "queueEntryId": "1c5f520c-7aba-4094-a482-bd3c9e822a2a",
+          "patientId": "3150f145-b8ae-4125-b75a-29e9dcaa7968",
+          "patientName": "TEST VOICE INLINE DURATION",
+          "doctorId": "037f610e-6ed1-4953-b08d-777e46867343",
+          "doctorName": "BS E2E C",
+          "authoredByDoctorId": "037f610e-6ed1-4953-b08d-777e46867343",
+          "authoredByDoctorName": "BS E2E C",
+          "departmentCode": "CO_XUONG_KHOP",
+          "departmentName": "Cơ xương khớp",
+          "temperature": null,
+          "bloodPressure": null,
+          "heartRate": null,
+          "spo2": null,
+          "height": null,
+          "weight": null,
+          "symptoms": "SYNTHETIC editable voice regression",
+          "clinicalNotes": "",
+          "icd10Code": "",
+          "icd10Name": "",
+          "diagnosis": "SYNTHETIC software test only",
+          "status": "COMPLETED",
+          "startedAt": "2026-10-24T14:04:10.150976",
+          "completedAt": "2026-10-24T14:14:26.838574",
+          "createdAt": "2026-10-24T14:04:10.152886",
+          "updatedAt": "2026-10-24T14:11:48.407237"
+        },
+        "queueCompleted": true,
+        "appointmentCompleted": true,
+        "complete": true,
+        "pendingSteps": []
+      }
+    },
+    "testCorrections": [
+      "Silent fixture initially used suspended AudioContext with no frames; running zero-gain oscillator now provides flowing silence",
+      "User-case review box is optional for locked/completed prescriptions; assert one inline editor and at most one review without writes"
+    ]
+  },
+  "runtime": {
+    "web": "http://localhost:5173",
+    "buildId": "z_VDz871gxYD2l-6y1Ngw",
+    "allServiceHealthChecks": "PASS",
+    "backendChanged": false,
+    "schemaChanged": false,
+    "modelChanged": false,
+    "secretsChanged": false
+  },
+  "gitnexus": {
+    "preEditImpact": "start/stop/resetInput/execute LOW; JSX panel and Next proxy UNKNOWN verified by text imports/route matcher/callbacks",
+    "refreshed": true,
+    "detectChanges": {
+      "changed_count": 220,
+      "affected_count": 40,
+      "changed_files": 67,
+      "risk_level": "critical"
+    },
+    "completeResultArrays": true,
+    "partial": false,
+    "truncated": false,
+    "riskNote": "CRITICAL reflects all carried uncommitted R6/R7 changes across67 files. Current checks cover voice UI/playback/CSP, not full-project safety. Process ranking/branching coverage incomplete; zero not read as unused."
+  },
+  "noCommitOrPush": true,
+  "fullAcceptance": false,
+  "limitations": [
+    "Physical microphone/input selection on user device not directly operated",
+    "Safari/MP4 and broader browser/device matrix not tested",
+    "Latest duration session metadata only, no durable multi-segment history/cross-device sync",
+    "Pending audio lost on refresh/unmount; duration metadata does not restore it",
+    "Clinical quality and full R7 remain open"
+  ]
+}

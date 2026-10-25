@@ -1,0 +1,136 @@
+{
+  "checkedAt": "2026-10-21T06:03:06.178062+00:00",
+  "base": "907cba222c299329de6d87f9acbb9ec3b9e4c4f8",
+  "branch": "feature/dangkhoii/ai-r6",
+  "committed": false,
+  "pushed": false,
+  "java": {
+    "careflow-common": {
+      "tests": 49,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-prescription-service": {
+      "tests": 119,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "careflow-ai-service": {
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "pythonPassed": 12,
+  "wheelFreshInstall": "PASS",
+  "builds": {
+    "web": "PASS (webpack)",
+    "gateway": "PASS",
+    "composeSecureConfig": "PASS"
+  },
+  "runtimeChecks": 16,
+  "e2e": {
+    "live-api": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "Gateway exposes enabled capabilities only to authorized roles",
+          "status": "PASS"
+        },
+        {
+          "name": "No approved source returns unavailable rather than medical fallback",
+          "status": "PASS"
+        },
+        {
+          "name": "Reviewed local source is quoted exactly; pageData is ignored and interaction access is actor scoped",
+          "status": "PASS"
+        },
+        {
+          "name": "Real local extraction creates one incomplete draft and signature is blocked until completion",
+          "status": "PASS"
+        },
+        {
+          "name": "Human edits and named details survive a duplicate AI draft request",
+          "status": "PASS"
+        },
+        {
+          "name": "Retired source cannot produce a new answer",
+          "status": "PASS"
+        }
+      ]
+    },
+    "browser": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "Existing draft fields and named AI details remain editable and survive page reload",
+          "status": "PASS"
+        },
+        {
+          "name": "Save draft while recording stops every microphone track and encodes a synthetic microphone stream in MediaRecorder and sends audio to actual local ASR",
+          "status": "PASS"
+        },
+        {
+          "name": "Recognition required human transcript correction before saving",
+          "status": "OBSERVED"
+        },
+        {
+          "name": "Audio/correction flow saves one real draft which reloads and never duplicates on another save",
+          "status": "PASS"
+        }
+      ]
+    },
+    "clinical-browser": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "Admin imports versioned source through real searchable Directory control; it remains DRAFT",
+          "status": "PASS"
+        },
+        {
+          "name": "A different DOCTOR explicitly reviews the exact source version in the browser",
+          "status": "PASS"
+        },
+        {
+          "name": "Source citation renders in the actual consultation widget and history survives reload",
+          "status": "PASS"
+        },
+        {
+          "name": "Admin retires the source from the same management screen",
+          "status": "PASS"
+        }
+      ]
+    },
+    "security-smoke": {
+      "status": "PASS",
+      "checks": [
+        "Previously issued access token cannot read AI history after logout",
+        "Direct AI service connection without a client certificate is rejected",
+        "Worker mTLS alone does not replace its independent bearer credential"
+      ]
+    }
+  },
+  "gitnexus": {
+    "nodes": 20795,
+    "edges": 48812,
+    "flows": 852,
+    "trackedChangedSymbols": 150,
+    "affectedProcesses": 39,
+    "aggregateRisk": "critical",
+    "note": "Aggregate risk is retained. Untracked new files reviewed independently; graph alone is not proof of scope/security."
+  },
+  "qualityAcceptance": {
+    "clinical": false,
+    "independentDoctorVoice": false,
+    "physicalMicrophone": false,
+    "notes": [
+      "Synthetic microphone stream in MediaRecorder; actual local ASR required transcript correction.",
+      "No hospital-reviewed clinical corpus or professional case evaluation supplied.",
+      "Existing prototype baseline positive_full_draft_exact=0/313 remains a historical limitation; not rescored or superseded by integration tests.",
+      "Local clinical engine retrieves/quotes reviewed evidence; no autonomous diagnosis or LLM reasoning claim."
+    ]
+  }
+}

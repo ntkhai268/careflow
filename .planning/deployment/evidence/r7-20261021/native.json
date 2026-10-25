@@ -1,0 +1,37 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PARTIAL",
+  "flutter": {
+    "passed": 272,
+    "skipped": 15,
+    "failed": 0,
+    "analyze": "PASS",
+    "testLogSha256": "c69e2c8cc48da642af4119e5309410cb215c765f524d72a56df8bc142468321e",
+    "analysisLogSha256": "30b38fe78f3bb687b3cc4d780b7f0380d8e00f080b51721a95a8e7ebfb7b9222"
+  },
+  "ios": {
+    "version": "1.0.0",
+    "build": "21",
+    "minimumOS": "15.0",
+    "signatureVerified": true,
+    "physicalInstall": "PASS",
+    "physicalLaunch": "PASS",
+    "deviceReadbackBuild": "21",
+    "physicalUserFlowsVerified": false,
+    "apsEnvironmentEntitlement": false,
+    "provisioningExpiresAt": "2026-10-25T08:04:00Z",
+    "installReceiptSha256": "3433740f04cd716da5f8a06dfcb110c217d078599be69394e09de0598a353379",
+    "launchReceiptSha256": "7414f378a953316bbb69b0fee3ef5eda7494f2115cc2ffc0561ea73e5449d7b0"
+  },
+  "android": {
+    "releaseBuild": "21",
+    "signatureVerified": true,
+    "debugSigner": false,
+    "signingScope": "Private local test upload key, not a store distribution key",
+    "physicalDeviceVerified": false,
+    "signatureLogSha256": "51a5bb34ddbe740050dc95616e38e8ba59fa2c2ab2a41a7e18bca47b6d877cd1"
+  },
+  "firebaseEnabled": false,
+  "demoMode": false
+}

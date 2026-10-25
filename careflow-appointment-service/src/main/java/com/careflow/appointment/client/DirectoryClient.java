@@ -15,6 +15,9 @@ import java.util.UUID;
 @FeignClient(name = "hospital-directory-service", path = "/api/directory")
 public interface DirectoryClient {
 
+    @GetMapping("/services/{code}")
+    ApiResponse<com.careflow.appointment.client.dto.ServicePriceResponse> getServicePrice(@PathVariable("code") String code);
+
     @GetMapping("/departments/{code}")
     ApiResponse<DepartmentResponse> getDepartmentByCode(@PathVariable("code") String code);
 

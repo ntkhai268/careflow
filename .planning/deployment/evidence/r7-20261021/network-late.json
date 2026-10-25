@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "scope": "Real Gateway, broker and six scratch operational DBs; actual committed response truncation and captured source envelopes replayed in reverse order; no SQL state mutation",
+  "checks": [
+    {
+      "name": "Actual TCP response body is dropped after committed201; same-key retry recovers exactly one persisted appointment",
+      "status": "PASS"
+    },
+    {
+      "name": "Real cancellation replays safely while initial confirmation delivery is intentionally delayed by isolated broker binding",
+      "status": "PASS"
+    },
+    {
+      "name": "Actual captured cancellation delivered before previously unseen confirmation cannot resurrect a cancelled appointment as a waiting ticket",
+      "status": "PASS"
+    }
+  ],
+  "processedSourceEnvelopes": 2,
+  "confirmationEnvelopeSha256": "4954aa1b0e6313475278ba6c43f2dc3efc3493f53084abd5fb01daf641d06bee",
+  "cancellationEnvelopeSha256": "0ed360efa96f5a2180d23a8eeaf6addd4b6cac404252b26e34c1bd29af7e8482",
+  "cancellationReplayStatus": 400,
+  "cancelledStateConfirmedByRead": true
+}

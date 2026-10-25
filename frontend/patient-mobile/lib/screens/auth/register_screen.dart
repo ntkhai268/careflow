@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'dart:async';
+import 'package:flutter/services.dart';
 import '../../config/theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/careflow_button.dart';
 import '../../widgets/careflow_text_field.dart';
+import '../../services/email_registration_service.dart';
+import '../../utils/api_error_message.dart';
 
 /// Register screen aligned with the Identity Service contract.
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -20,6 +24,11 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _codeController = TextEditingController();
+  String? _requestId, _error;
+  bool _busy = false;
+  DateTime? _resendAt;
+  Timer? _timer;
 
   final _emailFocus = FocusNode();
   final _passwordFocus = FocusNode();
@@ -27,6 +36,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   void dispose() {
+    _timer?.cancel();
+    _codeController.dispose();
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -37,15 +48,62 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  void _handleRegister() {
-    if (_formKey.currentState?.validate() ?? false) {
-      ref
+  Future<void> _handleRegister() async {
+    if (_busy || !(_formKey.currentState?.validate() ?? false)) return;
+    if (_requestId == null) {
+      await _requestCode();
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref
+          .read(emailRegistrationServiceProvider)
+          .verify(_requestId!, _codeController.text.trim());
+      if (!mounted) return;
+      await ref
           .read(authProvider.notifier)
-          .register(
-            username: _usernameController.text.trim(),
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
+          .login(_usernameController.text.trim(), _passwordController.text);
+    } catch (e) {
+      if (mounted) setState(() => _error = ApiErrorMessage.from(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _requestCode() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final id = await ref
+          .read(emailRegistrationServiceProvider)
+          .request(
+            _usernameController.text,
+            _emailController.text,
+            _passwordController.text,
           );
+      if (!mounted) return;
+      setState(() {
+        _requestId = id;
+        _codeController.clear();
+        _resendAt = DateTime.now().add(const Duration(seconds: 60));
+      });
+      _timer?.cancel();
+      _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+        if (mounted) setState(() {});
+        if (_resendAt != null && !DateTime.now().isBefore(_resendAt!)) {
+          _timer?.cancel();
+        }
+      });
+    } catch (e) {
+      if (mounted) setState(() => _error = ApiErrorMessage.from(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
     }
   }
 
@@ -107,7 +165,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Điền thông tin để đăng ký tài khoản mới',
+                  _requestId == null
+                      ? 'Điền thông tin và xác minh email để tạo tài khoản'
+                      : 'Nếu thông tin phù hợp, mã 6 số sẽ được gửi tới ${_emailController.text.trim()}. Mã có hiệu lực 5 phút.',
                   style: TextStyle(
                     fontSize: 14,
                     color: AppColors.textSecondary,
@@ -115,102 +175,155 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Username
-                CareFlowTextField(
-                  label: 'Tên đăng nhập',
-                  hint: '3-50 ký tự: chữ, số, . _ -',
-                  controller: _usernameController,
-                  prefixIcon: Icons.person_outlined,
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => _emailFocus.requestFocus(),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập tên đăng nhập';
-                    }
-                    if (!RegExp(r'^[A-Za-z0-9._-]{3,50}$').hasMatch(value)) {
-                      return 'Tên đăng nhập không hợp lệ';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                if (_requestId == null) ...[
+                  // Username
+                  CareFlowTextField(
+                    label: 'Tên đăng nhập',
+                    hint: '3-50 ký tự: chữ, số, . _ -',
+                    controller: _usernameController,
+                    prefixIcon: Icons.person_outlined,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => _emailFocus.requestFocus(),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Vui lòng nhập tên đăng nhập';
+                      }
+                      if (!RegExp(r'^[A-Za-z0-9._-]{3,50}$').hasMatch(value)) {
+                        return 'Tên đăng nhập không hợp lệ';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-                // Email
-                CareFlowTextField(
-                  label: 'Email',
-                  hint: 'Nhập email của bạn',
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: Icons.email_outlined,
-                  focusNode: _emailFocus,
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập email';
-                    }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return 'Email không hợp lệ';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                  // Email
+                  CareFlowTextField(
+                    label: 'Email',
+                    hint: 'Nhập email của bạn',
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    prefixIcon: Icons.email_outlined,
+                    focusNode: _emailFocus,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) => _passwordFocus.requestFocus(),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Vui lòng nhập email';
+                      }
+                      if (!RegExp(
+                        r'^[^\s@]+@[^\s@]+\.[^\s@]+$',
+                      ).hasMatch(value)) {
+                        return 'Email không hợp lệ';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-                // Password
-                CareFlowTextField(
-                  label: 'Mật khẩu',
-                  hint: 'Tối thiểu 8 ký tự, đủ hoa/thường/số/ký tự đặc biệt',
-                  controller: _passwordController,
-                  obscureText: true,
-                  prefixIcon: Icons.lock_outlined,
-                  focusNode: _passwordFocus,
-                  textInputAction: TextInputAction.next,
-                  onFieldSubmitted: (_) => _confirmPasswordFocus.requestFocus(),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Vui lòng nhập mật khẩu';
-                    }
-                    if (value.length < 8 ||
-                        !RegExp(
-                          r'(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])',
-                        ).hasMatch(value)) {
-                      return 'Mật khẩu chưa đạt yêu cầu bảo mật';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
+                  // Password
+                  CareFlowTextField(
+                    label: 'Mật khẩu',
+                    hint: 'Tối thiểu 8 ký tự, đủ hoa/thường/số/ký tự đặc biệt',
+                    controller: _passwordController,
+                    obscureText: true,
+                    prefixIcon: Icons.lock_outlined,
+                    focusNode: _passwordFocus,
+                    textInputAction: TextInputAction.next,
+                    onFieldSubmitted: (_) =>
+                        _confirmPasswordFocus.requestFocus(),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Vui lòng nhập mật khẩu';
+                      }
+                      if (value.length < 8 ||
+                          !RegExp(
+                            r'(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z0-9])',
+                          ).hasMatch(value)) {
+                        return 'Mật khẩu chưa đạt yêu cầu bảo mật';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-                // Confirm Password
-                CareFlowTextField(
-                  label: 'Xác nhận mật khẩu',
-                  hint: 'Nhập lại mật khẩu',
-                  controller: _confirmPasswordController,
-                  obscureText: true,
-                  prefixIcon: Icons.lock_outlined,
-                  focusNode: _confirmPasswordFocus,
-                  textInputAction: TextInputAction.done,
-                  onFieldSubmitted: (_) => _handleRegister(),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Vui lòng xác nhận mật khẩu';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Mật khẩu không khớp';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 32),
-
+                  // Confirm Password
+                  CareFlowTextField(
+                    label: 'Xác nhận mật khẩu',
+                    hint: 'Nhập lại mật khẩu',
+                    controller: _confirmPasswordController,
+                    obscureText: true,
+                    prefixIcon: Icons.lock_outlined,
+                    focusNode: _confirmPasswordFocus,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) => _handleRegister(),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Vui lòng xác nhận mật khẩu';
+                      }
+                      if (value != _passwordController.text) {
+                        return 'Mật khẩu không khớp';
+                      }
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 32),
+                ] else ...[
+                  TextFormField(
+                    controller: _codeController,
+                    decoration: const InputDecoration(
+                      labelText: 'Mã xác minh email',
+                    ),
+                    keyboardType: TextInputType.number,
+                    autofillHints: const [AutofillHints.oneTimeCode],
+                    inputFormatters: [
+                      FilteringTextInputFormatter.digitsOnly,
+                      LengthLimitingTextInputFormatter(6),
+                    ],
+                    validator: (value) =>
+                        RegExp(r'^[0-9]{6}$').hasMatch(value ?? '')
+                        ? null
+                        : 'Nhập mã xác minh gồm 6 số',
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed:
+                        _busy ||
+                            (_resendAt != null &&
+                                DateTime.now().isBefore(_resendAt!))
+                        ? null
+                        : _requestCode,
+                    child: Text(
+                      _resendAt != null && DateTime.now().isBefore(_resendAt!)
+                          ? 'Gửi lại mã sau ${_resendAt!.difference(DateTime.now()).inSeconds + 1}s'
+                          : 'Gửi lại mã',
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _busy
+                        ? null
+                        : () => setState(() {
+                            _requestId = null;
+                            _error = null;
+                            _codeController.clear();
+                          }),
+                    child: const Text('Sửa thông tin đăng ký'),
+                  ),
+                ],
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: AppColors.error),
+                    ),
+                  ),
                 // Register button
                 CareFlowButton(
-                  text: 'Đăng ký',
+                  text: _requestId == null
+                      ? 'Gửi mã xác minh email'
+                      : 'Xác minh và tạo tài khoản',
                   useGradient: true,
-                  isLoading: authState.status == AuthStatus.loading,
+                  isLoading: _busy || authState.status == AuthStatus.loading,
                   onPressed: _handleRegister,
                 ),
                 const SizedBox(height: 24),

@@ -1,0 +1,142 @@
+{
+  "capturedAt": "2026-10-19T16:50:53.760648+00:00",
+  "readOnly": true,
+  "healthChecks": [
+    {
+      "service": "careflow-eureka-server",
+      "port": 18761,
+      "tls": false,
+      "status": "UNVERIFIED",
+      "error": "URLError"
+    },
+    {
+      "service": "careflow-identity-service",
+      "port": 18081,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "careflow-hospital-directory-service",
+      "port": 18090,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "careflow-api-gateway",
+      "port": 18080,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "careflow-patient-service",
+      "port": 18082,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "careflow-consultation-service",
+      "port": 18086,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "careflow-emr-service",
+      "port": 18088,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "careflow-prescription-service",
+      "port": 18087,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "careflow-lab-service",
+      "port": 18089,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "careflow-appointment-service",
+      "port": 18083,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "careflow-identity-session-secondary",
+      "port": 18092,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "careflow-queue-service",
+      "port": 18084,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "careflow-notification-service",
+      "port": 18085,
+      "tls": true,
+      "http": 200,
+      "status": "UP"
+    },
+    {
+      "service": "phone-bridge",
+      "method": "GET",
+      "http": 200,
+      "status": "REACHABLE"
+    },
+    {
+      "service": "doctor-web",
+      "method": "GET",
+      "http": 200,
+      "status": "REACHABLE"
+    }
+  ],
+  "mobileReadiness": {
+    "installedArtifactCandidate": {
+      "bundle": "com.careflow.careflowPatient",
+      "version": "1.0.0",
+      "build": "16"
+    },
+    "firebaseIosConfigurationPresent": false,
+    "firebaseAndroidConfigurationPresent": false,
+    "apsEnvironment": null,
+    "debuggable": true,
+    "profile": {
+      "expiration": "2026-10-25T08:04:00",
+      "apsEnvironment": null,
+      "deviceLimited": true
+    },
+    "buildFlags": {
+      "FIREBASE_ENABLED": "false",
+      "DEMO_MODE": "false",
+      "USE_MOCK_AUTH": null
+    },
+    "iphoneConnected": true,
+    "deviceAppsQueryExitCode": 0,
+    "installedCareflow": [
+      {
+        "bundleIdentifier": "com.careflow.careflowPatient",
+        "version": "1.0.0",
+        "bundleVersion": "16"
+      }
+    ]
+  },
+  "staging": "NOT_PROVISIONED: current bridge depends on developer Mac/local network",
+  "pushAcceptance": "BLOCKED: current artifact lacks aps-environment; private Firebase config absent; no push delivery attempted",
+  "aiAcceptance": "DEFERRED: no real records or provider requests in R0"
+}

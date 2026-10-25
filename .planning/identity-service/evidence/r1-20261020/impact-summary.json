@@ -1,0 +1,233 @@
+[
+  {
+    "symbol": "UserController",
+    "file": "careflow-identity-service/src/main/java/com/careflow/identity/controller/UserController.java",
+    "risk": "UNKNOWN",
+    "summary": {
+      "direct": 0,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "updateStatus",
+    "file": "careflow-identity-service/src/main/java/com/careflow/identity/controller/UserController.java",
+    "risk": "UNKNOWN",
+    "summary": {
+      "direct": 0,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "updateRole",
+    "file": "careflow-identity-service/src/main/java/com/careflow/identity/controller/UserController.java",
+    "risk": "UNKNOWN",
+    "summary": {
+      "direct": 0,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "login",
+    "file": "careflow-identity-service/src/main/java/com/careflow/identity/service/AuthService.java",
+    "risk": "LOW",
+    "summary": {
+      "direct": 1,
+      "processes_affected": 1,
+      "modules_affected": 1
+    },
+    "status": null
+  },
+  {
+    "symbol": "UserRepository",
+    "file": "careflow-identity-service/src/main/java/com/careflow/identity/repository/UserRepository.java",
+    "risk": "HIGH",
+    "summary": {
+      "direct": 17,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "doFilterInternal",
+    "file": "careflow-identity-service/src/main/java/com/careflow/identity/security/JwtAuthenticationFilter.java",
+    "risk": "UNKNOWN",
+    "summary": {
+      "direct": 0,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "DirectoryService",
+    "file": "careflow-hospital-directory-service/src/main/java/com/careflow/directory/service/DirectoryService.java",
+    "risk": "LOW",
+    "summary": {
+      "direct": 3,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "createStaffAssignment",
+    "file": "careflow-hospital-directory-service/src/main/java/com/careflow/directory/service/DirectoryService.java",
+    "risk": "LOW",
+    "summary": {
+      "direct": 1,
+      "processes_affected": 1,
+      "modules_affected": 1
+    },
+    "status": null
+  },
+  {
+    "symbol": "updateStaffAssignment",
+    "file": "careflow-hospital-directory-service/src/main/java/com/careflow/directory/service/DirectoryService.java",
+    "risk": "LOW",
+    "summary": {
+      "direct": 1,
+      "processes_affected": 1,
+      "modules_affected": 1
+    },
+    "status": null
+  },
+  {
+    "symbol": "createDoctorProfile",
+    "file": "careflow-hospital-directory-service/src/main/java/com/careflow/directory/service/DirectoryService.java",
+    "risk": "LOW",
+    "summary": {
+      "direct": 1,
+      "processes_affected": 1,
+      "modules_affected": 1
+    },
+    "status": null
+  },
+  {
+    "symbol": "updateDoctorProfile",
+    "file": "careflow-hospital-directory-service/src/main/java/com/careflow/directory/service/DirectoryService.java",
+    "risk": "LOW",
+    "summary": {
+      "direct": 1,
+      "processes_affected": 1,
+      "modules_affected": 1
+    },
+    "status": null
+  },
+  {
+    "symbol": "DoctorController",
+    "file": "careflow-hospital-directory-service/src/main/java/com/careflow/directory/controller/DoctorController.java",
+    "risk": "UNKNOWN",
+    "summary": {
+      "direct": 0,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "AdminAccountsPage",
+    "file": "frontend/doctor-web/src/app/(dashboard)/admin/accounts/page.tsx",
+    "risk": "UNKNOWN",
+    "summary": {
+      "direct": 0,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "handleConfirmToggleStatus",
+    "file": "frontend/doctor-web/src/app/(dashboard)/admin/accounts/page.tsx",
+    "risk": "UNKNOWN",
+    "summary": {
+      "direct": 0,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "handleCreateAccount",
+    "file": "frontend/doctor-web/src/app/(dashboard)/admin/accounts/page.tsx",
+    "risk": "UNKNOWN",
+    "summary": {
+      "direct": 0,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "ConsultationPage",
+    "file": "frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx",
+    "risk": "UNKNOWN",
+    "summary": {
+      "direct": 0,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "loadSummary",
+    "file": "frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx",
+    "risk": "LOW",
+    "summary": {
+      "direct": 1,
+      "processes_affected": 1,
+      "modules_affected": 1
+    },
+    "status": null
+  },
+  {
+    "symbol": "loadData",
+    "file": "frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx",
+    "risk": "LOW",
+    "summary": {
+      "direct": 1,
+      "processes_affected": 1,
+      "modules_affected": 1
+    },
+    "status": null
+  },
+  {
+    "symbol": "DashboardGeneralPage",
+    "file": "frontend/doctor-web/src/app/(dashboard)/dashboard/general/page.tsx",
+    "risk": "UNKNOWN",
+    "summary": {
+      "direct": 0,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  },
+  {
+    "symbol": "loadDashboardData",
+    "file": "frontend/doctor-web/src/app/(dashboard)/dashboard/general/page.tsx",
+    "risk": "LOW",
+    "summary": {
+      "direct": 1,
+      "processes_affected": 1,
+      "modules_affected": 1
+    },
+    "status": null
+  },
+  {
+    "symbol": "AdminDashboardPage",
+    "file": "frontend/doctor-web/src/app/(dashboard)/admin/page.tsx",
+    "risk": "UNKNOWN",
+    "summary": {
+      "direct": 0,
+      "processes_affected": 0,
+      "modules_affected": 0
+    },
+    "status": null
+  }
+]

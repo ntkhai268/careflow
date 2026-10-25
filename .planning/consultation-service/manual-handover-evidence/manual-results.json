@@ -1,0 +1,1068 @@
+{
+  "startedAt": "2026-10-16T08:46:25.769Z",
+  "finishedAt": "2026-10-16T08:54:35.966Z",
+  "mode": "Step-by-step headed Chrome UI via Playwright; observed screenshots and real network; no interception or API mocking",
+  "checks": [
+    {
+      "name": "Bắt buộc nhập lý do và 4 phần SBAR",
+      "status": "PASS",
+      "detail": "5 trường trống bị chặn ngay trên giao diện, không gửi API"
+    },
+    {
+      "name": "Gửi yêu cầu thật và hiển thị ở bác sĩ nhận",
+      "status": "PASS",
+      "detail": "HTTP 200, trạng thái PENDING; C thấy đúng bệnh nhân và SBAR"
+    },
+    {
+      "name": "Người nhận chưa xác nhận không đọc được ca đầy đủ",
+      "status": "PASS",
+      "detail": "Trang khám trả 403 và báo không có quyền"
+    },
+    {
+      "name": "Từ chối có lý do, B giữ quyền phụ trách",
+      "status": "PASS",
+      "detail": "B mở lại ca thành công, người phụ trách B và tác giả A giữ nguyên"
+    },
+    {
+      "name": "Hủy yêu cầu qua Web",
+      "status": "PASS",
+      "detail": "C thấy Đã hủy và không còn nút tiếp nhận; không thay người phụ trách"
+    },
+    {
+      "name": "Điều phối cùng phòng hủy yêu cầu của bác sĩ khác",
+      "status": "PASS",
+      "detail": "HTTP 200, người quyết định thực tế là C, bác sĩ B vẫn phụ trách"
+    },
+    {
+      "name": "Sửa lỗi UI khi ca bị 403",
+      "status": "PASS",
+      "detail": "Thông báo lỗi giữ nguyên sau 3,5 giây; không còn biểu mẫu, bệnh nhân giả hoặc nút hoàn tất"
+    },
+    {
+      "name": "Bác sĩ C tiếp nhận qua hộp thoại xác nhận",
+      "status": "PASS",
+      "detail": "HTTP 200, ACCEPTED, có người nhận, ghi chú và thời điểm; hiện nút tiếp tục ca"
+    },
+    {
+      "name": "C mở đúng ca và giữ tác giả A",
+      "status": "PASS",
+      "detail": "Trang có bệnh nhân demo 01, bác sĩ phụ trách C, khởi tạo A và banner toa nháp cũ chỉ đọc"
+    },
+    {
+      "name": "Bác sĩ giao B mất quyền sau khi C tiếp nhận",
+      "status": "PASS",
+      "detail": "B mở lại cùng URL bị 403; giao diện chỉ còn thông báo lỗi, không có thao tác khám"
+    },
+    {
+      "name": "Toa nháp của bác sĩ A được mở để đối chiếu",
+      "status": "PASS",
+      "detail": "Hộp chi tiết hiển thị thuốc thật, chỉ có nút đóng; không có ký/sửa thay A"
+    },
+    {
+      "name": "Bác sĩ nhận lưu bệnh án và tạo toa nháp riêng",
+      "status": "PASS",
+      "detail": "PUT ca 200, POST toa 201; toa mới DRAFT thuộc C, khác toa gốc của A"
+    },
+    {
+      "name": "Tải lại vẫn còn bệnh án và toa nháp của C",
+      "status": "PASS",
+      "detail": "Dữ liệu lưu trong DB thật và được tải lại qua API; giữ toa A chỉ đọc"
+    },
+    {
+      "name": "Mobile giữ hành trình của cùng bệnh nhân sau bàn giao",
+      "status": "PASS",
+      "detail": "Đăng nhập bệnh nhân 01 qua UI; hành trình đang diễn ra, không báo lỗi tải hoặc yêu cầu đặt lịch/check-in lại"
+    },
+    {
+      "name": "Bàn giao ngược C về B có xác nhận",
+      "status": "PASS",
+      "detail": "C gửi, B nhận qua UI; không tạo lượt khám mới"
+    },
+    {
+      "name": "Toa của cả A và C đều giữ tác giả sau khi B nhận lại",
+      "status": "PASS",
+      "detail": "B thấy hai toa nháp trước chỉ đọc; không tự trở thành tác giả của chúng"
+    },
+    {
+      "name": "ADMIN thu hồi quyền điều phối có hiệu lực trên Web",
+      "status": "PASS",
+      "detail": "C không còn thấy ca của B để gửi thay; không có thay đổi trách nhiệm"
+    },
+    {
+      "name": "ADMIN cấp lại quyền cho đúng bác sĩ/phòng",
+      "status": "PASS",
+      "detail": "Cấp lại C ROOM-08 qua danh mục thật và lý do; lịch sử cấp/thu hồi giữ lại"
+    },
+    {
+      "name": "Điều phối C khởi tạo ngoại lệ cho ca đang thuộc B",
+      "status": "PASS",
+      "detail": "PENDING ghi nguồn B, người khởi tạo C, người nhận A; không tự chuyển trách nhiệm"
+    },
+    {
+      "name": "Ngoại lệ vẫn cần bác sĩ A tự xác nhận",
+      "status": "PASS",
+      "detail": "Chỉ sau thao tác của A, ca mới đổi người phụ trách A"
+    },
+    {
+      "name": "Khôi phục dữ liệu demo theo luồng bàn giao hợp lệ",
+      "status": "PASS",
+      "detail": "A gửi và B nhận lại bằng UI; giữ mọi lịch sử, không sửa SQL trạng thái"
+    },
+    {
+      "name": "ADMIN không vào được trang bàn giao chuyên môn",
+      "status": "PASS",
+      "detail": "Route doctor hiển thị trang 403; ADMIN không có nút ký nhận ca"
+    },
+    {
+      "name": "DOCTOR không tự cấp quyền điều phối",
+      "status": "PASS",
+      "detail": "Route admin hiển thị trang 403"
+    },
+    {
+      "name": "Ca đã hoàn tất không xuất hiện trong danh sách bàn giao",
+      "status": "PASS",
+      "detail": "Bệnh nhân demo 02 đã hoàn tất không được chọn để gửi"
+    },
+    {
+      "name": "Dữ liệu C đã ghi vẫn còn khi bàn giao về B",
+      "status": "PASS",
+      "detail": "B đọc được ghi chú C, hai toa cũ chỉ đọc, tác giả gốc A không đổi"
+    },
+    {
+      "name": "Mobile hiển thị đúng bác sĩ B và phòng Da liễu sau khi khôi phục",
+      "status": "PASS",
+      "detail": "Màn Đang khám hiện BS Bàn giao B, Phòng 08 - Da liễu"
+    },
+    {
+      "name": "Ca không tồn tại hiển thị lỗi cố định",
+      "status": "PASS",
+      "detail": "GET 404, không dựng form khám giả hoặc trạng thái Hoàn tất"
+    },
+    {
+      "name": "Nút Thử lại và Quay lại hoạt động trên trang lỗi",
+      "status": "PASS",
+      "detail": "Thử lại gọi API thật; quay lại đúng danh sách bàn giao"
+    }
+  ],
+  "issues": [
+    {
+      "id": "HANDOVER-MANUAL-01",
+      "title": "Trang khám vẫn hiện biểu mẫu trống và Hoàn tất sau HTTP 403",
+      "status": "FIXED_AND_RETESTED",
+      "before": "02-pending-access-denied.png",
+      "scope": "ConsultationPage error/loading state only",
+      "after": "04-fixed-access-error.png"
+    }
+  ],
+  "uncaughtErrors": [],
+  "requests": [
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:46:28.676Z"
+    },
+    {
+      "path": "/api/consultations/doctor/c8dca56c-b223-498a-a833-31b8f816d011/today",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:46:29.493Z"
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:46:29.988Z"
+    },
+    {
+      "path": "/api/appointments/clinical-context/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:46:30.009Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:46:30.315Z"
+    },
+    {
+      "path": "/api/consultations/doctor/7804f263-fedd-4db2-a746-d7172fef430a/today",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:46:30.329Z"
+    },
+    {
+      "path": "/api/appointments/clinical-context/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:46:30.852Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:46:30.941Z"
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-08/active",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:46:31.199Z"
+    },
+    {
+      "path": "/api/patients/5e4ba3a0-955c-4852-8c21-70606880c05c",
+      "method": "GET",
+      "status": 403,
+      "time": "2026-10-16T08:46:31.887Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:46:52.053Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:46:52.162Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:46:52.319Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:46:52.472Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:07.459Z"
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 403,
+      "time": "2026-10-16T08:47:07.566Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:07.996Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:08.255Z"
+    },
+    {
+      "path": "/api/consultations/handovers/66d0509e-c0ef-4ae8-9d58-45742c8ddd0b/reject",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:47:08.453Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:08.582Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:08.710Z"
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:08.763Z"
+    },
+    {
+      "path": "/api/patients/5e4ba3a0-955c-4852-8c21-70606880c05c",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:08.957Z"
+    },
+    {
+      "path": "/api/prescriptions/medicines",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:09.117Z"
+    },
+    {
+      "path": "/api/prescriptions/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:09.217Z"
+    },
+    {
+      "path": "/api/labs/orders/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:09.377Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:44.659Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:44.843Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:47:45.242Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:45.287Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:45.351Z"
+    },
+    {
+      "path": "/api/consultations/handovers/48fec103-cfec-4c59-8f8e-8033dd42837e/cancel",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:47:45.549Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:45.597Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:45.669Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:45.763Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:45.900Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:45.975Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:47:46.380Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:46.416Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:46.474Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:46.582Z"
+    },
+    {
+      "path": "/api/consultations/handovers/8cd7209f-182b-4116-86fc-ed552b556225/cancel",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:47:46.731Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:47:46.909Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:18.228Z"
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 403,
+      "time": "2026-10-16T08:49:18.372Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:34.422Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:34.592Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:34.669Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:49:35.114Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:35.173Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:35.250Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:35.355Z"
+    },
+    {
+      "path": "/api/consultations/handovers/c783d613-157d-42aa-a136-7058e88b8dcf/accept",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:49:35.779Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:36.071Z"
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:36.310Z"
+    },
+    {
+      "path": "/api/patients/5e4ba3a0-955c-4852-8c21-70606880c05c",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:36.592Z"
+    },
+    {
+      "path": "/api/prescriptions/medicines",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:36.719Z"
+    },
+    {
+      "path": "/api/prescriptions/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:36.814Z"
+    },
+    {
+      "path": "/api/labs/orders/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:36.943Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:49:48.701Z"
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 403,
+      "time": "2026-10-16T08:49:48.805Z"
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "PUT",
+      "status": 200,
+      "time": "2026-10-16T08:50:42.181Z"
+    },
+    {
+      "path": "/api/prescriptions",
+      "method": "POST",
+      "status": 201,
+      "time": "2026-10-16T08:50:42.451Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:50:42.621Z"
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:50:42.679Z"
+    },
+    {
+      "path": "/api/patients/5e4ba3a0-955c-4852-8c21-70606880c05c",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:50:42.857Z"
+    },
+    {
+      "path": "/api/prescriptions/medicines",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:50:42.901Z"
+    },
+    {
+      "path": "/api/prescriptions/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:50:42.980Z"
+    },
+    {
+      "path": "/api/labs/orders/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:50:43.109Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:12.710Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:12.941Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:51:13.283Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:13.357Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:13.467Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:13.475Z"
+    },
+    {
+      "path": "/api/consultations/handovers/e02a78f0-0d84-4d18-be10-c9e94b3dfc98/accept",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:51:13.724Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:13.772Z"
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:13.902Z"
+    },
+    {
+      "path": "/api/patients/5e4ba3a0-955c-4852-8c21-70606880c05c",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:13.988Z"
+    },
+    {
+      "path": "/api/prescriptions/medicines",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:14.028Z"
+    },
+    {
+      "path": "/api/prescriptions/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:14.114Z"
+    },
+    {
+      "path": "/api/labs/orders/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:14.195Z"
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:51:30.464Z"
+    },
+    {
+      "path": "/api/consultations/doctor/a46e5437-91d9-4718-8045-6fd9dfb76f52/today",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:30.695Z"
+    },
+    {
+      "path": "/api/appointments/clinical-context/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:31.039Z"
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-08/active",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:31.139Z"
+    },
+    {
+      "path": "/api/patients/5e4ba3a0-955c-4852-8c21-70606880c05c",
+      "method": "GET",
+      "status": 403,
+      "time": "2026-10-16T08:51:31.274Z"
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:51:31.486Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:31.596Z"
+    },
+    {
+      "path": "/api/consultations/handovers/coordinators",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:31.665Z"
+    },
+    {
+      "path": "/api/directory/doctors",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:31.678Z"
+    },
+    {
+      "path": "/api/consultations/handovers/coordinators/7804f263-fedd-4db2-a746-d7172fef430a/revoke",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:51:31.762Z"
+    },
+    {
+      "path": "/api/consultations/handovers/coordinators",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:31.835Z"
+    },
+    {
+      "path": "/api/directory/doctors",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:31.841Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:31.845Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:31.930Z"
+    },
+    {
+      "path": "/api/consultations/handovers/coordinators",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:51:32.236Z"
+    },
+    {
+      "path": "/api/consultations/handovers/coordinators",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:32.268Z"
+    },
+    {
+      "path": "/api/directory/doctors",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:32.269Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:48.773Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:48.904Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:49.029Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:49.163Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:51:49.513Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:49.574Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:49.671Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:49.673Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:49.858Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:49.915Z"
+    },
+    {
+      "path": "/api/consultations/handovers/988e5428-45d9-4499-9333-09fd60eb4501/accept",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:51:50.225Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:50.276Z"
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:50.395Z"
+    },
+    {
+      "path": "/api/patients/5e4ba3a0-955c-4852-8c21-70606880c05c",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:50.461Z"
+    },
+    {
+      "path": "/api/prescriptions/medicines",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:50.513Z"
+    },
+    {
+      "path": "/api/prescriptions/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:50.592Z"
+    },
+    {
+      "path": "/api/labs/orders/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:50.648Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:51.212Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:51.278Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:51:51.690Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:51.743Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:51.783Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:51.947Z"
+    },
+    {
+      "path": "/api/consultations/handovers/b9fd1852-61f4-4291-9d62-929c3e0d79c9/accept",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:51:52.189Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:51:52.244Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:28.061Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:28.548Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:28.656Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:28.881Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:29.046Z"
+    },
+    {
+      "path": "/api/consultations/2e561daf-b2b8-47a2-bb00-2f62b6590205",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:29.119Z"
+    },
+    {
+      "path": "/api/patients/f06ceafb-6af1-4dbe-b9ce-f702ccf46d6f",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:29.198Z"
+    },
+    {
+      "path": "/api/prescriptions/medicines",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:29.238Z"
+    },
+    {
+      "path": "/api/prescriptions/consultation/2e561daf-b2b8-47a2-bb00-2f62b6590205",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:29.289Z"
+    },
+    {
+      "path": "/api/labs/orders/consultation/2e561daf-b2b8-47a2-bb00-2f62b6590205",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:29.341Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:29.855Z"
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:29.887Z"
+    },
+    {
+      "path": "/api/patients/5e4ba3a0-955c-4852-8c21-70606880c05c",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:29.949Z"
+    },
+    {
+      "path": "/api/prescriptions/medicines",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:29.992Z"
+    },
+    {
+      "path": "/api/prescriptions/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:30.061Z"
+    },
+    {
+      "path": "/api/labs/orders/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:52:30.100Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:53:00.080Z"
+    },
+    {
+      "path": "/api/consultations/00000000-0000-4000-8000-00000000abcd",
+      "method": "GET",
+      "status": 404,
+      "time": "2026-10-16T08:53:00.145Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:53:00.232Z"
+    },
+    {
+      "path": "/api/consultations/00000000-0000-4000-8000-00000000abcd",
+      "method": "GET",
+      "status": 404,
+      "time": "2026-10-16T08:53:00.271Z"
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200,
+      "time": "2026-10-16T08:53:00.428Z"
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:54:35.478Z"
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:54:35.597Z"
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:54:35.679Z"
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200,
+      "time": "2026-10-16T08:54:35.759Z"
+    }
+  ],
+  "fixture": {
+    "room": "ROOM-08",
+    "caseId": "c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+    "finalDoctor": "handover_b_9bbb8a",
+    "originalAuthor": "handover_a_9bbb8a",
+    "additionalDraftDoctor": "handover_c_9bbb8a",
+    "additionalDraftId": "96f20bcc-4cf0-4821-91e7-32a59db669b9"
+  },
+  "git": {
+    "staged": false,
+    "committed": false,
+    "pushed": false
+  },
+  "sessionsLoggedOut": true
+}

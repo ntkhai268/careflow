@@ -5,6 +5,8 @@ import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -13,6 +15,8 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface QueueEntryRepository extends JpaRepository<QueueEntry, UUID> {
+    @Query("select coalesce(max(e.sequenceNumber), 0) from QueueEntry e where e.queueConfigId = :configId and e.queueDate = :date")
+    int maximumSequence(@Param("configId") UUID configId, @Param("date") LocalDate date);
     Optional<QueueEntry> findByAppointmentId(UUID appointmentId);
     Optional<QueueEntry> findByPrescriptionId(UUID prescriptionId);
     Optional<QueueEntry> findByConsultationIdAndQueueTypeAndConsultationPhase(

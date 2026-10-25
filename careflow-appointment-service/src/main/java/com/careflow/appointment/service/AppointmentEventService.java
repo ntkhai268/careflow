@@ -27,6 +27,7 @@ public class AppointmentEventService {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("appointmentId", appointment.getId());
         payload.put("patientId", appointment.getPatientId());
+        payload.put("patientName",appointment.getPatientName());
         payload.put("userId", appointment.getOwnerUserId());
         payload.put("departmentId", appointment.getDepartmentId());
         payload.put("department", appointment.getDepartment().name());

@@ -69,4 +69,14 @@ public class Appointment extends BaseEntity {
 
     @Column(length = 20)
     private String queueNumber;
+
+    @Column(length=50)
+    private String serviceCode;
+    @Column(length=150)
+    private String serviceName;
+    private Long priceVersion;
+    private Long quotedAmount;
+    @Column(length=3)
+    private String quotedCurrency;
+    private java.time.Instant priceEffectiveAt;
 }

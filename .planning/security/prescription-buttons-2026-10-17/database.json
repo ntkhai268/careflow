@@ -1,0 +1,5 @@
+{
+  "careflow_consultation": "                  id                  |  status   |            appointment_id            \n--------------------------------------+-----------+--------------------------------------\n 714f1ec6-2b9f-4a67-a9d7-5a4e48785c23 | COMPLETED | ff29fbb1-3609-4a4c-bc8e-bc448e4f8915\n(1 row)\n\n",
+  "careflow_prescription": "                  id                  |  status   |           consultation_id            \n--------------------------------------+-----------+--------------------------------------\n 2908960f-1e42-4ada-b953-0d795cbd9162 | CONFIRMED | 714f1ec6-2b9f-4a67-a9d7-5a4e48785c23\n(1 row)\n\n",
+  "careflow_queue": " queue_number |  status   |            appointment_id            \n--------------+-----------+--------------------------------------\n NOI-006      | COMPLETED | ff29fbb1-3609-4a4c-bc8e-bc448e4f8915\n(1 row)\n\n"
+}

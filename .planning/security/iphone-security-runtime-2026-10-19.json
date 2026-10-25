@@ -1,0 +1,72 @@
+{
+  "testOnly": true,
+  "database": "owned loopback PostgreSQL; no remote changes",
+  "services": [
+    {
+      "service": "careflow-identity-service",
+      "status": "UP",
+      "verifiedTls": true
+    },
+    {
+      "service": "careflow-hospital-directory-service",
+      "status": "UP",
+      "verifiedTls": true
+    },
+    {
+      "service": "careflow-api-gateway",
+      "status": "UP",
+      "verifiedTls": true
+    },
+    {
+      "service": "careflow-patient-service",
+      "status": "UP",
+      "verifiedTls": true
+    },
+    {
+      "service": "careflow-consultation-service",
+      "status": "UP",
+      "verifiedTls": true
+    },
+    {
+      "service": "careflow-emr-service",
+      "status": "UP",
+      "verifiedTls": true
+    },
+    {
+      "service": "careflow-prescription-service",
+      "status": "UP",
+      "verifiedTls": true
+    },
+    {
+      "service": "careflow-lab-service",
+      "status": "UP",
+      "verifiedTls": true
+    },
+    {
+      "service": "careflow-appointment-service",
+      "status": "UP",
+      "verifiedTls": true
+    },
+    {
+      "service": "careflow-identity-session-secondary",
+      "status": "UP",
+      "verifiedTls": true
+    },
+    {
+      "service": "careflow-queue-service",
+      "status": "UP",
+      "verifiedTls": true
+    },
+    {
+      "service": "careflow-notification-service",
+      "status": "UP",
+      "verifiedTls": true
+    }
+  ],
+  "appVersion": "1.0.0 (9)",
+  "installed": true,
+  "launched": true,
+  "faceIdSensorVerified": false,
+  "aiDeployed": false,
+  "resendKeyChanged": false
+}

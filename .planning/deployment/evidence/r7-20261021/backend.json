@@ -1,0 +1,140 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "command": "mvn -B -Dnet.bytebuddy.experimental=true clean verify",
+  "postgresTestsEnabled": true,
+  "provenance": "Full clean verify after conflict and event-ordering fixes; all PostgreSQL suites enabled. Raw output and Surefire XML retained outside /tmp.",
+  "totalTests": 1000,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 0,
+  "modules": {
+    "careflow-ai-service": {
+      "tests": 31,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 9,
+      "suiteHashesSha256": "1332683d3a92b5dc6babd3907e61e2ebd3379bbab2be96e5ee2e787e231e7df6",
+      "latestReportAt": "2026-10-21T14:18:26.251200+00:00"
+    },
+    "careflow-analytics-service": {
+      "tests": 30,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 4,
+      "suiteHashesSha256": "182276c4330d80d7f780cae48055bb1b4e29d2f396e1b68d61bc630cdf0b4982",
+      "latestReportAt": "2026-10-21T14:17:58.107143+00:00"
+    },
+    "careflow-api-gateway": {
+      "tests": 39,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 6,
+      "suiteHashesSha256": "c23209e49925e2fd24845df7c6a80139aacf3f545de7b41551370915b44ab86f",
+      "latestReportAt": "2026-10-21T14:16:58.258050+00:00"
+    },
+    "careflow-appointment-service": {
+      "tests": 87,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 16,
+      "suiteHashesSha256": "fcaf4fabeefa23b59e39a1effe0e8cf31b78086a95d007e0bb7c73e44559444f",
+      "latestReportAt": "2026-10-21T14:17:35.681425+00:00"
+    },
+    "careflow-common": {
+      "tests": 53,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 7,
+      "suiteHashesSha256": "74514aa3a382ac24d0c27cfae30272e0e7bd7c72d3e501ba8dbfc6cc9f718f65",
+      "latestReportAt": "2026-10-21T14:16:54.726801+00:00"
+    },
+    "careflow-consultation-service": {
+      "tests": 109,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 16,
+      "suiteHashesSha256": "e87b22ca0c36a4bde645532537ff9153d8bec4d81a47f4e1f1eef9e3b0d49f24",
+      "latestReportAt": "2026-10-21T14:18:04.732207+00:00"
+    },
+    "careflow-emr-service": {
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 3,
+      "suiteHashesSha256": "4711498e623b359c6921fe1074d63211245c7d60d89807c3f03e331c30e8ff70",
+      "latestReportAt": "2026-10-21T14:18:14.801942+00:00"
+    },
+    "careflow-hospital-directory-service": {
+      "tests": 38,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 11,
+      "suiteHashesSha256": "c1365da0c9339b7a2ceff5dd0b585bb625b1c84d56b9c28163ac5c576217f142",
+      "latestReportAt": "2026-10-21T14:18:37.230062+00:00"
+    },
+    "careflow-identity-service": {
+      "tests": 175,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 25,
+      "suiteHashesSha256": "87ebb3c036b61f66699be0aa89c93ecd5200efce3b34e8474658b69a1994fc3b",
+      "latestReportAt": "2026-10-21T14:17:22.562716+00:00"
+    },
+    "careflow-lab-service": {
+      "tests": 81,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 7,
+      "suiteHashesSha256": "22c7eac379d2d1d4e6f8fa375a13e06a4fbe660b16e77e01117ab1b0dbec7b1a",
+      "latestReportAt": "2026-10-21T14:18:19.635226+00:00"
+    },
+    "careflow-notification-service": {
+      "tests": 41,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 11,
+      "suiteHashesSha256": "d0260fc961ac55be24eac66b7fff753a58334228c15aefadb86c28fa7d1c1e53",
+      "latestReportAt": "2026-10-21T14:17:52.201503+00:00"
+    },
+    "careflow-patient-service": {
+      "tests": 91,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 14,
+      "suiteHashesSha256": "6ecee3dd4801b4e9b3676c0979ece1e618e455781b3e587733c76d06eeea5651",
+      "latestReportAt": "2026-10-21T14:17:29.419159+00:00"
+    },
+    "careflow-prescription-service": {
+      "tests": 119,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 11,
+      "suiteHashesSha256": "cabe37d04888af8619184ad650268e33d8d6d249ee9e6d5031894ab19d2aaf60",
+      "latestReportAt": "2026-10-21T14:18:11.791910+00:00"
+    },
+    "careflow-queue-service": {
+      "tests": 88,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "suiteCount": 19,
+      "suiteHashesSha256": "24fa5c25560f9c22169294d7176fc1c3eccee8c94d7a5548efef6ec051c92a9b",
+      "latestReportAt": "2026-10-21T14:17:43.757884+00:00"
+    }
+  }
+}

@@ -44,6 +44,8 @@ build/
 .flutter-plugins-dependencies
 *.g.dart
 frontend/patient-mobile/android/app/google-services.json
+frontend/patient-mobile/ios/Runner/GoogleService-Info.plist
+**/AuthKey_*.p8
 
 # Firebase credentials (never commit service-account private keys)
 secrets/firebase-service-account*.json

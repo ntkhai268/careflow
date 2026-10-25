@@ -1,0 +1,26 @@
+{
+  "checkedAt": "2026-10-20T04:27:45.818314+00:00",
+  "database": "owned loopback PostgreSQL",
+  "observation": {
+    "recentSessions": [
+      {
+        "method": "BIOMETRIC",
+        "count": 1,
+        "latest": "2026-10-20T04:27:06.835281+00:00"
+      },
+      {
+        "method": "PASSKEY",
+        "count": 2,
+        "latest": "2026-10-20T04:25:01.592933+00:00"
+      },
+      {
+        "method": "PASSWORD",
+        "count": 3,
+        "latest": "2026-10-20T04:26:43.848891+00:00"
+      }
+    ],
+    "recentBiometricUses": 1,
+    "activePasskeyCount": 1
+  },
+  "userActionConfirmation": "User reports OK and explicitly requests R2; no per-case assertion for camera/email UI"
+}

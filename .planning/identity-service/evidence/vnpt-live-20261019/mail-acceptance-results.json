@@ -1,0 +1,42 @@
+{
+  "checkedAt": "2026-10-19T15:19:00.364794+00:00",
+  "environment": "isolated disposable Identity database; real Resend",
+  "recipient": "user-provided address; omitted",
+  "messageCount": 3,
+  "purposes": [
+    "SIGNUP",
+    "CODE",
+    "CHANGED"
+  ],
+  "providerAccepted": true,
+  "inboxReceiptConfirmed": false,
+  "existingPhoneAccountModified": false,
+  "payloadsErased": true,
+  "checks": [
+    {
+      "name": "Real Resend accepted the signup OTP for the isolated test account",
+      "status": "PASS"
+    },
+    {
+      "name": "Correct email signup code creates an account and enables login",
+      "status": "PASS"
+    },
+    {
+      "name": "Real Resend accepted the password recovery OTP",
+      "status": "PASS"
+    },
+    {
+      "name": "Wrong code is rejected; correct code unlocks reset and the grant is single-use",
+      "status": "PASS"
+    },
+    {
+      "name": "Password reset revokes the old access/refresh session and old password",
+      "status": "PASS"
+    },
+    {
+      "name": "All three distinct-purpose real messages accepted; encrypted outbox payloads erased",
+      "status": "PASS"
+    }
+  ],
+  "harnessNote": "Final state assertion uses one row per message; CODE and CHANGED share a recovery challenge ID. No email was resent."
+}

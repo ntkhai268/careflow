@@ -1,0 +1,174 @@
+{
+  "consultationId": "f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+  "prescriptionId": "3ba91901-f338-4f09-8e9a-42b19d0cdeaf",
+  "realServiceStop": true,
+  "completionAfterFailedSave": 0,
+  "signedPrescriptionUpdateAttempts": 0,
+  "requests": [
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/clinical-context/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-11/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/06fddf04-8fcf-410f-b40d-561313a0dee9",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/doctor/78da2fc2-fcea-45ac-abab-68ddacd19315",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-11/call-next",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-11/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/doctor/78da2fc2-fcea-45ac-abab-68ddacd19315",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/appointment/e8b34ca9-31f2-4c5c-906a-4924a0880337",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/queues/entries/bd6b4590-e892-4408-bb7b-1e9500f4772c/start",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/06fddf04-8fcf-410f-b40d-561313a0dee9",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/labs/services",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/prescriptions/medicines",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/prescriptions/consultation/f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/labs/orders/consultation/f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/prescriptions",
+      "method": "POST",
+      "status": 201
+    },
+    {
+      "path": "/api/prescriptions/3ba91901-f338-4f09-8e9a-42b19d0cdeaf/confirm",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+      "method": "PUT",
+      "status": 500
+    },
+    {
+      "path": "/api/consultations/f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/labs/orders/consultation/f8d51f1d-f8e8-4114-8833-d248617ed2f6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/f8d51f1d-f8e8-4114-8833-d248617ed2f6/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/entries/bd6b4590-e892-4408-bb7b-1e9500f4772c/complete",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/e8b34ca9-31f2-4c5c-906a-4924a0880337/status",
+      "method": "PUT",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/doctor/78da2fc2-fcea-45ac-abab-68ddacd19315/today",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/clinical-context/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-11/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/06fddf04-8fcf-410f-b40d-561313a0dee9",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/765baab5-5ff5-4dfd-9ca9-ce2c69e10b6a",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/eb5faab3-2145-4f50-a3fc-3db1250f8987",
+      "method": "GET",
+      "status": 200
+    }
+  ]
+}

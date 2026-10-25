@@ -1,0 +1,6 @@
+com.careflow.common.security.ActiveSessionAutoConfiguration
+com.careflow.common.security.ServiceCallerAutoConfiguration
+com.careflow.common.security.InternalTlsAutoConfiguration
+com.careflow.common.security.ProductionSafetyAutoConfiguration
+com.careflow.common.security.ClinicalAuditAutoConfiguration
+com.careflow.common.security.PatientOwnershipAutoConfiguration

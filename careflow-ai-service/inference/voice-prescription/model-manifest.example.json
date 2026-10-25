@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "backend": "mlx",
+  "releaseId": "replace-with-verified-release",
+  "modelId": "moona3k/mlx-qwen3-asr-0.6b-8bit",
+  "baseRevision": "83ce2a8ef9a382d2ba2209aab383bc51fff366f5",
+  "baseDirectory": "base",
+  "adapterDirectory": "adapter",
+  "files": {
+    "base/config.json": "REPLACE_WITH_SHA256",
+    "base/weights.safetensors": "REPLACE_WITH_SHA256",
+    "base/tokenizer.json": "REPLACE_WITH_SHA256",
+    "adapter/adapter_config.json": "REPLACE_WITH_SHA256",
+    "adapter/adapters.safetensors": "REPLACE_WITH_SHA256"
+  },
+  "clinicalValidation": false,
+  "note": "Example only. Provisioning generates the full file list including all tokenizer assets. No weights are included in Git."
+}

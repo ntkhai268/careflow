@@ -13,13 +13,18 @@ import java.util.UUID;
 @Service
 public class DeviceInstallationService {
     private final DeviceInstallationRepository installations;
+    @org.springframework.beans.factory.annotation.Autowired private org.springframework.jdbc.core.JdbcTemplate jdbc;
 
     public DeviceInstallationService(DeviceInstallationRepository installations) {
         this.installations = installations;
     }
 
     @Transactional
-    public DeviceInstallationResponse register(UUID userId, RegisterDeviceRequest request) {
+    public DeviceInstallationResponse register(UUID userId, UUID sessionId, RegisterDeviceRequest request) {
+        if(userId==null || sessionId==null)throw new com.careflow.common.exception.BusinessException(401,"Cần phiên đã xác minh để đăng ký thông báo.");
+        // Production bean requires JDBC; direct unit fixtures do not exercise PostgreSQL locks.
+        if(jdbc!=null)for(String key:java.util.stream.Stream.of("push-token:"+request.registrationToken(),"push-device:"+userId+":"+request.deviceId()).sorted().toList())
+            jdbc.queryForObject("SELECT pg_advisory_xact_lock(hashtextextended(?,0))",Object.class,key);
         Instant now = Instant.now();
         DeviceInstallation installation = installations.findByUserIdAndDeviceId(userId, request.deviceId())
                 .orElseGet(() -> newInstallation(userId, request.deviceId(), now));
@@ -34,6 +39,8 @@ public class DeviceInstallationService {
                     installations.flush();
                 });
 
+        if(!installation.isEnabled() || installation.getBindingId()==null || !request.registrationToken().equals(installation.getRegistrationToken()))installation.setBindingId(UUID.randomUUID());
+        installation.setSessionId(sessionId);
         installation.setRegistrationToken(request.registrationToken());
         installation.setPlatform(request.platform());
         installation.setAppVersion(request.appVersion());
@@ -64,6 +71,6 @@ public class DeviceInstallationService {
     private DeviceInstallationResponse toResponse(DeviceInstallation installation) {
         return new DeviceInstallationResponse(installation.getId(), installation.getDeviceId(),
                 installation.getPlatform(), installation.getAppVersion(), installation.isEnabled(),
-                installation.getLastSeenAt());
+                installation.getLastSeenAt(), installation.getBindingId());
     }
 }

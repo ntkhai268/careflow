@@ -22,4 +22,6 @@ public class DoctorProfileResponse {
     private String specialization;
     private String licenseNumber;
     private Boolean isActive;
+
+    private Boolean primaryForBooking;
 }

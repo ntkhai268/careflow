@@ -1,0 +1,268 @@
+{
+  "checkedAt": "2026-10-16T06:14:08.524Z",
+  "mock": false,
+  "checks": [
+    {
+      "name": "Real doctor picker filters API data and dismisses on outside click",
+      "status": "PASS"
+    },
+    {
+      "name": "Doctor sends actual structured SBAR handover through Web",
+      "status": "PASS"
+    },
+    {
+      "name": "Pending receiver cannot open the full consultation",
+      "status": "PASS"
+    },
+    {
+      "name": "Receiver sees addressed patient identity and SBAR before accepting",
+      "status": "PASS"
+    },
+    {
+      "name": "ADMIN grants/revokes coordination through real UI without signing clinical handover",
+      "status": "PASS"
+    },
+    {
+      "name": "Receiver explicitly acknowledges responsibility through the confirmation dialog",
+      "status": "PASS"
+    },
+    {
+      "name": "Receiver opens real patient consultation; inherited draft remains read-only with original author",
+      "status": "PASS"
+    },
+    {
+      "name": "Account header identifies the real logged-in user; consultation shows current doctor B and original author A",
+      "status": "PASS"
+    },
+    {
+      "name": "Former responsible doctor cannot mutate the handed-over case",
+      "status": "PASS"
+    },
+    {
+      "name": "Original patient keeps the same active journey on Mobile Emulator after handover",
+      "status": "PASS"
+    },
+    {
+      "name": "Handover interfaces have no uncaught JavaScript errors",
+      "status": "PASS"
+    }
+  ],
+  "requests": [
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/doctor/7804f263-fedd-4db2-a746-d7172fef430a/today",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/clinical-context/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-08/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/5e4ba3a0-955c-4852-8c21-70606880c05c",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/doctor/c8dca56c-b223-498a-a833-31b8f816d011/today",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/clinical-context/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/rooms/ROOM-08/active",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/5e4ba3a0-955c-4852-8c21-70606880c05c",
+      "method": "GET",
+      "status": 403
+    },
+    {
+      "path": "/api/patients/f06ceafb-6af1-4dbe-b9ce-f702ccf46d6f",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/directory/departments",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/directory/rooms",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/directory/doctors",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 403
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/directory/doctors",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers/coordinators",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers/coordinators/7804f263-fedd-4db2-a746-d7172fef430a/revoke",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/directory/doctors",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers/coordinators",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers/coordinators",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/directory/doctors",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers/coordinators",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers/857cad0b-0af8-4701-965f-df7a37f56997/accept",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/5e4ba3a0-955c-4852-8c21-70606880c05c",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/prescriptions/medicines",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/prescriptions/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/labs/orders/consultation/c0e4d579-a1df-4cbb-803e-ae6d5384a508",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/handovers",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    }
+  ],
+  "errors": []
+}

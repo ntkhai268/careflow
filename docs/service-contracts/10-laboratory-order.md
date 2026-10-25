@@ -1,5 +1,8 @@
 # Laboratory Order Service Contract
 
+> **Chuẩn hóa R0 — 19/10/2026:** Phạm vi bàn giao đầy đủ, ownership và phân biệt CURRENT/TARGET xem [bộ đặc tả chuẩn](../../.planning/architecture/README.md). Tài liệu này không chứng minh chức năng đã được nghiệm thu. Các đoạn MVP/mock cũ phải đọc theo giới hạn và thay đổi tại R0; không loại Analytics/AI khỏi yêu cầu cuối.
+
+
 > Contract ID: `CF-SVC-10` | Version: `1.2` | Module: `careflow-lab-service`
 
 ## 1. Trách nhiệm và ranh giới
@@ -9,7 +12,7 @@ Sở hữu:
 - chỉ định cận lâm sàng và từng hạng mục;
 - điểm thực hiện, yêu cầu chuẩn bị, trạng thái thực hiện;
 - kết quả, khoảng tham chiếu, người nhập/xác nhận và lịch sử chỉnh sửa;
-- chi phí từng hạng mục để Visit Settlement tổng hợp ở cuối lượt.
+- danh mục xét nghiệm thật, seed idempotent trong PostgreSQL (V2); quyết toán chi phí chưa được tích hợp/nghiệm thu trong runtime Mac.
 
 Không sở hữu active queue; Queue Management tự tạo lượt từ order hợp lệ. Không yêu cầu bệnh
 nhân check-in lần hai. Không xử lý thanh toán, hoàn tiền hoặc dữ liệu thẻ/ngân hàng.
@@ -24,13 +27,13 @@ ORDERED → CANCELLED
 ```
 
 `QUEUED/CALLED/MISSED` là trạng thái projection từ Queue; Lab Order vẫn là nguồn sự thật của
-`ORDERED`, thực hiện và kết quả. Chi phí của order được đưa vào Visit Settlement
-cuối lượt; không có payment state trong Laboratory Order.
+`ORDERED`, thực hiện và kết quả. Không có payment state trong Laboratory Order; mô tả quyết toán mục tiêu không phải bằng chứng đã thu/hoàn tiền thật.
 
 ## 3. HTTP API
 
 | Method và path | Quyền | Mục đích |
 |---|---|---|
+| `GET /api/labs/services` | DOCTOR/ADMIN/LAB_TECHNICIAN | Active catalog from DB, no fixture response |
 | `POST /api/labs/orders` | Assigned `DOCTOR` | Tạo chỉ định |
 | `GET /api/labs/orders/{orderId}` | Doctor/Lab tech/chính patient theo view | Chi tiết |
 | `GET /api/labs/orders/consultation/{consultationId}` | Assigned doctor | Chỉ định của lần khám |
@@ -66,8 +69,7 @@ Create request:
 ```
 
 Server lấy `orderedByDoctorId` từ trusted header và xác minh consultation. Mỗi
-item trả về `unitPrice`/`lineAmount` theo fixture/catalog để quyết toán cuối lượt
-tổng hợp; Laboratory Service không nhận payment method hoặc xác nhận thu tiền.
+item được chuẩn hóa tên/điểm/chuẩn bị từ bảng lab_service_catalog. Mã không hoạt động hoặc sai điểm trả 422. Không dùng fixture giá hoặc tuyên bố đã quyết toán. Laboratory Service không nhận payment method hoặc xác nhận thu tiền.
 
 Result request:
 
@@ -185,3 +187,15 @@ Mobile. Queue dùng field này để đưa lượt đọc kết quả về đún
 - Doctor tạo chỉ định; order hợp lệ tự tạo lượt mà không yêu cầu payment riêng.
 - Lab queue xuất hiện tự động, không check-in lại.
 - Technician nhập kết quả; patient quay lại review đúng rule và thấy kết quả sau phát hành.
+
+## Accepted clinical handover — 2026-10-16
+
+Assigned-doctor authorization uses Consultation's current doctorId. The receiving doctor may read/review existing orders in the same consultation even when orderedByDoctorId names the earlier doctor. Order author is preserved; patient/consultation identity checks and technician execution assignment remain required. Pending handover does not grant clinical mutation rights.
+
+## Runtime validation 2026-10-17
+
+Real catalog API seeds CBC / LAB-HEMATOLOGY-01 and GLUCOSE / LAB-BIOCHEMISTRY-01 using ON CONFLICT DO NOTHING. Startup does not erase orders/results. Hospital Web searches/selects real catalog entries and active LAB rooms; imaging is outside this tested runtime.
+
+Doctor sends the initial clinic queue entry to completed when waiting for results. Result-review entries intentionally link consultationId and may have no appointmentId. UI resumes that exact consultation, starts the review queue entry, marks published orders reviewed and closes the correct review entry on completion. Consultation verifies all real Lab statuses: resume requires published/reviewed/cancelled orders; complete requires reviewed/cancelled. Lab unavailable returns 503; unfinished work returns 409. No fake result fallback.
+
+Two CBC cases, including one transferred from A to B, completed through real headed-browser UI to dispensing on 17/10. Full evidence and untested financial/hardware scope: `.planning/security/end-to-end-2026-10-17.md`.

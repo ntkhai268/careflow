@@ -1,0 +1,29 @@
+{
+  "checkedAt": "2026-10-21T15:21:32.153808+00:00",
+  "candidateId": "r7-929e88327e54c311",
+  "status": "PASS",
+  "scope": "Current R7 version, runtime, gate, guide, schema deltas and explicit acceptance limitations; older reports retain historical scope",
+  "dbmlFilesChecked": 12,
+  "r7SchemaDelta": true,
+  "schemaChanges": [
+    "Queue V14 appointment_cancellations, synchronized DBML"
+  ],
+  "otherServiceDbmlEqualToPreservedR6": true,
+  "queueV14MigrationColumnsVerified": true,
+  "canonicalGuide": "huong-dan-su-dung/25-nghiem-thu-va-ban-giao-r7.md",
+  "guidesUpdated": [
+    "00",
+    "09",
+    "11",
+    "24",
+    "25",
+    "README",
+    "CHANGELOG"
+  ],
+  "releaseToolGuardTests": {
+    "passed": 10,
+    "failed": 0
+  },
+  "gitWhitespaceCheck": "PASS",
+  "fullAcceptanceClaimed": false
+}

@@ -9,23 +9,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('production ticket renders hospital QR check-in action and assigned room', (
-    tester,
-  ) async {
-    await tester.pumpWidget(
-      app(const VisitTicketScreen(appointmentId: 'apt-1')),
-    );
-    await tester.pumpAndSettle();
+  testWidgets(
+    'production ticket renders hospital QR check-in action and assigned room',
+    (tester) async {
+      await tester.pumpWidget(
+        app(const VisitTicketScreen(appointmentId: 'apt-1')),
+      );
+      await tester.pumpAndSettle();
 
-    expect(find.text('Số thứ tự'), findsOneWidget);
-    expect(find.text('TK-047'), findsNWidgets(2));
-    expect(find.text('Phòng 21 - Lầu 1 khu A'), findsOneWidget);
-    expect(
-      find.text('Quét QR tại bệnh viện để check-in'),
-      findsOneWidget,
-    );
-    expect(find.text('Quét QR check-in tại bệnh viện'), findsOneWidget);
-  });
+      expect(find.text('Số thứ tự'), findsOneWidget);
+      expect(find.text('TK-047'), findsNWidgets(2));
+      expect(find.text('Phòng 21 - Lầu 1 khu A'), findsOneWidget);
+      expect(find.text('Quét QR tại bệnh viện để check-in'), findsOneWidget);
+      expect(find.text('Quét QR check-in tại bệnh viện'), findsOneWidget);
+    },
+  );
 
   testWidgets('production queue renders live called state', (tester) async {
     await tester.pumpWidget(
@@ -66,6 +64,10 @@ class FakeQueueService extends QueueService {
     qrToken: 'signed-queue-ticket-token',
     status: 'TICKET_ISSUED',
   );
+
+  @override
+  Future<PatientQueueStatus> getForAppointment(String appointmentId) =>
+      getCurrent('patient-1');
 
   @override
   Future<PatientQueueStatus> getCurrent(String patientId) async =>

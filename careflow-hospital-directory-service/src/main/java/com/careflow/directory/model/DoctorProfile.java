@@ -46,4 +46,6 @@ public class DoctorProfile extends BaseEntity {
     @Builder.Default
     @Column(nullable = false)
     private Boolean isActive = true;
+
+    private Boolean primaryForBooking;
 }

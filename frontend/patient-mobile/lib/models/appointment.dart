@@ -23,6 +23,8 @@ class Appointment {
   final String? queueNumber;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final String? serviceCode, serviceName, quotedCurrency;
+  final int? priceVersion, quotedAmount;
 
   Appointment({
     required this.id,
@@ -44,6 +46,11 @@ class Appointment {
     this.queueNumber,
     this.createdAt,
     this.updatedAt,
+    this.serviceCode,
+    this.serviceName,
+    this.quotedCurrency,
+    this.priceVersion,
+    this.quotedAmount,
   });
 
   bool get allowsActiveJourney => switch (status.toUpperCase()) {
@@ -54,6 +61,11 @@ class Appointment {
   factory Appointment.fromJson(Map<String, dynamic> json) {
     return Appointment(
       id: json['id'] as String,
+      serviceCode: json['serviceCode'] as String?,
+      serviceName: json['serviceName'] as String?,
+      quotedCurrency: json['quotedCurrency'] as String?,
+      priceVersion: (json['priceVersion'] as num?)?.toInt(),
+      quotedAmount: (json['quotedAmount'] as num?)?.toInt(),
       patientId: json['patientId'] as String,
       patientName: json['patientName'] as String?,
       department: json['department'] as String,

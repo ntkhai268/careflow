@@ -17,5 +17,5 @@ public record QueueDashboardResponse(
         List<QueueEntryResponse> resultReviewQueue,
         QueueEntryResponse recommendedNext,
         SchedulingLane lastServedLane,
-        long schedulerVersion) {
+        long schedulerVersion, com.careflow.queue.domain.MissedPolicy missedPolicy, int maxCallAttempts, boolean receptionActive) {
 }

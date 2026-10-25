@@ -18,9 +18,13 @@ public class ConsultationResponse {
 
     private UUID id;
     private UUID appointmentId;
+    private UUID queueEntryId;
     private UUID patientId;
+    private String patientName;
     private UUID doctorId;
     private String doctorName;
+    private UUID authoredByDoctorId;
+    private String authoredByDoctorName;
     private String departmentCode;
     private String departmentName;
 

@@ -33,6 +33,9 @@ public class PrescriptionMapper {
                 .diagnosis(entity.getDiagnosis())
                 .notes(entity.getNotes())
                 .followUpDate(entity.getFollowUpDate())
+                .followUpDepartment(entity.getFollowUpDepartment()).followUpTimeSlot(entity.getFollowUpTimeSlot())
+                .followUpStatus(entity.getFollowUpStatus()).followUpAppointmentId(entity.getFollowUpAppointmentId())
+                .followUpErrorCode(entity.getFollowUpErrorCode())
                 .dispensingServicePointId(entity.getDispensingServicePointId())
                 .confirmedAt(toLocalDateTime(entity.getConfirmedAt()))
                 .dispensedAt(toLocalDateTime(entity.getDispensedAt()))
@@ -59,7 +62,7 @@ public class PrescriptionMapper {
                 .timing(item.getTiming())
                 .duration(item.getDuration())
                 .quantity(item.getQuantity())
-                .notes(item.getNotes())
+                .notes(item.getNotes()).details(item.getDetails())
                 .createdAt(toLocalDateTime(item.getCreatedAt()))
                 .build();
     }
@@ -74,7 +77,7 @@ public class PrescriptionMapper {
                 .timing(request.getTiming())
                 .duration(request.getDuration())
                 .quantity(request.getQuantity())
-                .notes(request.getNotes())
+                .notes(request.getNotes()).details(com.careflow.prescription.service.PrescriptionDetails.validate(request.getDetails()))
                 .build();
     }
 }

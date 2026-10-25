@@ -6,7 +6,6 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class EkycServiceTest {
@@ -15,12 +14,9 @@ class EkycServiceTest {
     @Test
     void acceptsPngSignatureAndMarksResponseAsMock() {
         byte[] png = {(byte) 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a};
-        var response = service.verify(UUID.randomUUID(),
-                new MockMultipartFile("image", "cccd.png", "image/png", png));
-
-        assertThat(response.mock()).isTrue();
-        assertThat(response.status()).isEqualTo("VERIFIED");
-        assertThat(response.documentNumber()).startsWith("MOCK-");
+        assertThatThrownBy(() -> service.verify(UUID.randomUUID(),
+                new MockMultipartFile("image", "cccd.png", "image/png", png)))
+                .isInstanceOf(BusinessException.class).extracting("status").isEqualTo(410);
     }
 
     @Test

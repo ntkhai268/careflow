@@ -1,0 +1,65 @@
+{
+  "checkedAt": "2026-10-16T04:48:14.921Z",
+  "mock": false,
+  "checks": [
+    "Original real Home failure reproduced: doctor-only lab request returns 403",
+    "Only the browser test session is logged out"
+  ],
+  "requests": [
+    {
+      "path": "/api/auth/login",
+      "method": "POST",
+      "status": 200
+    },
+    {
+      "path": "/api/patients/user/abf0e105-14ec-4c0a-8a0b-b0368fa73ea1",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/patient/f4e9929c-abd6-44ba-bf75-13741708e4ae",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/patient/f4e9929c-abd6-44ba-bf75-13741708e4ae",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/notifications",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/appointments/65b8e77c-6396-4941-b30f-300e652fd8c6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/tickets/appointment/65b8e77c-6396-4941-b30f-300e652fd8c6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/queues/patients/f4e9929c-abd6-44ba-bf75-13741708e4ae/current",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/consultations/appointment/65b8e77c-6396-4941-b30f-300e652fd8c6",
+      "method": "GET",
+      "status": 200
+    },
+    {
+      "path": "/api/labs/orders/consultation/5f0a2c7b-ec39-4e39-9083-bcf694df27cd",
+      "method": "GET",
+      "status": 403
+    },
+    {
+      "path": "/api/auth/logout",
+      "method": "POST",
+      "status": 200
+    }
+  ]
+}
