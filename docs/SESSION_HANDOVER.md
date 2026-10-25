@@ -3,7 +3,7 @@
 > **Tài liệu bàn giao ngữ cảnh liên phiên (Cross-Session Handover & Memory Context)**  
 > **Dự án**: CareFlow — Phân hệ AI Lâm Sàng & Clinical RAG  
 > **Nhánh Git hiện tại**: `feature/vi/ai-service` (Tuyệt đối không push trực tiếp lên `main`)  
-> **Cập nhật lần cuối**: 24/10/2026 (18:15)  
+> **Cập nhật lần cuối**: 25/10/2026 (13:25)  
 > **Mục đích**: Lưu giữ 100% bối cảnh công việc, các quyết định kiến trúc, kinh nghiệm xử lý lỗi và nhiệm vụ tiếp theo để bất kỳ phiên làm việc AI mới nào cũng có thể tiếp tục ngay lập tức mà không bị mất dấu.
 
 ---
@@ -52,6 +52,10 @@
     - **Triệt tiêu Cảnh báo Tương tác Thuốc (DDI) Rác**:
       - Sửa Backend `AiClinicalAssistantService`: Chỉ trích xuất DDI khi ngữ cảnh ca khám thực sự có danh sách thuốc đang kê và tên hoạt chất khớp với phác đồ DDI.
       - Sửa Frontend `page.tsx`: Khối thẻ cảnh báo DDI màu vàng chỉ render khi `prescriptionItems.length > 0` và có thuốc tương tác; khi chưa kê thuốc, thẻ này bị ẩn hoàn toàn.
+  - ✅ **Phase 6: Merge & Harmonization with develop (R0–R7 Baseline)**: **ĐÃ HOÀN TẤT 100%**:
+    - **Đồng bộ mã nguồn**: Đã kéo và tích hợp toàn bộ release R0–R7 từ `origin/develop` vào `feature/vi/ai-service`.
+    - **Giải quyết 100% xung đột (7 tệp)**: Giữ song song cả 2 luồng Voice (Voice Prescription và Consultation Clinical STT), bảo toàn kiến trúc RAG BYT và tương thích `ClinicalEngine`, bảo mật DPoP token + absolute URL.
+    - **Kiểm thử xác thực**: `npm run build` trên `frontend/doctor-web` PASS 100%, `mvn test-compile` trên `careflow-ai-service` BUILD SUCCESS 100%. Nhánh hiện tại sẵn sàng 100% để tạo PR vào `develop`.
 
 ---
 
@@ -130,13 +134,16 @@
 
 ## 4. Nhiệm Vụ Tiếp Theo Khi Tiếp Tục (Next Tasks)
 
-1. **Commit Thay đổi Layout Nút Voice**:
-   - Khi user yêu cầu, commit thay đổi đưa nút `"Ghi âm"` lên trên hàng tab trong `frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx` và push lên `feature/vi/ai-service`.
-2. **Khởi chạy lại Dịch vụ khi cần Test**:
-   - Khởi động backend AI: `./start-local.sh ai` hoặc `mvn -pl careflow-ai-service spring-boot:run -Dspring-boot.run.profiles=local`.
-   - Khởi động frontend: `npm --prefix frontend/doctor-web run dev`.
-3. **Thử nghiệm Đơn thuốc Thực tế (E2E Test)**:
-   - Thử kê đơn thực tế gồm 2 thuốc tương tác (ví dụ `Clopidogrel` và `Omeprazole`), bấm tab "Trợ lý AI Lâm sàng" để kiểm chứng thẻ Cảnh báo DDI xuất hiện chính xác theo phác đồ Dược thư Quốc gia.
+1. **Push nhánh `feature/vi/ai-service` lên GitHub**:
+   - Chạy `git push origin feature/vi/ai-service` để cập nhật các commit merge và conflict resolution lên remote.
+2. **Tạo Pull Request (PR) merge vào `develop`**:
+   - Nhánh `feature/vi/ai-service` hiện tại đã đồng bộ với `develop`, giải quyết sạch toàn bộ conflicts và đã pass kiểm thử frontend build + backend test-compile. Có thể mở PR vào `develop` ngay lập tức.
+3. **Thử nghiệm Đơn thuốc & Song song 2 hệ thống Voice (E2E Test)**:
+   - Khởi động backend và frontend: `./start-local.sh ai` và `npm --prefix frontend/doctor-web run dev`.
+   - Thử nghiệm lâm sàng:
+     - Dùng nút "Ghi âm" ở cột trái: Đọc bệnh sử để điền tự động vào ca khám.
+     - Dùng panel "Nhập toa bằng giọng nói" ở cột phải: Đọc toa thuốc để bóc tách đơn thuốc nháp.
+     - Kiểm tra tab "Trợ lý AI Lâm sàng": Xem trích dẫn phác đồ Bộ Y Tế, nút "+ Áp dụng" và cảnh báo tương tác thuốc DDI từ Dược thư Quốc gia.
 
 ---
 
