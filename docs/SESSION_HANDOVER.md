@@ -57,7 +57,24 @@
 
 ## 2. Nhật Ký Các Phiên Gần Nhất (Recent Sessions Log)
 
-### A. Phiên 24/10/2026 (Phiên tối — Archify Architecture, Header Patient Refinement, Allergy Compact Bar & Manual RAG Import):
+### A. Phiên 25/10/2026 (Phiên trưa — Merge develop vào ai-service, đối chiếu Voice-to-Text & giải quyết 7 xung đột):
+1. **Kiểm tra Dry Run & Kéo nhánh develop (`origin/develop`)**:
+   - Chạy `git merge origin/develop` để đồng bộ toàn bộ release R0–R7 mới nhất.
+   - Phát hiện và giải quyết triệt để xung đột trên **7 tệp**:
+     1. `careflow-ai-service/src/main/java/com/careflow/ai/service/AiClinicalAssistantService.java`: Giữ cả kiến trúc `ClinicalEngine` (R6) và toàn bộ RAG Retrieval Engine + Gemini/DeepSeek provider.
+     2. `frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx`: Giữ toàn bộ quy trình mới của develop (`VoicePrescriptionPanel`, `ClinicalCitations`, `FollowUpAppointmentPanel`) kết hợp hoàn hảo với RAG tab BYT, thanh cảnh báo dị ứng siêu gọn và nút Ghi âm lời khám rảnh tay (`useVoiceStore`).
+     3. `frontend/doctor-web/src/components/AiAssistantWidget.tsx`: Tích hợp render markdown (`FormattedAiText`) vào widget hỗ trợ bác sĩ với bảo vệ vai trò `DOCTOR`.
+     4. `frontend/doctor-web/src/lib/api.ts`: Hợp nhất bảo mật DPoP + session refresh token của develop với logic URL linh hoạt của nhánh AI.
+     5. `AGENTS.md`, `CLAUDE.md`, `README.md`: Hợp nhất quy định dự án, số lượng symbol GitNexus và tài liệu khởi chạy.
+2. **Khảo sát & Đối chiếu 2 hệ thống Voice-to-Text (Voice STT)**:
+   - **Voice Prescription (Nhánh `develop`)**: Nhập toa thuốc bằng giọng nói qua `VoicePrescriptionPanel` + python worker runtime (`careflow_voice_core`), bóc tách danh mục thuốc, liều lượng và lưu toa nháp (`PrescriptionAiDraftService`).
+   - **Consultation Clinical STT (Nhánh `ai-service`)**: Ghi âm lời khám bệnh rảnh tay qua `useVoiceStore` + `VoicePreviewModal`, bóc tách triệu chứng lâm sàng, khám thực thể, chẩn đoán sơ bộ điền vào form ca khám.
+   - **Kết luận**: Cả hai tính năng hoàn toàn bổ trợ cho nhau ở 2 giai đoạn khám khác nhau và đã được tích hợp đồng thời, hoạt động độc lập không xung đột.
+3. **Kiểm thử xác thực (Verification)**:
+   - `npm --prefix frontend/doctor-web run build`: PASS 100% (Turbopack, TypeScript, Static generation).
+   - `mvn -pl careflow-ai-service test-compile`: PASS 100%.
+
+### B. Phiên 24/10/2026 (Phiên tối — Archify Architecture, Header Patient Refinement, Allergy Compact Bar & Manual RAG Import):
 1. **Tích hợp Skill Archify & Tạo Sơ đồ Kiến trúc**:
    - Cài đặt skill `archify` vào dự án (`.agents/skills/archify`).
    - Thiết kế và xuất bản sơ đồ kiến trúc trực quan độc lập (HTML standalone): [`docs/ai-service/clinical-ai-rag-and-voice-architecture.html`](./ai-service/clinical-ai-rag-and-voice-architecture.html) mô tả chi tiết luồng Voice STT, Hybrid Search RAG và Human-in-the-Loop.
