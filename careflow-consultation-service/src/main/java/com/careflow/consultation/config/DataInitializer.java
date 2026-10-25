@@ -82,6 +82,36 @@ public class DataInitializer implements CommandLineRunner {
             consultationRepository.save(c2);
             log.info("Seeded historical completed consultation for Nguyễn Thị Mai (K21.9)");
         }
+
+        // 3. Ca khám mẫu CỐ ĐỊNH ở trạng thái IN_PROGRESS phục vụ kiểm thử AI lâm sàng & Voice
+        UUID aiTestConsultationId = UUID.fromString("c0000001-0000-0000-0000-000000000099");
+        Consultation aiConsultation = consultationRepository.findById(aiTestConsultationId)
+                .orElseGet(() -> {
+                    Consultation c = new Consultation();
+                    c.setId(aiTestConsultationId);
+                    return c;
+                });
+
+        aiConsultation.setPatientId(UUID.fromString("f0000001-0000-0000-0000-000000000004")); // Phạm Đức Anh
+        aiConsultation.setDoctorId(UUID.fromString("d0000001-0000-0000-0000-000000000001"));
+        aiConsultation.setAppointmentId(UUID.fromString("a0000001-0000-0000-0000-000000000001"));
+        aiConsultation.setTemperature(new BigDecimal("37.8"));
+        aiConsultation.setBloodPressure("135/85");
+        aiConsultation.setHeartRate(88);
+        aiConsultation.setSpo2(97);
+        aiConsultation.setHeight(new BigDecimal("168.0"));
+        aiConsultation.setWeight(new BigDecimal("65.0"));
+        aiConsultation.setSymptoms("Bệnh nhân đau tức ngực trái âm ỉ 2 ngày nay, khó thở nhẹ khi gắng sức, hồi hộp đánh trống ngực.");
+        aiConsultation.setClinicalNotes("Tim đều, T1 T2 rõ, chưa nghe âm thổi bệnh lý. Phổi trong không rale. Huyết áp hơi cao.");
+        aiConsultation.setDiagnosis(null);
+        aiConsultation.setIcd10Code(null);
+        aiConsultation.setIcd10Name(null);
+        aiConsultation.setStatus(ConsultationStatus.IN_PROGRESS);
+        aiConsultation.setStartedAt(LocalDateTime.now().minusMinutes(15));
+        aiConsultation.setCompletedAt(null);
+
+        consultationRepository.save(aiConsultation);
+        log.info("Seeded/Ensured active IN_PROGRESS consultation for AI Testing: {}", aiTestConsultationId);
     }
 
     private void alignStatusConstraint() {

@@ -1,5 +1,12 @@
 # Project Rules - CareFlow
 
+## Language & Communication Rule
+- **Always Answer in Vietnamese**: **LUÔN LUÔN trả lời người dùng bằng TIẾNG VIỆT** trong mọi phản hồi, giải thích và trao đổi (trừ commit message bằng tiếng Anh).
+
+## Session Handover & Memory Continuity Rule
+- **BẮT BUỘC ĐỌC ĐẦU MỖI PHIÊN (Mandatory First Read)**: Ở đầu mỗi phiên chat mới hoặc khi bắt đầu tiếp tục công việc, agent BẮT BUỘC phải đọc tệp `docs/SESSION_HANDOVER.md` trước tiên để nắm toàn bộ tiến độ, các quyết định kiến trúc, kinh nghiệm xử lý lỗi và danh sách nhiệm vụ tiếp theo.
+- **CẬP NHẬT TRƯỚC KHI KẾT THÚC (Session End Update)**: Trước khi kết thúc phiên hoặc khi hoàn thành một milestone lớn, agent BẮT BUỘC phải tóm tắt và cập nhật trạng thái mới nhất vào `docs/SESSION_HANDOVER.md`.
+
 ## Git & Work Branch Strategy
 - **Prescription Feat Scope:** Only code and edit features related to Prescription on the `feature/vi/prescription-service` branch. 
 - **Isolation of Features:** Keep consultation-service and prescription-service cleanly implemented. Do not implement Lab Orders or EMR logic directly on this branch. Mock external dependencies when necessary, and document them clearly.

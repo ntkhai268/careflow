@@ -23,7 +23,11 @@ const BREADCRUMB_MAP: Record<string, string> = {
   "/staff/pharmacy": "Hàng đợi Phát thuốc",
 };
 
-export default function Topbar() {
+interface TopbarProps {
+  onToggleMobile?: () => void;
+}
+
+export default function Topbar({ onToggleMobile }: TopbarProps) {
   const { user, logout } = useAuth();
   const pathname = usePathname();
   const mounted = useSyncExternalStore(
@@ -74,28 +78,40 @@ export default function Topbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-6 bg-white border-b border-gray-200 shadow-sm">
-        {/* Left — Breadcrumb */}
-        <div className="flex items-center gap-2 text-[11px]">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-4 sm:px-6 bg-white border-b border-gray-200 shadow-sm">
+        {/* Left — Hamburger & Breadcrumb */}
+        <div className="flex items-center gap-2 sm:gap-3 text-[11px]">
+          {onToggleMobile && (
+            <button
+              type="button"
+              onClick={onToggleMobile}
+              className="p-1.5 -ml-1 text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-100 md:hidden transition-colors"
+              aria-label="Mở menu điều hướng"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+          )}
           <Link
             href={rootHref}
-            className="text-gray-400 hover:text-indigo-600 transition-colors font-medium"
+            className="text-gray-400 hover:text-indigo-600 transition-colors font-medium hidden xs:inline"
           >
             Bảng điều khiển
           </Link>
-          <svg className="w-3 h-3 text-gray-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-3 h-3 text-gray-300 flex-shrink-0 hidden xs:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           <Link
             href={pathname}
-            className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+            className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors truncate max-w-[140px] sm:max-w-none"
           >
             {pageTitle}
           </Link>
         </div>
 
-        {/* Center — Search */}
-        <div className="flex-1 max-w-sm mx-8">
+        {/* Center — Search (hidden on mobile, visible on sm and up) */}
+        <div className="flex-1 max-w-sm mx-4 sm:mx-8 hidden sm:block">
           <div className="relative">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

@@ -12,6 +12,20 @@ spring:
       max-request-size: 21MB
   application:
     name: ai-service
+  datasource:
+    url: ${AI_DB_URL:jdbc:postgresql://localhost:5433/careflow_ai}
+    username: ${AI_DB_USER:careflow}
+    password: ${AI_DB_PASS:careflow}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: Asia/Ho_Chi_Minh
   rabbitmq:
     host: localhost
     port: 5672

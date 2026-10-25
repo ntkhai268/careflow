@@ -29,17 +29,20 @@ public class QueueDataInitializer implements CommandLineRunner {
     private final IdempotencyRecordRepository idempotencyRecordRepository;
     private final com.careflow.queue.service.QrTokenService qrTokenService;
     private final HospitalCheckInConfigService hospitalCheckInConfigService;
+    private final org.springframework.core.env.Environment environment;
 
     public QueueDataInitializer(QueueConfigRepository configRepository,
                                 QueueEntryRepository entryRepository,
                                 IdempotencyRecordRepository idempotencyRecordRepository,
                                 com.careflow.queue.service.QrTokenService qrTokenService,
-                                HospitalCheckInConfigService hospitalCheckInConfigService) {
+                                HospitalCheckInConfigService hospitalCheckInConfigService,
+                                org.springframework.core.env.Environment environment) {
         this.configRepository = configRepository;
         this.entryRepository = entryRepository;
         this.idempotencyRecordRepository = idempotencyRecordRepository;
         this.qrTokenService = qrTokenService;
         this.hospitalCheckInConfigService = hospitalCheckInConfigService;
+        this.environment = environment;
     }
 
     @Override
@@ -61,13 +64,17 @@ public class QueueDataInitializer implements CommandLineRunner {
                     return configRepository.save(cfg);
                 });
 
-        // 2. Clear các IdempotencyRecord và QueueEntry cũ để reset lại danh sách chờ khám sạch khi khởi động server
-        // Queue entries are runtime state. Preserve them across restarts.
-        if (entryRepository.count() > 0) {
-            log.info("Queue data already exists; preserving runtime entries and idempotency records");
+        boolean isLocal = java.util.Arrays.asList(environment.getActiveProfiles()).contains("local");
+        long countToday = entryRepository.countByQueueDate(today);
+
+        // Ở môi trường local: Luôn reset để bảo đảm Bác sĩ luôn có hàng đợi lượt khám sẵn sàng test
+        // Ở môi trường khác (remote/production): Giữ nguyên nếu đã có dữ liệu
+        if (!isLocal && countToday > 0) {
+            log.info("Queue entries for today ({}) already exist ({} entries). Preserving runtime entries.", today, countToday);
             return;
         }
-        log.info("Resetting/Seeding clean Active QueueEntries for date {}...", today);
+
+        log.info("Resetting & Seeding clean Active QueueEntries for today ({}) (isLocal: {})...", today, isLocal);
         try {
             idempotencyRecordRepository.deleteAll();
             idempotencyRecordRepository.flush();
@@ -75,14 +82,6 @@ public class QueueDataInitializer implements CommandLineRunner {
             entryRepository.flush();
         } catch (Exception e) {
             log.warn("Lỗi khi reset QueueEntries: {}", e.getMessage());
-        }
-
-        // 3. Seed 6 Bệnh nhân đã Check-in ở các làn khác nhau (Priority, Normal, Result Review) cho ROOM-01
-        // Queue entries are runtime state. Never delete them during a restart;
-        // doing so loses patients currently waiting or being served.
-        if (entryRepository.count() > 0) {
-            log.info("Queue data already exists; preserving runtime entries and idempotency records");
-            return;
         }
 
         Instant now = Instant.now();

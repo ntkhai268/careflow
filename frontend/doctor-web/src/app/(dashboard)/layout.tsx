@@ -18,6 +18,7 @@ export default function DashboardLayout({
   const router = useRouter();
   const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -83,17 +84,19 @@ export default function DashboardLayout({
       <Sidebar
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
+        isMobileOpen={isMobileOpen}
+        onCloseMobile={() => setIsMobileOpen(false)}
       />
       <div
-        className={`flex flex-1 flex-col overflow-hidden relative transition-all duration-300 ease-in-out ${
-          isCollapsed ? "ml-16" : "ml-64"
+        className={`flex flex-1 flex-col overflow-hidden relative transition-all duration-300 ease-in-out ml-0 ${
+          isCollapsed ? "md:ml-16" : "md:ml-64"
         }`}
       >
         {/* Subtle decorative grid — light cyan tinted lines */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#6366F108_1px,transparent_1px),linear-gradient(to_bottom,#6366F108_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
-        <Topbar />
-        <main className="flex-1 overflow-y-auto p-6 pb-24 relative z-10">
+        <Topbar onToggleMobile={() => setIsMobileOpen(prev => !prev)} />
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 pb-24 relative z-10">
           {isAuthorized ? (
             children
           ) : (

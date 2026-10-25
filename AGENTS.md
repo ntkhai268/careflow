@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **careflow** (15569 symbols, 36072 relationships, 788 execution flows).
+This project is indexed by GitNexus as **careflow** (15569 symbols, 36072 relationships, 788 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
 
 > Index stale? Run `node .gitnexus/run.cjs analyze --index-only` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? Bootstrap with `npx`, `bunx`, or `pnpm dlx` — e.g. `bunx gitnexus@latest analyze` (npm 11 npx crash; #1939).
 
@@ -44,6 +44,13 @@ This project is indexed by GitNexus as **careflow** (15569 symbols, 36072 relati
 <!-- gitnexus:end -->
 
 # Project Rules - CareFlow
+
+## Language & Communication Rule
+- **Always Answer in Vietnamese**: **LUÔN LUÔN trả lời người dùng bằng TIẾNG VIỆT** trong mọi phản hồi, giải thích và giao tiếp (trừ commit message bằng tiếng Anh theo quy tắc Git).
+
+## Session Handover & Memory Continuity Rule
+- **BẮT BUỘC ĐỌC ĐẦU MỖI PHIÊN (Mandatory First Read)**: Ở đầu mỗi phiên chat mới hoặc khi bắt đầu tiếp tục công việc, agent BẮT BUỘC phải đọc tệp `docs/SESSION_HANDOVER.md` trước tiên để nắm toàn bộ tiến độ, các quyết định kiến trúc, kinh nghiệm xử lý lỗi và danh sách nhiệm vụ tiếp theo.
+- **CẬP NHẬT TRƯỚC KHI KẾT THÚC (Session End Update)**: Trước khi kết thúc phiên hoặc khi hoàn thành một milestone lớn, agent BẮT BUỘC phải tóm tắt và cập nhật trạng thái mới nhất vào `docs/SESSION_HANDOVER.md`.
 
 ## Git & Work Branch Strategy
 - **Prescription Feat Scope:** Only code and edit features related to Prescription on the `feature/vi/prescription-service` branch. 

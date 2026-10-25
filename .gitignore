@@ -20,12 +20,22 @@ application-remote.yml
 application-remote.yaml
 application-remote.properties
 
+# Python
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
 # Node / React
 node_modules/
 dist/
 build/
 .env
+.env.*
 .env.local
+**/.env
+**/.env.*
 
 # Flutter / Dart
 .dart_tool/
@@ -52,8 +62,11 @@ desktop.ini
 # Word docs (báo cáo gốc)
 *.docx
 
-# Service-level DB design docs
-#.planning/
+# Heavy binary raw docs (Keep Markdown and CSV only)
+docs/rag-docs/**/*.pdf
+docs/rag-docs/**/*.xlsx
+scripts/.rag_embeddings_cache*.json
 
-# tài liệu cá nhân của duvnguyen
-/docs
+# Archify artifacts scratch
+.archify/
+
