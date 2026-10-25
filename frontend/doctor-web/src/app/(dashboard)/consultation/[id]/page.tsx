@@ -418,7 +418,6 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             })));
           }
         }
-        }
 
         // Fetch existing lab orders if any
         try {
@@ -827,20 +826,6 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       );
       if (res.data) {
         setAiResponse(res.data);
-        setAiChatHistory(prev => [
-          ...prev,
-          {
-            sender: "user",
-            text: query,
-            time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-          },
-          {
-            sender: "ai",
-            text: res.data.summary,
-            time: new Date().toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" }),
-            responseObj: res.data,
-          },
-        ]);
       }
     } catch (error) {
       setAiResponse(null);
@@ -2623,8 +2608,6 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           onClose={closeVoicePreview}
         />
       )}
-    </div>
-
     </div>
   );
 }
