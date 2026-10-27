@@ -207,6 +207,25 @@ public class ConsultationService {
     }
 
     @Transactional
+    public ConsultationResponse markWaitingForReview(UUID id, UUID patientId) {
+        Consultation consultation = findConsultationOrThrow(id);
+        if (patientId == null || !consultation.getPatientId().equals(patientId)) {
+            throw new BusinessException(403, "Patient identity does not match this consultation");
+        }
+        if (consultation.getStatus() != ConsultationStatus.AWAITING_CLS) {
+            return consultationMapper.toResponse(consultation);
+        }
+        var orders = labOrders(consultation);
+        if (!orders.isEmpty() && orders.stream().allMatch(order ->
+                java.util.Set.of("RESULT_AVAILABLE", "REVIEWED", "CANCELLED").contains(order.status()))) {
+            consultation.setStatus(ConsultationStatus.AWAITING_REVIEW);
+            consultation = consultationRepository.save(consultation);
+            log.info("Consultation {} transitioned from AWAITING_CLS to AWAITING_REVIEW", id);
+        }
+        return consultationMapper.toResponse(consultation);
+    }
+
+    @Transactional
     public ConsultationResponse resume(UUID id, UUID actorUserId, String actorRole) {
         Consultation consultation = findConsultationOrThrow(id);
         requireAssignedDoctor(consultation, actorUserId, actorRole);
