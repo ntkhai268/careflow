@@ -70,3 +70,10 @@ scripts/.rag_embeddings_cache*.json
 # Archify artifacts scratch
 .archify/
 
+
+# Temporary E2E / Gradle / OpenCV local caches
+.gradle-e2e/
+.gradle-mobile-cache/
+.cache-backup-gradle/
+.tmp-e2e/
+.opencv-runtime/
