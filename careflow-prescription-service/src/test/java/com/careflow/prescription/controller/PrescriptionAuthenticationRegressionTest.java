@@ -94,7 +94,6 @@ class PrescriptionAuthenticationRegressionTest {
                         .header("X-User-Id", PATIENT).header("X-User-Role", "ADMIN"))
                 .andExpect(status().isOk());
         verify(service).confirmPrescription(ID, DOCTOR, "DOCTOR");
-        verify(service, never()).confirmPrescription(ID);
     }
 
     @Test
@@ -106,7 +105,6 @@ class PrescriptionAuthenticationRegressionTest {
                         .header("X-User-Id", DOCTOR).header("X-User-Role", "DOCTOR"))
                 .andExpect(status().isForbidden());
         verify(service).confirmPrescription(ID, PATIENT, "PATIENT");
-        verify(service, never()).confirmPrescription(ID);
     }
 
     @Test
@@ -116,7 +114,6 @@ class PrescriptionAuthenticationRegressionTest {
         when(service.confirmPrescription(ID, null, null)).thenThrow(new BusinessException(403, "Actor required"));
         withoutFilter.perform(post("/api/prescriptions/" + ID + "/confirm")).andExpect(status().isForbidden());
         verify(service).confirmPrescription(ID, null, null);
-        verify(service, never()).confirmPrescription(ID);
     }
 
     @Test

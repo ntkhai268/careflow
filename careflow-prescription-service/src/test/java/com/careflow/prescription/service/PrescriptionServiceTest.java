@@ -2,7 +2,6 @@ package com.careflow.prescription.service;
 
 import com.careflow.common.constants.AppConstants;
 import com.careflow.common.event.EventEnvelope;
-import com.careflow.prescription.config.AppointmentClient;
 import com.careflow.prescription.config.ConsultationClient;
 import com.careflow.prescription.config.DirectoryClient;
 import com.careflow.prescription.config.PatientIdentityClient;
@@ -22,7 +21,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -48,11 +46,11 @@ class PrescriptionServiceTest {
     @Mock private DrugRepository drugRepository;
     @Mock private PrescriptionMapper prescriptionMapper;
     @Mock private ConsultationClient consultationClient;
-    @Mock private AppointmentClient appointmentClient;
     @Mock private DirectoryClient directoryClient;
     @Mock private QueueExecutionClient queueExecutionClient;
     @Mock private PatientIdentityClient patientIdentityClient;
-    @Mock private RabbitTemplate rabbitTemplate;
+    @Mock private PrescriptionEventOutbox eventOutbox;
+    @Mock private PrescriptionAiReleaseGuard aiReleaseGuard;
     @Mock private ObjectMapper objectMapper;
 
     @InjectMocks private PrescriptionService prescriptionService;
@@ -73,7 +71,7 @@ class PrescriptionServiceTest {
         assertThat(draft.getStatus()).isEqualTo(PrescriptionStatus.CANCELLED);
         assertThat(draft.getCancellationReason()).isEqualTo("Sai liều thuốc");
         assertThat(draft.getCancelledByUserId()).isEqualTo(DOCTOR_ID);
-        verify(rabbitTemplate).convertAndSend(eq(AppConstants.EXCHANGE_PRESCRIPTION),
+        verify(eventOutbox).append(any(), eq("PrescriptionCancelled"),
                 eq(AppConstants.RK_PRESCRIPTION_CANCELLED), any(EventEnvelope.class));
     }
 

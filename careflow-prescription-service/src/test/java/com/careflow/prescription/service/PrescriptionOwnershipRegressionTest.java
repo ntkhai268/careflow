@@ -13,7 +13,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -31,7 +30,7 @@ class PrescriptionOwnershipRegressionTest {
     private PrescriptionRepository repository;
     private ConsultationClient consultations;
     private PatientIdentityClient patients;
-    private RabbitTemplate rabbit;
+    private PrescriptionEventOutbox outbox;
     private PrescriptionService service;
     private Prescription record;
 
@@ -40,7 +39,7 @@ class PrescriptionOwnershipRegressionTest {
         repository = mock(PrescriptionRepository.class);
         consultations = mock(ConsultationClient.class);
         patients = mock(PatientIdentityClient.class);
-        rabbit = mock(RabbitTemplate.class);
+        outbox = mock(PrescriptionEventOutbox.class);
         DrugRepository drugs = mock(DrugRepository.class);
         when(drugs.existsByCode("PARA500")).thenReturn(true);
         when(repository.save(any())).thenAnswer(call -> {
@@ -49,8 +48,8 @@ class PrescriptionOwnershipRegressionTest {
             return value;
         });
         service = new PrescriptionService(repository, drugs, new PrescriptionMapper(), consultations,
-                mock(AppointmentClient.class), mock(DirectoryClient.class), mock(QueueExecutionClient.class),
-                patients, rabbit, new ObjectMapper().findAndRegisterModules());
+                mock(DirectoryClient.class), mock(QueueExecutionClient.class),
+                patients, new ObjectMapper().findAndRegisterModules(), outbox, mock(PrescriptionAiReleaseGuard.class));
         record = Prescription.builder().consultationId(consultation).patientId(patient).doctorId(doctor)
                 .status(PrescriptionStatus.DRAFT).build();
         record.setId(id);
@@ -87,7 +86,7 @@ class PrescriptionOwnershipRegressionTest {
         });
         assertThat(record.getStatus()).isEqualTo(before);
         verify(repository, never()).save(any());
-        verifyNoInteractions(rabbit);
+        verifyNoInteractions(outbox);
     }
 
     @ParameterizedTest
@@ -119,15 +118,15 @@ class PrescriptionOwnershipRegressionTest {
             case "doctor" -> request.setDoctorId(UUID.randomUUID());
         }
         assertDenied(403, () -> service.updatePrescription(id, request, doctor, "DOCTOR"));
-        verifyNoInteractions(consultations, rabbit);
+        verifyNoInteractions(consultations, outbox);
         verify(repository, never()).save(any());
     }
 
     @Test
     void actorlessConfirmationNeverImpersonatesStoredDoctor() {
-        assertDenied(403, () -> service.confirmPrescription(id));
+        assertDenied(403, () -> service.confirmPrescription(id, null, null));
         verify(repository, never()).findById(any());
-        verifyNoInteractions(consultations, rabbit);
+        verifyNoInteractions(consultations, outbox);
     }
 
     @Test

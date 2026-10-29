@@ -11,7 +11,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -26,10 +25,10 @@ class PrescriptionConfirmationRetryTest {
     private final AppointmentClient appointments = mock(AppointmentClient.class);
     private final DirectoryClient directory = mock(DirectoryClient.class);
     private final QueueExecutionClient queue = mock(QueueExecutionClient.class);
-    private final RabbitTemplate rabbit = mock(RabbitTemplate.class);
+    private final PrescriptionEventOutbox outbox = mock(PrescriptionEventOutbox.class);
     private final PrescriptionService service = new PrescriptionService(repository, mock(DrugRepository.class),
-            new PrescriptionMapper(), consultations, appointments, directory, queue, mock(PatientIdentityClient.class),
-            rabbit, new ObjectMapper().findAndRegisterModules());
+            new PrescriptionMapper(), consultations, directory, queue, mock(PatientIdentityClient.class),
+            new ObjectMapper().findAndRegisterModules(), outbox, mock(PrescriptionAiReleaseGuard.class));
     private Prescription prescription;
 
     @BeforeEach
@@ -50,7 +49,7 @@ class PrescriptionConfirmationRetryTest {
 
         assertThat(service.confirmPrescription(id, doctor, "DOCTOR").getStatus()).isEqualTo(status);
         verify(repository, never()).save(any());
-        verifyNoInteractions(appointments, directory, queue, rabbit);
+        verifyNoInteractions(appointments, directory, queue, outbox);
     }
 
     @Test
@@ -84,6 +83,6 @@ class PrescriptionConfirmationRetryTest {
         assertThatThrownBy(() -> service.confirmPrescription(id, doctor, "DOCTOR"))
                 .isInstanceOfSatisfying(BusinessException.class, error -> assertThat(error.getStatus()).isEqualTo(status));
         verify(repository, never()).save(any());
-        verifyNoInteractions(appointments, directory, queue, rabbit);
+        verifyNoInteractions(appointments, directory, queue, outbox);
     }
 }

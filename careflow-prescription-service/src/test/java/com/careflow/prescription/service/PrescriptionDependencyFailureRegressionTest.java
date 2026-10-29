@@ -9,7 +9,6 @@ import com.careflow.prescription.repository.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,14 +25,14 @@ class PrescriptionDependencyFailureRegressionTest {
     private final UUID consultation = UUID.randomUUID();
     private final UUID id = UUID.randomUUID();
     private PrescriptionRepository repository;
-    private RabbitTemplate rabbit;
+    private PrescriptionEventOutbox outbox;
     private PrescriptionService service;
     private Prescription prescription;
 
     @BeforeEach
     void setUp() {
         repository = mock(PrescriptionRepository.class);
-        rabbit = mock(RabbitTemplate.class);
+        outbox = mock(PrescriptionEventOutbox.class);
         DrugRepository drugs = mock(DrugRepository.class);
         when(drugs.existsByCode("PARA500")).thenReturn(true);
         when(repository.save(any())).thenAnswer(call -> {
@@ -44,9 +43,9 @@ class PrescriptionDependencyFailureRegressionTest {
         DirectoryClient directory = mock(DirectoryClient.class);
         when(directory.getActivePharmacyServicePointId()).thenReturn("PHARMACY-MAIN-01");
         service = new PrescriptionService(repository, drugs, new PrescriptionMapper(),
-                mock(ConsultationClient.class), mock(AppointmentClient.class), directory,
-                mock(QueueExecutionClient.class), mock(PatientIdentityClient.class), rabbit,
-                new ObjectMapper().findAndRegisterModules());
+                mock(ConsultationClient.class), directory,
+                mock(QueueExecutionClient.class), mock(PatientIdentityClient.class),
+                new ObjectMapper().findAndRegisterModules(), outbox, mock(PrescriptionAiReleaseGuard.class));
         prescription = Prescription.builder().consultationId(consultation).patientId(patient)
                 .doctorId(doctor).status(PrescriptionStatus.DRAFT).build();
         prescription.setId(id);
@@ -82,7 +81,7 @@ class PrescriptionDependencyFailureRegressionTest {
         assertThatThrownBy(command::run).isInstanceOfSatisfying(BusinessException.class,
                 error -> assertThat(error.getStatus()).isEqualTo(503));
         verify(repository, never()).save(any());
-        verifyNoInteractions(rabbit);
+        verifyNoInteractions(outbox);
     }
 
     private PrescriptionItemRequest item() {
