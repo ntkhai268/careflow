@@ -52,7 +52,7 @@ class PrescriptionAiPostgresTest {
         @Bean PrescriptionAiDraftService aiDrafts(JdbcTemplate jdbc,PrescriptionAiClient ai,ConsultationClient c,PrescriptionService p,DrugRepository drugs){return new PrescriptionAiDraftService(jdbc,ai,c,p,drugs);}
         @Bean PrescriptionMapper mapper(){return new PrescriptionMapper();}
         @Bean PrescriptionEventOutbox outbox(JdbcTemplate jdbc,ObjectMapper json,RabbitTemplate rabbit,PlatformTransactionManager manager){return new PrescriptionEventOutbox(jdbc,json,rabbit,manager);}
-        @Bean PrescriptionService prescriptions(PrescriptionRepository repo,DrugRepository drugs,PrescriptionMapper mapper,ConsultationClient consultations,AppointmentClient appointments,DirectoryClient directory,RabbitTemplate rabbit,ObjectMapper json){return new PrescriptionService(repo,drugs,mapper,consultations,appointments,directory,mock(QueueExecutionClient.class),mock(PatientIdentityClient.class),rabbit,json);}
+        @Bean PrescriptionService prescriptions(PrescriptionRepository repo,DrugRepository drugs,PrescriptionMapper mapper,ConsultationClient consultations,DirectoryClient directory,ObjectMapper json,PrescriptionEventOutbox outbox,PrescriptionAiReleaseGuard guard){return new PrescriptionService(repo,drugs,mapper,consultations,directory,mock(QueueExecutionClient.class),mock(PatientIdentityClient.class),json,outbox,guard);}
         @Bean PrescriptionFollowUpService followUps(PrescriptionRepository repo,ConsultationClient consultations,AppointmentClient appointments,PrescriptionMapper mapper){return new PrescriptionFollowUpService(repo,consultations,appointments,mapper);}
     }
 

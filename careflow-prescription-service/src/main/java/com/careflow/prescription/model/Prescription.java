@@ -87,4 +87,19 @@ public class Prescription extends BaseEntity {
         items.forEach(item -> item.setPrescription(null));
         items.clear();
     }
+
+    public void replaceItems(List<PrescriptionItem> newItems) {
+        clearItems();
+        newItems.forEach(this::addItem);
+    }
+
+    /** Records the doctor's follow-up request and resets any previous scheduling result. */
+    public void requestFollowUp(LocalDate date, String department, String timeSlot) {
+        this.followUpDate = date;
+        this.followUpDepartment = department;
+        this.followUpTimeSlot = timeSlot;
+        this.followUpStatus = date == null ? "NOT_REQUESTED" : "PENDING";
+        this.followUpAppointmentId = null;
+        this.followUpErrorCode = null;
+    }
 }
