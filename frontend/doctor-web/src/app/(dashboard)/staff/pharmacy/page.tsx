@@ -5,25 +5,11 @@ import { queueApi, QueueEntry } from "@/lib/queue-api";
 import { prescriptionApi, PrescriptionResponse } from "@/lib/prescription-api";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
 import { getErrorMessage } from "@/lib/error-utils";
+import { pharmacyStatusLabel } from "@/components/queue/QueueBadges";
+import PharmacyVerificationPanel from "@/components/queue/PharmacyVerificationPanel";
+import { notifyAi, useVisibilityPolling } from "@/components/queue/useQueueOperations";
 
 const PHARMACY_SERVICE_POINT = "PHARMACY-MAIN-01";
-
-const statusLabel = (status: QueueEntry["queueStatus"]) => {
-  switch (status) {
-    case "QUEUED":
-      return "Đang chờ gọi";
-    case "CALLED":
-      return "Đã gọi số";
-    case "IN_PROGRESS":
-      return "Đang đối chiếu / phát thuốc";
-    case "COMPLETED":
-      return "Hoàn tất";
-    case "CANCELLED":
-      return "Đã hủy";
-    default:
-      return status;
-  }
-};
 
 export default function StaffPharmacyPage() {
   const [entries, setEntries] = useState<QueueEntry[] | null>(null);
@@ -42,10 +28,6 @@ export default function StaffPharmacyPage() {
     setToast({ message, type });
     window.setTimeout(() => setToast(null), 3000);
   }, []);
-
-  const notifyAi = (text: string) => {
-    window.dispatchEvent(new CustomEvent("careflow:ai-notify", { detail: { text } }));
-  };
 
   const replaceEntry = useCallback((updated: QueueEntry) => {
     setEntries(current => current?.map(entry => entry.entryId === updated.entryId ? updated : entry) ?? null);
@@ -75,50 +57,57 @@ export default function StaffPharmacyPage() {
 
   useEffect(() => {
     const timer = window.setTimeout(() => void fetchPharmacyQueue(), 0);
-    const pollingTimer = window.setInterval(() => void fetchPharmacyQueue(false), 10_000);
     return () => {
       window.clearTimeout(timer);
-      window.clearInterval(pollingTimer);
     };
   }, [fetchPharmacyQueue]);
 
+  useVisibilityPolling(
+    true,
+    useCallback(() => void fetchPharmacyQueue(false), [fetchPharmacyQueue]),
+    10_000,
+  );
+
   useEffect(() => {
-    if (!activeEntry?.prescriptionId) {
-      setActivePrescription(null);
-      setPrescriptionError(activeEntry ? "Lượt này chưa liên kết với toa thuốc." : null);
-      setIsLoadingPrescription(false);
-      return;
-    }
-
     let cancelled = false;
-    setActivePrescription(null);
-    setPrescriptionError(null);
-    setIsLoadingPrescription(true);
+    const timer = window.setTimeout(() => {
+      if (!activeEntry?.prescriptionId) {
+        setActivePrescription(null);
+        setPrescriptionError(activeEntry ? "Lượt này chưa liên kết với toa thuốc." : null);
+        setIsLoadingPrescription(false);
+        return;
+      }
 
-    void prescriptionApi.getPrescription(activeEntry.prescriptionId)
-      .then(response => {
-        if (cancelled) return;
-        if (!response.data) {
-          setPrescriptionError("Không tìm thấy chi tiết toa thuốc.");
-          return;
-        }
-        if (response.data.patientId !== activeEntry.patientId) {
-          setPrescriptionError("Mã bệnh nhân trong queue không khớp với mã bệnh nhân trên toa.");
-          return;
-        }
-        setActivePrescription(response.data);
-      })
-      .catch((err: unknown) => {
-        if (!cancelled) {
-          setPrescriptionError(getErrorMessage(err, "Không thể tải chi tiết toa thuốc."));
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoadingPrescription(false);
-      });
+      setActivePrescription(null);
+      setPrescriptionError(null);
+      setIsLoadingPrescription(true);
+
+      void prescriptionApi.getPrescription(activeEntry.prescriptionId)
+        .then(response => {
+          if (cancelled) return;
+          if (!response.data) {
+            setPrescriptionError("Không tìm thấy chi tiết toa thuốc.");
+            return;
+          }
+          if (response.data.patientId !== activeEntry.patientId) {
+            setPrescriptionError("Mã bệnh nhân trong queue không khớp với mã bệnh nhân trên toa.");
+            return;
+          }
+          setActivePrescription(response.data);
+        })
+        .catch((err: unknown) => {
+          if (!cancelled) {
+            setPrescriptionError(getErrorMessage(err, "Không thể tải chi tiết toa thuốc."));
+          }
+        })
+        .finally(() => {
+          if (!cancelled) setIsLoadingPrescription(false);
+        });
+    }, 0);
 
     return () => {
       cancelled = true;
+      window.clearTimeout(timer);
     };
   }, [activeEntry]);
 
@@ -254,7 +243,7 @@ export default function StaffPharmacyPage() {
                       <div className="w-12 h-12 shrink-0 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-extrabold text-base">{entry.queueNumber}</div>
                       <div className="min-w-0">
                         <p className="text-sm font-bold text-[#2B1D30]">Số thứ tự: {entry.queueNumber}</p>
-                        <p className="text-xs text-text-muted mt-0.5">{statusLabel(entry.queueStatus)}</p>
+                        <p className="text-xs text-text-muted mt-0.5">{pharmacyStatusLabel(entry.queueStatus)}</p>
                         <p className="text-[11px] text-text-muted truncate">Mã hồ sơ: {entry.patientId}</p>
                       </div>
                     </div>
@@ -271,73 +260,18 @@ export default function StaffPharmacyPage() {
           )}
         </div>
 
-        <div className="border border-card-border bg-card-bg rounded-xl p-5 shadow-sm space-y-4">
-          <h2 className="text-base font-bold text-[#2B1D30]">Đối chiếu và phát thuốc</h2>
-          {activeEntry ? (
-            <div className="space-y-4 text-xs">
-              <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                <p className="font-bold text-purple-900 text-sm">Số thứ tự: {activeEntry.queueNumber}</p>
-                <p className="text-purple-700 mt-1">Trạng thái: {statusLabel(activeEntry.queueStatus)}</p>
-                <p className="text-purple-700 mt-1 break-all">Mã bệnh nhân: {activeEntry.patientId}</p>
-              </div>
-
-              {isLoadingPrescription ? (
-                <div className="py-8 flex justify-center"><LoadingSpinner size="sm" /></div>
-              ) : prescriptionError ? (
-                <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg">{prescriptionError}</div>
-              ) : activePrescription ? (
-                <>
-                  <div className={`p-3 rounded-lg border ${activePatientMatches ? "bg-emerald-50 border-emerald-200 text-emerald-800" : "bg-rose-50 border-rose-200 text-rose-700"}`}>
-                    <p className="font-bold">{activePatientMatches ? "Đã khớp bệnh nhân với toa" : "Không khớp bệnh nhân"}</p>
-                    <p className="mt-1 break-all">Mã bệnh nhân trên toa: {activePrescription.patientId}</p>
-                    <p className="mt-1">Trạng thái toa: {activePrescription.status}</p>
-                  </div>
-
-                  <div className="p-3 bg-gray-50 border border-card-border rounded-lg space-y-1">
-                    <p className="font-semibold text-text">Chẩn đoán: {activePrescription.diagnosis || "Không có chẩn đoán"}</p>
-                    <p className="text-text-muted break-all">Mã toa: {activePrescription.id}</p>
-                    <p className="text-text-muted break-all">Mã phiên khám: {activePrescription.consultationId}</p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className="font-semibold text-text">Danh sách thuốc trong toa:</p>
-                    <div className="p-3 bg-gray-50 border border-card-border rounded-lg space-y-2 text-text">
-                      {activePrescription.items.length > 0 ? activePrescription.items.map(item => (
-                        <p key={item.id}>• {item.medicineName} — {item.quantity} {item.unit} ({item.dosage}, {item.frequency})</p>
-                      )) : <p className="text-text-muted italic">Toa chưa có thuốc.</p>}
-                    </div>
-                  </div>
-
-                  {activeEntry.queueStatus === "CALLED" && (
-                    <button
-                      onClick={handleStartVerification}
-                      disabled={isStarting || !activePatientMatches}
-                      className="w-full py-3 bg-[#6E2582] hover:bg-[#561A66] text-white font-bold rounded-lg shadow-sm text-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isStarting ? "Đang bắt đầu..." : "Bắt đầu đối chiếu"}
-                    </button>
-                  )}
-
-                  {activeEntry.queueStatus === "QUEUED" && (
-                    <p className="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg">Lượt này đang chờ gọi theo thứ tự FIFO.</p>
-                  )}
-
-                  {activeEntry.queueStatus === "IN_PROGRESS" && (
-                    <button
-                      onClick={handleDispenseMedicine}
-                      disabled={isDispensing || !canDispense}
-                      className="w-full py-3 bg-[#6E2582] hover:bg-[#561A66] text-white font-bold rounded-lg shadow-sm text-xs cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isDispensing ? "Đang xác nhận..." : "Xác nhận đã phát thuốc"}
-                    </button>
-                  )}
-                </>
-              ) : null}
-            </div>
-          ) : (
-            <div className="py-12 text-center text-text-muted text-xs">Chọn một lượt chờ để tải toa và đối chiếu trước khi phát.</div>
-          )}
-        </div>
+        <PharmacyVerificationPanel
+          activeEntry={activeEntry}
+          activePrescription={activePrescription}
+          isLoadingPrescription={isLoadingPrescription}
+          prescriptionError={prescriptionError}
+          isStarting={isStarting}
+          isDispensing={isDispensing}
+          activePatientMatches={activePatientMatches}
+          canDispense={canDispense}
+          onStartVerification={handleStartVerification}
+          onDispenseMedicine={handleDispenseMedicine}
+        />
       </div>
     </div>
   );

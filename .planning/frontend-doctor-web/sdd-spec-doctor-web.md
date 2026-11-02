@@ -57,3 +57,22 @@ LeftClinicalTabs -> LabOrdersTab: "4. Chỉ định Cận lâm sàng"
 LeftClinicalTabs -> EmrSummaryTab: "5. Tóm tắt lâm sàng"
 LeftClinicalTabs -> AiClinicalTab: "6. Trợ lý AI Lâm sàng (RAG)"
 ```
+
+
+---
+
+## 4. Phase 4.2 — Queue & Reception Screens Decomposition
+
+### Problem Statement
+`staff/checkin/page.tsx` (511 lines), `dashboard/queue/page.tsx` (472 lines), `lab/queue/page.tsx` (436 lines), and `staff/pharmacy/page.tsx` (344 lines) duplicate status/priority badge definitions, visibility-aware polling logic, AI voice notification dispatchers (`careflow:ai-notify`), and inline table/form rendering.
+
+### Modular Target Architecture (`src/components/queue/`)
+1. **`QueueBadges.tsx`**:
+   - Unified `QueueStatusDot`, `ReceptionStatusText`, `QueuePriorityBadge`, `PRIORITY_LABELS`, and `pharmacyStatusLabel`.
+2. **`useQueueOperations.ts`**:
+   - Visibility-aware interval polling (`useVisibilityPolling`), AI voice notification dispatcher (`notifyAi`), and common queue transition helpers.
+3. **Sub-Components**:
+   - `HospitalQrCheckInCard.tsx`: Hospital-wide dynamic QR display, clipboard copy, emulator token textarea, and manual counter check-in form + latest result panel (`staff/checkin`).
+   - `ReceptionQueueTable.tsx`: Daily room reception table with 3-state loading/error/empty handling and per-entry check-in/recall/miss actions (`staff/checkin`).
+   - `LabResultFormPanel.tsx`: Active lab order result entry form and finalization (`lab/queue`).
+   - `PharmacyVerificationPanel.tsx`: Patient-to-prescription verification and FIFO dispensing panel (`staff/pharmacy`).
