@@ -5,59 +5,34 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/contexts/AuthContext";
-import { consultationApi, ConsultationResponse, UpdateConsultationRequest } from "@/lib/consultation-api";
-import { prescriptionApi, PrescriptionResponse, PrescriptionItemRequest, MedicineCatalogItem } from "@/lib/prescription-api";
+import { consultationApi, ConsultationResponse } from "@/lib/consultation-api";
+import {
+  prescriptionApi,
+  PrescriptionResponse,
+  DEFAULT_MEDICINE_CATALOG,
+} from "@/lib/prescription-api";
 import { patientApi, emrApi, PatientAllergyResponse } from "@/lib/patient-api";
-import HandoverPicker from "@/components/ui/HandoverPicker";
 import { getErrorMessage } from "@/lib/error-utils";
 import { labApi, LabCatalogItem, LabOrderResponse } from "@/lib/lab-api";
 import { queueApi } from "@/lib/queue-api";
-import { aiApi, ClinicalSuggestionResponse, VoiceExtractedFields } from "@/lib/ai-api";
-import { FormattedAiText, renderFormattedAiText } from "@/lib/format-ai-text";
-import { DEFAULT_MEDICINE_CATALOG } from "@/lib/prescription-api";
-import { useVoiceStore } from "@/stores/voice-store";
 import { patientAge as ageFromBirthday } from "@/lib/patient-display";
 import LoadingSpinner from "@/components/ui/LoadingSpinner";
-import ConfirmModal from "@/components/ConfirmModal";
 import VoiceRecorderButton from "@/components/VoiceRecorderButton";
 import VoicePreviewModal from "@/components/VoicePreviewModal";
-import UploadedHealthRecords from "@/components/UploadedHealthRecords";
-import FollowUpFields from "@/components/FollowUpFields";
-import FollowUpAppointmentPanel from "@/components/FollowUpAppointmentPanel";
-import VoicePrescriptionPanel, { VoiceDraftHandle } from "@/components/VoicePrescriptionPanel";
-import PrescriptionDetailsEditor from "@/components/PrescriptionDetailsEditor";
-import NamedMedicineReview from "@/components/NamedMedicineReview";
-import VoicePrescriptionPreview from "@/components/VoicePrescriptionPreview";
-import { prescriptionItemErrors, prescriptionFieldId, PrescriptionRequiredField } from "@/lib/prescription-validation";
-import ClinicalCitations from "@/components/ClinicalCitations";
-
-const ICD10_CATALOG = [
-  { code: "K21.9", name: "Bệnh trào ngược dạ dày - thực quản không có viêm thực quản" },
-  { code: "I10", name: "Bệnh tăng huyết áp vô căn (nguyên phát)" },
-  { code: "E11.9", name: "Bệnh đái tháo đường không phụ thuộc insulin không có biến chứng" },
-  { code: "M17.9", name: "Thoái hóa khớp gối không xác định" },
-  { code: "J00", name: "Viêm mũi họng cấp (cảm thường)" },
-  { code: "J18.9", name: "Viêm phổi không xác định" },
-  { code: "K29.7", name: "Viêm dạ dày không xác định" },
-];
-
-const SEED_PATIENTS: Record<string, { fullName: string; birthYear: number; gender: string; allergyNotes?: string; allergies?: PatientAllergyResponse[] }> = {
-  "f0000001": {
-    fullName: "Nguyễn Thị Mai",
-    birthYear: 1981,
-    gender: "Nữ",
-    allergyNotes: "Dị ứng Penicillin, hải sản (tôm, cua)",
-    allergies: [
-      { id: "alg-1", allergyName: "Penicillin", severity: "CRITICAL", reaction: "Sốc phản vệ, khó thở" },
-      { id: "alg-2", allergyName: "Hải sản (tôm, cua)", severity: "WARNING", reaction: "Mề đay, ngứa" },
-    ]
-  },
-  "f0000002": { fullName: "Trần Văn Hùng", birthYear: 1975, gender: "Nam", allergies: [] },
-  "f0000003": { fullName: "Lê Hoàng Nam", birthYear: 1995, gender: "Nam", allergies: [] },
-  "f0000004": { fullName: "Phạm Thu Trang", birthYear: 1990, gender: "Nữ", allergies: [] },
-  "f0000005": { fullName: "Vũ Đức Anh", birthYear: 2018, gender: "Nam", allergies: [] },
-  "f0000006": { fullName: "Hoàng Thị Lan", birthYear: 1960, gender: "Nữ", allergies: [] },
-};
+import { buildDemoFallbackData } from "@/components/consultation/consultation-constants";
+import PatientHeaderBar from "@/components/consultation/PatientHeaderBar";
+import VitalsTab from "@/components/consultation/VitalsTab";
+import ClinicalExamTab from "@/components/consultation/ClinicalExamTab";
+import DiagnosisTab from "@/components/consultation/DiagnosisTab";
+import LabOrdersTab from "@/components/consultation/LabOrdersTab";
+import EmrSummaryTab from "@/components/consultation/EmrSummaryTab";
+import AiClinicalTab from "@/components/consultation/AiClinicalTab";
+import PrescriptionRightPanel from "@/components/consultation/PrescriptionRightPanel";
+import MedicineDrawerModal from "@/components/consultation/MedicineDrawerModal";
+import HistoryDetailModals from "@/components/consultation/HistoryDetailModals";
+import ConsultationActionBar from "@/components/consultation/ConsultationActionBar";
+import { useClinicalAi } from "@/components/consultation/useClinicalAi";
+import { usePrescriptionForm } from "@/components/consultation/usePrescriptionForm";
 
 export default function ConsultationPage({ params }: { params: Promise<{ id: string }> }) {
   const resolvedParams = use(params);
@@ -65,24 +40,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const router = useRouter();
   const { user } = useAuth();
 
-  // Active tab for clinical details
   const [activeTab, setActiveTab] = useState<"vitals" | "clinical" | "diagnosis" | "labs" | "summary" | "ai">("vitals");
-
-  // AI Clinical Assistant state
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiResponse, setAiResponse] = useState<ClinicalSuggestionResponse | null>(null);
-  const [aiQueryInput, setAiQueryInput] = useState("");
-
-  // AI Voice-to-Clinical-Fields state via Zustand Store
-  const {
-    transcript: voiceTranscript,
-    extractedFields: voiceExtractedFields,
-    isPreviewOpen: isVoicePreviewOpen,
-    closePreview: closeVoicePreview,
-    openPreview: openVoicePreview,
-    reset: resetVoiceStore,
-    setIsProcessing: setVoiceIsProcessing,
-  } = useVoiceStore();
 
   // Lab Orders state
   const [labCatalog, setLabCatalog] = useState<LabCatalogItem[]>([]);
@@ -99,7 +57,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   // Clinical Summary lazy-load state
   const [summaryLoaded, setSummaryLoaded] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
-  const [summaryError,setSummaryError] = useState<string|null>(null);
+  const [summaryError, setSummaryError] = useState<string | null>(null);
   const [consultationHistory, setConsultationHistory] = useState<ConsultationResponse[] | null>(null);
   const [prescriptionHistory, setPrescriptionHistory] = useState<PrescriptionResponse[] | null>(null);
   const [patientMedicalHistory, setPatientMedicalHistory] = useState<string | null>(null);
@@ -108,7 +66,6 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   // Detail Modal view states
   const [selectedHistoryConsultation, setSelectedHistoryConsultation] = useState<ConsultationResponse | null>(null);
   const [selectedHistoryPrescription, setSelectedHistoryPrescription] = useState<PrescriptionResponse | null>(null);
-  const [inheritedDrafts, setInheritedDrafts] = useState<PrescriptionResponse[]>([]);
 
   // Custom Modal confirm state
   const [confirmModalConfig, setConfirmModalConfig] = useState<{
@@ -128,12 +85,12 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   // Consultation states
   const [consultation, setConsultation] = useState<ConsultationResponse | null>(null);
   const [patientName, setPatientName] = useState("Bệnh nhân");
-  const [patientAge, setPatientAge] = useState<number|null>(null);
+  const [patientAge, setPatientAge] = useState<number | null>(null);
   const [patientGender, setPatientGender] = useState("Chưa ghi nhận giới tính");
   const [patientIdCode, setPatientIdCode] = useState("");
-  const [patientDataError, setPatientDataError] = useState<string|null>(null);
+  const [patientDataError, setPatientDataError] = useState<string | null>(null);
   const patientRequest = useRef(0);
-  
+
   // Vital signs & Clinical states
   const [temperature, setTemperature] = useState("");
   const [bloodPressure, setBloodPressure] = useState("");
@@ -146,132 +103,148 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [icd10Code, setIcd10Code] = useState("");
   const [icd10Name, setIcd10Name] = useState("");
   const [diagnosis, setDiagnosis] = useState("");
-  
-  // ICD10 Search state
-  const [icdSearchQuery, setIcdSearchQuery] = useState("");
-  const [showIcdDropdown, setShowIcdDropdown] = useState(false);
 
-  const voiceDraft=useRef<VoiceDraftHandle>(null);
-  const savingDraft=useRef(false);
-  const [medDetails,setMedDetails]=useState<Record<string,string>>({});
-  // Prescription states
-  const [prescriptionId, setPrescriptionId] = useState<string | null>(null);
-  const [prescriptionItems, setPrescriptionItems] = useState<PrescriptionItemRequest[]>([]);
-  const [prescriptionNotes, setPrescriptionNotes] = useState("");
-  const [followUpDate, setFollowUpDate] = useState("");
-  const [followUpDepartment, setFollowUpDepartment] = useState("");
-  const [followUpTimeSlot, setFollowUpTimeSlot] = useState("");
-  const [followUpDelivery, setFollowUpDelivery] = useState<PrescriptionResponse | null>(null);
   const [completionPending, setCompletionPending] = useState(false);
-  const [prescriptionStatus, setPrescriptionStatus] = useState<"DRAFT" | "CONFIRMED" | "DISPENSED" | "CANCELLED" | "CANCELLED_BY_AMENDMENT" | null>(null);
-
-  // Progressive disclosure notes state
-  const [showPrescriptionNotes, setShowPrescriptionNotes] = useState(false);
-  const [showMedNotesInput, setShowMedNotesInput] = useState(false);
-
-  // Drawer & Autocomplete UI states for Medicine Form
-  const [isMedicineDrawerOpen, setIsMedicineDrawerOpen] = useState(false);
-  const [editingMedicineIndex, setEditingMedicineIndex] = useState<number | null>(null);
-
-  const [medicines, setMedicines] = useState<MedicineCatalogItem[]>(DEFAULT_MEDICINE_CATALOG);
-  const [medSearchQuery, setMedSearchQuery] = useState("");
-  const [showMedDropdown, setShowMedDropdown] = useState(false);
-  const [selectedMedicine, setSelectedMedicine] = useState<MedicineCatalogItem | null>(null);
-  
-  const [medDosage, setMedDosage] = useState("1 viên / lần");
-  const [medFrequency, setMedFrequency] = useState("2 lần / ngày");
-  const [medTiming, setMedTiming] = useState("Sau khi ăn");
-  const [medDuration, setMedDuration] = useState("5");
-  const [medQuantity, setMedQuantity] = useState("10");
-  const [medNotes, setMedNotes] = useState("");
-
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "success" | "danger" | "warning" } | null>(null);
 
-  const showToast = (message: string, type: "success" | "danger" | "warning" = "success") => {
+  const showToast = useCallback((message: string, type: "success" | "danger" | "warning" = "success") => {
     setToast({ message, type });
     setTimeout(() => {
       setToast(null);
     }, 3000);
-  };
+  }, []);
 
-  // Vital Signs threshold evaluation helpers
-  const getTempWarning = (val: string) => {
-    const num = parseFloat(val);
-    if (!num) return null;
-    if (num > 38.5) return { text: "Sốt cao", level: "danger" };
-    if (num > 37.5) return { text: "Sốt nhẹ", level: "warning" };
-    if (num < 36.0) return { text: "Hạ thân nhiệt", level: "warning" };
-    return null;
-  };
+  const {
+    voiceDraft,
+    medDetails,
+    setMedDetails,
+    prescriptionId,
+    setPrescriptionId,
+    prescriptionItems,
+    setPrescriptionItems,
+    editPrescriptionItems,
+    prescriptionNotes,
+    setPrescriptionNotes,
+    followUpDate,
+    setFollowUpDate,
+    followUpDepartment,
+    setFollowUpDepartment,
+    followUpTimeSlot,
+    setFollowUpTimeSlot,
+    followUpDelivery,
+    setFollowUpDelivery,
+    prescriptionStatus,
+    setPrescriptionStatus,
+    inheritedDrafts,
+    setInheritedDrafts,
+    showPrescriptionNotes,
+    setShowPrescriptionNotes,
+    showMedNotesInput,
+    setShowMedNotesInput,
+    isMedicineDrawerOpen,
+    setIsMedicineDrawerOpen,
+    editingMedicineIndex,
+    medicines,
+    setMedicines,
+    medSearchQuery,
+    setMedSearchQuery,
+    showMedDropdown,
+    setShowMedDropdown,
+    selectedMedicine,
+    setSelectedMedicine,
+    medDosage,
+    setMedDosage,
+    medFrequency,
+    setMedFrequency,
+    medTiming,
+    setMedTiming,
+    medDuration,
+    setMedDuration,
+    medQuantity,
+    setMedQuantity,
+    medNotes,
+    setMedNotes,
+    openAddMedicineDrawer,
+    openEditMedicineDrawer,
+    saveMedicineToPrescription,
+    removeMedicine,
+    clearAllMedicines,
+    saveDraft,
+    confirmPrescription,
+  } = usePrescriptionForm({
+    consultationId,
+    userId: user?.id,
+    consultation,
+    patientAllergies,
+    temperature,
+    bloodPressure,
+    heartRate,
+    spo2,
+    height,
+    weight,
+    symptoms,
+    clinicalNotes,
+    icd10Code,
+    icd10Name,
+    diagnosis,
+    isSaving,
+    setIsSaving,
+    showToast,
+    setConfirmModalConfig,
+  });
 
-  const getBpWarning = (val: string) => {
-    if (!val) return null;
-    const parts = val.split("/");
-    if (parts.length === 2) {
-      const sys = parseInt(parts[0]);
-      const dia = parseInt(parts[1]);
-      if (sys >= 140 || dia >= 90) return { text: "Huyết áp cao", level: "danger" };
-      if (sys <= 90 || dia <= 60) return { text: "Huyết áp thấp", level: "warning" };
-    }
-    return null;
-  };
+  const {
+    aiLoading,
+    aiResponse,
+    aiQueryInput,
+    setAiQueryInput,
+    handleGetAiSuggestions,
+    voiceTranscript,
+    voiceExtractedFields,
+    isVoicePreviewOpen,
+    closeVoicePreview,
+    handleVoiceRecorded,
+    applyVoiceFields,
+  } = useClinicalAi({
+    consultationId,
+    symptoms,
+    diagnosis,
+    clinicalNotes,
+    patientName,
+    patientGender,
+    patientAge,
+    patientAllergies,
+    patientMedicalHistory,
+    bloodPressure,
+    heartRate,
+    temperature,
+    prescriptionItems,
+    showToast,
+    setHeartRate,
+    setBloodPressure,
+    setTemperature,
+    setSpo2,
+    setHeight,
+    setWeight,
+    setSymptoms,
+    setClinicalNotes,
+    setDiagnosis,
+    setIcd10Code,
+    setIcd10Name,
+  });
 
-  const getHeartRateWarning = (val: string) => {
-    const num = parseInt(val);
-    if (!num) return null;
-    if (num > 100) return { text: "Nhịp tim nhanh", level: "warning" };
-    if (num < 60) return { text: "Nhịp tim chậm", level: "warning" };
-    return null;
-  };
-
-  const getSpo2Warning = (val: string) => {
-    const num = parseInt(val);
-    if (!num) return null;
-    if (num < 95) return { text: "Cảnh báo thiếu Oxy", level: "danger" };
-    return null;
-  };
-
-  // Helper: Setup Demo Mock Consultation for Standalone RAG Testing
-  const setupDemoFallbackConsultation = () => {
-    const mockConsultation: ConsultationResponse = {
-      id: consultationId || "DEMO-CONSULTATION-01",
-      patientId: "p-demo-001",
-      doctorId: "doc-demo-01",
-      temperature: 38.5,
-      bloodPressure: "145/95",
-      heartRate: 88,
-      spo2: 96,
-      height: 168,
-      weight: 65,
-      symptoms: "Sốt cao 38.5°C 3 ngày nay, ho có đờm vàng đặc, khó thở nhẹ khi gắng sức, tức ngực trái.",
-      clinicalNotes: "Bệnh nhân có tiền sử Tăng huyết áp 5 năm, Đái tháo đường Type 2, dị ứng Penicillin. Hiện tỉnh, tiếp xúc tốt, phổi ran ẩm rải rác.",
-      icd10Code: "J18.9",
-      icd10Name: "Viêm phổi, không đặc hiệu",
-      diagnosis: "Theo dõi Viêm phổi mắc phải tại cộng đồng (CAP) / Tăng huyết áp độ 2",
-      status: "IN_PROGRESS",
-      startedAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    setConsultation(mockConsultation);
-    setPatientName("Nguyễn Văn An");
-    setPatientAge(58);
-    setPatientGender("Nam");
-    setPatientIdCode("DEMO-001");
-    setPatientAllergies([
-      {
-        id: "alg-1",
-        allergyName: "Penicillin",
-        allergyGroup: "Kháng sinh nhóm Beta-lactam",
-        severity: "CRITICAL",
-        reaction: "Phát ban, phù mạch, khó thở"
-      }
-    ]);
-    setPatientMedicalHistory("Tăng huyết áp 5 năm điều trị thường xuyên, Đái tháo đường Type 2 kiểm soát bằng Metformin.");
+  const setupDemoFallbackConsultation = useCallback(() => {
+    const demo = buildDemoFallbackData(consultationId);
+    setConsultation(demo.consultation);
+    setPatientName(demo.patientName);
+    setPatientAge(demo.patientAge);
+    setPatientGender(demo.patientGender);
+    setPatientIdCode(demo.patientIdCode);
+    setPatientAllergies(demo.patientAllergies);
+    setPatientMedicalHistory(demo.patientMedicalHistory);
     setAllergyLoaded(true);
 
     setTemperature("38.5");
@@ -280,64 +253,60 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     setSpo2("96");
     setHeight("168");
     setWeight("65");
-    setSymptoms(mockConsultation.symptoms!);
-    setClinicalNotes(mockConsultation.clinicalNotes!);
-    setIcd10Code(mockConsultation.icd10Code!);
-    setIcd10Name(mockConsultation.icd10Name!);
-    setDiagnosis(mockConsultation.diagnosis!);
+    setSymptoms(demo.consultation.symptoms!);
+    setClinicalNotes(demo.consultation.clinicalNotes!);
+    setIcd10Code(demo.consultation.icd10Code!);
+    setIcd10Name(demo.consultation.icd10Name!);
+    setDiagnosis(demo.consultation.diagnosis!);
 
-    // Seed all 25 clinical medicines from Ministry of Health (BYT) RAG guidelines
     setMedicines(DEFAULT_MEDICINE_CATALOG);
-
-    setPrescriptionItems([
-      {
-        medicineName: "Clopidogrel 75mg",
-        medicineCode: "CLOP-75",
-        unit: "Viên",
-        dosage: "1 viên/lần",
-        frequency: "1 lần/ngày",
-        timing: "Sau ăn sáng",
-        duration: 30,
-        quantity: 30,
-        notes: "Thuốc chống kết tập tiểu cầu"
-      },
-      {
-        medicineName: "Omeprazole 20mg",
-        medicineCode: "OMEP-20",
-        unit: "Viên",
-        dosage: "1 viên/lần",
-        frequency: "1 lần/ngày",
-        timing: "Trước ăn sáng 30 phút",
-        duration: 14,
-        quantity: 14,
-        notes: "Giảm tiết acid dạ dày"
-      }
-    ]);
+    setPrescriptionItems(demo.prescriptionItems);
     setShowPrescriptionNotes(true);
-    setPrescriptionNotes("Uống thuốc đúng giờ, tái khám sau 7 ngày.");
-  };
+    setPrescriptionNotes(demo.prescriptionNotes);
+  }, [
+    consultationId,
+    setMedicines,
+    setPrescriptionItems,
+    setPrescriptionNotes,
+    setShowPrescriptionNotes,
+  ]);
 
-  const loadPatientDetails = useCallback(async (patientId:string) => {
-    const version=++patientRequest.current;
-    setPatientDataError(null);setAllergyLoaded(false);
+  const loadPatientDetails = useCallback(async (patientId: string) => {
+    const version = ++patientRequest.current;
+    setPatientDataError(null);
+    setAllergyLoaded(false);
     try {
-      const response=await patientApi.getPatientById(patientId);
-      if(version!==patientRequest.current)return;
-      const data=response.data;
-      if(!data || data.id!==patientId)throw new Error("Thông tin hồ sơ không khớp ca khám.");
-      setPatientName(data.fullName || `Bệnh nhân (${patientId.slice(0,8)})`);
+      const response = await patientApi.getPatientById(patientId);
+      if (version !== patientRequest.current) return;
+      const data = response.data;
+      if (!data || data.id !== patientId) throw new Error("Thông tin hồ sơ không khớp ca khám.");
+      setPatientName(data.fullName || `Bệnh nhân (${patientId.slice(0, 8)})`);
       setPatientIdCode(data.id || patientId);
       setPatientAge(ageFromBirthday(data.dateOfBirth));
-      setPatientGender(data.gender==="FEMALE"?"Nữ":data.gender==="MALE"?"Nam":data.gender==="OTHER"?"Khác":"Chưa ghi nhận giới tính");
-      setAllergyNotes(data.allergyNotes || null);setPatientAllergies(data.allergies || []);
-      setPatientMedicalHistory(data.medicalHistory || null);setAllergyLoaded(true);
-    } catch(failure) {
-      if(version!==patientRequest.current)return;
-      setPatientDataError(getErrorMessage(failure,"Không tải được thông tin hồ sơ và dị ứng. Chưa thể kết luận bệnh nhân không có tiền sử."));
+      setPatientGender(
+        data.gender === "FEMALE"
+          ? "Nữ"
+          : data.gender === "MALE"
+            ? "Nam"
+            : data.gender === "OTHER"
+              ? "Khác"
+              : "Chưa ghi nhận giới tính"
+      );
+      setAllergyNotes(data.allergyNotes || null);
+      setPatientAllergies(data.allergies || []);
+      setPatientMedicalHistory(data.medicalHistory || null);
+      setAllergyLoaded(true);
+    } catch (failure) {
+      if (version !== patientRequest.current) return;
+      setPatientDataError(
+        getErrorMessage(
+          failure,
+          "Không tải được thông tin hồ sơ và dị ứng. Chưa thể kết luận bệnh nhân không có tiền sử."
+        )
+      );
     }
-  },[]);
+  }, []);
 
-  // Fetch all initial data
   useEffect(() => {
     async function loadData() {
       try {
@@ -351,10 +320,19 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         setLoadError(null);
         setConsultation(null);
         ++patientRequest.current;
-        setSummaryLoaded(false);setSummaryError(null);setConsultationHistory(null);setPrescriptionHistory(null);setEmrRecord(null);
-        setPatientAge(null);setPatientGender("Chưa ghi nhận giới tính");setPatientMedicalHistory(null);
-        setAllergyLoaded(false);setPatientAllergies([]);setAllergyNotes(null);setPatientDataError(null);
-        // Get consultation
+        setSummaryLoaded(false);
+        setSummaryError(null);
+        setConsultationHistory(null);
+        setPrescriptionHistory(null);
+        setEmrRecord(null);
+        setPatientAge(null);
+        setPatientGender("Chưa ghi nhận giới tính");
+        setPatientMedicalHistory(null);
+        setAllergyLoaded(false);
+        setPatientAllergies([]);
+        setAllergyNotes(null);
+        setPatientDataError(null);
+
         const consRes = await consultationApi.getConsultation(consultationId);
         const consData = consRes.data;
         setConsultation(consData);
@@ -363,7 +341,6 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
         await loadPatientDetails(consData.patientId);
 
-        // Prepopulate inputs
         setTemperature(consData.temperature?.toString() || "");
         setBloodPressure(consData.bloodPressure || "");
         setHeartRate(consData.heartRate?.toString() || "");
@@ -379,7 +356,6 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         const catalogRes = await labApi.getCatalog();
         setLabCatalog(catalogRes.data);
 
-        // Fetch medicine catalog from real API or default RAG catalog
         try {
           const medRes = await prescriptionApi.getMedicineCatalog();
           if (medRes.data && medRes.data.length > 0) {
@@ -391,48 +367,63 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           setMedicines(DEFAULT_MEDICINE_CATALOG);
         }
 
-        // Fetch existing prescription if any
         const prescRes = await prescriptionApi.getByConsultation(consultationId);
         if (prescRes.data && prescRes.data.length > 0) {
-          setInheritedDrafts(prescRes.data.filter(p => p.status === "DRAFT" && p.doctorId !== user?.id));
-          const presc = prescRes.data.find(p => p.doctorId === user?.id && p.status !== "CANCELLED" && p.status !== "CANCELLED_BY_AMENDMENT")
-            || prescRes.data.find(p => p.status === "CONFIRMED" || p.status === "DISPENSED");
+          setInheritedDrafts(prescRes.data.filter((p) => p.status === "DRAFT" && p.doctorId !== user?.id));
+          const presc =
+            prescRes.data.find(
+              (p) =>
+                p.doctorId === user?.id &&
+                p.status !== "CANCELLED" &&
+                p.status !== "CANCELLED_BY_AMENDMENT"
+            ) || prescRes.data.find((p) => p.status === "CONFIRMED" || p.status === "DISPENSED");
           if (presc) {
             setPrescriptionId(presc.id);
             setPrescriptionStatus(presc.status);
             setPrescriptionNotes(presc.notes || "");
             if (presc.notes) setShowPrescriptionNotes(true);
             setFollowUpDate(presc.followUpDate || "");
-            setFollowUpDepartment(presc.followUpDepartment || "");setFollowUpTimeSlot(presc.followUpTimeSlot || "");setFollowUpDelivery(presc);
-            setPrescriptionItems(presc.items.map(item => ({
-              medicineName: item.medicineName,
-              medicineCode: item.medicineCode,
-              unit: item.unit,
-              dosage: item.dosage,
-              frequency: item.frequency,
-              timing: item.timing,
-              duration: item.duration,
-              quantity: item.quantity,
-              notes: item.notes,
-              details: item.details
-            })));
+            setFollowUpDepartment(presc.followUpDepartment || "");
+            setFollowUpTimeSlot(presc.followUpTimeSlot || "");
+            setFollowUpDelivery(presc);
+            setPrescriptionItems(
+              presc.items.map((item) => ({
+                medicineName: item.medicineName,
+                medicineCode: item.medicineCode,
+                unit: item.unit,
+                dosage: item.dosage,
+                frequency: item.frequency,
+                timing: item.timing,
+                duration: item.duration,
+                quantity: item.quantity,
+                notes: item.notes,
+                details: item.details,
+              }))
+            );
           }
         }
 
-        // Fetch existing lab orders if any
         try {
           const labRes = await labApi.getByConsultation(consultationId);
           if (labRes.data) {
             setExistingLabOrders(labRes.data);
           }
         } catch (failure) {
-          throw new Error(getErrorMessage(failure,"Chưa tải được chỉ định xét nghiệm; không thể kết luận ca không có chỉ định."));
+          throw new Error(
+            getErrorMessage(
+              failure,
+              "Chưa tải được chỉ định xét nghiệm; không thể kết luận ca không có chỉ định."
+            )
+          );
         }
       } catch (err) {
         if (consultationId.startsWith("demo")) {
           console.warn("Consultation service offline. Falling back to Demo Consultation Data:", err);
           setupDemoFallbackConsultation();
-          showToast("Backend lâm sàng chưa bật. Đã tự động nạp Ca Khám Mẫu để thử nghiệm AI RAG", "warning");
+          showToast(
+            "Backend lâm sàng chưa bật. Đã tự động nạp Ca Khám Mẫu để thử nghiệm AI RAG",
+            "warning"
+          );
         } else {
           console.error(err);
           setLoadError(err instanceof Error ? err.message : "Không thể tải thông tin phiên khám.");
@@ -441,486 +432,133 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         setIsLoading(false);
       }
     }
-    loadData();
-  }, [consultationId, user?.id, loadPatientDetails]);
+    void loadData();
+  }, [
+    consultationId,
+    user?.id,
+    loadPatientDetails,
+    setupDemoFallbackConsultation,
+    showToast,
+    setMedicines,
+    setInheritedDrafts,
+    setPrescriptionId,
+    setPrescriptionStatus,
+    setPrescriptionNotes,
+    setShowPrescriptionNotes,
+    setFollowUpDate,
+    setFollowUpDepartment,
+    setFollowUpTimeSlot,
+    setFollowUpDelivery,
+    setPrescriptionItems,
+  ]);
 
-  // A failed history request is unknown, never an empty clinical history.
   const summaryPatientId = consultation?.patientId;
   useEffect(() => {
     if (activeTab !== "summary" || summaryLoaded || !summaryPatientId) return;
     const patientId = summaryPatientId;
-    let active=true;
+    let active = true;
     async function loadSummary() {
-      setSummaryLoading(true);setSummaryError(null);
+      setSummaryLoading(true);
+      setSummaryError(null);
       try {
-        const [consRes,prescRes,emrRes]=await Promise.all([
-          consultationApi.getByPatient(patientId),prescriptionApi.getByPatient(patientId),emrApi.getPatientSummary(patientId),
+        const [consRes, prescRes, emrRes] = await Promise.all([
+          consultationApi.getByPatient(patientId),
+          prescriptionApi.getByPatient(patientId),
+          emrApi.getPatientSummary(patientId),
         ]);
-        if(!active)return;
-        if(!Array.isArray(consRes.data) || !Array.isArray(prescRes.data) || !emrRes.data)
+        if (!active) return;
+        if (!Array.isArray(consRes.data) || !Array.isArray(prescRes.data) || !emrRes.data) {
           throw new Error("Máy chủ chưa trả đủ dữ liệu bệnh sử.");
-        setConsultationHistory(consRes.data.filter(item=>item.id!==consultationId));
-        setPrescriptionHistory(prescRes.data);setEmrRecord(emrRes.data.medicalRecord || null);
-      } catch(failure) {
-        if(active)setSummaryError(getErrorMessage(failure,"Không tải được bệnh sử. Chưa thể kết luận không có dữ liệu."));
+        }
+        setConsultationHistory(consRes.data.filter((item) => item.id !== consultationId));
+        setPrescriptionHistory(prescRes.data);
+        setEmrRecord(emrRes.data.medicalRecord || null);
+      } catch (failure) {
+        if (active) {
+          setSummaryError(
+            getErrorMessage(failure, "Không tải được bệnh sử. Chưa thể kết luận không có dữ liệu.")
+          );
+        }
       } finally {
-        if(active){setSummaryLoading(false);setSummaryLoaded(true);}
+        if (active) {
+          setSummaryLoading(false);
+          setSummaryLoaded(true);
+        }
       }
     }
     void loadSummary();
-    return ()=>{active=false;};
+    return () => {
+      active = false;
+    };
   }, [activeTab, summaryLoaded, summaryPatientId, consultationId]);
 
-  // Handle ICD-10 Search
-  const filteredIcd10 = ICD10_CATALOG.filter(item => 
-    item.code.toLowerCase().includes(icdSearchQuery.toLowerCase()) ||
-    item.name.toLowerCase().includes(icdSearchQuery.toLowerCase())
-  );
-
-  const selectIcd10 = (code: string, name: string) => {
-    setIcd10Code(code);
-    setIcd10Name(name);
-    setDiagnosis(name);
-    setIcdSearchQuery("");
-    setShowIcdDropdown(false);
-  };
-
-  // Medicine catalog search filter
-  const filteredMedicines = medicines.filter(m => 
-    m.name.toLowerCase().includes(medSearchQuery.toLowerCase()) ||
-    m.code.toLowerCase().includes(medSearchQuery.toLowerCase())
-  );
-
-  const openAddMedicineDrawer = () => {
-    voiceDraft.current?.collapse();
-    setEditingMedicineIndex(null);
-    setMedDetails({});
-    setSelectedMedicine(null);
-    setMedSearchQuery("");
-    setMedDosage("1 viên / lần");
-    setMedFrequency("2 lần / ngày");
-    setMedTiming("Sau khi ăn");
-    setMedDuration("5");
-    setMedQuantity("10");
-    setMedNotes("");
-    setShowMedNotesInput(false);
-    setIsMedicineDrawerOpen(true);
-  };
-
-  const openEditMedicineDrawer = (item: PrescriptionItemRequest) => {
-    voiceDraft.current?.collapse();
-    setEditingMedicineIndex(prescriptionItems.indexOf(item));
-    const catalogItem = medicines.find(m => m.code === item.medicineCode) || {
-      code: item.medicineCode || "",
-      name: item.medicineName,
-      unit: item.unit,
-      description: ""
-    };
-    setSelectedMedicine(catalogItem);
-    setMedSearchQuery(item.medicineName);
-    setMedDosage(item.dosage??"");
-    setMedFrequency(item.frequency??"");
-    setMedTiming(item.timing??"");
-    setMedDuration(item.duration?.toString()??"");
-    setMedQuantity(item.quantity?.toString()??"");
-    setMedDetails(item.details||{});
-    setMedNotes(item.notes || "");
-    if (item.notes) setShowMedNotesInput(true);
-    setIsMedicineDrawerOpen(true);
-  };
-
-  const withoutReview=(items:PrescriptionItemRequest[])=>items.map(item=>{const details={...item.details};delete details.manualReview;return {...item,details};});
-  const editPrescriptionItems=(items:PrescriptionItemRequest[])=>setPrescriptionItems(withoutReview(items));
-
-  const executeSaveMedicine = (newItem: PrescriptionItemRequest) => {
-    if (editingMedicineIndex !== null) {
-      editPrescriptionItems(prescriptionItems.map((item,index) => index === editingMedicineIndex ? newItem : item));
-      showToast(`Đã cập nhật thuốc ${newItem.medicineName}`);
-    } else {
-      if (prescriptionItems.some(item => item.medicineCode === newItem.medicineCode)) {
-        editPrescriptionItems(prescriptionItems.map(item => item.medicineCode === newItem.medicineCode ? newItem : item));
-        showToast(`Thuốc ${newItem.medicineName} đã có trong đơn. Hệ thống đã cập nhật lại số lượng và liều dùng mới.`, "warning");
-        setIsMedicineDrawerOpen(false);
-        return;
-      }
-      editPrescriptionItems([...prescriptionItems, newItem]);
-      showToast(`Đã thêm ${newItem.medicineName} vào đơn thuốc`);
-    }
-    setIsMedicineDrawerOpen(false);
-  };
-
-  const saveMedicineToPrescription = () => {
-    if (!selectedMedicine) {
-      showToast("Vui lòng chọn thuốc từ danh sách", "warning");
-      return;
-    }
-
-    const newItem: PrescriptionItemRequest = {
-      medicineName: selectedMedicine.name,
-      medicineCode: selectedMedicine.code,
-      unit: selectedMedicine.unit,
-      dosage: medDosage,
-      frequency: medFrequency,
-      timing: medTiming,
-      duration: medDuration.trim()?Number(medDuration):null,
-      quantity: medQuantity.trim()?Number(medQuantity):null,
-      notes: medNotes,
-      details: medDetails
-    };
-
-    // Check CRITICAL (Level 1) allergy conflict
-    const criticalConflict = patientAllergies.find(a => 
-      a.severity === "CRITICAL" && (
-        selectedMedicine.name.toLowerCase().includes(a.allergyName.toLowerCase()) ||
-        (a.allergyGroup && a.allergyGroup.toLowerCase() === "beta-lactam" && ["MED002", "MED014"].includes(selectedMedicine.code)) ||
-        (a.allergyName.toLowerCase().includes("penicillin") && ["MED002", "MED014"].includes(selectedMedicine.code))
-      )
-    );
-
-    if (criticalConflict) {
-      setConfirmModalConfig({
-        isOpen: true,
-        title: "🚨 CẢNH BÁO NGUY HIỂM CAO - PHẢN VỆ Y KHOA",
-        message: `Thuốc "${selectedMedicine.name}" chứa thành phần thuộc nhóm [${criticalConflict.allergyGroup || criticalConflict.allergyName}]. Bệnh nhân có tiền sử DỊ ỨNG NẶNG (${criticalConflict.reaction || 'Nguy cơ sốc phản vệ'}). Bác sĩ có chắc chắn muốn tiếp tục kê đơn thuốc này không?`,
-        variant: "danger",
-        onConfirm: () => {
-          executeSaveMedicine(newItem);
-          setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
-        }
-      });
-      return;
-    }
-
-    executeSaveMedicine(newItem);
-  };
-
-  const removeMedicine = (index: number, name: string) => {
-    const updatedItems = prescriptionItems.filter((_,i) => i !== index);
-    editPrescriptionItems(updatedItems);
-    showToast(`Đã xóa ${name} khỏi đơn thuốc`, "warning");
-
-    // Keep the persisted draft identity when editing the last item.
-  };
-
-  const clearAllMedicines = () => {
-    editPrescriptionItems([]);
-    showToast("Đã xóa toàn bộ đơn thuốc nháp", "warning");
-  };
-
-  // Save draft
-  const saveDraft = async () => {
-    if (!user || isSaving || savingDraft.current) return false;
-    if(followUpDate && prescriptionItems.length>0 && (!prescriptionId || prescriptionStatus==="DRAFT") && (!followUpDepartment || !followUpTimeSlot)){
-      showToast("Chọn khoa và ca tái khám còn chỗ trước khi lưu toa.","warning");return false;
-    }
-    savingDraft.current=true;
-    setIsSaving(true);
-
-    try {
-      await voiceDraft.current?.stop();
-      const consultationUpdate: UpdateConsultationRequest = {
-        temperature: parseFloat(temperature) || undefined,
-        bloodPressure: bloodPressure || undefined,
-        heartRate: parseInt(heartRate) || undefined,
-        spo2: parseInt(spo2) || undefined,
-        height: parseFloat(height) || undefined,
-        weight: parseFloat(weight) || undefined,
-        symptoms,
-        clinicalNotes,
-        icd10Code,
-        icd10Name,
-        diagnosis
-      };
-      await consultationApi.updateConsultation(consultationId, consultationUpdate);
-
-      if(prescriptionId&&prescriptionStatus==="DRAFT"&&prescriptionItems.length>0&&voiceDraft.current?.pending()){
-        await prescriptionApi.updatePrescription(prescriptionId,{consultationId,patientId:consultation!.patientId,doctorId:user.id,diagnosis,notes:prescriptionNotes,followUpDate:followUpDate||undefined,followUpDepartment:followUpDate?followUpDepartment:undefined,followUpTimeSlot:followUpDate?followUpTimeSlot:undefined,items:prescriptionItems});
-      }
-      const fromVoice=await voiceDraft.current?.save(!!prescriptionId&&prescriptionStatus==="DRAFT"&&prescriptionItems.length===0);
-      const targetId=fromVoice?.id||prescriptionId;
-      const targetItems=fromVoice?withoutReview(fromVoice.items):prescriptionItems;
-      if(fromVoice){setPrescriptionId(fromVoice.id);setPrescriptionStatus(fromVoice.status);setPrescriptionItems(targetItems);}
-      if(targetId && targetItems.length===0)throw new Error("Toa nháp cần ít nhất một thuốc. Thêm thuốc hoặc hủy toa, không tạo lại mã toa.");
-      if (targetItems.length > 0 && (!targetId || (fromVoice?.status||prescriptionStatus) === "DRAFT")) {
-        const prescriptionData = {
-          consultationId,
-          patientId: consultation!.patientId,
-          doctorId: user.id,
-          diagnosis,
-          notes: prescriptionNotes,
-          followUpDate: followUpDate || undefined,
-          followUpDepartment: followUpDate ? followUpDepartment : undefined,
-          followUpTimeSlot: followUpDate ? followUpTimeSlot : undefined,
-          items: targetItems
-        };
-
-        if (targetId) {
-          const res = await prescriptionApi.updatePrescription(targetId, prescriptionData);
-          setPrescriptionStatus(res.data.status);
-        } else {
-          const res = await prescriptionApi.createPrescription(prescriptionData);
-          setPrescriptionId(res.data.id);
-          setPrescriptionStatus(res.data.status);
-        }
-      }
-
-      showToast("Lưu thông tin nháp thành công.");
-      return true;
-    } catch (err) {
-      console.error(err);
-      showToast(err instanceof Error ? err.message : "Đã xảy ra lỗi khi lưu thông tin.", "danger");
-      return false;
-    } finally {
-      savingDraft.current=false;
-      setIsSaving(false);
-    }
-  };
-
-  const focusMissingPrescriptionField=()=>{
-    for(let index=0;index<prescriptionItems.length;index++){
-      const errors=prescriptionItemErrors(prescriptionItems[index]);
-      const key=Object.keys(errors)[0] as PrescriptionRequiredField|undefined;
-      if(!key)continue;
-      const input=document.getElementById(prescriptionFieldId(index,key));
-      const editor=input?.closest("details");if(editor)editor.open=true;
-      input?.scrollIntoView({behavior:"smooth",block:"center"});input?.focus({preventScroll:true});
-      return {index,message:errors[key]};
-    }
-    return null;
-  };
-
-  // Action to execute confirm prescription
-  const executeConfirmPrescription = async () => {
-    if (!prescriptionId || isSaving) return;
-    if(voiceDraft.current?.pending()){
-      setConfirmModalConfig(previous=>({...previous,isOpen:false}));
-      voiceDraft.current.open("Lưu đoạn ghi âm mới và kiểm tra các thuốc vừa thêm trước khi ký.");
-      return;
-    }
-    if (!(await saveDraft())) return;
-    setIsSaving(true);
-    try {
-      const res = await prescriptionApi.confirmPrescription(prescriptionId);
-      setPrescriptionStatus(res.data.status);setFollowUpDelivery(res.data);
-      showToast(res.data.followUpDate && res.data.followUpStatus!=="SCHEDULED"
-        ? "Toa đã ký. Lịch tái khám chưa được xác nhận; kiểm tra trạng thái và thử lại."
-        : "Toa đã ký; hệ thống đang chuyển thông tin đến quầy thuốc.",res.data.followUpDate && res.data.followUpStatus!=="SCHEDULED"?"warning":"success");
-    } catch (err) {
-      const message=err instanceof Error ? err.message : "Đã xảy ra lỗi khi ký đơn thuốc.";
-      showToast(message, "danger");
-      voiceDraft.current?.open(message);
-      requestAnimationFrame(()=>requestAnimationFrame(()=>focusMissingPrescriptionField()));
-    } finally {
-      setIsSaving(false);
-      setConfirmModalConfig(prev => ({ ...prev, isOpen: false }));
-    }
-  };
-
-  // Confirm Prescription trigger
-  const confirmPrescription = () => {
-    if (!prescriptionId) {
-      showToast("Vui lòng thêm thuốc và lưu nháp đơn trước khi ký xác nhận.", "warning");
-      return;
-    }
-    if(voiceDraft.current?.pending()){
-      voiceDraft.current.open("Lưu đoạn ghi âm mới và kiểm tra các thuốc vừa thêm trước khi ký.");
-      return;
-    }
-
-    const missing=focusMissingPrescriptionField();
-    if(missing){
-      showToast(`Thuốc ${missing.index+1}: ${missing.message} Các ô cần bổ sung đã được đánh dấu đỏ.`,"warning");
-      return;
-    }
-
-    if(prescriptionItems.some(item=>!item.medicineName?.trim()||!item.unit?.trim()||item.details?.manualReview!=="confirmed")){
-      showToast("Kiểm tra các dòng thuốc rồi xác nhận toàn bộ đơn thuốc ở cuối danh sách trước khi ký.","warning");
-      document.getElementById("prescription-review")?.scrollIntoView({behavior:"smooth",block:"center"});
-      document.getElementById("prescription-review-confirm")?.focus({preventScroll:true});
-      return;
-    }
-
-    setConfirmModalConfig({
-      isOpen: true,
-      title: "Ký & Xác nhận Đơn thuốc",
-      message: "Bác sĩ có chắc chắn muốn KÝ và XÁC NHẬN đơn thuốc này? Sau khi xác nhận, đơn thuốc sẽ được chuyển tới Quầy thuốc và không thể sửa đổi.",
-      variant: "purple",
-      showItemList: true,
-      onConfirm: executeConfirmPrescription
-    });
-  };
-
   const executeWaitForResults = async () => {
-    if(!consultation)return;
+    if (!consultation) return;
     await consultationApi.waitForResults(consultationId);
-    setConsultation(current=>current?{...current,status:"AWAITING_CLS"}:current);
-    let initial=consultation.queueEntryId;
-    if(!initial && consultation.appointmentId)initial=(await queueApi.getTicket(consultation.appointmentId)).data.ticketId;
-    if(!initial)throw new Error("Đã chuyển chờ CLS nhưng chưa xác định được lượt để đóng. Tải lại ca khám rồi thử tiếp tục chờ CLS.");
+    setConsultation((current) => (current ? { ...current, status: "AWAITING_CLS" } : current));
+    let initial = consultation.queueEntryId;
+    if (!initial && consultation.appointmentId) {
+      initial = (await queueApi.getTicket(consultation.appointmentId)).data.ticketId;
+    }
+    if (!initial) {
+      throw new Error(
+        "Đã chuyển chờ CLS nhưng chưa xác định được lượt để đóng. Tải lại ca khám rồi thử tiếp tục chờ CLS."
+      );
+    }
     await queueApi.completeEntry(initial);
   };
 
-  // Action to execute complete consultation
   const executeCompleteConsultation = async () => {
     setIsSaving(true);
     try {
-      if(consultation?.status!=="COMPLETED" && !(await saveDraft()))return;
+      if (consultation?.status !== "COMPLETED" && !(await saveDraft())) return;
       setIsSaving(true);
-      const result=(await consultationApi.finalizeVisit(consultationId)).data;
-      setConsultation(result.consultation);setCompletionPending(!result.complete);
-      if(!result.complete){showToast("Ca khám đã đóng; hàng đợi hoặc lịch hẹn chưa đồng bộ xong. Bấm Thử lại đồng bộ để tiếp tục.","warning");return;}
+      const result = (await consultationApi.finalizeVisit(consultationId)).data;
+      setConsultation(result.consultation);
+      setCompletionPending(!result.complete);
+      if (!result.complete) {
+        showToast(
+          "Ca khám đã đóng; hàng đợi hoặc lịch hẹn chưa đồng bộ xong. Bấm Thử lại đồng bộ để tiếp tục.",
+          "warning"
+        );
+        return;
+      }
       showToast("Ca khám, hàng đợi và lịch hẹn đã hoàn tất.");
       router.replace("/dashboard/general");
-    }catch(failure){showToast(getErrorMessage(failure,"Chưa hoàn tất thao tác. Tải lại trạng thái trước khi thử lại."),"danger");}
-    finally{setIsSaving(false);setConfirmModalConfig(previous=>({...previous,isOpen:false}));}
-  };
-
-  // Compile live consultation screen data for RAG Retrieval
-  const compileLiveConsultationContext = () => {
-    const contextParts: string[] = [];
-    if (symptoms?.trim()) contextParts.push(`Triệu chứng: ${symptoms.trim()}`);
-    if (diagnosis?.trim()) contextParts.push(`Chẩn đoán: ${diagnosis.trim()}`);
-    if (clinicalNotes?.trim()) contextParts.push(`Bệnh sử / Diễn tiến: ${clinicalNotes.trim()}`);
-    if (patientName) {
-      contextParts.push(`Bệnh nhân: ${patientName} (${patientGender}, ${patientAge} tuổi)`);
-    }
-    if (patientAllergies.length > 0) {
-      const allergyStr = patientAllergies.map(a => `${a.allergyName} (${a.severity || 'Dị ứng'})`).join(", ");
-      contextParts.push(`Dị ứng: ${allergyStr}`);
-    }
-    if (patientMedicalHistory) {
-      contextParts.push(`Tiền sử bệnh: ${patientMedicalHistory}`);
-    }
-    const vitalsStr: string[] = [];
-    if (bloodPressure) vitalsStr.push(`Huyết áp: ${bloodPressure}`);
-    if (heartRate) vitalsStr.push(`Mạch: ${heartRate} lần/phút`);
-    if (temperature) vitalsStr.push(`Nhiệt độ: ${temperature}°C`);
-    if (vitalsStr.length > 0) contextParts.push(`Sinh hiệu: ${vitalsStr.join(', ')}`);
-    if (prescriptionItems.length > 0) {
-      const medNames = prescriptionItems.map(p => `${p.medicineName} (${p.dosage || ''})`).join('; ');
-      contextParts.push(`Thuốc đang chỉ định: ${medNames}`);
-    }
-    return contextParts.join(' | ');
-  };
-
-  // AI Clinical Assistant Call handlers (Unified Prompt & Query Handler)
-  const handleGetAiSuggestions = async (promptQuestion?: string) => {
-    const query = (promptQuestion || aiQueryInput).trim();
-    if (!query || aiLoading) return;
-
-    setAiLoading(true);
-    if (!promptQuestion) {
-      setAiQueryInput("");
-    }
-
-    try {
-      const liveContext = {
-        pageRoute: `/consultation/${consultationId}`,
-        pageTitle: "Khám bệnh Chi tiết",
-        pageData: compileLiveConsultationContext(),
-      };
-      const res = await aiApi.getClinicalSuggestions(
-        consultationId,
-        query,
-        liveContext
+    } catch (failure) {
+      showToast(
+        getErrorMessage(failure, "Chưa hoàn tất thao tác. Tải lại trạng thái trước khi thử lại."),
+        "danger"
       );
-      if (res.data) {
-        setAiResponse(res.data);
-      }
-    } catch (error) {
-      setAiResponse(null);
-      showToast(getErrorMessage(error,"Trợ lý chưa sẵn sàng."), "danger");
     } finally {
-      setAiLoading(false);
+      setIsSaving(false);
+      setConfirmModalConfig((previous) => ({ ...previous, isOpen: false }));
     }
   };
 
-  // Voice STT Recording and Field Extraction Handlers (via Zustand Store)
-  const handleVoiceRecorded = async (audioBlob: Blob) => {
-    setVoiceIsProcessing(true);
-    try {
-      const res = await aiApi.processVoiceToFields(audioBlob);
-      if (res && res.data) {
-        openVoicePreview(res.data.transcriptText || "", res.data.extractedFields || {});
-      } else {
-        showToast("AI không nhận diện được nội dung từ bản ghi âm.", "warning");
-        resetVoiceStore();
-      }
-    } catch (err) {
-      console.error("Voice STT error:", err);
-      showToast(getErrorMessage(err, "Không thể xử lý âm thanh từ AI Service."), "danger");
-      resetVoiceStore();
-    } finally {
-      setVoiceIsProcessing(false);
-    }
-  };
-
-  const applyVoiceFields = (selectedFields: Partial<VoiceExtractedFields>) => {
-    let appliedCount = 0;
-    if (selectedFields.heartRate) {
-      setHeartRate(selectedFields.heartRate);
-      appliedCount++;
-    }
-    if (selectedFields.bloodPressure) {
-      setBloodPressure(selectedFields.bloodPressure);
-      appliedCount++;
-    }
-    if (selectedFields.temperature) {
-      setTemperature(selectedFields.temperature);
-      appliedCount++;
-    }
-    if (selectedFields.spo2) {
-      setSpo2(selectedFields.spo2);
-      appliedCount++;
-    }
-    if (selectedFields.height) {
-      setHeight(selectedFields.height);
-      appliedCount++;
-    }
-    if (selectedFields.weight) {
-      setWeight(selectedFields.weight);
-      appliedCount++;
-    }
-    if (selectedFields.symptoms) {
-      setSymptoms((prev) => (prev ? `${prev}\n${selectedFields.symptoms}` : selectedFields.symptoms || ""));
-      appliedCount++;
-    }
-    if (selectedFields.clinicalNotes) {
-      setClinicalNotes((prev) => (prev ? `${prev}\n${selectedFields.clinicalNotes}` : selectedFields.clinicalNotes || ""));
-      appliedCount++;
-    }
-    if (selectedFields.diagnosis) {
-      setDiagnosis(selectedFields.diagnosis);
-      appliedCount++;
-    }
-    if (selectedFields.icd10Code) {
-      setIcd10Code(selectedFields.icd10Code);
-      appliedCount++;
-    }
-    if (selectedFields.icd10Name) {
-      setIcd10Name(selectedFields.icd10Name);
-      appliedCount++;
-    }
-
-    closeVoicePreview();
-    showToast(`Đã áp dụng thành công ${appliedCount} trường thông tin vào ca khám.`, "success");
-  };
-
-  // Complete Consultation trigger
   const completeConsultation = () => {
     if (voiceDraft.current?.pending()) {
       voiceDraft.current.open();
-      showToast("Lưu toa nháp và kiểm tra các dòng thuốc trước khi ký và hoàn tất phiên khám.", "warning");
+      showToast(
+        "Lưu toa nháp và kiểm tra các dòng thuốc trước khi ký và hoàn tất phiên khám.",
+        "warning"
+      );
       return;
     }
-    if (prescriptionItems.length > 0 && prescriptionStatus !== "CONFIRMED" && prescriptionStatus !== "DISPENSED") {
+    if (
+      prescriptionItems.length > 0 &&
+      prescriptionStatus !== "CONFIRMED" &&
+      prescriptionStatus !== "DISPENSED"
+    ) {
       showToast("Vui lòng KÝ và XÁC NHẬN đơn thuốc trước khi hoàn tất phiên khám.", "warning");
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
-          detail: {
-            text: "Bác sĩ ơi, đơn thuốc đang ở dạng Nháp. Bác sĩ vui lòng nhấn KÝ & XÁC NHẬN ĐƠN trước khi hoàn tất ca khám nha!"
-          }
-        }));
+        window.dispatchEvent(
+          new CustomEvent("careflow:ai-notify", {
+            detail: {
+              text: "Bác sĩ ơi, đơn thuốc đang ở dạng Nháp. Bác sĩ vui lòng nhấn KÝ & XÁC NHẬN ĐƠN trước khi hoàn tất ca khám nha!",
+            },
+          })
+        );
       }
       return;
     }
@@ -928,9 +566,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     setConfirmModalConfig({
       isOpen: true,
       title: "Hoàn tất Phiên khám",
-      message: "Bác sĩ có chắc chắn muốn HOÀN TẤT phiên khám lâm sàng cho bệnh nhân? Hồ sơ bệnh án sẽ được đóng và lưu trữ.",
+      message:
+        "Bác sĩ có chắc chắn muốn HOÀN TẤT phiên khám lâm sàng cho bệnh nhân? Hồ sơ bệnh án sẽ được đóng và lưu trữ.",
       variant: "purple",
-      onConfirm: executeCompleteConsultation
+      onConfirm: executeCompleteConsultation,
     });
   };
 
@@ -947,245 +586,89 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       <section role="alert" className="max-w-xl mx-auto mt-12 bg-white border border-red-200 rounded-xl p-6 space-y-4">
         <h1 className="text-xl font-bold">Không thể mở phiên khám</h1>
         <p>{loadError || "Không tìm thấy thông tin phiên khám."}</p>
-        <p className="text-sm text-gray-600">Nếu đây là ca bàn giao, bạn cần xác nhận tiếp nhận trước khi mở ca khám.</p>
+        <p className="text-sm text-gray-600">
+          Nếu đây là ca bàn giao, bạn cần xác nhận tiếp nhận trước khi mở ca khám.
+        </p>
         <div className="flex gap-3">
-          <Link href="/dashboard/handovers" className="border rounded-lg px-4 py-2">Quay lại bàn giao</Link>
-          <button onClick={() => window.location.reload()} className="bg-purple-800 text-white rounded-lg px-4 py-2">Thử lại</button>
+          <Link href="/dashboard/handovers" className="border rounded-lg px-4 py-2">
+            Quay lại bàn giao
+          </Link>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="bg-purple-800 text-white rounded-lg px-4 py-2"
+          >
+            Thử lại
+          </button>
         </div>
       </section>
     );
   }
 
-  const isConsultationLocked = consultation?.status === "COMPLETED" || consultation?.status === "CANCELLED";
-  const isPrescriptionLocked = prescriptionStatus === "CONFIRMED" || prescriptionStatus === "DISPENSED" || isConsultationLocked;
-
-  const tempWarn = getTempWarning(temperature);
-  const bpWarn = getBpWarning(bloodPressure);
-  const hrWarn = getHeartRateWarning(heartRate);
-  const spo2Warn = getSpo2Warning(spo2);
+  const isConsultationLocked = consultation.status === "COMPLETED" || consultation.status === "CANCELLED";
+  const isPrescriptionLocked =
+    prescriptionStatus === "CONFIRMED" || prescriptionStatus === "DISPENSED" || isConsultationLocked;
 
   return (
     <div className="space-y-6 pb-40 relative bg-[linear-gradient(to_right,rgba(43,29,48,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(43,29,48,0.015)_1px,transparent_1px)] bg-[size:24px_24px]">
-      
-      {/* Toast Notification Container */}
       {toast && (
-        <div className={`fixed top-5 right-5 z-50 p-4 border shadow-lg max-w-md transition-all rounded-none ${
-          toast.type === "success" ? "bg-[#2B1D30] text-white border-primary-500" :
-          toast.type === "warning" ? "bg-amber-900 text-white border-amber-500" :
-          "bg-rose-900 text-white border-rose-500"
-        }`}>
+        <div
+          className={`fixed top-5 right-5 z-50 p-4 border shadow-lg max-w-md transition-all rounded-none ${
+            toast.type === "success"
+              ? "bg-[#2B1D30] text-white border-primary-500"
+              : toast.type === "warning"
+                ? "bg-amber-900 text-white border-amber-500"
+                : "bg-rose-900 text-white border-rose-500"
+          }`}
+        >
           <div className="flex items-center justify-between gap-4">
             <span className="text-xs font-semibold">{toast.message}</span>
-            <button onClick={() => setToast(null)} className="text-white/60 hover:text-white text-xs font-bold">X</button>
+            <button
+              type="button"
+              onClick={() => setToast(null)}
+              className="text-white/60 hover:text-white text-xs font-bold"
+            >
+              X
+            </button>
           </div>
         </div>
       )}
 
-      {/* Patient header info */}
-      {inheritedDrafts.length > 0 && <div className="border border-amber-200 bg-amber-50 p-3 rounded-lg text-sm space-y-2"><p>Ca bàn giao có toa nháp của bác sĩ trước. Bạn có thể xem để đối chiếu; toa mới sẽ được lập dưới tên của bạn, không ký thay tác giả cũ.</p>{inheritedDrafts.map(p => <button key={p.id} onClick={() => setSelectedHistoryPrescription(p)} className="text-purple-800 underline mr-3">Xem toa nháp {p.id.slice(0, 8)}</button>)}</div>}
-      <div className="border border-card-border bg-card-bg p-4 shadow-[0_1px_3px_rgba(110,37,130,0.06)] flex flex-wrap justify-between items-center rounded-lg">
-        <div>
-          <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Phiên khám hiện hành</span>
-          <h1 className="text-xl font-bold text-[#2B1D30] tracking-tight">{patientName}</h1>
-          <p className="text-xs text-[#6A5C70] flex items-center gap-1.5 mt-0.5">
-            <span>{patientAge === null ? "Chưa có ngày sinh" : `${patientAge} tuổi`}</span>
-            <span className="opacity-40">·</span>
-            <span>{patientGender}</span>
-            {patientIdCode && (
-              <>
-                <span className="opacity-40">·</span>
-                <span className="font-mono text-slate-400 text-[11px]">ID: {patientIdCode}</span>
-              </>
-            )}
-          </p>
-          {consultation?.doctorName && (
-            <p className="text-xs text-[#6A5C70] mt-1">
-              Bác sĩ phụ trách: {consultation.doctorName}
-              {consultation.authoredByDoctorName && consultation.authoredByDoctorId !== consultation.doctorId ? ` · Khởi tạo: ${consultation.authoredByDoctorName}` : ""}
-            </p>
-          )}
-          {consultation && !["COMPLETED", "CANCELLED", "TRANSFERRED"].includes(consultation.status) && (
-            <Link href="/dashboard/handovers" className="inline-block mt-2 text-sm text-purple-800 underline">
-              Bàn giao ca khám
-            </Link>
-          )}
-        </div>
-        <div className="flex gap-4">
-          <div className="text-right">
-            <span className="text-[10px] uppercase font-bold text-gray-400">Trạng thái khám</span>
-            <div className="mt-1">
-              <span className={`px-2 py-0.5 text-xs font-semibold rounded-md ${
-                consultation?.status === "COMPLETED"
-                  ? "bg-success-light text-success border border-success/20"
-                  : "bg-[#E8F1FD] text-[#2F80ED] border border-[#2F80ED]/20"
-              }`}>
-                {({IN_PROGRESS: "Đang khám", AWAITING_CLS: "Chờ cận lâm sàng", AWAITING_REVIEW: "Chờ đọc kết quả", READY_TO_COMPLETE: "Sẵn sàng hoàn tất", COMPLETED: "Hoàn tất", CANCELLED: "Đã hủy", TRANSFERRED: "Đã chuyển"} as Record<string, string>)[consultation?.status || ""] || consultation?.status}
-              </span>
-            </div>
-          </div>
-          {prescriptionStatus && (
-            <div className="text-right">
-              <span className="text-[10px] uppercase font-bold text-gray-400">Trạng thái đơn</span>
-              <div className="mt-1">
-                <span className={`px-2 py-0.5 text-xs font-semibold rounded-md ${
-                  prescriptionStatus === "DRAFT"
-                    ? "bg-warning-light text-warning border border-warning/20"
-                    : "bg-success-light text-success border border-success/20"
-                }`}>
-                  {prescriptionStatus === "DRAFT" ? "Đơn nháp" : "Đã ký xác nhận"}
-                </span>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+      <PatientHeaderBar
+        consultation={consultation}
+        patientName={patientName}
+        patientAge={patientAge}
+        patientGender={patientGender}
+        patientIdCode={patientIdCode}
+        prescriptionStatus={prescriptionStatus}
+        inheritedDrafts={inheritedDrafts}
+        onSelectInheritedDraft={setSelectedHistoryPrescription}
+        patientDataError={patientDataError}
+        onRetryPatientDetails={() => void loadPatientDetails(consultation.patientId)}
+        allergyLoaded={allergyLoaded}
+        patientAllergies={patientAllergies}
+        allergyNotes={allergyNotes}
+        isConsultationLocked={isConsultationLocked}
+        onNavigateDashboard={() => router.push("/dashboard")}
+        onResumeReview={async () => {
+          try {
+            await consultationApi.resume(consultationId);
+            setConsultation((prev) => (prev ? { ...prev, status: "IN_PROGRESS" } : null));
+            showToast("Đã chuyển sang đọc kết quả và tiếp tục phiên khám.", "success");
+          } catch {
+            showToast("Không thể cập nhật trạng thái phiên khám.", "danger");
+          }
+        }}
+      />
 
-      {patientDataError && (
-        <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-          Không tải được thông tin hồ sơ / dị ứng: {patientDataError}. Chưa thể kết luận bệnh nhân không có tiền sử.
-          <button type="button" className="ml-3 font-semibold underline" onClick={() => { if (consultation) void loadPatientDetails(consultation.patientId); }}>
-            Thử lại thông tin hồ sơ
-          </button>
-        </div>
-      )}
-      {/* Clinical Allergy Notice — Clean SJD Minimalist Compact Bar (~36px) */}
-      {allergyLoaded && (
-        patientAllergies.length > 0 ? (
-          <div className="space-y-1.5">
-            {/* Level 1 — CRITICAL (Clean Compact Red Notice) */}
-            {patientAllergies.filter(a => a.severity === "CRITICAL").length > 0 && (
-              <div className="min-h-[36px] px-3 py-1.5 border border-red-200/80 border-l-[3px] border-l-red-500 bg-red-50/70 flex items-center justify-between rounded-md text-[11px] text-red-950">
-                <div className="flex items-center gap-2 flex-wrap min-w-0">
-                  <svg className="w-3.5 h-3.5 text-red-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                  </svg>
-                  <span className="text-[10px] font-semibold text-red-700 bg-red-100/80 px-1.5 py-0.5 rounded flex-shrink-0">
-                    Dị ứng nguy hiểm
-                  </span>
-                  <div className="flex flex-wrap items-center gap-1.5 text-red-900 font-semibold">
-                    {patientAllergies.filter(a => a.severity === "CRITICAL").map((a, idx) => (
-                      <span key={idx}>
-                        {a.allergyName}
-                        {a.reaction && <span className="font-normal text-red-700 text-[10px] ml-1">({a.reaction})</span>}
-                        {idx < patientAllergies.filter(x => x.severity === "CRITICAL").length - 1 && <span className="mx-1 text-red-300">·</span>}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-                <span className="text-[10px] text-red-600 font-medium whitespace-nowrap ml-2 flex-shrink-0">
-                  Chặn kê đơn trùng nhóm
-                </span>
-              </div>
-            )}
-
-            {/* Level 2 — WARNING (Clean Compact Amber Notice) */}
-            {patientAllergies.filter(a => a.severity === "WARNING").length > 0 && (
-              <div className="min-h-[36px] px-3 py-1.5 border border-amber-200/80 border-l-[3px] border-l-amber-500 bg-amber-50/70 flex items-center gap-2 rounded-md text-[11px] text-amber-950">
-                <svg className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded flex-shrink-0">
-                  Cần lưu ý
-                </span>
-                <span className="text-amber-900 font-medium flex-wrap">
-                  {patientAllergies.filter(a => a.severity === "WARNING").map((a, idx) => (
-                    <span key={idx}>
-                      <span className="font-semibold">{a.allergyName}</span>
-                      {a.reaction && <span className="font-normal text-amber-700 text-[10px] ml-1">({a.reaction})</span>}
-                      {idx < patientAllergies.filter(x => x.severity === "WARNING").length - 1 && <span className="mx-1 text-amber-300">·</span>}
-                    </span>
-                  ))}
-                </span>
-              </div>
-            )}
-          </div>
-        ) : allergyNotes ? (
-          <div className="min-h-[36px] px-3 py-1.5 border border-amber-200/80 border-l-[3px] border-l-amber-500 bg-amber-50/70 flex items-center gap-2 rounded-md text-[11px] text-amber-950">
-            <svg className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
-            <span className="text-[10px] font-semibold text-amber-800 bg-amber-100/80 px-1.5 py-0.5 rounded flex-shrink-0">
-              Tiền sử dị ứng
-            </span>
-            <span className="text-amber-900 font-medium">{allergyNotes}</span>
-          </div>
-        ) : (
-          <div className="min-h-[32px] px-3 py-1 border border-slate-200/80 bg-slate-50/60 flex items-center gap-2 rounded-md text-[11px] text-slate-500">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block flex-shrink-0" />
-            <span>Không ghi nhận tiền sử dị ứng thuốc</span>
-          </div>
-        )
-      )}
-
-      {/* Locked Consultation Banner */}
-      {isConsultationLocked && (
-        <div className="border border-amber-300 bg-amber-50 p-4 text-amber-900 text-xs font-semibold flex items-center justify-between rounded-lg shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-amber-700 uppercase tracking-wider text-[11px]">Đã khóa phiên khám</span>
-            <span>· Phiên khám này đã HOÀN TẤT. Hồ sơ bệnh án đã được lưu trữ an toàn và ở chế độ chỉ xem (Read-Only).</span>
-          </div>
-          <button 
-            type="button"
-            onClick={() => router.push("/dashboard")}
-            className="px-3 py-1 bg-amber-800 text-white text-xs font-bold hover:bg-amber-900 rounded-md transition-all cursor-pointer"
-          >
-            Về Bảng điều khiển
-          </button>
-        </div>
-      )}
-
-      {/* Awaiting CLS Banner */}
-      {consultation?.status === "AWAITING_CLS" && !isConsultationLocked && (
-        <div className="border border-blue-300 bg-blue-50 p-4 text-blue-900 text-xs font-semibold flex items-center justify-between rounded-lg shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-blue-700 uppercase tracking-wider text-[11px]">Chờ Cận lâm sàng</span>
-            <span>· Đã tạo chỉ định Cận lâm sàng. Đang chờ bệnh nhân tới phòng kỹ thuật và chờ trả kết quả.</span>
-          </div>
-        </div>
-      )}
-
-      {/* Awaiting Review Banner */}
-      {consultation?.status === "AWAITING_REVIEW" && !isConsultationLocked && (
-        <div className="border border-purple-300 bg-purple-50 p-4 text-purple-900 text-xs font-semibold flex items-center justify-between rounded-lg shadow-sm">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-purple-700 uppercase tracking-wider text-[11px]">Đã có kết quả CLS</span>
-            <span>· Kết quả Cận lâm sàng đã sẵn sàng. Bác sĩ bấm &quot;Tiếp tục đọc kết quả&quot; để xem và hoàn tất ca khám.</span>
-          </div>
-          <button
-            type="button"
-            onClick={async () => {
-              try {
-                await consultationApi.resume(consultationId);
-                setConsultation(prev => prev ? { ...prev, status: "IN_PROGRESS" } : null);
-                showToast("Đã chuyển sang đọc kết quả và tiếp tục phiên khám.", "success");
-              } catch {
-                showToast("Không thể cập nhật trạng thái phiên khám.", "danger");
-              }
-            }}
-            className="px-3.5 py-1.5 bg-[#6E2582] text-white text-xs font-bold hover:bg-[#561A66] rounded-md transition-all cursor-pointer shadow-xs"
-          >
-            Tiếp tục đọc kết quả
-          </button>
-        </div>
-      )}
-
-      {/* Main two-column workspace */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-        
-        {/* Left Column (3/5): Tabbed Clinical & Diagnostic Data */}
         <div className="lg:col-span-3 space-y-3">
-          
-          {/* Voice Recorder Action Button placed cleanly above tabs */}
           {!isConsultationLocked && (
             <div className="flex items-center justify-end">
-              <VoiceRecorderButton
-                onAudioReady={handleVoiceRecorded}
-                disabled={isConsultationLocked}
-              />
+              <VoiceRecorderButton onAudioReady={handleVoiceRecorded} disabled={isConsultationLocked} />
             </div>
           )}
 
-          {/* Navigation Tabs */}
           <div className="border-b border-card-border flex items-center overflow-x-auto bg-card-bg rounded-t-lg">
             <button
               type="button"
@@ -1207,7 +690,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                   : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
               }`}
             >
-              2. Triệu chứng & Lâm sàng
+              2. Triệu chứng &amp; Lâm sàng
             </button>
             <button
               type="button"
@@ -1246,7 +729,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
               type="button"
               onClick={() => {
                 setActiveTab("ai");
-                if (!aiResponse) handleGetAiSuggestions();
+                if (!aiResponse) void handleGetAiSuggestions();
               }}
               className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-1.5 ${
                 activeTab === "ai"
@@ -1258,1348 +741,205 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               <span>Trợ lý AI Lâm sàng</span>
-              <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-black border border-purple-200">RAG</span>
+              <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-black border border-purple-200">
+                RAG
+              </span>
             </button>
           </div>
 
-          {/* TAB 1: Vital Signs with Real-time threshold validation */}
           {activeTab === "vitals" && (
-            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-4">
-              <div className="flex justify-between items-center border-b border-card-border pb-2">
-                <h2 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide">
-                  Chỉ số sinh hiệu bệnh nhân
-                </h2>
-                <span className="text-[10px] text-[#6A5C70]">Tự động phát hiện bất thường</span>
-              </div>
-              
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Nhiệt độ (°C)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    disabled={isConsultationLocked}
-                    value={temperature}
-                    onChange={(e) => setTemperature(e.target.value)}
-                    placeholder="36.5"
-                    className={`w-full border px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-none ${
-                      tempWarn
-                        ? tempWarn.level === "danger"
-                          ? "border-rose-500 bg-rose-50 font-bold"
-                          : "border-amber-500 bg-amber-50 font-bold"
-                        : "border-input-border bg-input-bg focus:border-input-focus"
-                    }`}
-                  />
-                  {tempWarn && (
-                    <span className={`text-[10px] font-bold mt-1 block ${
-                      tempWarn.level === "danger" ? "text-rose-600" : "text-amber-600"
-                    }`}>
-                      Cảnh báo: {tempWarn.text}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Huyết áp (mmHg)</label>
-                  <input
-                    type="text"
-                    disabled={isConsultationLocked}
-                    value={bloodPressure}
-                    onChange={(e) => setBloodPressure(e.target.value)}
-                    placeholder="120/80"
-                    className={`w-full border px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-none ${
-                      bpWarn
-                        ? bpWarn.level === "danger"
-                          ? "border-rose-500 bg-rose-50 font-bold"
-                          : "border-amber-500 bg-amber-50 font-bold"
-                        : "border-input-border bg-input-bg focus:border-input-focus"
-                    }`}
-                  />
-                  {bpWarn && (
-                    <span className={`text-[10px] font-bold mt-1 block ${
-                      bpWarn.level === "danger" ? "text-rose-600" : "text-amber-600"
-                    }`}>
-                      Cảnh báo: {bpWarn.text}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Mạch (lần/phút)</label>
-                  <input
-                    type="number"
-                    disabled={isConsultationLocked}
-                    value={heartRate}
-                    onChange={(e) => setHeartRate(e.target.value)}
-                    placeholder="80"
-                    className={`w-full border px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-none ${
-                      hrWarn ? "border-amber-500 bg-amber-50 font-bold" : "border-input-border bg-input-bg focus:border-input-focus"
-                    }`}
-                  />
-                  {hrWarn && (
-                    <span className="text-[10px] font-bold mt-1 block text-amber-600">
-                      Cảnh báo: {hrWarn.text}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">SpO2 (%)</label>
-                  <input
-                    type="number"
-                    disabled={isConsultationLocked}
-                    value={spo2}
-                    onChange={(e) => setSpo2(e.target.value)}
-                    placeholder="98"
-                    className={`w-full border px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-none ${
-                      spo2Warn ? "border-rose-500 bg-rose-50 font-bold" : "border-input-border bg-input-bg focus:border-input-focus"
-                    }`}
-                  />
-                  {spo2Warn && (
-                    <span className="text-[10px] font-bold mt-1 block text-rose-600">
-                      Cảnh báo: {spo2Warn.text}
-                    </span>
-                  )}
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Chiều cao (cm)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    disabled={isConsultationLocked}
-                    value={height}
-                    onChange={(e) => setHeight(e.target.value)}
-                    placeholder="165"
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Cân nặng (kg)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    disabled={isConsultationLocked}
-                    value={weight}
-                    onChange={(e) => setWeight(e.target.value)}
-                    placeholder="60"
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-none"
-                  />
-                </div>
-              </div>
-            </div>
+            <VitalsTab
+              temperature={temperature}
+              setTemperature={setTemperature}
+              bloodPressure={bloodPressure}
+              setBloodPressure={setBloodPressure}
+              heartRate={heartRate}
+              setHeartRate={setHeartRate}
+              spo2={spo2}
+              setSpo2={setSpo2}
+              height={height}
+              setHeight={setHeight}
+              weight={weight}
+              setWeight={setWeight}
+              isConsultationLocked={isConsultationLocked}
+            />
           )}
 
-          {/* TAB 2: Clinical Details */}
           {activeTab === "clinical" && (
-            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-4">
-              <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
-                Ghi nhận bệnh sử & Thăm khám
-              </h2>
-              <div>
-                <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Triệu chứng & Diễn biến bệnh</label>
-                <textarea
-                  disabled={isConsultationLocked}
-                  value={symptoms}
-                  onChange={(e) => setSymptoms(e.target.value)}
-                  rows={4}
-                  placeholder="Ghi nhận triệu chứng cơ năng, thời gian khởi phát..."
-                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Nhận định & Tóm tắt khám lâm sàng</label>
-                <textarea
-                  disabled={isConsultationLocked}
-                  value={clinicalNotes}
-                  onChange={(e) => setClinicalNotes(e.target.value)}
-                  rows={4}
-                  placeholder="Nhận định của bác sĩ qua thăm khám thể chất..."
-                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
-                />
-              </div>
-            </div>
+            <ClinicalExamTab
+              symptoms={symptoms}
+              setSymptoms={setSymptoms}
+              clinicalNotes={clinicalNotes}
+              setClinicalNotes={setClinicalNotes}
+              isConsultationLocked={isConsultationLocked}
+            />
           )}
 
-          {/* TAB 3: Diagnosis & ICD-10 */}
           {activeTab === "diagnosis" && (
-            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-4">
-              <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
-                Chẩn đoán bệnh theo chuẩn y tế
-              </h2>
-              
-              {!isConsultationLocked && (
-                <div className="relative">
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Tra cứu Mã ICD-10</label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={icdSearchQuery}
-                      onChange={(e) => {
-                        setIcdSearchQuery(e.target.value);
-                        setShowIcdDropdown(true);
-                      }}
-                      onFocus={() => setShowIcdDropdown(true)}
-                      placeholder="Nhập mã hoặc tên bệnh (ví dụ: K21, Tăng huyết áp...)"
-                      className="flex-1 border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
-                    />
-                    {icdSearchQuery && (
-                      <button 
-                        onClick={() => { setIcdSearchQuery(""); setShowIcdDropdown(false); }}
-                        className="border border-card-border px-3 text-xs hover:bg-[#F8F6F9] rounded-md"
-                      >
-                        Xóa
-                      </button>
-                    )}
-                  </div>
-
-                  {showIcdDropdown && filteredIcd10.length > 0 && (
-                    <div className="absolute left-0 right-0 z-20 mt-1 border border-card-border bg-card-bg shadow-md max-h-48 overflow-y-auto rounded-md">
-                      {filteredIcd10.map((item) => (
-                        <div
-                          key={item.code}
-                          onClick={() => selectIcd10(item.code, item.name)}
-                          className="px-4 py-2 text-sm hover:bg-[#F3E8F5] cursor-pointer text-[#2B1D30] flex justify-between"
-                        >
-                          <span className="font-mono font-bold text-primary-600">{item.code}</span>
-                          <span className="text-[#6A5C70] truncate max-w-xs">{item.name}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div className="sm:col-span-1">
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Mã ICD-10 đã chọn</label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={icd10Code}
-                    placeholder="Chưa chọn"
-                    className="w-full border border-card-border bg-gray-50 px-3 py-2 text-sm text-[#2B1D30] font-mono font-bold focus:outline-none rounded-md"
-                  />
-                </div>
-                <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Tên bệnh theo ICD</label>
-                  <input
-                    type="text"
-                    readOnly
-                    value={icd10Name}
-                    placeholder="Chưa chọn"
-                    className="w-full border border-card-border bg-gray-50 px-3 py-2 text-sm text-[#6A5C70] focus:outline-none rounded-md"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Chẩn đoán chi tiết của bác sĩ</label>
-                <textarea
-                  disabled={isConsultationLocked}
-                  value={diagnosis}
-                  onChange={(e) => setDiagnosis(e.target.value)}
-                    rows={3}
-                  placeholder="Nhập chẩn đoán lâm sàng chi tiết..."
-                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
-                />
-              </div>
-            </div>
+            <DiagnosisTab
+              icd10Code={icd10Code}
+              setIcd10Code={setIcd10Code}
+              icd10Name={icd10Name}
+              setIcd10Name={setIcd10Name}
+              diagnosis={diagnosis}
+              setDiagnosis={setDiagnosis}
+              isConsultationLocked={isConsultationLocked}
+            />
           )}
 
-          {/* TAB 4: Lab Orders (Chỉ định Cận lâm sàng) */}
           {activeTab === "labs" && (
-            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-5">
-              <div className="flex items-center justify-between border-b border-card-border pb-3">
-                <div>
-                  <h2 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide">
-                    Chỉ định Cận lâm sàng (Xét nghiệm & Cẩn lâm sàng)
-                  </h2>
-                  <p className="text-[11px] text-[#6A5C70] mt-0.5">
-                    Chọn các chỉ định cận lâm sàng cần thiết cho ca khám. Hệ thống sẽ tự động tạo lượt xếp hàng tại khu tương ứng.
-                  </p>
-                </div>
-                {selectedLabServices.length > 0 && !isConsultationLocked && (
-                  <button
-                    type="button"
-                    disabled={isSubmittingLabOrder}
-                    onClick={async () => {
-                      if (!user || !consultation) return;
-                      setIsSubmittingLabOrder(true);
-                      try {
-                        const items = selectedLabServices.map(s => ({
-                          serviceCode: s.serviceCode,
-                          serviceName: s.serviceName,
-                          servicePointId: s.servicePointId,
-                          required: true,
-                          preparationInstruction: s.preparationInstruction
-                        }));
-                        await labApi.createOrder({
-                          consultationId,
-                          patientId: consultation.patientId,
-                          items,
-                          clinicalNote: labClinicalNote || symptoms || "Chỉ định cận lâm sàng",
-                          paymentRequired: false
-                        });
-                        let transitioned=true;
-                        try{await executeWaitForResults();}catch(failure){transitioned=false;showToast(getErrorMessage(failure,"Đã tạo chỉ định; bước chuyển chờ CLS chưa xong. Dùng Tiếp tục chờ CLS để thử lại."),"warning");}
-                        if(transitioned)showToast("Đã tạo chỉ định và chuyển ca sang chờ CLS. Lượt xét nghiệm đang được đồng bộ.","success");
-                        setSelectedLabServices([]);
-                        setLabClinicalNote("");
-                        const updatedOrders = await labApi.getByConsultation(consultationId);
-                        setExistingLabOrders(updatedOrders.data);
-                      } catch (err) {
-                        showToast(err instanceof Error ? err.message : "Không thể tạo chỉ định Cận lâm sàng.", "danger");
-                      } finally {
-                        setIsSubmittingLabOrder(false);
-                      }
-                    }}
-                    className="px-3.5 py-1.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white text-xs font-semibold rounded-md shadow-xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
-                  >
-                    {isSubmittingLabOrder ? "Đang gửi chỉ định..." : `Gửi ${selectedLabServices.length} chỉ định CLS`}
-                  </button>
-                )}
-              </div>
-
-              {existingLabOrders.some(order=>!["REVIEWED","CANCELLED"].includes(order.status)) && (consultation.status==="IN_PROGRESS" || consultation.status==="AWAITING_CLS") && <button disabled={isSaving || isSubmittingLabOrder} className="rounded-lg border border-indigo-200 px-3 py-2 text-sm" onClick={async()=>{setIsSaving(true);try{await executeWaitForResults();showToast("Đã chuyển sang chờ xét nghiệm và đóng lượt khám ban đầu.");}catch(failure){showToast(getErrorMessage(failure,"Chưa chuyển xong giai đoạn chờ CLS."),"warning");}finally{setIsSaving(false);}}}>Tiếp tục chờ CLS</button>}
-              {/* Danh sách Chỉ định đã được tạo */}
-              {existingLabOrders.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wider flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />
-                    <span>Các Chỉ định CLS đã phát hành ({existingLabOrders.length})</span>
-                  </h3>
-                  <div className="space-y-2">
-                    {existingLabOrders.map((order) => (
-                      <div key={order.id} className="border border-indigo-100 bg-indigo-50/50 p-3 rounded-md space-y-2">
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="font-mono font-bold text-indigo-900">Order ID: {order.id.slice(0, 8)}...</span>
-                          <span className={`px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
-                            order.status === "RESULT_AVAILABLE" ? "bg-emerald-100 text-emerald-800" :
-                            order.status === "IN_PROGRESS" ? "bg-purple-100 text-purple-800" :
-                            "bg-amber-100 text-amber-800"
-                          }`}>
-                            {order.status === "RESULT_AVAILABLE" ? "Đã có kết quả" :
-                             order.status === "IN_PROGRESS" ? "Đang thực hiện" : order.status === "REVIEWED" ? "Bác sĩ đã đọc" : order.status === "CANCELLED" ? "Đã hủy" : "Đã vào hàng chờ CLS"}
-                          </span>
-                        </div>
-                        {!isConsultationLocked && <button disabled={isSaving} className="rounded-lg border border-indigo-200 px-3 py-2 text-xs text-indigo-800" onClick={async()=>{setIsSaving(true);try{await labApi.synchronizeReview(order.id);showToast("Đã đối chiếu lượt CLS. Nếu đủ kết quả, hệ thống sẽ đồng bộ lượt đọc kết quả.");}catch(failure){showToast(getErrorMessage(failure,"Chưa đồng bộ được lượt CLS."),"warning");}finally{setIsSaving(false);}}}>Đồng bộ lượt CLS</button>}
-                        {order.status==="RESULT_AVAILABLE" && !isConsultationLocked && <button disabled={isSaving} className="rounded-lg border border-emerald-300 px-3 py-2 text-xs text-emerald-800 disabled:opacity-50" onClick={async()=>{
-                          setIsSaving(true);try{await labApi.markReviewed(order.id);setExistingLabOrders((await labApi.getByConsultation(consultationId)).data);showToast("Đã ghi nhận bác sĩ đọc kết quả.");}
-                          catch(failure){showToast(getErrorMessage(failure,"Chưa ghi nhận đọc kết quả."),"danger");}finally{setIsSaving(false);}
-                        }}>Tôi đã đọc kết quả chỉ định này</button>}
-                        <div className="divide-y divide-indigo-100 border border-indigo-100 bg-white rounded-md text-xs">
-                          {order.items.map(item => (
-                            <div key={item.id} className="p-2.5 flex items-center justify-between">
-                              <div>
-                                <span className="font-semibold text-gray-900">{item.serviceName}</span>
-                                <span className="text-[11px] text-gray-500 block">Điểm thực hiện: {item.servicePointId}</span>
-                              </div>
-                              {item.resultValue ? (
-                                <div className="text-right font-mono text-xs">
-                                  <span className="font-bold text-emerald-700">{item.resultValue} {item.unit || ""}</span>
-                                  {item.referenceRange && <span className="text-[10px] text-gray-400 block">Chuẩn: {item.referenceRange}</span>}
-                                </div>
-                              ) : (
-                                <span className="text-[11px] text-amber-600 italic">Chờ KTV nhập kết quả</span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Danh mục các Xét nghiệm / Dịch vụ để Bác sĩ chọn */}
-              {!isConsultationLocked && (
-                <div className="space-y-3">
-                  <h3 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wider">
-                    Chọn dịch vụ Cận lâm sàng từ Danh mục
-                  </h3>
-                  <HandoverPicker label="Dịch vụ cận lâm sàng" value=""
-                    options={labCatalog.filter(service => !selectedLabServices.some(selected => selected.serviceCode === service.serviceCode)).map(service => ({value: service.serviceCode, label: `${service.serviceName} · ${service.servicePointId}`}))}
-                    onChange={code => { const service = labCatalog.find(item => item.serviceCode === code); if (service) setSelectedLabServices(current => [...current, service]); }} />
-                  <div className="flex flex-wrap gap-2">
-                    {selectedLabServices.map(service => <button type="button" key={service.serviceCode} onClick={() => setSelectedLabServices(current => current.filter(item => item.serviceCode !== service.serviceCode))} className="rounded-lg border border-purple-200 bg-purple-50 px-3 py-2 text-xs text-purple-800" aria-label={`Bỏ ${service.serviceName}`}>{service.serviceName} ×</button>)}
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Ghi chú chỉ định cận lâm sàng cho KTV</label>
-                    <input
-                      type="text"
-                      value={labClinicalNote}
-                      onChange={(e) => setLabClinicalNote(e.target.value)}
-                      placeholder="Ví dụ: Kiểm tra nghi ngờ viêm dạ dày, loại trừ thiếu máu..."
-                      className="w-full border border-input-border bg-input-bg px-3 py-2 text-xs text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
+            <LabOrdersTab
+              consultationId={consultationId}
+              consultation={consultation}
+              userId={user?.id}
+              symptoms={symptoms}
+              isConsultationLocked={isConsultationLocked}
+              isSaving={isSaving}
+              setIsSaving={setIsSaving}
+              labCatalog={labCatalog}
+              selectedLabServices={selectedLabServices}
+              setSelectedLabServices={setSelectedLabServices}
+              labClinicalNote={labClinicalNote}
+              setLabClinicalNote={setLabClinicalNote}
+              existingLabOrders={existingLabOrders}
+              setExistingLabOrders={setExistingLabOrders}
+              isSubmittingLabOrder={isSubmittingLabOrder}
+              setIsSubmittingLabOrder={setIsSubmittingLabOrder}
+              executeWaitForResults={executeWaitForResults}
+              showToast={showToast}
+            />
           )}
 
-          {/* TAB 5: Clinical Summary */}
-          {activeTab === "summary" && consultation && user && <div className="space-y-4 mb-4">
-            <UploadedHealthRecords key={`uploads-${consultation.patientId}-${user.id}`} patientId={consultation.patientId} />
-            <FollowUpAppointmentPanel key={`follow-up-${consultationId}-${user.id}`} consultationId={consultationId} patientId={consultation.patientId} doctorId={user.id} />
-          </div>}
           {activeTab === "summary" && (
-            <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-b-lg space-y-5">
-              <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
-                Tóm tắt Lâm sàng & Lịch sử Y tế Bệnh nhân
-              </h2>
-
-              {summaryLoading ? (
-                <div className="space-y-4 py-2">
-                  <div className="h-16 bg-gray-100 animate-pulse rounded-md" />
-                  <div className="h-28 bg-gray-100 animate-pulse rounded-md" />
-                  <div className="h-24 bg-gray-100 animate-pulse rounded-md" />
-                </div>
-              ) : summaryError ? (
-                <div role="alert" className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900">
-                  Không tải được bệnh sử: {summaryError}. Chưa thể kết luận không có lịch sử khám hoặc đơn thuốc.
-                  <button type="button" className="ml-3 font-semibold underline" onClick={()=>setSummaryLoaded(false)}>Thử lại bệnh sử</button>
-                </div>
-              ) : (
-                <div className="space-y-5">
-                  {/* Section A: EMR Master Record Card (Hồ sơ Bệnh án Điện tử) */}
-                  <div className="border border-purple-200 bg-purple-50/40 p-4 space-y-3 rounded-md">
-                    <div className="flex items-center justify-between border-b border-purple-200/60 pb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-purple-700 uppercase tracking-widest bg-purple-100 px-2 py-0.5 border border-purple-200 rounded-sm">
-                          Hồ sơ EMR Master
-                        </span>
-                        <span className="text-xs font-mono font-bold text-purple-900">
-                          {emrRecord?.recordNumber || "Chưa có mã EMR"}
-                        </span>
-                      </div>
-                      {emrRecord?.bloodType && (
-                        <span className="text-xs font-bold text-rose-700 bg-rose-50 px-2 py-0.5 border border-rose-200 flex items-center gap-1 rounded-sm">
-                          <span>🩸 Nhóm máu:</span>
-                          <span>{emrRecord.bloodType}</span>
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                        Bệnh nền & Tiền sử y tế
-                      </span>
-                      <p className="text-xs font-medium text-slate-800">
-                        {emrRecord?.medicalHistory || patientMedicalHistory || "Chưa ghi nhận thông tin bệnh nền mạn tính"}
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Section B: Consultation History (Past visits) */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
-                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        Lịch sử khám bệnh gần đây
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {(consultationHistory ?? []).length} ca khám trước (Cuộn để xem thêm)
-                      </span>
-                    </div>
-
-                    {(consultationHistory ?? []).length === 0 ? (
-                      <div className="py-6 text-center text-xs text-slate-400 italic bg-slate-50 border border-dashed border-slate-200 rounded-md">
-                        Chưa có lịch sử khám được trả về trong phạm vi tra cứu
-                      </div>
-                    ) : (
-                      <div className="divide-y divide-slate-100 border border-slate-200 rounded-md max-h-[260px] overflow-y-auto pr-1">
-                        {(consultationHistory ?? []).map((c) => {
-                          const linkedPrescription = (prescriptionHistory ?? []).find(p => p.consultationId === c.id);
-                          return (
-                            <div 
-                              key={c.id} 
-                              onClick={() => setSelectedHistoryConsultation(c)}
-                              className="p-3 hover:bg-purple-50/50 transition-colors space-y-1.5 cursor-pointer group"
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
-                                  <span className="text-xs font-bold text-slate-800 group-hover:text-primary-700">
-                                    {c.icd10Name ? `${c.icd10Code ? `${c.icd10Code} - ` : ""}${c.icd10Name}` : c.diagnosis || "Chẩn đoán chưa cập nhật"}
-                                  </span>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className="text-[11px] font-mono text-slate-400">
-                                    {c.startedAt ? new Date(c.startedAt).toLocaleDateString("vi-VN") : "N/A"}
-                                  </span>
-                                  <span className="text-[10px] text-primary-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                                    Xem chi tiết →
-                                  </span>
-                                </div>
-                              </div>
-
-                              {/* Vitals summary line */}
-                              <div className="text-[11px] text-slate-500 flex flex-wrap gap-x-3 gap-y-0.5 items-center justify-between">
-                                <div className="flex flex-wrap gap-x-3 gap-y-0.5">
-                                  {c.bloodPressure && <span>Huyết áp: <strong className="font-mono text-slate-700">{c.bloodPressure}</strong></span>}
-                                  {c.temperature && <span>Thân nhiệt: <strong className="font-mono text-slate-700">{c.temperature}°C</strong></span>}
-                                  {c.spo2 && <span>SpO2: <strong className="font-mono text-slate-700">{c.spo2}%</strong></span>}
-                                  {c.heartRate && <span>Mạch: <strong className="font-mono text-slate-700">{c.heartRate} bpm</strong></span>}
-                                </div>
-                                {linkedPrescription ? (
-                                  <span className="text-[10px] font-semibold text-purple-700 bg-purple-50 px-1.5 py-0.5 border border-purple-200 rounded-sm">
-                                    Đã kê đơn thuốc
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] text-slate-400 italic">
-                                    Chưa kê đơn
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Section C: Prescription History (Past prescriptions) */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
-                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
-                        Đơn thuốc đã dùng gần đây
-                      </span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {(prescriptionHistory ?? []).length} đơn (Cuộn để xem thêm)
-                      </span>
-                    </div>
-
-                    {(prescriptionHistory ?? []).length === 0 ? (
-                      <div className="py-6 text-center text-xs text-slate-400 italic bg-slate-50 border border-dashed border-slate-200 rounded-md">
-                        Chưa ghi nhận lịch sử đơn thuốc cũ
-                      </div>
-                    ) : (
-                      <div className="space-y-2.5 max-h-[260px] overflow-y-auto pr-1">
-                        {(prescriptionHistory ?? []).map((p) => {
-                          const linkedConsultation = (consultationHistory ?? []).find(c => c.id === p.consultationId);
-                          return (
-                            <div 
-                              key={p.id} 
-                              onClick={() => setSelectedHistoryPrescription(p)}
-                              className="border border-slate-200 p-3 bg-white space-y-2 rounded-md hover:border-primary-400 transition-colors cursor-pointer group"
-                            >
-                              <div className="flex items-center justify-between text-[11px] border-b border-slate-100 pb-1.5">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-bold text-slate-800 group-hover:text-primary-700">
-                                    Đơn thuốc · {new Date(p.createdAt).toLocaleDateString("vi-VN")}
-                                  </span>
-                                  {linkedConsultation && (
-                                    <span className="text-[10px] font-mono text-slate-500 truncate max-w-[200px]">
-                                      ({linkedConsultation.icd10Code || linkedConsultation.diagnosis || "Lần khám"})
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <span className={`px-1.5 py-0.5 font-bold uppercase text-[9px] rounded-sm ${
-                                    p.status === "CONFIRMED" || p.status === "DISPENSED"
-                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                                      : "bg-amber-50 text-amber-700 border border-amber-200"
-                                  }`}>
-                                    {p.status === "CONFIRMED" ? "Đã ký" : p.status === "DISPENSED" ? "Đã cấp phát" : "Nháp"}
-                                  </span>
-                                  <span className="text-[10px] text-primary-600 font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
-                                    Chi tiết →
-                                  </span>
-                                </div>
-                              </div>
-                              <ul className="space-y-1">
-                                {(p.items || []).slice(0, 3).map((item, idx) => (
-                                  <li key={item.id || idx} className="text-xs text-slate-600 flex justify-between">
-                                    <span>
-                                      <strong className="text-slate-800">{idx + 1}. {item.medicineName}</strong>
-                                      {item.dosage && <span className="text-slate-500 font-normal"> · {item.dosage}</span>}
-                                      {item.frequency && <span className="text-slate-500 font-normal"> · {item.frequency}</span>}
-                                    </span>
-                                    <span className="font-mono text-slate-500 text-[11px]">x{item.quantity} {item.unit}</span>
-                                  </li>
-                                ))}
-                                {(p.items || []).length > 3 && (
-                                  <li className="text-[11px] text-primary-600 font-semibold italic">
-                                    + {p.items.length - 3} loại thuốc khác... (Bấm để xem đầy đủ)
-                                  </li>
-                                )}
-                              </ul>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
+            <EmrSummaryTab
+              consultationId={consultationId}
+              consultation={consultation}
+              userId={user?.id}
+              summaryLoading={summaryLoading}
+              summaryError={summaryError}
+              onRetrySummary={() => setSummaryLoaded(false)}
+              emrRecord={emrRecord}
+              patientMedicalHistory={patientMedicalHistory}
+              consultationHistory={consultationHistory}
+              prescriptionHistory={prescriptionHistory}
+              onSelectHistoryConsultation={setSelectedHistoryConsultation}
+              onSelectHistoryPrescription={setSelectedHistoryPrescription}
+            />
           )}
 
-          {/* TAB 6: AI Clinical Assistant Workspace */}
           {activeTab === "ai" && (
-            <div className="border border-card-border bg-card-bg p-5 rounded-b-lg space-y-4">
-              {/* Section Header */}
-              <div className="flex items-center justify-between pb-3 border-b border-card-border">
-                <div>
-                  <h3 className="font-bold text-xs text-[#2B1D30] tracking-wide">
-                    Trợ lý Lâm sàng (Phác đồ điều trị Bộ Y Tế)
-                  </h3>
-                  <p className="text-[10px] text-[#6A5C70]">
-                    Truy hồi tri thức phác đồ BYT & Dược thư Quốc gia (RAG Hybrid Search)
-                  </p>
-                </div>
-                <span className="text-[10px] bg-purple-50 text-[#6E2582] border border-purple-200 px-2 py-0.5 rounded font-mono font-medium">
-                  BYT Guidelines & Gemini 2.5 Flash
-                </span>
-              </div>
-
-              {/* Unified Query & Quick Prompts Bar */}
-              <div className="space-y-2.5 bg-slate-50 p-3 rounded-lg border border-card-border">
-                <form
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleGetAiSuggestions();
-                  }}
-                  className="flex gap-2"
-                >
-                  <input
-                    type="text"
-                    value={aiQueryInput}
-                    onChange={(e) => setAiQueryInput(e.target.value)}
-                    placeholder="Nhập câu hỏi lâm sàng, biệt dược, liều dùng hoặc tra cứu phác đồ..."
-                    className="flex-1 px-3 py-2 border border-card-border rounded-md text-xs bg-white text-[#2B1D30] placeholder-[#6A5C70] focus:outline-none focus:border-[#6E2582]"
-                  />
-                  <button
-                    type="submit"
-                    disabled={aiLoading || !aiQueryInput.trim()}
-                    className="px-4 py-2 bg-[#6E2582] hover:bg-[#561A66] text-white text-xs font-semibold rounded-md transition-all disabled:opacity-40 cursor-pointer"
-                  >
-                    Tra cứu
-                  </button>
-                </form>
-
-                {/* Quick Prompt Chips */}
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  <span className="text-[10px] font-semibold text-[#6A5C70] mr-1">Gợi ý nhanh:</span>
-                  <button
-                    type="button"
-                    onClick={() => handleGetAiSuggestions("Gợi ý các khả năng chẩn đoán phân biệt cần cân nhắc theo phác đồ")}
-                    disabled={aiLoading}
-                    className="px-2.5 py-1 bg-white hover:bg-purple-50 text-slate-700 hover:text-[#6E2582] border border-card-border text-[11px] font-medium rounded-md transition-all cursor-pointer"
-                  >
-                    Chẩn đoán phân biệt
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleGetAiSuggestions("Kiểm tra tương tác thuốc DDI từ Dược thư Quốc gia và yếu tố dị ứng")}
-                    disabled={aiLoading}
-                    className="px-2.5 py-1 bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-card-border text-[11px] font-medium rounded-md transition-all cursor-pointer"
-                  >
-                    Cảnh báo tương tác DDI
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleGetAiSuggestions("Kiểm tra dữ liệu lâm sàng và tiền sử còn thiếu")}
-                    disabled={aiLoading}
-                    className="px-2.5 py-1 bg-white hover:bg-amber-50 text-slate-700 hover:text-amber-800 border border-card-border text-[11px] font-medium rounded-md transition-all cursor-pointer"
-                  >
-                    Dữ liệu còn thiếu
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleGetAiSuggestions("Đề xuất các chỉ định Cận lâm sàng theo phác đồ")}
-                    disabled={aiLoading}
-                    className="px-2.5 py-1 bg-white hover:bg-blue-50 text-slate-700 hover:text-blue-800 border border-card-border text-[11px] font-medium rounded-md transition-all cursor-pointer"
-                  >
-                    Đề xuất Cận lâm sàng
-                  </button>
-                </div>
-              </div>
-
-              {/* Loading State */}
-              {aiLoading && (
-                <div className="p-6 text-center bg-slate-50 border border-card-border rounded-lg space-y-2">
-                  <div className="w-5 h-5 border-2 border-[#6E2582] border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-xs text-slate-600 font-medium">
-                    Đang truy hồi phác đồ Bộ Y Tế và phân tích ca khám...
-                  </p>
-                </div>
-              )}
-
-              {/* Results Viewport */}
-              {!aiLoading && aiResponse && (
-                <div className="space-y-3.5">
-                  {/* DDI & Critical Warnings Alert (Only shown if medications have actually been prescribed) */}
-                  {prescriptionItems.length > 0 && aiResponse.warnings && aiResponse.warnings.some(w => w.includes("DDI") || w.toLowerCase().includes("tương tác")) && (
-                    <div className="p-3 bg-amber-50/90 border-l-3 border-amber-500 rounded-r-md space-y-1">
-                      <div className="flex items-center gap-1.5 text-amber-900 font-bold text-xs">
-                        <span>Cảnh báo tương tác thuốc (Dược Thư Quốc Gia):</span>
-                      </div>
-                      <ul className="list-disc list-inside text-xs text-amber-950 space-y-0.5 pl-1">
-                        {aiResponse.warnings
-                          .filter(w => w.includes("DDI") || w.toLowerCase().includes("tương tác"))
-                          .map((w, idx) => (
-                            <li key={idx}>{w}</li>
-                          ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Analysis Content with Formatted Markdown */}
-                  <div className="p-4 bg-white border border-card-border rounded-lg space-y-2">
-                    <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                      <span className="text-[11px] font-bold text-[#2B1D30] uppercase tracking-wide">
-                        Kết quả phân tích lâm sàng:
-                      </span>
-                      {aiResponse.model && (
-                        <span className="text-[10px] text-slate-500 font-mono">
-                          {aiResponse.model.name}
-                        </span>
-                      )}
-                    </div>
-                    <FormattedAiText content={aiResponse.summary} />
-                    <ClinicalCitations response={aiResponse} />
-                  </div>
-
-                  {/* Suggestions list with Guidelines evidence & apply button */}
-                  {aiResponse.suggestions && aiResponse.suggestions.length > 0 && (
-                    <div className="space-y-2">
-                      <span className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide block">
-                        Khuyến nghị từ Phác đồ Bộ Y Tế:
-                      </span>
-                      <div className="space-y-2">
-                        {aiResponse.suggestions.map((item, idx) => (
-                          <div key={idx} className="p-3 bg-white border border-card-border rounded-lg space-y-2">
-                            <div className="flex items-start justify-between gap-3">
-                              <p className="text-xs text-slate-800 leading-relaxed font-medium">{item.text}</p>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setDiagnosis(item.text);
-                                  showToast(`Đã áp dụng gợi ý vào ô Chẩn đoán`, "success");
-                                }}
-                                className="px-2.5 py-1 text-[11px] font-medium text-[#6E2582] bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-md transition-all flex-shrink-0 cursor-pointer"
-                              >
-                                + Áp dụng
-                              </button>
-                            </div>
-                            {item.evidenceRefs && item.evidenceRefs.length > 0 && (
-                              <div className="flex flex-wrap items-center gap-1.5 pt-1.5 border-t border-slate-100 text-[10px]">
-                                <span className="text-slate-500">Căn cứ:</span>
-                                {item.evidenceRefs.map((ev, eIdx) => (
-                                  <span
-                                    key={eIdx}
-                                    className="bg-purple-50 text-purple-900 font-mono px-1.5 py-0.5 rounded border border-purple-200 text-[10px]"
-                                  >
-                                    <span className="font-semibold">{ev.sourceId}</span>
-                                    {ev.field && <span className="text-purple-700 ml-1">({ev.field})</span>}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* General Missing Information */}
-                  {aiResponse.missingInformation && aiResponse.missingInformation.length > 0 && (
-                    <div className="p-3 bg-slate-50 border border-card-border rounded-lg space-y-1">
-                      <span className="text-xs font-semibold text-slate-800 block">
-                        Dữ liệu lâm sàng cần khai thác thêm:
-                      </span>
-                      <ul className="list-disc list-inside text-xs text-slate-700 space-y-0.5 pl-1">
-                        {aiResponse.missingInformation.map((info, idx) => (
-                          <li key={idx}>{info}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Medical Disclaimer */}
-                  <p className="text-[10px] text-slate-400 italic text-center pt-1">
-                    {aiResponse.disclaimer}
-                  </p>
-                </div>
-              )}
-            </div>
+            <AiClinicalTab
+              aiLoading={aiLoading}
+              aiResponse={aiResponse}
+              aiQueryInput={aiQueryInput}
+              setAiQueryInput={setAiQueryInput}
+              handleGetAiSuggestions={handleGetAiSuggestions}
+              prescriptionItems={prescriptionItems}
+              onApplyDiagnosisSuggestion={(text) => {
+                setDiagnosis(text);
+                showToast("Đã áp dụng gợi ý vào ô Chẩn đoán", "success");
+              }}
+            />
           )}
-
         </div>
 
-        {/* Right Column (2/5): Prescription List & Actions */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          <VoicePrescriptionPanel key={`${user?.id}:${consultationId}`} ref={voiceDraft} consultationId={consultationId} actorId={user?.id||""} prescriptionId={prescriptionId} disabled={isConsultationLocked||isSaving} hasPrescription={!!prescriptionId} canEdit={prescriptionStatus==="DRAFT"} onSaveDraft={saveDraft}>
-          {/* Main Prescription Container */}
-          <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-lg flex flex-col justify-between min-h-[420px]">
-            <div>
-              <div className="flex justify-between items-center border-b border-card-border pb-3 mb-4">
-                <div>
-                  <h2 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide">
-                    Đơn thuốc
-                  </h2>
-                  <p className="text-[10px] text-[#6A5C70]">Tổng số thuốc: {prescriptionItems.length}</p>
-                </div>
-                <div className="flex items-center gap-3">
-                  {prescriptionItems.length > 0 && !isPrescriptionLocked && (
-                    <button
-                      type="button"
-                      onClick={clearAllMedicines}
-                      disabled={isSaving}
-                      className="text-[11px] font-medium text-slate-400 hover:text-rose-600 transition-colors hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      <span>Xóa toàn bộ đơn</span>
-                    </button>
-                  )}
-                  {!isPrescriptionLocked && (
-                    <button
-                      type="button"
-                      onClick={openAddMedicineDrawer}
-                      disabled={isSaving}
-                      className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-3 py-1.5 text-xs transition-all flex items-center gap-1.5 rounded-md shadow-sm"
-                    >
-                      + THÊM THUỐC
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <VoicePrescriptionPreview result={null} saved items={prescriptionItems} disabled={isSaving||isPrescriptionLocked} canEdit={!isPrescriptionLocked} onChange={(index,item)=>editPrescriptionItems(prescriptionItems.map((row,i)=>i===index?item:row))} onRemove={index=>removeMedicine(index,prescriptionItems[index].medicineName)} onEditCatalog={openEditMedicineDrawer}/>
-              {!isPrescriptionLocked&&<NamedMedicineReview items={prescriptionItems} disabled={isSaving} onChange={setPrescriptionItems}/>}
-
-            </div>
-
-            {/* Progressive Disclosure: General Notes for Prescription */}
-            <div className="pt-4 border-t border-card-border mt-4">
-              {!showPrescriptionNotes && !prescriptionNotes ? (
-                <button
-                  type="button"
-                  onClick={() => setShowPrescriptionNotes(true)}
-                  className="text-xs font-bold text-primary-600 hover:underline flex items-center gap-1"
-                >
-                  + Thêm ghi chú đơn thuốc chung
-                </button>
-              ) : (
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <label className="block text-xs font-semibold text-[#6A5C70]">Ghi chú đơn thuốc chung</label>
-                    {!isPrescriptionLocked && (
-                      <button 
-                        onClick={() => { setShowPrescriptionNotes(false); setPrescriptionNotes(""); }}
-                        className="text-[10px] text-gray-400 hover:text-rose-600"
-                      >
-                        Thu gọn
-                      </button>
-                    )}
-                  </div>
-                  <textarea
-                    disabled={isPrescriptionLocked||isSaving}
-                    value={prescriptionNotes}
-                    onChange={(e) => setPrescriptionNotes(e.target.value)}
-                    rows={2}
-                    placeholder="Ghi chú về chế độ ăn kiêng, dị ứng hoặc lời dặn của bác sĩ..."
-                    className="w-full border border-input-border bg-input-bg px-3 py-1.5 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-
-          </VoicePrescriptionPanel>
-
-          {/* Follow-up Date Panel */}
-          <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] space-y-3 rounded-lg">
-            <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
-              Lịch Hẹn Tái khám
-            </h2>
-            {user && <FollowUpFields doctorId={user.id} value={{date:followUpDate,department:followUpDepartment,timeSlot:followUpTimeSlot}} onChange={plan=>{setFollowUpDate(plan.date);setFollowUpDepartment(plan.department);setFollowUpTimeSlot(plan.timeSlot);}} disabled={isPrescriptionLocked || isSaving} />}
-            {followUpDelivery?.followUpDate && (followUpDelivery.status==="CONFIRMED" || followUpDelivery.status==="DISPENSED") && <div className="rounded-lg border p-3 text-xs space-y-2">
-              <p>{followUpDelivery.followUpStatus==="SCHEDULED"?"Lịch tái khám đã được xác nhận.":"Toa đã ký. Lịch tái khám chưa được xác nhận; không cần ký lại toa."}</p>
-              {followUpDelivery.followUpStatus!=="SCHEDULED" && followUpDelivery.followUpStatus!=="NEEDS_SELECTION" && <button disabled={isSaving} className="rounded-lg border px-3 py-2" onClick={async()=>{if(!prescriptionId)return;setIsSaving(true);try{setFollowUpDelivery((await prescriptionApi.retryFollowUp(prescriptionId)).data);}catch(failure){showToast(getErrorMessage(failure,"Chưa xác nhận được lịch tái khám."),"warning");}finally{setIsSaving(false);}}}>Thử lại tạo lịch đã chọn</button>}
-              {(followUpDelivery.followUpStatus==="FAILED" || followUpDelivery.followUpStatus==="NEEDS_SELECTION") && <p>Nếu ca đã đầy/ngày đã qua, mở Tổng quan &amp; Tiền sử, đối chiếu lịch đã tạo rồi chọn lịch phù hợp trong Hẹn tái khám từ ca khám.</p>}
-            </div>}
-            <p className="text-[10px] text-[#6A5C70]">Chỉ báo tạo lịch thành công sau khi máy chủ xác nhận. Thông báo đẩy khi app ở nền được nghiệm thu riêng.</p>
-          </div>
-
-        </div>
-
+        <PrescriptionRightPanel
+          consultationId={consultationId}
+          userId={user?.id}
+          voiceDraftRef={voiceDraft}
+          prescriptionId={prescriptionId}
+          prescriptionStatus={prescriptionStatus}
+          prescriptionItems={prescriptionItems}
+          setPrescriptionItems={setPrescriptionItems}
+          editPrescriptionItems={editPrescriptionItems}
+          prescriptionNotes={prescriptionNotes}
+          setPrescriptionNotes={setPrescriptionNotes}
+          showPrescriptionNotes={showPrescriptionNotes}
+          setShowPrescriptionNotes={setShowPrescriptionNotes}
+          followUpDate={followUpDate}
+          setFollowUpDate={setFollowUpDate}
+          followUpDepartment={followUpDepartment}
+          setFollowUpDepartment={setFollowUpDepartment}
+          followUpTimeSlot={followUpTimeSlot}
+          setFollowUpTimeSlot={setFollowUpTimeSlot}
+          followUpDelivery={followUpDelivery}
+          setFollowUpDelivery={setFollowUpDelivery}
+          isConsultationLocked={isConsultationLocked}
+          isPrescriptionLocked={isPrescriptionLocked}
+          isSaving={isSaving}
+          setIsSaving={setIsSaving}
+          saveDraft={saveDraft}
+          openAddMedicineDrawer={openAddMedicineDrawer}
+          openEditMedicineDrawer={openEditMedicineDrawer}
+          removeMedicine={removeMedicine}
+          clearAllMedicines={clearAllMedicines}
+          showToast={showToast}
+        />
       </div>
 
-      {/* SLIDE-OVER DRAWER MODAL FOR MEDICINE ENTRY */}
-      {typeof document !== "undefined" && createPortal(
-      <div className="relative z-[60]">
-      {isMedicineDrawerOpen && (
-        <div role="dialog" aria-modal="true" aria-labelledby="medicine-drawer-title" className="fixed inset-0 z-50 flex justify-end bg-black/50 backdrop-blur-xs">
-          <div className="w-full max-w-lg min-h-0 bg-card-bg border-l border-card-border shadow-2xl h-dvh flex flex-col p-6 animate-in slide-in-from-right duration-200 rounded-l-xl">
-            
-              <div className="shrink-0 flex justify-between items-center border-b border-card-border pb-3">
-                <h3 id="medicine-drawer-title" className="text-base font-bold text-[#2B1D30] uppercase tracking-wide">
-                  {editingMedicineIndex !== null ? "Cập nhật thông tin thuốc" : "Thêm thuốc vào đơn kê"}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsMedicineDrawerOpen(false)}
-                  className="text-gray-400 hover:text-black font-bold text-sm px-2"
-                >
-                  X
-                </button>
-              </div>
+      {typeof document !== "undefined" &&
+        createPortal(
+          <div className="relative z-[60]">
+            <MedicineDrawerModal
+              isOpen={isMedicineDrawerOpen}
+              onClose={() => setIsMedicineDrawerOpen(false)}
+              editingMedicineIndex={editingMedicineIndex}
+              medicines={medicines}
+              medSearchQuery={medSearchQuery}
+              setMedSearchQuery={setMedSearchQuery}
+              showMedDropdown={showMedDropdown}
+              setShowMedDropdown={setShowMedDropdown}
+              selectedMedicine={selectedMedicine}
+              setSelectedMedicine={setSelectedMedicine}
+              medDosage={medDosage}
+              setMedDosage={setMedDosage}
+              medFrequency={medFrequency}
+              setMedFrequency={setMedFrequency}
+              medTiming={medTiming}
+              setMedTiming={setMedTiming}
+              medDuration={medDuration}
+              setMedDuration={setMedDuration}
+              medQuantity={medQuantity}
+              setMedQuantity={setMedQuantity}
+              medDetails={medDetails}
+              setMedDetails={setMedDetails}
+              showMedNotesInput={showMedNotesInput}
+              setShowMedNotesInput={setShowMedNotesInput}
+              medNotes={medNotes}
+              setMedNotes={setMedNotes}
+              saveMedicineToPrescription={saveMedicineToPrescription}
+            />
 
-            <div className="min-h-0 flex-1 overflow-y-auto py-4 pr-1 space-y-5">
-              {/* Search-as-you-type Autocomplete for Medicine Selection */}
-              <div className="relative z-40">
-                <label className="block text-xs font-bold text-[#2B1D30] mb-1">Tìm kiếm & Chọn thuốc (*)</label>
-                <input
-                  type="text"
-                  value={medSearchQuery}
-                  onChange={(e) => {
-                    setMedSearchQuery(e.target.value);
-                    setShowMedDropdown(true);
-                  }}
-                  onFocus={() => setShowMedDropdown(true)}
-                  placeholder="Nhập tên thuốc hoặc mã thuốc..."
-                  className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
-                />
+            <ConsultationActionBar
+              consultation={consultation}
+              userDisplayName={user?.fullName || user?.username || user?.email}
+              isConsultationLocked={isConsultationLocked}
+              isSaving={isSaving}
+              completionPending={completionPending}
+              prescriptionId={prescriptionId}
+              prescriptionStatus={prescriptionStatus}
+              prescriptionItems={prescriptionItems}
+              saveDraft={saveDraft}
+              confirmPrescription={confirmPrescription}
+              completeConsultation={completeConsultation}
+              executeCompleteConsultation={executeCompleteConsultation}
+              onNavigateDashboard={() => router.replace("/dashboard")}
+              confirmModalConfig={confirmModalConfig}
+              onCancelConfirmModal={() => setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }))}
+            />
 
-                {showMedDropdown && filteredMedicines.length > 0 && (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-1 border border-card-border bg-white shadow-2xl max-h-60 overflow-y-auto rounded-md divide-y divide-gray-100">
-                    {filteredMedicines.map((m) => (
-                      <div
-                        key={m.code}
-                        onClick={() => {
-                          setSelectedMedicine(m);
-                          setMedSearchQuery(m.name);
-                          setShowMedDropdown(false);
-                        }}
-                        className="px-4 py-2.5 hover:bg-[#F3E8F5] cursor-pointer text-sm flex justify-between items-center transition-colors"
-                      >
-                        <div>
-                          <p className="font-bold text-[#2B1D30]">{m.name}</p>
-                          <p className="text-xs text-[#6A5C70]">Mã: <span className="font-mono">{m.code}</span> | Đơn vị: {m.unit}</p>
-                        </div>
-                        <span className="text-[10px] bg-primary-100 text-primary-700 px-2 py-0.5 font-semibold rounded-sm">
-                          Khả dụng
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Selected Medicine Info Card */}
-              {selectedMedicine && (
-                <div className="border border-primary-200 bg-[#F8F6F9] p-3 text-xs space-y-1 rounded-md">
-                  <p className="font-bold text-primary-700">{selectedMedicine.name}</p>
-                  <p className="text-[#6A5C70]">Mã thuốc chuẩn: <span className="font-mono font-bold">{selectedMedicine.code}</span> | Đơn vị tính: <strong>{selectedMedicine.unit}</strong></p>
-                </div>
-              )}
-
-              {/* Dosage & Frequency */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Liều dùng (*)</label>
-                  <input
-                    type="text"
-                    value={medDosage}
-                    onChange={(e) => setMedDosage(e.target.value)}
-                    placeholder="1 viên / lần"
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Tần suất (*)</label>
-                  <input
-                    type="text"
-                    value={medFrequency}
-                    onChange={(e) => setMedFrequency(e.target.value)}
-                    placeholder="2 lần / ngày"
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
-                  />
-                </div>
-              </div>
-
-              {/* Timing, Duration & Quantity */}
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Thời điểm</label>
-                  <input
-                    type="text"
-                    value={medTiming}
-                    onChange={(e) => setMedTiming(e.target.value)}
-                    placeholder="Sau khi ăn"
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Số ngày</label>
-                  <input
-                    type="number"
-                    value={medDuration}
-                    onChange={(e) => setMedDuration(e.target.value)}
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Số lượng (*)</label>
-                  <input
-                    type="number"
-                    value={medQuantity}
-                    onChange={(e) => setMedQuantity(e.target.value)}
-                    className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
-                  />
-                </div>
-              </div>
-
-              <PrescriptionDetailsEditor value={medDetails} onChange={setMedDetails}/>
-              {/* Progressive Disclosure: Medicine Note */}
-              <div>
-                {!showMedNotesInput && !medNotes ? (
-                  <button
-                    type="button"
-                    onClick={() => setShowMedNotesInput(true)}
-                    className="text-xs font-semibold text-primary-600 hover:underline"
-                  >
-                    + Thêm ghi chú/lưu ý dùng thuốc này
-                  </button>
-                ) : (
-                  <div>
-                    <label className="block text-xs font-semibold text-[#6A5C70] mb-1">Ghi chú uống thuốc</label>
-                    <input
-                      type="text"
-                      value={medNotes}
-                      onChange={(e) => setMedNotes(e.target.value)}
-                      placeholder="Ví dụ: Uống với nhiều nước, tránh uống cùng sữa..."
-                      className="w-full border border-input-border bg-input-bg px-3 py-2 text-sm text-[#2B1D30] focus:outline-none rounded-md"
-                    />
-                  </div>
-                )}
-              </div>
-
-            </div>
-
-            {/* Drawer Actions */}
-            <div className="shrink-0 pt-4 border-t border-card-border flex gap-3">
-              <button
-                type="button"
-                onClick={() => setIsMedicineDrawerOpen(false)}
-                className="flex-1 border border-card-border hover:bg-gray-100 text-[#2B1D30] font-bold py-2.5 text-xs transition-all rounded-md"
-              >
-                HỦY BỎ
-              </button>
-              <button
-                type="button"
-                onClick={saveMedicineToPrescription}
-                className="flex-1 bg-primary-600 hover:bg-primary-700 text-white font-bold py-2.5 text-xs transition-all rounded-md shadow-sm"
-              >
-                {editingMedicineIndex !== null ? "LƯU CẬP NHẬT" : "XÁC NHẬN THÊM"}
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-      {/* Sticky Bottom Action Bar */}
-      <div aria-label="Thao tác phiên khám" className="fixed bottom-0 left-64 right-0 bg-[#2B1D30] border-t border-white/10 min-h-16 px-4 py-3 flex flex-wrap justify-between items-center gap-3 z-30 shadow-2xl">
-        <div className="flex min-w-0 items-center gap-2">
-          <span className="w-2 h-2 bg-emerald-400 rounded-full inline-block"></span>
-          <span className="truncate text-xs text-white/70 font-medium">Bác sĩ phụ trách: <strong className="text-white">{consultation?.doctorName || user?.fullName || user?.username || user?.email}</strong></span>
-        </div>
-        
-        <div className="ml-auto flex max-w-full flex-wrap justify-end gap-2">
-          {consultation?.status==="COMPLETED" && <button onClick={()=>void executeCompleteConsultation()} disabled={isSaving} className="rounded-lg border border-white/40 px-3 py-2 text-xs text-white disabled:opacity-50">{completionPending?"THỬ LẠI ĐỒNG BỘ":"ĐỐI SOÁT HOÀN TẤT"}</button>}
-          {!isConsultationLocked && (
-            <button
-              onClick={saveDraft}
-              disabled={isSaving}
-              className="whitespace-nowrap border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md"
-            >
-              {isSaving ? "ĐANG LƯU..." : "LƯU TOA NHÁP"}
-            </button>
-          )}
-          
-          {prescriptionId && prescriptionStatus === "DRAFT" && prescriptionItems.length > 0 && !isConsultationLocked && (
-            <button
-              onClick={confirmPrescription}
-              disabled={isSaving}
-              className="whitespace-nowrap border border-white/30 hover:bg-white/10 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md"
-            >
-              {isSaving ? "ĐANG KÝ..." : "KÝ & XÁC NHẬN ĐƠN"}
-            </button>
-          )}
-
-          {!isConsultationLocked ? (
-            <button
-              onClick={completeConsultation}
-              disabled={isSaving}
-              className="whitespace-nowrap bg-primary-600 hover:bg-primary-700 text-white font-bold px-4 py-2 text-xs transition-all disabled:opacity-50 rounded-md shadow-sm"
-            >
-              {isSaving ? "ĐANG XỬ LÝ..." : "HOÀN TẤT PHIÊN KHÁM"}
-            </button>
-          ) : (
-            <button
-              onClick={() => router.replace("/dashboard")}
-              className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-6 py-2 text-xs transition-all rounded-md"
-            >
-              QUAY LẠI TRANG CHỦ
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* Custom Confirmation Modal */}
-      <ConfirmModal
-        isOpen={confirmModalConfig.isOpen}
-        title={confirmModalConfig.title}
-        message={confirmModalConfig.message}
-        variant={confirmModalConfig.variant}
-        onConfirm={confirmModalConfig.onConfirm}
-        onCancel={() => setConfirmModalConfig(prev => ({ ...prev, isOpen: false }))}
-      >
-        {confirmModalConfig.showItemList && prescriptionItems.length > 0 && (
-          <div className="mt-3 space-y-2">
-            <div className="text-[11px] font-bold text-[#2B1D30] uppercase border-b border-card-border pb-1 flex justify-between items-center">
-              <span>Danh sách thuốc trong đơn ({prescriptionItems.length} loại):</span>
-              {prescriptionItems.length > 5 && (
-                <span className="text-[10px] text-primary-600 font-normal italic">Cuộn xuống để xem hết</span>
-              )}
-            </div>
-            <div className="max-h-[160px] overflow-y-auto space-y-1.5 pr-1 custom-scrollbar">
-              {prescriptionItems.map((item, idx) => (
-                <div key={idx} className="text-xs text-[#6A5C70] font-medium leading-relaxed">
-                  <span className="font-bold text-[#2B1D30]">{idx + 1}. {item.medicineName}</span>{" "}
-                  <span className="text-gray-900 font-semibold">x{item.quantity} {item.unit}</span>{" "}
-                  <span className="text-gray-500">({item.frequency})</span>{" "}
-                  <span className="text-gray-400 font-mono text-[11px]">- {item.medicineCode}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+            <HistoryDetailModals
+              selectedHistoryConsultation={selectedHistoryConsultation}
+              setSelectedHistoryConsultation={setSelectedHistoryConsultation}
+              selectedHistoryPrescription={selectedHistoryPrescription}
+              setSelectedHistoryPrescription={setSelectedHistoryPrescription}
+              consultationHistory={consultationHistory}
+              prescriptionHistory={prescriptionHistory}
+            />
+          </div>,
+          document.body
         )}
-      </ConfirmModal>
 
-      {/* DETAIL MODAL: Selected History Consultation */}
-      {selectedHistoryConsultation && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-white border border-card-border shadow-2xl rounded-xl w-full max-w-2xl max-h-[85vh] flex flex-col justify-between p-6">
-            <div className="space-y-4 overflow-y-auto pr-1">
-              <div className="flex justify-between items-center border-b border-card-border pb-3">
-                <div>
-                  <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Chi tiết phiên khám cũ</span>
-                  <h3 className="text-base font-bold text-[#2B1D30]">
-                    {selectedHistoryConsultation.icd10Name ? `${selectedHistoryConsultation.icd10Code ? `${selectedHistoryConsultation.icd10Code} - ` : ""}${selectedHistoryConsultation.icd10Name}` : selectedHistoryConsultation.diagnosis || "Ca khám trước"}
-                  </h3>
-                  <p className="text-xs text-[#6A5C70]">
-                    Thời gian khám: <strong className="font-mono text-[#2B1D30]">{selectedHistoryConsultation.startedAt ? new Date(selectedHistoryConsultation.startedAt).toLocaleString("vi-VN") : "N/A"}</strong>
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedHistoryConsultation(null)}
-                  className="text-gray-400 hover:text-black font-bold text-sm px-2 py-1 rounded-md"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Vitals Grid */}
-              <div className="border border-slate-200 bg-slate-50/50 p-3.5 rounded-lg space-y-2">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Chỉ số sinh hiệu</span>
-                <div className="grid grid-cols-4 gap-3 text-xs">
-                  <div className="bg-white p-2 border border-slate-200 rounded-md">
-                    <span className="text-[10px] text-slate-400 block">Huyết áp</span>
-                    <strong className="font-mono text-slate-800">{selectedHistoryConsultation.bloodPressure || "N/A"}</strong>
-                  </div>
-                  <div className="bg-white p-2 border border-slate-200 rounded-md">
-                    <span className="text-[10px] text-slate-400 block">Thân nhiệt</span>
-                    <strong className="font-mono text-slate-800">{selectedHistoryConsultation.temperature ? `${selectedHistoryConsultation.temperature}°C` : "N/A"}</strong>
-                  </div>
-                  <div className="bg-white p-2 border border-slate-200 rounded-md">
-                    <span className="text-[10px] text-slate-400 block">SpO2</span>
-                    <strong className="font-mono text-slate-800">{selectedHistoryConsultation.spo2 ? `${selectedHistoryConsultation.spo2}%` : "N/A"}</strong>
-                  </div>
-                  <div className="bg-white p-2 border border-slate-200 rounded-md">
-                    <span className="text-[10px] text-slate-400 block">Nhịp tim</span>
-                    <strong className="font-mono text-slate-800">{selectedHistoryConsultation.heartRate ? `${selectedHistoryConsultation.heartRate} bpm` : "N/A"}</strong>
-                  </div>
-                </div>
-              </div>
-
-              {/* Clinical Symptoms & Notes */}
-              <div className="space-y-3">
-                <div className="border border-slate-200 p-3.5 bg-white rounded-lg space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Triệu chứng cơ năng</span>
-                  <p className="text-xs text-slate-800 font-medium whitespace-pre-wrap">{selectedHistoryConsultation.symptoms || "Không ghi nhận"}</p>
-                </div>
-                <div className="border border-slate-200 p-3.5 bg-white rounded-lg space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Nhận định & Tóm tắt khám lâm sàng</span>
-                  <p className="text-xs text-slate-800 font-medium whitespace-pre-wrap">{selectedHistoryConsultation.clinicalNotes || "Không ghi nhận"}</p>
-                </div>
-                <div className="border border-slate-200 p-3.5 bg-white rounded-lg space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chẩn đoán lâm sàng</span>
-                  <p className="text-xs text-primary-700 font-bold">{selectedHistoryConsultation.diagnosis || "Chẩn đoán chưa cập nhật"}</p>
-                </div>
-              </div>
-
-              {/* Linked Prescription Section */}
-              {(() => {
-                const linkedP = (prescriptionHistory ?? []).find(p => p.consultationId === selectedHistoryConsultation.id);
-                return linkedP ? (
-                  <div className="border border-purple-200 bg-purple-50/40 p-4 rounded-lg space-y-2.5">
-                    <div className="flex items-center justify-between border-b border-purple-200/60 pb-1.5">
-                      <span className="text-xs font-bold text-purple-900 flex items-center gap-1.5">
-                        <span>Đơn thuốc đính kèm ca khám này</span>
-                      </span>
-                      <span className="text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 font-bold uppercase rounded-sm border border-purple-200">
-                        {linkedP.status === "CONFIRMED" ? "Đã ký" : linkedP.status === "DISPENSED" ? "Đã cấp phát" : "Nháp"}
-                      </span>
-                    </div>
-                    <ul className="space-y-1.5">
-                      {(linkedP.items || []).map((item, idx) => (
-                        <li key={item.id || idx} className="text-xs text-slate-700 bg-white p-2 border border-purple-100 rounded-md flex justify-between items-center">
-                          <div>
-                            <strong className="text-slate-900">{idx + 1}. {item.medicineName}</strong>
-                            <p className="text-[11px] text-slate-500 font-medium">{item.dosage} · {item.frequency} · {item.timing}</p>
-                          </div>
-                          <span className="font-mono text-xs font-bold text-purple-800">x{item.quantity} {item.unit}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ) : (
-                  <div className="p-3 bg-slate-50 border border-slate-200 text-center text-xs text-slate-400 italic rounded-lg">
-                    Phiên khám này không có đơn thuốc đính kèm
-                  </div>
-                );
-              })()}
-            </div>
-
-            <div className="pt-4 border-t border-card-border flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedHistoryConsultation(null)}
-                className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2 text-xs transition-all rounded-md"
-              >
-                ĐÓNG CỬA SỔ
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* DETAIL MODAL: Selected History Prescription */}
-      {selectedHistoryPrescription && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-150">
-          <div className="bg-white border border-card-border shadow-2xl rounded-xl w-full max-w-xl max-h-[85vh] flex flex-col justify-between p-6">
-            <div className="space-y-4 overflow-y-auto pr-1">
-              <div className="flex justify-between items-center border-b border-card-border pb-3">
-                <div>
-                  <span className="text-[10px] font-bold text-primary-600 uppercase tracking-widest">Chi tiết đơn thuốc cũ</span>
-                  <h3 className="text-base font-bold text-[#2B1D30]">
-                    Đơn thuốc · {new Date(selectedHistoryPrescription.createdAt).toLocaleDateString("vi-VN")}
-                  </h3>
-                  <p className="text-xs text-[#6A5C70]">
-                    Mã đơn: <span className="font-mono font-bold text-[#2B1D30]">{selectedHistoryPrescription.id}</span>
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedHistoryPrescription(null)}
-                  className="text-gray-400 hover:text-black font-bold text-sm px-2 py-1 rounded-md"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {/* Linked Consultation Banner */}
-              {(() => {
-                const linkedC = (consultationHistory ?? []).find(c => c.id === selectedHistoryPrescription.consultationId);
-                return linkedC ? (
-                  <div className="border border-emerald-200 bg-emerald-50/50 p-3 rounded-lg flex items-center justify-between text-xs">
-                    <div>
-                      <span className="text-[10px] font-bold text-emerald-800 uppercase tracking-wider block">Kê cho phiên khám</span>
-                      <strong className="text-emerald-950 font-bold">{linkedC.icd10Name ? `${linkedC.icd10Code} - ${linkedC.icd10Name}` : linkedC.diagnosis || "Lần khám trước"}</strong>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const targetC = linkedC;
-                        setSelectedHistoryPrescription(null);
-                        setSelectedHistoryConsultation(targetC);
-                      }}
-                      className="text-[11px] font-bold text-emerald-700 hover:underline bg-emerald-100 border border-emerald-300 px-2.5 py-1 rounded-md"
-                    >
-                      Xem phiên khám này →
-                    </button>
-                  </div>
-                ) : null;
-              })()}
-
-              {/* Medicine List Detail */}
-              <div className="space-y-2">
-                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">
-                  Danh sách thuốc trong đơn ({(selectedHistoryPrescription.items || []).length} loại)
-                </span>
-                <div className="divide-y divide-slate-100 border border-slate-200 rounded-lg">
-                  {(selectedHistoryPrescription.items || []).map((item, idx) => (
-                    <div key={item.id || idx} className="p-3 bg-white space-y-1">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <span className="text-xs font-bold text-slate-900">{idx + 1}. {item.medicineName}</span>
-                          <span className="text-[10px] font-mono text-slate-400 block">Mã: {item.medicineCode}</span>
-                        </div>
-                        <span className="text-xs font-bold text-primary-700 font-mono bg-primary-50 px-2 py-0.5 border border-primary-200 rounded-sm">
-                          x{item.quantity} {item.unit} ({item.duration || "N/A"} ngày)
-                        </span>
-                      </div>
-                      <p className="text-xs text-slate-600">
-                        <strong className="text-slate-700">Liều dùng:</strong> {item.dosage} · {item.frequency} · {item.timing}
-                      </p>
-                      {item.notes && (
-                        <p className="text-[11px] text-amber-800 bg-amber-50 p-1.5 border border-amber-200 rounded-md">
-                          Ghi chú: {item.notes}
-                        </p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* General Prescription Notes */}
-              {selectedHistoryPrescription.notes && (
-                <div className="border border-slate-200 bg-slate-50 p-3 rounded-lg space-y-1">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Lời dặn chung của bác sĩ</span>
-                  <p className="text-xs text-slate-800 italic">{selectedHistoryPrescription.notes}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="pt-4 border-t border-card-border flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedHistoryPrescription(null)}
-                className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-5 py-2 text-xs transition-all rounded-md"
-              >
-                ĐÓNG CỬA SỔ
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      </div>,
-      document.body
-      )}
-
-      {/* AI Voice-to-Clinical-Fields Review & Apply Modal (Zustand Store) */}
       {isVoicePreviewOpen && voiceExtractedFields && (
         <VoicePreviewModal
           transcript={voiceTranscript}
