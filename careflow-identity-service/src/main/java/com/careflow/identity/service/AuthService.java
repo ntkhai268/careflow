@@ -5,9 +5,14 @@ import com.careflow.common.exception.ResourceNotFoundException;
 import com.careflow.identity.domain.User;
 import com.careflow.identity.domain.UserRole;
 import com.careflow.identity.domain.UserStatus;
-import com.careflow.identity.dto.*;
+import com.careflow.identity.dto.LoginRequest;
+import com.careflow.identity.dto.LoginResponse;
+import com.careflow.identity.dto.RefreshTokenRequest;
+import com.careflow.identity.dto.RegisterRequest;
+import com.careflow.identity.dto.UserResponse;
 import com.careflow.identity.repository.UserRepository;
 import com.careflow.identity.security.JwtService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,10 +32,12 @@ public class AuthService {
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokens;
     private final String dummyHash;
-    @org.springframework.beans.factory.annotation.Value("${security.auth.require-staff-passkey:false}")
+
+    @Value("${security.auth.require-staff-passkey:false}")
     private boolean requireStaffPasskey;
-    @org.springframework.beans.factory.annotation.Value("${security.auth.public-registration-enabled:true}")
-    private boolean publicRegistrationEnabled=true;
+
+    @Value("${security.auth.public-registration-enabled:true}")
+    private boolean publicRegistrationEnabled = true;
 
     public AuthService(UserRepository users, PasswordEncoder passwordEncoder, JwtService jwtService,
                        RefreshTokenService refreshTokens) {
@@ -43,8 +50,10 @@ public class AuthService {
 
     @Transactional
     public UserResponse register(RegisterRequest request) {
-        if(!publicRegistrationEnabled) throw new BusinessException(503,"Đăng ký trực tuyến chưa được mở. Vui lòng liên hệ cơ sở y tế để xác minh tài khoản.");
-        throw new BusinessException(410,"Vui lòng cập nhật ứng dụng và xác minh email để đăng ký tài khoản.");
+        if (!publicRegistrationEnabled) {
+            throw new BusinessException(503, "Đăng ký trực tuyến chưa được mở. Vui lòng liên hệ cơ sở y tế để xác minh tài khoản.");
+        }
+        throw new BusinessException(410, "Vui lòng cập nhật ứng dụng và xác minh email để đăng ký tài khoản.");
     }
 
     @Transactional(noRollbackFor = BusinessException.class)
@@ -61,33 +70,21 @@ public class AuthService {
         if (user.getStatus() == UserStatus.DISABLED) {
             throw new BusinessException(403, "Tài khoản đã bị vô hiệu hóa");
         }
-        if (user.getStatus() == UserStatus.LOCKED && user.getLockedUntil() != null
-                && !user.getLockedUntil().isAfter(now)) {
-            user.setStatus(UserStatus.ACTIVE);
-            user.setLockedUntil(null);
-            user.setFailedLoginAttempts(0);
-        }
+        user.unlockIfLockExpired(now);
         if (user.getStatus() == UserStatus.LOCKED) {
             throw new BusinessException(403, "Tài khoản đang bị khóa");
         }
         if (!passwordEncoder.matches(request.password(), user.getPasswordHash())) {
-            int failures = user.getFailedLoginAttempts() + 1;
-            user.setFailedLoginAttempts(failures);
-            if (failures >= MAX_FAILED_ATTEMPTS) {
-                user.setStatus(UserStatus.LOCKED);
-                user.setLockedUntil(now.plus(LOCK_DURATION));
-                // Untrusted failed attempts must not permanently revoke trusted devices.
-            }
+            // Untrusted failed attempts must not permanently revoke trusted devices.
+            user.recordFailedLogin(now, MAX_FAILED_ATTEMPTS, LOCK_DURATION);
             users.save(user);
             throw new BusinessException(401, "Thông tin đăng nhập không hợp lệ");
         }
 
-        if(user.getRole()!=UserRole.PATIENT && (requireStaffPasskey || users.isProvisionedStaff(user.getId()))) {
-            throw new BusinessException(403,"Tài khoản nội bộ phải đăng nhập bằng passkey đã đăng ký.");
+        if (user.getRole() != UserRole.PATIENT && (requireStaffPasskey || users.isProvisionedStaff(user.getId()))) {
+            throw new BusinessException(403, "Tài khoản nội bộ phải đăng nhập bằng passkey đã đăng ký.");
         }
-        user.setFailedLoginAttempts(0);
-        user.setLockedUntil(null);
-        user.setLastLoginAt(now);
+        user.recordSuccessfulLogin(now);
         users.save(user);
         RefreshTokenService.IssuedRefreshToken refreshToken = refreshTokens.issue(user, dpopJkt);
         return tokenResponse(user, refreshToken.value(), refreshToken.expiresInSeconds(), refreshToken.sessionId());
@@ -118,7 +115,9 @@ public class AuthService {
         boolean changed = user.getStatus() != status;
         user.setStatus(status);
         user.setLockedUntil(null);
-        if (status == UserStatus.ACTIVE) user.setFailedLoginAttempts(0);
+        if (status == UserStatus.ACTIVE) {
+            user.setFailedLoginAttempts(0);
+        }
         if (changed) {
             refreshTokens.revokeAll(user);
             users.invalidateStaffPasskeyGrants(userId);
@@ -127,7 +126,7 @@ public class AuthService {
     }
 
     @Transactional
-    public UserResponse updateRole(UUID userId, com.careflow.identity.domain.UserRole role) {
+    public UserResponse updateRole(UUID userId, UserRole role) {
         User user = requireUserForUpdate(userId);
         boolean changed = user.getRole() != role;
         boolean staffPromotion = user.getRole() == UserRole.PATIENT && role != UserRole.PATIENT;
@@ -136,7 +135,9 @@ public class AuthService {
             refreshTokens.revokeAll(user);
             users.invalidateStaffPasskeyGrants(userId);
             // Patient keys could be enrolled using only a password; staff requires trusted issuance.
-            if (staffPromotion) users.retirePatientPasskeysForStaffPromotion(userId);
+            if (staffPromotion) {
+                users.retirePatientPasskeysForStaffPromotion(userId);
+            }
         }
         return UserResponse.from(users.save(user));
     }
