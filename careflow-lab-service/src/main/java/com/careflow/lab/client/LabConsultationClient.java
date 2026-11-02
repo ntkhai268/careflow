@@ -10,11 +10,21 @@ import java.util.UUID;
 
 @FeignClient(name = "consultation-service")
 public interface LabConsultationClient {
+
     @GetMapping("/api/consultations/{consultationId}")
     ApiResponse<Context> getById(@PathVariable("consultationId") UUID consultationId);
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    record Context(UUID id, UUID patientId, UUID doctorId, String status,UUID queueEntryId,UUID appointmentId) {
-        public Context(UUID id,UUID patientId,UUID doctorId,String status){this(id,patientId,doctorId,status,null,null);}
+    record Context(
+            UUID id,
+            UUID patientId,
+            UUID doctorId,
+            String status,
+            UUID queueEntryId,
+            UUID appointmentId) {
+
+        public Context(UUID id, UUID patientId, UUID doctorId, String status) {
+            this(id, patientId, doctorId, status, null, null);
+        }
     }
 }

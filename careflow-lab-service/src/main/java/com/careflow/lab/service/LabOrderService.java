@@ -4,24 +4,40 @@ import com.careflow.common.constants.AppConstants;
 import com.careflow.common.event.EventEnvelope;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.common.exception.ResourceNotFoundException;
+import com.careflow.lab.client.LabConsultationClient;
+import com.careflow.lab.client.LabQueueSourceClient;
 import com.careflow.lab.dto.request.CreateLabOrderRequest;
 import com.careflow.lab.dto.request.LabOrderItemRequest;
 import com.careflow.lab.dto.request.UpdateLabResultRequest;
 import com.careflow.lab.dto.response.LabOrderItemResponse;
 import com.careflow.lab.dto.response.LabOrderResponse;
-import com.careflow.lab.model.*;
+import com.careflow.lab.model.LabOrder;
+import com.careflow.lab.model.LabOrderItem;
+import com.careflow.lab.model.LabOrderItemStatus;
+import com.careflow.lab.model.LabOrderStatus;
+import com.careflow.lab.model.PaymentStatus;
 import com.careflow.lab.repository.LabOrderItemRepository;
 import com.careflow.lab.repository.LabOrderRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.lang.Nullable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class LabOrderService {
+
     private static final String PRODUCER = "lab-service";
     private static final Set<String> CLINICAL_COMMAND_ROLES = Set.of(AppConstants.ROLE_DOCTOR);
     private static final Set<String> LAB_COMMAND_ROLES = Set.of(AppConstants.ROLE_LAB_TECHNICIAN);
@@ -33,23 +49,39 @@ public class LabOrderService {
     private final ObjectMapper objectMapper;
     private final LabAccessService access;
     private final LabCatalogService catalog;
-    @Autowired private com.careflow.lab.client.LabQueueSourceClient sourceQueues;
+    private final LabQueueSourceClient sourceQueues;
+
+    public LabOrderService(LabOrderRepository orders,
+                           LabOrderItemRepository items,
+                           LabEventPublisher events,
+                           ObjectMapper objectMapper,
+                           LabAccessService access,
+                           LabCatalogService catalog) {
+        this(orders, items, events, objectMapper, access, catalog, null);
+    }
 
     @Autowired
-    public LabOrderService(LabOrderRepository orders, LabOrderItemRepository items,
-                           LabEventPublisher events, ObjectMapper objectMapper,
-                           LabAccessService access, LabCatalogService catalog) {
+    public LabOrderService(LabOrderRepository orders,
+                           LabOrderItemRepository items,
+                           LabEventPublisher events,
+                           ObjectMapper objectMapper,
+                           LabAccessService access,
+                           LabCatalogService catalog,
+                           @Nullable LabQueueSourceClient sourceQueues) {
         this.orders = orders;
         this.items = items;
         this.events = events;
         this.objectMapper = objectMapper;
         this.access = Objects.requireNonNull(access);
         this.catalog = Objects.requireNonNull(catalog);
+        this.sourceQueues = sourceQueues;
     }
 
     @Transactional
-    public LabOrderResponse createOrder(CreateLabOrderRequest request, UUID actorUserId,
-                                        String actorRole, String correlationId) {
+    public LabOrderResponse createOrder(CreateLabOrderRequest request,
+                                        UUID actorUserId,
+                                        String actorRole,
+                                        String correlationId) {
         requireRole(actorRole, CLINICAL_COMMAND_ROLES);
         requireActor(actorUserId);
         if (request.items() == null || request.items().isEmpty()) {
@@ -58,8 +90,10 @@ public class LabOrderService {
         if (Boolean.TRUE.equals(request.paymentRequired())) {
             throw new BusinessException(400, "Laboratory orders do not support a payment workflow");
         }
-        var context=access.requireConsultation(request.consultationId(), request.patientId(), actorUserId, actorRole, true);
-        UUID source=verifiedSource(context);
+
+        LabConsultationClient.Context context = access.requireConsultation(
+                request.consultationId(), request.patientId(), actorUserId, actorRole, true);
+        UUID sourceQueueEntryId = verifiedSource(context);
         access.requireServicePoints(request.items());
 
         LabOrder order = new LabOrder();
@@ -68,12 +102,13 @@ public class LabOrderService {
         order.setOrderedByDoctorId(actorUserId);
         // The originating visit/Queue owns its department; never trust a client UUID here.
         order.setDepartmentId(null);
-        order.setSourceQueueEntryId(source);order.setSourceVerifiedBy(actorUserId);order.setSourceVerifiedAt(Instant.now());
+        order.recordSourceVerification(sourceQueueEntryId, actorUserId, Instant.now());
         order.setClinicalNote(trimToNull(request.clinicalNote()));
         order.setStatus(LabOrderStatus.ORDERED);
         order.setPaymentStatus(PaymentStatus.NOT_REQUIRED);
+
         for (LabOrderItemRequest itemRequest : request.items()) {
-            var definition = catalog.requireItem(itemRequest);
+            LabCatalogService.Definition definition = catalog.requireItem(itemRequest);
             LabOrderItem item = new LabOrderItem();
             item.setServiceCode(definition.serviceCode());
             item.setServiceName(definition.serviceName());
@@ -97,7 +132,8 @@ public class LabOrderService {
 
     @Transactional(readOnly = true)
     public List<LabOrderResponse> getByConsultation(UUID consultationId, UUID actorUserId, String actorRole) {
-        var consultation = access.requireConsultation(consultationId, null, actorUserId, actorRole, false);
+        LabConsultationClient.Context consultation = access.requireConsultation(
+                consultationId, null, actorUserId, actorRole, false);
         return orders.findByConsultationIdOrderByCreatedAtDesc(consultationId).stream()
                 .filter(order -> consultation.patientId().equals(order.getPatientId()))
                 .map(LabOrderResponse::from)
@@ -119,8 +155,11 @@ public class LabOrderService {
         requireActor(actorUserId);
         LabOrder order = requireOrder(id);
         access.requireTechnician(order, actorUserId, actorRole, Set.of("IN_PROGRESS"), null);
-        if (order.getStatus() == LabOrderStatus.IN_PROGRESS) return LabOrderResponse.from(order);
-        if (order.getStatus() != LabOrderStatus.ORDERED && order.getStatus() != LabOrderStatus.QUEUED
+        if (order.getStatus() == LabOrderStatus.IN_PROGRESS) {
+            return LabOrderResponse.from(order);
+        }
+        if (order.getStatus() != LabOrderStatus.ORDERED
+                && order.getStatus() != LabOrderStatus.QUEUED
                 && order.getStatus() != LabOrderStatus.CALLED) {
             throw invalidTransition(order, LabOrderStatus.IN_PROGRESS);
         }
@@ -129,8 +168,11 @@ public class LabOrderService {
     }
 
     @Transactional
-    public LabOrderItemResponse updateResult(UUID orderId, UUID itemId, UpdateLabResultRequest request,
-                                             UUID actorUserId, String actorRole) {
+    public LabOrderItemResponse updateResult(UUID orderId,
+                                             UUID itemId,
+                                             UpdateLabResultRequest request,
+                                             UUID actorUserId,
+                                             String actorRole) {
         requireRole(actorRole, LAB_COMMAND_ROLES);
         requireActor(actorUserId);
         LabOrder order = requireOrder(orderId);
@@ -143,14 +185,15 @@ public class LabOrderService {
             throw new BusinessException(404, "Lab item does not belong to this order");
         }
         access.requireTechnician(order, actorUserId, actorRole, Set.of("IN_PROGRESS"), item.getServicePointId());
-        item.setResultValue(requireText(request.resultValue(), "resultValue"));
-        item.setReferenceRange(trimToNull(request.referenceRange()));
-        item.setResultUnit(trimToNull(request.unit()));
-        item.setResultFlag(trimToNull(request.resultFlag()));
-        item.setComment(trimToNull(request.comment()));
-        item.setPerformedByStaffId(actorUserId);
-        item.setPerformedAt(Instant.now());
-        item.setStatus(LabOrderItemStatus.COMPLETED);
+
+        item.completeWithResult(
+                requireText(request.resultValue(), "resultValue"),
+                trimToNull(request.referenceRange()),
+                trimToNull(request.unit()),
+                trimToNull(request.resultFlag()),
+                trimToNull(request.comment()),
+                actorUserId,
+                Instant.now());
         return LabOrderItemResponse.from(items.save(item));
     }
 
@@ -159,22 +202,22 @@ public class LabOrderService {
         requireRole(actorRole, RESULT_FINALIZE_ROLES);
         requireActor(actorUserId);
         LabOrder order = requireOrder(id);
-        access.requireTechnician(order, actorUserId, actorRole, LabAccessService.isPublished(order)
-                ? Set.of("IN_PROGRESS", "COMPLETED") : Set.of("IN_PROGRESS"), null);
-        if (order.getStatus() == LabOrderStatus.RESULT_AVAILABLE || order.getStatus() == LabOrderStatus.REVIEWED) {
+        access.requireTechnician(order, actorUserId, actorRole,
+                LabAccessService.isPublished(order) ? Set.of("IN_PROGRESS", "COMPLETED") : Set.of("IN_PROGRESS"),
+                null);
+        if (order.isPublished()) {
             return LabOrderResponse.from(order);
         }
         if (order.getStatus() != LabOrderStatus.IN_PROGRESS) {
             throw invalidTransition(order, LabOrderStatus.RESULT_AVAILABLE);
         }
-        boolean missingRequired = order.getItems().stream()
-                .filter(LabOrderItem::isRequired)
-                .anyMatch(item -> item.getStatus() != LabOrderItemStatus.COMPLETED
-                        || item.getResultValue() == null || item.getResultValue().isBlank());
-        if (missingRequired) {
+        if (!order.hasAllRequiredResults()) {
             throw new BusinessException(409, "All required lab items must have valid results before finalization");
         }
-        if(order.getSourceQueueEntryId()==null)throw new BusinessException(409,"Bác sĩ cần đồng bộ phiếu gốc của chỉ định trước khi phát hành kết quả.");
+        if (order.getSourceQueueEntryId() == null) {
+            throw new BusinessException(409,
+                    "Bác sĩ cần đồng bộ phiếu gốc của chỉ định trước khi phát hành kết quả.");
+        }
         order.setStatus(LabOrderStatus.RESULT_AVAILABLE);
         LabOrder saved = orders.save(order);
         events.publishAllRequiredResultsAvailable(resultsEnvelope(saved, correlationId));
@@ -187,7 +230,9 @@ public class LabOrderService {
         requireActor(actorUserId);
         LabOrder order = requireOrder(id);
         access.requireDoctorOrder(order, actorUserId, actorRole);
-        if (order.getStatus() == LabOrderStatus.REVIEWED) return LabOrderResponse.from(order);
+        if (order.getStatus() == LabOrderStatus.REVIEWED) {
+            return LabOrderResponse.from(order);
+        }
         if (order.getStatus() != LabOrderStatus.RESULT_AVAILABLE) {
             throw invalidTransition(order, LabOrderStatus.REVIEWED);
         }
@@ -201,37 +246,62 @@ public class LabOrderService {
         requireActor(actorUserId);
         LabOrder order = requireOrder(id);
         access.requireDoctorOrder(order, actorUserId, actorRole);
-        if (order.getStatus() == LabOrderStatus.CANCELLED) return LabOrderResponse.from(order);
-        if (order.getStatus() == LabOrderStatus.RESULT_AVAILABLE || order.getStatus() == LabOrderStatus.REVIEWED) {
+        if (order.getStatus() == LabOrderStatus.CANCELLED) {
+            return LabOrderResponse.from(order);
+        }
+        if (order.isPublished()) {
             throw invalidTransition(order, LabOrderStatus.CANCELLED);
         }
         order.setStatus(LabOrderStatus.CANCELLED);
-        order.getItems().stream()
-                .filter(item -> item.getStatus() == LabOrderItemStatus.ORDERED)
-                .forEach(item -> item.setStatus(LabOrderItemStatus.CANCELLED));
+        order.cancelOrderedItems();
         return LabOrderResponse.from(orders.save(order));
     }
 
-    private UUID verifiedSource(com.careflow.lab.client.LabConsultationClient.Context context){
-        if(context==null)throw new BusinessException(503,"Chưa xác minh được ca khám nguồn.");
-        if(context.queueEntryId()!=null)return context.queueEntryId();
-        if(context.appointmentId()!=null && sourceQueues!=null){
-            try{
-                var response=sourceQueues.ticket(context.appointmentId());var ticket=response==null?null:response.getData();
-                if(ticket!=null && ticket.ticketId()!=null && context.appointmentId().equals(ticket.appointmentId()) && context.patientId().equals(ticket.patientId()))return ticket.ticketId();
-            }catch(feign.FeignException e){throw new BusinessException(503,"Chưa đối chiếu được phiếu của lịch khám nguồn.");}
+    private UUID verifiedSource(LabConsultationClient.Context context) {
+        if (context == null) {
+            throw new BusinessException(503, "Chưa xác minh được ca khám nguồn.");
         }
-        throw new BusinessException(409,"Chưa xác định được phiếu gốc. Không tự chọn lượt gần nhất của bệnh nhân.");
+        if (context.queueEntryId() != null) {
+            return context.queueEntryId();
+        }
+        if (context.appointmentId() != null && sourceQueues != null) {
+            try {
+                var response = sourceQueues.ticket(context.appointmentId());
+                var ticket = response == null ? null : response.getData();
+                if (ticket != null
+                        && ticket.ticketId() != null
+                        && context.appointmentId().equals(ticket.appointmentId())
+                        && context.patientId().equals(ticket.patientId())) {
+                    return ticket.ticketId();
+                }
+            } catch (FeignException e) {
+                throw new BusinessException(503, "Chưa đối chiếu được phiếu của lịch khám nguồn.");
+            }
+        }
+        throw new BusinessException(409, "Chưa xác định được phiếu gốc. Không tự chọn lượt gần nhất của bệnh nhân.");
     }
 
     @Transactional
-    public LabOrderResponse synchronizeReviewQueue(UUID id,UUID actor,String role,String correlationId){
-        requireRole(role,CLINICAL_COMMAND_ROLES);requireActor(actor);
-        var order=requireOrder(id);var context=access.requireConsultation(order.getConsultationId(),order.getPatientId(),actor,role,false);
-        UUID source=verifiedSource(context);
-        if(order.getSourceQueueEntryId()!=null && !source.equals(order.getSourceQueueEntryId()))throw new BusinessException(409,"Phiếu gốc đã lưu không khớp ca khám; cần kiểm tra tại cơ sở y tế.");
-        if(order.getSourceQueueEntryId()==null){order.setSourceQueueEntryId(source);order.setSourceVerifiedBy(actor);order.setSourceVerifiedAt(Instant.now());orders.save(order);}
-        if(Set.of(LabOrderStatus.RESULT_AVAILABLE,LabOrderStatus.REVIEWED).contains(order.getStatus()))events.publishAllRequiredResultsAvailable(resultsEnvelope(order,correlationId));
+    public LabOrderResponse synchronizeReviewQueue(UUID id, UUID actor, String role, String correlationId) {
+        requireRole(role, CLINICAL_COMMAND_ROLES);
+        requireActor(actor);
+
+        LabOrder order = requireOrder(id);
+        LabConsultationClient.Context context = access.requireConsultation(
+                order.getConsultationId(), order.getPatientId(), actor, role, false);
+        UUID source = verifiedSource(context);
+
+        if (order.getSourceQueueEntryId() != null && !source.equals(order.getSourceQueueEntryId())) {
+            throw new BusinessException(409,
+                    "Phiếu gốc đã lưu không khớp ca khám; cần kiểm tra tại cơ sở y tế.");
+        }
+        if (order.getSourceQueueEntryId() == null) {
+            order.recordSourceVerification(source, actor, Instant.now());
+            orders.save(order);
+        }
+        if (order.isPublished()) {
+            events.publishAllRequiredResultsAvailable(resultsEnvelope(order, correlationId));
+        }
         return LabOrderResponse.from(order);
     }
 
@@ -269,22 +339,35 @@ public class LabOrderService {
         payload.put("labOrderId", order.getId());
         payload.put("consultationId", order.getConsultationId());
         payload.put("patientId", order.getPatientId());
-        if (order.getDepartmentId() != null) payload.put("departmentId", order.getDepartmentId());
-        if(order.getSourceQueueEntryId()!=null)payload.put("sourceQueueEntryId",order.getSourceQueueEntryId());
+        if (order.getDepartmentId() != null) {
+            payload.put("departmentId", order.getDepartmentId());
+        }
+        if (order.getSourceQueueEntryId() != null) {
+            payload.put("sourceQueueEntryId", order.getSourceQueueEntryId());
+        }
         return payload;
     }
 
-    private EventEnvelope envelope(String eventType, LabOrder order,
-                                   String correlationId, Map<String, Object> payload) {
+    private EventEnvelope envelope(String eventType,
+                                   LabOrder order,
+                                   String correlationId,
+                                   Map<String, Object> payload) {
         UUID eventId = UUID.randomUUID();
-        return new EventEnvelope(eventId, eventType, 1, order.getId(), 1,
-                Instant.now(), PRODUCER,
+        return new EventEnvelope(
+                eventId,
+                eventType,
+                1,
+                order.getId(),
+                1,
+                Instant.now(),
+                PRODUCER,
                 correlationId == null || correlationId.isBlank() ? eventId.toString() : correlationId,
                 objectMapper.valueToTree(payload));
     }
 
     private LabOrder requireOrder(UUID id) {
-        return orders.findById(id).orElseThrow(() -> new ResourceNotFoundException("LabOrder", "id", id));
+        return orders.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("LabOrder", "id", id));
     }
 
     private void enforceReadAccess(LabOrder order, UUID actorUserId, String actorRole) {
@@ -292,11 +375,22 @@ public class LabOrderService {
     }
 
     private LabOrderResponse responseForRead(LabOrder order, String role) {
-        var response = LabOrderResponse.from(order);
-        if (!isPatient(role)) return response;
-        return new LabOrderResponse(response.id(), response.consultationId(), response.patientId(),
-                response.orderedByDoctorId(), response.departmentId(), response.status(), response.paymentStatus(),
-                null, response.items(), response.createdAt(), response.updatedAt());
+        LabOrderResponse response = LabOrderResponse.from(order);
+        if (!isPatient(role)) {
+            return response;
+        }
+        return new LabOrderResponse(
+                response.id(),
+                response.consultationId(),
+                response.patientId(),
+                response.orderedByDoctorId(),
+                response.departmentId(),
+                response.status(),
+                response.paymentStatus(),
+                null,
+                response.items(),
+                response.createdAt(),
+                response.updatedAt());
     }
 
     private boolean isPatient(String role) {
@@ -311,7 +405,9 @@ public class LabOrderService {
     }
 
     private void requireActor(UUID actorUserId) {
-        if (actorUserId == null) throw new BusinessException(401, "Missing trusted user header");
+        if (actorUserId == null) {
+            throw new BusinessException(401, "Missing trusted user header");
+        }
     }
 
     private String normalizeRole(String role) {
@@ -319,7 +415,9 @@ public class LabOrderService {
     }
 
     private String requireText(String value, String field) {
-        if (value == null || value.isBlank()) throw new BusinessException(400, field + " must not be blank");
+        if (value == null || value.isBlank()) {
+            throw new BusinessException(400, field + " must not be blank");
+        }
         return value.trim();
     }
 
