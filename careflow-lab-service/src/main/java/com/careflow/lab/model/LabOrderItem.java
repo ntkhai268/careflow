@@ -2,7 +2,15 @@ package com.careflow.lab.model;
 
 import com.careflow.common.model.BaseEntity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Index;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -19,6 +27,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 public class LabOrderItem extends BaseEntity {
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "lab_order_id", nullable = false)
     @JsonIgnore
@@ -60,4 +69,27 @@ public class LabOrderItem extends BaseEntity {
 
     @Column(name = "performed_at")
     private Instant performedAt;
+
+    public boolean hasValidResult() {
+        return status == LabOrderItemStatus.COMPLETED
+                && resultValue != null
+                && !resultValue.isBlank();
+    }
+
+    public void completeWithResult(String resultValue,
+                                   String referenceRange,
+                                   String resultUnit,
+                                   String resultFlag,
+                                   String comment,
+                                   UUID performedByStaffId,
+                                   Instant performedAt) {
+        this.resultValue = resultValue;
+        this.referenceRange = referenceRange;
+        this.resultUnit = resultUnit;
+        this.resultFlag = resultFlag;
+        this.comment = comment;
+        this.performedByStaffId = performedByStaffId;
+        this.performedAt = performedAt;
+        this.status = LabOrderItemStatus.COMPLETED;
+    }
 }
