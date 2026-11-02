@@ -46,6 +46,10 @@ public class PrescriptionService {
     private final PrescriptionEventOutbox eventOutbox;
     private final PrescriptionAiReleaseGuard aiReleaseGuard;
 
+    /**
+     * Tạo đơn thuốc mới với danh sách thuốc kèm theo.
+     * Status mặc định: DRAFT — bác sỹ có thể chỉnh sửa trước khi xác nhận.
+     */
     @Transactional
     public PrescriptionResponse createPrescription(CreatePrescriptionRequest request,
                                                     UUID actorUserId, String actorRole) {
@@ -54,7 +58,27 @@ public class PrescriptionService {
             throw new BusinessException(403, "Doctor identity must come from the trusted gateway header");
         }
         request.setDoctorId(actorUserId);
-        return createPrescription(request);
+
+        validateConsultationStatus(request.getConsultationId(), request.getPatientId(), request.getDoctorId());
+        validateMedicineItems(request.getItems());
+
+        Prescription prescription = Prescription.builder()
+                .consultationId(request.getConsultationId())
+                .patientId(request.getPatientId())
+                .doctorId(request.getDoctorId())
+                .diagnosis(request.getDiagnosis())
+                .notes(request.getNotes())
+                .status(PrescriptionStatus.DRAFT)
+                .build();
+        prescription.requestFollowUp(request.getFollowUpDate(), request.getFollowUpDepartment(),
+                request.getFollowUpTimeSlot());
+        prescription.replaceItems(toItemEntities(request.getItems()));
+
+        Prescription saved = prescriptionRepository.save(prescription);
+        log.info("Created prescription {} with {} items for consultation {}",
+                saved.getId(), saved.getItems().size(), saved.getConsultationId());
+
+        return prescriptionMapper.toResponse(saved);
     }
 
     private void requireDoctor(UUID actorUserId, String actorRole) {
@@ -112,37 +136,6 @@ public class PrescriptionService {
         if (status.equals("CANCELLED") || status.equals("TRANSFERRED")) {
             throw new BusinessException(400, "Cannot amend a prescription for a cancelled consultation");
         }
-    }
-
-    /**
-     * Tạo đơn thuốc mới với danh sách thuốc kèm theo.
-     * Status mặc định: DRAFT — bác sỹ có thể chỉnh sửa trước khi xác nhận.
-     */
-    @Transactional
-    public PrescriptionResponse createPrescription(CreatePrescriptionRequest request) {
-        // Validate consultation status
-        validateConsultationStatus(request.getConsultationId(), request.getPatientId(), request.getDoctorId());
-
-        // Validate medicine codes
-        validateMedicineItems(request.getItems());
-
-        Prescription prescription = Prescription.builder()
-                .consultationId(request.getConsultationId())
-                .patientId(request.getPatientId())
-                .doctorId(request.getDoctorId())
-                .diagnosis(request.getDiagnosis())
-                .notes(request.getNotes())
-                .status(PrescriptionStatus.DRAFT)
-                .build();
-        prescription.requestFollowUp(request.getFollowUpDate(), request.getFollowUpDepartment(),
-                request.getFollowUpTimeSlot());
-        prescription.replaceItems(toItemEntities(request.getItems()));
-
-        Prescription saved = prescriptionRepository.save(prescription);
-        log.info("Created prescription {} with {} items for consultation {}",
-                saved.getId(), saved.getItems().size(), saved.getConsultationId());
-
-        return prescriptionMapper.toResponse(saved);
     }
 
     /**
