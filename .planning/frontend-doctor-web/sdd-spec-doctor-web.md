@@ -76,3 +76,20 @@ LeftClinicalTabs -> AiClinicalTab: "6. Trợ lý AI Lâm sàng (RAG)"
    - `ReceptionQueueTable.tsx`: Daily room reception table with 3-state loading/error/empty handling and per-entry check-in/recall/miss actions (`staff/checkin`).
    - `LabResultFormPanel.tsx`: Active lab order result entry form and finalization (`lab/queue`).
    - `PharmacyVerificationPanel.tsx`: Patient-to-prescription verification and FIFO dispensing panel (`staff/pharmacy`).
+
+
+---
+
+## 5. Phase 4.3 — Admin Facility & General Dashboard Decomposition (`admin/facility/page.tsx` & `dashboard/general/page.tsx`)
+
+### 5.1 Target Shared & Sub-Components
+1. **Admin Facility Components (`src/components/admin/`)**:
+   - `FacilitySelectBox.tsx`: Custom searchable dropdown combobox (`useRef` + `mousedown` outside-click listener, `rounded-xl`, `shadow-lg`, SJD purple hover) replacing native HTML `<select>` controls in facility modals per CareFlow UI rules.
+   - `FacilityColumnsGrid.tsx`: 3-column directory grid (Departments, Rooms & Service Points, Doctor Profiles) with 3-state skeleton/empty/data rendering.
+   - `DepartmentFormModal.tsx`: Modal for creating/editing hospital departments with local form state.
+   - `RoomFormModal.tsx`: Modal for creating/editing clinical/lab/imaging/pharmacy rooms using `FacilitySelectBox` for department and service point type selection.
+   - `DoctorProfileFormModal.tsx`: Modal for creating/editing doctor profiles using `FacilitySelectBox` for department and room assignment.
+2. **General Dashboard Components (`src/components/dashboard/`)**:
+   - `GeneralStatCards.tsx`: Role-aware stat cards (Waiting count, Completed count, Role queue shortcut).
+   - `GeneralQueuePanel.tsx`: Active queue table with search filter, `QueueStatusDot`, per-row call/start action, and "Gọi bệnh nhân tiếp theo" footer.
+   - `RecentlyCompletedPanel.tsx`: Right-hand panel listing today's completed consultations with 3-state loading/empty/list rendering.
