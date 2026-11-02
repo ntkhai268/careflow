@@ -2,12 +2,12 @@ package com.careflow.patient.service;
 
 import com.careflow.common.exception.BusinessException;
 import com.careflow.common.exception.ResourceNotFoundException;
-import com.careflow.patient.dto.request.CreatePatientRequest;
-import com.careflow.patient.dto.request.UpdatePatientRequest;
-import com.careflow.patient.dto.response.PatientResponse;
-import com.careflow.patient.dto.response.PatientOperationalResponse;
 import com.careflow.patient.client.AssignmentClient;
 import com.careflow.patient.client.dto.AssignmentAccessResponse;
+import com.careflow.patient.dto.request.CreatePatientRequest;
+import com.careflow.patient.dto.request.UpdatePatientRequest;
+import com.careflow.patient.dto.response.PatientOperationalResponse;
+import com.careflow.patient.dto.response.PatientResponse;
 import com.careflow.patient.mapper.PatientMapper;
 import com.careflow.patient.model.Patient;
 import com.careflow.patient.repository.PatientRepository;
@@ -25,9 +25,10 @@ import java.util.UUID;
 public class PatientService {
 
     private static final int MAX_PROFILES_PER_USER = 10;
+    private static final PatientAccessPolicy ACCESS_POLICY = new PatientAccessPolicy();
+
     private final PatientRepository patientRepository;
     private final AssignmentClient assignmentClient;
-    private static final PatientAccessPolicy ACCESS_POLICY = new PatientAccessPolicy();
 
     /**
      * Tạo hồ sơ bệnh nhân mới (UC-P01)
@@ -82,8 +83,11 @@ public class PatientService {
     }
 
     @Transactional(readOnly = true)
-    public PatientOperationalResponse getOperationalSummary(UUID id, UUID appointmentId, String roomId,
-                                                             UUID requesterId, String role) {
+    public PatientOperationalResponse getOperationalSummary(UUID id,
+                                                            UUID appointmentId,
+                                                            String roomId,
+                                                            UUID requesterId,
+                                                            String role) {
         Patient patient = patientRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
         boolean assigned = hasAssignment(id, appointmentId, roomId, requesterId, role);
@@ -98,8 +102,10 @@ public class PatientService {
 
     @Transactional(readOnly = true)
     public UUID getOwnerUserId(UUID id, UUID requesterId, String role) {
-        if (requesterId == null || role == null
-                || !("DOCTOR".equalsIgnoreCase(role) || "STAFF".equalsIgnoreCase(role)
+        if (requesterId == null
+                || role == null
+                || !("DOCTOR".equalsIgnoreCase(role)
+                || "STAFF".equalsIgnoreCase(role)
                 || "ADMIN".equalsIgnoreCase(role))) {
             throw new BusinessException(403, "Clinical access is required");
         }
@@ -140,7 +146,9 @@ public class PatientService {
                 .orElseThrow(() -> new ResourceNotFoundException("Patient", "id", id));
 
         if (patient.getUserId() == null && "STAFF".equalsIgnoreCase(role)) {
-            throw new BusinessException(403, "Hồ sơ không tài khoản chỉ được sửa qua quy trình tiếp nhận có kiểm tra phân công");
+            throw new BusinessException(
+                    403,
+                    "Hồ sơ không tài khoản chỉ được sửa qua quy trình tiếp nhận có kiểm tra phân công");
         }
 
         ACCESS_POLICY.requireUpdate(requesterId, role, patient);
@@ -153,18 +161,7 @@ public class PatientService {
             throw new BusinessException(409, "Tài khoản này đã có hồ sơ dùng số CCCD đã nhập");
         }
 
-        // Partial update — chỉ cập nhật field non-null
-        if (request.getFullName() != null) patient.setFullName(request.getFullName());
-        if (request.getDateOfBirth() != null) patient.setDateOfBirth(request.getDateOfBirth());
-        if (request.getGender() != null) patient.setGender(request.getGender());
-        if (request.getPhone() != null) patient.setPhone(request.getPhone());
-        if (request.getIdCardNumber() != null) patient.setIdCardNumber(request.getIdCardNumber());
-        if (request.getInsuranceNumber() != null) patient.setInsuranceNumber(request.getInsuranceNumber());
-        if (request.getOccupation() != null) patient.setOccupation(request.getOccupation());
-        if (request.getAddress() != null) patient.setAddress(request.getAddress());
-        if (request.getAvatarUrl() != null) patient.setAvatarUrl(request.getAvatarUrl());
-        if (request.getAllergyNotes() != null) patient.setAllergyNotes(request.getAllergyNotes());
-        if (request.getMedicalHistory() != null) patient.setMedicalHistory(request.getMedicalHistory());
+        patient.applyUpdates(request);
 
         Patient updated = patientRepository.save(patient);
         log.info("Updated patient {}", updated.getId());
@@ -172,9 +169,14 @@ public class PatientService {
         return PatientMapper.toResponse(updated);
     }
 
-    private boolean hasAssignment(UUID patientId, UUID appointmentId, String roomId,
-                                  UUID requesterId, String role) {
-        if (requesterId == null || role == null || role.isBlank()
+    private boolean hasAssignment(UUID patientId,
+                                  UUID appointmentId,
+                                  String roomId,
+                                  UUID requesterId,
+                                  String role) {
+        if (requesterId == null
+                || role == null
+                || role.isBlank()
                 || "PATIENT".equalsIgnoreCase(role)) {
             return false;
         }

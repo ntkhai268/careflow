@@ -9,10 +9,10 @@ import com.careflow.directory.dto.StaffAssignmentResponse;
 import com.careflow.directory.dto.request.CreateDepartmentRequest;
 import com.careflow.directory.dto.request.CreateDoctorProfileRequest;
 import com.careflow.directory.dto.request.CreateRoomRequest;
+import com.careflow.directory.dto.request.StaffAssignmentRequest;
 import com.careflow.directory.dto.request.UpdateDepartmentRequest;
 import com.careflow.directory.dto.request.UpdateDoctorProfileRequest;
 import com.careflow.directory.dto.request.UpdateRoomRequest;
-import com.careflow.directory.dto.request.StaffAssignmentRequest;
 import com.careflow.directory.model.Department;
 import com.careflow.directory.model.DoctorProfile;
 import com.careflow.directory.model.Room;
@@ -27,12 +27,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class DirectoryService {
+    private static final Set<String> DOCTOR_ROLES = Set.of("DOCTOR");
 
     private final DepartmentRepository departmentRepository;
     private final RoomRepository roomRepository;
@@ -41,7 +43,9 @@ public class DirectoryService {
     private final StaffIdentityVerifier staffIdentity;
 
     public boolean hasStaffRoomAccess(UUID userId, String roomId) {
-        return userId != null && roomId != null && !roomId.isBlank()
+        return userId != null
+                && roomId != null
+                && !roomId.isBlank()
                 && staffAssignmentRepository.existsByUserIdAndRoomIdAndIsActiveTrue(userId, roomId);
     }
 
@@ -65,8 +69,9 @@ public class DirectoryService {
     public StaffAssignmentResponse createStaffAssignment(StaffAssignmentRequest req) {
         String roomId = req.getRoomId().trim();
         String departmentCode = req.getDepartmentCode().trim();
+        boolean active = !Boolean.FALSE.equals(req.getIsActive());
         validateStaffAssignment(departmentCode, roomId);
-        validateStaffRoleForRoom(req.getUserId(),roomId,!Boolean.FALSE.equals(req.getIsActive()));
+        validateStaffRoleForRoom(req.getUserId(), roomId, active);
         if (staffAssignmentRepository.findByUserIdAndRoomId(req.getUserId(), roomId).isPresent()) {
             throw new BusinessException(409, "Staff assignment đã tồn tại cho user và room này");
         }
@@ -74,7 +79,7 @@ public class DirectoryService {
                 .userId(req.getUserId())
                 .roomId(roomId)
                 .departmentCode(departmentCode)
-                .isActive(req.getIsActive() == null || req.getIsActive())
+                .isActive(active)
                 .build();
         return StaffAssignmentResponse.from(staffAssignmentRepository.save(assignment));
     }
@@ -85,9 +90,11 @@ public class DirectoryService {
                 .orElseThrow(() -> new ResourceNotFoundException("StaffAssignment", "id", id));
         String roomId = req.getRoomId().trim();
         String departmentCode = req.getDepartmentCode().trim();
+        boolean active = !Boolean.FALSE.equals(req.getIsActive());
         validateStaffAssignment(departmentCode, roomId);
-        if(!Boolean.FALSE.equals(req.getIsActive()) || !assignment.getUserId().equals(req.getUserId()))
-            validateStaffRoleForRoom(req.getUserId(),roomId,!Boolean.FALSE.equals(req.getIsActive()));
+        if (active || !assignment.getUserId().equals(req.getUserId())) {
+            validateStaffRoleForRoom(req.getUserId(), roomId, active);
+        }
         staffAssignmentRepository.findByUserIdAndRoomId(req.getUserId(), roomId)
                 .filter(existing -> !existing.getId().equals(id))
                 .ifPresent(existing -> {
@@ -96,7 +103,7 @@ public class DirectoryService {
         assignment.setUserId(req.getUserId());
         assignment.setRoomId(roomId);
         assignment.setDepartmentCode(departmentCode);
-        assignment.setIsActive(req.getIsActive() == null || req.getIsActive());
+        assignment.setIsActive(active);
         return StaffAssignmentResponse.from(staffAssignmentRepository.save(assignment));
     }
 
@@ -148,8 +155,7 @@ public class DirectoryService {
         boolean hasDepartmentFilter = departmentCode != null && !departmentCode.isBlank();
         boolean hasRoomTypeFilter = roomType != null && !roomType.isBlank();
         if (hasDepartmentFilter && hasRoomTypeFilter) {
-            rooms = roomRepository.findByDepartmentCodeAndRoomTypeAndIsActiveTrue(
-                    departmentCode, roomType);
+            rooms = roomRepository.findByDepartmentCodeAndRoomTypeAndIsActiveTrue(departmentCode, roomType);
         } else if (hasDepartmentFilter) {
             rooms = roomRepository.findByDepartmentCodeAndIsActiveTrue(departmentCode);
         } else if (hasRoomTypeFilter) {
@@ -211,7 +217,9 @@ public class DirectoryService {
     }
 
     public List<DoctorProfileResponse> getAllDoctorProfilesForAdministration() {
-        return doctorProfileRepository.findAll().stream().map(this::toDoctorProfileResponse).toList();
+        return doctorProfileRepository.findAll().stream()
+                .map(this::toDoctorProfileResponse)
+                .toList();
     }
 
     public DoctorProfileResponse getDoctorByUserId(UUID userId) {
@@ -226,7 +234,8 @@ public class DirectoryService {
             throw new BusinessException(400, "Bác sĩ đã có profile cho userId: " + req.getUserId());
         }
         validateDoctorAssignment(req.getDepartmentCode(), req.getAssignedRoomId());
-        staffIdentity.require(req.getUserId(),java.util.Set.of("DOCTOR"),!Boolean.FALSE.equals(req.getIsActive()));
+        boolean active = !Boolean.FALSE.equals(req.getIsActive());
+        staffIdentity.require(req.getUserId(), DOCTOR_ROLES, active);
         DoctorProfile profile = DoctorProfile.builder()
                 .userId(req.getUserId())
                 .fullName(req.getFullName())
@@ -235,7 +244,7 @@ public class DirectoryService {
                 .assignedRoomId(req.getAssignedRoomId())
                 .specialization(req.getSpecialization())
                 .licenseNumber(req.getLicenseNumber())
-                .isActive(req.getIsActive() != null ? req.getIsActive() : true)
+                .isActive(active)
                 .primaryForBooking(Boolean.TRUE.equals(req.getPrimaryForBooking()))
                 .build();
         validateDoctorAssignment(profile.getDepartmentCode(), profile.getAssignedRoomId());
@@ -246,41 +255,31 @@ public class DirectoryService {
     public DoctorProfileResponse updateDoctorProfile(UUID id, UpdateDoctorProfileRequest req) {
         DoctorProfile profile = doctorProfileRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("DoctorProfile", "id", id));
-        if (req.getFullName() != null && !req.getFullName().isBlank()) {
-            profile.setFullName(req.getFullName());
-        }
-        if (req.getTitle() != null) {
-            profile.setTitle(req.getTitle());
-        }
-        if (req.getDepartmentCode() != null) {
-            profile.setDepartmentCode(req.getDepartmentCode());
-        }
-        if (req.getAssignedRoomId() != null) {
-            profile.setAssignedRoomId(req.getAssignedRoomId());
-        }
-        if (req.getSpecialization() != null) {
-            profile.setSpecialization(req.getSpecialization());
-        }
-        if (req.getPrimaryForBooking() != null) { profile.setPrimaryForBooking(req.getPrimaryForBooking()); }
-        if (req.getLicenseNumber() != null) {
-            profile.setLicenseNumber(req.getLicenseNumber());
-        }
-        if (req.getIsActive() != null) {
-            profile.setIsActive(req.getIsActive());
-        }
+        profile.applyUpdates(
+                req.getFullName(),
+                req.getTitle(),
+                req.getDepartmentCode(),
+                req.getAssignedRoomId(),
+                req.getSpecialization(),
+                req.getPrimaryForBooking(),
+                req.getLicenseNumber(),
+                req.getIsActive());
         validateDoctorAssignment(profile.getDepartmentCode(), profile.getAssignedRoomId());
-        if(Boolean.TRUE.equals(profile.getIsActive()))staffIdentity.require(profile.getUserId(),java.util.Set.of("DOCTOR"),true);
+        if (Boolean.TRUE.equals(profile.getIsActive())) {
+            staffIdentity.require(profile.getUserId(), DOCTOR_ROLES, true);
+        }
         return toDoctorProfileResponse(doctorProfileRepository.save(profile));
     }
 
-    private void validateStaffRoleForRoom(UUID userId,String roomId,boolean active) {
-        Room room=roomRepository.findById(roomId).orElseThrow(()->new ResourceNotFoundException("Room","id",roomId));
-        String role=switch(room.getRoomType()) {
-            case "LAB","IMAGING" -> "LAB_TECHNICIAN";
-            case "CONSULTATION","PHARMACY" -> "STAFF";
-            default -> throw new BusinessException(409,"Loại phòng không hỗ trợ phân công nhân viên này.");
+    private void validateStaffRoleForRoom(UUID userId, String roomId, boolean active) {
+        Room room = roomRepository.findById(roomId)
+                .orElseThrow(() -> new ResourceNotFoundException("Room", "id", roomId));
+        String requiredRole = switch (room.getRoomType()) {
+            case "LAB", "IMAGING" -> "LAB_TECHNICIAN";
+            case "CONSULTATION", "PHARMACY" -> "STAFF";
+            default -> throw new BusinessException(409, "Loại phòng không hỗ trợ phân công nhân viên này.");
         };
-        staffIdentity.require(userId,java.util.Set.of(role),active);
+        staffIdentity.require(userId, Set.of(requiredRole), active);
     }
 
     private void validateDoctorAssignment(String departmentCode, String roomId) {
@@ -295,7 +294,9 @@ public class DirectoryService {
         if (!Boolean.TRUE.equals(department.getIsActive())) {
             throw new BusinessException(400, "Doctor cannot be assigned to an inactive department");
         }
-        if (roomId == null || roomId.isBlank()) return;
+        if (roomId == null || roomId.isBlank()) {
+            return;
+        }
         Room room = roomRepository.findById(roomId)
                 .orElseThrow(() -> new ResourceNotFoundException("Room", "id", roomId));
         if (!Boolean.TRUE.equals(room.getIsActive()) || !departmentCode.equals(room.getDepartmentCode())) {
