@@ -156,3 +156,22 @@
 - **Service AI Lâm Sàng**: [`careflow-ai-service/src/main/java/com/careflow/ai/service/AiClinicalAssistantService.java`](../careflow-ai-service/src/main/java/com/careflow/ai/service/AiClinicalAssistantService.java)
 - **Chiến lược Chunking chuẩn CareFlow**: [`.planning/ai-service/chunking-strategy.md`](../.planning/ai-service/chunking-strategy.md)
 - **Tài liệu kiến trúc AI & RAG đầy đủ**: [`docs/ai-service/clinical-ai-architecture-and-rag-implementation-plan.md`](./ai-service/clinical-ai-architecture-and-rag-implementation-plan.md)
+
+
+---
+
+## 7. Milestone SDD Refactor Toàn Hệ Thống (Phases 1–5) — ĐÃ HOÀN TẤT 100%
+
+- **Tài liệu đặc tả SDD (`.planning/*/sdd-spec-*.md`)**: Đã thiết lập đầy đủ cho toàn bộ Backend Microservices, `frontend/doctor-web` và `frontend/patient-mobile`.
+- **Phase 1 — Core Clinical Services**:
+  - `careflow-consultation-service` (PR `#23`), `careflow-prescription-service` (PR `#24`, `#25`), `careflow-lab-service` (PR `#26`): Tách biệt State Validator, Orchestration, Event Payload Factory, Pricing/Stock Helper và Query/Support components.
+- **Phase 2 — Patient Journey & EMR Services**:
+  - `careflow-appointment-service` (PR `#27`), `careflow-queue-service` (PR `#28`), `careflow-emr-service` (PR `#29`): Tách biệt Slot/CheckIn/Fifo Validator, Queue Calling/Ticket/Payload Helpers, và EMR Encryption/Integrity/Audit/Access/Search Helpers.
+- **Phase 3 — Directory, Patient, Identity, Gateway & Support Services**:
+  - `careflow-hospital-directory-service` & `careflow-patient-service` (PR `#30`), `careflow-identity-service` & `careflow-api-gateway` (PR `#31`), `careflow-ai-service`, `careflow-notification-service` & `careflow-analytics-service` (PR `#32`).
+- **Phase 4 — Doctor & Hospital Web (`frontend/doctor-web`)**:
+  - **4.1**: Tách trang `consultation/[id]/page.tsx` (2.613 dòng) thành 2 custom hooks (`usePrescriptionForm`, `useClinicalAi`), 1 module constants và 11 sub-components trong `src/components/consultation/` (PR `#33`).
+  - **4.2**: Tách 4 màn hình Hàng đợi & Tiếp nhận (`staff/checkin`, `dashboard/queue`, `lab/queue`, `staff/pharmacy`) với bộ component dùng chung trong `src/components/queue/` (PR `#34`).
+  - **4.3**: Tách `admin/facility/page.tsx` (thay thế `<select>` mặc định bằng `FacilitySelectBox` chuẩn SJD) và `dashboard/general/page.tsx` thành các component trong `src/components/admin/` và `src/components/dashboard/` (PR `#35`).
+- **Phase 5 — Patient Mobile (`frontend/patient-mobile`)**:
+  - Tách gọn `journey_models.dart`, `backend_journey_repository.dart`, `login_methods_screen.dart` và `appointment_detail_screen.dart` thành các `part` file chuyên biệt theo domain và widget; `flutter analyze` (0 issues) và `flutter test` (14/14 tests PASS).
