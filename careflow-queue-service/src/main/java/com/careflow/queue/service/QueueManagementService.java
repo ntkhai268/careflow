@@ -1,32 +1,67 @@
 package com.careflow.queue.service;
 
 import com.careflow.common.constants.AppConstants;
-import com.careflow.common.dto.ApiResponse;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.common.exception.ResourceNotFoundException;
-import com.careflow.queue.domain.*;
-import com.careflow.queue.dto.*;
+import com.careflow.common.security.PatientOwnershipClient;
 import com.careflow.queue.client.DirectoryClient;
-import com.careflow.queue.client.dto.DoctorAssignmentResponse;
-import com.careflow.queue.repository.*;
-import org.springframework.beans.factory.annotation.Value;
+import com.careflow.queue.domain.ConsultationPhase;
+import com.careflow.queue.domain.IdempotencyRecord;
+import com.careflow.queue.domain.MissedPolicy;
+import com.careflow.queue.domain.PriorityLevel;
+import com.careflow.queue.domain.QueueClass;
+import com.careflow.queue.domain.QueueConfig;
+import com.careflow.queue.domain.QueueEntry;
+import com.careflow.queue.domain.QueueNumberSequence;
+import com.careflow.queue.domain.QueueStatus;
+import com.careflow.queue.domain.QueueType;
+import com.careflow.queue.domain.SchedulingLane;
+import com.careflow.queue.dto.CheckInQrResponse;
+import com.careflow.queue.dto.CheckInRequest;
+import com.careflow.queue.dto.ManualIntakeRequest;
+import com.careflow.queue.dto.QueueConfigRequest;
+import com.careflow.queue.dto.QueueConfigResponse;
+import com.careflow.queue.dto.QueueDashboardResponse;
+import com.careflow.queue.dto.QueueEntryResponse;
+import com.careflow.queue.dto.RequeueRequest;
+import com.careflow.queue.dto.ServicePointQueueResponse;
+import com.careflow.queue.dto.VisitTicketResponse;
+import com.careflow.queue.repository.IdempotencyRecordRepository;
+import com.careflow.queue.repository.QueueConfigRepository;
+import com.careflow.queue.repository.QueueEntryRepository;
+import com.careflow.queue.repository.QueueNumberSequenceRepository;
+import com.careflow.queue.repository.ServicePointSequenceRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.*;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.EnumSet;
+import java.util.HashMap;
+import java.util.HexFormat;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 @Service
 public class QueueManagementService {
-    @org.springframework.beans.factory.annotation.Autowired
-    private com.careflow.common.security.PatientOwnershipClient currentOwners;
     private static final String DEFAULT_HOSPITAL_SITE_ID = "HOSPITAL-MAIN";
-    private static final String DEFAULT_SESSION_CODE = "MORNING";
     private static final double DEFAULT_GEOFENCE_LATITUDE = 10.7769;
     private static final double DEFAULT_GEOFENCE_LONGITUDE = 106.7009;
     private static final double DEFAULT_GEOFENCE_RADIUS_METERS = 150;
@@ -44,27 +79,29 @@ public class QueueManagementService {
     private static final Set<QueueStatus> SERVING_STATUSES = EnumSet.of(
             QueueStatus.CALLED, QueueStatus.IN_PROGRESS);
 
-    @Autowired private QueueRoomConfigurationService roomConfigurations;
+    @Autowired
+    private PatientOwnershipClient currentOwners;
+
+    @Autowired
+    private QueueRoomConfigurationService roomConfigurations;
+
     private final QueueConfigRepository configs;
     private final QueueNumberSequenceRepository sequences;
-    private final ServicePointSequenceRepository servicePointSequences;
     private final QueueEntryRepository entries;
     private final IdempotencyRecordRepository idempotencyRecords;
     private final QueueEventService events;
-    private final QrTokenService qrTokens;
-    private final HospitalCheckInConfigService hospitalCheckInConfigService;
     private final ZoneId businessZone;
-    private final DirectoryClient directoryClient;
-    private final String geofenceSiteId;
-    private final double geofenceLatitude;
-    private final double geofenceLongitude;
-    private final double geofenceRadiusMeters;
-    private final double geofenceMaxAccuracyMeters;
+    private final QueueAccessValidator accessValidator;
+    private final QueueCheckInSupport checkInSupport;
+    private final ServicePointQueueSupport servicePointSupport;
 
-    public QueueManagementService(QueueConfigRepository configs, QueueNumberSequenceRepository sequences,
+    public QueueManagementService(QueueConfigRepository configs,
+                                  QueueNumberSequenceRepository sequences,
                                   ServicePointSequenceRepository servicePointSequences,
-                                  QueueEntryRepository entries, IdempotencyRecordRepository idempotencyRecords,
-                                  QueueEventService events, QrTokenService qrTokens,
+                                  QueueEntryRepository entries,
+                                  IdempotencyRecordRepository idempotencyRecords,
+                                  QueueEventService events,
+                                  QrTokenService qrTokens,
                                   @Value("${queue.business-zone:Asia/Ho_Chi_Minh}") String businessZone) {
         this(configs, sequences, servicePointSequences, entries, idempotencyRecords, events, qrTokens,
                 businessZone, null, null, DEFAULT_HOSPITAL_SITE_ID, DEFAULT_GEOFENCE_LATITUDE,
@@ -72,22 +109,30 @@ public class QueueManagementService {
                 DEFAULT_GEOFENCE_MAX_ACCURACY_METERS);
     }
 
-    public QueueManagementService(QueueConfigRepository configs, QueueNumberSequenceRepository sequences,
+    public QueueManagementService(QueueConfigRepository configs,
+                                  QueueNumberSequenceRepository sequences,
                                   ServicePointSequenceRepository servicePointSequences,
-                                  QueueEntryRepository entries, IdempotencyRecordRepository idempotencyRecords,
-                                  QueueEventService events, QrTokenService qrTokens,
-                                  String businessZone, DirectoryClient directoryClient) {
+                                  QueueEntryRepository entries,
+                                  IdempotencyRecordRepository idempotencyRecords,
+                                  QueueEventService events,
+                                  QrTokenService qrTokens,
+                                  String businessZone,
+                                  DirectoryClient directoryClient) {
         this(configs, sequences, servicePointSequences, entries, idempotencyRecords, events, qrTokens,
                 businessZone, directoryClient, null, DEFAULT_HOSPITAL_SITE_ID, DEFAULT_GEOFENCE_LATITUDE,
                 DEFAULT_GEOFENCE_LONGITUDE, DEFAULT_GEOFENCE_RADIUS_METERS,
                 DEFAULT_GEOFENCE_MAX_ACCURACY_METERS);
     }
 
-    public QueueManagementService(QueueConfigRepository configs, QueueNumberSequenceRepository sequences,
+    public QueueManagementService(QueueConfigRepository configs,
+                                  QueueNumberSequenceRepository sequences,
                                   ServicePointSequenceRepository servicePointSequences,
-                                  QueueEntryRepository entries, IdempotencyRecordRepository idempotencyRecords,
-                                  QueueEventService events, QrTokenService qrTokens,
-                                  String businessZone, DirectoryClient directoryClient,
+                                  QueueEntryRepository entries,
+                                  IdempotencyRecordRepository idempotencyRecords,
+                                  QueueEventService events,
+                                  QrTokenService qrTokens,
+                                  String businessZone,
+                                  DirectoryClient directoryClient,
                                   HospitalCheckInConfigService hospitalCheckInConfigService) {
         this(configs, sequences, servicePointSequences, entries, idempotencyRecords, events, qrTokens,
                 businessZone, directoryClient, hospitalCheckInConfigService, DEFAULT_HOSPITAL_SITE_ID,
@@ -96,10 +141,13 @@ public class QueueManagementService {
     }
 
     @Autowired
-    public QueueManagementService(QueueConfigRepository configs, QueueNumberSequenceRepository sequences,
+    public QueueManagementService(QueueConfigRepository configs,
+                                  QueueNumberSequenceRepository sequences,
                                   ServicePointSequenceRepository servicePointSequences,
-                                  QueueEntryRepository entries, IdempotencyRecordRepository idempotencyRecords,
-                                  QueueEventService events, QrTokenService qrTokens,
+                                  QueueEntryRepository entries,
+                                  IdempotencyRecordRepository idempotencyRecords,
+                                  QueueEventService events,
+                                  QrTokenService qrTokens,
                                   @Value("${queue.business-zone:Asia/Ho_Chi_Minh}") String businessZone,
                                   DirectoryClient directoryClient,
                                   HospitalCheckInConfigService hospitalCheckInConfigService,
@@ -108,36 +156,81 @@ public class QueueManagementService {
                                   @Value("${queue.geofence.longitude:106.7009}") double geofenceLongitude,
                                   @Value("${queue.geofence.radius-meters:150}") double geofenceRadiusMeters,
                                   @Value("${queue.geofence.max-accuracy-meters:50}") double geofenceMaxAccuracyMeters) {
-        this.configs = configs;
-        this.sequences = sequences;
-        this.servicePointSequences = servicePointSequences;
-        this.entries = entries;
-        this.idempotencyRecords = idempotencyRecords;
-        this.events = events;
-        this.qrTokens = qrTokens;
-        this.hospitalCheckInConfigService = hospitalCheckInConfigService;
-        this.businessZone = ZoneId.of(businessZone);
-        this.directoryClient = directoryClient;
-        this.geofenceSiteId = geofenceSiteId;
-        this.geofenceLatitude = geofenceLatitude;
-        this.geofenceLongitude = geofenceLongitude;
         if (geofenceRadiusMeters <= 0 || geofenceMaxAccuracyMeters <= 0) {
             throw new IllegalArgumentException("Geofence radius and accuracy must be positive");
         }
-        this.geofenceRadiusMeters = geofenceRadiusMeters;
-        this.geofenceMaxAccuracyMeters = geofenceMaxAccuracyMeters;
+        this.configs = configs;
+        this.sequences = sequences;
+        this.entries = entries;
+        this.idempotencyRecords = idempotencyRecords;
+        this.events = events;
+        this.businessZone = ZoneId.of(businessZone);
+        this.accessValidator = new QueueAccessValidator(entries, directoryClient);
+        HospitalCheckInConfigService.GeofenceSettings fallbackGeofence =
+                new HospitalCheckInConfigService.GeofenceSettings(
+                        geofenceSiteId,
+                        geofenceLatitude,
+                        geofenceLongitude,
+                        geofenceRadiusMeters,
+                        geofenceMaxAccuracyMeters);
+        this.checkInSupport = new QueueCheckInSupport(
+                entries,
+                events,
+                qrTokens,
+                hospitalCheckInConfigService,
+                fallbackGeofence,
+                this::businessDate,
+                () -> this.currentOwners,
+                () -> this.roomConfigurations,
+                this::configFor,
+                this::requireRoomConfig,
+                this::response);
+        this.servicePointSupport = new ServicePointQueueSupport(
+                entries,
+                servicePointSequences,
+                events,
+                this.businessZone,
+                this::businessDate);
     }
 
-    public record ClinicalContext(UUID entryId,UUID patientId,UUID appointmentId,String patientName,String roomId,String phase,String status,UUID calledByUserId){}
-    @Transactional(readOnly=true)
-    public ClinicalContext clinicalContext(UUID entryId,UUID actor,String role){
-        if(!"DOCTOR".equals(role))throw new BusinessException(403,"Chỉ bác sĩ được đọc ngữ cảnh bắt đầu khám.");
-        requireEntryAssignmentAccess(entryId,actor,role);
-        QueueEntry entry=entries.findById(entryId).orElseThrow(()->new ResourceNotFoundException("QueueEntry","id",entryId));
-        if(entry.getQueueType()!=QueueType.CONSULTATION || entry.getConsultationPhase()!=ConsultationPhase.INITIAL)throw new BusinessException(409,"Lượt này không phải lượt khám ban đầu.");
-        if(!entry.getQueueDate().equals(businessDate()))throw new BusinessException(409,"Lượt khám không thuộc ngày hiện tại.");
-        if(!SERVING_STATUSES.contains(entry.getStatus()))throw new BusinessException(409,"Cần gọi bệnh nhân trước khi bắt đầu khám.");
-        return new ClinicalContext(entry.getId(),entry.getPatientId(),entry.getAppointmentId(),entry.getPatientNameSnapshot(),configFor(entry).getRoomCode(),entry.getConsultationPhase().name(),entry.getStatus().name(),entry.getCalledByUserId());
+    public record ClinicalContext(
+            UUID entryId,
+            UUID patientId,
+            UUID appointmentId,
+            String patientName,
+            String roomId,
+            String phase,
+            String status,
+            UUID calledByUserId
+    ) {}
+
+    @Transactional(readOnly = true)
+    public ClinicalContext clinicalContext(UUID entryId, UUID actor, String role) {
+        if (!"DOCTOR".equals(role)) {
+            throw new BusinessException(403, "Chỉ bác sĩ được đọc ngữ cảnh bắt đầu khám.");
+        }
+        accessValidator.requireEntryAssignmentAccess(entryId, actor, role, this::configFor);
+        QueueEntry entry = entries.findById(entryId)
+                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "id", entryId));
+        if (entry.getQueueType() != QueueType.CONSULTATION
+                || entry.getConsultationPhase() != ConsultationPhase.INITIAL) {
+            throw new BusinessException(409, "Lượt này không phải lượt khám ban đầu.");
+        }
+        if (!entry.getQueueDate().equals(businessDate())) {
+            throw new BusinessException(409, "Lượt khám không thuộc ngày hiện tại.");
+        }
+        if (!SERVING_STATUSES.contains(entry.getStatus())) {
+            throw new BusinessException(409, "Cần gọi bệnh nhân trước khi bắt đầu khám.");
+        }
+        return new ClinicalContext(
+                entry.getId(),
+                entry.getPatientId(),
+                entry.getAppointmentId(),
+                entry.getPatientNameSnapshot(),
+                configFor(entry).getRoomCode(),
+                entry.getConsultationPhase().name(),
+                entry.getStatus().name(),
+                entry.getCalledByUserId());
     }
 
     public LocalDate businessDate() {
@@ -146,7 +239,11 @@ public class QueueManagementService {
 
     @Transactional
     public QueueConfigResponse saveConfig(UUID departmentId, QueueConfigRequest request) {
-        if(roomConfigurations!=null)throw new BusinessException(410,"Cập nhật chính sách theo phòng tại /api/queues/rooms/{roomId}/config với phiên bản hiện tại.");
+        if (roomConfigurations != null) {
+            throw new BusinessException(
+                    410,
+                    "Cập nhật chính sách theo phòng tại /api/queues/rooms/{roomId}/config với phiên bản hiện tại.");
+        }
         QueueConfig config = configs.findByDepartmentId(departmentId).orElseGet(QueueConfig::new);
         boolean schedulingChanged = config.getId() != null
                 && (config.getPriorityRatioN() != request.priorityRatioN()
@@ -161,7 +258,9 @@ public class QueueManagementService {
         config.setNearTurnThreshold(request.nearTurnThreshold());
         config.setMissedPolicy(request.missedPolicy());
         config.setActive(request.active());
-        if (config.getSchedulerDate() == null || schedulingChanged) config.resetScheduler(businessDate());
+        if (config.getSchedulerDate() == null || schedulingChanged) {
+            config.resetScheduler(businessDate());
+        }
         return QueueConfigResponse.from(configs.save(config));
     }
 
@@ -171,38 +270,73 @@ public class QueueManagementService {
     }
 
     @Transactional
-    public QueueEntryResponse manualIntake(ManualIntakeRequest request, UUID actorUserId,
-                                          String idempotencyKey, String correlationId) {
-        return manualIntake(request,actorUserId,idempotencyKey,correlationId,null);
+    public QueueEntryResponse manualIntake(ManualIntakeRequest request,
+                                           UUID actorUserId,
+                                           String idempotencyKey,
+                                           String correlationId) {
+        return manualIntake(request, actorUserId, idempotencyKey, correlationId, null);
     }
+
     @Transactional
-    public QueueEntryResponse manualIntake(ManualIntakeRequest request,UUID actorUserId,String idempotencyKey,String correlationId,String verifiedPatientName){
-        if (actorUserId == null) throw new BusinessException(401, "Thiếu người tiếp nhận đã xác thực");
+    public QueueEntryResponse manualIntake(ManualIntakeRequest request,
+                                           UUID actorUserId,
+                                           String idempotencyKey,
+                                           String correlationId,
+                                           String verifiedPatientName) {
+        if (actorUserId == null) {
+            throw new BusinessException(401, "Thiếu người tiếp nhận đã xác thực");
+        }
         if (!MANUAL_LEVELS.contains(request.priorityLevel())) {
             throw new BusinessException(400, "Tiếp nhận thủ công chỉ cho EMERGENCY, PRIORITY hoặc WALK_IN");
         }
         String normalizedKey = requireIdempotencyKey(idempotencyKey);
         String requestFingerprint = fingerprint(
                 request.patientId(), request.userId(), request.departmentId(), request.priorityLevel());
-        QueueConfig config = request.roomId()==null?requireLockedConfig(request.departmentId()):requireLockedRoomConfig(request.roomId(),request.departmentId());
-        if(roomConfigurations!=null)roomConfigurations.lockPatient(request.patientId(),request.departmentId(),businessDate());
-        if(request.roomId()!=null || request.serviceCode()!=null)requestFingerprint=fingerprint(request.patientId(),request.userId(),request.departmentId(),request.priorityLevel(),config.getRoomCode(),request.serviceCode(),actorUserId);
+        QueueConfig config = request.roomId() == null
+                ? requireLockedConfig(request.departmentId())
+                : requireLockedRoomConfig(request.roomId(), request.departmentId());
+        if (roomConfigurations != null) {
+            roomConfigurations.lockPatient(request.patientId(), request.departmentId(), businessDate());
+        }
+        if (request.roomId() != null || request.serviceCode() != null) {
+            requestFingerprint = fingerprint(
+                    request.patientId(),
+                    request.userId(),
+                    request.departmentId(),
+                    request.priorityLevel(),
+                    config.getRoomCode(),
+                    request.serviceCode(),
+                    actorUserId);
+        }
         Optional<QueueEntryResponse> replay = replay(
                 COMMAND_MANUAL_INTAKE, config.getId(), normalizedKey, requestFingerprint);
-        if (replay.isPresent()) return replay.get();
+        if (replay.isPresent()) {
+            return replay.get();
+        }
         LocalDate date = businessDate();
-        QueueEntry entry = newEntry(config, date, request.patientId(), request.userId(), null,
-                request.priorityLevel(), QueueStatus.CHECKED_IN);
+        QueueEntry entry = newEntry(
+                config,
+                date,
+                request.patientId(),
+                request.userId(),
+                null,
+                request.priorityLevel(),
+                QueueStatus.CHECKED_IN);
         entry.setPatientNameSnapshot(verifiedPatientName);
-        entry.setServiceCode(request.serviceCode()==null?"GENERAL_CONSULTATION":request.serviceCode());
+        entry.setServiceCode(request.serviceCode() == null ? "GENERAL_CONSULTATION" : request.serviceCode());
         Instant now = Instant.now();
         entry.setCheckedInAt(now);
         entry.setCheckedInByUserId(actorUserId);
         entry.setCheckInMethod("STAFF_MANUAL_INTAKE");
         entry.setEligibleSinceAt(now);
         entries.saveAndFlush(entry);
-        events.append(entry, config, "PatientCheckedIn", AppConstants.RK_QUEUE_CHECKED_IN,
-                correlationId, Map.of("priorityLevel", entry.getPriorityLevel().name()));
+        events.append(
+                entry,
+                config,
+                "PatientCheckedIn",
+                AppConstants.RK_QUEUE_CHECKED_IN,
+                correlationId,
+                Map.of("priorityLevel", entry.getPriorityLevel().name()));
 
         recordCommand(COMMAND_MANUAL_INTAKE, config.getId(), normalizedKey, requestFingerprint, entry);
         return response(entry, config);
@@ -211,8 +345,9 @@ public class QueueManagementService {
     @Transactional(readOnly = true)
     public QueueEntryResponse myStatus(UUID userId) {
         QueueEntry entry = entries.findByUserIdAndQueueDateOrderByCreatedAtDesc(userId, businessDate()).stream()
-                .filter(e->currentOwners==null || userId.equals(currentOwners.owner(e.getPatientId())))
-                .findFirst().orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "userId/date", userId));
+                .filter(candidate -> currentOwners == null || userId.equals(currentOwners.owner(candidate.getPatientId())))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "userId/date", userId));
         QueueConfig config = configs.findById(entry.getQueueConfigId())
                 .orElseThrow(() -> new ResourceNotFoundException("QueueConfig", "id", entry.getQueueConfigId()));
         return response(entry, config);
@@ -220,69 +355,78 @@ public class QueueManagementService {
 
     @Transactional(readOnly = true)
     public QueueEntryResponse patientCurrent(UUID patientId, UUID userId, boolean clinicalStaff) {
-        if(!clinicalStaff && currentOwners!=null)currentOwners.require(patientId,userId);
-        Optional<QueueEntry> current = (clinicalStaff || currentOwners!=null)
+        if (!clinicalStaff && currentOwners != null) {
+            currentOwners.require(patientId, userId);
+        }
+        Optional<QueueEntry> current = (clinicalStaff || currentOwners != null)
                 ? entries.findFirstByPatientIdAndQueueDateAndStatusInOrderByCreatedAtDesc(
                         patientId, businessDate(), ACTIVE_PATIENT_STATUSES)
                 : entries.findFirstByPatientIdAndUserIdAndQueueDateAndStatusInOrderByCreatedAtDesc(
                         patientId, userId, businessDate(), ACTIVE_PATIENT_STATUSES);
         QueueEntry entry = current
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "QueueEntry", "patientId/userId", patientId));
-        QueueConfig config = entry.getQueueConfigId() == null ? null : configs.findById(entry.getQueueConfigId())
-                .orElseThrow(() -> new ResourceNotFoundException("QueueConfig", "id", entry.getQueueConfigId()));
+                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "patientId/userId", patientId));
+        QueueConfig config = entry.getQueueConfigId() == null
+                ? null
+                : configs.findById(entry.getQueueConfigId())
+                        .orElseThrow(() -> new ResourceNotFoundException("QueueConfig", "id", entry.getQueueConfigId()));
         return response(entry, config);
     }
 
-    @Transactional(readOnly=true)
-    public QueueEntryResponse appointmentStatus(UUID appointmentId,UUID actor,String role){
-        ticket(appointmentId,actor,role);
-        var entry=entries.findByAppointmentId(appointmentId).orElseThrow(()->new ResourceNotFoundException("QueueEntry","appointmentId",appointmentId));
-        return response(entry,configFor(entry));
+    @Transactional(readOnly = true)
+    public QueueEntryResponse appointmentStatus(UUID appointmentId, UUID actor, String role) {
+        ticket(appointmentId, actor, role);
+        QueueEntry entry = entries.findByAppointmentId(appointmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "appointmentId", appointmentId));
+        return response(entry, configFor(entry));
     }
 
     @Transactional(readOnly = true)
     public VisitTicketResponse ticket(UUID appointmentId, UUID requesterUserId, boolean clinicalStaff) {
         QueueEntry entry = entries.findByAppointmentId(appointmentId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "VisitTicket", "appointmentId", appointmentId));
-        if(!clinicalStaff && currentOwners!=null)currentOwners.require(entry.getPatientId(),requesterUserId);
-        if (!clinicalStaff && currentOwners==null && !java.util.Objects.equals(entry.getUserId(),requesterUserId)) {
+                .orElseThrow(() -> new ResourceNotFoundException("VisitTicket", "appointmentId", appointmentId));
+        if (!clinicalStaff && currentOwners != null) {
+            currentOwners.require(entry.getPatientId(), requesterUserId);
+        }
+        if (!clinicalStaff && currentOwners == null && !Objects.equals(entry.getUserId(), requesterUserId)) {
             throw new BusinessException(403, "Không có quyền xem phiếu khám này");
         }
         QueueConfig config = configs.findById(entry.getQueueConfigId())
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "QueueConfig", "id", entry.getQueueConfigId()));
+                .orElseThrow(() -> new ResourceNotFoundException("QueueConfig", "id", entry.getQueueConfigId()));
         return new VisitTicketResponse(
-                entry.getId(), entry.getQueueNumber(), entry.getAppointmentId(),
-                entry.getPatientId(), entry.getQueueNumber(),
-                entry.getDepartmentCode(), config.getDepartmentNameSnapshot(), config.getRoomCode(),
+                entry.getId(),
+                entry.getQueueNumber(),
+                entry.getAppointmentId(),
+                entry.getPatientId(),
+                entry.getQueueNumber(),
+                entry.getDepartmentCode(),
+                config.getDepartmentNameSnapshot(),
+                config.getRoomCode(),
                 entry.getRoomDisplayNameSnapshot() == null
-                        ? config.getRoomCode() : entry.getRoomDisplayNameSnapshot(),
-                entry.getQueueDate(), entry.getTimeSlot(), null,
+                        ? config.getRoomCode()
+                        : entry.getRoomDisplayNameSnapshot(),
+                entry.getQueueDate(),
+                entry.getTimeSlot(),
+                null,
                 entry.getStatus() == QueueStatus.WAITING
-                        ? "TICKET_ISSUED" : entry.getStatus().name());
+                        ? "TICKET_ISSUED"
+                        : entry.getStatus().name());
     }
 
     @Transactional(readOnly = true)
-    public CheckInQrResponse issueHospitalCheckInQr(String roomId, LocalDate date, String session,
-                                                    UUID requesterUserId, String role) {
+    public CheckInQrResponse issueHospitalCheckInQr(String roomId,
+                                                    LocalDate date,
+                                                    String session,
+                                                    UUID requesterUserId,
+                                                    String role) {
         return issueHospitalCheckInQr(date, session, requesterUserId, role);
     }
 
     @Transactional(readOnly = true)
-    public CheckInQrResponse issueHospitalCheckInQr(LocalDate date, String session,
-                                                    UUID requesterUserId, String role) {
-        LocalDate sessionDate = date == null ? businessDate() : date;
-        if (!businessDate().equals(sessionDate)) {
-            throw new BusinessException(422, "Chỉ có thể hiển thị QR check-in của ngày hiện tại");
-        }
-        String sessionCode = session == null || session.isBlank()
-                ? DEFAULT_SESSION_CODE : session.trim().toUpperCase(Locale.ROOT);
-        String siteId = currentGeofence().siteId();
-        QrTokenService.IssuedHospitalQr issued = qrTokens.issueHospitalQr(siteId, sessionDate, sessionCode);
-        return new CheckInQrResponse(siteId, sessionCode, sessionDate,
-                issued.token(), issued.expiresAt());
+    public CheckInQrResponse issueHospitalCheckInQr(LocalDate date,
+                                                    String session,
+                                                    UUID requesterUserId,
+                                                    String role) {
+        return checkInSupport.issueHospitalCheckInQr(date, session);
     }
 
     @Transactional
@@ -291,177 +435,18 @@ public class QueueManagementService {
     }
 
     @Transactional
-    public QueueEntryResponse checkIn(CheckInRequest request, UUID actorUserId, String role,
+    public QueueEntryResponse checkIn(CheckInRequest request,
+                                      UUID actorUserId,
+                                      String role,
                                       String correlationId) {
         if (AppConstants.ROLE_PATIENT.equalsIgnoreCase(role)) {
-            return checkInAsPatient(request, actorUserId, correlationId);
+            return checkInSupport.checkInAsPatient(request, actorUserId, correlationId);
         }
-        if(request.roomId()==null || request.roomId().isBlank())throw new BusinessException(400,"Chọn phòng tiếp nhận.");
-        requireRoomAccess(request.roomId(),actorUserId,role);
-        return checkInAsStaff(request, actorUserId, correlationId);
-    }
-
-    private QueueEntryResponse checkInAsPatient(CheckInRequest request, UUID patientUserId,
-                                                String correlationId) {
-        if (request.appointmentId() == null || request.checkInQrToken() == null
-                || request.checkInQrToken().isBlank()) {
-            throw new BusinessException(400, "Vui lòng quét QR check-in của bệnh viện");
+        if (request.roomId() == null || request.roomId().isBlank()) {
+            throw new BusinessException(400, "Chọn phòng tiếp nhận.");
         }
-        QrTokenService.HospitalQrClaims claims = qrTokens.verifyHospitalQr(request.checkInQrToken());
-        if (!claims.sessionDate().equals(businessDate())) {
-            throw new BusinessException(422, "QR không thuộc ngày hiện tại");
-        }
-        QueueEntry entry = entries.findFirstByAppointmentId(request.appointmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "appointmentId", request.appointmentId()));
-        if(currentOwners!=null)currentOwners.require(entry.getPatientId(),patientUserId);
-        if (currentOwners==null && (entry.getUserId() == null || !entry.getUserId().equals(patientUserId))) {
-            throw new BusinessException(403, "Lịch hẹn không thuộc tài khoản bệnh nhân này");
-        }
-        if (!entry.getQueueDate().equals(claims.sessionDate())) {
-            throw new BusinessException(409, "QR không khớp ngày khám của lịch hẹn");
-        }
-        QueueConfig config = configFor(entry);
-        if (!currentGeofence().siteId().equals(claims.siteId())) {
-            throw new BusinessException(409, "QR không thuộc bệnh viện này");
-        }
-        if (entry.getStatus() == QueueStatus.CHECKED_IN) return response(entry, config);
-
-        HospitalCheckInConfigService.GeofenceSettings geofence = currentGeofence();
-        validateCoordinates(request, geofence.maxAccuracyMeters());
-        double distanceMeters = distanceMeters(request.latitude(), request.longitude(),
-                geofence.latitude(), geofence.longitude());
-        if (distanceMeters > geofence.radiusMeters()) {
-            throw new BusinessException(422, "Bạn đang ở ngoài khu vực bệnh viện, chưa thể check-in");
-        }
-        return activateCheckedInEntry(entry, config, request, patientUserId, correlationId,
-                "PATIENT_QR_GEOFENCE", distanceMeters);
-    }
-
-    private QueueEntryResponse checkInAsStaff(CheckInRequest request, UUID staffUserId,
-                                              String correlationId) {
-        if ((request.qrToken() == null || request.qrToken().isBlank())
-                && (request.ticketCode() == null || request.ticketCode().isBlank())) {
-            throw new BusinessException(400, "Vui l\u00f2ng cung c\u1ea5p m\u00e3 QR ho\u1eb7c m\u00e3 phi\u1ebfu kh\u00e1m");
-        }
-        if (request.ticketCode() != null && !request.ticketCode().isBlank()) {
-            return checkInByTicketCode(request, staffUserId, correlationId);
-        }
-        QrTokenService.QrClaims claims = qrTokens.verify(request.qrToken());
-        if (!claims.queueDate().equals(businessDate())) throw new BusinessException(422, "QR không thuộc ngày hiện tại");
-        QueueEntry entry = entries.findFirstByAppointmentId(claims.appointmentId())
-                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "appointmentId", claims.appointmentId()));
-        if (!entry.getId().equals(claims.ticketId()) || !java.util.Objects.equals(entry.getUserId(),claims.userId())) {
-            throw new BusinessException(401, "QR không khớp phiếu khám");
-        }
-        QueueConfig config = configFor(entry);
-        if (!config.getRoomCode().equals(request.roomId())) {
-            throw new BusinessException(409, "QR không thuộc phòng tiếp nhận này");
-        }
-        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId,
-                "STAFF_QR", null);
-    }
-
-    private QueueEntryResponse activateCheckedInEntry(QueueEntry entry, QueueConfig config,
-                                                       CheckInRequest request, UUID staffUserId,
-                                                       String correlationId) {
-        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId,
-                "STAFF_MANUAL", null);
-    }
-
-    private QueueEntryResponse activateCheckedInEntry(QueueEntry entry, QueueConfig config,
-                                                       CheckInRequest request, UUID actorUserId,
-                                                       String correlationId, String checkInMethod,
-                                                       Double distanceMeters) {
-        if(roomConfigurations!=null){
-            roomConfigurations.lockPatient(entry.getPatientId(),entry.getDepartmentId(),businessDate());
-            if(entry.getStatus()==QueueStatus.WAITING && entries.existsByPatientIdAndDepartmentIdAndQueueDateAndStatusIn(entry.getPatientId(),entry.getDepartmentId(),businessDate(),java.util.Set.of(QueueStatus.CHECKED_IN,QueueStatus.CALLED,QueueStatus.IN_PROGRESS,QueueStatus.MISSED)))
-                throw new BusinessException(409,"Bệnh nhân đang có một lượt khám hoạt động trong khoa này.");
-        }
-        if (entry.getStatus() == QueueStatus.CHECKED_IN) return response(entry, config);
-        if (entry.getStatus() == QueueStatus.CANCELLED) {
-            throw new BusinessException(409, "Lịch hẹn đã bị hủy");
-        }
-        if (entry.getStatus() != QueueStatus.WAITING) {
-            throw new BusinessException(409, "Trạng thái lượt khám không cho phép check-in");
-        }
-        if(!config.isActive())throw new BusinessException(409,"Phòng đang tạm ngừng tiếp nhận.");
-
-        Instant now = Instant.now();
-        entry.setStatus(QueueStatus.CHECKED_IN);
-        entry.setCheckedInAt(now);
-        entry.setCheckedInByUserId(actorUserId);
-        entry.setCheckInMethod(checkInMethod);
-        entry.setCheckInDistanceMeters(distanceMeters);
-        entry.setCheckInAccuracyMeters(request.accuracyMeters());
-        entry.setCheckInLatitude(request.latitude());
-        entry.setCheckInLongitude(request.longitude());
-        QueueClass queueClass = request.queueClass() == null ? QueueClass.NORMAL : request.queueClass();
-        if (queueClass == QueueClass.PRIORITY) {
-            if (request.priorityReasonCode() == null || request.priorityReasonCode().isBlank()) {
-                throw new BusinessException(400, "Lượt ưu tiên phải có lý do đã được xác minh");
-            }
-            entry.setPriorityLevel(PriorityLevel.PRIORITY);
-            entry.setQueueClass(QueueClass.PRIORITY);
-            entry.setPriorityReasonCode(request.priorityReasonCode().trim());
-        } else {
-            entry.setPriorityLevel(PriorityLevel.APPOINTMENT);
-            entry.setQueueClass(QueueClass.NORMAL);
-            entry.setPriorityReasonCode(null);
-        }
-        entry.setEligibleSinceAt(now);
-        entries.saveAndFlush(entry);
-        Map<String, Object> eventData = new LinkedHashMap<>();
-        eventData.put("queueClass", queueClass.name());
-        eventData.put("checkedInByUserId", actorUserId);
-        eventData.put("checkInMethod", checkInMethod);
-        if (distanceMeters != null) eventData.put("distanceMeters", distanceMeters);
-        events.append(entry, config, "PatientCheckedIn", AppConstants.RK_QUEUE_CHECKED_IN,
-                correlationId, eventData);
-        return response(entry, config);
-    }
-
-    private QueueEntryResponse checkInByTicketCode(CheckInRequest request, UUID staffUserId,
-                                                    String correlationId) {
-        QueueConfig config = requireRoomConfig(request.roomId());
-        String ticketCode = request.ticketCode().trim();
-        QueueEntry entry = entries.findFirstByQueueConfigIdAndQueueDateAndQueueNumber(
-                        config.getId(), businessDate(), ticketCode)
-                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "ticketCode", ticketCode));
-
-        return activateCheckedInEntry(entry, config, request, staffUserId, correlationId,
-                "STAFF_MANUAL", null);
-    }
-
-    private void validateCoordinates(CheckInRequest request, double maxAccuracyMeters) {
-        if (request.latitude() == null || request.longitude() == null || request.accuracyMeters() == null) {
-            throw new BusinessException(422, "Không thể xác định vị trí hiện tại của thiết bị");
-        }
-        if (!Double.isFinite(request.latitude()) || !Double.isFinite(request.longitude()) || !Double.isFinite(request.accuracyMeters())
-                || request.latitude() < -90 || request.latitude() > 90
-                || request.longitude() < -180 || request.longitude() > 180) {
-            throw new BusinessException(422, "Tọa độ vị trí không hợp lệ");
-        }
-        if (request.accuracyMeters() <= 0 || request.accuracyMeters() > maxAccuracyMeters) {
-            throw new BusinessException(422, "Độ chính xác vị trí chưa đạt yêu cầu");
-        }
-    }
-
-    private HospitalCheckInConfigService.GeofenceSettings currentGeofence() {
-        if (hospitalCheckInConfigService != null) return hospitalCheckInConfigService.current();
-        return new HospitalCheckInConfigService.GeofenceSettings(
-                geofenceSiteId, geofenceLatitude, geofenceLongitude,
-                geofenceRadiusMeters, geofenceMaxAccuracyMeters);
-    }
-
-    private double distanceMeters(double latitude1, double longitude1,
-                                  double latitude2, double longitude2) {
-        double earthRadiusMeters = 6_371_000;
-        double latDistance = Math.toRadians(latitude2 - latitude1);
-        double lonDistance = Math.toRadians(longitude2 - longitude1);
-        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
-                + Math.cos(Math.toRadians(latitude1)) * Math.cos(Math.toRadians(latitude2))
-                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
-        return earthRadiusMeters * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        accessValidator.requireRoomAccess(request.roomId(), actorUserId, role);
+        return checkInSupport.checkInAsStaff(request, actorUserId, correlationId);
     }
 
     @Transactional(readOnly = true)
@@ -470,62 +455,61 @@ public class QueueManagementService {
     }
 
     public QueueDashboardResponse roomDashboard(String roomId, UUID requesterUserId, String role) {
-        requireRoomAccess(roomId, requesterUserId, role);
+        accessValidator.requireRoomAccess(roomId, requesterUserId, role);
         return roomDashboard(roomId);
     }
 
     @Transactional(readOnly = true)
     public QueueDashboardResponse receptionDashboard(String roomId, UUID requesterUserId, String role) {
-        requireRoomAccess(roomId, requesterUserId, role);
+        accessValidator.requireRoomAccess(roomId, requesterUserId, role);
         QueueConfig config = requireRoomConfig(roomId);
         QueueDashboardResponse active = dashboardFor(config);
         List<QueueEntryResponse> receptionEntries = new ArrayList<>(active.entries());
         entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                         config.getId(), active.queueDate(), Set.of(QueueStatus.WAITING)).stream()
-                .sorted(Comparator.comparing(QueueEntry::getScheduledStartAt,
-                        Comparator.nullsLast(Comparator.naturalOrder()))
+                .sorted(Comparator.comparing(
+                                QueueEntry::getScheduledStartAt,
+                                Comparator.nullsLast(Comparator.naturalOrder()))
                         .thenComparing(QueueEntry::getSequenceNumber))
                 .map(entry -> response(entry, config, null, null))
                 .forEach(receptionEntries::add);
-        return new QueueDashboardResponse(active.departmentId(), active.departmentName(),
-                active.roomCode(), active.queueDate(), receptionEntries, active.priorityQueue(),
-                active.normalQueue(), active.resultReviewQueue(), active.recommendedNext(),
-                active.lastServedLane(), active.schedulerVersion(),active.missedPolicy(),active.maxCallAttempts(),active.receptionActive());
+        return new QueueDashboardResponse(
+                active.departmentId(),
+                active.departmentName(),
+                active.roomCode(),
+                active.queueDate(),
+                receptionEntries,
+                active.priorityQueue(),
+                active.normalQueue(),
+                active.resultReviewQueue(),
+                active.recommendedNext(),
+                active.lastServedLane(),
+                active.schedulerVersion(),
+                active.missedPolicy(),
+                active.maxCallAttempts(),
+                active.receptionActive());
     }
 
     @Transactional(readOnly = true)
     public ServicePointQueueResponse servicePointDashboard(String servicePointId, LocalDate requestedDate) {
-        String normalized = normalizeServicePointId(servicePointId);
-        LocalDate date = requestedDate == null ? businessDate() : requestedDate;
-        List<QueueEntry> active = entries
-                .findByServicePointIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
-                        normalized, date, EnumSet.of(QueueStatus.QUEUED, QueueStatus.CALLED, QueueStatus.IN_PROGRESS));
-        List<QueueEntryResponse> response = new ArrayList<>();
-        active.stream().filter(entry -> SERVING_STATUSES.contains(entry.getStatus()))
-                .sorted(Comparator.comparing(QueueEntry::getCalledAt, Comparator.nullsLast(Comparator.naturalOrder())))
-                .forEach(entry -> response.add(QueueEntryResponse.fromServicePoint(entry, 0, 0)));
-        int position = 1;
-        QueueEntryResponse recommended = null;
-        for (QueueEntry entry : active) {
-            if (entry.getStatus() != QueueStatus.QUEUED) continue;
-            QueueEntryResponse item = QueueEntryResponse.fromServicePoint(entry, position++, null);
-            if (recommended == null) recommended = item;
-            response.add(item);
-        }
-        return new ServicePointQueueResponse(normalized, date, response, recommended);
+        return servicePointSupport.servicePointDashboard(servicePointId, requestedDate);
     }
 
     @Transactional(readOnly = true)
-    public ServicePointQueueResponse servicePointDashboard(String servicePointId, LocalDate requestedDate,
-                                                           UUID requesterUserId, String role) {
-        requireServicePointAccess(servicePointId, requesterUserId, role);
+    public ServicePointQueueResponse servicePointDashboard(String servicePointId,
+                                                           LocalDate requestedDate,
+                                                           UUID requesterUserId,
+                                                           String role) {
+        accessValidator.requireServicePointAccess(servicePointId, requesterUserId, role);
         return servicePointDashboard(servicePointId, requestedDate);
     }
 
     @Transactional
-    public Optional<QueueEntryResponse> callNextAtServicePoint(
-            String servicePointId, UUID calledByUserId, String idempotencyKey, String correlationId) {
-        String normalized = normalizeServicePointId(servicePointId);
+    public Optional<QueueEntryResponse> callNextAtServicePoint(String servicePointId,
+                                                               UUID calledByUserId,
+                                                               String idempotencyKey,
+                                                               String correlationId) {
+        String normalized = QueueAccessValidator.normalizeServicePointId(servicePointId);
         String normalizedKey = requireIdempotencyKey(idempotencyKey);
         UUID scopeId = UUID.nameUUIDFromBytes(normalized.getBytes(StandardCharsets.UTF_8));
         String fingerprint = fingerprint(normalized, calledByUserId);
@@ -534,7 +518,9 @@ public class QueueManagementService {
                         COMMAND_CALL_NEXT_SERVICE_POINT, scopeId, normalizedKey);
         if (existing.isPresent()) {
             requireSameFingerprint(existing.get(), fingerprint);
-            if (existing.get().isEmptyResult()) return Optional.empty();
+            if (existing.get().isEmptyResult()) {
+                return Optional.empty();
+            }
             QueueEntry replayed = entries.findById(existing.get().getResultEntryId())
                     .orElseThrow(() -> new IllegalStateException("Idempotency result entry is missing"));
             return Optional.of(QueueEntryResponse.fromServicePoint(replayed, 0, 0));
@@ -542,106 +528,79 @@ public class QueueManagementService {
         QueueEntry candidate = entries
                 .findByServicePointIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                         normalized, businessDate(), Set.of(QueueStatus.QUEUED))
-                .stream().findFirst().orElse(null);
+                .stream()
+                .findFirst()
+                .orElse(null);
         if (candidate == null) {
             recordEmptyCommand(COMMAND_CALL_NEXT_SERVICE_POINT, scopeId, normalizedKey, fingerprint);
             return Optional.empty();
         }
         QueueEntry locked = requireEntryForUpdate(candidate.getId());
-        if (!locked.isWaitingForCall()) throw invalidTransition(locked, QueueStatus.CALLED);
-        Instant now = Instant.now();
-        locked.setStatus(QueueStatus.CALLED);
-        locked.setCalledAt(now);
-        locked.setCalledByUserId(calledByUserId);
-        locked.setCallAttempts(1);
+        if (!locked.isWaitingForCall()) {
+            throw invalidTransition(locked, QueueStatus.CALLED);
+        }
+        locked.markCalled(calledByUserId, Instant.now());
         entries.saveAndFlush(locked);
-        events.append(locked, null, "PatientCalled", AppConstants.RK_QUEUE_CALLED,
-                correlationId, Map.of("callAttempt", 1, "calledByUserId", calledByUserId));
+        events.append(
+                locked,
+                null,
+                "PatientCalled",
+                AppConstants.RK_QUEUE_CALLED,
+                correlationId,
+                Map.of("callAttempt", 1, "calledByUserId", calledByUserId));
         recordCommand(COMMAND_CALL_NEXT_SERVICE_POINT, scopeId, normalizedKey, fingerprint, locked);
         return Optional.of(QueueEntryResponse.fromServicePoint(locked, 0, 0));
     }
 
     @Transactional
-    public Optional<QueueEntryResponse> callNextAtServicePoint(
-            String servicePointId, UUID calledByUserId, String role,
-            String idempotencyKey, String correlationId) {
-        requireServicePointAccess(servicePointId, calledByUserId, role);
+    public Optional<QueueEntryResponse> callNextAtServicePoint(String servicePointId,
+                                                               UUID calledByUserId,
+                                                               String role,
+                                                               String idempotencyKey,
+                                                               String correlationId) {
+        accessValidator.requireServicePointAccess(servicePointId, calledByUserId, role);
         return callNextAtServicePoint(servicePointId, calledByUserId, idempotencyKey, correlationId);
     }
 
     @Transactional
-    public Optional<QueueEntryResponse> callNextInRoom(
-            String roomId, UUID calledByUserId, String idempotencyKey, String correlationId) {
-        return callNextConfigured(requireLockedRoomConfig(roomId,null),calledByUserId,idempotencyKey,correlationId);
+    public Optional<QueueEntryResponse> callNextInRoom(String roomId,
+                                                       UUID calledByUserId,
+                                                       String idempotencyKey,
+                                                       String correlationId) {
+        return callNextConfigured(
+                requireLockedRoomConfig(roomId, null),
+                calledByUserId,
+                idempotencyKey,
+                correlationId);
     }
 
     @Transactional
-    public Optional<QueueEntryResponse> callNextInRoom(
-            String roomId, UUID calledByUserId, String role, String idempotencyKey, String correlationId) {
-        requireRoomAccess(roomId, calledByUserId, role);
+    public Optional<QueueEntryResponse> callNextInRoom(String roomId,
+                                                       UUID calledByUserId,
+                                                       String role,
+                                                       String idempotencyKey,
+                                                       String correlationId) {
+        accessValidator.requireRoomAccess(roomId, calledByUserId, role);
         return callNextInRoom(roomId, calledByUserId, idempotencyKey, correlationId);
-    }
-
-    private void requireRoomAccess(String roomId, UUID userId, String role) {
-        if (AppConstants.ROLE_ADMIN.equalsIgnoreCase(role)) {
-            return;
-        }
-        if (directoryClient == null) {
-            throw new BusinessException(503, "Không thể xác minh assignment của actor với phòng");
-        }
-        boolean allowed = false;
-        try {
-            if (AppConstants.ROLE_DOCTOR.equalsIgnoreCase(role)) {
-                ApiResponse<DoctorAssignmentResponse> response = directoryClient.getDoctorByUserId(userId);
-                DoctorAssignmentResponse doctor = response == null ? null : response.getData();
-                allowed = doctor != null && Boolean.TRUE.equals(doctor.getIsActive())
-                        && roomId.equals(doctor.getAssignedRoomId());
-            } else if (AppConstants.ROLE_STAFF.equalsIgnoreCase(role)) {
-                ApiResponse<Boolean> response = directoryClient.hasStaffRoomAccess(userId, roomId);
-                allowed = response != null && Boolean.TRUE.equals(response.getData());
-            }
-        } catch (RuntimeException ex) {
-            throw new BusinessException(403, "Không thể xác minh assignment của actor với phòng");
-        }
-        if (!allowed) {
-            throw new BusinessException(403, "Actor chưa được phân công vào phòng này");
-        }
-    }
-
-    private void requireServicePointAccess(String servicePointId, UUID userId, String role) {
-        String normalizedServicePointId = normalizeServicePointId(servicePointId);
-        if (AppConstants.ROLE_ADMIN.equalsIgnoreCase(role)) {
-            return;
-        }
-        if (directoryClient == null) {
-            throw new BusinessException(503, "Không thể xác minh assignment của actor với service point");
-        }
-        boolean allowed = false;
-        try {
-            if (AppConstants.ROLE_STAFF.equalsIgnoreCase(role)
-                    || AppConstants.ROLE_LAB_TECHNICIAN.equalsIgnoreCase(role)) {
-                ApiResponse<Boolean> response = directoryClient.hasStaffRoomAccess(
-                        userId, normalizedServicePointId);
-                allowed = response != null && Boolean.TRUE.equals(response.getData());
-            }
-        } catch (RuntimeException ex) {
-            throw new BusinessException(403, "Không thể xác minh assignment của actor với service point");
-        }
-        if (!allowed) {
-            throw new BusinessException(403, "Actor chưa được phân công vào service point này");
-        }
     }
 
     @Transactional(readOnly = true)
     public QueueDashboardResponse dashboard(UUID departmentId) {
         return dashboardFor(requireConfig(departmentId));
     }
-    private QueueDashboardResponse dashboardFor(QueueConfig config){
-        UUID departmentId=config.getDepartmentId();
+
+    private QueueDashboardResponse dashboardFor(QueueConfig config) {
+        UUID departmentId = config.getDepartmentId();
         LocalDate date = businessDate();
         List<QueueEntry> active = entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
-                config.getId(), date, EnumSet.of(QueueStatus.QUEUED, QueueStatus.CHECKED_IN,
-                        QueueStatus.CALLED, QueueStatus.IN_PROGRESS, QueueStatus.MISSED));
+                config.getId(),
+                date,
+                EnumSet.of(
+                        QueueStatus.QUEUED,
+                        QueueStatus.CHECKED_IN,
+                        QueueStatus.CALLED,
+                        QueueStatus.IN_PROGRESS,
+                        QueueStatus.MISSED));
         List<QueueEntry> serving = active.stream()
                 .filter(entry -> SERVING_STATUSES.contains(entry.getStatus()))
                 .sorted(Comparator.comparing((QueueEntry entry) -> entry.getStatus() == QueueStatus.IN_PROGRESS ? 0 : 1)
@@ -655,7 +614,9 @@ public class QueueManagementService {
         Instant now = Instant.now();
         int currentWorkload = serving.isEmpty() ? 0 : config.getAvgConsultationMinutes();
         List<ConsultationQueueScheduler.ScheduledEntry> schedule = ConsultationQueueScheduler.schedule(
-                waiting, config.getLastServedLane(), now.plus(Duration.ofMinutes(currentWorkload)),
+                waiting,
+                config.getLastServedLane(),
+                now.plus(Duration.ofMinutes(currentWorkload)),
                 config.getAvgConsultationMinutes());
         List<QueueEntryResponse> response = new ArrayList<>();
         serving.forEach(entry -> response.add(response(entry, config, 0, 0)));
@@ -674,30 +635,58 @@ public class QueueManagementService {
         List<QueueEntryResponse> priorityQueue = lane(response, SchedulingLane.PRIORITY);
         List<QueueEntryResponse> normalQueue = lane(response, SchedulingLane.NORMAL);
         List<QueueEntryResponse> resultReviewQueue = lane(response, SchedulingLane.RESULT_REVIEW);
-        active.stream().filter(entry->entry.getStatus()==QueueStatus.MISSED).forEach(entry->response.add(response(entry,config,null,null)));
-        return new QueueDashboardResponse(departmentId, config.getDepartmentNameSnapshot(),
-                config.getRoomCode(), date, response, priorityQueue, normalQueue, resultReviewQueue,
-                recommendedNext, config.getLastServedLane(), config.getVersion(),config.getMissedPolicy(),MAX_CALL_ATTEMPTS,config.isActive());
+        active.stream()
+                .filter(entry -> entry.getStatus() == QueueStatus.MISSED)
+                .forEach(entry -> response.add(response(entry, config, null, null)));
+        return new QueueDashboardResponse(
+                departmentId,
+                config.getDepartmentNameSnapshot(),
+                config.getRoomCode(),
+                date,
+                response,
+                priorityQueue,
+                normalQueue,
+                resultReviewQueue,
+                recommendedNext,
+                config.getLastServedLane(),
+                config.getVersion(),
+                config.getMissedPolicy(),
+                MAX_CALL_ATTEMPTS,
+                config.isActive());
     }
 
     @Transactional
-    public Optional<QueueEntryResponse> callNext(UUID departmentId, UUID calledByUserId,
-                                                  String idempotencyKey, String correlationId) {
-        return callNextConfigured(requireLockedConfig(departmentId),calledByUserId,idempotencyKey,correlationId);
+    public Optional<QueueEntryResponse> callNext(UUID departmentId,
+                                                 UUID calledByUserId,
+                                                 String idempotencyKey,
+                                                 String correlationId) {
+        return callNextConfigured(
+                requireLockedConfig(departmentId),
+                calledByUserId,
+                idempotencyKey,
+                correlationId);
     }
-    private Optional<QueueEntryResponse> callNextConfigured(QueueConfig config,UUID calledByUserId,String idempotencyKey,String correlationId){
-        UUID departmentId=config.getDepartmentId();
+
+    private Optional<QueueEntryResponse> callNextConfigured(QueueConfig config,
+                                                            UUID calledByUserId,
+                                                            String idempotencyKey,
+                                                            String correlationId) {
+        UUID departmentId = config.getDepartmentId();
         String normalizedKey = requireIdempotencyKey(idempotencyKey);
         String requestFingerprint = fingerprint(departmentId, calledByUserId);
         LocalDate date = businessDate();
-        if (!date.equals(config.getSchedulerDate())) config.resetScheduler(date);
+        if (!date.equals(config.getSchedulerDate())) {
+            config.resetScheduler(date);
+        }
         Optional<IdempotencyRecord> existingCommand = idempotencyRecords
                 .findByCommandNameAndScopeIdAndIdempotencyKey(
                         COMMAND_CALL_NEXT, config.getId(), normalizedKey);
         if (existingCommand.isPresent()) {
             IdempotencyRecord record = existingCommand.get();
             requireSameFingerprint(record, requestFingerprint);
-            if (record.isEmptyResult()) return Optional.empty();
+            if (record.isEmptyResult()) {
+                return Optional.empty();
+            }
             QueueEntry replayed = entries.findById(record.getResultEntryId())
                     .orElseThrow(() -> new IllegalStateException("Idempotency result entry is missing"));
             return Optional.of(response(replayed, config));
@@ -705,21 +694,22 @@ public class QueueManagementService {
         List<QueueEntry> waiting = entries
                 .findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                         config.getId(), date, Set.of(QueueStatus.CHECKED_IN, QueueStatus.QUEUED));
-        Instant now = Instant.now();
         QueueEntry candidate = ConsultationQueueScheduler.next(waiting, config.getLastServedLane());
         if (candidate == null) {
             recordEmptyCommand(COMMAND_CALL_NEXT, config.getId(), normalizedKey, requestFingerprint);
             return Optional.empty();
         }
         config.setLastServedLane(candidate.getSchedulingLane());
-        candidate.setStatus(QueueStatus.CALLED);
-        candidate.setCalledAt(now);
-        candidate.setCalledByUserId(calledByUserId);
-        candidate.setCallAttempts(1);
+        candidate.markCalled(calledByUserId, Instant.now());
         entries.saveAndFlush(candidate);
         configs.save(config);
-        events.append(candidate, config, "PatientCalled", AppConstants.RK_QUEUE_CALLED,
-                correlationId, Map.of(
+        events.append(
+                candidate,
+                config,
+                "PatientCalled",
+                AppConstants.RK_QUEUE_CALLED,
+                correlationId,
+                Map.of(
                         "callAttempt", candidate.getCallAttempts(),
                         "calledByUserId", calledByUserId));
         recordCommand(COMMAND_CALL_NEXT, config.getId(), normalizedKey, requestFingerprint, candidate);
@@ -728,61 +718,75 @@ public class QueueManagementService {
     }
 
     @Transactional
-    public QueueEntryResponse call(UUID entryId, UUID calledByUserId,
-                                   String idempotencyKey, String correlationId) {
+    public QueueEntryResponse call(UUID entryId,
+                                   UUID calledByUserId,
+                                   String idempotencyKey,
+                                   String correlationId) {
         String normalizedKey = requireIdempotencyKey(idempotencyKey);
         String requestFingerprint = fingerprint(entryId, calledByUserId);
         Optional<QueueEntryResponse> replay = replay(
                 COMMAND_CALL_ENTRY, entryId, normalizedKey, requestFingerprint);
-        if (replay.isPresent()) return replay.get();
+        if (replay.isPresent()) {
+            return replay.get();
+        }
 
         QueueEntry entry = requireEntryForUpdate(entryId);
         if (!entry.isWaitingForCall()) {
             throw invalidTransition(entry, QueueStatus.CALLED);
         }
         QueueConfig config = configFor(entry);
-        if(config!=null && !config.isActive())throw new BusinessException(409,"Phòng đang tạm ngừng gọi lượt mới.");
-        Instant now = Instant.now();
-        entry.setStatus(QueueStatus.CALLED);
-        entry.setCalledAt(now);
-        entry.setCalledByUserId(calledByUserId);
-        entry.setCallAttempts(1);
+        if (config != null && !config.isActive()) {
+            throw new BusinessException(409, "Phòng đang tạm ngừng gọi lượt mới.");
+        }
+        entry.markCalled(calledByUserId, Instant.now());
         entries.saveAndFlush(entry);
         if (config != null && entry.getSchedulingLane() != null) {
             config.setLastServedLane(entry.getSchedulingLane());
             configs.save(config);
         }
-        events.append(entry, config, "PatientCalled", AppConstants.RK_QUEUE_CALLED,
-                correlationId, Map.of(
+        events.append(
+                entry,
+                config,
+                "PatientCalled",
+                AppConstants.RK_QUEUE_CALLED,
+                correlationId,
+                Map.of(
                         "callAttempt", entry.getCallAttempts(),
                         "calledByUserId", calledByUserId,
                         "selectedByActor", true));
         recordCommand(COMMAND_CALL_ENTRY, entryId, normalizedKey, requestFingerprint, entry);
-        if (config != null) appendNearTurnEvents(config, entry.getQueueDate(), correlationId);
+        if (config != null) {
+            appendNearTurnEvents(config, entry.getQueueDate(), correlationId);
+        }
         return response(entry, config);
     }
 
     @Transactional
-    public QueueEntryResponse call(UUID entryId, UUID calledByUserId, String role,
-                                   String idempotencyKey, String correlationId) {
-        requireEntryAssignmentAccess(entryId, calledByUserId, role);
+    public QueueEntryResponse call(UUID entryId,
+                                   UUID calledByUserId,
+                                   String role,
+                                   String idempotencyKey,
+                                   String correlationId) {
+        accessValidator.requireEntryAssignmentAccess(entryId, calledByUserId, role, this::configFor);
         return call(entryId, calledByUserId, idempotencyKey, correlationId);
     }
 
     @Transactional
     public QueueEntryResponse recall(UUID entryId, UUID calledByUserId, String correlationId) {
         QueueEntry entry = requireEntryForUpdate(entryId);
-        if (entry.getStatus() != QueueStatus.CALLED) throw invalidTransition(entry, QueueStatus.CALLED);
-        if (entry.getCallAttempts() >= MAX_CALL_ATTEMPTS) {
-            throw new BusinessException(409, "Đã gọi đủ " + MAX_CALL_ATTEMPTS + " lần; hãy đánh dấu lỡ lượt");
+        if (entry.getStatus() != QueueStatus.CALLED) {
+            throw invalidTransition(entry, QueueStatus.CALLED);
         }
+        entry.recordRecall(calledByUserId, Instant.now(), MAX_CALL_ATTEMPTS);
         QueueConfig config = configFor(entry);
-        entry.setCallAttempts(entry.getCallAttempts() + 1);
-        entry.setCalledAt(Instant.now());
-        entry.setCalledByUserId(calledByUserId);
         entries.saveAndFlush(entry);
-        events.append(entry, config, "PatientCalled", AppConstants.RK_QUEUE_CALLED,
-                correlationId, Map.of(
+        events.append(
+                entry,
+                config,
+                "PatientCalled",
+                AppConstants.RK_QUEUE_CALLED,
+                correlationId,
+                Map.of(
                         "callAttempt", entry.getCallAttempts(),
                         "calledByUserId", calledByUserId,
                         "recalled", true));
@@ -791,31 +795,32 @@ public class QueueManagementService {
 
     @Transactional
     public QueueEntryResponse recall(UUID entryId, UUID calledByUserId, String role, String correlationId) {
-        requireEntryAssignmentAccess(entryId, calledByUserId, role);
+        accessValidator.requireEntryAssignmentAccess(entryId, calledByUserId, role, this::configFor);
         return recall(entryId, calledByUserId, correlationId);
     }
 
     @Transactional
     public QueueEntryResponse miss(UUID entryId, String correlationId) {
         QueueEntry entry = requireEntryForUpdate(entryId);
-        if (entry.getStatus() != QueueStatus.CALLED) throw invalidTransition(entry, QueueStatus.MISSED);
-        if (entry.getCallAttempts() < MAX_CALL_ATTEMPTS) {
-            throw new BusinessException(409,
-                    "Phải gọi đủ " + MAX_CALL_ATTEMPTS + " lần trước khi đánh dấu lỡ lượt");
+        if (entry.getStatus() != QueueStatus.CALLED) {
+            throw invalidTransition(entry, QueueStatus.MISSED);
         }
+        entry.markMissed(Instant.now(), MAX_CALL_ATTEMPTS);
         QueueConfig config = configFor(entry);
-        entry.setStatus(QueueStatus.MISSED);
-        entry.setMissedAt(Instant.now());
-        entry.setMissedCount(entry.getMissedCount() + 1);
         entries.saveAndFlush(entry);
-        events.append(entry, config, "QueueEntryMissed", AppConstants.RK_QUEUE_MISSED, correlationId,
+        events.append(
+                entry,
+                config,
+                "QueueEntryMissed",
+                AppConstants.RK_QUEUE_MISSED,
+                correlationId,
                 Map.of("missedCount", entry.getMissedCount()));
         return response(entry, config);
     }
 
     @Transactional
     public QueueEntryResponse miss(UUID entryId, UUID requesterUserId, String role, String correlationId) {
-        requireEntryAssignmentAccess(entryId, requesterUserId, role);
+        accessValidator.requireEntryAssignmentAccess(entryId, requesterUserId, role, this::configFor);
         return miss(entryId, correlationId);
     }
 
@@ -827,55 +832,65 @@ public class QueueManagementService {
         QueueEntry entry = requireEntryForUpdate(entryId);
         QueueStatus requeuedStatus = entry.getQueueType() == QueueType.CONSULTATION
                 && entry.getConsultationPhase() == ConsultationPhase.INITIAL
-                ? QueueStatus.CHECKED_IN : QueueStatus.QUEUED;
-        if (entry.getStatus() != QueueStatus.MISSED) throw invalidTransition(entry, requeuedStatus);
-        boolean back;
-        if (entry.getConsultationPhase() == ConsultationPhase.RESULT_REVIEW) {
-            back = true;
-        } else if (config == null) {
-            back = true;
-        } else if (config.getMissedPolicy() == MissedPolicy.REQUIRE_MANUAL) {
-            if (request == null || request.position() == null) {
-                throw new BusinessException(400, "Policy REQUIRE_MANUAL yêu cầu position FRONT hoặc BACK");
-            }
-            back = request.position() == RequeueRequest.Position.BACK;
-        } else {
-            back = config.getMissedPolicy() == MissedPolicy.REQUEUE_BACK;
+                ? QueueStatus.CHECKED_IN
+                : QueueStatus.QUEUED;
+        if (entry.getStatus() != QueueStatus.MISSED) {
+            throw invalidTransition(entry, requeuedStatus);
         }
+        boolean back = resolveRequeueBackPosition(entry, config, request);
+        Instant eligibleSinceAt;
         if (back) {
-            entry.setEligibleSinceAt(Instant.now());
+            eligibleSinceAt = Instant.now();
         } else {
             QueueEntry first = firstCandidate(config, entry.getQueueDate(), entry.getSchedulingLane());
-            entry.setEligibleSinceAt(first == null
-                    ? Instant.now()
-                    : first.getEligibleSinceAt().minusSeconds(1));
+            eligibleSinceAt = first == null ? Instant.now() : first.getEligibleSinceAt().minusSeconds(1);
         }
-        entry.setStatus(requeuedStatus);
-        entry.setCalledAt(null);
-        entry.setCalledByUserId(null);
-        entry.setCallAttempts(0);
-        entry.setNearTurnNotifiedAt(null);
+        entry.markRequeued(requeuedStatus, eligibleSinceAt);
         entries.saveAndFlush(entry);
-        events.append(entry, config, "QueueEntryRequeued", "queue.requeued", correlationId,
+        events.append(
+                entry,
+                config,
+                "QueueEntryRequeued",
+                "queue.requeued",
+                correlationId,
                 Map.of("requeued", true, "position", back ? "BACK" : "FRONT"));
         return response(entry, config);
     }
 
+    private boolean resolveRequeueBackPosition(QueueEntry entry, QueueConfig config, RequeueRequest request) {
+        if (entry.getConsultationPhase() == ConsultationPhase.RESULT_REVIEW || config == null) {
+            return true;
+        }
+        if (config.getMissedPolicy() == MissedPolicy.REQUIRE_MANUAL) {
+            if (request == null || request.position() == null) {
+                throw new BusinessException(400, "Policy REQUIRE_MANUAL yêu cầu position FRONT hoặc BACK");
+            }
+            return request.position() == RequeueRequest.Position.BACK;
+        }
+        return config.getMissedPolicy() == MissedPolicy.REQUEUE_BACK;
+    }
+
     @Transactional
-    public QueueEntryResponse requeue(UUID entryId, RequeueRequest request, UUID requesterUserId,
-                                      String role, String correlationId) {
-        requireEntryAssignmentAccess(entryId, requesterUserId, role);
+    public QueueEntryResponse requeue(UUID entryId,
+                                      RequeueRequest request,
+                                      UUID requesterUserId,
+                                      String role,
+                                      String correlationId) {
+        accessValidator.requireEntryAssignmentAccess(entryId, requesterUserId, role, this::configFor);
         return requeue(entryId, request, correlationId);
     }
 
     @Transactional
     public QueueEntryResponse start(UUID entryId, String correlationId) {
         QueueEntry entry = requireEntryForUpdate(entryId);
-        if(entry.getStatus()==QueueStatus.IN_PROGRESS)return response(entry,configFor(entry));
-        if (entry.getStatus() != QueueStatus.CALLED) throw invalidTransition(entry, QueueStatus.IN_PROGRESS);
+        if (entry.getStatus() == QueueStatus.IN_PROGRESS) {
+            return response(entry, configFor(entry));
+        }
+        if (entry.getStatus() != QueueStatus.CALLED) {
+            throw invalidTransition(entry, QueueStatus.IN_PROGRESS);
+        }
         QueueConfig config = configFor(entry);
-        entry.setStatus(QueueStatus.IN_PROGRESS);
-        entry.setStartedAt(Instant.now());
+        entry.markStarted(Instant.now());
         entries.saveAndFlush(entry);
         events.append(entry, config, "QueueEntryStarted", AppConstants.RK_QUEUE_STARTED, correlationId, Map.of());
         return response(entry, config);
@@ -883,8 +898,8 @@ public class QueueManagementService {
 
     @Transactional
     public QueueEntryResponse start(UUID entryId, UUID requesterUserId, String role, String correlationId) {
-        requireClinicalOperator(entryId,role);
-        requireEntryAssignmentAccess(entryId, requesterUserId, role);
+        accessValidator.requireClinicalOperator(entryId, role);
+        accessValidator.requireEntryAssignmentAccess(entryId, requesterUserId, role, this::configFor);
         return start(entryId, correlationId);
     }
 
@@ -897,60 +912,56 @@ public class QueueManagementService {
         }
         QueueConfig config = snapshot.getQueueConfigId() == null ? null : requireLockedEntryConfig(snapshot);
         QueueEntry entry = requireEntryForUpdate(entryId);
-        if(entry.getStatus()==QueueStatus.COMPLETED)return response(entry,config);
-        if (entry.getStatus() != QueueStatus.IN_PROGRESS) throw invalidTransition(entry, QueueStatus.COMPLETED);
-        entry.setStatus(QueueStatus.COMPLETED);
-        entry.setCompletedAt(Instant.now());
+        if (entry.getStatus() == QueueStatus.COMPLETED) {
+            return response(entry, config);
+        }
+        if (entry.getStatus() != QueueStatus.IN_PROGRESS) {
+            throw invalidTransition(entry, QueueStatus.COMPLETED);
+        }
+        entry.markCompleted(Instant.now());
         entries.saveAndFlush(entry);
-        if (config != null && entry.getQueueType() == QueueType.CONSULTATION) updateAverage(config, entry.getQueueDate());
-        events.append(entry, config, "QueueEntryCompleted", AppConstants.RK_QUEUE_COMPLETED, correlationId,
+        if (config != null && entry.getQueueType() == QueueType.CONSULTATION) {
+            updateAverage(config, entry.getQueueDate());
+        }
+        events.append(
+                entry,
+                config,
+                "QueueEntryCompleted",
+                AppConstants.RK_QUEUE_COMPLETED,
+                correlationId,
                 Map.of("serviceMinutes", consultationMinutes(entry)));
         return response(entry, config);
     }
 
     @Transactional
     public QueueEntryResponse complete(UUID entryId, UUID requesterUserId, String role, String correlationId) {
-        requireClinicalOperator(entryId,role);
-        requireEntryAssignmentAccess(entryId, requesterUserId, role);
+        accessValidator.requireClinicalOperator(entryId, role);
+        accessValidator.requireEntryAssignmentAccess(entryId, requesterUserId, role, this::configFor);
         return complete(entryId, correlationId);
     }
 
-    private void requireClinicalOperator(UUID entryId,String role){
-        var entry=entries.findById(entryId).orElseThrow(()->new ResourceNotFoundException("QueueEntry","id",entryId));
-        if(entry.getQueueType()==QueueType.CONSULTATION && !"DOCTOR".equals(role))throw new BusinessException(403,"Chỉ bác sĩ phụ trách được bắt đầu/hoàn tất lượt khám.");
-    }
-
-    private void requireEntryAssignmentAccess(UUID entryId, UUID requesterUserId, String role) {
-        QueueEntry entry = entries.findById(entryId)
-                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "id", entryId));
-        if (entry.getQueueType() != QueueType.CONSULTATION) {
-            if ((entry.getQueueType() == QueueType.LAB_EXECUTION
-                    || entry.getQueueType() == QueueType.PHARMACY_DISPENSING)
-                    && entry.getServicePointId() != null) {
-                requireServicePointAccess(entry.getServicePointId(), requesterUserId, role);
-                return;
-            }
-            throw new BusinessException(403, "Lượt phục vụ không có service point assignment hợp lệ");
-        }
-        QueueConfig config = configFor(entry);
-        if (config == null) {
-            throw new BusinessException(403, "Lượt khám không có phòng assignment hợp lệ");
-        }
-        requireRoomAccess(config.getRoomCode(), requesterUserId, role);
-    }
-
-    private QueueEntry newEntry(QueueConfig config, LocalDate date, UUID patientId, UUID userId,
-                                UUID appointmentId, PriorityLevel priority, QueueStatus status) {
-        if (appointmentId==null && entries.existsByPatientIdAndDepartmentIdAndQueueDateAndStatusIn(
-                patientId, config.getDepartmentId(), date, Set.of(QueueStatus.CHECKED_IN,QueueStatus.CALLED,QueueStatus.IN_PROGRESS,QueueStatus.MISSED))) {
+    private QueueEntry newEntry(QueueConfig config,
+                                LocalDate date,
+                                UUID patientId,
+                                UUID userId,
+                                UUID appointmentId,
+                                PriorityLevel priority,
+                                QueueStatus status) {
+        if (appointmentId == null
+                && entries.existsByPatientIdAndDepartmentIdAndQueueDateAndStatusIn(
+                        patientId,
+                        config.getDepartmentId(),
+                        date,
+                        Set.of(QueueStatus.CHECKED_IN, QueueStatus.CALLED, QueueStatus.IN_PROGRESS, QueueStatus.MISSED))) {
             throw new BusinessException(409, "Bệnh nhân đã có một lượt khám đang hoạt động tại khoa trong ngày");
         }
-        QueueNumberSequence sequence = sequences.findByQueueConfigIdAndQueueDate(config.getId(), date).orElseGet(() -> {
-            QueueNumberSequence created = new QueueNumberSequence();
-            created.setQueueConfigId(config.getId());
-            created.setQueueDate(date);
-            return sequences.saveAndFlush(created);
-        });
+        QueueNumberSequence sequence = sequences.findByQueueConfigIdAndQueueDate(config.getId(), date)
+                .orElseGet(() -> {
+                    QueueNumberSequence created = new QueueNumberSequence();
+                    created.setQueueConfigId(config.getId());
+                    created.setQueueDate(date);
+                    return sequences.saveAndFlush(created);
+                });
         // The configuration is locked by every caller. Seed/import rows may exist
         // without a counter, or the counter may be older than persisted entries.
         sequence.setLastNumber(Math.max(sequence.getLastNumber(), entries.maximumSequence(config.getId(), date)) + 1);
@@ -972,9 +983,15 @@ public class QueueManagementService {
         return entry;
     }
 
-    public QueueEntry createAppointmentEntry(QueueConfig config, LocalDate date, LocalTime scheduledStart,
-                                             String timeSlot, String departmentCode, String roomDisplayName,
-                                             UUID appointmentId, UUID patientId, UUID userId) {
+    public QueueEntry createAppointmentEntry(QueueConfig config,
+                                             LocalDate date,
+                                             LocalTime scheduledStart,
+                                             String timeSlot,
+                                             String departmentCode,
+                                             String roomDisplayName,
+                                             UUID appointmentId,
+                                             UUID patientId,
+                                             UUID userId) {
         QueueEntry entry = newEntry(
                 config, date, patientId, userId, appointmentId, PriorityLevel.APPOINTMENT, QueueStatus.WAITING);
         entry.setScheduledStartAt(ZonedDateTime.of(date, scheduledStart, businessZone).toInstant());
@@ -984,49 +1001,21 @@ public class QueueManagementService {
         return entry;
     }
 
-    public QueueEntry createPharmacyEntry(UUID prescriptionId, UUID consultationId, UUID patientId,
-                                          String servicePointId, Instant queuedAt) {
-        Optional<QueueEntry> existing = entries.findByPrescriptionId(prescriptionId);
-        if (existing.isPresent()) return existing.get();
-        String normalizedServicePoint = normalizeServicePointId(servicePointId);
-        LocalDate date = LocalDate.ofInstant(queuedAt, businessZone);
-        ServicePointSequence sequence = servicePointSequences
-                .findByServicePointIdAndQueueDate(normalizedServicePoint, date)
-                .orElseGet(() -> {
-                    ServicePointSequence created = new ServicePointSequence();
-                    created.setServicePointId(normalizedServicePoint);
-                    created.setQueueDate(date);
-                    return servicePointSequences.saveAndFlush(created);
-                });
-        sequence.setLastNumber(sequence.getLastNumber() + 1);
-        servicePointSequences.save(sequence);
-
-        QueueEntry entry = new QueueEntry();
-        entry.setQueueConfigId(null);
-        entry.setDepartmentId(null);
-        entry.setDepartmentCode(null);
-        entry.setPrescriptionId(prescriptionId);
-        entry.setConsultationId(consultationId);
-        entry.setPatientId(patientId);
-        entry.setUserId(entries.findFirstByPatientIdAndUserIdIsNotNullOrderByCreatedAtDesc(patientId)
-                .map(QueueEntry::getUserId).orElse(null));
-        entry.setQueueType(QueueType.PHARMACY_DISPENSING);
-        entry.setConsultationPhase(null);
-        entry.setQueueClass(null);
-        entry.setServicePointId(normalizedServicePoint);
-        entry.setQueueDate(date);
-        entry.setSequenceNumber(sequence.getLastNumber());
-        entry.setQueueNumber("RX-" + String.format("%03d", sequence.getLastNumber()));
-        entry.setPriorityLevel(PriorityLevel.WALK_IN);
-        entry.setStatus(QueueStatus.QUEUED);
-        entry.setEligibleSinceAt(queuedAt);
-        return entry;
+    public QueueEntry createPharmacyEntry(UUID prescriptionId,
+                                          UUID consultationId,
+                                          UUID patientId,
+                                          String servicePointId,
+                                          Instant queuedAt) {
+        return servicePointSupport.createPharmacyEntry(
+                prescriptionId, consultationId, patientId, servicePointId, queuedAt);
     }
 
     @Transactional(readOnly = true)
     public QueueEntryResponse patientCurrent(UUID patientId, UUID userId, String role) {
         QueueEntryResponse entry = patientCurrent(patientId, userId, !AppConstants.ROLE_PATIENT.equals(role));
-        if (!AppConstants.ROLE_PATIENT.equals(role)) requireEntryAssignmentAccess(entry.entryId(), userId, role);
+        if (!AppConstants.ROLE_PATIENT.equals(role)) {
+            accessValidator.requireEntryAssignmentAccess(entry.entryId(), userId, role, this::configFor);
+        }
         return entry;
     }
 
@@ -1036,7 +1025,7 @@ public class QueueManagementService {
         if (!AppConstants.ROLE_PATIENT.equals(role)) {
             QueueEntry entry = entries.findByAppointmentId(appointmentId)
                     .orElseThrow(() -> new ResourceNotFoundException("VisitTicket", "appointmentId", appointmentId));
-            requireEntryAssignmentAccess(entry.getId(), userId, role);
+            accessValidator.requireEntryAssignmentAccess(entry.getId(), userId, role, this::configFor);
         }
         return ticket;
     }
@@ -1044,94 +1033,62 @@ public class QueueManagementService {
     @Transactional(readOnly = true)
     public QueueDashboardResponse dashboard(UUID departmentId, UUID userId, String role) {
         QueueConfig config = requireConfig(departmentId);
-        requireRoomAccess(config.getRoomCode(), userId, role);
+        accessValidator.requireRoomAccess(config.getRoomCode(), userId, role);
         return dashboard(departmentId);
     }
 
     @Transactional
-    public Optional<QueueEntryResponse> callNext(UUID departmentId, UUID userId, String role,
-                                               String idempotencyKey, String correlationId) {
+    public Optional<QueueEntryResponse> callNext(UUID departmentId,
+                                                 UUID userId,
+                                                 String role,
+                                                 String idempotencyKey,
+                                                 String correlationId) {
         QueueConfig config = requireConfig(departmentId);
-        requireRoomAccess(config.getRoomCode(), userId, role);
+        accessValidator.requireRoomAccess(config.getRoomCode(), userId, role);
         return callNext(departmentId, userId, idempotencyKey, correlationId);
     }
 
     @Transactional(readOnly = true)
     public QueueEntryResponse currentLabExecution(UUID labOrderId, String servicePointId, UUID userId, String role) {
-        String point = normalizeServicePointId(servicePointId);
-        requireServicePointAccess(point, userId, role);
-        QueueEntry entry = entries.findByLabOrderIdAndServicePointId(labOrderId, point)
-                .orElseThrow(() -> new ResourceNotFoundException("Lab queue entry", "labOrderId/servicePointId", labOrderId));
-        if (entry.getQueueType() != QueueType.LAB_EXECUTION) {
-            throw new BusinessException(409, "Queue entry is not a lab execution");
-        }
-        return QueueEntryResponse.fromServicePoint(entry, null, null);
+        String point = QueueAccessValidator.normalizeServicePointId(servicePointId);
+        accessValidator.requireServicePointAccess(point, userId, role);
+        return servicePointSupport.currentLabExecution(labOrderId, point);
     }
 
     @Transactional(readOnly = true)
     public QueueEntryResponse currentLabExecution(UUID labOrderId) {
-        QueueEntry entry = entries.findFirstByLabOrderIdOrderByCreatedAtDesc(labOrderId)
-                .orElseThrow(() -> new ResourceNotFoundException("Lab queue entry", "labOrderId", labOrderId));
-        return QueueEntryResponse.fromServicePoint(entry, null, null);
+        return servicePointSupport.currentLabExecution(labOrderId);
     }
 
     @Transactional(readOnly = true)
     public QueueEntryResponse currentLabExecution(UUID labOrderId, UUID requesterUserId, String role) {
         QueueEntry entry = entries.findFirstByLabOrderIdOrderByCreatedAtDesc(labOrderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Lab queue entry", "labOrderId", labOrderId));
-        requireServicePointAccess(entry.getServicePointId(), requesterUserId, role);
+        accessValidator.requireServicePointAccess(entry.getServicePointId(), requesterUserId, role);
         return currentLabExecution(labOrderId);
     }
 
     @Transactional
-    public QueueEntry createLabExecutionEntry(UUID labOrderId, UUID consultationId, UUID patientId,
-                                               String servicePointId, Instant queuedAt) {
-        Optional<QueueEntry> existing = entries.findByLabOrderIdAndServicePointId(
-                labOrderId, normalizeServicePointId(servicePointId));
-        if (existing.isPresent()) return existing.get();
-
-        String normalizedServicePoint = normalizeServicePointId(servicePointId);
-        LocalDate date = LocalDate.ofInstant(queuedAt, businessZone);
-        ServicePointSequence sequence = servicePointSequences
-                .findByServicePointIdAndQueueDate(normalizedServicePoint, date)
-                .orElseGet(() -> {
-                    ServicePointSequence created = new ServicePointSequence();
-                    created.setServicePointId(normalizedServicePoint);
-                    created.setQueueDate(date);
-                    return servicePointSequences.saveAndFlush(created);
-                });
-        sequence.setLastNumber(sequence.getLastNumber() + 1);
-        servicePointSequences.save(sequence);
-
-        QueueEntry entry = new QueueEntry();
-        entry.setQueueConfigId(null);
-        entry.setDepartmentId(null);
-        entry.setDepartmentCode(null);
-        entry.setLabOrderId(labOrderId);
-        entry.setConsultationId(consultationId);
-        entry.setPatientId(patientId);
-        entry.setUserId(entries.findFirstByPatientIdAndUserIdIsNotNullOrderByCreatedAtDesc(patientId)
-                .map(QueueEntry::getUserId).orElse(null));
-        entry.setQueueType(QueueType.LAB_EXECUTION);
-        entry.setConsultationPhase(null);
-        entry.setQueueClass(null);
-        entry.setServicePointId(normalizedServicePoint);
-        entry.setQueueDate(date);
-        entry.setSequenceNumber(sequence.getLastNumber());
-        entry.setQueueNumber("LAB-" + String.format("%03d", sequence.getLastNumber()));
-        entry.setPriorityLevel(PriorityLevel.WALK_IN);
-        entry.setStatus(QueueStatus.QUEUED);
-        entry.setEligibleSinceAt(queuedAt);
-        return entry;
+    public QueueEntry createLabExecutionEntry(UUID labOrderId,
+                                              UUID consultationId,
+                                              UUID patientId,
+                                              String servicePointId,
+                                              Instant queuedAt) {
+        return servicePointSupport.createLabExecutionEntry(
+                labOrderId, consultationId, patientId, servicePointId, queuedAt);
     }
 
-    public QueueEntry createResultReviewEntry(UUID consultationId, UUID patientId,
-                                              UUID sourceQueueEntryId, Instant queuedAt) {
+    public QueueEntry createResultReviewEntry(UUID consultationId,
+                                              UUID patientId,
+                                              UUID sourceQueueEntryId,
+                                              Instant queuedAt) {
         Optional<QueueEntry> existing = entries.findByConsultationIdAndQueueTypeAndConsultationPhase(
                 consultationId, QueueType.CONSULTATION, ConsultationPhase.RESULT_REVIEW);
-        if (existing.isPresent()) return existing.get();
+        if (existing.isPresent()) {
+            return existing.get();
+        }
 
-        QueueEntry source = resolveInitialConsultationEntry(consultationId, patientId, sourceQueueEntryId);
+        QueueEntry source = resolveInitialConsultationEntry(consultationId, sourceQueueEntryId);
         if (!source.getPatientId().equals(patientId)) {
             throw new BusinessException(422, "patientId không khớp lượt khám ban đầu");
         }
@@ -1150,7 +1107,8 @@ public class QueueManagementService {
         review.setConsultationId(consultationId);
         review.setPatientId(patientId);
         review.setUserId(source.getUserId());
-        review.setPatientNameSnapshot(source.getPatientNameSnapshot());review.setServiceCode(source.getServiceCode());review.setDepartmentCode(source.getDepartmentCode());
+        review.setPatientNameSnapshot(source.getPatientNameSnapshot());
+        review.setServiceCode(source.getServiceCode());
         review.setQueueType(QueueType.CONSULTATION);
         review.setConsultationPhase(ConsultationPhase.RESULT_REVIEW);
         review.setQueueClass(null);
@@ -1164,21 +1122,18 @@ public class QueueManagementService {
         return review;
     }
 
-    private QueueEntry resolveInitialConsultationEntry(UUID consultationId, UUID patientId,
-                                                       UUID sourceQueueEntryId) {
+    private QueueEntry resolveInitialConsultationEntry(UUID consultationId, UUID sourceQueueEntryId) {
         QueueEntry source = null;
         if (sourceQueueEntryId != null) {
             source = entries.findById(sourceQueueEntryId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Initial QueueEntry", "id", sourceQueueEntryId));
+                    .orElseThrow(() -> new ResourceNotFoundException("Initial QueueEntry", "id", sourceQueueEntryId));
         }
         if (source == null) {
             source = entries.findByConsultationIdAndQueueTypeAndConsultationPhase(
                     consultationId, QueueType.CONSULTATION, ConsultationPhase.INITIAL).orElse(null);
         }
         if (source == null) {
-            throw new BusinessException(422,
-                    "Không tìm thấy lượt khám ban đầu để tạo hàng chờ đọc kết quả");
+            throw new BusinessException(422, "Không tìm thấy lượt khám ban đầu để tạo hàng chờ đọc kết quả");
         }
         if (source.getQueueType() != QueueType.CONSULTATION
                 || source.getConsultationPhase() != ConsultationPhase.INITIAL) {
@@ -1189,126 +1144,142 @@ public class QueueManagementService {
 
     @Transactional
     public void cancelPharmacyEntry(UUID prescriptionId, String correlationId) {
-        QueueEntry snapshot = entries.findByPrescriptionId(prescriptionId).orElse(null);
-        if (snapshot == null || snapshot.getStatus() == QueueStatus.COMPLETED
-                || snapshot.getStatus() == QueueStatus.CANCELLED) return;
-        QueueEntry entry = requireEntryForUpdate(snapshot.getId());
-        if (entry.getStatus() == QueueStatus.COMPLETED || entry.getStatus() == QueueStatus.CANCELLED) return;
-        entry.setStatus(QueueStatus.CANCELLED);
-        entry.setCancelledAt(Instant.now());
-        entries.saveAndFlush(entry);
-        events.append(entry, null, "QueueEntryCancelled", "queue.cancelled", correlationId,
-                Map.of("prescriptionId", prescriptionId));
+        servicePointSupport.cancelPharmacyEntry(prescriptionId, correlationId);
     }
 
     @Transactional
     public void completePharmacyEntry(UUID prescriptionId, Instant dispensedAt, String correlationId) {
-        QueueEntry snapshot = entries.findByPrescriptionId(prescriptionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pharmacy QueueEntry", "prescriptionId", prescriptionId));
-        if (snapshot.getStatus() == QueueStatus.COMPLETED) return;
-        QueueEntry entry = requireEntryForUpdate(snapshot.getId());
-        if (entry.getStatus() == QueueStatus.COMPLETED) return;
-        if (entry.getStatus() != QueueStatus.IN_PROGRESS) {
-            throw new BusinessException(409, "Lượt phát thuốc phải ở IN_PROGRESS trước khi xác nhận đã phát");
-        }
-        entry.setStatus(QueueStatus.COMPLETED);
-        entry.setCompletedAt(dispensedAt);
-        entries.saveAndFlush(entry);
-        events.append(entry, null, "QueueEntryCompleted", AppConstants.RK_QUEUE_COMPLETED,
-                correlationId, Map.of("prescriptionId", prescriptionId, "dispensed", true));
+        servicePointSupport.completePharmacyEntry(prescriptionId, dispensedAt, correlationId);
     }
 
     @Transactional
-    public void completePharmacyEntry(UUID prescriptionId, UUID requesterUserId, String role,
-                                      Instant dispensedAt, String correlationId) {
+    public void completePharmacyEntry(UUID prescriptionId,
+                                      UUID requesterUserId,
+                                      String role,
+                                      Instant dispensedAt,
+                                      String correlationId) {
         QueueEntry entry = entries.findByPrescriptionId(prescriptionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pharmacy QueueEntry", "prescriptionId", prescriptionId));
-        requireServicePointAccess(entry.getServicePointId(), requesterUserId, role);
+        accessValidator.requireServicePointAccess(entry.getServicePointId(), requesterUserId, role);
         completePharmacyEntry(prescriptionId, dispensedAt, correlationId);
     }
 
     @Transactional(readOnly = true)
     public QueueEntryResponse currentPharmacyEntry(UUID prescriptionId) {
-        QueueEntry entry = entries.findByPrescriptionId(prescriptionId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pharmacy QueueEntry", "prescriptionId", prescriptionId));
-        if (entry.getQueueType() != QueueType.PHARMACY_DISPENSING) {
-            throw new BusinessException(422, "Queue entry is not a pharmacy dispensing entry");
-        }
-        Integer position = entry.getStatus() == QueueStatus.QUEUED ? 1 : 0;
-        return QueueEntryResponse.fromServicePoint(entry, position, position == 0 ? 0 : null);
+        return servicePointSupport.currentPharmacyEntry(prescriptionId);
     }
 
     @Transactional(readOnly = true)
     public QueueEntryResponse currentPharmacyEntry(UUID prescriptionId, UUID requesterUserId, String role) {
         QueueEntry entry = entries.findByPrescriptionId(prescriptionId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pharmacy QueueEntry", "prescriptionId", prescriptionId));
-        requireServicePointAccess(entry.getServicePointId(), requesterUserId, role);
+        accessValidator.requireServicePointAccess(entry.getServicePointId(), requesterUserId, role);
         return currentPharmacyEntry(prescriptionId);
     }
 
     public QueueConfig requireLockedConfig(UUID departmentId) {
-        if(roomConfigurations!=null){
-            var available=configs.findAllByDepartmentIdOrderByRoomCodeAsc(departmentId).stream().filter(QueueConfig::isActive).toList();
-            if(available.size()!=1)throw new BusinessException(409,"Khoa có nhiều phòng hoặc chưa cấu hình; hãy chọn phòng cụ thể.");
+        if (roomConfigurations != null) {
+            List<QueueConfig> available = configs.findAllByDepartmentIdOrderByRoomCodeAsc(departmentId).stream()
+                    .filter(QueueConfig::isActive)
+                    .toList();
+            if (available.size() != 1) {
+                throw new BusinessException(409, "Khoa có nhiều phòng hoặc chưa cấu hình; hãy chọn phòng cụ thể.");
+            }
             return configs.findByIdForUpdate(available.getFirst().getId()).orElseThrow();
         }
-        return configs.findFirstByDepartmentIdAndActiveTrue(departmentId).orElseThrow(()->new ResourceNotFoundException("Active QueueConfig","departmentId",departmentId));
-    }
-    public QueueConfig requireScheduledRoom(String roomId,UUID departmentId){
-        // A paused reception policy does not invalidate a future booked ticket.
-        return roomConfigurations==null?requireLockedRoomConfig(roomId,departmentId):roomConfigurations.ensure(roomId,departmentId);
+        return configs.findFirstByDepartmentIdAndActiveTrue(departmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Active QueueConfig", "departmentId", departmentId));
     }
 
-    public QueueConfig requireLockedRoomConfig(String roomId,UUID departmentId){
-        QueueConfig result=roomConfigurations==null?configs.findFirstByRoomCodeAndActiveTrue(roomId).orElseThrow(()->new ResourceNotFoundException("QueueConfig","roomId",roomId)):roomConfigurations.ensure(roomId,departmentId);
-        if(!result.isActive() || (departmentId!=null && !departmentId.equals(result.getDepartmentId())))throw new BusinessException(409,"Cấu hình phòng không hoạt động hoặc không thuộc khoa.");
+    public QueueConfig requireScheduledRoom(String roomId, UUID departmentId) {
+        // A paused reception policy does not invalidate a future booked ticket.
+        return roomConfigurations == null
+                ? requireLockedRoomConfig(roomId, departmentId)
+                : roomConfigurations.ensure(roomId, departmentId);
+    }
+
+    public QueueConfig requireLockedRoomConfig(String roomId, UUID departmentId) {
+        QueueConfig result = roomConfigurations == null
+                ? configs.findFirstByRoomCodeAndActiveTrue(roomId)
+                        .orElseThrow(() -> new ResourceNotFoundException("QueueConfig", "roomId", roomId))
+                : roomConfigurations.ensure(roomId, departmentId);
+        if (!result.isActive() || (departmentId != null && !departmentId.equals(result.getDepartmentId()))) {
+            throw new BusinessException(409, "Cấu hình phòng không hoạt động hoặc không thuộc khoa.");
+        }
         return result;
     }
-    public QueueConfig requireEntryConfigForEvent(QueueEntry entry){return requireLockedEntryConfig(entry);}
-    private QueueConfig requireLockedEntryConfig(QueueEntry entry){
-        if(roomConfigurations==null)return requireLockedConfig(entry.getDepartmentId());
-        return configs.findByIdForUpdate(entry.getQueueConfigId()).orElseThrow(()->new ResourceNotFoundException("QueueConfig","id",entry.getQueueConfigId()));
+
+    public QueueConfig requireEntryConfigForEvent(QueueEntry entry) {
+        return requireLockedEntryConfig(entry);
     }
-    private QueueConfig requireConfig(UUID departmentId){
-        if(roomConfigurations!=null){
-            var available=configs.findAllByDepartmentIdOrderByRoomCodeAsc(departmentId).stream().filter(QueueConfig::isActive).toList();
-            if(available.size()!=1)throw new BusinessException(409,"Chọn phòng cụ thể để truy cập hàng đợi.");
+
+    private QueueConfig requireLockedEntryConfig(QueueEntry entry) {
+        if (roomConfigurations == null) {
+            return requireLockedConfig(entry.getDepartmentId());
+        }
+        return configs.findByIdForUpdate(entry.getQueueConfigId())
+                .orElseThrow(() -> new ResourceNotFoundException("QueueConfig", "id", entry.getQueueConfigId()));
+    }
+
+    private QueueConfig requireConfig(UUID departmentId) {
+        if (roomConfigurations != null) {
+            List<QueueConfig> available = configs.findAllByDepartmentIdOrderByRoomCodeAsc(departmentId).stream()
+                    .filter(QueueConfig::isActive)
+                    .toList();
+            if (available.size() != 1) {
+                throw new BusinessException(409, "Chọn phòng cụ thể để truy cập hàng đợi.");
+            }
             return available.getFirst();
         }
-        return configs.findByDepartmentIdAndActiveTrue(departmentId).orElseThrow(()->new ResourceNotFoundException("Active QueueConfig","departmentId",departmentId));
+        return configs.findByDepartmentIdAndActiveTrue(departmentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Active QueueConfig", "departmentId", departmentId));
     }
-    private QueueConfig configFor(QueueEntry entry){
-        if(entry.getQueueConfigId()==null)return null;
-        if(roomConfigurations==null)return requireConfig(entry.getDepartmentId());
-        return configs.findById(entry.getQueueConfigId()).orElseThrow(()->new ResourceNotFoundException("QueueConfig","id",entry.getQueueConfigId()));
+
+    private QueueConfig configFor(QueueEntry entry) {
+        if (entry.getQueueConfigId() == null) {
+            return null;
+        }
+        if (roomConfigurations == null) {
+            return requireConfig(entry.getDepartmentId());
+        }
+        return configs.findById(entry.getQueueConfigId())
+                .orElseThrow(() -> new ResourceNotFoundException("QueueConfig", "id", entry.getQueueConfigId()));
     }
-    private QueueConfig requireRoomConfig(String roomId){
-        return (roomConfigurations==null?configs.findByRoomCodeAndActiveTrue(roomId):configs.findByRoomCode(roomId)).orElseThrow(()->new ResourceNotFoundException("QueueConfig","roomId",roomId));
+
+    private QueueConfig requireRoomConfig(String roomId) {
+        Optional<QueueConfig> found = roomConfigurations == null
+                ? configs.findByRoomCodeAndActiveTrue(roomId)
+                : configs.findByRoomCode(roomId);
+        return found.orElseThrow(() -> new ResourceNotFoundException("QueueConfig", "roomId", roomId));
     }
 
     private QueueEntry requireEntryForUpdate(UUID id) {
-        return entries.findFirstById(id).orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "id", id));
+        return entries.findFirstById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("QueueEntry", "id", id));
     }
 
     private QueueEntry firstCandidate(QueueConfig config, LocalDate date, SchedulingLane lane) {
         return entries.findByQueueConfigIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
                         config.getId(), date, Set.of(QueueStatus.CHECKED_IN, QueueStatus.QUEUED))
-                .stream().filter(QueueEntry::isWaitingForCall)
+                .stream()
+                .filter(QueueEntry::isWaitingForCall)
                 .filter(entry -> entry.getSchedulingLane() == lane)
-                .findFirst().orElse(null);
+                .findFirst()
+                .orElse(null);
     }
 
     private QueueEntryResponse response(QueueEntry entry, QueueConfig config) {
         if (config == null) {
-            Integer position = entry.getStatus() == QueueStatus.QUEUED ? servicePointPosition(entry) : 0;
+            Integer position = entry.getStatus() == QueueStatus.QUEUED
+                    ? servicePointSupport.servicePointPosition(entry)
+                    : 0;
             Integer wait;
             if (entry.getStatus() == QueueStatus.QUEUED) {
                 wait = entry.getEstimatedWaitMinutes();
             } else {
                 wait = 0;
             }
-            return QueueEntryResponse.fromServicePoint(entry, position,
-                    wait);
+            return QueueEntryResponse.fromServicePoint(entry, position, wait);
         }
         Integer position = null;
         Integer wait = entry.getEstimatedWaitMinutes();
@@ -1318,9 +1289,12 @@ public class QueueManagementService {
             Instant now = Instant.now();
             int currentConsultation = entries.existsByQueueConfigIdAndQueueDateAndStatusIn(
                     config.getId(), entry.getQueueDate(), SERVING_STATUSES)
-                    ? config.getAvgConsultationMinutes() : 0;
+                    ? config.getAvgConsultationMinutes()
+                    : 0;
             List<ConsultationQueueScheduler.ScheduledEntry> schedule = ConsultationQueueScheduler.schedule(
-                    active, config.getLastServedLane(), now.plus(Duration.ofMinutes(currentConsultation)),
+                    active,
+                    config.getLastServedLane(),
+                    now.plus(Duration.ofMinutes(currentConsultation)),
                     config.getAvgConsultationMinutes());
             int index = -1;
             for (int candidateIndex = 0; candidateIndex < schedule.size(); candidateIndex++) {
@@ -1346,25 +1320,10 @@ public class QueueManagementService {
                 : QueueEntryResponse.from(entry, QueueConfigResponse.from(config), position, wait);
     }
 
-    private int servicePointPosition(QueueEntry entry) {
-        List<QueueEntry> waiting = entries
-                .findByServicePointIdAndQueueDateAndStatusInOrderByEligibleSinceAtAscSequenceNumberAsc(
-                        entry.getServicePointId(), entry.getQueueDate(), Set.of(QueueStatus.QUEUED));
-        for (int index = 0; index < waiting.size(); index++) {
-            if (waiting.get(index).getId().equals(entry.getId())) return index + 1;
-        }
-        return 0;
-    }
-
     private List<QueueEntryResponse> lane(List<QueueEntryResponse> entries, SchedulingLane lane) {
-        return entries.stream().filter(entry -> entry.schedulingLane() == lane).toList();
-    }
-
-    private String normalizeServicePointId(String servicePointId) {
-        if (servicePointId == null || servicePointId.isBlank()) {
-            throw new BusinessException(400, "servicePointId không được để trống");
-        }
-        return servicePointId.trim().toUpperCase(Locale.ROOT);
+        return entries.stream()
+                .filter(entry -> entry.schedulingLane() == lane)
+                .toList();
     }
 
     private void appendNearTurnEvents(QueueConfig config, LocalDate date, String correlationId) {
@@ -1375,18 +1334,28 @@ public class QueueManagementService {
         Instant now = Instant.now();
         int currentWorkload = entries.existsByQueueConfigIdAndQueueDateAndStatusIn(
                 config.getId(), date, SERVING_STATUSES)
-                ? config.getAvgConsultationMinutes() : 0;
+                ? config.getAvgConsultationMinutes()
+                : 0;
         List<ConsultationQueueScheduler.ScheduledEntry> schedule = ConsultationQueueScheduler.schedule(
-                waiting, config.getLastServedLane(), now.plus(Duration.ofMinutes(currentWorkload)),
+                waiting,
+                config.getLastServedLane(),
+                now.plus(Duration.ofMinutes(currentWorkload)),
                 config.getAvgConsultationMinutes());
         int limit = Math.min(config.getNearTurnThreshold(), schedule.size());
         for (int index = 0; index < limit; index++) {
             ConsultationQueueScheduler.ScheduledEntry scheduled = schedule.get(index);
             QueueEntry entry = byId.get(scheduled.entryId());
-            if (entry.getNearTurnNotifiedAt() != null) continue;
+            if (entry.getNearTurnNotifiedAt() != null) {
+                continue;
+            }
             int position = index + 1;
             int wait = projectedWaitMinutes(now, scheduled.projectedStartAt());
-            events.append(entry, config, "QueueNearTurn", AppConstants.RK_QUEUE_NEAR_TURN, correlationId,
+            events.append(
+                    entry,
+                    config,
+                    "QueueNearTurn",
+                    AppConstants.RK_QUEUE_NEAR_TURN,
+                    correlationId,
                     Map.of("effectivePosition", position, "estimatedWaitMinutes", wait));
             entry.setNearTurnNotifiedAt(Instant.now());
         }
@@ -1408,8 +1377,10 @@ public class QueueManagementService {
         return normalized;
     }
 
-    private Optional<QueueEntryResponse> replay(
-            String command, UUID scopeId, String idempotencyKey, String requestFingerprint) {
+    private Optional<QueueEntryResponse> replay(String command,
+                                                UUID scopeId,
+                                                String idempotencyKey,
+                                                String requestFingerprint) {
         return idempotencyRecords.findByCommandNameAndScopeIdAndIdempotencyKey(command, scopeId, idempotencyKey)
                 .map(record -> {
                     requireSameFingerprint(record, requestFingerprint);
@@ -1418,14 +1389,19 @@ public class QueueManagementService {
                     }
                     QueueEntry entry = entries.findById(record.getResultEntryId())
                             .orElseThrow(() -> new IllegalStateException("Idempotency result entry is missing"));
-                    QueueConfig config = entry.getQueueConfigId() == null ? null : configs.findById(entry.getQueueConfigId())
-                            .orElseThrow(() -> new IllegalStateException("Idempotency result config is missing"));
+                    QueueConfig config = entry.getQueueConfigId() == null
+                            ? null
+                            : configs.findById(entry.getQueueConfigId())
+                                    .orElseThrow(() -> new IllegalStateException("Idempotency result config is missing"));
                     return response(entry, config);
                 });
     }
 
-    private void recordCommand(String command, UUID scopeId, String idempotencyKey,
-                               String requestFingerprint, QueueEntry entry) {
+    private void recordCommand(String command,
+                               UUID scopeId,
+                               String idempotencyKey,
+                               String requestFingerprint,
+                               QueueEntry entry) {
         IdempotencyRecord record = new IdempotencyRecord();
         record.setCommandName(command);
         record.setScopeId(scopeId);
@@ -1435,8 +1411,10 @@ public class QueueManagementService {
         idempotencyRecords.save(record);
     }
 
-    private void recordEmptyCommand(
-            String command, UUID scopeId, String idempotencyKey, String requestFingerprint) {
+    private void recordEmptyCommand(String command,
+                                    UUID scopeId,
+                                    String idempotencyKey,
+                                    String requestFingerprint) {
         IdempotencyRecord record = new IdempotencyRecord();
         record.setCommandName(command);
         record.setScopeId(scopeId);
@@ -1472,7 +1450,9 @@ public class QueueManagementService {
                 .findByQueueConfigIdAndQueueDateAndStatusAndStartedAtIsNotNullAndCompletedAtIsNotNullOrderByCompletedAtDesc(
                         config.getId(), date, QueueStatus.COMPLETED, PageRequest.of(0, 20));
         if (!completed.isEmpty()) {
-            int average = (int) Math.round(completed.stream().mapToLong(this::consultationMinutes).average()
+            int average = (int) Math.round(completed.stream()
+                    .mapToLong(this::consultationMinutes)
+                    .average()
                     .orElse(config.getAvgConsultationMinutes()));
             config.setAvgConsultationMinutes(Math.max(1, average));
             configs.save(config);
