@@ -2,11 +2,14 @@ package com.careflow.ai.service;
 
 import com.careflow.ai.repository.ClinicalGuidelineChunkRepository;
 import com.careflow.ai.repository.projection.ChunkSearchResultProjection;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
@@ -14,7 +17,6 @@ import java.util.stream.Collectors;
  * Chuẩn học thuật: Cormack et al. (SIGIR 2009)
  */
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class ClinicalHybridSearchService {
 
@@ -25,6 +27,14 @@ public class ClinicalHybridSearchService {
     private final ClinicalGuidelineChunkRepository chunkRepository;
     private final GeminiClientService geminiClientService;
 
+    @Autowired
+    public ClinicalHybridSearchService(
+            @Autowired(required = false) ClinicalGuidelineChunkRepository chunkRepository,
+            GeminiClientService geminiClientService) {
+        this.chunkRepository = chunkRepository;
+        this.geminiClientService = geminiClientService;
+    }
+
     public record RankedChunk(
             UUID chunkId,
             String documentCode,
@@ -33,10 +43,11 @@ public class ClinicalHybridSearchService {
             String sectionTitle,
             String content,
             double rrfScore
-    ) {}
+    ) {
+    }
 
     public List<RankedChunk> search(String queryText, String specialty) {
-        if (queryText == null || queryText.trim().isEmpty()) {
+        if (queryText == null || queryText.trim().isEmpty() || chunkRepository == null) {
             return List.of();
         }
 

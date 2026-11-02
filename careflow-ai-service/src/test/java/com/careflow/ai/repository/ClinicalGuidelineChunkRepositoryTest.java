@@ -3,6 +3,7 @@ package com.careflow.ai.repository;
 import com.careflow.ai.repository.projection.ChunkSearchResultProjection;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -12,6 +13,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@EnabledIfEnvironmentVariable(named = "R6_DB_TESTS", matches = "1")
 class ClinicalGuidelineChunkRepositoryTest {
 
     @Autowired

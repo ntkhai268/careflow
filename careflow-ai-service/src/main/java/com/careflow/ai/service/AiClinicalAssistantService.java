@@ -1,4 +1,5 @@
 package com.careflow.ai.service;
+
 import com.careflow.ai.clinical.ClinicalEngine;
 import com.careflow.ai.dto.request.ClinicalChatRequest;
 import com.careflow.ai.dto.request.ClinicalSuggestionRequest;
@@ -10,6 +11,7 @@ import com.careflow.ai.service.ClinicalHybridSearchService.RankedChunk;
 import com.careflow.common.exception.BusinessException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -43,6 +45,7 @@ public class AiClinicalAssistantService {
     private final ClinicalHybridSearchService clinicalHybridSearchService;
     private final ObjectProvider<ClinicalEngine> engines;
 
+    @Autowired
     public AiClinicalAssistantService(
             GeminiClientService geminiClientService,
             DeepSeekClientService deepSeekClientService,
