@@ -1,8 +1,8 @@
 package com.careflow.gateway.security;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.careflow.common.exception.BusinessException;
 import com.careflow.common.security.ActiveSessionClient;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -27,14 +27,40 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     private static final String USER_ID = "X-User-Id";
     private static final String USER_ROLE = "X-User-Role";
     private static final String CORRELATION_ID = "X-Correlation-Id";
-    private static final Set<String> ROLES = Set.of(
-            "PATIENT", "DOCTOR", "STAFF", "LAB_TECHNICIAN", "ADMIN");
+    private static final Set<String> SPOOFED_INTERNAL_HEADERS = Set.of(
+            "X-Careflow-Caller",
+            "X-Careflow-Caller-Key",
+            "X-Careflow-Request-Method",
+            "X-Careflow-Request-Path",
+            "X-Careflow-Delegated-Caller",
+            "X-Careflow-Delegated-Key");
+    private static final Set<String> PUBLIC_AUTH_POST_PATHS = Set.of(
+            "/api/auth/register",
+            "/api/auth/registration/email/request",
+            "/api/auth/registration/email/verify",
+            "/api/auth/staff-passkeys/enroll/options",
+            "/api/auth/staff-passkeys/enroll/finish",
+            "/api/auth/mail/events",
+            "/api/auth/login",
+            "/api/auth/login/biometric",
+            "/api/auth/recovery/email/request",
+            "/api/auth/recovery/email/verify",
+            "/api/auth/recovery/email/confirm",
+            "/api/auth/login/question",
+            "/api/auth/recovery/question",
+            "/api/auth/passkeys/login/options",
+            "/api/auth/passkeys/login/finish",
+            "/api/auth/recovery/passkey/options",
+            "/api/auth/recovery/passkey/finish",
+            "/api/auth/refresh",
+            "/api/auth/logout");
 
     private final ObjectMapper objectMapper;
     private final ActiveSessionClient sessions;
 
     public JwtAuthenticationFilter(ObjectMapper objectMapper, ActiveSessionClient sessions) {
-        this.objectMapper = objectMapper; this.sessions = sessions;
+        this.objectMapper = objectMapper;
+        this.sessions = sessions;
     }
 
     @Override
@@ -43,7 +69,9 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
         String correlationId = normalizedCorrelationId(
                 exchange.getRequest().getHeaders().getFirst(CORRELATION_ID));
         ServerHttpRequest.Builder request = exchange.getRequest().mutate().headers(headers -> {
-            for (String name : Set.of("X-Careflow-Caller","X-Careflow-Caller-Key","X-Careflow-Request-Method","X-Careflow-Request-Path","X-Careflow-Delegated-Caller","X-Careflow-Delegated-Key")) headers.remove(name);
+            for (String name : SPOOFED_INTERNAL_HEADERS) {
+                headers.remove(name);
+            }
             headers.remove(USER_ID);
             headers.remove(USER_ROLE);
             headers.remove(CORRELATION_ID);
@@ -69,8 +97,8 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                     });
                     return chain.filter(exchange.mutate().request(request.build()).build());
                 })
-                .onErrorResume(BusinessException.class, exception -> authenticationError(exchange, correlationId,
-                        exception.getStatus(), exception.getMessage()));
+                .onErrorResume(BusinessException.class, exception -> authenticationError(
+                        exchange, correlationId, exception.getStatus(), exception.getMessage()));
     }
 
     private boolean isPublic(HttpMethod method, String path) {
@@ -80,19 +108,13 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
                 || (HttpMethod.GET.equals(method) && path.matches("/api/directory/departments/[^/]+"))
                 || (HttpMethod.GET.equals(method) && path.equals("/api/directory/rooms"))
                 || (HttpMethod.GET.equals(method) && path.equals("/api/directory/doctors"))
-                || (HttpMethod.POST.equals(method) && Set.of(
-                        "/api/auth/register", "/api/auth/registration/email/request", "/api/auth/registration/email/verify",
-            "/api/auth/staff-passkeys/enroll/options", "/api/auth/staff-passkeys/enroll/finish", "/api/auth/mail/events", "/api/auth/login", "/api/auth/login/biometric",
-            "/api/auth/recovery/email/request","/api/auth/recovery/email/verify", "/api/auth/recovery/email/confirm",
-                        "/api/auth/login/question", "/api/auth/recovery/question",
-                                "/api/auth/passkeys/login/options", "/api/auth/passkeys/login/finish",
-                                "/api/auth/recovery/passkey/options", "/api/auth/recovery/passkey/finish",
-                                "/api/auth/refresh", "/api/auth/logout").contains(path))
+                || (HttpMethod.POST.equals(method) && PUBLIC_AUTH_POST_PATHS.contains(path))
                 || path.startsWith("/actuator/health")
                 || path.startsWith("/swagger-ui/")
                 || path.startsWith("/v3/api-docs/")
                 || path.equals("/v3/api-docs")
-                || path.equals("/ws") || path.startsWith("/ws/");
+                || path.equals("/ws")
+                || path.startsWith("/ws/");
     }
 
     private String normalizedCorrelationId(String value) {

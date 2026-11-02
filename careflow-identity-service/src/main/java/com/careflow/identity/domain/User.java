@@ -1,12 +1,20 @@
 package com.careflow.identity.domain;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -57,8 +65,33 @@ public class User {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
+    public void unlockIfLockExpired(Instant now) {
+        if (status == UserStatus.LOCKED && lockedUntil != null && !lockedUntil.isAfter(now)) {
+            status = UserStatus.ACTIVE;
+            lockedUntil = null;
+            failedLoginAttempts = 0;
+        }
+    }
+
+    public void recordFailedLogin(Instant now, int maxAttempts, Duration lockDuration) {
+        int failures = failedLoginAttempts + 1;
+        failedLoginAttempts = failures;
+        if (failures >= maxAttempts) {
+            status = UserStatus.LOCKED;
+            lockedUntil = now.plus(lockDuration);
+        }
+    }
+
+    public void recordSuccessfulLogin(Instant now) {
+        failedLoginAttempts = 0;
+        lockedUntil = null;
+        lastLoginAt = now;
+    }
+
     @PrePersist
     void assignId() {
-        if (id == null) id = UUID.randomUUID();
+        if (id == null) {
+            id = UUID.randomUUID();
+        }
     }
 }
