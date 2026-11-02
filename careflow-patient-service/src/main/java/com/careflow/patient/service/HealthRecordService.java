@@ -10,20 +10,26 @@ import com.careflow.patient.model.HealthRecordFile;
 import com.careflow.patient.repository.HealthRecordRepository;
 import com.careflow.patient.repository.PatientRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class HealthRecordService {
+    private static final int MAX_FILES_PER_RECORD = 5;
+    private static final long MAX_BYTES_PER_RECORD = 50L * 1024 * 1024;
 
     private final HealthRecordRepository healthRecordRepository;
     private final PatientRepository patientRepository;
@@ -31,75 +37,16 @@ public class HealthRecordService {
     private final UploadQuotaService uploadQuotaService;
 
     @Transactional
-    public HealthRecordResponse create(UUID patientId, CreateHealthRecordRequest request, List<MultipartFile> files, String baseUrl) {
+    public HealthRecordResponse create(UUID patientId,
+                                       CreateHealthRecordRequest request,
+                                       List<MultipartFile> files,
+                                       String baseUrl) {
         if (!patientRepository.existsById(patientId)) {
             throw new ResourceNotFoundException("Patient", "id", patientId);
         }
 
-        BigDecimal bmi = calculateBmi(request.getHeightCm(), request.getWeightKg());
-
-        HealthRecord record = HealthRecord.builder()
-                .patientId(patientId)
-                .title(request.getTitle())
-                .recordDate(request.getRecordDate())
-                .facilityName(request.getFacilityName())
-                .notes(request.getNotes())
-                .bloodSugar(request.getBloodSugar())
-                .bloodPressure(request.getBloodPressure())
-                .heightCm(request.getHeightCm())
-                .weightKg(request.getWeightKg())
-                .bmi(bmi)
-                .waistCm(request.getWaistCm())
-                .bloodType(request.getBloodType())
-                .pulse(request.getPulse())
-                .temperature(request.getTemperature())
-                .respiratoryRate(request.getRespiratoryRate())
-                .drugAllergy(request.getDrugAllergy())
-                .chemicalAllergy(request.getChemicalAllergy())
-                .foodAllergy(request.getFoodAllergy())
-                .heartDisease(request.getHeartDisease())
-                .hypertension(request.getHypertension())
-                .mentalIllness(request.getMentalIllness())
-                .cancer(request.getCancer())
-                .asthma(request.getAsthma())
-                .epilepsy(request.getEpilepsy())
-                .tuberculosis(request.getTuberculosis())
-                .build();
-
-        if(files!=null && (files.size()>5 || files.stream().filter(java.util.Objects::nonNull).mapToLong(MultipartFile::getSize).sum()>50L*1024*1024))
-            throw new BusinessException(413,"Mỗi hồ sơ tối đa 5 tệp, tổng dung lượng tối đa 50MB.");
-        var storedFiles=new java.util.ArrayList<String>();
-        if (files != null && !files.isEmpty()) {
-            uploadQuotaService.requireCapacity(patientId,files.stream().filter(java.util.Objects::nonNull).mapToLong(MultipartFile::getSize).sum(),
-                    files.stream().filter(java.util.Objects::nonNull).filter(file->!file.isEmpty()).count());
-            if(org.springframework.transaction.support.TransactionSynchronizationManager.isSynchronizationActive())
-                org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
-                    @Override public void afterCompletion(int status) {
-                        if(status==STATUS_COMMITTED) return;
-                        for(String stored:storedFiles) {
-                            try { fileStorageService.delete(stored); }
-                            catch(RuntimeException failure) { org.slf4j.LoggerFactory.getLogger(HealthRecordService.class).warn("event=UPLOAD_ROLLBACK_CLEANUP_FAILED"); }
-                        }
-                    }
-                });
-            for (MultipartFile file : files) {
-                if (file != null && !file.isEmpty()) {
-                    String originalFilename = file.getOriginalFilename();
-                    if (!StringUtils.hasText(originalFilename)) {
-                        throw new BusinessException(400, "File must have a filename");
-                    }
-                    String storedPath = fileStorageService.store(file);
-                    storedFiles.add(storedPath);
-                    HealthRecordFile recordFile = HealthRecordFile.builder()
-                            .fileName(originalFilename)
-                            .storedPath(storedPath)
-                            .fileSize(file.getSize())
-                            .contentType(file.getContentType())
-                            .build();
-                    record.addFile(recordFile);
-                }
-            }
-        }
+        HealthRecord record = HealthRecord.fromCreateRequest(patientId, request);
+        attachUploadedFilesIfPresent(patientId, record, files);
 
         HealthRecord savedRecord = healthRecordRepository.save(record);
         return HealthRecordResponse.from(savedRecord, baseUrl);
@@ -124,36 +71,14 @@ public class HealthRecordService {
     }
 
     @Transactional
-    public HealthRecordResponse update(UUID patientId, UUID recordId, UpdateHealthRecordRequest request, String baseUrl) {
+    public HealthRecordResponse update(UUID patientId,
+                                       UUID recordId,
+                                       UpdateHealthRecordRequest request,
+                                       String baseUrl) {
         HealthRecord record = healthRecordRepository.findByIdAndPatientId(recordId, patientId)
                 .orElseThrow(() -> new ResourceNotFoundException("HealthRecord", "id", recordId));
 
-        if (request.getTitle() != null) record.setTitle(request.getTitle());
-        if (request.getRecordDate() != null) record.setRecordDate(request.getRecordDate());
-        if (request.getFacilityName() != null) record.setFacilityName(request.getFacilityName());
-        record.setNotes(request.getNotes());
-        record.setBloodSugar(request.getBloodSugar());
-        record.setBloodPressure(request.getBloodPressure());
-        record.setHeightCm(request.getHeightCm());
-        record.setWeightKg(request.getWeightKg());
-        record.setWaistCm(request.getWaistCm());
-        record.setBloodType(request.getBloodType());
-        record.setPulse(request.getPulse());
-        record.setTemperature(request.getTemperature());
-        record.setRespiratoryRate(request.getRespiratoryRate());
-        record.setDrugAllergy(request.getDrugAllergy());
-        record.setChemicalAllergy(request.getChemicalAllergy());
-        record.setFoodAllergy(request.getFoodAllergy());
-        record.setHeartDisease(request.getHeartDisease());
-        record.setHypertension(request.getHypertension());
-        record.setMentalIllness(request.getMentalIllness());
-        record.setCancer(request.getCancer());
-        record.setAsthma(request.getAsthma());
-        record.setEpilepsy(request.getEpilepsy());
-        record.setTuberculosis(request.getTuberculosis());
-
-        // Recalculate BMI
-        record.setBmi(calculateBmi(record.getHeightCm(), record.getWeightKg()));
+        record.applyUpdates(request);
 
         HealthRecord saved = healthRecordRepository.save(record);
         return HealthRecordResponse.from(saved, baseUrl);
@@ -173,11 +98,67 @@ public class HealthRecordService {
         healthRecordRepository.delete(record);
     }
 
-    private BigDecimal calculateBmi(BigDecimal heightCm, BigDecimal weightKg) {
-        if (heightCm != null && weightKg != null && heightCm.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal heightInMeters = heightCm.divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
-            return weightKg.divide(heightInMeters.multiply(heightInMeters), 2, RoundingMode.HALF_UP);
+    private void attachUploadedFilesIfPresent(UUID patientId, HealthRecord record, List<MultipartFile> files) {
+        if (files == null) {
+            return;
         }
-        return null;
+        long totalBytes = files.stream()
+                .filter(Objects::nonNull)
+                .mapToLong(MultipartFile::getSize)
+                .sum();
+        if (files.size() > MAX_FILES_PER_RECORD || totalBytes > MAX_BYTES_PER_RECORD) {
+            throw new BusinessException(413, "Mỗi hồ sơ tối đa 5 tệp, tổng dung lượng tối đa 50MB.");
+        }
+        if (files.isEmpty()) {
+            return;
+        }
+
+        long nonEmptyFileCount = files.stream()
+                .filter(Objects::nonNull)
+                .filter(file -> !file.isEmpty())
+                .count();
+        uploadQuotaService.requireCapacity(patientId, totalBytes, nonEmptyFileCount);
+
+        List<String> storedFiles = new ArrayList<>();
+        registerRollbackFileCleanup(storedFiles);
+
+        for (MultipartFile file : files) {
+            if (file != null && !file.isEmpty()) {
+                String originalFilename = file.getOriginalFilename();
+                if (!StringUtils.hasText(originalFilename)) {
+                    throw new BusinessException(400, "File must have a filename");
+                }
+                String storedPath = fileStorageService.store(file);
+                storedFiles.add(storedPath);
+                HealthRecordFile recordFile = HealthRecordFile.builder()
+                        .fileName(originalFilename)
+                        .storedPath(storedPath)
+                        .fileSize(file.getSize())
+                        .contentType(file.getContentType())
+                        .build();
+                record.addFile(recordFile);
+            }
+        }
+    }
+
+    private void registerRollbackFileCleanup(List<String> storedFiles) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCompletion(int status) {
+                if (status == STATUS_COMMITTED) {
+                    return;
+                }
+                for (String stored : storedFiles) {
+                    try {
+                        fileStorageService.delete(stored);
+                    } catch (RuntimeException failure) {
+                        log.warn("event=UPLOAD_ROLLBACK_CLEANUP_FAILED");
+                    }
+                }
+            }
+        });
     }
 }

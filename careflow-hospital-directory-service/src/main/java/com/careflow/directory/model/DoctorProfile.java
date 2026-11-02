@@ -1,8 +1,16 @@
 package com.careflow.directory.model;
 
 import com.careflow.common.model.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.util.UUID;
 
@@ -48,4 +56,38 @@ public class DoctorProfile extends BaseEntity {
     private Boolean isActive = true;
 
     private Boolean primaryForBooking;
+
+    public void applyUpdates(String updatedFullName,
+                             String updatedTitle,
+                             String updatedDepartmentCode,
+                             String updatedAssignedRoomId,
+                             String updatedSpecialization,
+                             Boolean updatedPrimaryForBooking,
+                             String updatedLicenseNumber,
+                             Boolean updatedIsActive) {
+        if (updatedFullName != null && !updatedFullName.isBlank()) {
+            this.fullName = updatedFullName;
+        }
+        if (updatedTitle != null) {
+            this.title = updatedTitle;
+        }
+        if (updatedDepartmentCode != null) {
+            this.departmentCode = updatedDepartmentCode;
+        }
+        if (updatedAssignedRoomId != null) {
+            this.assignedRoomId = updatedAssignedRoomId;
+        }
+        if (updatedSpecialization != null) {
+            this.specialization = updatedSpecialization;
+        }
+        if (updatedPrimaryForBooking != null) {
+            this.primaryForBooking = updatedPrimaryForBooking;
+        }
+        if (updatedLicenseNumber != null) {
+            this.licenseNumber = updatedLicenseNumber;
+        }
+        if (updatedIsActive != null) {
+            this.isActive = updatedIsActive;
+        }
+    }
 }

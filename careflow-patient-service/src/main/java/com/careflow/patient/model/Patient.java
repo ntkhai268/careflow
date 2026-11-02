@@ -1,10 +1,24 @@
 package com.careflow.patient.model;
 
 import com.careflow.common.model.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
+import com.careflow.patient.dto.request.UpdatePatientRequest;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -64,5 +78,41 @@ public class Patient extends BaseEntity {
 
     @OneToMany(mappedBy = "patient", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    private java.util.List<PatientAllergy> allergies = new java.util.ArrayList<>();
+    private List<PatientAllergy> allergies = new ArrayList<>();
+
+    public void applyUpdates(UpdatePatientRequest request) {
+        if (request.getFullName() != null) {
+            this.fullName = request.getFullName();
+        }
+        if (request.getDateOfBirth() != null) {
+            this.dateOfBirth = request.getDateOfBirth();
+        }
+        if (request.getGender() != null) {
+            this.gender = request.getGender();
+        }
+        if (request.getPhone() != null) {
+            this.phone = request.getPhone();
+        }
+        if (request.getIdCardNumber() != null) {
+            this.idCardNumber = request.getIdCardNumber();
+        }
+        if (request.getInsuranceNumber() != null) {
+            this.insuranceNumber = request.getInsuranceNumber();
+        }
+        if (request.getOccupation() != null) {
+            this.occupation = request.getOccupation();
+        }
+        if (request.getAddress() != null) {
+            this.address = request.getAddress();
+        }
+        if (request.getAvatarUrl() != null) {
+            this.avatarUrl = request.getAvatarUrl();
+        }
+        if (request.getAllergyNotes() != null) {
+            this.allergyNotes = request.getAllergyNotes();
+        }
+        if (request.getMedicalHistory() != null) {
+            this.medicalHistory = request.getMedicalHistory();
+        }
+    }
 }
