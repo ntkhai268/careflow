@@ -1,9 +1,19 @@
 package com.careflow.appointment.model;
 
 import com.careflow.common.model.BaseEntity;
-import jakarta.persistence.*;
-import lombok.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Index;
+import jakarta.persistence.Table;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -70,13 +80,25 @@ public class Appointment extends BaseEntity {
     @Column(length = 20)
     private String queueNumber;
 
-    @Column(length=50)
+    @Column(length = 50)
     private String serviceCode;
-    @Column(length=150)
+
+    @Column(length = 150)
     private String serviceName;
+
     private Long priceVersion;
+
     private Long quotedAmount;
-    @Column(length=3)
+
+    @Column(length = 3)
     private String quotedCurrency;
-    private java.time.Instant priceEffectiveAt;
+
+    private Instant priceEffectiveAt;
+
+    public void applyStatusUpdate(AppointmentStatus newStatus, String updatedNotes) {
+        this.status = newStatus;
+        if (updatedNotes != null) {
+            this.notes = updatedNotes;
+        }
+    }
 }
