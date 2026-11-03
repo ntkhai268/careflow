@@ -259,23 +259,23 @@ export default function VoicePrescriptionPreview({
         </div>
       ) : (
         <>
-          <div className="mb-3 grid grid-cols-[1fr_4rem_3.5rem] gap-2 border-b border-[#D5E0E6] pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#4D626E]">
-            <h4>THÔNG TIN ĐƠN THUỐC</h4>
-            <span className="text-right">Số lượng</span>
-            <span className="text-right">Đơn vị</span>
+          <div className="mb-3 grid grid-cols-[1fr_5rem_3.5rem] items-center gap-2 border-b border-[#D5E0E6] pb-2.5 text-[11px] font-bold uppercase tracking-wider text-[#4D626E]">
+            <h4 className="whitespace-nowrap">THÔNG TIN ĐƠN THUỐC</h4>
+            <span className="whitespace-nowrap text-right">Số lượng</span>
+            <span className="whitespace-nowrap text-right">Đơn vị</span>
           </div>
           <div className="divide-y divide-[#EDF2F5]">
             {rows.map((row, index) => (
               <article key={index} className="py-3.5 first:pt-1 space-y-2.5">
-                <div className="grid grid-cols-[1.5rem_1fr_4rem_3.5rem] gap-2 items-baseline text-sm">
+                <div className="grid grid-cols-[1.5rem_1fr_5rem_3.5rem] gap-2 items-baseline text-sm">
                   <span className="font-mono font-bold text-[#0277A8]">{index + 1}.</span>
                   <strong className="min-w-0 break-words font-bold text-[#17242D]">
                     {row.name}
                   </strong>
-                  <strong className="text-right font-mono font-bold text-[#00577E]">
+                  <strong className="whitespace-nowrap text-right font-mono font-bold text-[#00577E]">
                     {row.quantity ?? "—"}
                   </strong>
-                  <span className="text-right text-xs font-medium text-[#4D626E]">
+                  <span className="whitespace-nowrap text-right text-xs font-medium text-[#4D626E]">
                     {row.unit || "—"}
                   </span>
                   <p className="col-start-2 col-end-5 text-xs text-[#4D626E] leading-relaxed bg-[#F5F8FA] px-2.5 py-1.5 rounded-lg border border-[#EDF2F5]">

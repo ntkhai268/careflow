@@ -66,80 +66,116 @@ export default function PatientHeaderBar({
         </div>
       )}
 
-      <div className="border border-[#D5E0E6] bg-white px-5 py-4 shadow-[0_2px_8px_rgba(23,36,45,0.03)] flex flex-wrap justify-between items-center gap-4 rounded-xl">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#0277A8]" />
-            <span className="text-[10px] font-bold text-[#0277A8] uppercase tracking-widest">
-              Phiên khám hiện hành
-            </span>
-          </div>
-          <h1 className="text-xl font-bold text-[#17242D] tracking-tight mt-0.5">{patientName}</h1>
-          <p className="text-xs text-[#4D626E] flex flex-wrap items-center gap-1.5 mt-0.5">
-            <span>{patientAge === null ? "Chưa có ngày sinh" : `${patientAge} tuổi`}</span>
-            <span className="opacity-40">·</span>
-            <span>{patientGender}</span>
-            {patientIdCode && (
-              <>
-                <span className="opacity-40">·</span>
-                <span className="font-mono text-[#667985] text-[11px]">
-                  Mã BN: {patientIdCode.slice(0, 8).toUpperCase()}
-                </span>
-              </>
-            )}
-          </p>
-          {consultation.doctorName && (
-            <p className="text-xs text-[#4D626E] mt-1">
-              Bác sĩ phụ trách: <strong className="text-[#17242D]">{consultation.doctorName}</strong>
-              {consultation.authoredByDoctorName &&
-              consultation.authoredByDoctorId !== consultation.doctorId
-                ? ` · Khởi tạo: ${consultation.authoredByDoctorName}`
-                : ""}
-            </p>
-          )}
-          {!["COMPLETED", "CANCELLED", "TRANSFERRED"].includes(consultation.status) && (
-            <Link
-              href="/dashboard/handovers"
-              className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-[#0277A8] hover:text-[#00577E] hover:underline"
-            >
-              <span>Bàn giao ca khám</span>
-              <span>→</span>
-            </Link>
-          )}
-        </div>
-
-        <div className="flex gap-5">
-          <div className="text-right">
-            <span className="text-[10px] uppercase font-bold text-[#667985]">Trạng thái khám</span>
-            <div className="mt-1">
-              <span
-                className={`px-2.5 py-1 text-xs font-bold rounded-full inline-block ${
-                  consultation.status === "COMPLETED"
-                    ? "bg-[#DDF4E7] text-[#1B7F4B]"
-                    : "bg-[#DDF3FC] text-[#00577E]"
-                }`}
-              >
-                {CONSULTATION_STATUS_LABELS[consultation.status || ""] || consultation.status}
-              </span>
+      <div className="rounded-xl border border-[#D5E0E6] bg-white px-5 py-3.5 shadow-[0_2px_8px_rgba(23,36,45,0.03)]">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+          {/* Left: Patient Identity */}
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#8BD2EE] bg-[#DDF3FC] font-extrabold text-sm text-[#00577E]">
+              {(patientName || "BN")
+                .split(" ")
+                .filter(Boolean)
+                .slice(-2)
+                .map((part) => part[0])
+                .join("")
+                .toUpperCase()}
             </div>
-          </div>
-
-          {prescriptionStatus && (
-            <div className="text-right">
-              <span className="text-[10px] uppercase font-bold text-[#667985]">Trạng thái đơn</span>
-              <div className="mt-1">
-                <span
-                  className={`px-2.5 py-1 text-xs font-bold rounded-full inline-block ${
-                    prescriptionStatus === "DRAFT"
-                      ? "bg-[#FFEBCB] text-[#A86100]"
-                      : "bg-[#DDF4E7] text-[#1B7F4B]"
-                  }`}
-                >
-                  {prescriptionStatus === "DRAFT" ? "Đơn nháp" : "Đã ký xác nhận"}
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-[#0277A8]">
+                  <span className="h-1.5 w-1.5 rounded-full bg-[#0277A8]" />
+                  Phiên khám hiện hành
+                </span>
+                {patientIdCode && (
+                  <span className="rounded-md border border-[#D5E0E6] bg-[#F5F8FA] px-2 py-0.5 font-mono text-[10px] font-bold text-[#4D626E]">
+                    Mã BN: {patientIdCode.slice(0, 8).toUpperCase()}
+                  </span>
+                )}
+              </div>
+              <div className="mt-0.5 flex flex-wrap items-baseline gap-x-2.5 gap-y-1">
+                <h1 className="text-lg font-extrabold tracking-tight text-[#17242D]">
+                  {patientName}
+                </h1>
+                <span className="text-xs font-medium text-[#4D626E]">
+                  {patientAge === null ? "Chưa có ngày sinh" : `${patientAge} tuổi`} ·{" "}
+                  {patientGender}
                 </span>
               </div>
             </div>
-          )}
+          </div>
+
+          {/* Right: Balanced Clinical Metadata & Status Pills */}
+          <div className="flex flex-wrap items-center gap-3 border-t border-[#EDF2F5] pt-3 lg:border-t-0 lg:pt-0">
+            {consultation.doctorName && (
+              <div className="rounded-xl border border-[#EDF2F5] bg-[#F5F8FA] px-3.5 py-2">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-[#667985]">
+                  Bác sĩ phụ trách
+                </span>
+                <p className="mt-0.5 text-xs font-bold text-[#17242D]">
+                  {consultation.doctorName}
+                  {consultation.authoredByDoctorName &&
+                  consultation.authoredByDoctorId !== consultation.doctorId
+                    ? ` · Khởi tạo: ${consultation.authoredByDoctorName}`
+                    : ""}
+                </p>
+              </div>
+            )}
+
+            <div className="rounded-xl border border-[#EDF2F5] bg-[#F5F8FA] px-3.5 py-2">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-[#667985]">
+                Trạng thái khám
+              </span>
+              <div className="mt-0.5">
+                <span
+                  className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    consultation.status === "COMPLETED"
+                      ? "bg-[#DDF4E7] text-[#1B7F4B]"
+                      : "bg-[#DDF3FC] text-[#00577E]"
+                  }`}
+                >
+                  <span
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      consultation.status === "COMPLETED" ? "bg-[#1B7F4B]" : "bg-[#0277A8]"
+                    }`}
+                  />
+                  {CONSULTATION_STATUS_LABELS[consultation.status || ""] || consultation.status}
+                </span>
+              </div>
+            </div>
+
+            {prescriptionStatus && (
+              <div className="rounded-xl border border-[#EDF2F5] bg-[#F5F8FA] px-3.5 py-2">
+                <span className="block text-[10px] font-bold uppercase tracking-wider text-[#667985]">
+                  Trạng thái đơn
+                </span>
+                <div className="mt-0.5">
+                  <span
+                    className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                      prescriptionStatus === "DRAFT"
+                        ? "bg-[#FFEBCB] text-[#A86100]"
+                        : "bg-[#DDF4E7] text-[#1B7F4B]"
+                    }`}
+                  >
+                    <span
+                      className={`h-1.5 w-1.5 rounded-full ${
+                        prescriptionStatus === "DRAFT" ? "bg-[#A86100]" : "bg-[#1B7F4B]"
+                      }`}
+                    />
+                    {prescriptionStatus === "DRAFT" ? "Đơn nháp" : "Đã ký xác nhận"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {!["COMPLETED", "CANCELLED", "TRANSFERRED"].includes(consultation.status) && (
+              <Link
+                href="/dashboard/handovers"
+                className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-[#8BD2EE] bg-[#DDF3FC]/60 px-3.5 text-xs font-bold text-[#00577E] transition-colors hover:bg-[#DDF3FC]"
+              >
+                <span>Bàn giao ca khám</span>
+                <span aria-hidden="true">→</span>
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 
