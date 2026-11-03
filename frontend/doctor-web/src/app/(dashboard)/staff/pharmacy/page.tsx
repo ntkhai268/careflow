@@ -277,47 +277,85 @@ export default function StaffPharmacyPage() {
             <div className="divide-y divide-[#EDF2F5]">
               {(entries ?? []).map((entry) => {
                 const selected = activeEntry?.entryId === entry.entryId;
+                const isInProgress = entry.queueStatus === "IN_PROGRESS";
+                const isCalled = entry.queueStatus === "CALLED";
+
                 return (
                   <div
                     key={entry.entryId}
-                    className={`flex items-center justify-between gap-4 py-3.5 transition-colors ${
+                    className={`flex items-center justify-between gap-4 py-4 transition-colors ${
                       selected
-                        ? "-mx-2 rounded-xl border border-[#8BD2EE] bg-[#DDF3FC]/50 px-3"
-                        : ""
+                        ? "-mx-2 rounded-xl border border-[#8BD2EE] bg-[#DDF3FC]/45 px-3.5"
+                        : "px-1"
                     }`}
                   >
-                    <div className="flex min-w-0 items-center gap-3.5">
+                    <div className="flex min-w-0 items-center gap-4">
                       <div
-                        className={`flex h-12 w-14 shrink-0 items-center justify-center rounded-xl font-mono text-sm font-extrabold ${
+                        className={`flex min-w-[104px] shrink-0 flex-col items-center justify-center rounded-xl px-3.5 py-2 transition-colors ${
                           selected
-                            ? "bg-[#0277A8] text-white"
-                            : "border border-[#8BD2EE] bg-[#DDF3FC] text-[#00577E]"
+                            ? "bg-[#0277A8] text-white shadow-xs"
+                            : "border border-[#8BD2EE] bg-[#DDF3FC]/70 text-[#00577E]"
                         }`}
                       >
-                        {entry.queueNumber}
+                        <span
+                          className={`text-[10px] font-bold uppercase tracking-wider ${
+                            selected ? "text-[#DDF3FC]" : "text-[#0277A8]"
+                          }`}
+                        >
+                          Số thứ tự
+                        </span>
+                        <span className="mt-0.5 font-mono text-sm font-extrabold whitespace-nowrap">
+                          {entry.queueNumber}
+                        </span>
                       </div>
-                      <div className="min-w-0">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-bold text-[#17242D]">
-                            Số thứ tự: {entry.queueNumber}
+
+                      <div className="min-w-0 space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <p className="text-sm font-extrabold text-[#17242D] whitespace-nowrap">
+                            {entry.patientName
+                              ? entry.patientName
+                              : `Hồ sơ BN: ${entry.patientId.slice(0, 8).toUpperCase()}`}
                           </p>
-                          <span className="rounded-md bg-[#D9F3EC] px-2 py-0.5 text-[11px] font-bold text-[#087F6A]">
+                          <span
+                            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap ${
+                              isInProgress
+                                ? "border border-[#087F6A]/25 bg-[#D9F3EC] text-[#087F6A]"
+                                : isCalled
+                                  ? "border border-[#8BD2EE] bg-[#DDF3FC] text-[#00577E]"
+                                  : "border border-[#D5E0E6] bg-[#F5F8FA] text-[#4D626E]"
+                            }`}
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                isInProgress
+                                  ? "bg-[#087F6A]"
+                                  : isCalled
+                                    ? "bg-[#0277A8]"
+                                    : "bg-[#667985]"
+                              }`}
+                            />
                             {pharmacyStatusLabel(entry.queueStatus)}
                           </span>
                         </div>
-                        <p
-                          className="mt-1 font-mono text-xs text-[#667985]"
-                          title={entry.patientId}
-                        >
-                          Mã hồ sơ BN: {entry.patientId.slice(0, 8).toUpperCase()}
-                        </p>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-[#667985]">
+                          <span title={entry.patientId}>
+                            Mã BN: {entry.patientId.slice(0, 8).toUpperCase()}
+                          </span>
+                          <span>·</span>
+                          <span title={entry.prescriptionId ?? undefined}>
+                            Mã toa:{" "}
+                            {entry.prescriptionId
+                              ? entry.prescriptionId.slice(0, 8).toUpperCase()
+                              : "Chưa liên kết"}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <button
                       onClick={() => setActiveEntry(entry)}
-                      className={`w-28 shrink-0 cursor-pointer rounded-xl py-2 text-center text-xs font-bold transition-colors ${
+                      className={`w-28 shrink-0 cursor-pointer rounded-xl py-2.5 text-center text-xs font-bold whitespace-nowrap transition-colors ${
                         selected
-                          ? "bg-[#087F6A] text-white"
+                          ? "bg-[#087F6A] text-white shadow-xs"
                           : "bg-[#0277A8] text-white hover:bg-[#00577E]"
                       }`}
                     >
