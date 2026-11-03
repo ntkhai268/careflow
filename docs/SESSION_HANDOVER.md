@@ -175,3 +175,31 @@
   - **4.3**: Tách `admin/facility/page.tsx` (thay thế `<select>` mặc định bằng `FacilitySelectBox` chuẩn SJD) và `dashboard/general/page.tsx` thành các component trong `src/components/admin/` và `src/components/dashboard/` (PR `#35`).
 - **Phase 5 — Patient Mobile (`frontend/patient-mobile`)**:
   - Tách gọn `journey_models.dart`, `backend_journey_repository.dart`, `login_methods_screen.dart` và `appointment_detail_screen.dart` thành các `part` file chuyên biệt theo domain và widget; `flutter analyze` (0 issues) và `flutter test` (14/14 tests PASS).
+
+---
+
+## 8. Milestone SDD UI/UX Enhancement & Mobile Theme Unification (`frontend/doctor-web`) — ĐÃ HOÀN TẤT 100%
+
+- **Nhánh làm việc**: `feature/khai/doctor-web-ui-ux` (khởi tạo từ `origin/develop` `863ce1e`).
+- **Tài liệu Báo cáo Kiểm toán & Đặc tả SDD**:
+  - [`docs/ui-ux-audit/CAREFLOW_WEB_UI_UX_SDD_REPORT.md`](./ui-ux-audit/CAREFLOW_WEB_UI_UX_SDD_REPORT.md)
+  - Bộ 12 ảnh chụp màn hình **Before**: [`docs/ui-ux-audit/screenshots/`](./ui-ux-audit/screenshots/)
+  - Bộ 12 ảnh chụp màn hình **After**: [`docs/ui-ux-audit/screenshots-after/`](./ui-ux-audit/screenshots-after/)
+- **Tóm tắt 5 Slices đã hoàn tất**:
+  1. **Slice 1 — Core Theme, Typography & CSP (`globals.css`, `layout.tsx`, `proxy.ts`, `public/logo.svg`)**:
+     - Đồng bộ 100% bảng màu **CareFlow Ocean Medical Blue (`#0277A8` / `#00577E` / `#8BD2EE` / `#DDF3FC`) & Medical Teal (`#087F6A` / `#D9F3EC`)** từ `frontend/patient-mobile/lib/config/theme.dart`.
+     - Nạp font `Be Vietnam Pro` và `Roboto Mono` hỗ trợ đầy đủ tiếng Việt.
+  2. **Slice 2 — App Shell & Auth (`Sidebar.tsx`, `Topbar.tsx`, `HospitalAuthLayout.tsx`, `login/page.tsx`, `ConfirmModal.tsx`, `(dashboard)/layout.tsx`)**:
+     - Chuyển Sidebar sang Deep Ocean Slate (`#0B2534` $\rightarrow$ `#0F3144`), loại bỏ emoji trên Topbar, đồng bộ bo góc `rounded-xl` cho ô input và nút trên trang `/login`.
+  3. **Slice 3 — Doctor Dashboards & 3-Lane Queue (`dashboard/general/page.tsx`, `dashboard/queue/page.tsx`, `QueueBadges.tsx`)**:
+     - Tách tên bác sĩ và badge khoa trên tiêu đề chào mừng, cố định chiều rộng nút bảng (`w-28`), rút gọn UUID bệnh nhân thành 8 ký tự in hoa (`F0000001`), sửa badge làn đọc kết quả CLS.
+  4. **Slice 4 — Clinical Consultation Workspace (`consultation/[id]/page.tsx`, `VitalsTab.tsx`, `VoicePrescriptionPanel.tsx`, `VoicePrescriptionPreview.tsx`, `PatientHeaderBar.tsx`, `AiClinicalTab.tsx`, `PrescriptionRightPanel.tsx`, `ConsultationActionBar.tsx`)**:
+     - Sửa lỗi vỡ dấu tiếng Việt (`font-serif` $\rightarrow$ `Be Vietnam Pro`) và lỗi lặp chữ `"Trong 5 ngày ngày"` trong `VoicePrescriptionPreview.tsx`.
+     - Thu gọn `VoicePrescriptionPanel.tsx` thành compact toolbar (`~68px` khi chờ) để thẻ `ĐƠN THUỐC` hiển thị ngay trên màn hình đầu tiên.
+     - Bo góc `rounded-xl` cho các ô Sinh hiệu, thêm đơn vị đo inline (`°C`, `mmHg`, `bpm`, `%`, `cm`, `kg`) và badge tự động tính **BMI**.
+     - Sắp xếp 6 Tab khám lâm sàng gọn trên 1 hàng ngang duy nhất (`grid-cols-6`).
+  5. **Slice 5 — Hospital Staff, Lab & Admin Portals (`staff/checkin/page.tsx`, `WalkInReception.tsx`, `ProfileLinkReception.tsx`, `HospitalQrCheckInCard.tsx`, `ReceptionQueueTable.tsx`, `HandoverPicker.tsx`, `staff/pharmacy/page.tsx`, `PharmacyVerificationPanel.tsx`, `lab/queue/page.tsx`, `LabResultFormPanel.tsx`, `admin/page.tsx`, `admin/facility/page.tsx`)**:
+     - Bố cục 2 cột (`7/12` & `5/12`) trên `/staff/checkin`, đưa Bảng tiếp nhận và Mã QR Check-in bệnh viện lên ngay màn hình đầu tiên; thay `border-black` bằng `border-[#D5E0E6]`.
+     - Việt hóa 100% nhãn loại phòng trên `/admin` và trạng thái phát thuốc trên `/staff/pharmacy`; khử trùng lặp học hàm bác sĩ (`BS.CKII BS.CKII` $\rightarrow$ `BS.CKII`) trên `/admin/facility`.
+- **Kiểm증 (Verification)**:
+  - `npm --prefix frontend/doctor-web run build`: **PASS 100%** (0 lỗi TypeScript, 0 lỗi Next.js build).

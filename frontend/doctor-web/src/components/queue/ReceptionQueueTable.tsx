@@ -33,28 +33,31 @@ export default function ReceptionQueueTable({
   onMissEntry,
 }: ReceptionQueueTableProps) {
   return (
-    <section className="rounded-lg border border-slate-200 bg-white shadow-[0_1px_3px_rgba(110,37,130,0.06)]">
-      <div className="flex flex-col gap-3 border-b border-slate-200 p-5 sm:flex-row sm:items-end sm:justify-between">
+    <section className="rounded-xl border border-[#D5E0E6] bg-white shadow-xs">
+      <div className="flex flex-col gap-3 border-b border-[#D5E0E6] p-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-[15px] font-semibold text-[#2B1D30]">Danh sách tiếp nhận trong ngày</h2>
-          <p className="mt-1 text-[10px] text-slate-500">
+          <h2 className="text-[15px] font-extrabold text-[#17242D]">
+            Danh sách tiếp nhận trong ngày
+          </h2>
+          <p className="mt-0.5 text-xs text-[#667985]">
             Phòng đang chọn:{" "}
-            <span className="font-medium text-slate-700">{roomId || "Đang tải phân công"}</span>. Gồm phiếu chờ tiếp nhận và lượt đã check-in, tự cập nhật mỗi 10 giây.
+            <span className="font-mono font-bold text-[#00577E]">
+              {roomId || "Đang tải phân công"}
+            </span>
+            . Gồm phiếu chờ tiếp nhận và lượt đã check-in, tự cập nhật mỗi 10 giây.
           </p>
         </div>
-        <div className="flex w-full flex-col gap-2 sm:w-[280px] sm:flex-row sm:items-center">
-          <button
-            type="button"
-            onClick={onRefreshQueue}
-            className="h-9 shrink-0 rounded-md border border-slate-200 px-3 text-[10px] font-semibold text-[#7B4B94] hover:bg-[#F3E8F5]"
-          >
-            Tải lại
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={onRefreshQueue}
+          className="h-9 shrink-0 rounded-xl border border-[#D5E0E6] bg-[#F5F8FA] px-3.5 text-xs font-bold text-[#00577E] transition-colors hover:border-[#0277A8] hover:bg-[#DDF3FC]"
+        >
+          Tải lại danh sách
+        </button>
       </div>
 
       {roomError || queueError ? (
-        <div role="alert" className="p-5 text-sm text-red-700">
+        <div role="alert" className="p-5 text-xs font-semibold text-[#BA1A1A]">
           {roomError || queueError}
         </div>
       ) : isLoadingQueue || !roomId ? (
@@ -62,21 +65,21 @@ export default function ReceptionQueueTable({
           <LoadingSpinner size="md" />
         </div>
       ) : (roomEntries ?? []).length === 0 ? (
-        <div className="flex min-h-[180px] items-center justify-center px-5 text-center text-[11px] text-slate-500">
+        <div className="flex min-h-[180px] items-center justify-center px-5 text-center text-xs text-[#667985]">
           Chưa có phiếu chờ tiếp nhận hoặc lượt đang khám tại phòng này hôm nay.
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-left">
+          <table className="w-full border-collapse text-left">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-[9px] font-semibold uppercase tracking-wider text-slate-400">
-                <th className="px-5 py-3">Số thứ tự</th>
-                <th className="px-4 py-3">Bệnh nhân</th>
-                <th className="px-4 py-3">Loại lượt</th>
-                <th className="px-4 py-3">Trạng thái</th>
-                <th className="px-4 py-3">Khung giờ hẹn</th>
-                <th className="px-4 py-3">Thời gian tiếp nhận</th>
-                <th className="px-5 py-3 text-right">Thao tác</th>
+              <tr className="border-b border-[#D5E0E6] bg-[#F5F8FA] text-[10px] font-bold uppercase tracking-wider text-[#667985]">
+                <th className="whitespace-nowrap px-5 py-3">Số thứ tự</th>
+                <th className="whitespace-nowrap px-4 py-3">Bệnh nhân</th>
+                <th className="whitespace-nowrap px-4 py-3">Loại lượt</th>
+                <th className="whitespace-nowrap px-4 py-3">Trạng thái</th>
+                <th className="whitespace-nowrap px-4 py-3">Khung giờ hẹn</th>
+                <th className="whitespace-nowrap px-4 py-3">Thời gian tiếp nhận</th>
+                <th className="whitespace-nowrap px-5 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -94,62 +97,70 @@ export default function ReceptionQueueTable({
                 return (
                   <tr
                     key={entry.entryId}
-                    className="min-h-[44px] border-b border-slate-100 last:border-0 hover:bg-slate-50"
+                    className="min-h-[48px] border-b border-[#EDF2F5] last:border-0 hover:bg-[#F5F8FA]/80"
                   >
-                    <td className="px-5 py-3.5">
-                      <span className="font-mono text-sm font-bold text-[#2B1D30]">
+                    <td className="whitespace-nowrap px-5 py-3">
+                      <span className="inline-flex whitespace-nowrap rounded-lg bg-[#DDF3FC] px-2.5 py-1 font-mono text-xs font-extrabold text-[#00577E]">
                         {entry.queueNumber}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="whitespace-nowrap px-4 py-3">
                       {patient ? (
-                        <div>
-                          <p className="text-[11px] font-semibold text-[#2B1D30]">
+                        <div className="flex items-baseline gap-2">
+                          <span className="whitespace-nowrap text-xs font-bold text-[#17242D]">
                             {patient.fullName}
-                          </p>
-                          <p className="mt-1 text-[9px] text-slate-500">
-                            Mã BN: {patient.id.slice(0, 8)} ·{" "}
-                            {patient.gender || "Chưa rõ giới tính"}
+                          </span>
+                          <span className="whitespace-nowrap font-mono text-[11px] text-[#667985]">
+                            ({patient.id.slice(0, 8).toUpperCase()} ·{" "}
+                            {patient.gender === "MALE"
+                              ? "Nam"
+                              : patient.gender === "FEMALE"
+                                ? "Nữ"
+                                : patient.gender || "Chưa rõ"}
                             {patient.dateOfBirth
                               ? ` · ${new Date(patient.dateOfBirth).getFullYear()}`
                               : ""}
-                          </p>
+                            )
+                          </span>
                         </div>
                       ) : (
-                        <div>
-                          <p className="text-[11px] font-medium text-slate-400">
+                        <div className="flex items-baseline gap-2">
+                          <span className="whitespace-nowrap text-xs font-medium text-[#667985]">
                             Đang tải thông tin
-                          </p>
-                          <p className="mt-1 text-[9px] text-slate-400">
-                            Mã BN: {entry.patientId.slice(0, 8)}
-                          </p>
+                          </span>
+                          <span className="whitespace-nowrap font-mono text-[11px] text-[#667985]">
+                            ({entry.patientId.slice(0, 8).toUpperCase()})
+                          </span>
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3.5 text-[10px] text-slate-600">
+                    <td className="whitespace-nowrap px-4 py-3 text-xs font-medium text-[#4D626E]">
                       {PRIORITY_LABELS[entry.priorityLevel] || entry.priorityLevel}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="whitespace-nowrap px-4 py-3">
                       <ReceptionStatusText status={entry.queueStatus} />
                     </td>
-                    <td className="px-4 py-3.5 text-[10px] text-slate-500">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-[#4D626E]">
                       {new Date(entry.scheduledStartAt).toLocaleTimeString("vi-VN", {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
                     </td>
-                    <td className="px-4 py-3.5 text-[10px] text-slate-500">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-[#4D626E]">
                       {entry.checkedInAt
-                        ? new Date(entry.checkedInAt).toLocaleTimeString("vi-VN")
+                        ? new Date(entry.checkedInAt).toLocaleTimeString("vi-VN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                         : "Chưa tiếp nhận"}
                     </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex justify-end gap-2">
+                    <td className="whitespace-nowrap px-5 py-3">
+                      <div className="flex items-center justify-end gap-2">
                         {canCheckIn && (
                           <button
                             onClick={() => onCheckInEntry(entry)}
                             disabled={isProcessing}
-                            className="h-8 w-24 rounded-md text-[10px] font-semibold text-[#7B4B94] hover:bg-[#F3E8F5] disabled:opacity-50"
+                            className="h-8 w-24 whitespace-nowrap rounded-lg bg-[#0277A8] text-xs font-bold text-white transition-colors hover:bg-[#00577E] disabled:opacity-50"
                           >
                             {isProcessing ? "Đang xử lý" : "Duyệt vào"}
                           </button>
@@ -164,14 +175,14 @@ export default function ReceptionQueueTable({
                                 ? "Chỉ gọi lượt đã tiếp nhận hoặc đang được gọi."
                                 : "Gọi bệnh nhân"
                           }
-                          className="h-8 w-20 rounded-md border border-slate-200 text-[10px] font-semibold text-slate-600 hover:border-[#7B4B94] hover:text-[#7B4B94] disabled:cursor-not-allowed disabled:opacity-50"
+                          className="h-8 w-20 whitespace-nowrap rounded-lg border border-[#D5E0E6] bg-white text-xs font-bold text-[#00577E] transition-colors hover:border-[#0277A8] hover:bg-[#DDF3FC] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           Gọi lại
                         </button>
                         <button
                           onClick={() => onMissEntry(entry)}
                           disabled={isProcessing || !canMiss}
-                          className="h-8 w-20 rounded-md text-[10px] font-medium text-slate-500 hover:bg-rose-50 hover:text-rose-600 disabled:opacity-50"
+                          className="h-8 w-20 whitespace-nowrap rounded-lg border border-[#D5E0E6] bg-white text-xs font-semibold text-[#667985] transition-colors hover:border-[#BA1A1A] hover:bg-[#BA1A1A]/10 hover:text-[#BA1A1A] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           Vắng mặt
                         </button>

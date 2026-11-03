@@ -40,7 +40,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const router = useRouter();
   const { user } = useAuth();
 
-  const [activeTab, setActiveTab] = useState<"vitals" | "clinical" | "diagnosis" | "labs" | "summary" | "ai">("vitals");
+  const [activeTab, setActiveTab] = useState<
+    "vitals" | "clinical" | "diagnosis" | "labs" | "summary" | "ai"
+  >("vitals");
 
   // Lab Orders state
   const [labCatalog, setLabCatalog] = useState<LabCatalogItem[]>([]);
@@ -58,14 +60,24 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [summaryLoaded, setSummaryLoaded] = useState(false);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
-  const [consultationHistory, setConsultationHistory] = useState<ConsultationResponse[] | null>(null);
-  const [prescriptionHistory, setPrescriptionHistory] = useState<PrescriptionResponse[] | null>(null);
+  const [consultationHistory, setConsultationHistory] = useState<ConsultationResponse[] | null>(
+    null
+  );
+  const [prescriptionHistory, setPrescriptionHistory] = useState<PrescriptionResponse[] | null>(
+    null
+  );
   const [patientMedicalHistory, setPatientMedicalHistory] = useState<string | null>(null);
-  const [emrRecord, setEmrRecord] = useState<{ recordNumber: string; bloodType: string; medicalHistory: string } | null>(null);
+  const [emrRecord, setEmrRecord] = useState<{
+    recordNumber: string;
+    bloodType: string;
+    medicalHistory: string;
+  } | null>(null);
 
   // Detail Modal view states
-  const [selectedHistoryConsultation, setSelectedHistoryConsultation] = useState<ConsultationResponse | null>(null);
-  const [selectedHistoryPrescription, setSelectedHistoryPrescription] = useState<PrescriptionResponse | null>(null);
+  const [selectedHistoryConsultation, setSelectedHistoryConsultation] =
+    useState<ConsultationResponse | null>(null);
+  const [selectedHistoryPrescription, setSelectedHistoryPrescription] =
+    useState<PrescriptionResponse | null>(null);
 
   // Custom Modal confirm state
   const [confirmModalConfig, setConfirmModalConfig] = useState<{
@@ -108,14 +120,20 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "danger" | "warning" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "danger" | "warning";
+  } | null>(null);
 
-  const showToast = useCallback((message: string, type: "success" | "danger" | "warning" = "success") => {
-    setToast({ message, type });
-    setTimeout(() => {
-      setToast(null);
-    }, 3000);
-  }, []);
+  const showToast = useCallback(
+    (message: string, type: "success" | "danger" | "warning" = "success") => {
+      setToast({ message, type });
+      setTimeout(() => {
+        setToast(null);
+      }, 3000);
+    },
+    []
+  );
 
   const {
     voiceDraft,
@@ -279,7 +297,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       const response = await patientApi.getPatientById(patientId);
       if (version !== patientRequest.current) return;
       const data = response.data;
-      if (!data || data.id !== patientId) throw new Error("Thông tin hồ sơ không khớp ca khám.");
+      if (!data || data.id !== patientId)
+        throw new Error("Thông tin hồ sơ không khớp ca khám.");
       setPatientName(data.fullName || `Bệnh nhân (${patientId.slice(0, 8)})`);
       setPatientIdCode(data.id || patientId);
       setPatientAge(ageFromBirthday(data.dateOfBirth));
@@ -313,7 +332,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         setIsLoading(true);
         if (consultationId === "demo" || consultationId === "demo-01") {
           setupDemoFallbackConsultation();
-          showToast("Đã kích hoạt Ca Khám Mẫu Demo sẵn sàng thử nghiệm Trợ lý AI RAG", "success");
+          showToast(
+            "Đã kích hoạt Ca Khám Mẫu Demo sẵn sàng thử nghiệm Trợ lý AI RAG",
+            "success"
+          );
           return;
         }
 
@@ -369,14 +391,17 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
         const prescRes = await prescriptionApi.getByConsultation(consultationId);
         if (prescRes.data && prescRes.data.length > 0) {
-          setInheritedDrafts(prescRes.data.filter((p) => p.status === "DRAFT" && p.doctorId !== user?.id));
+          setInheritedDrafts(
+            prescRes.data.filter((p) => p.status === "DRAFT" && p.doctorId !== user?.id)
+          );
           const presc =
             prescRes.data.find(
               (p) =>
                 p.doctorId === user?.id &&
                 p.status !== "CANCELLED" &&
                 p.status !== "CANCELLED_BY_AMENDMENT"
-            ) || prescRes.data.find((p) => p.status === "CONFIRMED" || p.status === "DISPENSED");
+            ) ||
+            prescRes.data.find((p) => p.status === "CONFIRMED" || p.status === "DISPENSED");
           if (presc) {
             setPrescriptionId(presc.id);
             setPrescriptionStatus(presc.status);
@@ -418,7 +443,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         }
       } catch (err) {
         if (consultationId.startsWith("demo")) {
-          console.warn("Consultation service offline. Falling back to Demo Consultation Data:", err);
+          console.warn(
+            "Consultation service offline. Falling back to Demo Consultation Data:",
+            err
+          );
           setupDemoFallbackConsultation();
           showToast(
             "Backend lâm sàng chưa bật. Đã tự động nạp Ca Khám Mẫu để thử nghiệm AI RAG",
@@ -426,7 +454,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
           );
         } else {
           console.error(err);
-          setLoadError(err instanceof Error ? err.message : "Không thể tải thông tin phiên khám.");
+          setLoadError(
+            err instanceof Error ? err.message : "Không thể tải thông tin phiên khám."
+          );
         }
       } finally {
         setIsLoading(false);
@@ -476,7 +506,10 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       } catch (failure) {
         if (active) {
           setSummaryError(
-            getErrorMessage(failure, "Không tải được bệnh sử. Chưa thể kết luận không có dữ liệu.")
+            getErrorMessage(
+              failure,
+              "Không tải được bệnh sử. Chưa thể kết luận không có dữ liệu."
+            )
           );
         }
       } finally {
@@ -568,7 +601,7 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       title: "Hoàn tất Phiên khám",
       message:
         "Bác sĩ có chắc chắn muốn HOÀN TẤT phiên khám lâm sàng cho bệnh nhân? Hồ sơ bệnh án sẽ được đóng và lưu trữ.",
-      variant: "purple",
+      variant: "primary",
       onConfirm: executeCompleteConsultation,
     });
   };
@@ -583,20 +616,26 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
 
   if (loadError || !consultation) {
     return (
-      <section role="alert" className="max-w-xl mx-auto mt-12 bg-white border border-red-200 rounded-xl p-6 space-y-4">
-        <h1 className="text-xl font-bold">Không thể mở phiên khám</h1>
-        <p>{loadError || "Không tìm thấy thông tin phiên khám."}</p>
-        <p className="text-sm text-gray-600">
+      <section
+        role="alert"
+        className="max-w-xl mx-auto mt-12 bg-white border border-[#BA1A1A]/30 rounded-2xl p-6 space-y-4 shadow-sm"
+      >
+        <h1 className="text-xl font-bold text-[#17242D]">Không thể mở phiên khám</h1>
+        <p className="text-sm text-[#4D626E]">{loadError || "Không tìm thấy thông tin phiên khám."}</p>
+        <p className="text-xs text-[#667985]">
           Nếu đây là ca bàn giao, bạn cần xác nhận tiếp nhận trước khi mở ca khám.
         </p>
         <div className="flex gap-3">
-          <Link href="/dashboard/handovers" className="border rounded-lg px-4 py-2">
+          <Link
+            href="/dashboard/handovers"
+            className="border border-[#D5E0E6] rounded-xl px-4 py-2 text-xs font-semibold text-[#17242D] hover:bg-[#EDF2F5]"
+          >
             Quay lại bàn giao
           </Link>
           <button
             type="button"
             onClick={() => window.location.reload()}
-            className="bg-purple-800 text-white rounded-lg px-4 py-2"
+            className="bg-[#0277A8] hover:bg-[#00577E] text-white rounded-xl px-4 py-2 text-xs font-bold"
           >
             Thử lại
           </button>
@@ -605,20 +644,23 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
     );
   }
 
-  const isConsultationLocked = consultation.status === "COMPLETED" || consultation.status === "CANCELLED";
+  const isConsultationLocked =
+    consultation.status === "COMPLETED" || consultation.status === "CANCELLED";
   const isPrescriptionLocked =
-    prescriptionStatus === "CONFIRMED" || prescriptionStatus === "DISPENSED" || isConsultationLocked;
+    prescriptionStatus === "CONFIRMED" ||
+    prescriptionStatus === "DISPENSED" ||
+    isConsultationLocked;
 
   return (
-    <div className="space-y-6 pb-40 relative bg-[linear-gradient(to_right,rgba(43,29,48,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(43,29,48,0.015)_1px,transparent_1px)] bg-[size:24px_24px]">
+    <div className="space-y-5 pb-40 relative">
       {toast && (
         <div
-          className={`fixed top-5 right-5 z-50 p-4 border shadow-lg max-w-md transition-all rounded-none ${
+          className={`fixed top-5 right-5 z-50 px-4 py-3 border shadow-lg max-w-md transition-all rounded-xl ${
             toast.type === "success"
-              ? "bg-[#2B1D30] text-white border-primary-500"
+              ? "bg-[#0B2534] text-white border-[#0277A8]"
               : toast.type === "warning"
-                ? "bg-amber-900 text-white border-amber-500"
-                : "bg-rose-900 text-white border-rose-500"
+                ? "bg-[#FFEBCB] text-[#A86100] border-[#A86100]/40"
+                : "bg-[#FFDAD6] text-[#BA1A1A] border-[#BA1A1A]/40"
           }`}
         >
           <div className="flex items-center justify-between gap-4">
@@ -626,9 +668,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <button
               type="button"
               onClick={() => setToast(null)}
-              className="text-white/60 hover:text-white text-xs font-bold"
+              className="opacity-70 hover:opacity-100 text-xs font-bold cursor-pointer"
             >
-              X
+              ✕
             </button>
           </div>
         </div>
@@ -664,19 +706,26 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         <div className="lg:col-span-3 space-y-3">
           {!isConsultationLocked && (
-            <div className="flex items-center justify-end">
-              <VoiceRecorderButton onAudioReady={handleVoiceRecorded} disabled={isConsultationLocked} />
+            <div className="flex items-center justify-between rounded-xl border border-[#D5E0E6] bg-white px-3.5 py-2 shadow-2xs">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-[#4D626E]">
+                Hồ sơ khám lâm sàng & Bệnh án điện tử
+              </span>
+              <VoiceRecorderButton
+                onAudioReady={handleVoiceRecorded}
+                disabled={isConsultationLocked}
+              />
             </div>
           )}
 
-          <div className="border-b border-card-border flex items-center overflow-x-auto bg-card-bg rounded-t-lg">
+          {/* Single-line Clinical Tabs Bar */}
+          <div className="border border-b-0 border-[#D5E0E6] grid grid-cols-6 items-center bg-[#EDF2F5]/60 rounded-t-xl px-1 pt-1 gap-0.5">
             <button
               type="button"
               onClick={() => setActiveTab("vitals")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all rounded-tl-lg ${
+              className={`whitespace-nowrap px-2 py-2.5 text-[11px] font-bold border-b-2 transition-all rounded-t-lg cursor-pointer text-center ${
                 activeTab === "vitals"
-                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+                  ? "border-[#0277A8] text-[#00577E] bg-white shadow-2xs"
+                  : "border-transparent text-[#4D626E] hover:text-[#17242D] hover:bg-white/50"
               }`}
             >
               1. Sinh hiệu
@@ -684,46 +733,50 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             <button
               type="button"
               onClick={() => setActiveTab("clinical")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+              className={`whitespace-nowrap px-2 py-2.5 text-[11px] font-bold border-b-2 transition-all rounded-t-lg cursor-pointer text-center ${
                 activeTab === "clinical"
-                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+                  ? "border-[#0277A8] text-[#00577E] bg-white shadow-2xs"
+                  : "border-transparent text-[#4D626E] hover:text-[#17242D] hover:bg-white/50"
               }`}
             >
-              2. Triệu chứng &amp; Lâm sàng
+              2. Lâm sàng
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("diagnosis")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+              className={`whitespace-nowrap px-2 py-2.5 text-[11px] font-bold border-b-2 transition-all rounded-t-lg cursor-pointer text-center ${
                 activeTab === "diagnosis"
-                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+                  ? "border-[#0277A8] text-[#00577E] bg-white shadow-2xs"
+                  : "border-transparent text-[#4D626E] hover:text-[#17242D] hover:bg-white/50"
               }`}
             >
-              3. Chẩn đoán ICD-10
+              3. Chẩn đoán
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("labs")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+              className={`whitespace-nowrap px-2 py-2.5 text-[11px] font-bold border-b-2 transition-all rounded-t-lg cursor-pointer text-center ${
                 activeTab === "labs"
-                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+                  ? "border-[#0277A8] text-[#00577E] bg-white shadow-2xs"
+                  : "border-transparent text-[#4D626E] hover:text-[#17242D] hover:bg-white/50"
               }`}
             >
-              4. Chỉ định Cận lâm sàng ({selectedLabServices.length > 0 ? selectedLabServices.length : existingLabOrders.length})
+              4. CLS (
+              {selectedLabServices.length > 0
+                ? selectedLabServices.length
+                : existingLabOrders.length}
+              )
             </button>
             <button
               type="button"
               onClick={() => setActiveTab("summary")}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all ${
+              className={`whitespace-nowrap px-2 py-2.5 text-[11px] font-bold border-b-2 transition-all rounded-t-lg cursor-pointer text-center ${
                 activeTab === "summary"
-                  ? "border-primary-600 text-primary-600 bg-[#F8F6F9]"
-                  : "border-transparent text-[#6A5C70] hover:text-[#2B1D30]"
+                  ? "border-[#0277A8] text-[#00577E] bg-white shadow-2xs"
+                  : "border-transparent text-[#4D626E] hover:text-[#17242D] hover:bg-white/50"
               }`}
             >
-              5. Tóm tắt lâm sàng
+              5. Bệnh sử EMR
             </button>
             <button
               type="button"
@@ -731,17 +784,27 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
                 setActiveTab("ai");
                 if (!aiResponse) void handleGetAiSuggestions();
               }}
-              className={`px-4 py-2.5 text-xs font-bold uppercase tracking-wider border-b-2 transition-all flex items-center gap-1.5 ${
+              className={`whitespace-nowrap px-2 py-2.5 text-[11px] font-bold border-b-2 transition-all rounded-t-lg flex items-center justify-center gap-1 cursor-pointer ${
                 activeTab === "ai"
-                  ? "border-[#6E2582] text-[#6E2582] bg-purple-50"
-                  : "border-transparent text-purple-700 hover:text-[#6E2582]"
+                  ? "border-[#087F6A] text-[#087F6A] bg-white shadow-2xs"
+                  : "border-transparent text-[#087F6A] hover:bg-white/50"
               }`}
             >
-              <svg className="w-3.5 h-3.5 text-purple-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              <svg
+                className="w-3.5 h-3.5 shrink-0 text-[#087F6A]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
               </svg>
-              <span>Trợ lý AI Lâm sàng</span>
-              <span className="px-1.5 py-0.2 text-[9px] bg-purple-100 text-purple-800 rounded font-black border border-purple-200">
+              <span>6. Trợ lý AI</span>
+              <span className="px-1 py-0.5 text-[9px] bg-[#D9F3EC] text-[#087F6A] rounded font-extrabold border border-[#087F6A]/25">
                 RAG
               </span>
             </button>
@@ -925,7 +988,9 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
               executeCompleteConsultation={executeCompleteConsultation}
               onNavigateDashboard={() => router.replace("/dashboard")}
               confirmModalConfig={confirmModalConfig}
-              onCancelConfirmModal={() => setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }))}
+              onCancelConfirmModal={() =>
+                setConfirmModalConfig((prev) => ({ ...prev, isOpen: false }))
+              }
             />
 
             <HistoryDetailModals

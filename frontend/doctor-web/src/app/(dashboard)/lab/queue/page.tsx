@@ -21,7 +21,10 @@ export default function LabQueuePage() {
   const [activeEntry, setActiveEntry] = useState<QueueEntry | null>(null);
   const [activeLabOrder, setActiveLabOrder] = useState<LabOrderResponse | null>(null);
 
-  const [toast, setToast] = useState<{ message: string; type: "success" | "danger" | "warning" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "danger" | "warning";
+  } | null>(null);
 
   const [modalConfig, setModalConfig] = useState<{
     isOpen: boolean;
@@ -41,7 +44,11 @@ export default function LabQueuePage() {
   };
 
   const fetchQueue = useCallback(async () => {
-    if (!selectedServicePoint) { setEntries([]); setIsLoading(false); return; }
+    if (!selectedServicePoint) {
+      setEntries([]);
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     setError(null);
     try {
@@ -145,16 +152,35 @@ export default function LabQueuePage() {
     }
   };
 
-  const [servicePoints, setServicePoints] = useState<{id: string; name: string}[]>([]);
+  const [servicePoints, setServicePoints] = useState<{ id: string; name: string }[]>([]);
   useEffect(() => {
     let active = true;
-    directoryApi.getRooms(undefined, "LAB").then(rooms => {
-      if (!active) return;
-      const points = rooms.filter(room => room.isActive).map(room => ({id: room.id, name: room.displayName}));
-      setServicePoints(points);
-      setSelectedServicePoint(current => points.some(point => point.id === current) ? current : points[0]?.id || "");
-    }).catch(err => { if (active) setError(getErrorMessage(err, "Không tải được danh mục phòng LAB.")); });
-    return () => { active = false; };
+    directoryApi
+      .getRooms(undefined, "LAB")
+      .then((rooms) => {
+        if (!active) return;
+        const labRooms = rooms.filter(
+          (room) =>
+            room.isActive !== false &&
+            (room.roomType === "LAB" || room.roomType === "IMAGING" || room.id.startsWith("LAB"))
+        );
+        const points = (labRooms.length > 0 ? labRooms : rooms.filter((r) => r.isActive)).map(
+          (room) => ({
+            id: room.id,
+            name: `${room.id} · ${room.displayName}`,
+          })
+        );
+        setServicePoints(points);
+        setSelectedServicePoint((current) =>
+          points.some((point) => point.id === current) ? current : points[0]?.id || ""
+        );
+      })
+      .catch((err) => {
+        if (active) setError(getErrorMessage(err, "Không tải được danh mục phòng LAB."));
+      });
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -162,17 +188,20 @@ export default function LabQueuePage() {
       {/* Toast Notification Container */}
       {toast && (
         <div
-          className={`fixed top-5 right-5 z-50 p-4 border shadow-lg max-w-md transition-all rounded-lg text-white ${
+          className={`fixed top-5 right-5 z-50 max-w-md rounded-xl border p-4 text-white shadow-lg transition-all ${
             toast.type === "success"
-              ? "bg-[#2B1D30] border-purple-500"
+              ? "border-[#0277A8] bg-[#0B2534]"
               : toast.type === "warning"
-              ? "bg-amber-900 border-amber-500"
-              : "bg-rose-900 border-rose-500"
+                ? "border-[#A86100] bg-[#A86100]"
+                : "border-[#BA1A1A] bg-[#BA1A1A]"
           }`}
         >
           <div className="flex items-center justify-between gap-4">
             <span className="text-xs font-semibold">{toast.message}</span>
-            <button onClick={() => setToast(null)} className="text-white/60 hover:text-white text-xs font-bold">
+            <button
+              onClick={() => setToast(null)}
+              className="text-xs font-bold text-white/70 hover:text-white"
+            >
               X
             </button>
           </div>
@@ -180,41 +209,47 @@ export default function LabQueuePage() {
       )}
 
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border border-card-border bg-card-bg p-5 rounded-xl shadow-sm">
+      <div className="flex flex-col justify-between gap-4 rounded-xl border border-[#D5E0E6] bg-white p-5 shadow-xs md:flex-row md:items-center">
         <div>
           <div className="flex items-center gap-2">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-400">
+            <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-[#087F6A]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-[#087F6A]">
               Phân hệ Kỹ thuật viên Cận lâm sàng
             </span>
           </div>
-          <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Hàng đợi Thực hiện Xét nghiệm</h1>
-          <p className="text-xs text-text-muted mt-0.5">
-            Điều phối và nhập kết quả xét nghiệm tại phòng LAB đang hoạt động
+          <h1 className="mt-1 text-2xl font-extrabold text-[#17242D]">
+            Hàng đợi Thực hiện Xét nghiệm
+          </h1>
+          <p className="mt-0.5 text-xs text-[#667985]">
+            Điều phối và nhập kết quả xét nghiệm tại phòng Cận lâm sàng đang hoạt động
           </p>
         </div>
 
         <button
           onClick={handleCallNext}
           disabled={isCallingNext || isLoading || (entries ?? []).length === 0}
-          className="px-5 py-3 rounded-xl font-bold text-sm text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed shadow-md transition-all cursor-pointer"
+          className="cursor-pointer rounded-xl bg-[#0277A8] px-5 py-3 text-sm font-bold text-white shadow-xs transition-all hover:bg-[#00577E] disabled:cursor-not-allowed disabled:opacity-50"
         >
-          {isCallingNext ? "Đang gọi..." : "Gọi số"}
+          {isCallingNext ? "Đang gọi..." : "Gọi số tiếp theo"}
         </button>
       </div>
 
       {/* Service Point Filter Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-card-border pb-3">
+      <div className="flex flex-wrap gap-2 border-b border-[#D5E0E6] pb-3">
         {servicePoints.map((sp) => {
           const isActive = selectedServicePoint === sp.id;
           return (
             <button
               key={sp.id}
-              onClick={() => { setSelectedServicePoint(sp.id); setActiveEntry(null); setActiveLabOrder(null); }}
-              className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+              onClick={() => {
+                setSelectedServicePoint(sp.id);
+                setActiveEntry(null);
+                setActiveLabOrder(null);
+              }}
+              className={`cursor-pointer rounded-xl px-4 py-2 text-xs font-bold transition-all ${
                 isActive
-                  ? "bg-purple-600 text-white shadow-sm"
-                  : "bg-card-bg text-text-muted hover:bg-purple-50 hover:text-purple-700 border border-card-border"
+                  ? "bg-[#0277A8] text-white shadow-xs"
+                  : "border border-[#D5E0E6] bg-white text-[#4D626E] hover:border-[#0277A8] hover:bg-[#DDF3FC] hover:text-[#00577E]"
               }`}
             >
               {sp.name}
@@ -224,78 +259,130 @@ export default function LabQueuePage() {
       </div>
 
       {/* Queue Items Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Active Queue List */}
-        <div className="lg:col-span-2 border border-card-border bg-card-bg rounded-xl p-5 shadow-sm space-y-4">
+        <div className="space-y-4 rounded-xl border border-[#D5E0E6] bg-white p-5 shadow-xs lg:col-span-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-[#2B1D30]">Danh sách chờ thực hiện tại phòng</h2>
-            <span className="text-xs font-semibold px-2.5 py-1 bg-purple-100 text-purple-700 rounded-full">
+            <h2 className="text-base font-extrabold text-[#17242D]">
+              Danh sách chờ thực hiện tại phòng
+            </h2>
+            <span className="rounded-full bg-[#DDF3FC] px-3 py-1 text-xs font-bold text-[#00577E]">
               {(entries ?? []).length} lượt chờ
             </span>
           </div>
 
           {isLoading ? (
-            <div className="py-12 flex justify-center">
+            <div className="flex justify-center py-12">
               <LoadingSpinner size="md" />
             </div>
           ) : error ? (
-            <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-medium">
+            <div className="rounded-xl border border-[#BA1A1A]/30 bg-[#BA1A1A]/10 p-4 text-xs font-semibold text-[#BA1A1A]">
               {error}
             </div>
           ) : (entries ?? []).length === 0 ? (
-            <div className="py-12 text-center text-text-muted text-xs">
-              <svg className="w-12 h-12 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <div className="py-12 text-center text-xs text-[#667985]">
+              <svg
+                className="mx-auto mb-2 h-12 w-12 text-[#D5E0E6]"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
               </svg>
               Hiện chưa có bệnh nhân nào trong hàng đợi của điểm phục vụ này.
             </div>
           ) : (
-            <div className="divide-y divide-card-border">
+            <div className="divide-y divide-[#EDF2F5]">
               {(entries ?? []).map((entry) => {
                 const isCalled = entry.queueStatus === "CALLED";
                 const isInProgress = entry.queueStatus === "IN_PROGRESS";
                 const isMissed = entry.queueStatus === "MISSED";
 
                 return (
-                  <div key={entry.entryId} className="py-3.5 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
+                  <div
+                    key={entry.entryId}
+                    className="flex items-center justify-between gap-4 py-3.5"
+                  >
+                    <div className="flex items-center gap-3.5">
                       <div
-                        className={`w-12 h-12 rounded-xl flex items-center justify-center font-extrabold text-base ${
+                        className={`flex h-12 w-14 items-center justify-center rounded-xl font-mono text-sm font-extrabold ${
                           isCalled
-                            ? "bg-amber-500 text-white animate-pulse"
+                            ? "animate-pulse bg-[#A86100] text-white"
                             : isInProgress
-                            ? "bg-emerald-600 text-white"
-                            : isMissed
-                            ? "bg-rose-500 text-white"
-                            : "bg-purple-100 text-purple-700"
+                              ? "bg-[#1B7F4B] text-white"
+                              : isMissed
+                                ? "bg-[#BA1A1A] text-white"
+                                : "border border-[#8BD2EE] bg-[#DDF3FC] text-[#00577E]"
                         }`}
                       >
                         {entry.queueNumber}
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-bold text-[#2B1D30]">Mã lượt: {entry.queueNumber}</span>
-                          <div className="flex items-center gap-1.5 text-xs font-semibold">
-                            <span className={`w-1.5 h-1.5 rounded-full ${isCalled ? "bg-amber-500" : isInProgress ? "bg-emerald-500" : isMissed ? "bg-rose-500" : "bg-blue-500"}`} />
-                            <span className={isCalled ? "text-amber-700" : isInProgress ? "text-emerald-700" : isMissed ? "text-rose-700" : "text-blue-700"}>
-                              {entry.queueStatus === "CHECKED_IN" ? "Đã tiếp nhận" : entry.queueStatus === "CALLED" ? "Đang gọi" : entry.queueStatus === "IN_PROGRESS" ? "Đang thực hiện" : entry.queueStatus === "MISSED" ? "Vắng mặt" : entry.queueStatus === "COMPLETED" ? "Hoàn tất" : entry.queueStatus}
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-bold text-[#17242D]">
+                            Mã lượt: {entry.queueNumber}
+                          </span>
+                          <div className="flex items-center gap-1.5 text-xs font-bold">
+                            <span
+                              className={`h-2 w-2 rounded-full ${
+                                isCalled
+                                  ? "bg-[#A86100]"
+                                  : isInProgress
+                                    ? "bg-[#1B7F4B]"
+                                    : isMissed
+                                      ? "bg-[#BA1A1A]"
+                                      : "bg-[#0277A8]"
+                              }`}
+                            />
+                            <span
+                              className={
+                                isCalled
+                                  ? "text-[#A86100]"
+                                  : isInProgress
+                                    ? "text-[#1B7F4B]"
+                                    : isMissed
+                                      ? "text-[#BA1A1A]"
+                                      : "text-[#00577E]"
+                              }
+                            >
+                              {entry.queueStatus === "CHECKED_IN" || entry.queueStatus === "WAITING"
+                                ? "Đã tiếp nhận"
+                                : entry.queueStatus === "CALLED"
+                                  ? "Đang gọi"
+                                  : entry.queueStatus === "IN_PROGRESS"
+                                    ? "Đang thực hiện"
+                                    : entry.queueStatus === "MISSED"
+                                      ? "Vắng mặt"
+                                      : entry.queueStatus === "COMPLETED"
+                                        ? "Hoàn tất"
+                                        : entry.queueStatus}
                             </span>
                           </div>
                         </div>
-                        <p className="text-xs text-text-muted mt-0.5">
-                          Thời gian vào hàng: {entry.scheduledStartAt
-                            ? new Date(entry.scheduledStartAt).toLocaleTimeString("vi-VN")
-                            : "—"}
+                        <p className="mt-0.5 text-xs text-[#667985]">
+                          Thời gian vào hàng:{" "}
+                          <span className="font-mono font-medium text-[#4D626E]">
+                            {entry.scheduledStartAt
+                              ? new Date(entry.scheduledStartAt).toLocaleTimeString("vi-VN")
+                              : "—"}
+                          </span>
                         </p>
                       </div>
                     </div>
 
                     {/* Action buttons */}
                     <div className="flex items-center gap-2">
-                      {entry.queueStatus === "CHECKED_IN" && (
+                      {(entry.queueStatus === "CHECKED_IN" ||
+                        entry.queueStatus === "WAITING" ||
+                        entry.queueStatus === "QUEUED") && (
                         <button
                           onClick={() => handleCallEntry(entry.entryId, entry.queueNumber)}
-                          className="w-20 py-1.5 bg-purple-600 text-white text-xs font-semibold rounded-md hover:bg-purple-700 cursor-pointer text-center"
+                          className="w-24 cursor-pointer rounded-xl bg-[#0277A8] py-2 text-center text-xs font-bold text-white transition-colors hover:bg-[#00577E]"
                         >
                           Gọi số
                         </button>
@@ -305,13 +392,13 @@ export default function LabQueuePage() {
                         <>
                           <button
                             onClick={() => handleStartEntry(entry)}
-                            className="w-20 py-1.5 bg-emerald-600 text-white text-xs font-semibold rounded-md hover:bg-emerald-700 cursor-pointer text-center"
+                            className="w-24 cursor-pointer rounded-xl bg-[#087F6A] py-2 text-center text-xs font-bold text-white transition-colors hover:bg-[#066554]"
                           >
                             Bắt đầu
                           </button>
                           <button
                             onClick={() => handleMissEntry(entry.entryId, entry.queueNumber)}
-                            className="w-20 py-1.5 bg-rose-600 text-white text-xs font-semibold rounded-md hover:bg-rose-700 cursor-pointer text-center"
+                            className="w-24 cursor-pointer rounded-xl border border-[#D5E0E6] bg-white py-2 text-center text-xs font-semibold text-[#667985] transition-colors hover:border-[#BA1A1A] hover:bg-[#BA1A1A]/10 hover:text-[#BA1A1A]"
                           >
                             Vắng mặt
                           </button>
@@ -321,7 +408,7 @@ export default function LabQueuePage() {
                       {isMissed && (
                         <button
                           onClick={() => handleRecallEntry(entry.entryId, entry.queueNumber)}
-                          className="w-20 py-1.5 bg-blue-600 text-white text-xs font-semibold rounded-md hover:bg-blue-700 cursor-pointer text-center"
+                          className="w-24 cursor-pointer rounded-xl border border-[#0277A8] bg-[#DDF3FC] py-2 text-center text-xs font-bold text-[#00577E] transition-colors hover:bg-[#8BD2EE]/50"
                         >
                           Gọi lại
                         </button>
