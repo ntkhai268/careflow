@@ -296,63 +296,78 @@ export default function StaffCheckinPage() {
 
   return (
     <div className="mx-auto max-w-[1440px] space-y-5 pb-12">
-      <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-end sm:justify-between">
+      <header className="flex flex-col gap-4 rounded-xl border border-[#D5E0E6] bg-white p-5 shadow-xs lg:flex-row lg:items-center lg:justify-between">
         <div>
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[#7B4B94]">
-            Quầy tiếp nhận
-          </p>
-          <h1 className="mt-1 text-xl font-bold tracking-tight text-[#2B1D30]">
-            Check-in bệnh nhân
+          <div className="flex items-center gap-2">
+            <span className="h-2 w-2 rounded-full bg-[#087F6A]" />
+            <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[#087F6A]">
+              Quầy tiếp nhận & phân luồng bệnh nhân
+            </p>
+          </div>
+          <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-[#17242D]">
+            Check-in & Tiếp đón Bệnh nhân
           </h1>
-          <p className="mt-1 text-[11px] text-slate-500">
-            Hiển thị một QR chung cho bệnh nhân tự check-in tại bệnh viện và xác minh geofence.
+          <p className="mt-0.5 text-xs text-[#667985]">
+            Hiển thị QR chung cho bệnh nhân tự check-in tại viện, cấp số khám vãng lai và điều phối
+            danh sách chờ tại phòng.
           </p>
         </div>
-        <div className="flex items-center gap-4 text-[10px] text-slate-500">
-          <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Hệ thống sẵn sàng
-          </span>
-          <span>{waitingCount} lượt đang chờ</span>
+
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="w-full sm:w-72">
+            <RoomPicker rooms={rooms} value={roomId} onChange={setRoomId} />
+          </div>
+          <div className="flex h-11 items-center gap-3 rounded-xl border border-[#D5E0E6] bg-[#F5F8FA] px-4 text-xs font-semibold text-[#4D626E]">
+            <span className="flex items-center gap-1.5 text-[#1B7F4B]">
+              <span className="h-2 w-2 rounded-full bg-[#1B7F4B]" />
+              Sẵn sàng
+            </span>
+            <span className="text-[#D5E0E6]">|</span>
+            <span className="font-bold text-[#00577E]">{waitingCount} lượt chờ</span>
+          </div>
         </div>
       </header>
-      <div className="max-w-md">
-        <RoomPicker rooms={rooms} value={roomId} onChange={setRoomId} />
+
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
+        <div className="space-y-5 xl:col-span-7">
+          <ReceptionQueueTable
+            roomId={roomId}
+            roomError={roomError}
+            queueError={queueError}
+            isLoadingQueue={isLoadingQueue}
+            roomEntries={roomEntries}
+            patientDetails={patientDetails}
+            processingEntryId={processingEntryId}
+            onRefreshQueue={() => void fetchRoomQueue()}
+            onCheckInEntry={(entry) => void handleCheckInEntry(entry)}
+            onRecallEntry={(entry) => void handleRecall(entry)}
+            onMissEntry={(entry) => void handleMiss(entry)}
+          />
+
+          <WalkInReception
+            key={roomId}
+            roomId={roomId}
+            departmentCode={rooms.find((r) => r.id === roomId)?.departmentCode || ""}
+            onIssued={() => void fetchRoomQueue()}
+          />
+        </div>
+
+        <div className="xl:col-span-5">
+          <HospitalQrCheckInCard
+            hospitalQr={hospitalQr}
+            isLoadingQr={isLoadingQr}
+            qrError={qrError}
+            onRefreshQr={() => void fetchHospitalQr()}
+            qrInput={qrInput}
+            setQrInput={setQrInput}
+            error={error}
+            isSubmitting={isSubmitting}
+            roomId={roomId}
+            onSubmitCheckIn={handleCheckIn}
+            checkInResult={checkInResult}
+          />
+        </div>
       </div>
-      <WalkInReception
-        key={roomId}
-        roomId={roomId}
-        departmentCode={rooms.find((r) => r.id === roomId)?.departmentCode || ""}
-        onIssued={() => void fetchRoomQueue()}
-      />
-
-      <HospitalQrCheckInCard
-        hospitalQr={hospitalQr}
-        isLoadingQr={isLoadingQr}
-        qrError={qrError}
-        onRefreshQr={() => void fetchHospitalQr()}
-        qrInput={qrInput}
-        setQrInput={setQrInput}
-        error={error}
-        isSubmitting={isSubmitting}
-        roomId={roomId}
-        onSubmitCheckIn={handleCheckIn}
-        checkInResult={checkInResult}
-      />
-
-      <ReceptionQueueTable
-        roomId={roomId}
-        roomError={roomError}
-        queueError={queueError}
-        isLoadingQueue={isLoadingQueue}
-        roomEntries={roomEntries}
-        patientDetails={patientDetails}
-        processingEntryId={processingEntryId}
-        onRefreshQueue={() => void fetchRoomQueue()}
-        onCheckInEntry={(entry) => void handleCheckInEntry(entry)}
-        onRecallEntry={(entry) => void handleRecall(entry)}
-        onMissEntry={(entry) => void handleMiss(entry)}
-      />
     </div>
   );
 }

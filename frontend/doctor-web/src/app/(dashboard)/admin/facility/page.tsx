@@ -9,6 +9,16 @@ import {
   DoctorProfileItem,
 } from "@/lib/directory-api";
 
+function formatDoctorDisplayName(doc: DoctorProfileItem): string {
+  const fullName = (doc.fullName || "").trim();
+  const title = (doc.title || "").trim();
+  if (!title) return fullName;
+  if (fullName.toLocaleLowerCase("vi").startsWith(title.toLocaleLowerCase("vi"))) {
+    return fullName;
+  }
+  return `${title} ${fullName}`;
+}
+
 export default function AdminFacilityPage() {
   const [departments, setDepartments] = useState<DepartmentItem[] | null>(null);
   const [rooms, setRooms] = useState<RoomItem[] | null>(null);
@@ -241,40 +251,47 @@ export default function AdminFacilityPage() {
   return (
     <div className="space-y-6 pb-12">
       {/* Header */}
-      <div className="border border-card-border bg-card-bg p-5 rounded-xl shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 rounded-xl border border-[#D5E0E6] bg-white p-5 shadow-xs md:flex-row md:items-center">
         <div>
           <div className="flex items-center gap-2">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-600">
+            <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-[#0277A8]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-[#0277A8]">
               Quản trị Cấu hình Bệnh viện
             </span>
           </div>
-          <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Cấu hình Cơ sở Y tế & Danh bạ Bác sĩ</h1>
-          <p className="text-xs text-[#6A5C70] mt-0.5">
+          <h1 className="mt-1 text-2xl font-extrabold text-[#17242D]">
+            Cấu hình Cơ sở Y tế & Danh bạ Bác sĩ
+          </h1>
+          <p className="mt-0.5 text-xs text-[#667985]">
             Quản lý danh mục Khoa chuyên môn, Danh sách Phòng khám và Hồ sơ Bác sĩ hành nghề
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Link href="/admin/services" className="rounded-xl bg-purple-100 px-3.5 py-2 text-xs font-bold text-purple-800 hover:bg-purple-200">Dịch vụ & bảng giá</Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            href="/admin/services"
+            className="rounded-xl border border-[#8BD2EE] bg-[#DDF3FC] px-3.5 py-2 text-xs font-bold text-[#00577E] transition-colors hover:bg-[#8BD2EE]/40"
+          >
+            Dịch vụ & bảng giá
+          </Link>
           <button
             onClick={openCreateDept}
             disabled={isLoading}
-            className="px-3.5 py-2 rounded-xl font-bold text-xs text-white bg-[#6E2582] hover:bg-[#561A66] shadow-sm transition-all cursor-pointer disabled:opacity-50"
+            className="cursor-pointer rounded-xl bg-[#0277A8] px-3.5 py-2 text-xs font-bold text-white shadow-xs transition-all hover:bg-[#00577E] disabled:opacity-50"
           >
             + Thêm khoa
           </button>
           <button
             onClick={openCreateRoom}
             disabled={isLoading}
-            className="px-3.5 py-2 rounded-xl font-bold text-xs text-[#6E2582] bg-purple-100 hover:bg-purple-200 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+            className="cursor-pointer rounded-xl border border-[#8BD2EE] bg-[#DDF3FC] px-3.5 py-2 text-xs font-bold text-[#00577E] shadow-xs transition-all hover:bg-[#8BD2EE]/40 disabled:opacity-50"
           >
             + Thêm phòng
           </button>
           <button
             onClick={openCreateDoctor}
             disabled={isLoading}
-            className="px-3.5 py-2 rounded-xl font-bold text-xs text-emerald-800 bg-emerald-100 hover:bg-emerald-200 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+            className="cursor-pointer rounded-xl border border-[#087F6A]/30 bg-[#D9F3EC] px-3.5 py-2 text-xs font-bold text-[#087F6A] shadow-xs transition-all hover:bg-[#087F6A] hover:text-white disabled:opacity-50"
           >
             + Thêm hồ sơ Bác sĩ
           </button>
@@ -282,18 +299,18 @@ export default function AdminFacilityPage() {
       </div>
 
       {error && (
-        <div className="p-4 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">
+        <div className="rounded-xl border border-[#BA1A1A]/30 bg-[#BA1A1A]/10 p-4 text-xs font-semibold text-[#BA1A1A]">
           {error}
         </div>
       )}
 
       {/* Main Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Departments Column */}
-        <div className="border border-card-border bg-card-bg rounded-xl p-5 shadow-sm space-y-4">
+        <div className="space-y-4 rounded-xl border border-[#D5E0E6] bg-white p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-[#2B1D30]">Khoa chuyên môn</h2>
-            <span className="text-xs text-purple-700 font-bold">
+            <h2 className="text-base font-extrabold text-[#17242D]">Khoa chuyên môn</h2>
+            <span className="rounded-full bg-[#DDF3FC] px-2.5 py-0.5 text-xs font-bold text-[#00577E]">
               {(departments ?? []).length} khoa
             </span>
           </div>
@@ -301,28 +318,31 @@ export default function AdminFacilityPage() {
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 bg-purple-50/50 rounded-xl animate-pulse" />
+                <div key={i} className="h-20 animate-pulse rounded-xl bg-[#F5F8FA]" />
               ))}
             </div>
           ) : (departments ?? []).length === 0 ? (
-            <p className="text-xs text-[#6A5C70] py-6 text-center">Chưa có khoa nào được khởi tạo</p>
+            <p className="py-6 text-center text-xs text-[#667985]">Chưa có khoa nào được khởi tạo</p>
           ) : (
             <div className="space-y-3 text-xs">
               {(departments ?? []).map((dept) => (
-                <div key={dept.code} className="p-4 bg-purple-50/60 border border-purple-200 rounded-xl space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-purple-950 text-sm">{dept.name}</span>
-                    <span className="px-2 py-0.5 bg-purple-200 text-purple-800 font-bold text-[10px] rounded-md">
+                <div
+                  key={dept.code}
+                  className="space-y-2 rounded-xl border border-[#8BD2EE]/50 bg-[#DDF3FC]/35 p-4"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-bold text-[#17242D]">{dept.name}</span>
+                    <span className="rounded-md bg-[#DDF3FC] px-2 py-0.5 font-mono text-[10px] font-bold text-[#00577E]">
                       {dept.code}
                     </span>
                   </div>
                   {dept.description && (
-                    <p className="text-[#6A5C70] text-[11px]">{dept.description}</p>
+                    <p className="text-[11px] text-[#4D626E]">{dept.description}</p>
                   )}
-                  <div className="pt-1 flex justify-end">
+                  <div className="flex justify-end pt-1">
                     <button
                       onClick={() => openEditDept(dept)}
-                      className="text-xs font-bold text-[#6E2582] hover:underline cursor-pointer"
+                      className="cursor-pointer text-xs font-bold text-[#0277A8] hover:underline"
                     >
                       Chỉnh sửa
                     </button>
@@ -334,10 +354,12 @@ export default function AdminFacilityPage() {
         </div>
 
         {/* Rooms Column */}
-        <div className="border border-card-border bg-card-bg rounded-xl p-5 shadow-sm space-y-4">
+        <div className="space-y-4 rounded-xl border border-[#D5E0E6] bg-white p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-[#2B1D30]">Danh sách Phòng khám & CLS</h2>
-            <span className="text-xs text-purple-700 font-bold">
+            <h2 className="text-base font-extrabold text-[#17242D]">
+              Danh sách Phòng khám & CLS
+            </h2>
+            <span className="rounded-full bg-[#DDF3FC] px-2.5 py-0.5 text-xs font-bold text-[#00577E]">
               {(rooms ?? []).length} phòng
             </span>
           </div>
@@ -345,28 +367,46 @@ export default function AdminFacilityPage() {
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3, 4].map((i) => (
-                <div key={i} className="h-16 bg-gray-100 rounded-xl animate-pulse" />
+                <div key={i} className="h-16 animate-pulse rounded-xl bg-[#F5F8FA]" />
               ))}
             </div>
           ) : (rooms ?? []).length === 0 ? (
-            <p className="text-xs text-[#6A5C70] py-6 text-center">Chưa có phòng nào được tạo</p>
+            <p className="py-6 text-center text-xs text-[#667985]">Chưa có phòng nào được tạo</p>
           ) : (
             <div className="space-y-3 text-xs">
               {(rooms ?? []).map((room) => (
-                <div key={room.id} className="p-3.5 bg-gray-50 border border-card-border rounded-xl flex items-center justify-between">
+                <div
+                  key={room.id}
+                  className="flex items-center justify-between rounded-xl border border-[#D5E0E6] bg-[#F5F8FA] p-3.5"
+                >
                   <div>
-                    <p className="font-bold text-[#2B1D30] text-sm">{room.displayName}</p>
-                    <p className="text-[#6A5C70] text-[11px] mt-0.5">
-                      Mã: <span className="font-mono font-bold text-gray-800">{room.id}</span> | Khoa: {room.departmentCode}
+                    <p className="text-sm font-bold text-[#17242D]">{room.displayName}</p>
+                    <p className="mt-0.5 text-[11px] text-[#667985]">
+                      Mã: <span className="font-mono font-bold text-[#17242D]">{room.id}</span> |
+                      Khoa: {room.departmentCode}
                     </p>
                   </div>
                   <div className="flex flex-col items-end gap-1">
-                    <span className="px-2 py-0.5 bg-purple-100 text-purple-800 font-bold rounded-md text-[10px]">
-                      {room.roomType === "CONSULTATION" ? "Phòng khám" : room.roomType === "LAB" ? "Phòng XN" : room.roomType === "IMAGING" ? "CĐHA" : "Nhà thuốc"}
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-[10px] font-bold ${
+                        room.roomType === "CONSULTATION"
+                          ? "bg-[#DDF3FC] text-[#00577E]"
+                          : room.roomType === "LAB"
+                            ? "bg-[#D9F3EC] text-[#087F6A]"
+                            : "bg-[#EDF2F5] text-[#4D626E]"
+                      }`}
+                    >
+                      {room.roomType === "CONSULTATION"
+                        ? "Phòng khám"
+                        : room.roomType === "LAB"
+                          ? "Phòng XN"
+                          : room.roomType === "IMAGING"
+                            ? "CĐHA"
+                            : "Nhà thuốc"}
                     </span>
                     <button
                       onClick={() => openEditRoom(room)}
-                      className="text-[11px] font-bold text-[#6E2582] hover:underline cursor-pointer"
+                      className="cursor-pointer text-[11px] font-bold text-[#0277A8] hover:underline"
                     >
                       Chỉnh sửa
                     </button>
@@ -378,10 +418,10 @@ export default function AdminFacilityPage() {
         </div>
 
         {/* Doctors Column */}
-        <div className="border border-card-border bg-card-bg rounded-xl p-5 shadow-sm space-y-4">
+        <div className="space-y-4 rounded-xl border border-[#D5E0E6] bg-white p-5 shadow-xs">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-[#2B1D30]">Danh bạ Hồ sơ Bác sĩ</h2>
-            <span className="text-xs text-purple-700 font-bold">
+            <h2 className="text-base font-extrabold text-[#17242D]">Danh bạ Hồ sơ Bác sĩ</h2>
+            <span className="rounded-full bg-[#D9F3EC] px-2.5 py-0.5 text-xs font-bold text-[#087F6A]">
               {(doctors ?? []).length} bác sĩ
             </span>
           </div>
@@ -389,34 +429,47 @@ export default function AdminFacilityPage() {
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 bg-emerald-50/50 rounded-xl animate-pulse" />
+                <div key={i} className="h-20 animate-pulse rounded-xl bg-[#D9F3EC]/40" />
               ))}
             </div>
           ) : (doctors ?? []).length === 0 ? (
-            <p className="text-xs text-[#6A5C70] py-6 text-center">Chưa có hồ sơ bác sĩ nào</p>
+            <p className="py-6 text-center text-xs text-[#667985]">Chưa có hồ sơ bác sĩ nào</p>
           ) : (
             <div className="space-y-3 text-xs">
               {(doctors ?? []).map((doc) => (
-                <div key={doc.id} className="p-3.5 bg-emerald-50/50 border border-emerald-200 rounded-xl space-y-1">
-                  <div className="flex items-center justify-between">
-                    <span className="font-bold text-emerald-950 text-sm">
-                      {doc.title ? `${doc.title} ${doc.fullName}` : doc.fullName}
+                <div
+                  key={doc.id}
+                  className="space-y-1 rounded-xl border border-[#087F6A]/25 bg-[#D9F3EC]/45 p-3.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-sm font-bold text-[#17242D]">
+                      {formatDoctorDisplayName(doc)}
                     </span>
                     <button
                       onClick={() => openEditDoctor(doc)}
-                      className="text-[11px] font-bold text-emerald-700 hover:underline cursor-pointer"
+                      className="cursor-pointer text-[11px] font-bold text-[#087F6A] hover:underline"
                     >
                       Sửa hồ sơ
                     </button>
                   </div>
-                  <p className="text-[#6A5C70] text-[11px]">
-                    Chuyên khoa: <span className="font-semibold text-gray-800">{doc.specialization || "Nội tổng quát"}</span>
+                  <p className="text-[11px] text-[#4D626E]">
+                    Chuyên khoa:{" "}
+                    <span className="font-semibold text-[#17242D]">
+                      {doc.specialization || "Nội tổng quát"}
+                    </span>
                   </p>
-                  <p className="text-[#6A5C70] text-[11px]">
-                    Khoa: <span className="font-semibold text-gray-800">{doc.departmentName || doc.departmentCode || "Chưa gán"}</span> | Phòng: <span className="font-mono font-bold">{doc.assignedRoomId || "Chưa gán"}</span>
+                  <p className="text-[11px] text-[#4D626E]">
+                    Khoa:{" "}
+                    <span className="font-semibold text-[#17242D]">
+                      {doc.departmentName || doc.departmentCode || "Chưa gán"}
+                    </span>{" "}
+                    | Phòng:{" "}
+                    <span className="font-mono font-bold text-[#00577E]">
+                      {doc.assignedRoomId || "Chưa gán"}
+                    </span>
                   </p>
                   {doc.licenseNumber && (
-                    <p className="text-[10px] text-emerald-800 font-mono">
+                    <p className="font-mono text-[10px] font-semibold text-[#087F6A]">
                       Số CCHN: {doc.licenseNumber}
                     </p>
                   )}
@@ -429,50 +482,50 @@ export default function AdminFacilityPage() {
 
       {/* Modal Department */}
       {showDeptModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-[#2B1D30]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B2534]/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md space-y-4 rounded-2xl border border-[#D5E0E6] bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-extrabold text-[#17242D]">
               {editingDept ? "Chỉnh sửa Khoa chuyên môn" : "Thêm Khoa chuyên môn mới"}
             </h3>
 
             {formError && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-semibold">
+              <div className="rounded-xl border border-[#BA1A1A]/30 bg-[#BA1A1A]/10 p-3 text-xs font-semibold text-[#BA1A1A]">
                 {formError}
               </div>
             )}
 
             <form onSubmit={handleSaveDept} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#2B1D30] mb-1">Mã Khoa</label>
+                <label className="mb-1 block font-bold text-[#17242D]">Mã Khoa</label>
                 <input
                   type="text"
                   disabled={!!editingDept}
                   value={deptCode}
                   onChange={(e) => setDeptCode(e.target.value)}
                   placeholder="VD: INTERNAL, PEDIATRICS"
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-500 uppercase font-mono disabled:opacity-60"
+                  className="w-full rounded-xl border border-[#D5E0E6] bg-[#F5F8FA] p-2.5 font-mono uppercase focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15 disabled:opacity-60"
                   required
                 />
               </div>
               <div>
-                <label className="block font-bold text-[#2B1D30] mb-1">Tên Khoa chuyên môn</label>
+                <label className="mb-1 block font-bold text-[#17242D]">Tên Khoa chuyên môn</label>
                 <input
                   type="text"
                   value={deptName}
                   onChange={(e) => setDeptName(e.target.value)}
                   placeholder="VD: Khoa Nội tổng quát"
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg focus:ring-2 focus:ring-purple-500"
+                  className="w-full rounded-xl border border-[#D5E0E6] bg-white p-2.5 focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15"
                   required
                 />
               </div>
               <div>
-                <label className="block font-bold text-[#2B1D30] mb-1">Mô tả / Ghi chú</label>
+                <label className="mb-1 block font-bold text-[#17242D]">Mô tả / Ghi chú</label>
                 <textarea
                   value={deptDesc}
                   onChange={(e) => setDeptDesc(e.target.value)}
                   placeholder="Mô tả nhiệm vụ khoa..."
                   rows={2}
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg focus:ring-2 focus:ring-purple-500"
+                  className="w-full rounded-xl border border-[#D5E0E6] bg-white p-2.5 focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15"
                 />
               </div>
 
@@ -480,14 +533,14 @@ export default function AdminFacilityPage() {
                 <button
                   type="button"
                   onClick={() => setShowDeptModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer"
+                  className="cursor-pointer rounded-xl px-4 py-2 text-xs font-bold text-[#4D626E] hover:bg-[#EDF2F5]"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#6E2582] hover:bg-[#561A66] shadow-md cursor-pointer disabled:opacity-50"
+                  className="cursor-pointer rounded-xl bg-[#0277A8] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#00577E] disabled:opacity-50"
                 >
                   {isSubmitting ? "Đang lưu..." : "Lưu lại"}
                 </button>
@@ -499,37 +552,37 @@ export default function AdminFacilityPage() {
 
       {/* Modal Room */}
       {showRoomModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-[#2B1D30]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B2534]/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md space-y-4 rounded-2xl border border-[#D5E0E6] bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-extrabold text-[#17242D]">
               {editingRoom ? "Chỉnh sửa Phòng" : "Thêm Phòng mới"}
             </h3>
 
             {formError && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-semibold">
+              <div className="rounded-xl border border-[#BA1A1A]/30 bg-[#BA1A1A]/10 p-3 text-xs font-semibold text-[#BA1A1A]">
                 {formError}
               </div>
             )}
 
             <form onSubmit={handleSaveRoom} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#2B1D30] mb-1">Mã Phòng</label>
+                <label className="mb-1 block font-bold text-[#17242D]">Mã Phòng</label>
                 <input
                   type="text"
                   disabled={!!editingRoom}
                   value={roomId}
                   onChange={(e) => setRoomId(e.target.value)}
                   placeholder="VD: ROOM-01, LAB-01"
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-500 uppercase font-mono disabled:opacity-60"
+                  className="w-full rounded-xl border border-[#D5E0E6] bg-[#F5F8FA] p-2.5 font-mono uppercase focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15 disabled:opacity-60"
                   required
                 />
               </div>
               <div>
-                <label className="block font-bold text-[#2B1D30] mb-1">Khoa trực thuộc</label>
+                <label className="mb-1 block font-bold text-[#17242D]">Khoa trực thuộc</label>
                 <select
                   value={roomDeptCode}
                   onChange={(e) => setRoomDeptCode(e.target.value)}
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg focus:ring-2 focus:ring-purple-500"
+                  className="w-full rounded-xl border border-[#D5E0E6] bg-white p-2.5 focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15"
                   required
                 >
                   {(departments ?? []).map((d) => (
@@ -540,22 +593,22 @@ export default function AdminFacilityPage() {
                 </select>
               </div>
               <div>
-                <label className="block font-bold text-[#2B1D30] mb-1">Tên phòng hiển thị</label>
+                <label className="mb-1 block font-bold text-[#17242D]">Tên phòng hiển thị</label>
                 <input
                   type="text"
                   value={roomDisplayName}
                   onChange={(e) => setRoomDisplayName(e.target.value)}
                   placeholder="VD: Phòng khám Nội 01"
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg focus:ring-2 focus:ring-purple-500"
+                  className="w-full rounded-xl border border-[#D5E0E6] bg-white p-2.5 focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15"
                   required
                 />
               </div>
               <div>
-                <label className="block font-bold text-[#2B1D30] mb-1">Loại điểm phục vụ</label>
+                <label className="mb-1 block font-bold text-[#17242D]">Loại điểm phục vụ</label>
                 <select
                   value={roomType}
                   onChange={(e) => setRoomType(e.target.value)}
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg focus:ring-2 focus:ring-purple-500"
+                  className="w-full rounded-xl border border-[#D5E0E6] bg-white p-2.5 focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15"
                 >
                   <option value="CONSULTATION">Phòng khám Lâm sàng</option>
                   <option value="LAB">Phòng Xét nghiệm</option>
@@ -568,14 +621,14 @@ export default function AdminFacilityPage() {
                 <button
                   type="button"
                   onClick={() => setShowRoomModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer"
+                  className="cursor-pointer rounded-xl px-4 py-2 text-xs font-bold text-[#4D626E] hover:bg-[#EDF2F5]"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-[#6E2582] hover:bg-[#561A66] shadow-md cursor-pointer disabled:opacity-50"
+                  className="cursor-pointer rounded-xl bg-[#0277A8] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#00577E] disabled:opacity-50"
                 >
                   {isSubmitting ? "Đang lưu..." : "Lưu lại"}
                 </button>
@@ -587,71 +640,75 @@ export default function AdminFacilityPage() {
 
       {/* Modal Doctor Profile */}
       {showDoctorModal && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 className="text-lg font-bold text-[#2B1D30]">
-              {editingDoctor ? "Chỉnh sửa Hồ sơ Bác sĩ" : "Gán Hồ sơ Bác sĩ mới (Sau khi tạo Account)"}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#0B2534]/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-md space-y-4 rounded-2xl border border-[#D5E0E6] bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-extrabold text-[#17242D]">
+              {editingDoctor
+                ? "Chỉnh sửa Hồ sơ Bác sĩ"
+                : "Gán Hồ sơ Bác sĩ mới (Sau khi tạo Account)"}
             </h3>
 
             {formError && (
-              <div className="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-semibold">
+              <div className="rounded-xl border border-[#BA1A1A]/30 bg-[#BA1A1A]/10 p-3 text-xs font-semibold text-[#BA1A1A]">
                 {formError}
               </div>
             )}
 
             <form onSubmit={handleSaveDoctor} className="space-y-3 text-xs">
               <div>
-                <label className="block font-bold text-[#2B1D30] mb-1">Mã Tài khoản (User ID từ Identity)</label>
+                <label className="mb-1 block font-bold text-[#17242D]">
+                  Mã Tài khoản (User ID từ Identity)
+                </label>
                 <input
                   type="text"
                   disabled={!!editingDoctor}
                   value={docUserId}
                   onChange={(e) => setDocUserId(e.target.value)}
                   placeholder="VD: d0000001-0000-0000-0000-000000000001"
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-gray-50 focus:ring-2 focus:ring-purple-500 font-mono text-[11px] disabled:opacity-60"
+                  className="w-full rounded-xl border border-[#D5E0E6] bg-[#F5F8FA] p-2.5 font-mono text-[11px] focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15 disabled:opacity-60"
                   required
                 />
               </div>
               <div>
-                <label className="block font-bold text-[#2B1D30] mb-1">Họ và Tên Bác sĩ</label>
+                <label className="mb-1 block font-bold text-[#17242D]">Họ và Tên Bác sĩ</label>
                 <input
                   type="text"
                   value={docFullName}
                   onChange={(e) => setDocFullName(e.target.value)}
                   placeholder="VD: Nguyễn Văn An"
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg focus:ring-2 focus:ring-purple-500"
+                  className="w-full rounded-xl border border-[#D5E0E6] bg-white p-2.5 focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15"
                   required
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block font-bold text-[#2B1D30] mb-1">Học hàm / Học vị</label>
+                  <label className="mb-1 block font-bold text-[#17242D]">Học hàm / Học vị</label>
                   <input
                     type="text"
                     value={docTitle}
                     onChange={(e) => setDocTitle(e.target.value)}
                     placeholder="VD: BS. CKI"
-                    className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg focus:ring-2 focus:ring-purple-500"
+                    className="w-full rounded-xl border border-[#D5E0E6] bg-white p-2.5 focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15"
                   />
                 </div>
                 <div>
-                  <label className="block font-bold text-[#2B1D30] mb-1">Số CCHN</label>
+                  <label className="mb-1 block font-bold text-[#17242D]">Số CCHN</label>
                   <input
                     type="text"
                     value={docLicense}
                     onChange={(e) => setDocLicense(e.target.value)}
                     placeholder="VD: CCHN-012345"
-                    className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg focus:ring-2 focus:ring-purple-500 font-mono"
+                    className="w-full rounded-xl border border-[#D5E0E6] bg-white p-2.5 font-mono focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block font-bold text-[#2B1D30] mb-1">Khoa làm việc</label>
+                  <label className="mb-1 block font-bold text-[#17242D]">Khoa làm việc</label>
                   <select
                     value={docDeptCode}
                     onChange={(e) => setDocDeptCode(e.target.value)}
-                    className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg focus:ring-2 focus:ring-purple-500"
+                    className="w-full rounded-xl border border-[#D5E0E6] bg-white p-2.5 focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15"
                   >
                     <option value="">-- Chọn khoa --</option>
                     {(departments ?? []).map((d) => (
@@ -662,11 +719,11 @@ export default function AdminFacilityPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block font-bold text-[#2B1D30] mb-1">Phòng khám gán</label>
+                  <label className="mb-1 block font-bold text-[#17242D]">Phòng khám gán</label>
                   <select
                     value={docRoomId}
                     onChange={(e) => setDocRoomId(e.target.value)}
-                    className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg focus:ring-2 focus:ring-purple-500 font-mono"
+                    className="w-full rounded-xl border border-[#D5E0E6] bg-white p-2.5 font-mono focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15"
                   >
                     <option value="">-- Chọn phòng --</option>
                     {(rooms ?? []).map((r) => (
@@ -678,29 +735,38 @@ export default function AdminFacilityPage() {
                 </div>
               </div>
               <div>
-                <label className="block font-bold text-[#2B1D30] mb-1">Chuyên khoa sâu</label>
+                <label className="mb-1 block font-bold text-[#17242D]">Chuyên khoa sâu</label>
                 <input
                   type="text"
                   value={docSpec}
                   onChange={(e) => setDocSpec(e.target.value)}
                   placeholder="VD: Tim mạch, Nội tiết..."
-                  className="w-full p-2.5 border border-card-border rounded-lg bg-card-bg focus:ring-2 focus:ring-purple-500"
+                  className="w-full rounded-xl border border-[#D5E0E6] bg-white p-2.5 focus:border-[#0277A8] focus:ring-2 focus:ring-[#0277A8]/15"
                 />
               </div>
 
-              <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={docPrimary} onChange={e => setDocPrimary(e.target.checked)} />Bác sĩ nhận lịch mặc định của phòng. Khi có nhiều bác sĩ cùng phòng, chỉ chọn một người; bỏ chọn người cũ trước khi đổi.</label>
+              <label className="flex items-start gap-2 text-xs text-[#4D626E]">
+                <input
+                  type="checkbox"
+                  checked={docPrimary}
+                  onChange={(e) => setDocPrimary(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-[#087F6A]"
+                />
+                Bác sĩ nhận lịch mặc định của phòng. Khi có nhiều bác sĩ cùng phòng, chỉ chọn một
+                người; bỏ chọn người cũ trước khi đổi.
+              </label>
               <div className="flex items-center justify-end gap-2 pt-3">
                 <button
                   type="button"
                   onClick={() => setShowDoctorModal(false)}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer"
+                  className="cursor-pointer rounded-xl px-4 py-2 text-xs font-bold text-[#4D626E] hover:bg-[#EDF2F5]"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="px-4 py-2 rounded-xl text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 shadow-md cursor-pointer disabled:opacity-50"
+                  className="cursor-pointer rounded-xl bg-[#087F6A] px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-[#066554] disabled:opacity-50"
                 >
                   {isSubmitting ? "Đang lưu..." : "Lưu hồ sơ"}
                 </button>

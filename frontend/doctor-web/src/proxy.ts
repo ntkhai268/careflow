@@ -3,17 +3,22 @@ import { NextRequest, NextResponse } from "next/server";
 export function proxy(request: NextRequest) {
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const dev = process.env.NODE_ENV !== "production";
-  const apiOrigin = new URL(process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api").origin;
+  const apiOrigin = new URL(
+    process.env.NEXT_PUBLIC_API_URL || "https://api.careflow-demo.online"
+  ).origin;
   const wsOrigin = apiOrigin.replace(/^http/, "ws");
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ""}`,
-    "style-src 'self' 'unsafe-inline'", // Existing React style attributes and chart layouts.
+    "style-src 'self' 'unsafe-inline'",
     "img-src 'self' blob: data:",
     "media-src 'self' blob:",
     "font-src 'self'",
-    `connect-src 'self' ${apiOrigin} ${wsOrigin}${dev ? " ws://localhost:* http://localhost:*" : ""}`,
-    "object-src 'none'", "base-uri 'self'", "form-action 'self'", "frame-ancestors 'none'",
+    `connect-src 'self' ${apiOrigin} ${wsOrigin} https://api.careflow-demo.online http://localhost:8080 ws://localhost:8080${dev ? " ws://localhost:* http://localhost:*" : ""}`,
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
   ].join("; ");
   const headers = new Headers(request.headers);
   headers.set("x-nonce", nonce);

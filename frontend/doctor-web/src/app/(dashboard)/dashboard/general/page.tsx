@@ -10,6 +10,7 @@ import { appointmentApi } from "@/lib/appointment-api";
 import { getErrorMessage } from "@/lib/error-utils";
 import Link from "next/link";
 import { patientAge, visitTime } from "@/lib/patient-display";
+import { QueueStatusDot } from "@/components/queue/QueueBadges";
 
 interface DisplayQueuePatient {
   entryId: string;
@@ -23,27 +24,6 @@ interface DisplayQueuePatient {
   time: string;
 }
 
-function StatusDot({ status }: { status: string }) {
-  const config: Record<string, { color: string; label: string; textClass: string }> = {
-    WAITING:     { color: "#F59E0B", label: "Chờ khám", textClass: "text-amber-600 font-medium" },
-    PENDING:     { color: "#F59E0B", label: "Chờ khám", textClass: "text-amber-600 font-medium" },
-    CHECKED_IN:  { color: "#3B82F6", label: "Đã check-in", textClass: "text-blue-600 font-medium" },
-    QUEUED:      { color: "#3B82F6", label: "Đang chờ gọi", textClass: "text-blue-600 font-medium" },
-    CALLED:      { color: "#F59E0B", label: "Đã gọi số", textClass: "text-amber-600 font-semibold" },
-    IN_PROGRESS: { color: "#8B5CF6", label: "Đang khám", textClass: "text-purple-600 font-semibold" },
-    CONFIRMED:   { color: "#3B82F6", label: "Đã tiếp nhận", textClass: "text-blue-600 font-medium" },
-    COMPLETED:   { color: "#10B981", label: "Hoàn tất", textClass: "text-emerald-600 font-medium" },
-    CANCELLED:   { color: "#EF4444", label: "Đã huỷ", textClass: "text-rose-600 font-medium" },
-  };
-  const cfg = config[status] || { color: "#94A3B8", label: status, textClass: "text-gray-600 font-medium" };
-  return (
-    <span className={`inline-flex items-center gap-1.5 text-[11px] leading-none ${cfg.textClass}`}>
-      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0 inline-block align-middle" style={{ backgroundColor: cfg.color }} />
-      <span className="leading-none">{cfg.label}</span>
-    </span>
-  );
-}
-
 export default function DashboardGeneralPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -53,7 +33,7 @@ export default function DashboardGeneralPage() {
   const [queuePatients, setQueuePatients] = useState<DisplayQueuePatient[] | null>(null);
   const [recentCompleted, setRecentCompleted] = useState<ConsultationResponse[] | null>(null);
   const [patientNames, setPatientNames] = useState<Record<string, string>>({});
-  const [waitingCount, setWaitingCount] = useState<number|null>(null);
+  const [waitingCount, setWaitingCount] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeNotice, setActiveNotice] = useState<{
     show: boolean;
@@ -81,19 +61,23 @@ export default function DashboardGeneralPage() {
             const labRes = await queueApi.getServicePointActive("LAB-HEMATOLOGY-01");
             const activeEntries = labRes.data?.entries || [];
             setWaitingCount(activeEntries.length);
-            setQueuePatients(activeEntries.map((e) => ({
-              entryId: e.entryId,
-              queueNo: e.queueNumber,
-              appointmentId: e.appointmentId,
-              patientId: e.patientId,
-              name: `Bệnh nhân (${e.patientId.slice(0, 6)})`,
-              age: null,
-              department: "Khu Xét nghiệm Cận lâm sàng",
-              status: e.queueStatus,
-              time: visitTime(e.scheduledStartAt)
-            })));
-          } catch(error) {
-            setWaitingCount(null);setQueuePatients(null);throw error;
+            setQueuePatients(
+              activeEntries.map((e) => ({
+                entryId: e.entryId,
+                queueNo: e.queueNumber,
+                appointmentId: e.appointmentId,
+                patientId: e.patientId,
+                name: e.patientName || `Bệnh nhân (${e.patientId.slice(0, 6)})`,
+                age: null,
+                department: "Khu Xét nghiệm Cận lâm sàng",
+                status: e.queueStatus,
+                time: visitTime(e.scheduledStartAt),
+              }))
+            );
+          } catch (error) {
+            setWaitingCount(null);
+            setQueuePatients(null);
+            throw error;
           }
           setRecentCompleted([]);
         } else if (isStaff) {
@@ -101,29 +85,33 @@ export default function DashboardGeneralPage() {
             const staffRes = await queueApi.getServicePointActive("PHARMACY-MAIN-01");
             const activeEntries = staffRes.data?.entries || [];
             setWaitingCount(activeEntries.length);
-            setQueuePatients(activeEntries.map((e) => ({
-              entryId: e.entryId,
-              queueNo: e.queueNumber,
-              appointmentId: e.appointmentId,
-              patientId: e.patientId,
-              name: `Bệnh nhân (${e.patientId.slice(0, 6)})`,
-              age: null,
-              department: "Quầy Phát thuốc",
-              status: e.queueStatus,
-              time: visitTime(e.scheduledStartAt)
-            })));
-          } catch(error) {
-            setWaitingCount(null);setQueuePatients(null);throw error;
+            setQueuePatients(
+              activeEntries.map((e) => ({
+                entryId: e.entryId,
+                queueNo: e.queueNumber,
+                appointmentId: e.appointmentId,
+                patientId: e.patientId,
+                name: e.patientName || `Bệnh nhân (${e.patientId.slice(0, 6)})`,
+                age: null,
+                department: "Quầy Phát thuốc",
+                status: e.queueStatus,
+                time: visitTime(e.scheduledStartAt),
+              }))
+            );
+          } catch (error) {
+            setWaitingCount(null);
+            setQueuePatients(null);
+            throw error;
           }
           setRecentCompleted([]);
         } else {
           const consRes = await consultationApi.getTodayByDoctor(user.id);
           const todayCons = consRes.data || [];
-          const completedList = todayCons.filter(c => c.status === "COMPLETED");
+          const completedList = todayCons.filter((c) => c.status === "COMPLETED");
           setRecentCompleted(completedList);
 
           const pNames: Record<string, string> = {};
-          const pAges: Record<string, number|null> = {};
+          const pAges: Record<string, number | null> = {};
 
           try {
             const contextRes = await appointmentApi.getClinicalContext();
@@ -133,7 +121,6 @@ export default function DashboardGeneralPage() {
             const activeEntries = queueRes.data?.entries || [];
             setWaitingCount(activeEntries.length);
 
-            // Fetch patient names for queue entries
             for (const e of activeEntries) {
               if (!pNames[e.patientId]) {
                 try {
@@ -141,22 +128,24 @@ export default function DashboardGeneralPage() {
                   if (pRes.data?.fullName) pNames[e.patientId] = pRes.data.fullName;
                   pAges[e.patientId] = patientAge(pRes.data?.dateOfBirth);
                 } catch {
-                  pNames[e.patientId] = `Bệnh nhân (${e.patientId.slice(0, 8)})`;
+                  pNames[e.patientId] = e.patientName || `Bệnh nhân (${e.patientId.slice(0, 8)})`;
                 }
               }
             }
 
-            setQueuePatients(activeEntries.map((e) => ({
-              entryId: e.entryId,
-              queueNo: e.queueNumber,
-              appointmentId: e.appointmentId,
-              patientId: e.patientId,
-              name: pNames[e.patientId] || `Bệnh nhân (${e.patientId.slice(0, 8)})`,
-              age: pAges[e.patientId] ?? null,
-              department: queueRes.data?.departmentName || "Chưa xác định khoa",
-              status: e.queueStatus,
-              time: visitTime(e.scheduledStartAt)
-            })));
+            setQueuePatients(
+              activeEntries.map((e) => ({
+                entryId: e.entryId,
+                queueNo: e.queueNumber,
+                appointmentId: e.appointmentId,
+                patientId: e.patientId,
+                name: pNames[e.patientId] || e.patientName || `Bệnh nhân (${e.patientId.slice(0, 8)})`,
+                age: pAges[e.patientId] ?? null,
+                department: queueRes.data?.departmentName || "Chưa xác định khoa",
+                status: e.queueStatus,
+                time: visitTime(e.scheduledStartAt),
+              }))
+            );
           } catch (error) {
             setWaitingCount(null);
             setQueuePatients(null);
@@ -176,8 +165,11 @@ export default function DashboardGeneralPage() {
           setPatientNames(pNames);
         }
       } catch (error) {
-        setWaitingCount(null);setRecentCompleted(null);
-        setErrorMessage(getErrorMessage(error, "Không thể tải dữ liệu khám bệnh. Vui lòng thử lại."));
+        setWaitingCount(null);
+        setRecentCompleted(null);
+        setErrorMessage(
+          getErrorMessage(error, "Không thể tải dữ liệu khám bệnh. Vui lòng thử lại.")
+        );
         setQueuePatients(null);
       } finally {
         setIsLoading(false);
@@ -189,8 +181,8 @@ export default function DashboardGeneralPage() {
   const handleCallPatient = async (patientId: string, appointmentId: string | null) => {
     if (!user) return;
 
-    const queueEntry = (queuePatients ?? []).find(entry =>
-      entry.patientId === patientId && entry.appointmentId === appointmentId
+    const queueEntry = (queuePatients ?? []).find(
+      (entry) => entry.patientId === patientId && entry.appointmentId === appointmentId
     );
     const entryId = queueEntry?.entryId;
     const entryQuery = entryId ? `?entryId=${encodeURIComponent(entryId)}` : "";
@@ -214,24 +206,28 @@ export default function DashboardGeneralPage() {
       }
 
       const consRes = await consultationApi.getByDoctor(user.id);
-      const activeCons = (consRes.data || []).find(c => c.status === "IN_PROGRESS");
-      const isSameConsultation = activeCons && (
-        activeCons.queueEntryId === entryId || (!!appointmentId && activeCons.appointmentId === appointmentId)
-      );
+      const activeCons = (consRes.data || []).find((c) => c.status === "IN_PROGRESS");
+      const isSameConsultation =
+        activeCons &&
+        (activeCons.queueEntryId === entryId ||
+          (!!appointmentId && activeCons.appointmentId === appointmentId));
 
       if (activeCons && !isSameConsultation) {
         setActiveNotice({
           show: true,
-          message: "Bạn đang có một ca khám chưa hoàn tất. Vào ca khám để xử lý trước khi gọi bệnh nhân khác.",
+          message:
+            "Bạn đang có một ca khám chưa hoàn tất. Vào ca khám để xử lý trước khi gọi bệnh nhân khác.",
           consultationId: activeCons.id,
         });
         if (typeof window !== "undefined") {
-          window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
-            detail: {
-              text: "Bác sĩ hiện tại đang có một ca khám chưa hoàn tất. Vui lòng hoàn thành lượt khám hiện tại trước khi gọi bệnh nhân khác.",
-              consultationId: activeCons.id
-            }
-          }));
+          window.dispatchEvent(
+            new CustomEvent("careflow:ai-notify", {
+              detail: {
+                text: "Bác sĩ hiện tại đang có một ca khám chưa hoàn tất. Vui lòng hoàn thành lượt khám hiện tại trước khi gọi bệnh nhân khác.",
+                consultationId: activeCons.id,
+              },
+            })
+          );
         }
         setIsCalling(false);
         return;
@@ -239,9 +235,12 @@ export default function DashboardGeneralPage() {
 
       if (queueEntry.status === "CHECKED_IN" || queueEntry.status === "QUEUED") {
         await queueApi.callEntry(entryId);
-        setQueuePatients(current => current?.map(entry =>
-          entry.entryId === entryId ? { ...entry, status: "CALLED" } : entry
-        ) ?? null);
+        setQueuePatients(
+          (current) =>
+            current?.map((entry) =>
+              entry.entryId === entryId ? { ...entry, status: "CALLED" } : entry
+            ) ?? null
+        );
         return;
       }
 
@@ -250,8 +249,13 @@ export default function DashboardGeneralPage() {
         return;
       }
 
-      const created = await consultationApi.createConsultation({ appointmentId,queueEntryId:entryId,patientId,doctorId:user.id });
-      const consultation=created.data;
+      const created = await consultationApi.createConsultation({
+        appointmentId,
+        queueEntryId: entryId,
+        patientId,
+        doctorId: user.id,
+      });
+      const consultation = created.data;
       if (queueEntry.status === "CALLED") {
         await queueApi.startEntry(entryId);
       }
@@ -259,19 +263,23 @@ export default function DashboardGeneralPage() {
     } catch (err: unknown) {
       const msg = getErrorMessage(err, "Bác sĩ hiện tại đang có một ca khám chưa hoàn tất.");
       if (typeof window !== "undefined") {
-        window.dispatchEvent(new CustomEvent("careflow:ai-notify", {
-          detail: { text: msg }
-        }));
+        window.dispatchEvent(
+          new CustomEvent("careflow:ai-notify", {
+            detail: { text: msg },
+          })
+        );
       }
-    } finally { setIsCalling(false); }
+    } finally {
+      setIsCalling(false);
+    }
   };
 
   const safeQueuePatients = queuePatients ?? [];
-  const filteredQueuePatients = safeQueuePatients.filter(p => 
-    !searchQuery.trim() || p.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
+  const filteredQueuePatients = safeQueuePatients.filter(
+    (p) => !searchQuery.trim() || p.name.toLowerCase().includes(searchQuery.toLowerCase().trim())
   );
-  const nextCallablePatient = filteredQueuePatients.find(patient =>
-    patient.status === "CHECKED_IN" || patient.status === "QUEUED"
+  const nextCallablePatient = filteredQueuePatients.find(
+    (patient) => patient.status === "CHECKED_IN" || patient.status === "QUEUED"
   );
   const actionLabel = (status: string) => {
     if (status === "CALLED") return "Bắt đầu khám";
@@ -279,42 +287,71 @@ export default function DashboardGeneralPage() {
     return "Gọi số";
   };
 
+  const displayDoctorTitle =
+    user?.title?.split(" - ")[0] ||
+    user?.fullName ||
+    user?.username ||
+    (isLabTech ? "Kỹ thuật viên" : isStaff ? "Nhân viên Tiếp nhận & Dược" : "Bác sĩ");
+  const displayDept = user?.department || user?.title?.split(" - ")[1] || "";
+
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white border border-[#D5E0E6] rounded-xl px-5 py-4 shadow-[0_2px_8px_rgba(23,36,45,0.03)]">
         <div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">
-            Xin chào, {user?.title || user?.username || (isLabTech ? "Kỹ thuật viên" : isStaff ? "Nhân viên Tiếp nhận & Dược" : "Bác sĩ")}
-          </h1>
-          <p className="mt-0.5 text-xs text-gray-400">
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h1 className="text-xl font-bold text-[#17242D] tracking-tight">
+              Xin chào, {displayDoctorTitle}
+            </h1>
+            {displayDept && (
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-[#DDF3FC] text-[#00577E] border border-[#8BD2EE]/50">
+                {displayDept}
+              </span>
+            )}
+          </div>
+          <p className="mt-1 text-xs text-[#4D626E]">
             {isLabTech
               ? "Tổng quan hoạt động thực hiện Cận lâm sàng hôm nay"
               : isStaff
-              ? "Tổng quan hoạt động tiếp nhận & phát thuốc hôm nay"
-              : "Tổng quan hoạt động khám bệnh hôm nay"}
+                ? "Tổng quan hoạt động tiếp nhận & phát thuốc hôm nay"
+                : "Tổng quan hoạt động khám chữa bệnh lâm sàng trong ca trực hôm nay"}
           </p>
         </div>
-        <p className="text-xs text-gray-400">
-          {new Date().toLocaleDateString("vi-VN", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
-        </p>
+        <div className="flex items-center gap-2 text-xs font-medium text-[#667985] bg-[#F5F8FA] px-3 py-1.5 rounded-lg border border-[#D5E0E6]">
+          <span>
+            {new Date().toLocaleDateString("vi-VN", {
+              weekday: "long",
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+            })}
+          </span>
+        </div>
       </div>
 
       {/* Informational Compact Notice Banner for Active Consultation */}
       {activeNotice.show && (
-        <div className="bg-[#EEF2FF] border-l-4 border-[#6366F1] px-3.5 py-2.5 shadow-xs flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-1 duration-200 rounded-none text-slate-700">
+        <div className="bg-[#DDF3FC] border-l-4 border-[#0277A8] px-4 py-3 shadow-xs flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-1 duration-200 rounded-xl text-[#17242D]">
           <div className="flex items-center gap-2.5">
-            <svg className="w-4 h-4 text-[#6366F1] flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-4 h-4 text-[#0277A8] flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
-            <p className="text-xs font-medium leading-normal">
-              {activeNotice.message}
-            </p>
+            <p className="text-xs font-medium leading-normal">{activeNotice.message}</p>
           </div>
           {activeNotice.consultationId && (
             <button
               onClick={() => router.push(`/consultation/${activeNotice.consultationId}`)}
-              className="px-2.5 py-1 bg-[#6366F1] hover:bg-[#4F46E5] text-white text-[11px] font-bold rounded-lg transition-colors whitespace-nowrap"
+              className="px-3 py-1.5 bg-[#0277A8] hover:bg-[#00577E] text-white text-[11px] font-bold rounded-lg transition-colors whitespace-nowrap cursor-pointer"
             >
               Vào ca khám →
             </button>
@@ -324,158 +361,211 @@ export default function DashboardGeneralPage() {
 
       {/* Error */}
       {errorMessage && (
-        <div className="flex items-center gap-2 px-4 py-2.5 bg-red-50 border border-red-100 rounded-xl text-xs font-semibold text-red-600">
-          <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        <div className="flex items-center gap-2 px-4 py-3 bg-[#FFDAD6] border border-[#BA1A1A]/25 rounded-xl text-xs font-semibold text-[#BA1A1A]">
+          <svg
+            className="w-4 h-4 flex-shrink-0"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           {errorMessage}
         </div>
       )}
 
-      {/* Stat Cards */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+      {/* Stat Cards (No decorative icons inside stat cards per design.md, unified clean clinical surface) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {/* Waiting */}
-        <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 shadow-sm flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-50">
-            <svg className="w-5 h-5 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
+        <div className="bg-white rounded-xl border border-[#D5E0E6] px-5 py-4 shadow-[0_2px_8px_rgba(23,36,45,0.03)] flex items-center justify-between">
           <div>
-            <p className="text-[10px] text-gray-400 font-medium">Đang chờ</p>
-            <p className="text-lg font-bold text-gray-900">{waitingCount ?? "—"}</p>
+            <p className="text-[11px] text-[#4D626E] font-semibold uppercase tracking-wider">
+              Bệnh nhân đang chờ
+            </p>
+            <p className="text-2xl font-extrabold text-[#17242D] font-mono mt-1">
+              {waitingCount ?? "—"}
+            </p>
           </div>
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#DDF3FC] text-[#00577E]">
+            Hàng đợi thực tế
+          </span>
         </div>
 
         {/* Completed */}
-        <div className="bg-white rounded-xl border border-gray-200 px-4 py-3 shadow-sm flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50">
-            <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
+        <div className="bg-white rounded-xl border border-[#D5E0E6] px-5 py-4 shadow-[0_2px_8px_rgba(23,36,45,0.03)] flex items-center justify-between">
           <div>
-            <p className="text-[10px] text-gray-400 font-medium">Hoàn tất</p>
-            <p className="text-lg font-bold text-gray-900">{isStaff||isLabTech||recentCompleted===null?"—":recentCompleted.length}</p>
+            <p className="text-[11px] text-[#4D626E] font-semibold uppercase tracking-wider">
+              Đã hoàn tất hôm nay
+            </p>
+            <p className="text-2xl font-extrabold text-[#1B7F4B] font-mono mt-1">
+              {isStaff || isLabTech || recentCompleted === null ? "—" : recentCompleted.length}
+            </p>
           </div>
+          <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#DDF4E7] text-[#1B7F4B]">
+            Ca hoàn thành
+          </span>
         </div>
 
         {/* Queue shortcut card depending on Role */}
-        <div className="rounded-xl px-4 py-3 shadow-sm col-span-2 sm:col-span-1 hover:shadow-md transition-shadow"
-          style={{ background: "linear-gradient(135deg, #6E2582 0%, #3B82F6 100%)" }}>
-          <Link href={isLabTech ? "/lab/queue" : isStaff ? "/staff/pharmacy" : "/dashboard/queue"} className="flex items-center gap-3 w-full">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/20">
-              <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
-              </svg>
-            </div>
-            <div>
-              <p className="text-[10px] text-white/70 font-medium">
-                {isLabTech ? "Khu Cận lâm sàng" : isStaff ? "Quầy Phát thuốc" : "Phòng khám"}
-              </p>
-              <p className="text-xs font-bold text-white">
-                {isLabTech ? "Đến hàng đợi CLS →" : isStaff ? "Hàng đợi Phát thuốc →" : "Vào hàng đợi →"}
-              </p>
-            </div>
-          </Link>
-        </div>
+        <Link
+          href={isLabTech ? "/lab/queue" : isStaff ? "/staff/pharmacy" : "/dashboard/queue"}
+          className="rounded-xl px-5 py-4 shadow-[0_4px_12px_rgba(2,119,168,0.16)] hover:shadow-[0_6px_16px_rgba(2,119,168,0.24)] transition-all flex items-center justify-between group"
+          style={{ background: "linear-gradient(135deg, #0277A8 0%, #00577E 100%)" }}
+        >
+          <div>
+            <p className="text-[11px] text-[#8BD2EE] font-semibold uppercase tracking-wider">
+              {isLabTech
+                ? "Điều phối Cận lâm sàng"
+                : isStaff
+                  ? "Điều phối Quầy Dược"
+                  : "Điều phối Khám 3 Làn"}
+            </p>
+            <p className="text-sm font-bold text-white mt-1 group-hover:translate-x-0.5 transition-transform">
+              {isLabTech
+                ? "Đến hàng đợi CLS →"
+                : isStaff
+                  ? "Hàng đợi Phát thuốc →"
+                  : "Mở bảng hàng đợi 3 làn →"}
+            </p>
+          </div>
+          <div className="h-8 w-8 rounded-lg bg-white/15 flex items-center justify-center text-white font-bold">
+            →
+          </div>
+        </Link>
       </div>
 
       {/* Two column layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
         {/* Left: Queue Table */}
-        <div className="lg:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-[480px]">
-          <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 flex-wrap gap-2 flex-shrink-0">
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-bold text-gray-800">
-                {isLabTech ? "Hàng đợi Cận lâm sàng" : isStaff ? "Hàng đợi Phát thuốc" : "Hàng đợi khám cần xử lý"}
+        <div className="lg:col-span-2 bg-white rounded-xl border border-[#D5E0E6] shadow-[0_2px_8px_rgba(23,36,45,0.03)] flex flex-col h-[480px]">
+          <div className="flex items-center justify-between px-5 py-3.5 border-b border-[#D5E0E6] flex-wrap gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2.5">
+              <h2 className="text-sm font-bold text-[#17242D]">
+                {isLabTech
+                  ? "Hàng đợi Cận lâm sàng"
+                  : isStaff
+                    ? "Hàng đợi Phát thuốc"
+                    : "Hàng đợi khám cần xử lý"}
               </h2>
               {(waitingCount ?? 0) > 0 && (
-                <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-red-100 text-red-600 text-[10px] font-bold">
+                <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-[#DDF3FC] text-[#00577E] text-[10px] font-bold">
                   {waitingCount}
                 </span>
               )}
             </div>
-            
+
             {/* Search Input Filter for Queue */}
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className="relative">
                 <input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Tìm bệnh nhân theo tên..."
-                  className="w-44 border border-gray-200 bg-gray-50 px-2.5 py-1 text-xs text-gray-800 rounded-lg focus:bg-white focus:border-indigo-400 focus:outline-none transition-all placeholder:text-gray-400"
+                  className="w-48 border border-[#D5E0E6] bg-[#F5F8FA] px-3 py-1.5 text-xs text-[#17242D] rounded-lg focus:bg-white focus:border-[#0277A8] focus:outline-none transition-all placeholder:text-[#667985]"
                 />
                 {searchQuery && (
                   <button
                     onClick={() => setSearchQuery("")}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 text-xs font-bold"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#667985] hover:text-[#17242D] text-xs font-bold"
                   >
                     ✕
                   </button>
                 )}
               </div>
 
-              <Link href={isLabTech ? "/lab/queue" : isStaff ? "/staff/pharmacy" : "/dashboard/queue"}
-                className="text-[11px] font-semibold text-indigo-500 hover:text-indigo-700 transition-colors flex items-center gap-0.5 whitespace-nowrap">
+              <Link
+                href={isLabTech ? "/lab/queue" : isStaff ? "/staff/pharmacy" : "/dashboard/queue"}
+                className="text-[11px] font-bold text-[#0277A8] hover:text-[#00577E] transition-colors flex items-center gap-0.5 whitespace-nowrap"
+              >
                 Xem tất cả
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5l7 7-7 7"
+                  />
                 </svg>
               </Link>
             </div>
           </div>
 
-          {/* Table Container with Mouse Scroll Wheel */}
+          {/* Table Container */}
           <div className="overflow-x-auto overflow-y-auto flex-1 custom-scrollbar">
             <table className="w-full min-w-[600px] text-left text-xs">
-              <thead className="sticky top-0 z-10 bg-indigo-50 border-b border-gray-100 shadow-xs">
+              <thead className="sticky top-0 z-10 bg-[#EDF2F5] border-b border-[#D5E0E6]">
                 <tr>
-                  <th className="px-5 py-3 font-semibold text-gray-600 w-14">STT</th>
-                  <th className="px-5 py-3 font-semibold text-gray-600">Bệnh nhân</th>
-                  <th className="px-5 py-3 font-semibold text-gray-600 w-20">Tuổi</th>
-                  <th className="px-5 py-3 font-semibold text-gray-600 w-24">Giờ vào</th>
-                  <th className="px-5 py-3 font-semibold text-gray-600 w-32">Trạng thái</th>
-                  <th className="px-5 py-3 font-semibold text-gray-600 w-28 text-right">Thao tác</th>
+                  <th className="px-5 py-3 font-bold text-[#4D626E] uppercase tracking-wider text-[10px] w-16">
+                    STT
+                  </th>
+                  <th className="px-5 py-3 font-bold text-[#4D626E] uppercase tracking-wider text-[10px]">
+                    Bệnh nhân
+                  </th>
+                  <th className="px-5 py-3 font-bold text-[#4D626E] uppercase tracking-wider text-[10px] w-20">
+                    Tuổi
+                  </th>
+                  <th className="px-5 py-3 font-bold text-[#4D626E] uppercase tracking-wider text-[10px] w-24">
+                    Giờ vào
+                  </th>
+                  <th className="px-5 py-3 font-bold text-[#4D626E] uppercase tracking-wider text-[10px] w-32">
+                    Trạng thái
+                  </th>
+                  <th className="px-5 py-3 font-bold text-[#4D626E] uppercase tracking-wider text-[10px] w-32 text-right">
+                    Thao tác
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody className="divide-y divide-[#EDF2F5]">
                 {isLoading ? (
                   Array.from({ length: 4 }).map((_, i) => (
-                    <tr key={i} className="border-b border-gray-50">
-                      {["w-10", "w-36", "w-10", "w-16", "w-20", "w-16"].map((w, j) => (
+                    <tr key={i} className="border-b border-[#EDF2F5]">
+                      {["w-10", "w-36", "w-10", "w-16", "w-20", "w-24"].map((w, j) => (
                         <td key={j} className="px-5 py-3.5">
-                          <div className={`h-3 ${w} rounded bg-gray-100 animate-pulse`} />
+                          <div className={`h-3 ${w} rounded bg-[#EDF2F5] animate-pulse`} />
                         </td>
                       ))}
                     </tr>
                   ))
                 ) : filteredQueuePatients.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-5 py-12 text-center text-gray-400 text-xs italic">
-                      {searchQuery ? `Không tìm thấy bệnh nhân nào khớp với "${searchQuery}"` : "Hiện chưa có bệnh nhân nào trong hàng đợi khám"}
+                    <td colSpan={6} className="px-5 py-12 text-center text-[#667985] text-xs">
+                      {searchQuery
+                        ? `Không tìm thấy bệnh nhân nào khớp với "${searchQuery}"`
+                        : "Hiện chưa có bệnh nhân nào trong hàng đợi khám"}
                     </td>
                   </tr>
                 ) : (
                   filteredQueuePatients.map((patient) => (
-                    <tr key={patient.queueNo}
-                      className="hover:bg-indigo-50 cursor-pointer transition-colors"
-                      onClick={() => handleCallPatient(patient.patientId, patient.appointmentId)}>
-                      <td className="px-5 py-3 font-mono font-bold text-gray-700">{patient.queueNo}</td>
+                    <tr
+                      key={patient.queueNo}
+                      className="hover:bg-[#DDF3FC]/35 cursor-pointer transition-colors"
+                      onClick={() => handleCallPatient(patient.patientId, patient.appointmentId)}
+                    >
+                      <td className="px-5 py-3 font-mono font-bold text-[#00577E]">
+                        {patient.queueNo}
+                      </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center gap-2.5">
-                          <div className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white flex-shrink-0"
-                            style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}>
+                          <div
+                            className="flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold text-white flex-shrink-0"
+                            style={{ background: "linear-gradient(135deg, #0277A8, #087F6A)" }}
+                          >
                             {patient.name.charAt(0)}
                           </div>
-                          <span className="font-semibold text-gray-800">{patient.name}</span>
+                          <span className="font-semibold text-[#17242D]">{patient.name}</span>
                         </div>
                       </td>
-                      <td className="px-5 py-3 text-gray-500">{patient.age ?? "—"}</td>
-                      <td className="px-5 py-3 text-gray-500 font-mono">{patient.time}</td>
-                      <td className="px-5 py-3"><StatusDot status={patient.status} /></td>
+                      <td className="px-5 py-3 text-[#4D626E] font-mono">{patient.age ?? "—"}</td>
+                      <td className="px-5 py-3 text-[#4D626E] font-mono">{patient.time}</td>
+                      <td className="px-5 py-3">
+                        <QueueStatusDot status={patient.status} />
+                      </td>
                       <td className="px-5 py-3 text-right">
                         <button
                           type="button"
@@ -484,7 +574,7 @@ export default function DashboardGeneralPage() {
                             handleCallPatient(patient.patientId, patient.appointmentId);
                           }}
                           disabled={isCalling}
-                          className="whitespace-nowrap rounded border border-gray-200 bg-white px-2.5 py-1.5 text-[10px] font-semibold text-[#2B1D30] hover:border-purple-200 hover:bg-purple-50 hover:text-[#6E2582] disabled:opacity-50"
+                          className="w-28 inline-flex items-center justify-center whitespace-nowrap rounded-lg border border-[#D5E0E6] bg-white px-2.5 py-1.5 text-[11px] font-semibold text-[#17242D] hover:border-[#0277A8] hover:bg-[#DDF3FC]/60 hover:text-[#00577E] disabled:opacity-50 transition-colors cursor-pointer"
                         >
                           {actionLabel(patient.status)}
                         </button>
@@ -497,18 +587,26 @@ export default function DashboardGeneralPage() {
           </div>
 
           {/* Footer inside Left Card: Call Next Patient Button */}
-          <div className="px-5 py-3 border-t border-gray-100 bg-gray-50/80 rounded-b-xl flex justify-end flex-shrink-0">
+          <div className="px-5 py-3 border-t border-[#D5E0E6] bg-[#F5F8FA] rounded-b-xl flex justify-end flex-shrink-0">
             <button
               onClick={() => {
-                if (nextCallablePatient) handleCallPatient(nextCallablePatient.patientId, nextCallablePatient.appointmentId);
+                if (nextCallablePatient)
+                  handleCallPatient(
+                    nextCallablePatient.patientId,
+                    nextCallablePatient.appointmentId
+                  );
                 else setErrorMessage("Hàng đợi khám hiện tại rỗng.");
               }}
               disabled={isCalling || isLoading || !nextCallablePatient}
-              className="flex items-center gap-2 text-white px-4 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50 shadow-sm hover:shadow-md cursor-pointer"
-              style={{ background: "linear-gradient(135deg, #6366F1 0%, #3B82F6 100%)" }}
+              className="flex items-center gap-2 text-white px-4 py-2 rounded-xl text-xs font-bold transition-all disabled:opacity-50 shadow-sm hover:bg-[#00577E] bg-[#0277A8] cursor-pointer"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"
+                />
               </svg>
               {isCalling ? "Đang gọi..." : "Gọi bệnh nhân tiếp theo"}
             </button>
@@ -516,44 +614,59 @@ export default function DashboardGeneralPage() {
         </div>
 
         {/* Right: Recently Completed (Synced height with left panel) */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col h-[480px]">
-          <div className="px-5 py-3.5 border-b border-gray-100 flex-shrink-0">
-            <h2 className="text-sm font-bold text-gray-800">Vừa hoàn tất</h2>
-            <p className="text-[10px] text-gray-400 mt-0.5">Ca khám hoàn thành hôm nay</p>
+        <div className="bg-white rounded-xl border border-[#D5E0E6] shadow-[0_2px_8px_rgba(23,36,45,0.03)] flex flex-col h-[480px]">
+          <div className="px-5 py-3.5 border-b border-[#D5E0E6] flex-shrink-0">
+            <h2 className="text-sm font-bold text-[#17242D]">Vừa hoàn tất</h2>
+            <p className="text-[11px] text-[#667985] mt-0.5">Ca khám hoàn thành trong ngày hôm nay</p>
           </div>
-          <div className="p-4 space-y-2 flex-1 overflow-y-auto custom-scrollbar">
+          <div className="p-4 space-y-2.5 flex-1 overflow-y-auto custom-scrollbar">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="p-3 rounded-xl border border-gray-100 bg-gray-50 space-y-2">
-                  <div className="h-3 w-28 rounded bg-gray-200 animate-pulse" />
-                  <div className="h-2.5 w-40 rounded bg-gray-100 animate-pulse" />
+                <div
+                  key={i}
+                  className="p-3 rounded-xl border border-[#EDF2F5] bg-[#F5F8FA] space-y-2"
+                >
+                  <div className="h-3 w-28 rounded bg-[#D5E0E6] animate-pulse" />
+                  <div className="h-2.5 w-40 rounded bg-[#EDF2F5] animate-pulse" />
                 </div>
               ))
             ) : (recentCompleted ?? []).length === 0 ? (
               <div className="text-center py-12">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-100 mx-auto mb-2">
-                  <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#EDF2F5] mx-auto mb-2.5">
+                  <svg
+                    className="w-5 h-5 text-[#667985]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={1.6}
+                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
                   </svg>
                 </div>
-                <p className="text-[11px] text-gray-400 italic">Chưa có ca khám nào hoàn tất hôm nay</p>
+                <p className="text-xs text-[#667985]">Chưa có ca khám nào hoàn tất hôm nay</p>
               </div>
             ) : (
               (recentCompleted ?? []).map((c) => (
-                <div key={c.id}
-                  className="p-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-indigo-50 hover:border-indigo-100 transition-colors">
+                <div
+                  key={c.id}
+                  className="p-3.5 rounded-xl border border-[#D5E0E6] bg-[#F5F8FA] hover:bg-[#DDF3FC]/35 hover:border-[#8BD2EE] transition-colors"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-gray-800 text-xs truncate">
+                      <p className="font-bold text-[#17242D] text-xs truncate">
                         {patientNames[c.patientId] || "Bệnh nhân"}
                       </p>
-                      <p className="text-[10px] text-gray-400 mt-0.5 truncate">
+                      <p className="text-[11px] text-[#4D626E] mt-0.5 truncate">
                         {c.diagnosis || "Chẩn đoán chưa cập nhật"}
                       </p>
                     </div>
-                    <span className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-semibold">
-                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
-                      Xong
+                    <span className="flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#DDF4E7] text-[#1B7F4B] text-[10px] font-bold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-[#1B7F4B] inline-block" />
+                      Hoàn tất
                     </span>
                   </div>
                 </div>

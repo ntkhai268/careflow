@@ -47,7 +47,7 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-[#F1F5F9]">
+      <div className="flex h-screen items-center justify-center bg-[#F5F8FA]">
         <LoadingSpinner size="lg" />
       </div>
     );
@@ -73,14 +73,17 @@ export default function DashboardLayout({
   } else if (pathname.startsWith("/staff") && !isStaff) {
     isAuthorized = false;
     requiredRoleLabel = "Nhân viên Tiếp nhận & Dược (STAFF)";
-  } else if ((pathname.startsWith("/dashboard") || pathname.startsWith("/consultation")) && !isDoctor &&
-      !(pathname === "/dashboard/general" && (isStaff || isLabTech || isAdmin))) {
+  } else if (
+    (pathname.startsWith("/dashboard") || pathname.startsWith("/consultation")) &&
+    !isDoctor &&
+    !(pathname === "/dashboard/general" && (isStaff || isLabTech || isAdmin))
+  ) {
     isAuthorized = false;
     requiredRoleLabel = "Bác sĩ khám bệnh (DOCTOR)";
   }
 
   return (
-    <div className="flex h-screen bg-[#F1F5F9]">
+    <div className="flex h-screen bg-[#F5F8FA]">
       <Sidebar
         isCollapsed={isCollapsed}
         onToggleCollapse={() => setIsCollapsed(!isCollapsed)}
@@ -92,10 +95,10 @@ export default function DashboardLayout({
           isCollapsed ? "md:ml-16" : "md:ml-64"
         }`}
       >
-        {/* Subtle decorative grid — light cyan tinted lines */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#6366F108_1px,transparent_1px),linear-gradient(to_bottom,#6366F108_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
+        {/* Subtle decorative grid — Ocean Medical Blue tinted lines (24px x 24px) */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#0277A809_1px,transparent_1px),linear-gradient(to_bottom,#0277A809_1px,transparent_1px)] bg-[size:24px_24px] pointer-events-none" />
 
-        <Topbar onToggleMobile={() => setIsMobileOpen(prev => !prev)} />
+        <Topbar onToggleMobile={() => setIsMobileOpen((prev) => !prev)} />
         <main className="flex-1 overflow-y-auto p-3 sm:p-6 pb-24 relative z-10">
           {isAuthorized ? (
             children

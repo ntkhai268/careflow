@@ -33,9 +33,9 @@ export default function Topbar({ onToggleMobile }: TopbarProps) {
   const mounted = useSyncExternalStore(
     () => () => {},
     () => true,
-    () => false,
+    () => false
   );
-  
+
   // Dropdown & Modal States
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
@@ -70,56 +70,83 @@ export default function Topbar({ onToggleMobile }: TopbarProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const pageTitle = BREADCRUMB_MAP[pathname] || "Dashboard";
+  const pageTitle = pathname.startsWith("/consultation/")
+    ? "Phiên Khám Lâm Sàng"
+    : BREADCRUMB_MAP[pathname] || "Bảng điều khiển";
   const rootHref = user?.role?.toUpperCase().includes("ADMIN") ? "/admin" : "/dashboard/general";
   const initials = user?.fullName
-    ? user.fullName.split(" ").map((n: string) => n[0]).slice(-2).join("").toUpperCase()
+    ? user.fullName
+        .split(" ")
+        .map((n: string) => n[0])
+        .slice(-2)
+        .join("")
+        .toUpperCase()
     : "BS";
 
   return (
     <>
-      <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-4 sm:px-6 bg-white border-b border-gray-200 shadow-sm">
+      <header className="sticky top-0 z-30 flex h-16 items-center justify-between px-4 sm:px-6 bg-white border-b border-[#D5E0E6] shadow-[0_1px_2px_rgba(23,36,45,0.04)]">
         {/* Left — Hamburger & Breadcrumb */}
-        <div className="flex items-center gap-2 sm:gap-3 text-[11px]">
+        <div className="flex items-center gap-2 sm:gap-3 text-xs">
           {onToggleMobile && (
             <button
               type="button"
               onClick={onToggleMobile}
-              className="p-1.5 -ml-1 text-gray-500 hover:text-indigo-600 rounded-lg hover:bg-gray-100 md:hidden transition-colors"
+              className="p-1.5 -ml-1 text-[#4D626E] hover:text-[#0277A8] rounded-lg hover:bg-[#DDF3FC]/50 md:hidden transition-colors"
               aria-label="Mở menu điều hướng"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M4 6h16M4 12h16M4 18h16"
+                />
               </svg>
             </button>
           )}
           <Link
             href={rootHref}
-            className="text-gray-400 hover:text-indigo-600 transition-colors font-medium hidden xs:inline"
+            className="text-[#667985] hover:text-[#0277A8] transition-colors font-medium hidden xs:inline"
           >
             Bảng điều khiển
           </Link>
-          <svg className="w-3 h-3 text-gray-300 flex-shrink-0 hidden xs:inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg
+            className="w-3.5 h-3.5 text-[#B8C7D0] flex-shrink-0 hidden xs:inline"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           <Link
             href={pathname}
-            className="font-bold text-indigo-600 hover:text-indigo-800 transition-colors truncate max-w-[140px] sm:max-w-none"
+            className="font-bold text-[#0277A8] hover:text-[#00577E] transition-colors truncate max-w-[160px] sm:max-w-none"
           >
             {pageTitle}
           </Link>
         </div>
 
-        {/* Center — Search (hidden on mobile, visible on sm and up) */}
+        {/* Center — Search */}
         <div className="flex-1 max-w-sm mx-4 sm:mx-8 hidden sm:block">
           <div className="relative">
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            <svg
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-[#667985]"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
             </svg>
             <input
               type="text"
               placeholder="Tìm kiếm bệnh nhân, đơn thuốc..."
-              className="w-full bg-gray-50 rounded-xl pl-9 pr-4 py-2 text-xs text-gray-700 placeholder-gray-400 border border-gray-200 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition-all"
+              className="w-full bg-[#F5F8FA] rounded-xl pl-9 pr-4 py-2 text-xs text-[#17242D] placeholder-[#667985] border border-[#D5E0E6] outline-none focus:bg-white focus:border-[#0277A8] focus:ring-2 focus:ring-[#DDF3FC] transition-all"
             />
           </div>
         </div>
@@ -127,70 +154,91 @@ export default function Topbar({ onToggleMobile }: TopbarProps) {
         {/* Right — Actions */}
         <div className="flex items-center gap-3">
           {/* Date */}
-          <span className="text-[10px] text-gray-400 hidden md:block">
-            {mounted && new Date().toLocaleDateString("vi-VN", {
-              weekday: "short", day: "2-digit", month: "2-digit", year: "numeric",
-            })}
+          <span className="text-[11px] font-medium text-[#667985] hidden md:block">
+            {mounted &&
+              new Date().toLocaleDateString("vi-VN", {
+                weekday: "short",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+              })}
           </span>
 
           {/* Help button */}
           <button
             onClick={() => setShowHelpModal(true)}
-            className="flex items-center justify-center w-9 h-9 rounded-xl text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 transition-colors"
+            className="flex items-center justify-center w-9 h-9 rounded-xl text-[#4D626E] hover:bg-[#DDF3FC]/60 hover:text-[#0277A8] transition-colors"
             title="Trợ giúp & Phím tắt"
           >
             <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.8}
+                d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
           </button>
 
           {/* Settings button */}
           <button
             onClick={() => setShowSettingsModal(true)}
-            className="flex items-center justify-center w-9 h-9 rounded-xl text-gray-400 hover:bg-indigo-50 hover:text-indigo-500 transition-colors"
+            className="flex items-center justify-center w-9 h-9 rounded-xl text-[#4D626E] hover:bg-[#DDF3FC]/60 hover:text-[#0277A8] transition-colors"
             title="Cài đặt"
           >
             <svg className="h-[18px] w-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.8}
+                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={1.8}
+                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
           </button>
 
           {/* Divider */}
-          <div className="h-6 w-px bg-gray-200" />
+          <div className="h-6 w-px bg-[#D5E0E6]" />
 
           {/* User Profile Dropdown Container */}
           <div className="relative" ref={dropdownRef}>
             <div
               onClick={() => setShowUserDropdown(!showUserDropdown)}
-              className="flex items-center gap-2.5 cursor-pointer hover:bg-indigo-50 rounded-xl px-2 py-1.5 transition-colors"
+              className="flex items-center gap-2.5 cursor-pointer hover:bg-[#DDF3FC]/50 rounded-xl px-2.5 py-1.5 transition-colors"
             >
               {/* Avatar */}
               <div className="relative">
                 <div
                   className="flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-bold text-white shadow-xs"
-                  style={{ background: "linear-gradient(135deg, #6366F1, #3B82F6)" }}
+                  style={{ background: "linear-gradient(135deg, #0277A8, #087F6A)" }}
                 >
                   {initials}
                 </div>
                 <span
                   className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full border-2 border-white"
-                  style={{ background: doctorStatus === "READY" ? "#10B981" : "#F59E0B" }}
+                  style={{ background: doctorStatus === "READY" ? "#1B7F4B" : "#A86100" }}
                 />
               </div>
 
               <div className="hidden sm:block">
-                <p className="text-xs font-semibold text-gray-800 leading-tight">
+                <p className="text-xs font-semibold text-[#17242D] leading-tight">
                   {user?.fullName || user?.username || user?.email || "Tài khoản"}
                 </p>
-                <p className="text-[10px] text-gray-400 leading-tight">
+                <p className="text-[10px] text-[#667985] leading-tight mt-0.5">
                   {user?.department || user?.role || ""}
                 </p>
               </div>
 
               {/* Dropdown chevron */}
               <svg
-                className={`w-3.5 h-3.5 text-gray-400 transition-transform duration-200 ${showUserDropdown ? "rotate-180" : ""}`}
+                className={`w-3.5 h-3.5 text-[#667985] transition-transform duration-200 ${
+                  showUserDropdown ? "rotate-180" : ""
+                }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -201,65 +249,129 @@ export default function Topbar({ onToggleMobile }: TopbarProps) {
 
             {/* Dropdown Menu */}
             {showUserDropdown && (
-              <div className="absolute right-0 mt-2 w-64 rounded-xl bg-white shadow-xl border border-gray-100 py-2 text-left z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="absolute right-0 mt-2 w-64 rounded-xl bg-white shadow-xl border border-[#D5E0E6] py-2 text-left z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                 {/* Doctor Brief Info */}
-                <div className="px-4 py-2.5 border-b border-gray-100">
-                  <p className="text-xs font-bold text-gray-900">{user?.fullName || user?.username || user?.email || "Tài khoản"}</p>
-                  <p className="text-[10px] text-indigo-600 font-medium">{user?.title || user?.role || ""}</p>
-                  <div className="mt-2 flex items-center justify-between pt-2 border-t border-gray-50">
-                    <span className="text-[10px] text-gray-400">Trạng thái làm việc:</span>
+                <div className="px-4 py-2.5 border-b border-[#EDF2F5]">
+                  <p className="text-xs font-bold text-[#17242D]">
+                    {user?.fullName || user?.username || user?.email || "Tài khoản"}
+                  </p>
+                  <p className="text-[10px] text-[#0277A8] font-medium mt-0.5">
+                    {user?.title || user?.role || ""}
+                  </p>
+                  <div className="mt-2 flex items-center justify-between pt-2 border-t border-[#EDF2F5]">
+                    <span className="text-[10px] text-[#667985]">Trạng thái làm việc:</span>
                     <button
                       onClick={() => setDoctorStatus(doctorStatus === "READY" ? "PAUSED" : "READY")}
-                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full transition-colors ${
-                        doctorStatus === "READY" ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+                      className={`inline-flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-0.5 rounded-full transition-colors ${
+                        doctorStatus === "READY"
+                          ? "bg-[#DDF4E7] text-[#1B7F4B]"
+                          : "bg-[#FFEBCB] text-[#A86100]"
                       }`}
                     >
-                      {doctorStatus === "READY" ? "🟢 Đang khám" : "🟡 Tạm dừng"}
+                      <span
+                        className={`w-1.5 h-1.5 rounded-full ${
+                          doctorStatus === "READY" ? "bg-[#1B7F4B]" : "bg-[#A86100]"
+                        }`}
+                      />
+                      <span>{doctorStatus === "READY" ? "Đang khám" : "Tạm dừng"}</span>
                     </button>
                   </div>
                 </div>
 
                 {/* Menu items */}
                 <div className="py-1">
-                  <Link href="/account/security" onClick={() => setShowUserDropdown(false)} className="block px-4 py-2 text-xs text-gray-700 hover:bg-purple-50 hover:text-purple-700">Hình thức đăng nhập</Link>
-                  <button
-                    onClick={() => { setShowUserDropdown(false); setShowProfileModal(true); }}
-                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2.5 transition-colors"
+                  <Link
+                    href="/account/security"
+                    onClick={() => setShowUserDropdown(false)}
+                    className="block px-4 py-2 text-xs text-[#17242D] hover:bg-[#DDF3FC]/60 hover:text-[#00577E]"
                   >
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    Hình thức đăng nhập
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      setShowProfileModal(true);
+                    }}
+                    className="w-full px-4 py-2 text-left text-xs text-[#17242D] hover:bg-[#DDF3FC]/60 hover:text-[#00577E] flex items-center gap-2.5 transition-colors"
+                  >
+                    <svg
+                      className="w-4 h-4 text-[#667985]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                      />
                     </svg>
                     Hồ sơ & Chuyên môn Bác sĩ
                   </button>
 
                   <button
-                    onClick={() => { setShowUserDropdown(false); setShowSettingsModal(true); }}
-                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2.5 transition-colors"
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      setShowSettingsModal(true);
+                    }}
+                    className="w-full px-4 py-2 text-left text-xs text-[#17242D] hover:bg-[#DDF3FC]/60 hover:text-[#00577E] flex items-center gap-2.5 transition-colors"
                   >
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <svg
+                      className="w-4 h-4 text-[#667985]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
+                      />
                     </svg>
                     Cài đặt hệ thống
                   </button>
 
                   <button
-                    onClick={() => { setShowUserDropdown(false); setShowHelpModal(true); }}
-                    className="w-full px-4 py-2 text-left text-xs text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 flex items-center gap-2.5 transition-colors"
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      setShowHelpModal(true);
+                    }}
+                    className="w-full px-4 py-2 text-left text-xs text-[#17242D] hover:bg-[#DDF3FC]/60 hover:text-[#00577E] flex items-center gap-2.5 transition-colors"
                   >
-                    <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="w-4 h-4 text-[#667985]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                     Hướng dẫn & Phím tắt
                   </button>
                 </div>
 
-                <div className="border-t border-gray-100 pt-1">
+                <div className="border-t border-[#EDF2F5] pt-1">
                   <button
-                    onClick={() => { setShowUserDropdown(false); logout(); }}
-                    className="w-full px-4 py-2 text-left text-xs text-slate-500 hover:text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 transition-colors font-medium"
+                    onClick={() => {
+                      setShowUserDropdown(false);
+                      logout();
+                    }}
+                    className="w-full px-4 py-2 text-left text-xs text-[#4D626E] hover:text-[#BA1A1A] hover:bg-[#FFDAD6]/40 flex items-center gap-2.5 transition-colors font-medium"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={1.8}
+                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                      />
                     </svg>
                     Đăng xuất khỏi hệ thống
                   </button>
@@ -277,4 +389,3 @@ export default function Topbar({ onToggleMobile }: TopbarProps) {
     </>
   );
 }
-

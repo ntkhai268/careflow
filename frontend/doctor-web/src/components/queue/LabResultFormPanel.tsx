@@ -23,20 +23,25 @@ export default function LabResultFormPanel({
   const [units, setUnits] = useState<Record<string, string>>({});
 
   return (
-    <div className="border border-card-border bg-card-bg rounded-xl p-5 shadow-sm space-y-4">
-      <h2 className="text-base font-bold text-[#2B1D30]">Chi tiết ca đang thực hiện</h2>
+    <div className="space-y-4 rounded-xl border border-[#D5E0E6] bg-white p-5 shadow-xs">
+      <h2 className="text-base font-extrabold text-[#17242D]">Chi tiết ca đang thực hiện</h2>
       {activeEntry ? (
         <div className="space-y-4 text-xs">
-          <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-            <p className="font-bold text-purple-900 text-sm">Số thứ tự: {activeEntry.queueNumber}</p>
-            <p className="text-purple-700 mt-1">Trạng thái: Đang thực hiện</p>
+          <div className="rounded-xl border border-[#8BD2EE] bg-[#DDF3FC]/60 p-3.5">
+            <p className="font-mono text-sm font-extrabold text-[#00577E]">
+              Số thứ tự: {activeEntry.queueNumber}
+            </p>
+            <p className="mt-1 font-semibold text-[#087F6A]">Trạng thái: Đang thực hiện</p>
           </div>
 
           <div className="space-y-3">
-            <label className="block font-bold text-text">Nhập kết quả xét nghiệm:</label>
+            <label className="block font-bold text-[#17242D]">Nhập kết quả xét nghiệm:</label>
             {activeLabOrder?.items.map((item) => (
-              <div key={item.id} className="space-y-2 border-b border-card-border pb-3 last:border-0">
-                <p className="font-semibold text-text">{item.serviceName}</p>
+              <div
+                key={item.id}
+                className="space-y-2 border-b border-[#EDF2F5] pb-3 last:border-0"
+              >
+                <p className="font-bold text-[#17242D]">{item.serviceName}</p>
                 <input
                   value={resultValues[item.id] ?? ""}
                   onChange={(event) =>
@@ -44,16 +49,19 @@ export default function LabResultFormPanel({
                   }
                   type="text"
                   placeholder="Giá trị kết quả"
-                  className="w-full p-2 border border-card-border rounded-lg bg-card-bg text-text"
+                  className="h-10 w-full rounded-xl border border-[#D5E0E6] bg-white px-3 text-xs text-[#17242D] outline-none focus:border-[#0277A8]"
                 />
                 <input
                   value={referenceRanges[item.id] ?? ""}
                   onChange={(event) =>
-                    setReferenceRanges((current) => ({ ...current, [item.id]: event.target.value }))
+                    setReferenceRanges((current) => ({
+                      ...current,
+                      [item.id]: event.target.value,
+                    }))
                   }
                   type="text"
                   placeholder="Khoảng tham chiếu"
-                  className="w-full p-2 border border-card-border rounded-lg bg-card-bg text-text"
+                  className="h-10 w-full rounded-xl border border-[#D5E0E6] bg-white px-3 text-xs text-[#17242D] outline-none focus:border-[#0277A8]"
                 />
                 <input
                   value={units[item.id] ?? ""}
@@ -62,7 +70,7 @@ export default function LabResultFormPanel({
                   }
                   type="text"
                   placeholder="Đơn vị đo"
-                  className="w-full p-2 border border-card-border rounded-lg bg-card-bg text-text"
+                  className="h-10 w-full rounded-xl border border-[#D5E0E6] bg-white px-3 text-xs text-[#17242D] outline-none focus:border-[#0277A8]"
                 />
               </div>
             ))}
@@ -94,15 +102,16 @@ export default function LabResultFormPanel({
                   showToast(getErrorMessage(err, "Lỗi khi hoàn tất lượt."), "danger");
                 }
               }}
-              className="w-full py-2.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold rounded-lg shadow-sm hover:from-purple-500 hover:to-indigo-500 cursor-pointer text-xs"
+              className="w-full cursor-pointer rounded-xl bg-[#087F6A] py-3 text-xs font-bold text-white shadow-xs transition-colors hover:bg-[#066554]"
             >
               Phát hành kết quả
             </button>
           </div>
         </div>
       ) : (
-        <div className="py-8 text-center text-text-muted text-xs">
-          Vui lòng chọn hoặc bấm <b>&quot;Bắt đầu thực hiện&quot;</b> cho một bệnh nhân để nhập kết quả xét nghiệm.
+        <div className="py-8 text-center text-xs text-[#667985]">
+          Vui lòng chọn hoặc bấm <b>&quot;Bắt đầu&quot;</b> cho một bệnh nhân để nhập kết quả xét
+          nghiệm.
         </div>
       )}
     </div>

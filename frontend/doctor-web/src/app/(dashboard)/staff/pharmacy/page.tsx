@@ -22,16 +22,25 @@ export default function StaffPharmacyPage() {
   const [prescriptionError, setPrescriptionError] = useState<string | null>(null);
   const [isStarting, setIsStarting] = useState(false);
   const [isDispensing, setIsDispensing] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "success" | "danger" | "warning" } | null>(null);
+  const [toast, setToast] = useState<{
+    message: string;
+    type: "success" | "danger" | "warning";
+  } | null>(null);
 
-  const showToast = useCallback((message: string, type: "success" | "danger" | "warning" = "success") => {
-    setToast({ message, type });
-    window.setTimeout(() => setToast(null), 3000);
-  }, []);
+  const showToast = useCallback(
+    (message: string, type: "success" | "danger" | "warning" = "success") => {
+      setToast({ message, type });
+      window.setTimeout(() => setToast(null), 3000);
+    },
+    []
+  );
 
   const replaceEntry = useCallback((updated: QueueEntry) => {
-    setEntries(current => current?.map(entry => entry.entryId === updated.entryId ? updated : entry) ?? null);
-    setActiveEntry(current => current?.entryId === updated.entryId ? updated : current);
+    setEntries(
+      (current) =>
+        current?.map((entry) => (entry.entryId === updated.entryId ? updated : entry)) ?? null
+    );
+    setActiveEntry((current) => (current?.entryId === updated.entryId ? updated : current));
   }, []);
 
   const fetchPharmacyQueue = useCallback(async (showLoading = true) => {
@@ -41,11 +50,15 @@ export default function StaffPharmacyPage() {
       const response = await queueApi.getServicePointActive(PHARMACY_SERVICE_POINT);
       const nextEntries = response.data?.entries ?? [];
       setEntries(nextEntries);
-      setActiveEntry(current => {
+      setActiveEntry((current) => {
         if (current) {
-          return nextEntries.find(entry => entry.entryId === current.entryId) ?? current;
+          return nextEntries.find((entry) => entry.entryId === current.entryId) ?? current;
         }
-        return nextEntries.find(entry => entry.queueStatus === "IN_PROGRESS" || entry.queueStatus === "CALLED") ?? null;
+        return (
+          nextEntries.find(
+            (entry) => entry.queueStatus === "IN_PROGRESS" || entry.queueStatus === "CALLED"
+          ) ?? null
+        );
       });
     } catch (err: unknown) {
       setError(getErrorMessage(err, "Không thể tải danh sách hàng đợi phát thuốc."));
@@ -65,7 +78,7 @@ export default function StaffPharmacyPage() {
   useVisibilityPolling(
     true,
     useCallback(() => void fetchPharmacyQueue(false), [fetchPharmacyQueue]),
-    10_000,
+    10_000
   );
 
   useEffect(() => {
@@ -82,8 +95,9 @@ export default function StaffPharmacyPage() {
       setPrescriptionError(null);
       setIsLoadingPrescription(true);
 
-      void prescriptionApi.getPrescription(activeEntry.prescriptionId)
-        .then(response => {
+      void prescriptionApi
+        .getPrescription(activeEntry.prescriptionId)
+        .then((response) => {
           if (cancelled) return;
           if (!response.data) {
             setPrescriptionError("Không tìm thấy chi tiết toa thuốc.");
@@ -177,79 +191,135 @@ export default function StaffPharmacyPage() {
   };
 
   const activePatientMatches = Boolean(
-    activeEntry && activePrescription && activeEntry.patientId === activePrescription.patientId,
+    activeEntry && activePrescription && activeEntry.patientId === activePrescription.patientId
   );
   const canDispense = Boolean(
-    activeEntry?.queueStatus === "IN_PROGRESS"
-      && activePrescription?.status === "CONFIRMED"
-      && activePatientMatches
-      && !isLoadingPrescription
-      && !prescriptionError,
+    activeEntry?.queueStatus === "IN_PROGRESS" &&
+      activePrescription?.status === "CONFIRMED" &&
+      activePatientMatches &&
+      !isLoadingPrescription &&
+      !prescriptionError
   );
-  const hasServingEntry = activeEntry?.queueStatus === "CALLED" || activeEntry?.queueStatus === "IN_PROGRESS";
+  const hasServingEntry =
+    activeEntry?.queueStatus === "CALLED" || activeEntry?.queueStatus === "IN_PROGRESS";
 
   return (
     <div className="space-y-6 pb-12">
       {toast && (
-        <div className={`fixed top-5 right-5 z-50 p-4 border shadow-lg max-w-md rounded-lg text-white ${
-          toast.type === "success" ? "bg-[#2B1D30] border-purple-500" :
-          toast.type === "warning" ? "bg-amber-900 border-amber-500" : "bg-rose-900 border-rose-500"
-        }`}>
+        <div
+          className={`fixed top-5 right-5 z-50 max-w-md rounded-xl border p-4 text-white shadow-lg ${
+            toast.type === "success"
+              ? "border-[#0277A8] bg-[#0B2534]"
+              : toast.type === "warning"
+                ? "border-[#A86100] bg-[#A86100]"
+                : "border-[#BA1A1A] bg-[#BA1A1A]"
+          }`}
+        >
           <div className="flex items-center justify-between gap-4">
             <span className="text-xs font-semibold">{toast.message}</span>
-            <button onClick={() => setToast(null)} className="text-white/60 hover:text-white text-xs font-bold" aria-label="Đóng thông báo">X</button>
+            <button
+              onClick={() => setToast(null)}
+              className="text-xs font-bold text-white/70 hover:text-white"
+              aria-label="Đóng thông báo"
+            >
+              X
+            </button>
           </div>
         </div>
       )}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border border-card-border bg-card-bg p-5 rounded-xl shadow-sm">
+      <div className="flex flex-col justify-between gap-4 rounded-xl border border-[#D5E0E6] bg-white p-5 shadow-xs md:flex-row md:items-center">
         <div>
           <div className="flex items-center gap-2">
-            <span className="inline-block w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse" />
-            <span className="text-xs font-bold uppercase tracking-wider text-purple-600">Phân hệ Nhân viên Dược / Quầy Phát thuốc</span>
+            <span className="inline-block h-2.5 w-2.5 animate-pulse rounded-full bg-[#087F6A]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-[#087F6A]">
+              Phân hệ Nhân viên Dược · Quầy {PHARMACY_SERVICE_POINT}
+            </span>
           </div>
-          <h1 className="text-2xl font-extrabold text-[#2B1D30] mt-1">Hàng đợi Phát thuốc</h1>
-          <p className="text-xs text-[#6A5C70] mt-0.5">Cấp phát theo FIFO cho toa đã được bác sĩ ký và xác nhận</p>
+          <h1 className="mt-1 text-2xl font-extrabold text-[#17242D]">Hàng đợi Phát thuốc</h1>
+          <p className="mt-0.5 text-xs text-[#667985]">
+            Cấp phát theo thứ tự FIFO cho đơn thuốc đã được bác sĩ ký xác nhận
+          </p>
         </div>
         <button
           onClick={handleCallNext}
           disabled={isLoading || Boolean(hasServingEntry)}
-          className="px-5 py-3 rounded-xl font-bold text-sm text-white bg-[#6E2582] hover:bg-[#561A66] shadow-md transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          className="cursor-pointer rounded-xl bg-[#0277A8] px-5 py-3 text-sm font-bold text-white shadow-xs transition-all hover:bg-[#00577E] disabled:cursor-not-allowed disabled:opacity-50"
         >
           Gọi số tiếp theo
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 border border-card-border bg-card-bg rounded-xl p-5 shadow-sm space-y-4">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="space-y-4 rounded-xl border border-[#D5E0E6] bg-white p-5 shadow-xs lg:col-span-2">
           <div className="flex items-center justify-between">
-            <h2 className="text-base font-bold text-[#2B1D30]">Danh sách bệnh nhân chờ nhận thuốc</h2>
-            <span className="text-xs font-semibold px-2.5 py-1 bg-purple-100 text-purple-800 rounded-full">{(entries ?? []).length} lượt</span>
+            <h2 className="text-base font-extrabold text-[#17242D]">
+              Danh sách bệnh nhân chờ nhận thuốc
+            </h2>
+            <span className="rounded-full bg-[#DDF3FC] px-3 py-1 text-xs font-bold text-[#00577E]">
+              {(entries ?? []).length} lượt
+            </span>
           </div>
 
           {isLoading ? (
-            <div className="py-12 flex justify-center"><LoadingSpinner size="md" /></div>
+            <div className="flex justify-center py-12">
+              <LoadingSpinner size="md" />
+            </div>
           ) : error ? (
-            <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg text-xs font-medium">{error}</div>
+            <div className="rounded-xl border border-[#BA1A1A]/30 bg-[#BA1A1A]/10 p-4 text-xs font-semibold text-[#BA1A1A]">
+              {error}
+            </div>
           ) : (entries ?? []).length === 0 ? (
-            <div className="py-12 text-center text-text-muted text-xs">Hiện chưa có lượt chờ phát thuốc nào.</div>
+            <div className="py-12 text-center text-xs text-[#667985]">
+              Hiện chưa có lượt chờ phát thuốc nào.
+            </div>
           ) : (
-            <div className="divide-y divide-card-border">
-              {(entries ?? []).map(entry => {
+            <div className="divide-y divide-[#EDF2F5]">
+              {(entries ?? []).map((entry) => {
                 const selected = activeEntry?.entryId === entry.entryId;
                 return (
-                  <div key={entry.entryId} className={`py-3.5 flex items-center justify-between gap-4 ${selected ? "bg-purple-50/60 -mx-2 px-2 rounded-lg" : ""}`}>
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-12 h-12 shrink-0 rounded-xl bg-purple-100 text-purple-800 flex items-center justify-center font-extrabold text-base">{entry.queueNumber}</div>
+                  <div
+                    key={entry.entryId}
+                    className={`flex items-center justify-between gap-4 py-3.5 transition-colors ${
+                      selected
+                        ? "-mx-2 rounded-xl border border-[#8BD2EE] bg-[#DDF3FC]/50 px-3"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex min-w-0 items-center gap-3.5">
+                      <div
+                        className={`flex h-12 w-14 shrink-0 items-center justify-center rounded-xl font-mono text-sm font-extrabold ${
+                          selected
+                            ? "bg-[#0277A8] text-white"
+                            : "border border-[#8BD2EE] bg-[#DDF3FC] text-[#00577E]"
+                        }`}
+                      >
+                        {entry.queueNumber}
+                      </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-[#2B1D30]">Số thứ tự: {entry.queueNumber}</p>
-                        <p className="text-xs text-text-muted mt-0.5">{pharmacyStatusLabel(entry.queueStatus)}</p>
-                        <p className="text-[11px] text-text-muted truncate">Mã hồ sơ: {entry.patientId}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="text-sm font-bold text-[#17242D]">
+                            Số thứ tự: {entry.queueNumber}
+                          </p>
+                          <span className="rounded-md bg-[#D9F3EC] px-2 py-0.5 text-[11px] font-bold text-[#087F6A]">
+                            {pharmacyStatusLabel(entry.queueStatus)}
+                          </span>
+                        </div>
+                        <p
+                          className="mt-1 font-mono text-xs text-[#667985]"
+                          title={entry.patientId}
+                        >
+                          Mã hồ sơ BN: {entry.patientId.slice(0, 8).toUpperCase()}
+                        </p>
                       </div>
                     </div>
                     <button
                       onClick={() => setActiveEntry(entry)}
-                      className="shrink-0 w-28 py-1.5 bg-[#6E2582] text-white text-xs font-semibold rounded-md hover:bg-[#561A66] cursor-pointer text-center disabled:opacity-50"
+                      className={`w-28 shrink-0 cursor-pointer rounded-xl py-2 text-center text-xs font-bold transition-colors ${
+                        selected
+                          ? "bg-[#087F6A] text-white"
+                          : "bg-[#0277A8] text-white hover:bg-[#00577E]"
+                      }`}
                     >
                       {selected ? "Đang chọn" : "Đối chiếu toa"}
                     </button>

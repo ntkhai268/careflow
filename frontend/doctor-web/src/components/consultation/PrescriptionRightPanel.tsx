@@ -77,7 +77,7 @@ export default function PrescriptionRightPanel({
   showToast,
 }: PrescriptionRightPanelProps) {
   return (
-    <div className="lg:col-span-2 space-y-6">
+    <div className="lg:col-span-2 space-y-5">
       <VoicePrescriptionPanel
         key={`${userId}:${consultationId}`}
         ref={voiceDraftRef}
@@ -89,12 +89,16 @@ export default function PrescriptionRightPanel({
         canEdit={prescriptionStatus === "DRAFT"}
         onSaveDraft={saveDraft}
       >
-        <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] rounded-lg flex flex-col justify-between min-h-[420px]">
+        <div className="border border-[#D5E0E6] bg-white p-5 shadow-[0_2px_8px_rgba(23,36,45,0.04)] rounded-xl flex flex-col justify-between min-h-[380px]">
           <div>
-            <div className="flex justify-between items-center border-b border-card-border pb-3 mb-4">
+            <div className="flex justify-between items-center border-b border-[#EDF2F5] pb-3 mb-4">
               <div>
-                <h2 className="text-xs font-bold text-[#2B1D30] uppercase tracking-wide">Đơn thuốc</h2>
-                <p className="text-[10px] text-[#6A5C70]">Tổng số thuốc: {prescriptionItems.length}</p>
+                <h2 className="text-xs font-bold text-[#17242D] uppercase tracking-wide">
+                  Đơn thuốc
+                </h2>
+                <p className="text-[11px] text-[#667985]">
+                  Tổng số thuốc: <strong className="font-mono text-[#00577E]">{prescriptionItems.length}</strong>
+                </p>
               </div>
               <div className="flex items-center gap-3">
                 {prescriptionItems.length > 0 && !isPrescriptionLocked && (
@@ -102,13 +106,13 @@ export default function PrescriptionRightPanel({
                     type="button"
                     onClick={clearAllMedicines}
                     disabled={isSaving}
-                    className="text-[11px] font-medium text-slate-400 hover:text-rose-600 transition-colors hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-[11px] font-semibold text-[#667985] hover:text-[#BA1A1A] transition-colors hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
-                        strokeWidth={1.5}
+                        strokeWidth={1.6}
                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                       />
                     </svg>
@@ -120,7 +124,7 @@ export default function PrescriptionRightPanel({
                     type="button"
                     onClick={openAddMedicineDrawer}
                     disabled={isSaving}
-                    className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-3 py-1.5 text-xs transition-all flex items-center gap-1.5 rounded-md shadow-sm"
+                    className="bg-[#0277A8] hover:bg-[#00577E] text-white font-bold px-3.5 py-1.5 text-xs transition-all flex items-center gap-1.5 rounded-lg shadow-xs cursor-pointer"
                   >
                     + THÊM THUỐC
                   </button>
@@ -149,19 +153,19 @@ export default function PrescriptionRightPanel({
             )}
           </div>
 
-          <div className="pt-4 border-t border-card-border mt-4">
+          <div className="pt-4 border-t border-[#EDF2F5] mt-4">
             {!showPrescriptionNotes && !prescriptionNotes ? (
               <button
                 type="button"
                 onClick={() => setShowPrescriptionNotes(true)}
-                className="text-xs font-bold text-primary-600 hover:underline flex items-center gap-1"
+                className="text-xs font-bold text-[#0277A8] hover:underline flex items-center gap-1 cursor-pointer"
               >
                 + Thêm ghi chú đơn thuốc chung
               </button>
             ) : (
               <div>
-                <div className="flex justify-between items-center mb-1">
-                  <label className="block text-xs font-semibold text-[#6A5C70]">
+                <div className="flex justify-between items-center mb-1.5">
+                  <label className="block text-xs font-semibold text-[#4D626E]">
                     Ghi chú đơn thuốc chung
                   </label>
                   {!isPrescriptionLocked && (
@@ -171,7 +175,7 @@ export default function PrescriptionRightPanel({
                         setShowPrescriptionNotes(false);
                         setPrescriptionNotes("");
                       }}
-                      className="text-[10px] text-gray-400 hover:text-rose-600"
+                      className="text-[11px] font-medium text-[#667985] hover:text-[#BA1A1A] cursor-pointer"
                     >
                       Thu gọn
                     </button>
@@ -183,7 +187,7 @@ export default function PrescriptionRightPanel({
                   onChange={(e) => setPrescriptionNotes(e.target.value)}
                   rows={2}
                   placeholder="Ghi chú về chế độ ăn kiêng, dị ứng hoặc lời dặn của bác sĩ..."
-                  className="w-full border border-input-border bg-input-bg px-3 py-1.5 text-sm text-[#2B1D30] focus:border-input-focus focus:outline-none rounded-md"
+                  className="w-full border border-[#D5E0E6] bg-white px-3 py-2 text-xs text-[#17242D] focus:border-[#0277A8] focus:ring-2 focus:ring-[#DDF3FC] focus:outline-none rounded-xl"
                 />
               </div>
             )}
@@ -191,9 +195,9 @@ export default function PrescriptionRightPanel({
         </div>
       </VoicePrescriptionPanel>
 
-      <div className="border border-card-border bg-card-bg p-5 shadow-[0_1px_3px_rgba(110,37,130,0.06)] space-y-3 rounded-lg">
-        <h2 className="text-xs font-bold text-[#2B1D30] border-b border-card-border pb-2 uppercase tracking-wide">
-          Lịch Hẹn Tái khám
+      <div className="border border-[#D5E0E6] bg-white p-5 shadow-[0_2px_8px_rgba(23,36,45,0.04)] space-y-3 rounded-xl">
+        <h2 className="text-xs font-bold text-[#17242D] border-b border-[#EDF2F5] pb-2.5 uppercase tracking-wide">
+          Lịch Hẹn Tái Khám
         </h2>
         {userId && (
           <FollowUpFields
@@ -209,8 +213,8 @@ export default function PrescriptionRightPanel({
         )}
         {followUpDelivery?.followUpDate &&
           (followUpDelivery.status === "CONFIRMED" || followUpDelivery.status === "DISPENSED") && (
-            <div className="rounded-lg border p-3 text-xs space-y-2">
-              <p>
+            <div className="rounded-xl border border-[#D5E0E6] bg-[#F5F8FA] p-3 text-xs space-y-2">
+              <p className="font-medium text-[#17242D]">
                 {followUpDelivery.followUpStatus === "SCHEDULED"
                   ? "Lịch tái khám đã được xác nhận."
                   : "Toa đã ký. Lịch tái khám chưa được xác nhận; không cần ký lại toa."}
@@ -219,12 +223,14 @@ export default function PrescriptionRightPanel({
                 followUpDelivery.followUpStatus !== "NEEDS_SELECTION" && (
                   <button
                     disabled={isSaving}
-                    className="rounded-lg border px-3 py-2"
+                    className="rounded-lg border border-[#D5E0E6] bg-white px-3 py-1.5 font-semibold text-[#0277A8] hover:bg-[#DDF3FC]/60"
                     onClick={async () => {
                       if (!prescriptionId) return;
                       setIsSaving(true);
                       try {
-                        setFollowUpDelivery((await prescriptionApi.retryFollowUp(prescriptionId)).data);
+                        setFollowUpDelivery(
+                          (await prescriptionApi.retryFollowUp(prescriptionId)).data
+                        );
                       } catch (failure) {
                         showToast(
                           getErrorMessage(failure, "Chưa xác nhận được lịch tái khám."),
@@ -240,13 +246,13 @@ export default function PrescriptionRightPanel({
                 )}
               {(followUpDelivery.followUpStatus === "FAILED" ||
                 followUpDelivery.followUpStatus === "NEEDS_SELECTION") && (
-                <p>
+                <p className="text-[#4D626E]">
                   Nếu ca đã đầy/ngày đã qua, mở Tổng quan &amp; Tiền sử, đối chiếu lịch đã tạo rồi chọn lịch phù hợp trong Hẹn tái khám từ ca khám.
                 </p>
               )}
             </div>
           )}
-        <p className="text-[10px] text-[#6A5C70]">
+        <p className="text-[11px] text-[#667985]">
           Chỉ báo tạo lịch thành công sau khi máy chủ xác nhận. Thông báo đẩy khi app ở nền được nghiệm thu riêng.
         </p>
       </div>
