@@ -328,22 +328,22 @@ export default function StaffCheckinPage() {
         </div>
       </header>
 
-      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
-        <div className="space-y-5 xl:col-span-7">
-          <ReceptionQueueTable
-            roomId={roomId}
-            roomError={roomError}
-            queueError={queueError}
-            isLoadingQueue={isLoadingQueue}
-            roomEntries={roomEntries}
-            patientDetails={patientDetails}
-            processingEntryId={processingEntryId}
-            onRefreshQueue={() => void fetchRoomQueue()}
-            onCheckInEntry={(entry) => void handleCheckInEntry(entry)}
-            onRecallEntry={(entry) => void handleRecall(entry)}
-            onMissEntry={(entry) => void handleMiss(entry)}
-          />
+      <ReceptionQueueTable
+        roomId={roomId}
+        roomError={roomError}
+        queueError={queueError}
+        isLoadingQueue={isLoadingQueue}
+        roomEntries={roomEntries}
+        patientDetails={patientDetails}
+        processingEntryId={processingEntryId}
+        onRefreshQueue={() => void fetchRoomQueue()}
+        onCheckInEntry={(entry) => void handleCheckInEntry(entry)}
+        onRecallEntry={(entry) => void handleRecall(entry)}
+        onMissEntry={(entry) => void handleMiss(entry)}
+      />
 
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-12">
+        <div className="xl:col-span-7">
           <WalkInReception
             key={roomId}
             roomId={roomId}

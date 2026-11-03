@@ -70,16 +70,16 @@ export default function ReceptionQueueTable({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[760px] border-collapse text-left">
+          <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-[#D5E0E6] bg-[#F5F8FA] text-[10px] font-bold uppercase tracking-wider text-[#667985]">
-                <th className="px-5 py-3">Số thứ tự</th>
-                <th className="px-4 py-3">Bệnh nhân</th>
-                <th className="px-4 py-3">Loại lượt</th>
-                <th className="px-4 py-3">Trạng thái</th>
-                <th className="px-4 py-3">Khung giờ hẹn</th>
-                <th className="px-4 py-3">Thời gian tiếp nhận</th>
-                <th className="px-5 py-3 text-right">Thao tác</th>
+                <th className="whitespace-nowrap px-5 py-3">Số thứ tự</th>
+                <th className="whitespace-nowrap px-4 py-3">Bệnh nhân</th>
+                <th className="whitespace-nowrap px-4 py-3">Loại lượt</th>
+                <th className="whitespace-nowrap px-4 py-3">Trạng thái</th>
+                <th className="whitespace-nowrap px-4 py-3">Khung giờ hẹn</th>
+                <th className="whitespace-nowrap px-4 py-3">Thời gian tiếp nhận</th>
+                <th className="whitespace-nowrap px-5 py-3 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody>
@@ -97,19 +97,21 @@ export default function ReceptionQueueTable({
                 return (
                   <tr
                     key={entry.entryId}
-                    className="min-h-[44px] border-b border-[#EDF2F5] last:border-0 hover:bg-[#F5F8FA]/80"
+                    className="min-h-[48px] border-b border-[#EDF2F5] last:border-0 hover:bg-[#F5F8FA]/80"
                   >
-                    <td className="px-5 py-3.5">
-                      <span className="inline-flex rounded-lg bg-[#DDF3FC] px-2.5 py-1 font-mono text-xs font-extrabold text-[#00577E]">
+                    <td className="whitespace-nowrap px-5 py-3">
+                      <span className="inline-flex whitespace-nowrap rounded-lg bg-[#DDF3FC] px-2.5 py-1 font-mono text-xs font-extrabold text-[#00577E]">
                         {entry.queueNumber}
                       </span>
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="whitespace-nowrap px-4 py-3">
                       {patient ? (
-                        <div>
-                          <p className="text-xs font-bold text-[#17242D]">{patient.fullName}</p>
-                          <p className="mt-0.5 font-mono text-[10px] text-[#667985]">
-                            Mã BN: {patient.id.slice(0, 8).toUpperCase()} ·{" "}
+                        <div className="flex items-baseline gap-2">
+                          <span className="whitespace-nowrap text-xs font-bold text-[#17242D]">
+                            {patient.fullName}
+                          </span>
+                          <span className="whitespace-nowrap font-mono text-[11px] text-[#667985]">
+                            ({patient.id.slice(0, 8).toUpperCase()} ·{" "}
                             {patient.gender === "MALE"
                               ? "Nam"
                               : patient.gender === "FEMALE"
@@ -118,41 +120,47 @@ export default function ReceptionQueueTable({
                             {patient.dateOfBirth
                               ? ` · ${new Date(patient.dateOfBirth).getFullYear()}`
                               : ""}
-                          </p>
+                            )
+                          </span>
                         </div>
                       ) : (
-                        <div>
-                          <p className="text-xs font-medium text-[#667985]">Đang tải thông tin</p>
-                          <p className="mt-0.5 font-mono text-[10px] text-[#667985]">
-                            Mã BN: {entry.patientId.slice(0, 8).toUpperCase()}
-                          </p>
+                        <div className="flex items-baseline gap-2">
+                          <span className="whitespace-nowrap text-xs font-medium text-[#667985]">
+                            Đang tải thông tin
+                          </span>
+                          <span className="whitespace-nowrap font-mono text-[11px] text-[#667985]">
+                            ({entry.patientId.slice(0, 8).toUpperCase()})
+                          </span>
                         </div>
                       )}
                     </td>
-                    <td className="px-4 py-3.5 text-xs font-medium text-[#4D626E]">
+                    <td className="whitespace-nowrap px-4 py-3 text-xs font-medium text-[#4D626E]">
                       {PRIORITY_LABELS[entry.priorityLevel] || entry.priorityLevel}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="whitespace-nowrap px-4 py-3">
                       <ReceptionStatusText status={entry.queueStatus} />
                     </td>
-                    <td className="px-4 py-3.5 font-mono text-xs text-[#4D626E]">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-[#4D626E]">
                       {new Date(entry.scheduledStartAt).toLocaleTimeString("vi-VN", {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
                     </td>
-                    <td className="px-4 py-3.5 font-mono text-xs text-[#4D626E]">
+                    <td className="whitespace-nowrap px-4 py-3 font-mono text-xs text-[#4D626E]">
                       {entry.checkedInAt
-                        ? new Date(entry.checkedInAt).toLocaleTimeString("vi-VN")
+                        ? new Date(entry.checkedInAt).toLocaleTimeString("vi-VN", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })
                         : "Chưa tiếp nhận"}
                     </td>
-                    <td className="px-5 py-3.5">
-                      <div className="flex justify-end gap-2">
+                    <td className="whitespace-nowrap px-5 py-3">
+                      <div className="flex items-center justify-end gap-2">
                         {canCheckIn && (
                           <button
                             onClick={() => onCheckInEntry(entry)}
                             disabled={isProcessing}
-                            className="h-8 w-24 rounded-lg bg-[#0277A8] text-xs font-bold text-white transition-colors hover:bg-[#00577E] disabled:opacity-50"
+                            className="h-8 w-24 whitespace-nowrap rounded-lg bg-[#0277A8] text-xs font-bold text-white transition-colors hover:bg-[#00577E] disabled:opacity-50"
                           >
                             {isProcessing ? "Đang xử lý" : "Duyệt vào"}
                           </button>
@@ -167,14 +175,14 @@ export default function ReceptionQueueTable({
                                 ? "Chỉ gọi lượt đã tiếp nhận hoặc đang được gọi."
                                 : "Gọi bệnh nhân"
                           }
-                          className="h-8 w-20 rounded-lg border border-[#D5E0E6] bg-white text-xs font-bold text-[#00577E] transition-colors hover:border-[#0277A8] hover:bg-[#DDF3FC] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="h-8 w-20 whitespace-nowrap rounded-lg border border-[#D5E0E6] bg-white text-xs font-bold text-[#00577E] transition-colors hover:border-[#0277A8] hover:bg-[#DDF3FC] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           Gọi lại
                         </button>
                         <button
                           onClick={() => onMissEntry(entry)}
                           disabled={isProcessing || !canMiss}
-                          className="h-8 w-20 rounded-lg border border-[#D5E0E6] bg-white text-xs font-semibold text-[#667985] transition-colors hover:border-[#BA1A1A] hover:bg-[#BA1A1A]/10 hover:text-[#BA1A1A] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="h-8 w-20 whitespace-nowrap rounded-lg border border-[#D5E0E6] bg-white text-xs font-semibold text-[#667985] transition-colors hover:border-[#BA1A1A] hover:bg-[#BA1A1A]/10 hover:text-[#BA1A1A] disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           Vắng mặt
                         </button>

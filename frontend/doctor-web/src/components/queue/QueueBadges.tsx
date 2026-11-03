@@ -38,11 +38,11 @@ export const PRIORITY_LABELS: Record<string, string> = {
 export function ReceptionStatusText({ status }: { status: string }) {
   return (
     <span
-      className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap text-[11px] font-semibold ${
         RECEPTION_STATUS_COLORS[status] || "text-[#667985]"
       }`}
     >
-      <span className="h-1.5 w-1.5 rounded-full bg-current" />
+      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
       {RECEPTION_STATUS_LABELS[status] || status}
     </span>
   );
