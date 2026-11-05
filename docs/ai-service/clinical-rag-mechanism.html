@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Cơ Chế Hoạt Động Của Hệ Thống Clinical RAG</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@page {
+    size: A4;
+    margin: 20mm 16mm 20mm 16mm;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    background: #ffffff;
+    line-height: 1.6;
+    font-size: 13.5px;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    border-bottom: 2px solid #6366f1;
+    padding-bottom: 8px;
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+h2 {
+    font-size: 15.5px;
+    font-weight: 700;
+    color: #1e1b4b;
+    border-left: 4px solid #6366f1;
+    padding-left: 10px;
+    margin-top: 22px;
+    margin-bottom: 12px;
+}
+
+h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #312e81;
+    margin-top: 14px;
+    margin-bottom: 8px;
+}
+
+p {
+    margin: 6px 0;
+    color: #334155;
+    text-align: justify;
+}
+
+ul, ol {
+    padding-left: 22px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+}
+
+li {
+    margin-bottom: 5px;
+    color: #334155;
+}
+
+strong {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+code {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 12px;
+    background: #f1f5f9;
+    color: #0f766e;
+    padding: 2px 5px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+}
+
+pre {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 11.5px;
+    line-height: 1.45;
+    margin: 12px 0;
+    page-break-inside: avoid;
+    color: #1e293b;
+}
+
+pre code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: inherit;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 16px 0;
+}
+
+.math-block {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 10px 0;
+    font-family: 'JetBrains Mono', monospace;
+    color: #166534;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    page-break-inside: avoid;
+}
+
+.math-label {
+    font-weight: 600;
+    color: #15803d;
+    font-size: 11.5px;
+}
+
+.math-expr {
+    font-size: 13px;
+    font-weight: 500;
+}
+</style>
+</head>
+<body>
+<h1>Cơ Chế Hoạt Động Của Hệ Thống Clinical RAG</h1>
+<p>Tài liệu mô tả quy trình kỹ thuật từng bước của hệ thống Retrieval-Augmented Generation (RAG) đang hoạt động trong <code>careflow-ai-service</code>.</p>
+<hr />
+<h2>1. Dữ Liệu Nguồn &amp; Tiền Xử Lý (Data Ingestion)</h2>
+<ol>
+<li><strong>Nguồn văn bản</strong>: Các phác đồ điều trị, danh mục bệnh ICD-10 và bảng tương tác thuốc chống chỉ định (DDI) của Bộ Y Tế.</li>
+<li><strong>Phân đoạn văn bản (Chunking)</strong>:
+<ul>
+<li>Kích thước mỗi đoạn: 400 – 800 tokens, có chồng lấn 50 – 80 tokens giữa các đoạn liền kề.</li>
+<li>Gắn kèm thông tin ngữ cảnh phân cấp: <code>[Tên tài liệu &gt; Chuyên khoa &gt; Đề mục]</code>.</li>
+</ul>
+</li>
+<li><strong>Vector hóa &amp; Lưu trữ</strong>:
+<ul>
+<li>Chuyển đổi nội dung thành vector nhúng 768 chiều (Google Gemini Embedding).</li>
+<li>Lưu trữ vào PostgreSQL 16 (extension <code>pgvector</code>) gồm: cột vector <code>embedding</code> (đánh chỉ mục HNSW) và cột toàn văn <code>tsv_content</code> (đánh chỉ mục GIN).</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h2>2. Quy Trình Xử Lý Truy Vấn (Query &amp; Retrieval Pipeline)</h2>
+<p>Khi nhận yêu cầu từ phiên khám bệnh, hệ thống thực hiện tuần tự qua 4 bước:</p>
+<pre><code>[Bối cảnh ca khám / Câu hỏi]
+             │
+             ├──► 1. Chuyển thành vector 768 chiều
+             │
+             ├──► 2. Truy xuất song song:
+             │       ├─ Dense Search (HNSW Cosine): Tìm 20 đoạn gần nghĩa nhất
+             │       └─ Sparse Search (BM25 Full-text): Tìm 20 đoạn khớp từ khóa
+             │
+             ├──► 3. Xếp hạng lại (Reciprocal Rank Fusion - RRF, k=60):
+             │       └─ Lấy Top 5 đoạn có điểm số cao nhất
+             │
+             └──► 4. Sinh phản hồi (LLM Gemini 2.5 Flash):
+                     ├─ Đưa Top 5 đoạn vào làm căn cứ
+                     ├─ Bổ sung tiền sử, dị ứng và thuốc đang kê
+                     └─ Trả về khuyến nghị kèm mã văn bản trích dẫn
+</code></pre>
+<h3>Chi tiết các bước:</h3>
+<ul>
+<li><strong>Bước 1 — Embedding câu hỏi</strong>: Văn bản truy vấn được gửi đến mô hình embedding để tạo vector 768 chiều.</li>
+<li><strong>Bước 2 — Tìm kiếm kết hợp (Hybrid Search)</strong>:
+<ul>
+<li><em>Vector Search</em>: Sử dụng khoảng cách Cosine (<code>&lt;=&gt;</code>) trên chỉ mục HNSW để tìm các đoạn có ngữ nghĩa tương đồng.</li>
+<li><em>Full-text Search</em>: Dùng truy vấn <code>plainto_tsquery</code> trên chỉ mục GIN để tìm chính xác tên bệnh, triệu chứng hoặc tên thuốc.</li>
+</ul>
+</li>
+<li><strong>Bước 3 — Hợp nhất và xếp hạng (RRF)</strong>:
+<ul>
+<li>Áp dụng công thức:
+$$RRF_Score(d) = \sum_{m \in {Vector, BM25}} \frac{1}{60 + r_m(d)}$$</li>
+<li>Chọn 5 đoạn tri thức có tổng điểm cao nhất làm ngữ cảnh tham chiếu.</li>
+</ul>
+</li>
+<li><strong>Bước 4 — Sinh nội dung có đối chiếu (Augmented Generation)</strong>:
+<ul>
+<li>Ghép 5 đoạn tài liệu cùng dữ liệu ca khám (tuổi, triệu chứng, tiền sử, dị ứng, thuốc dự kiến) vào cấu trúc prompt cố định.</li>
+<li>Mô hình ngôn ngữ tổng hợp khuyến nghị điều trị, cảnh báo chống chỉ định và đính kèm số quyết định của phác đồ làm bằng chứng.</li>
+</ul>
+</li>
+</ul>
+
+</body>
+</html>

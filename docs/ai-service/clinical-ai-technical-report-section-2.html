@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>CareFlow - Báo Cáo Kỹ Thuật (Mục 2)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@page {
+    size: A4;
+    margin: 18mm 14mm 18mm 14mm;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    background: #ffffff;
+    line-height: 1.6;
+    font-size: 13px;
+    margin: 0;
+    padding: 0;
+}
+
+.doc-header {
+    border-bottom: 2px solid #6366f1;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+.doc-tag {
+    display: inline-block;
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+}
+.doc-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0 0 4px 0;
+}
+.doc-subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+}
+
+h2 {
+    font-size: 16.5px;
+    font-weight: 700;
+    color: #1e1b4b;
+    border-left: 4px solid #6366f1;
+    padding-left: 10px;
+    margin-top: 20px;
+    margin-bottom: 14px;
+}
+
+h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #312e81;
+    margin-top: 18px;
+    margin-bottom: 10px;
+    background: #f8fafc;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border-left: 3px solid #818cf8;
+    page-break-after: avoid;
+}
+
+h4 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #4338ca;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+}
+
+p {
+    margin: 6px 0;
+    color: #334155;
+    text-align: justify;
+}
+
+ul, ol {
+    padding-left: 20px;
+    margin-top: 4px;
+    margin-bottom: 8px;
+}
+
+li {
+    margin-bottom: 4px;
+    color: #334155;
+}
+
+strong {
+    color: #0f172a;
+    font-weight: 600;
+}
+
+code {
+    font-family: 'JetBrains Mono', Consolas, Monaco, monospace;
+    font-size: 11.5px;
+    background: #f1f5f9;
+    color: #0f766e;
+    padding: 1.5px 4.5px;
+    border-radius: 4px;
+    border: 1px solid #e2e8f0;
+}
+
+pre {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 12px;
+    overflow-x: auto;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 11px;
+    line-height: 1.45;
+    margin: 10px 0;
+    page-break-inside: avoid;
+}
+
+pre code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: #1e293b;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+    font-size: 11.5px;
+    page-break-inside: avoid;
+}
+
+th, td {
+    border: 1px solid #cbd5e1;
+    padding: 7px 9px;
+    text-align: left;
+    vertical-align: top;
+}
+
+th {
+    background: #f1f5f9;
+    color: #1e293b;
+    font-weight: 600;
+}
+
+tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+hr {
+    border: none;
+    border-top: 1px dashed #cbd5e1;
+    margin: 16px 0;
+}
+
+.math-block {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin: 8px 0;
+    font-family: 'JetBrains Mono', monospace;
+    color: #166534;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    page-break-inside: avoid;
+}
+
+.math-label {
+    font-weight: 600;
+    color: #15803d;
+    font-size: 11px;
+}
+
+.math-expr {
+    font-size: 13px;
+    font-weight: 500;
+}
+
+pre { line-height: 125%; }
+td.linenos .normal { color: #666666; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+span.linenos { color: #666666; background-color: transparent; padding-left: 5px; padding-right: 5px; }
+td.linenos .special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+span.linenos.special { color: #000000; background-color: #ffffc0; padding-left: 5px; padding-right: 5px; }
+.highlight .hll { background-color: #ffffcc }
+.highlight { background: #f0f0f0; }
+.highlight .c { color: #60a0b0; font-style: italic } /* Comment */
+.highlight .err { border: 1px solid #FF0000 } /* Error */
+.highlight .k { color: #007020; font-weight: bold } /* Keyword */
+.highlight .o { color: #666666 } /* Operator */
+.highlight .ch { color: #60a0b0; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #60a0b0; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #007020 } /* Comment.Preproc */
+.highlight .cpf { color: #60a0b0; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #60a0b0; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #60a0b0; background-color: #fff0f0 } /* Comment.Special */
+.highlight .gd { color: #A00000 } /* Generic.Deleted */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .ges { font-weight: bold; font-style: italic } /* Generic.EmphStrong */
+.highlight .gr { color: #FF0000 } /* Generic.Error */
+.highlight .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #00A000 } /* Generic.Inserted */
+.highlight .go { color: #888888 } /* Generic.Output */
+.highlight .gp { color: #c65d09; font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.highlight .gt { color: #0044DD } /* Generic.Traceback */
+.highlight .kc { color: #007020; font-weight: bold } /* Keyword.Constant */
+.highlight .kd { color: #007020; font-weight: bold } /* Keyword.Declaration */
+.highlight .kn { color: #007020; font-weight: bold } /* Keyword.Namespace */
+.highlight .kp { color: #007020 } /* Keyword.Pseudo */
+.highlight .kr { color: #007020; font-weight: bold } /* Keyword.Reserved */
+.highlight .kt { color: #902000 } /* Keyword.Type */
+.highlight .m { color: #40a070 } /* Literal.Number */
+.highlight .s { color: #4070a0 } /* Literal.String */
+.highlight .na { color: #4070a0 } /* Name.Attribute */
+.highlight .nb { color: #007020 } /* Name.Builtin */
+.highlight .nc { color: #0e84b5; font-weight: bold } /* Name.Class */
+.highlight .no { color: #60add5 } /* Name.Constant */
+.highlight .nd { color: #555555; font-weight: bold } /* Name.Decorator */
+.highlight .ni { color: #d55537; font-weight: bold } /* Name.Entity */
+.highlight .ne { color: #007020 } /* Name.Exception */
+.highlight .nf { color: #06287e } /* Name.Function */
+.highlight .nl { color: #002070; font-weight: bold } /* Name.Label */
+.highlight .nn { color: #0e84b5; font-weight: bold } /* Name.Namespace */
+.highlight .nt { color: #062873; font-weight: bold } /* Name.Tag */
+.highlight .nv { color: #bb60d5 } /* Name.Variable */
+.highlight .ow { color: #007020; font-weight: bold } /* Operator.Word */
+.highlight .w { color: #bbbbbb } /* Text.Whitespace */
+.highlight .mb { color: #40a070 } /* Literal.Number.Bin */
+.highlight .mf { color: #40a070 } /* Literal.Number.Float */
+.highlight .mh { color: #40a070 } /* Literal.Number.Hex */
+.highlight .mi { color: #40a070 } /* Literal.Number.Integer */
+.highlight .mo { color: #40a070 } /* Literal.Number.Oct */
+.highlight .sa { color: #4070a0 } /* Literal.String.Affix */
+.highlight .sb { color: #4070a0 } /* Literal.String.Backtick */
+.highlight .sc { color: #4070a0 } /* Literal.String.Char */
+.highlight .dl { color: #4070a0 } /* Literal.String.Delimiter */
+.highlight .sd { color: #4070a0; font-style: italic } /* Literal.String.Doc */
+.highlight .s2 { color: #4070a0 } /* Literal.String.Double */
+.highlight .se { color: #4070a0; font-weight: bold } /* Literal.String.Escape */
+.highlight .sh { color: #4070a0 } /* Literal.String.Heredoc */
+.highlight .si { color: #70a0d0; font-style: italic } /* Literal.String.Interpol */
+.highlight .sx { color: #c65d09 } /* Literal.String.Other */
+.highlight .sr { color: #235388 } /* Literal.String.Regex */
+.highlight .s1 { color: #4070a0 } /* Literal.String.Single */
+.highlight .ss { color: #517918 } /* Literal.String.Symbol */
+.highlight .bp { color: #007020 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #06287e } /* Name.Function.Magic */
+.highlight .vc { color: #bb60d5 } /* Name.Variable.Class */
+.highlight .vg { color: #bb60d5 } /* Name.Variable.Global */
+.highlight .vi { color: #bb60d5 } /* Name.Variable.Instance */
+.highlight .vm { color: #bb60d5 } /* Name.Variable.Magic */
+.highlight .il { color: #40a070 } /* Literal.Number.Integer.Long */
+</style>
+</head>
+<body>
+<div class="doc-header">
+    <div class="doc-tag">CareFlow • Phân hệ Trợ lý AI Lâm sàng & Clinical RAG</div>
+    <div class="doc-title">Báo Cáo Kỹ Thuật Hiện Thực Phân Hệ AI Lâm Sàng & Clinical RAG</div>
+    <div class="doc-subtitle">Phần trích xuất: <strong>Mục 2. Các Thành Phần Kỹ Thuật Đã Hoàn Thành (Detailed Implementations)</strong></div>
+</div>
+<h2>2. Các Thành Phần Kỹ Thuật Đã Hoàn Thành (Detailed Implementations)</h2>
+<h3>2.1. Phân Kỳ 1: Tiền Xử Lý Dữ Liệu &amp; Data Ingestion Pipeline</h3>
+<p>Toàn bộ dữ liệu lâm sàng được chuẩn hóa thành tài liệu Markdown sạch và file dữ liệu có cấu trúc tại thư mục <code>docs/rag-docs/</code>:</p>
+<ol>
+<li><strong>Từ điển Danh mục Bệnh ICD-10 (Bộ Y Tế)</strong>:
+<ul>
+<li>File: <code>docs/rag-docs/icd10/icd10_dictionary.csv</code>.</li>
+<li>Quy mô: <strong>15.844 bản ghi ICD-10</strong> chuẩn hóa tiếng Việt không lỗi font.</li>
+</ul>
+</li>
+<li><strong>Ma Trận Tương Tác Thuốc Chống Chỉ Định (DDI Matrix)</strong>:
+<ul>
+<li>File: <code>docs/rag-docs/ddi/ddi_contraindicated.csv</code>.</li>
+<li>Căn cứ pháp lý: <strong>Quyết định 5948/QĐ-BYT</strong> của Bộ Y Tế.</li>
+<li>Quy mô: <strong>701 cặp tương tác thuốc chống chỉ định nghiêm trọng</strong> (ví dụ: Clopidogrel – Omeprazole, Simvastatin – Clarithromycin...).</li>
+<li>Cơ chế: <strong>Synthetic Narrative Serialization</strong> — chuyển hóa từng hàng bảng DDI thành 1 đoạn văn bản ngữ cảnh độc lập để embedding.</li>
+</ul>
+</li>
+<li><strong>Phác Đồ Điều Trị Bộ Y Tế (Clinical Practice Guidelines)</strong>:
+<ul>
+<li>Nguồn văn bản: Đái tháo đường Type 2 (QĐ 5481/QĐ-BYT), Tăng huyết áp (QĐ 3192/QĐ-BYT), Viêm phổi mắc phải cộng đồng (QĐ 4815/QĐ-BYT).</li>
+<li>Chuẩn hóa Markdown: Giữ nguyên cấu trúc phân cấp <code>#</code>, <code>##</code>, <code>###</code>, bảng biểu thuốc (Table Integrity).</li>
+</ul>
+</li>
+<li><strong>Script Tự Động Phân Đoạn &amp; Vector Hóa</strong>:
+<ul>
+<li>File script: <code>scripts/ingest_clinical_rag.py</code>.</li>
+<li><strong>Kỹ thuật Contextual Chunking</strong>:
+<ul>
+<li>Bơm Breadcrumbs phân cấp vào từng chunk: <code>[Văn bản BYT &gt; Chuyên khoa &gt; Đề mục]</code>.</li>
+<li>Kích thước cửa sổ token: 400 – 800 tokens. Tự động chia đệ quy khi &gt; 800 tokens, gộp đoạn khi &lt; 150 tokens.</li>
+<li>Khâu nối đa đoạn (Overlap): 50 – 80 tokens kèm liên kết con trỏ <code>prev_chunk_id</code> và <code>next_chunk_id</code>.</li>
+<li>Trích xuất metadata JSONB: Danh sách mã ICD-10 liên quan, danh sách tên thuốc generic đề cập, chuyên khoa.</li>
+</ul>
+</li>
+<li>Đã nạp thành công <strong>1.095 / 1.095 chunks (100%)</strong> với vector 768 chiều (<code>models/gemini-embedding-2</code> / <code>text-embedding-004</code>).</li>
+<li>Lưu trữ bản dump SQL tái tạo nhanh: <code>scripts/careflow_ai_schema_and_data.sql</code> (9.5MB).</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h3>2.2. Phân Kỳ 2: Cơ Sở Dữ Liệu Vector (PostgreSQL 16 + <code>pgvector</code>)</h3>
+<p>Hạ tầng lưu trữ vector được triển khai trên PostgreSQL 16 tích hợp extension <code>pgvector</code> 0.8.7 chạy độc lập trên Docker (Port <code>5433</code>, Database <code>careflow_ai</code>).</p>
+<h4>Cấu Trúc Bảng DDL &amp; Chỉ Mục Tối Ưu:</h4>
+<ul>
+<li><strong><code>clinical_guideline_documents</code></strong>: Lưu 4 tài liệu phác đồ gốc của Bộ Y Tế (Mã quyết định, tiêu đề, chuyên khoa, trạng thái active).</li>
+<li><strong><code>clinical_guideline_chunks</code></strong>: Lưu 1.095 đoạn tri thức được phân rã ngữ nghĩa:
+<ul>
+<li>Cột vector: <code>embedding vector(768)</code></li>
+<li>Cột full-text: <code>tsv_content tsvector</code> sinh tự động từ văn bản chunk</li>
+<li>Cột liên kết &amp; phân cấp: <code>document_id</code>, <code>chunk_index</code>, <code>section_title</code>, <code>breadcrumbs</code></li>
+<li>Cột metadata: <code>metadata jsonb</code> (chứa <code>icd10_codes</code>, <code>mentioned_drugs</code>)</li>
+</ul>
+</li>
+<li><strong><code>ai_clinical_interactions</code></strong>: Nhật ký kiểm toán (Audit Trail) lưu trữ toàn bộ truy vấn của bác sĩ, câu trả lời của AI, danh sách chunk trích dẫn và phản hồi bác sĩ (áp dụng hay từ chối).</li>
+</ul>
+<h4>Chỉ Mục Kép Hiệu Năng Cao:</h4>
+<ul>
+<li><strong>Chỉ mục HNSW Dense Vector</strong>:<pre><code class="language-sql"><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_clinical_chunks_hnsw</span><span class="w"> </span>
+<span class="k">ON</span><span class="w"> </span><span class="n">clinical_guideline_chunks</span><span class="w"> </span>
+<span class="k">USING</span><span class="w"> </span><span class="n">hnsw</span><span class="w"> </span><span class="p">(</span><span class="n">embedding</span><span class="w"> </span><span class="n">vector_cosine_ops</span><span class="p">)</span><span class="w"> </span>
+<span class="k">WITH</span><span class="w"> </span><span class="p">(</span><span class="n">m</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">16</span><span class="p">,</span><span class="w"> </span><span class="n">ef_construction</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">64</span><span class="p">);</span>
+</code></pre>
+</li>
+<li><strong>Chỉ mục GIN Sparse Full-Text</strong>:<pre><code class="language-sql"><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_clinical_chunks_tsv</span><span class="w"> </span>
+<span class="k">ON</span><span class="w"> </span><span class="n">clinical_guideline_chunks</span><span class="w"> </span>
+<span class="k">USING</span><span class="w"> </span><span class="n">gin</span><span class="w"> </span><span class="p">(</span><span class="n">tsv_content</span><span class="p">);</span>
+</code></pre>
+</li>
+<li><strong>Chỉ mục GIN JSONB</strong>:<pre><code class="language-sql"><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">idx_clinical_chunks_metadata_gin</span><span class="w"> </span>
+<span class="k">ON</span><span class="w"> </span><span class="n">clinical_guideline_chunks</span><span class="w"> </span>
+<span class="k">USING</span><span class="w"> </span><span class="n">gin</span><span class="w"> </span><span class="p">(</span><span class="n">metadata</span><span class="w"> </span><span class="n">jsonb_path_ops</span><span class="p">);</span>
+</code></pre>
+</li>
+</ul>
+<hr />
+<h3>2.3. Phân Kỳ 3: Backend Hybrid Search Engine &amp; Clinical RAG</h3>
+<p>Trong module <code>careflow-ai-service</code>, hệ thống RAG được cài đặt chuẩn TDD và clean architecture:</p>
+<ol>
+<li><strong>JPA Native Query Repositories</strong>:
+<ul>
+<li>File: <code>ClinicalGuidelineChunkRepository.java</code>.</li>
+<li>Truy vấn Dense: Tìm kiếm theo Cosine Distance sử dụng toán tử <code>&lt;=&gt;</code> và ép kiểu native <code>cast(:embedding as vector)</code>.</li>
+<li>Truy vấn Sparse: Tìm kiếm full-text bằng hàm <code>plainto_tsquery('simple', :query)</code> trên <code>tsv_content</code>.</li>
+</ul>
+</li>
+<li><strong>Thuật Toán Hybrid Search Kết Hợp RRF (Reciprocal Rank Fusion)</strong>:
+<ul>
+<li>File: <code>ClinicalHybridSearchService.java</code>.</li>
+<li>Chuẩn học thuật: Cormack et al. (SIGIR 2009).</li>
+<li>Tham số: Hằng số <em>k = 60</em>, lấy Top 20 ứng viên từ Vector Search và Top 20 ứng viên từ BM25 Full-text Search.</li>
+<li>Công thức tính điểm:
+$$RRF_Score(d) = \sum_{m \in {Vector, BM25}} \frac{1}{k + r_m(d)}$$</li>
+<li>Kết quả: Hợp nhất và chọn ra <strong>Top 5 Chunks</strong> có điểm số cao nhất chuyển tiếp sang tầng Augmentation.</li>
+</ul>
+</li>
+<li><strong>Dịch Vụ AI Lâm Sàng &amp; Guardrails</strong>:
+<ul>
+<li>File: <code>AiClinicalAssistantService.java</code>.</li>
+<li>Tích hợp Gemini 2.5 Flash / DeepSeek fallback.</li>
+<li>Bơm bối cảnh lâm sàng thời gian thực: Tuổi, giới tính, tiền sử bệnh, dị ứng, triệu chứng, khám thực thể, thuốc đang kê.</li>
+<li>Bóc tách cấu trúc dữ liệu trả về gồm: <code>summary</code>, <code>differentialDiagnoses</code>, <code>treatmentSuggestions</code>, <code>contraindications</code>, <code>ddiWarnings</code>, và mảng <code>evidenceRefs</code> (Mã QĐ BYT, tên mục phác đồ).</li>
+<li><strong>DDI Guardrails</strong>: Chỉ kích hoạt quét và cảnh báo tương tác thuốc khi bác sĩ thực sự đã thêm thuốc vào đơn khám, loại bỏ cảnh báo rác.</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h3>2.4. Phân Kỳ 4: Kiến Trúc Voice-to-Text Kép (Dual Voice STT Architecture)</h3>
+<p>CareFlow hiện tích hợp hoàn chỉnh và song song <strong>hai luồng xử lý giọng nói độc lập</strong>, phục vụ hai giai đoạn khác nhau trong phiên khám:</p>
+<table>
+<thead>
+<tr>
+<th>Tiêu Chí</th>
+<th>Luồng 1: Consultation Clinical STT</th>
+<th>Luồng 2: Voice Prescription Panel</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Vị trí trên UI</strong></td>
+<td>Căn lề phải phía trên hàng Tab khám bệnh (Cột trái)</td>
+<td>Panel &quot;Nhập toa bằng giọng nói&quot; (Cột phải)</td>
+</tr>
+<tr>
+<td><strong>Mục đích</strong></td>
+<td>Bác sĩ đọc diễn biến bệnh, triệu chứng lâm sàng</td>
+<td>Bác sĩ đọc danh mục thuốc kê đơn, liều dùng</td>
+</tr>
+<tr>
+<td><strong>Quản lý trạng thái</strong></td>
+<td>Zustand Store (<code>useVoiceStore.ts</code>)</td>
+<td>Component state nội bộ (<code>VoicePrescriptionPanel.tsx</code>)</td>
+</tr>
+<tr>
+<td><strong>Xử lý Backend</strong></td>
+<td><code>careflow-ai-service</code> bóc tách thực thể lâm sàng</td>
+<td><code>PrescriptionAiDraftService</code> + Python voice core</td>
+</tr>
+<tr>
+<td><strong>Điền tự động vào</strong></td>
+<td>Lý do khám, Bệnh sử, Triệu chứng cơ năng &amp; thực thể</td>
+<td>Danh sách đơn thuốc nháp (Prescription Draft Items)</td>
+</tr>
+<tr>
+<td><strong>Tính năng an toàn</strong></td>
+<td>Nút <strong>&quot;Hủy&quot;</strong> tức thì khi ghi âm hoặc preview</td>
+<td>Xem trước danh sách thuốc trước khi lưu toa nháp</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>2.5. Phân Kỳ 5: Giao Diện Người Dùng Bác Sĩ (Doctor Web UI/UX)</h3>
+<p>Theo tiêu chuẩn thiết kế Bệnh viện Nhi đồng SJD Barcelona tại <code>docs/design.md</code>, giao diện được tối ưu hóa toàn diện tại <code>consultation/[id]/page.tsx</code>/consultation/[id]/page.tsx):</p>
+<ol>
+<li><strong>Chuẩn Hóa Typography &amp; Loại Bỏ Overdesign</strong>:
+<ul>
+<li>Giảm 30% thang cỡ chữ chuẩn y khoa (<code>text-[11px]</code>, <code>text-[12px]</code>, <code>text-[13px]</code>).</li>
+<li>Xóa bỏ hoàn toàn mascot &quot;Bác sĩ Chồn AI&quot;, emoji đùa cợt (<code>🐾</code>), gradient màu tím/hồng lòe lẹt. Chuẩn hóa giọng điệu: <em>&quot;Trợ lý Lâm sàng (Phác đồ điều trị Bộ Y Tế)&quot;</em>.</li>
+</ul>
+</li>
+<li><strong>Thanh Compact Bar Cảnh Báo Dị Ứng</strong>:
+<ul>
+<li>Chiều cao thu gọn còn ~36px (<code>min-h-[36px] px-3 py-1.5</code>).</li>
+<li>Viền nhấn mảnh bên trái 3px (<code>border-l-[3px] border-l-rose-500</code>), loại bỏ chữ in hoa thô cứng, hiển thị trực quan các dị ứng thuốc nghiêm trọng.</li>
+</ul>
+</li>
+<li><strong>Thanh Điều Khiển Tra Cứu Lâm Sàng Thống Nhất</strong>:
+<ul>
+<li>Gộp ô tra cứu văn bản và các chips gợi ý nhanh thành 1 thanh công cụ duy nhất trên đỉnh tab AI: <em>&quot;Chẩn đoán phân biệt&quot;</em>, <em>&quot;Cảnh báo tương tác DDI&quot;</em>, <em>&quot;Dữ liệu còn thiếu&quot;</em>, <em>&quot;Đề xuất Cận lâm sàng&quot;</em>.</li>
+</ul>
+</li>
+<li><strong>Render Markdown Chuẩn Y Khoa</strong>:
+<ul>
+<li>Component: <code>FormattedAiText.tsx</code>.</li>
+<li>Tích hợp <code>react-markdown</code> và <code>remark-gfm</code> render chuẩn xác tiêu đề, gạch đầu dòng, bảng liều lượng thuốc và khối trích dẫn phác đồ.</li>
+</ul>
+</li>
+<li><strong>Combobox Danh Mục Thuốc Có Dữ Liệu Thực</strong>:
+<ul>
+<li>Nạp 25 thuốc mẫu chuẩn phác đồ Bộ Y Tế vào bảng <code>drugs_dictionary</code> (<code>careflow_prescription</code>).</li>
+<li>Bổ sung <code>DEFAULT_MEDICINE_CATALOG</code> trên Frontend đảm bảo ô chọn thuốc luôn có gợi ý chính xác khi bác sĩ gõ tìm kiếm.</li>
+</ul>
+</li>
+<li><strong>Khối Bằng Chứng Phác Đồ Bộ Y Tế</strong>:
+<ul>
+<li>Render danh sách <code>evidenceRefs</code> kèm badge mã quyết định (VD: <code>5481/QĐ-BYT</code>).</li>
+<li>Nút <strong>&quot;+ Áp dụng&quot;</strong>: Tự động đưa chẩn đoán xác định và danh mục thuốc khuyến nghị vào đơn khám của bệnh nhân chỉ bằng 1 click.</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h3>2.6. Phân Kỳ 6: Đồng Bộ Mã Nguồn &amp; Hòa Nhập Nhánh <code>develop</code> (R0–R7)</h3>
+<ol>
+<li><strong>Giải Quyết Xung Đột Mã Nguồn (7 tệp)</strong>:
+<ul>
+<li>Đã kéo toàn bộ các release R0–R7 từ <code>origin/develop</code> vào <code>feature/vi/ai-service</code>.</li>
+<li>Bảo toàn cấu trúc <code>ClinicalEngine</code> của develop song song với toàn bộ <code>ClinicalHybridSearchService</code> RAG của nhánh AI.</li>
+<li>Hợp nhất cơ chế bảo mật xác thực DPoP tokens và Next.js API client routing.</li>
+</ul>
+</li>
+<li><strong>Kết Quả Kiểm Thử Xác Thực</strong>:
+<ul>
+<li><strong>Frontend</strong>: Chạy <code>npm run build</code> trên <code>frontend/doctor-web</code> thành công 100% (Turbopack, TypeCheck, Static Optimization).</li>
+<li><strong>Backend</strong>: Chạy <code>mvn test</code> trên <code>careflow-ai-service</code> đạt <strong>13/13 unit &amp; integration tests PASS 100%</strong>.</li>
+</ul>
+</li>
+</ol>
+
+</body>
+</html>

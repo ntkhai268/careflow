@@ -1,19 +1,18 @@
 "use client";
+
 import {
   forwardRef,
   useEffect,
   useImperativeHandle,
   useRef,
-  useState,
   ReactNode,
 } from "react";
-import { fixWebmDuration } from "@fix-webm-duration/fix";
-import {
-  voicePrescriptionApi,
-  VoiceJob,
-  VoiceResult,
-} from "@/lib/voice-prescription-api";
 import { PrescriptionResponse } from "@/lib/prescription-api";
+import {
+  useVoicePrescriptionStore,
+  formatVoiceTime,
+  validVoiceDuration,
+} from "@/stores/voice-prescription-store";
 
 export interface VoiceDraftHandle {
   save: (replaceItems?: boolean) => Promise<PrescriptionResponse | null>;
@@ -34,19 +33,6 @@ interface Props {
   children: ReactNode;
 }
 
-const timeLabel = (seconds: number) => {
-  const value = Math.max(0, Math.round(seconds));
-  return `${Math.floor(value / 60)
-    .toString()
-    .padStart(2, "0")}:${(value % 60).toString().padStart(2, "0")}`;
-};
-
-const validDuration = (value: unknown): value is number =>
-  typeof value === "number" && Number.isFinite(value) && value > 0 && value <= 181;
-
-const failure = (e: unknown) =>
-  e instanceof Error ? e.message : "Chưa xử lý được giọng nói.";
-
 const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
   function VoicePrescriptionPanel(
     {
@@ -61,497 +47,91 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
     },
     ref
   ) {
-    const [available, setAvailable] = useState(false),
-      [capError, setCapError] = useState(""),
-      [recording, setRecording] = useState(false),
-      [seconds, setSeconds] = useState(0),
-      [busy, setBusy] = useState(""),
-      [error, setError] = useState(""),
-      [text, setText] = useState(""),
-      [hasAudio, setHasAudio] = useState(false),
-      [warnings, setWarnings] = useState<string[]>([]),
-      [textMode, setTextMode] = useState(false);
-    const [review, setReview] = useState<VoiceResult | null>(null);
-    const [audioUrl, setAudioUrl] = useState("");
-    const [clipDuration, setClipDuration] = useState<number | null>(null),
-      [savedDuration, setSavedDuration] = useState<number | null>(null),
-      [finishing, setFinishing] = useState(false),
-      [level, setLevel] = useState<number | null>(null);
-    const duration = useRef<number | null>(null),
-      recordingStarted = useRef(0),
-      finalizing = useRef(false),
-      meter = useRef<AudioContext | null>(null),
-      analyser = useRef<AnalyserNode | null>(null);
-    const rememberDuration = (value: number | null) => {
-      duration.current = value;
-      setClipDuration(value);
-    };
-    const stopMeter = () => {
-      const current = meter.current;
-      meter.current = null;
-      analyser.current = null;
-      if (current && current.state !== "closed") void current.close().catch(() => {});
-    };
-    const [inputPending, setInputPending] = useState(false),
-      [starting, setStarting] = useState(false);
-    const pendingInput = useRef(false),
-      acquiring = useRef(false),
-      captureEpoch = useRef(0);
-    const panel = useRef<HTMLElement | null>(null),
-      previewUrl = useRef("");
-    const metadataKey = `careflow.voice.saved:${actorId}:${consultationId}`;
-    const preview = (blob: Blob | null) => {
-      if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
-      previewUrl.current = blob ? URL.createObjectURL(blob) : "";
-      setAudioUrl(previewUrl.current);
-    };
-    useEffect(
-      () => () => {
-        if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
-      },
-      []
-    );
-    const recorder = useRef<MediaRecorder | null>(null),
-      stream = useRef<MediaStream | null>(null),
-      chunks = useRef<Blob[]>([]),
-      audio = useRef<Blob | null>(null),
-      stopped = useRef<Promise<Blob> | null>(null),
-      job = useRef<VoiceJob | null>(null),
-      submittedText = useRef(""),
-      key = useRef(crypto.randomUUID()),
-      controller = useRef(new AbortController()),
-      task = useRef<Promise<PrescriptionResponse | null> | null>(null),
-      mounted = useRef(true),
-      created = useRef<PrescriptionResponse | null>(null);
+    const panelRef = useRef<HTMLElement | null>(null);
 
+    const {
+      available,
+      capError,
+      recording,
+      starting,
+      finishing,
+      seconds,
+      level,
+      busy,
+      error,
+      text,
+      hasAudio,
+      audioUrl,
+      clipDuration,
+      savedDuration,
+      warnings,
+      textMode,
+      inputPending,
+      review,
+      checkCapabilities,
+      startRecording,
+      stopRecording,
+      uploadAudio,
+      setText,
+      setTextMode,
+      resetInput,
+      setError,
+      setClipDuration,
+      executeDraft,
+      initSessionMetadata,
+      cleanup,
+    } = useVoicePrescriptionStore();
+
+    // Check capabilities on mount & cleanup on unmount
     useEffect(() => {
-      mounted.current = true;
-      controller.current = new AbortController();
-      voicePrescriptionApi.capabilities().then(
-        (r) => {
-          if (mounted.current) setAvailable(r.data.voicePrescription);
-        },
-        (e) => {
-          if (mounted.current) setCapError(failure(e));
-        }
-      );
+      void checkCapabilities();
       return () => {
-        mounted.current = false;
-        controller.current.abort();
-        if (recorder.current?.state === "recording") recorder.current.stop();
-        stream.current?.getTracks().forEach((t) => t.stop());
-        chunks.current = [];
-        audio.current = null;
-        stopMeter();
+        cleanup();
       };
-    }, []);
+    }, [checkCapabilities, cleanup]);
 
+    // Restore previous session metadata if any
     useEffect(() => {
-      if (!prescriptionId || job.current) return;
-      let active = true;
-      try {
-        const saved = JSON.parse(sessionStorage.getItem(metadataKey) || "null");
-        if (saved?.prescriptionId !== prescriptionId) return;
-        if (
-          !pendingInput.current &&
-          !acquiring.current &&
-          validDuration(saved.audioDurationSeconds)
-        )
-          setSavedDuration(saved.audioDurationSeconds);
-        if (typeof saved.jobId !== "string" || !/^[0-9a-f-]{36}$/i.test(saved.jobId))
-          return;
-        voicePrescriptionApi.get(saved.jobId, controller.current.signal).then(
-          (r) => {
-            if (
-              active &&
-              !pendingInput.current &&
-              !acquiring.current &&
-              r.data.consultationId === consultationId &&
-              r.data.state === "SUCCEEDED" &&
-              r.data.result
-            ) {
-              setText(r.data.result.transcript);
-              setReview(r.data.result);
-              setWarnings(r.data.result.warnings || []);
-              if (validDuration(r.data.result.timings?.audioDurationSeconds))
-                setSavedDuration(r.data.result.timings.audioDurationSeconds);
-            }
-          },
-          () => {
-            try {
-              sessionStorage.setItem(
-                metadataKey,
-                JSON.stringify({
-                  prescriptionId: saved.prescriptionId,
-                  ...(validDuration(saved.audioDurationSeconds)
-                    ? { audioDurationSeconds: saved.audioDurationSeconds }
-                    : {}),
-                })
-              );
-            } catch {}
-          }
-        );
-      } catch {
-        /* Storage is optional; prescription data remains on the server. */
-      }
-      return () => {
-        active = false;
-      };
-    }, [prescriptionId, metadataKey, consultationId]);
+      void initSessionMetadata({ consultationId, prescriptionId, actorId });
+    }, [consultationId, prescriptionId, actorId, initSessionMetadata]);
 
-    useEffect(() => {
-      if (!recording) return;
-      const timer = setInterval(() => {
-        setSeconds(Math.floor((performance.now() - recordingStarted.current) / 1000));
-        const current = analyser.current;
-        if (current) {
-          const values = new Uint8Array(current.fftSize);
-          current.getByteTimeDomainData(values);
-          let sum = 0;
-          for (const value of values) sum += ((value - 128) / 128) ** 2;
-          setLevel(Math.sqrt(sum / values.length));
-        }
-      }, 200);
-      return () => clearInterval(timer);
-    }, [recording]);
-
-    useEffect(() => {
-      if (seconds >= 180 && recording && recorder.current?.state === "recording")
-        recorder.current.stop();
-    }, [seconds, recording]);
-
-    useEffect(() => {
-      if (hasPrescription && !canEdit && recorder.current?.state === "recording")
-        recorder.current.stop();
-    }, [hasPrescription, canEdit]);
-
-    const resetInput = (pending: boolean, mode = false) => {
-      pendingInput.current = pending;
-      setInputPending(pending);
-      audio.current = null;
-      preview(null);
-      setHasAudio(false);
-      setText("");
-      setTextMode(mode);
-      setWarnings([]);
-      setReview(null);
-      setError("");
-      job.current = null;
-      created.current = null;
-      submittedText.current = "";
-      key.current = crypto.randomUUID();
-      setSeconds(0);
-      rememberDuration(null);
-      setLevel(null);
-    };
-
-    const stop = async () => {
-      if (recorder.current?.state === "recording") recorder.current.stop();
-      return stopped.current;
-    };
-
-    const start = async () => {
-      if (
-        acquiring.current ||
-        finalizing.current ||
-        task.current ||
-        recorder.current?.state === "recording" ||
-        disabled ||
-        busy ||
-        !available ||
-        (hasPrescription && !canEdit)
-      )
-        return;
-      acquiring.current = true;
-      setStarting(true);
-      setError("");
-      const epoch = ++captureEpoch.current;
-      let captured: MediaStream | undefined;
-      try {
-        if (
-          !window.isSecureContext ||
-          !navigator.mediaDevices?.getUserMedia ||
-          typeof MediaRecorder === "undefined"
-        )
-          throw new Error("Trình duyệt cần HTTPS/localhost và hỗ trợ ghi âm.");
-        const s = await navigator.mediaDevices.getUserMedia({ audio: true });
-        captured = s;
-        if (!s.getAudioTracks().some((t) => t.readyState === "live" && t.enabled))
-          throw new Error(
-            "Micro chưa cung cấp âm thanh. Hãy chọn đúng micro trong trình duyệt rồi thử lại."
-          );
-        if (
-          !mounted.current ||
-          controller.current.signal.aborted ||
-          captureEpoch.current !== epoch
-        ) {
-          s.getTracks().forEach((t) => t.stop());
-          return;
-        }
-        const mime = ["audio/webm;codecs=opus", "audio/mp4", "audio/webm"].find((t) =>
-          MediaRecorder.isTypeSupported(t)
-        );
-        const m = new MediaRecorder(s, mime ? { mimeType: mime } : undefined),
-          parts: Blob[] = [];
-        let size = 0,
-          began = 0;
-        const ended = new Promise<Blob>((resolve, reject) => {
-          m.ondataavailable = (e) => {
-            if (e.data.size) {
-              size += e.data.size;
-              parts.push(e.data);
-              if (size > 20 * 1024 * 1024 && m.state === "recording") m.stop();
-            }
-          };
-          m.onerror = () => {
-            s.getTracks().forEach((t) => t.stop());
-            stopMeter();
-            if (mounted.current && recorder.current === m) {
-              setRecording(false);
-              setError("Ghi âm bị gián đoạn. Hãy ghi lại.");
-            }
-            reject(new Error("Ghi âm bị gián đoạn"));
-          };
-          m.onstop = async () => {
-            s.getTracks().forEach((t) => t.stop());
-            stopMeter();
-            const elapsed = (performance.now() - began) / 1000;
-            const raw = new Blob(parts, { type: m.mimeType });
-            parts.length = 0;
-            if (mounted.current && recorder.current === m) {
-              finalizing.current = true;
-              setFinishing(true);
-              setRecording(false);
-              rememberDuration(elapsed);
-            }
-            try {
-              if (!raw.size)
-                throw new Error(
-                  "Micro không tạo được dữ liệu âm thanh. Hãy kiểm tra quyền micro rồi ghi lại."
-                );
-              let b = raw;
-              if (raw.type.includes("webm"))
-                b = await fixWebmDuration(raw, elapsed * 1000, { logger: false });
-              if (mounted.current && recorder.current === m) {
-                audio.current = b;
-                preview(b);
-                setHasAudio(true);
-                recorder.current = null;
-              }
-              resolve(b);
-            } catch (e) {
-              if (mounted.current && recorder.current === m) {
-                setError(failure(e));
-                recorder.current = null;
-                setHasAudio(false);
-              }
-              reject(e);
-            } finally {
-              finalizing.current = false;
-              if (mounted.current) setFinishing(false);
-            }
-          };
-        });
-        void ended.catch(() => {});
-        m.start(1000);
-        began = performance.now();
-        recordingStarted.current = began;
-        resetInput(true);
-        recorder.current = m;
-        stream.current = s;
-        chunks.current = parts;
-        stopped.current = ended;
-        setRecording(true);
-        try {
-          const context = new AudioContext();
-          meter.current = context;
-          const a = context.createAnalyser();
-          a.fftSize = 512;
-          context.createMediaStreamSource(s).connect(a);
-          analyser.current = a;
-          void context.resume().catch(() => {});
-        } catch {
-          stopMeter();
-        }
-      } catch (e) {
-        captured?.getTracks().forEach((t) => t.stop());
-        if (mounted.current) setError(failure(e));
-      } finally {
-        acquiring.current = false;
-        if (mounted.current) setStarting(false);
-      }
-    };
-
-    const execute = async (replaceItems = false) => {
-      if (!pendingInput.current || created.current) return null;
-      if (!audio.current && recorder.current?.state !== "recording" && !text.trim())
-        return null;
-      if (hasPrescription && !canEdit)
-        throw new Error("Chỉ ghi thêm vào toa đang ở dạng nháp.");
-      setError("");
-      setBusy("Đang dừng ghi âm…");
-      const signal = controller.current.signal;
-      try {
-        if (recorder.current?.state === "recording") await stop();
-        if (signal.aborted) throw new DOMException("Phiên đã thay đổi", "AbortError");
-        setBusy("Đang nhận dạng và đọc toa…");
-        let current = job.current;
-        if (current && text.trim() && text.trim() !== submittedText.current) {
-          current = (
-            await voicePrescriptionApi.revise(current, text.trim(), signal)
-          ).data;
-          submittedText.current = text.trim();
-        }
-        if (!current) {
-          const input = textMode ? text.trim() : audio.current || text.trim();
-          if (!input) throw new Error("Chưa có bản ghi hoặc transcript.");
-          current = (
-            await voicePrescriptionApi.create(consultationId, key.current, input, signal)
-          ).data;
-          submittedText.current = typeof input === "string" ? input : "";
-        }
-        job.current = current;
-        const deadline = Date.now() + 240000;
-        while (["QUEUED", "RUNNING"].includes(current.state)) {
-          if (Date.now() > deadline)
-            throw new Error(
-              "AI vẫn đang xử lý. Bấm Lưu toa nháp để kiểm tra lại công việc hiện tại."
-            );
-          await new Promise<void>((resolve, reject) => {
-            const timer = setTimeout(done, 800);
-            function done() {
-              signal.removeEventListener("abort", abort);
-              resolve();
-            }
-            function abort() {
-              clearTimeout(timer);
-              reject(new DOMException("Phiên đã thay đổi", "AbortError"));
-            }
-            signal.addEventListener("abort", abort, { once: true });
-          });
-          current = (await voicePrescriptionApi.get(current.jobId, signal)).data;
-          job.current = current;
-        }
-        if (current.result) {
-          setText(current.result.transcript);
-          submittedText.current = current.result.transcript;
-          setWarnings(current.result.warnings || []);
-          setReview(current.result);
-        }
-        if (current.state !== "SUCCEEDED")
-          throw new Error(
-            `Không tạo được đề xuất (${
-              current.errorCode || current.state
-            }). Hãy ghi lại hoặc nhập transcript mới.`
-          );
-        if (!current.result?.items.length)
-          throw new Error(
-            "Chưa nhận được tên thuốc. Hãy bổ sung tên thuốc trong transcript rồi lưu lại."
-          );
-        setBusy(hasPrescription ? "Đang thêm thuốc vào toa nháp…" : "Đang lưu toa nháp…");
-        const saved = (
-          await voicePrescriptionApi.editableDraft(
-            current,
-            signal,
+    // Expose imperative handle for parent components
+    useImperativeHandle(
+      ref,
+      () => ({
+        save: async (replaceItems = false) => {
+          return executeDraft({
+            consultationId,
             prescriptionId,
-            replaceItems
-          )
-        ).data;
-        if (signal.aborted) throw new DOMException("Phiên đã thay đổi", "AbortError");
-        created.current = saved;
-        pendingInput.current = false;
-        setInputPending(false);
-        setSavedDuration(
-          validDuration(current.result?.timings?.audioDurationSeconds)
-            ? current.result.timings.audioDurationSeconds
-            : duration.current
-        );
-        try {
-          sessionStorage.setItem(
-            metadataKey,
-            JSON.stringify({
-              jobId: current.jobId,
-              prescriptionId: saved.id,
-              ...(validDuration(current.result?.timings?.audioDurationSeconds)
-                ? { audioDurationSeconds: current.result.timings.audioDurationSeconds }
-                : validDuration(duration.current)
-                  ? { audioDurationSeconds: duration.current }
-                  : {}),
-            })
-          );
-        } catch {}
-        audio.current = null;
-        setHasAudio(false);
-        return saved;
-      } catch (e) {
-        if (mounted.current) {
-          setError(failure(e));
-          panel.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-        throw e;
-      } finally {
-        if (mounted.current) setBusy("");
-      }
-    };
+            actorId,
+            replaceItems,
+          });
+        },
+        pending: () => inputPending,
+        open: (message?: string) => {
+          if (message) setError(message);
+          panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        },
+        stop: async () => {
+          await stopRecording();
+        },
+        collapse: () => {
+          resetInput(false);
+        },
+      }),
+      [
+        executeDraft,
+        consultationId,
+        prescriptionId,
+        actorId,
+        inputPending,
+        setError,
+        stopRecording,
+        resetInput,
+      ]
+    );
 
-    useImperativeHandle(ref, () => ({
-      collapse: () => close(),
-      pending: () =>
-        acquiring.current ||
-        (pendingInput.current &&
-          (finalizing.current ||
-            !!audio.current ||
-            recorder.current?.state === "recording" ||
-            !!text.trim() ||
-            !!job.current)),
-      open: (message) => {
-        if (message) setError(message);
-        panel.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      },
-      stop: async () => {
-        if (acquiring.current)
-          throw new Error("Micro đang được mở. Hãy chờ rồi bấm lưu lại.");
-        await stop();
-      },
-      save: (replaceItems = false) => {
-        if (task.current) return task.current;
-        task.current = execute(replaceItems).finally(() => {
-          task.current = null;
-        });
-        return task.current;
-      },
-    }));
-
-    const close = () => {
-      if (busy) return;
-      captureEpoch.current++;
-      if (recorder.current?.state === "recording") recorder.current.stop();
-    };
-
-    const upload = (file?: File) => {
-      if (
-        !file ||
-        disabled ||
-        busy ||
-        recording ||
-        starting ||
-        finalizing.current ||
-        !available ||
-        (hasPrescription && !canEdit)
-      )
-        return;
-      if (!file.size || file.size > 20 * 1024 * 1024) {
-        setError("Audio phải có dữ liệu và không quá 20 MiB.");
-        return;
-      }
-      resetInput(true);
-      audio.current = file;
-      preview(file);
-      setHasAudio(true);
-      panel.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    };
-
-    if (!available && !hasPrescription)
+    if (!available && !hasPrescription) {
       return (
         <>
           {children}
@@ -560,6 +140,7 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
           </div>
         </>
       );
+    }
 
     const hasActiveDetails =
       recording ||
@@ -575,7 +156,7 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
 
     return (
       <section
-        ref={panel}
+        ref={panelRef}
         aria-label="Nhập toa bằng giọng nói"
         className="space-y-4"
       >
@@ -605,11 +186,15 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
                   !available ||
                   (hasPrescription && !canEdit)
                 }
-                onClick={() =>
-                  recording
-                    ? void stop().catch((e) => setError(failure(e)))
-                    : void start()
-                }
+                onClick={() => {
+                  if (recording) {
+                    void stopRecording().catch((e) =>
+                      setError(e instanceof Error ? e.message : "Chưa dừng được micro.")
+                    );
+                  } else {
+                    void startRecording({ disabled, hasPrescription, canEdit });
+                  }
+                }}
                 className={`rounded-lg px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-all disabled:opacity-50 cursor-pointer ${
                   recording
                     ? "bg-[#BA1A1A] hover:bg-[#93000A]"
@@ -621,7 +206,7 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
                   : finishing
                     ? "Đang chuẩn bị bản ghi…"
                     : recording
-                      ? `Dừng ghi âm (${timeLabel(seconds)})`
+                      ? `Dừng ghi âm (${formatVoiceTime(seconds)})`
                       : hasAudio
                         ? "Ghi lại"
                         : hasPrescription
@@ -646,7 +231,8 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
                     (hasPrescription && !canEdit)
                   }
                   onChange={(e) => {
-                    upload(e.target.files?.[0]);
+                    const file = e.target.files?.[0];
+                    if (file) uploadAudio(file);
                     e.target.value = "";
                   }}
                 />
@@ -665,7 +251,7 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
                 }
                 onClick={() => {
                   resetInput(true, true);
-                  panel.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                  panelRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
                 className="rounded-lg border border-[#D5E0E6] bg-white hover:bg-[#F5F8FA] px-2.5 py-1.5 text-xs font-semibold text-[#17242D] transition-colors cursor-pointer disabled:opacity-50"
               >
@@ -690,7 +276,7 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
               {recording && (
                 <div className="rounded-lg border border-[#BA1A1A]/30 bg-[#FFDAD6]/40 p-2.5">
                   <p role="status" className="text-xs font-bold text-[#BA1A1A]">
-                    Đang ghi âm · {timeLabel(seconds)} / 03:00
+                    Đang ghi âm · {formatVoiceTime(seconds)} / 03:00
                   </p>
                   {level !== null && (
                     <>
@@ -716,7 +302,7 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
               {finishing && (
                 <p role="status" className="text-xs font-medium text-[#00577E]">
                   Đang chuẩn bị bản ghi{" "}
-                  {clipDuration !== null ? timeLabel(clipDuration) : ""} để nghe lại…
+                  {clipDuration !== null ? formatVoiceTime(clipDuration) : ""} để nghe lại…
                 </p>
               )}
 
@@ -727,7 +313,7 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
                 >
                   <p className="text-xs font-bold text-[#A86100]">
                     {clipDuration !== null
-                      ? `Đã ghi ${timeLabel(clipDuration)}`
+                      ? `Đã ghi ${formatVoiceTime(clipDuration)}`
                       : "Đã có audio"}{" "}
                     · Chưa thêm vào toa nháp
                   </p>
@@ -742,7 +328,7 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
                   aria-label="Thời lượng bản ghi đã xử lý"
                   className="rounded-lg bg-[#DDF4E7] px-3 py-2 text-xs font-semibold text-[#1B7F4B]"
                 >
-                  Đã xử lý đoạn ghi âm · {timeLabel(savedDuration)}
+                  Đã xử lý đoạn ghi âm · {formatVoiceTime(savedDuration)}
                 </p>
               )}
 
@@ -758,7 +344,7 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
                   src={audioUrl}
                   onLoadedMetadata={(e) => {
                     const value = e.currentTarget.duration;
-                    if (audio.current && validDuration(value)) rememberDuration(value);
+                    if (validVoiceDuration(value)) setClipDuration(value);
                   }}
                   className="w-full h-9"
                 />
@@ -788,18 +374,7 @@ const VoicePrescriptionPanel = forwardRef<VoiceDraftHandle, Props>(
                     }
                     maxLength={12000}
                     onChange={(e) => {
-                      pendingInput.current = true;
-                      setInputPending(true);
                       setText(e.target.value);
-                      setReview(null);
-                      setWarnings([]);
-                      setError("");
-                      if (
-                        job.current &&
-                        ["FAILED", "CANCELLED", "EXPIRED"].includes(job.current.state)
-                      )
-                        job.current = null;
-                      if (!job.current) key.current = crypto.randomUUID();
                     }}
                     className="mt-1 block w-full rounded-lg border border-[#D5E0E6] bg-white p-2.5 text-xs text-[#17242D] min-h-20 focus:border-[#0277A8] focus:outline-none"
                   />
