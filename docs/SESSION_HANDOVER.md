@@ -3,7 +3,7 @@
 > **Tài liệu bàn giao ngữ cảnh liên phiên (Cross-Session Handover & Memory Context)**  
 > **Dự án**: CareFlow — Phân hệ AI Lâm Sàng & Clinical RAG  
 > **Nhánh Git hiện tại**: `feature/vi/ai-service` (Tuyệt đối không push trực tiếp lên `main`)  
-> **Cập nhật lần cuối**: 05/11/2026 (11:55)  
+> **Cập nhật lần cuối**: 05/11/2026 (15:20)  
 > **Mục đích**: Lưu giữ 100% bối cảnh công việc, các quyết định kiến trúc, kinh nghiệm xử lý lỗi và nhiệm vụ tiếp theo để bất kỳ phiên làm việc AI mới nào cũng có thể tiếp tục ngay lập tức mà không bị mất dấu.
 
 ---
@@ -244,10 +244,30 @@
   4. **GitNexus Impact Analysis**: `bunx gitnexus@latest detect-changes --scope all --repo .` $\rightarrow$ **Risk level: LOW** (0 affected execution flows).
 - **Trạng thái Git & PR**:
   - Nhánh cục bộ: `feature/vi/ai-service`.
-  - Đã commit: `0a06e4a feat(ai,doctor-web): integrate zustand voice prescription store and add pre-merge deploy checklist`.
+  - Đã commit & push:
+    - `0a06e4a`: `feat(ai,doctor-web): integrate zustand voice prescription store and add pre-merge deploy checklist`
+    - `34c3616`: `docs: update session handover with checklist and pr status`
   - Đã push thành công lên: `origin/feature/vi/ai-service`.
-  - **Đường link tạo Pull Request vào `develop`**:
+  - **Đường link Pull Request vào `develop`**:
     `https://github.com/ntkhai268/careflow/compare/develop...feature/vi/ai-service?expand=1`
+
+---
+
+## 11. Trạng Thái Bàn Giao & Nhiệm Vụ Tiếp Theo (Handover Status & Next Steps)
+
+- **Trạng thái hiện tại**:
+  - Phân hệ **AI Service & Clinical RAG** cùng toàn bộ **Zustand Voice Prescription Store** trên `frontend/doctor-web` đã hoàn thành 100%, vượt qua toàn bộ quy trình kiểm định [`docs/DEPLOY_CHECKLIST.md`](./DEPLOY_CHECKLIST.md).
+  - Toàn bộ thay đổi đã được đẩy an toàn lên nhánh `feature/vi/ai-service` trên remote `origin`.
+  - Pull Request vào `develop` đã được khởi tạo và sẵn sàng merge.
+
+- **Nhiệm vụ cho phiên tiếp theo (Next Session)**:
+  1. **Theo dõi & Merge PR**: Sau khi PR được review và merge vào `develop`, kéo code mới nhất từ `develop` về trước khi mở nhánh mới (`git checkout develop && git pull origin develop`).
+  2. **Kiểm thử Luồng E2E Toàn Diện (End-to-End Clinical Flow)**:
+     - Luồng 1: Bác sĩ bấm "Ghi âm" $\rightarrow$ Built-in STT bóc tách sinh hiệu & triệu chứng $\rightarrow$ tự động điền vào hồ sơ khám.
+     - Luồng 2: Bác sĩ tra cứu Phác đồ Bộ Y Tế $\rightarrow$ Hệ thống truy xuất Hybrid RAG (HNSW Cosine + GIN BM25) $\rightarrow$ Bác sĩ nhấn "+ Áp dụng" phác đồ vào đơn thuốc.
+     - Luồng 3: Bác sĩ chọn thuốc tương tác chống chỉ định (ví dụ Clopidogrel + Omeprazole) $\rightarrow$ Cảnh báo DDI thời gian thực hiển thị rõ ràng.
+  3. **Phát triển Phân hệ Tiếp theo**: Chuyển sang thực hiện các tính năng trên nhánh dịch vụ chuyên trách (ví dụ `feature/vi/prescription-service` hoặc `feature/vi/consultation-service`) theo đúng `AGENTS.md`.
+
 
 
 
