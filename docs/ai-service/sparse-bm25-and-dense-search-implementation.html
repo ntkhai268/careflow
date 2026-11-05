@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>Hiện Thực Hóa BM25 & Dense Vector Search Trong PostgreSQL & Spring Boot</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@page {
+    size: A4;
+    margin: 18mm 16mm 18mm 16mm;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: #1e293b;
+    background: #ffffff;
+    line-height: 1.6;
+    font-size: 13px;
+    margin: 0;
+    padding: 0;
+}
+
+.header-container {
+    border-bottom: 2px solid #0284c7;
+    padding-bottom: 12px;
+    margin-bottom: 18px;
+}
+
+.doc-badge {
+    display: inline-block;
+    background: #f0f9ff;
+    color: #0369a1;
+    font-size: 10.5px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    border: 1px solid #bae6fd;
+}
+
+h1 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 4px 0 6px 0;
+    line-height: 1.3;
+}
+
+.subtitle {
+    font-size: 12px;
+    color: #64748b;
+    margin: 0;
+}
+
+h2 {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: #0c4a6e;
+    border-left: 4px solid #0284c7;
+    padding-left: 10px;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    page-break-after: avoid;
+}
+
+h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: #0369a1;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    page-break-after: avoid;
+}
+
+p {
+    margin: 0 0 10px 0;
+    text-align: justify;
+}
+
+ul, ol {
+    margin: 0 0 10px 0;
+    padding-left: 20px;
+}
+
+li {
+    margin-bottom: 4px;
+}
+
+code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    background: #f1f5f9;
+    color: #0f172a;
+    padding: 1.5px 5px;
+    border-radius: 3px;
+    border: 1px solid #e2e8f0;
+}
+
+pre {
+    background: #0f172a;
+    color: #f8fafc;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    padding: 12px 14px;
+    border-radius: 6px;
+    overflow-x: auto;
+    margin: 10px 0 14px 0;
+    page-break-inside: avoid;
+}
+
+pre code {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font-size: inherit;
+}
+
+.table-container {
+    margin: 12px 0 16px 0;
+    page-break-inside: avoid;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+
+th {
+    background: #f8fafc;
+    color: #334155;
+    font-weight: 600;
+    text-align: left;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+}
+
+td {
+    padding: 7px 10px;
+    border: 1px solid #e2e8f0;
+    vertical-align: middle;
+}
+
+tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+.alert-box {
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin: 12px 0;
+    font-size: 12px;
+    page-break-inside: avoid;
+}
+
+.alert-info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+}
+
+.alert-warning {
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+    color: #92400e;
+}
+
+.alert-tip {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    color: #166534;
+}
+
+.footer {
+    margin-top: 24px;
+    border-top: 1px solid #e2e8f0;
+    padding-top: 10px;
+    font-size: 11px;
+    color: #94a3b8;
+    display: flex;
+    justify-content: space-between;
+}
+
+.section-block {
+    page-break-inside: avoid;
+    margin-bottom: 14px;
+}
+</style>
+</head>
+<body>
+
+<div class="header-container">
+    <div class="doc-badge">CAREFLOW CLINICAL AI &bull; ARCHITECTURE &amp; IMPLEMENTATION</div>
+    <h1>Hiện Thực Hóa BM25 (Sparse) &amp; Dense Vector Search Trong PostgreSQL &amp; Spring Boot</h1>
+    <div class="subtitle">Cơ chế hoạt động, cấu hình CSDL, Native Query và lý do không cần tự viết giải thuật từ con số 0</div>
+</div>
+
+<h2>1. Phân Định Khái Niệm: Dense Search vs. Sparse Search</h2>
+<p>
+    Trong hệ thống tìm kiếm thông tin hiện đại và mô hình Hybrid Search RAG, hai khái niệm này đóng hai vai trò hoàn toàn bổ trợ cho nhau:
+</p>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 20%;">Thuộc Tính</th>
+                <th style="width: 40%;">Dense Search (Tìm kiếm dày / Ngữ nghĩa)</th>
+                <th style="width: 40%;">Sparse Search (Tìm kiếm thưa / Từ khóa)</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Bản chất công nghệ</strong></td>
+                <td>Mô hình Vector Embedding (Gemini, OpenAI, BGE).</td>
+                <td>Thuật toán BM25 / TF-IDF / Full-Text Search.</td>
+            </tr>
+            <tr>
+                <td><strong>Dạng dữ liệu lưu trữ</strong></td>
+                <td>Mảng số thực liên tục dày đặc: <code>vector(768)</code>.</td>
+                <td>Danh sách từ khóa kèm vị trí: <code>tsvector</code> (Inverted Index).</td>
+            </tr>
+            <tr>
+                <td><strong>Cơ chế tính điểm</strong></td>
+                <td>Khoảng cách vector: Cosine Similarity, Dot Product, Euclidean.</td>
+                <td>Tần suất từ khóa (TF), nghịch đảo tần suất tài liệu (IDF) và độ dài văn bản.</td>
+            </tr>
+            <tr>
+                <td><strong>Thế mạnh vượt trội</strong></td>
+                <td>Hiểu ngữ nghĩa, từ đồng nghĩa, ý định diễn đạt tự nhiên của người dùng.</td>
+                <td>Bắt chính xác 100% từ khóa hiếm: mã ICD-10, tên hoạt chất thuốc, số liệu xét nghiệm.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="alert-box alert-info">
+    <strong>Lưu ý thuật ngữ:</strong> <strong>BM25 là Sparse Search</strong> (từ khóa chính xác), còn <strong>Vector là Dense Search</strong> (ngữ nghĩa). Cả hai được kết hợp bằng thuật toán <strong>RRF (Reciprocal Rank Fusion)</strong>.
+</div>
+
+<h2>2. Tại Sao Ta Không Cần Tự Viết Code Giải Thuật BM25?</h2>
+<p>
+    Nếu phải tự lập trình thuật toán BM25 từ con số 0 bằng mã nguồn Java/Python:
+</p>
+<ul>
+    <li>Phải tự xây dựng bộ phân tách từ khóa (Tokenizer) và bộ lọc từ dừng (Stopwords).</li>
+    <li>Phải tự duy trì bảng băm chỉ mục đảo (Inverted Index) trong bộ nhớ hoặc ổ đĩa.</li>
+    <li>Phải tính toán thủ công độ dài trung bình văn bản $avgdl$ và các trọng số phi tuyến $k_1$, $b$.</li>
+</ul>
+<p>
+    <strong>Giải pháp tối ưu của CareFlow:</strong> Chúng ta tận dụng trực tiếp bộ máy <strong>Full-Text Search chuẩn BM25 đã được viết bằng ngôn ngữ C tối ưu hóa cực đại tích hợp sẵn bên trong hạt nhân PostgreSQL</strong>. Bạn chỉ cần cấu hình schema và viết câu lệnh truy vấn mà không phải bảo trì bất kỳ dòng code thuật toán nào.
+</p>
+
+<h2>3. Quy Trình Cài Đặt &amp; Sử Dụng Chi Tiết Trong CareFlow</h2>
+
+<pre><code>[Văn bản lâm sàng / Phác đồ điều trị]
+                  │
+                  ▼ (1. Database tự động bóc tách từ &amp; đánh chỉ mục)
+PostgreSQL 16: tsv_content (tsvector) + Chỉ mục GIN (idx_clinical_chunks_tsv)
+                  │
+                  ▼ (2. Repository truy vấn xếp hạng chuẩn BM25)
+Spring Data JPA: ts_rank_cd(tsv_content, plainto_tsquery('simple', :query))
+                  │
+                  ▼ (3. Service kết hợp Dense Vector + Sparse BM25)
+ClinicalHybridSearchService: Thuật toán Reciprocal Rank Fusion (k=60)</code></pre>
+
+<h3>Tầng 1: Khai báo Schema CSDL &amp; Chỉ Mục GIN (PostgreSQL DDL)</h3>
+<p>
+    Trong tệp cơ sở dữ liệu <code>scripts/careflow_ai_schema_and_data.sql</code>, bảng <code>clinical_guideline_chunks</code> lưu trữ cả hai dạng:
+</p>
+
+<pre><code>CREATE TABLE clinical_guideline_chunks (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    document_id UUID NOT NULL,
+    section_title VARCHAR(300),
+    content TEXT NOT NULL,
+    metadata JSONB DEFAULT '{}'::jsonb,
+    
+    -- [1] DENSE SEARCH: Vector nhúng 768 chiều từ Google Gemini Embedding
+    embedding VECTOR(768) NOT NULL,
+    
+    -- [2] SPARSE BM25: Cột tự động phân tích và sinh từ khóa từ content
+    tsv_content TSVECTOR GENERATED ALWAYS AS (to_tsvector('simple', content)) STORED
+);
+
+-- Chỉ mục HNSW cho Dense Vector (Cosine Distance)
+CREATE INDEX idx_clinical_chunks_hnsw 
+ON clinical_guideline_chunks USING hnsw (embedding vector_cosine_ops);
+
+-- Chỉ mục GIN (Generalized Inverted Index) cho Sparse BM25
+CREATE INDEX idx_clinical_chunks_tsv 
+ON clinical_guideline_chunks USING gin (tsv_content);</code></pre>
+
+<div class="alert-box alert-tip">
+    <strong>Điểm sáng kiến trúc:</strong> Cột <code>tsv_content</code> dùng mệnh đề <code>GENERATED ALWAYS AS (...) STORED</code>. Mỗi khi thêm mới hoặc cập nhật một đoạn phác đồ, PostgreSQL sẽ <strong>tự động tính toán từ vựng và cập nhật chỉ mục GIN ngay lập tức</strong> mà nhà phát triển không cần viết bất kỳ dòng code đồng bộ nào!
+    Cấu hình từ điển <code>'simple'</code> giữ nguyên vẹn từ ngữ tiếng Việt mà không bị thuật toán ngôn ngữ tiếng Anh làm sai lệch.
+</div>
+
+<h3>Tầng 2: Truy Vấn Điểm Số BM25 Bằng Spring Data JPA Native Query</h3>
+<p>
+    Tại giao diện <code>ClinicalGuidelineChunkRepository.java</code>, chúng ta khai báo Native Query sử dụng hàm xếp hạng độ tương quan của PostgreSQL:
+</p>
+
+<pre><code>@Query(value = """
+    SELECT
+        c.id            AS id,
+        c.section_title AS sectionTitle,
+        c.content       AS content,
+        -- Hàm ts_rank_cd: Thuật toán Cover Density Ranking (biến thể chuẩn của BM25)
+        ts_rank_cd(c.tsv_content, plainto_tsquery('simple', :query)) AS similarityScore
+    FROM clinical_guideline_chunks c
+    JOIN clinical_guideline_documents d ON c.document_id = d.id
+    WHERE d.is_active = true
+      -- Toán tử @@ kiểm tra sự xuất hiện của từ khóa qua chỉ mục GIN
+      AND c.tsv_content @@ plainto_tsquery('simple', :query)
+      AND (:specialty IS NULL OR d.specialty = :specialty)
+    ORDER BY similarityScore DESC
+    LIMIT :limitVal
+    """, nativeQuery = true)
+List&lt;ChunkSearchResultProjection&gt; searchByBm25(
+        @Param("query") String query,
+        @Param("specialty") String specialty,
+        @Param("limitVal") int limit);</code></pre>
+
+<ul>
+    <li><strong><code>plainto_tsquery('simple', :query)</code>:</strong> Tự động làm sạch và chuyển hóa văn bản tìm kiếm của người dùng (ví dụ: <em>"hạ đường huyết gliclazide"</em>) thành chuỗi toán tử truy vấn logic <code>'hạ' &amp; 'đường' &amp; 'huyết' &amp; 'gliclazide'</code>.</li>
+    <li><strong><code>ts_rank_cd(...)</code>:</strong> Cover Density Ranking — tính điểm không chỉ dựa vào số lần xuất hiện (TF) mà còn dựa vào <strong>khoảng cách không gian</strong> giữa các từ khóa. Nếu các từ khóa xuất hiện gần nhau trong cùng một câu, điểm BM25 sẽ cao hơn nhiều so với việc nằm rải rác.</li>
+</ul>
+
+<h3>Tầng 3: Sử Dụng Trong Service &amp; Hợp Nhất RRF</h3>
+<p>
+    Trong <code>ClinicalHybridSearchService.java</code>, chúng ta chỉ việc gọi hàm repository và thực thi công thức RRF ($k=60$):
+</p>
+
+<pre><code>// 1. DENSE VECTOR SEARCH (Tìm kiếm ngữ nghĩa HNSW Cosine)
+List&lt;ChunkSearchResultProjection&gt; vectorResults = 
+        chunkRepository.searchByVector(embeddingString, specialty, 20);
+for (int rank = 1; rank &lt;= vectorResults.size(); rank++) {
+    UUID id = vectorResults.get(rank - 1).getId();
+    rrfScores.merge(id, 1.0 / (RRF_K + rank), Double::sum);
+}
+
+// 2. SPARSE BM25 SEARCH (Tìm kiếm từ khóa GIN Full-Text)
+List&lt;ChunkSearchResultProjection&gt; bm25Results = 
+        chunkRepository.searchByBm25(queryText, specialty, 20);
+for (int rank = 1; rank &lt;= bm25Results.size(); rank++) {
+    UUID id = bm25Results.get(rank - 1).getId();
+    rrfScores.merge(id, 1.0 / (RRF_K + rank), Double::sum);
+}
+
+// 3. Sắp xếp điểm RRF giảm dần và lấy Top 5 kết quả tối ưu nhất
+return rrfScores.entrySet().stream()
+        .sorted(Map.Entry.&lt;UUID, Double&gt;comparingByValue().reversed())
+        .limit(FINAL_TOP_K)
+        .toList();</code></pre>
+
+<h2>4. So Sánh: PostgreSQL All-in-One vs. Cụm Elasticsearch Độc Lập</h2>
+
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">Khía Cạnh</th>
+                <th style="width: 37%;">Mô Hình Cũ: Dựng Elasticsearch Riêng</th>
+                <th style="width: 38%;">Mô Hình CareFlow: PostgreSQL All-in-One</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Hạ tầng &amp; Bộ nhớ RAM</strong></td>
+                <td>Cần JVM riêng cho ES, tiêu tốn tối thiểu 2GB – 4GB RAM.</td>
+                <td><strong>0 MB phụ trội</strong>, dùng chung với PostgreSQL hiện có.</td>
+            </tr>
+            <tr>
+                <td><strong>Độ trễ đồng bộ (Sync lag)</strong></td>
+                <td>Phải viết pipeline Logstash / Kafka / CDC Debezium; dữ liệu bị trễ (eventual consistency).</td>
+                <td><strong>Tức thì (ACID Transaction)</strong>; commit dữ liệu là tìm thấy ngay lập tức.</td>
+            </tr>
+            <tr>
+                <td><strong>Khối lượng code bảo trì</strong></td>
+                <td>Phải viết RestClient, xử lý retry, reconnect và mapping JSON phức tạp.</td>
+                <td><strong>Chỉ 1 câu lệnh SQL Native Query</strong> gọn gàng trong JPA.</td>
+            </tr>
+            <tr>
+                <td><strong>Hybrid Search</strong></td>
+                <td>Lưu vector ở nơi khác (hoặc plugin ES vector nặng nề).</td>
+                <td><strong>PostgreSQL lưu cả Vector 768d + BM25 GIN</strong> trên cùng 1 bảng.</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<h2>5. Kết Luận</h2>
+<p>
+    Hệ thống CareFlow không cần viết lại mã nguồn BM25 bởi vì hạt nhân <strong>PostgreSQL Full-Text Search</strong> kết hợp cùng chỉ mục <strong>GIN</strong> và hàm <strong>ts_rank_cd</strong> đã cung cấp sẵn năng lực BM25 tiêu chuẩn công nghiệp với hiệu năng mili-giây. Kiến trúc này mang lại sự tinh gọn, tin cậy tuyệt đối và loại bỏ hoàn toàn gánh nặng vận hành hạ tầng phức tạp.
+</p>
+
+<div class="footer">
+    <div><strong>Hệ thống:</strong> CareFlow Hospital Information System &bull; AI Clinical Assistant</div>
+    <div>CareFlow Tech Series &bull; 2026</div>
+</div>
+
+</body>
+</html>

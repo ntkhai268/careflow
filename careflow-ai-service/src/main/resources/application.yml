@@ -47,6 +47,13 @@ elevenlabs:
   api-key: ${ELEVENLABS_API_KEY:}
   model-id: ${ELEVENLABS_MODEL_ID:scribe_v1}
 
+security:
+  caller:
+    name: ${SECURITY_CALLER_NAME:ai-service}
+    key: ${SECURITY_CALLER_KEY:ai-service-internal-credential-key-32chars}
+  audit:
+    allow-loopback-http: ${SECURITY_ALLOW_LOOPBACK_HTTP:true}
+
 eureka:
   client:
     service-url:

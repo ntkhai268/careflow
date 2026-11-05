@@ -11,6 +11,7 @@
 - **Prescription Feat Scope:** Only code and edit features related to Prescription on the `feature/vi/prescription-service` branch. 
 - **Isolation of Features:** Keep consultation-service and prescription-service cleanly implemented. Do not implement Lab Orders or EMR logic directly on this branch. Mock external dependencies when necessary, and document them clearly.
 - **Commit discipline:** Ensure focused commits so that changes can be easily cherry-picked or reverted without affecting other services.
+- **Mandatory Pre-Merge Deploy Checklist**: Trước khi tạo PR hoặc merge vào `develop`/`main`, agent **BẮT BUỘC** phải rà soát và thực thi toàn bộ danh sách kiểm định tại [`docs/DEPLOY_CHECKLIST.md`](docs/DEPLOY_CHECKLIST.md) (bao gồm Backend `mvn test`, Frontend `npm run build`, và GitNexus `detect-changes`).
 
 ## UI/UX & Design System Constraints
 - **Subtle Rounding Rule:** Components use modern subtle rounded corners (`rounded-md` / `rounded-lg` / `rounded-xl` for cards, buttons, inputs, badges, and modals). Maintain visual harmony across all pages.

@@ -3,7 +3,7 @@
 > **Tài liệu bàn giao ngữ cảnh liên phiên (Cross-Session Handover & Memory Context)**  
 > **Dự án**: CareFlow — Phân hệ AI Lâm Sàng & Clinical RAG  
 > **Nhánh Git hiện tại**: `feature/vi/ai-service` (Tuyệt đối không push trực tiếp lên `main`)  
-> **Cập nhật lần cuối**: 25/10/2026 (13:25)  
+> **Cập nhật lần cuối**: 05/11/2026 (11:55)  
 > **Mục đích**: Lưu giữ 100% bối cảnh công việc, các quyết định kiến trúc, kinh nghiệm xử lý lỗi và nhiệm vụ tiếp theo để bất kỳ phiên làm việc AI mới nào cũng có thể tiếp tục ngay lập tức mà không bị mất dấu.
 
 ---
@@ -155,7 +155,10 @@
 - **Trang Ca Khám Bác Sĩ**: [`frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx`](../frontend/doctor-web/src/app/(dashboard)/consultation/[id]/page.tsx)
 - **Service AI Lâm Sàng**: [`careflow-ai-service/src/main/java/com/careflow/ai/service/AiClinicalAssistantService.java`](../careflow-ai-service/src/main/java/com/careflow/ai/service/AiClinicalAssistantService.java)
 - **Chiến lược Chunking chuẩn CareFlow**: [`.planning/ai-service/chunking-strategy.md`](../.planning/ai-service/chunking-strategy.md)
+- **Tài liệu Báo cáo Kỹ thuật đã hoàn thành**: [`docs/ai-service/clinical-ai-technical-report.md`](./ai-service/clinical-ai-technical-report.md)
 - **Tài liệu kiến trúc AI & RAG đầy đủ**: [`docs/ai-service/clinical-ai-architecture-and-rag-implementation-plan.md`](./ai-service/clinical-ai-architecture-and-rag-implementation-plan.md)
+- **Quy chuẩn Bảng kiểm Pre-Merge / Deploy**: [`docs/DEPLOY_CHECKLIST.md`](./DEPLOY_CHECKLIST.md)
+
 
 
 ---
@@ -203,3 +206,30 @@
      - Việt hóa 100% nhãn loại phòng trên `/admin` và trạng thái phát thuốc trên `/staff/pharmacy`; khử trùng lặp học hàm bác sĩ (`BS.CKII BS.CKII` $\rightarrow$ `BS.CKII`) trên `/admin/facility`.
 - **Kiểm증 (Verification)**:
   - `npm --prefix frontend/doctor-web run build`: **PASS 100%** (0 lỗi TypeScript, 0 lỗi Next.js build).
+
+---
+
+## 9. Chuyển Đổi Voice sang Built-in Engine & Quản Lý Trạng Thái Toàn Cục bằng Zustand (`frontend/doctor-web`) — ĐÃ HOÀN TẤT 100%
+
+- **Bối cảnh & Quyết định**:
+  - Đối chiếu hiệu năng giữa ElevenLabs Cloud (2.0–4.0s qua 2 chặng internet) và Built-in Local Worker (200–600ms, không phụ thuộc internet, bảo mật dữ liệu y tế PHI).
+  - Thống nhất chuyển đổi và chuẩn hóa luồng Voice sang hệ thống **Built-in Engine nội bộ**, đồng thời áp dụng **Zustand Store** để quản lý trạng thái thời gian thực và dọn dẹp triệt để sự cồng kềnh của React component.
+- **Các bước kỹ thuật đã thực hiện**:
+  1. **Khởi tạo Store Zustand Chuyên biệt (`src/stores/voice-prescription-store.ts`)**:
+     - Quản lý toàn bộ State Machine bất đồng bộ của Built-in Voice Job: `IDLE` $\rightarrow$ `RECORDING` $\rightarrow$ `FINISHING` $\rightarrow$ `POLLING (QUEUED / RUNNING)` $\rightarrow$ `SUCCEEDED / FAILED`.
+     - Đóng gói toàn bộ logic MediaRecorder, WebM duration fix (`@fix-webm-duration/fix`), AudioContext metering cho visualizer, upload file audio (tối đa 20 MiB).
+     - Quản lý tự động polling API `/api/ai/voice-prescription/jobs`, xử lý transcript revisions khi bác sĩ sửa text, và gọi endpoint `/api/prescriptions/ai-drafts/editable`.
+     - Tự động duy trì và khôi phục metadata phiên làm việc qua `sessionStorage`.
+  2. **Tái cấu trúc `VoicePrescriptionPanel.tsx`**:
+     - Rút gọn component từ gần **900 dòng** code nhồi nhét hơn 20 `useRef` và nhiều `useState` xuống component khai báo tinh gọn (~400 dòng).
+     - Tách biệt 100% logic xử lý luồng âm thanh/API ra khỏi tầng UI, duy trì trọn vẹn thiết kế giao diện Ocean Medical Blue & Teal chuẩn của mốc R7/PR #37.
+     - Bảo toàn đầy đủ hợp đồng `VoiceDraftHandle` (`save`, `pending`, `open`, `stop`, `collapse`), đảm bảo **0 breaking change** với `usePrescriptionForm.ts` và `consultation/[id]/page.tsx`.
+- **Kiểm thử xác minh (Verification)**:
+  - `npm --prefix frontend/doctor-web run build`: **PASS 100%** (0 lỗi TypeScript, 0 lỗi Next.js Turbopack).
+  - Khởi chạy `careflow-ai-service` độc lập (profile `local` trên port `8091`), kiểm thử thành công:
+    - `GET /api/ai/capabilities`: HTTP 200 OK.
+    - `POST /api/ai/text-to-clinical-fields`: HTTP 200 OK (bóc tách thành công Mạch: 80, Huyết áp: 120/80, Sốt: 38.5, SpO2: 98).
+    - `POST /api/ai/voice-to-clinical-fields`: HTTP 200 OK (xử lý payload audio multipart/form-data chuẩn xác).
+  - Đã dừng toàn bộ tiến trình server và container sạch sẽ sau khi kiểm thử.
+
+

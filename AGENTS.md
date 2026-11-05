@@ -1,7 +1,7 @@
 <!-- gitnexus:start -->
 # GitNexus — Code Intelligence
 
-This project is indexed by GitNexus as **careflow** (15569 symbols, 36072 relationships, 788 execution flows). Use the GitNexus MCP tools to understand code, assess impact, and navigate safely.
+This project is indexed by GitNexus as **careflow** (23803 symbols, 52888 relationships, 850 execution flows).
 
 > Index stale? Run `node .gitnexus/run.cjs analyze --index-only` from the project root — it auto-selects an available runner. No `.gitnexus/run.cjs` yet? Bootstrap with `npx`, `bunx`, or `pnpm dlx` — e.g. `bunx gitnexus@latest analyze` (npm 11 npx crash; #1939).
 
@@ -60,6 +60,7 @@ This project is indexed by GitNexus as **careflow** (15569 symbols, 36072 relati
 - **Pull Main Before Coding**: Trước khi lập trình bất kỳ tính năng mới nào, **BẮT BUỘC** phải pull code mới nhất từ `main` về (`git pull origin main`) để tránh xung đột và code bị outdated.
 - **English Commit Messages**: All git commit messages **MUST be written in English** (e.g. `feat: ...`, `fix: ...`).
 - **No Unrequested Commits**: KHÔNG tự động thực hiện `git add` hay `git commit` trừ khi được người dùng chỉ định rõ ràng.
+- **Mandatory Pre-Merge Deploy Checklist**: Trước khi tạo PR hoặc merge vào `develop`/`main`, agent **BẮT BUỘC** phải rà soát và thực thi toàn bộ danh sách kiểm định tại [`docs/DEPLOY_CHECKLIST.md`](docs/DEPLOY_CHECKLIST.md) (bao gồm Backend `mvn test`, Frontend `npm run build`, và GitNexus `detect-changes`).
 
 ## DB Schema & Planning Rules
 - **Đồng bộ DBML**: Mỗi khi lập trình xong một tính năng có bổ sung/chỉnh sửa DB Schema (JPA Entity, Flyway Migration, bảng/cột mới), **BẮT BUỘC** phải cập nhật lại sơ đồ DBML tương ứng tại thư mục `.planning/<service_name>/<service_name>-db.dbml`.
