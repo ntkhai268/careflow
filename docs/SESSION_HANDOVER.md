@@ -232,4 +232,22 @@
     - `POST /api/ai/voice-to-clinical-fields`: HTTP 200 OK (xử lý payload audio multipart/form-data chuẩn xác).
   - Đã dừng toàn bộ tiến trình server và container sạch sẽ sau khi kiểm thử.
 
+---
+
+## 10. Kiểm Định Tiền Merge (Pre-Merge Deploy Checklist) & Tạo Pull Request — ĐÃ HOÀN TẤT 100%
+
+- **Quy chuẩn ban hành**: Thiết lập tài liệu kiểm định bắt buộc [`docs/DEPLOY_CHECKLIST.md`](./DEPLOY_CHECKLIST.md) và tích hợp vào quy tắc hệ thống (`AGENTS.md`).
+- **Kết quả thực thi Checklist trước khi đẩy code**:
+  1. **Git Sync**: Đã merge `origin/develop` (`8d46c75`) vào nhánh làm việc mà không phát sinh xung đột.
+  2. **Backend Unit/Integration Tests**: `mvn -pl careflow-ai-service test` $\rightarrow$ **44 tests run, 0 failures, 0 errors, 11 skipped** (BUILD SUCCESS).
+  3. **Frontend Production Build**: `npm --prefix frontend/doctor-web run build` $\rightarrow$ **PASS 100%** (0 TypeScript errors, 0 ESLint errors).
+  4. **GitNexus Impact Analysis**: `bunx gitnexus@latest detect-changes --scope all --repo .` $\rightarrow$ **Risk level: LOW** (0 affected execution flows).
+- **Trạng thái Git & PR**:
+  - Nhánh cục bộ: `feature/vi/ai-service`.
+  - Đã commit: `0a06e4a feat(ai,doctor-web): integrate zustand voice prescription store and add pre-merge deploy checklist`.
+  - Đã push thành công lên: `origin/feature/vi/ai-service`.
+  - **Đường link tạo Pull Request vào `develop`**:
+    `https://github.com/ntkhai268/careflow/compare/develop...feature/vi/ai-service?expand=1`
+
+
 
