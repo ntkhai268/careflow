@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -30,12 +31,7 @@ public class GeminiClientService {
         this.objectMapper = objectMapper;
     }
 
-    private static final List<String> FALLBACK_MODELS = List.of(
-            "gemini-2.5-flash",
-            "gemini-2.5-flash-lite",
-            "gemini-2.0-flash",
-            "gemini-2.0-flash-lite"
-    );
+    private static final String GEMINI_MODEL = "gemini-2.5-flash";
 
     private static final List<String> EMBEDDING_MODELS = List.of(
             "gemini-embedding-2-preview",
@@ -61,12 +57,16 @@ public class GeminiClientService {
                 ),
                 "contents", List.of(
                         Map.of("parts", List.of(Map.of("text", userPromptText)))
+                ),
+                "generationConfig", Map.of(
+                        "maxOutputTokens", 2048,
+                        "temperature", 0.2
                 )
         );
 
-        for (String targetModel : FALLBACK_MODELS) {
+        for (int attempt = 0; attempt < 2; attempt++) {
             try {
-                String url = String.format("/v1beta/models/%s:generateContent?key=%s", targetModel, apiKey);
+                String url = String.format("/v1beta/models/%s:generateContent?key=%s", GEMINI_MODEL, apiKey);
 
                 String responseBody = webClient.post()
                         .uri(url)
@@ -74,18 +74,24 @@ public class GeminiClientService {
                         .bodyValue(requestPayload)
                         .retrieve()
                         .bodyToMono(String.class)
+                        .timeout(Duration.ofSeconds(15))
                         .block();
 
                 if (responseBody != null) {
                     JsonNode root = objectMapper.readTree(responseBody);
                     JsonNode textNode = root.path("candidates").get(0).path("content").path("parts").get(0).path("text");
                     if (!textNode.isMissingNode()) {
-                        log.info("Successfully generated content using model: {}", targetModel);
+                        log.info("Successfully generated content using model: {}", GEMINI_MODEL);
                         return textNode.asText();
                     }
                 }
             } catch (Exception e) {
-                log.warn("Model {} failed or rate limited ({}). Trying next fallback model...", targetModel, e.getMessage());
+                log.warn("Gemini call attempt {} failed ({}).", attempt + 1, e.getMessage());
+                if (attempt == 0 && e.getMessage() != null && e.getMessage().contains("429")) {
+                    try {
+                        Thread.sleep(1200);
+                    } catch (InterruptedException ignored) {}
+                }
             }
         }
 
@@ -125,6 +131,7 @@ public class GeminiClientService {
                         .bodyValue(requestPayload)
                         .retrieve()
                         .bodyToMono(String.class)
+                        .timeout(Duration.ofSeconds(15))
                         .block();
 
                 if (responseBody != null) {
@@ -194,9 +201,9 @@ public class GeminiClientService {
                 )
         );
 
-        for (String targetModel : FALLBACK_MODELS) {
+        for (int attempt = 0; attempt < 2; attempt++) {
             try {
-                String url = String.format("/v1beta/models/%s:generateContent?key=%s", targetModel, apiKey);
+                String url = String.format("/v1beta/models/%s:generateContent?key=%s", GEMINI_MODEL, apiKey);
 
                 String responseBody = webClient.post()
                         .uri(url)
@@ -204,6 +211,7 @@ public class GeminiClientService {
                         .bodyValue(requestPayload)
                         .retrieve()
                         .bodyToMono(String.class)
+                        .timeout(Duration.ofSeconds(15))
                         .block();
 
                 if (responseBody != null) {
@@ -224,12 +232,17 @@ public class GeminiClientService {
                         jsonString = jsonString.trim();
 
                         VoiceExtractedFields fields = objectMapper.readValue(jsonString, VoiceExtractedFields.class);
-                        log.info("Gemini successfully extracted clinical fields using model {}", targetModel);
+                        log.info("Gemini successfully extracted clinical fields using model {}", GEMINI_MODEL);
                         return fields;
                     }
                 }
             } catch (Exception e) {
-                log.warn("Model {} failed for JSON extraction ({}). Trying next model...", targetModel, e.getMessage());
+                log.warn("Gemini call attempt {} failed for JSON extraction ({}).", attempt + 1, e.getMessage());
+                if (attempt == 0 && e.getMessage() != null && e.getMessage().contains("429")) {
+                    try {
+                        Thread.sleep(1200);
+                    } catch (InterruptedException ignored) {}
+                }
             }
         }
 

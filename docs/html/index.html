@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareFlow — Visual HTML Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0B0F19;
+      --card-bg: #111827;
+      --card-border: #1F2937;
+      --text: #F3F4F6;
+      --text-muted: #9CA3AF;
+      --primary: #8B5CF6;
+      --primary-light: #A78BFA;
+      --accent: #10B981;
+      --hover-bg: #1E293B;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+    .badge {
+      display: inline-block;
+      padding: 6px 14px;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(139, 92, 246, 0.4);
+      color: var(--primary-light);
+      border-radius: 9999px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, #FFF 0%, #A78BFA 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    header p {
+      color: var(--text-muted);
+      font-size: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(440px, 1fr));
+      gap: 20px;
+    }
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 14px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: all 0.25s ease;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .card:hover {
+      border-color: var(--primary);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px -10px rgba(139, 92, 246, 0.25);
+      background: var(--hover-bg);
+    }
+    .card-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .card-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary-light);
+      background: rgba(139, 92, 246, 0.12);
+      padding: 3px 10px;
+      border-radius: 6px;
+    }
+    .card-tag {
+      font-size: 11px;
+      color: var(--accent);
+      background: rgba(16, 185, 129, 0.12);
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+    .card-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #FFF;
+      margin-bottom: 8px;
+    }
+    .card-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      flex-grow: 1;
+    }
+    .card-arrow {
+      margin-top: 16px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--primary-light);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 60px;
+      color: var(--text-muted);
+      font-size: 13px;
+      border-top: 1px solid var(--card-border);
+      padding-top: 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="badge">CareFlow Visual Documentation Hub</div>
+      <h1>Trung Tâm Tài Liệu & Kiến Trúc Trực Quan</h1>
+      <p>Tổng hợp 8 sơ đồ kiến trúc tương tác, cơ chế thuật toán và hướng dẫn triển khai dạng HTML độc lập.</p>
+    </header>
+
+    <div class="grid">
+      <a class="card" href="01-architecture.html">
+        <div class="card-top">
+          <span class="card-num">01</span>
+          <span class="card-tag">Archify Standalone</span>
+        </div>
+        <div class="card-title">Sơ Đồ Kiến Trúc Toàn Cảnh</div>
+        <div class="card-desc">Toàn cảnh luồng dữ liệu từ Frontend Doctor Web, Zustand Store, AI Speech Service (Voice STT) đến pgvector Hybrid Search & Gemini Cloud.</div>
+        <div class="card-arrow">Xem sơ đồ tương tác &rarr;</div>
+      </a>
+
+      <a class="card" href="02-rag-mechanism.html">
+        <div class="card-top">
+          <span class="card-num">02</span>
+          <span class="card-tag">Mechanism</span>
+        </div>
+        <div class="card-title">Cơ Chế Hoạt Động Clinical RAG</div>
+        <div class="card-desc">Chu trình 3 bước khép kín: Ingestion dữ liệu Bộ Y Tế, Hybrid Retrieval (HNSW + BM25) và Generation đề xuất điều trị chuẩn y khoa.</div>
+        <div class="card-arrow">Xem cơ chế hoạt động &rarr;</div>
+      </a>
+
+      <a class="card" href="03-chunking.html">
+        <div class="card-top">
+          <span class="card-num">03</span>
+          <span class="card-tag">Standard Spec</span>
+        </div>
+        <div class="card-title">Chiến Thuật Phân Đoạn Tri Thức</div>
+        <div class="card-desc">Contextual Document-Structure Chunking: Giữ nguyên 100% bảng thuốc, kiểm soát 400-800 tokens và tiêm Breadcrumbs chống mất ngữ cảnh.</div>
+        <div class="card-arrow">Xem chi tiết chiến thuật &rarr;</div>
+      </a>
+
+      <a class="card" href="04-hybrid-search.html">
+        <div class="card-top">
+          <span class="card-num">04</span>
+          <span class="card-tag">Implementation</span>
+        </div>
+        <div class="card-title">Hiện Thực Hóa Dense & Sparse Search</div>
+        <div class="card-desc">Chi tiết kỹ thuật kết hợp HNSW Cosine Distance, BM25 GIN Fulltext và JSONB filtering trong PostgreSQL 16 & Spring Boot JPA.</div>
+        <div class="card-arrow">Xem mã nguồn & truy vấn &rarr;</div>
+      </a>
+
+      <a class="card" href="05-rrf-guide.html">
+        <div class="card-top">
+          <span class="card-num">05</span>
+          <span class="card-tag">Algorithm</span>
+        </div>
+        <div class="card-title">Chuyên Đề Thuật Toán RRF (k=60)</div>
+        <div class="card-desc">Giải thích công thức toán học Reciprocal Rank Fusion, phân tích lý do chọn k=60 và ví dụ bảng điểm hợp nhất thứ hạng chi tiết.</div>
+        <div class="card-arrow">Xem chuyên đề thuật toán &rarr;</div>
+      </a>
+
+      <a class="card" href="06-db-import.html">
+        <div class="card-top">
+          <span class="card-num">06</span>
+          <span class="card-tag">Guide</span>
+        </div>
+        <div class="card-title">Hướng Dẫn Nạp CSDL RAG Cục Bộ</div>
+        <div class="card-desc">Cách nạp 1.095 chunks và vector 768 chiều từ file dump SQL vào Docker PostgreSQL trong 3-5 giây mà không cần gọi lại Gemini API.</div>
+        <div class="card-arrow">Xem hướng dẫn nạp DB &rarr;</div>
+      </a>
+
+      <a class="card" href="07-implementation-plan.html">
+        <div class="card-top">
+          <span class="card-num">07</span>
+          <span class="card-tag">Roadmap</span>
+        </div>
+        <div class="card-title">Kế Hoạch Triển Khai Chi Tiết</div>
+        <div class="card-desc">Bản HTML toàn diện của kế hoạch triển khai 5 Phase phân hệ AI Lâm Sàng & RAG Engine theo chuẩn y tế.</div>
+        <div class="card-arrow">Xem kế hoạch 5 Phase &rarr;</div>
+      </a>
+
+      <a class="card" href="08-technical-report.html">
+        <div class="card-top">
+          <span class="card-num">08</span>
+          <span class="card-tag">Report</span>
+        </div>
+        <div class="card-title">Báo Cáo Kỹ Thuật Chuyên Sâu</div>
+        <div class="card-desc">Báo cáo đánh giá hiệu năng tìm kiếm, độ trễ phản hồi, chi phí token và độ bao phủ tri thức y khoa lâm sàng.</div>
+        <div class="card-arrow">Xem báo cáo kỹ thuật &rarr;</div>
+      </a>
+
+      <a class="card" href="09-retrieval-benchmark-deck.html" style="border-color: rgba(139, 92, 246, 0.5); background: rgba(139, 92, 246, 0.08);">
+        <div class="card-top">
+          <span class="card-num" style="background: var(--primary); color: #fff;">09</span>
+          <span class="card-tag" style="background: var(--primary); color: #fff;">Interactive PPT Deck</span>
+        </div>
+        <div class="card-title" style="color: #A78BFA;">Slide Thuyết Trình Phản Biện Vector</div>
+        <div class="card-desc">Slide deck tương tác: 3 điểm mù của Gemini Embedding, dữ liệu thực tế từ PostgreSQL `careflow_ai`, bảng A/B Test Benchmark &amp; kịch bản phản biện.</div>
+        <div class="card-arrow" style="color: #FFF;">Mở slide thuyết trình &rarr;</div>
+      </a>
+    </div>
+
+    <footer>
+      CareFlow Ecosystem &bull; Clinical AI & RAG Service &bull; Docs Hub
+    </footer>
+  </div>
+</body>
+</html>

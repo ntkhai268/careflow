@@ -8,7 +8,16 @@ import javax.naming.ldap.LdapName;
 public final class ServiceTransportIdentity {
     private ServiceTransportIdentity() {}
     public static void require(HttpServletRequest request,String caller,boolean allowLoopbackHttp) {
-        if (allowLoopbackHttp && !request.isSecure() && java.util.Set.of("127.0.0.1","0:0:0:0:0:0:0:1","::1").contains(request.getRemoteAddr())) return;
+        if (allowLoopbackHttp && !request.isSecure()) {
+            String remote = request.getRemoteAddr();
+            if (remote != null) {
+                if (java.util.Set.of("127.0.0.1","0:0:0:0:0:0:0:1","::1").contains(remote)) return;
+                try {
+                    var addr = java.net.InetAddress.getByName(remote);
+                    if (addr.isLoopbackAddress() || addr.isSiteLocalAddress() || addr.isAnyLocalAddress()) return;
+                } catch (Exception ignored) {}
+            }
+        }
         try {
             Object value=request.getAttribute("jakarta.servlet.request.X509Certificate");
             if (!request.isSecure() || !(value instanceof X509Certificate[] chain) || chain.length==0) throw new IllegalArgumentException();

@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contextual Document-Structure Chunking — CareFlow Clinical AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #0277A8;
+      --primary-dark: #00577E;
+      --primary-light: #DDF3FC;
+      --teal: #087F6A;
+      --teal-light: #D9F3EC;
+      --slate-900: #0F172A;
+      --slate-800: #1E293B;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748B;
+      --slate-200: #E2E8F0;
+      --slate-100: #F1F5F9;
+      --slate-50: #F8FAFC;
+      --amber-500: #F59E0B;
+      --amber-50: #FFFBEB;
+      --amber-200: #FDE68A;
+      --emerald-600: #059669;
+      --emerald-50: #ECFDF5;
+      --rose-600: #E11D48;
+      --rose-50: #FFF1F2;
+      --purple-600: #7C3AED;
+      --purple-50: #FAF5FF;
+      --indigo-600: #4F46E5;
+      --indigo-50: #EEF2FF;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 18px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 14px rgba(0,0,0,0.06);
+      --shadow-lg: 0 12px 28px -6px rgba(2,119,168,0.12), 0 8px 10px -6px rgba(0,0,0,0.04);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F8FAFC;
+      color: var(--slate-800);
+      line-height: 1.65;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Sticky Navbar */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--slate-200);
+      padding: 12px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--slate-900);
+    }
+
+    .nav-logo-badge {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--teal) 100%);
+      color: white;
+      font-weight: 800;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.6px;
+    }
+
+    .nav-title {
+      font-weight: 700;
+      font-size: 14.5px;
+      color: var(--slate-900);
+    }
+
+    .nav-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      font-family: inherit;
+    }
+
+    .btn-outline {
+      background: white;
+      color: var(--slate-700);
+      border-color: var(--slate-200);
+    }
+
+    .btn-outline:hover {
+      background: var(--slate-100);
+      color: var(--slate-900);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 960px;
+      margin: 36px auto 70px;
+      padding: 0 24px;
+    }
+
+    .main-card {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 44px;
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Hero Section */
+    .hero {
+      border-bottom: 1px solid var(--slate-200);
+      padding-bottom: 28px;
+      margin-bottom: 32px;
+    }
+
+    .badge-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .tag-blue { background: var(--primary-light); color: var(--primary-dark); }
+    .tag-teal { background: var(--teal-light); color: var(--teal); }
+    .tag-purple { background: var(--purple-50); color: var(--purple-600); }
+
+    .hero-title {
+      font-size: 26px;
+      font-weight: 800;
+      color: var(--slate-900);
+      line-height: 1.35;
+      margin-bottom: 10px;
+    }
+
+    .hero-title span {
+      color: var(--primary);
+    }
+
+    .hero-desc {
+      font-size: 15.5px;
+      color: var(--slate-600);
+      line-height: 1.6;
+    }
+
+    /* Comparison Box (Problem vs Solution) */
+    .comparison-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin: 28px 0 36px;
+    }
+
+    .comp-card {
+      border-radius: var(--radius-md);
+      padding: 20px 22px;
+      font-size: 13.5px;
+      border: 1px solid transparent;
+    }
+
+    .comp-danger {
+      background: #FFF5F5;
+      border-color: #FED7D7;
+      color: #9B2C2C;
+    }
+
+    .comp-danger h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #C53030;
+      margin-bottom: 8px;
+    }
+
+    .comp-success {
+      background: var(--emerald-50);
+      border-color: #A7F3D0;
+      color: #065F46;
+    }
+
+    .comp-success h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: var(--emerald-600);
+      margin-bottom: 8px;
+    }
+
+    /* 4 Steps Container */
+    .steps-section {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      margin-bottom: 36px;
+    }
+
+    .step-card {
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      background: white;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      transition: all 0.2s ease;
+    }
+
+    .step-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: #CBD5E1;
+    }
+
+    .step-header {
+      padding: 16px 22px;
+      background: var(--slate-50);
+      border-bottom: 1px solid var(--slate-200);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .step-badge {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-sm);
+      background: var(--primary);
+      color: white;
+      font-weight: 800;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-header-text h3 {
+      font-size: 16.5px;
+      font-weight: 700;
+      color: var(--slate-900);
+      line-height: 1.3;
+    }
+
+    .step-header-text .subtitle {
+      font-size: 12px;
+      color: var(--slate-500);
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      margin-top: 2px;
+    }
+
+    .step-body {
+      padding: 22px;
+      font-size: 14.5px;
+      color: var(--slate-700);
+    }
+
+    .step-body ul {
+      padding-left: 20px;
+      margin: 10px 0;
+    }
+
+    .step-body li {
+      margin-bottom: 8px;
+      line-height: 1.55;
+    }
+
+    .rule-highlight {
+      background: #EFF6FF;
+      border-left: 4px solid var(--primary);
+      padding: 12px 16px;
+      border-radius: 4px;
+      margin: 14px 0 6px;
+      font-size: 13.5px;
+      color: #1E40AF;
+    }
+
+    /* Window Guard Gauge Component */
+    .gauge-wrapper {
+      background: var(--slate-100);
+      border-radius: var(--radius-sm);
+      padding: 18px 20px;
+      margin: 16px 0 8px;
+    }
+
+    .gauge-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--slate-600);
+    }
+
+    .gauge-bar {
+      height: 12px;
+      background: #CBD5E1;
+      border-radius: 6px;
+      display: flex;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+
+    .gauge-zone-low { width: 25%; background: var(--amber-500); }
+    .gauge-zone-ideal { width: 50%; background: var(--emerald-600); }
+    .gauge-zone-high { width: 25%; background: var(--rose-600); }
+
+    .gauge-details {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr 1fr;
+      gap: 12px;
+      font-size: 12.5px;
+    }
+
+    .gauge-col {
+      background: white;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--slate-200);
+    }
+
+    .gauge-col strong {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 12px;
+    }
+
+    /* Code & Example Blocks */
+    .example-box {
+      margin: 16px 0 8px;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      border: 1px solid var(--slate-200);
+    }
+
+    .example-header {
+      background: var(--slate-800);
+      color: #E2E8F0;
+      padding: 8px 16px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .example-content {
+      background: #0B132B;
+      color: #F8FAFC;
+      padding: 16px 18px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .prefix-tag {
+      color: #38BDF8;
+      font-weight: 700;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    .payload-text {
+      color: #E2E8F0;
+    }
+
+    .btn-copy {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: white;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-copy:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+    }
+
+    /* DDI Narrative Flow */
+    .ddi-flow {
+      background: #F8FAFC;
+      border: 1px dashed #94A3B8;
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      margin: 14px 0 8px;
+      font-size: 13.5px;
+    }
+
+    .ddi-chain {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .ddi-pill {
+      background: white;
+      border: 1px solid var(--slate-200);
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12.5px;
+      font-weight: 600;
+      color: var(--slate-800);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+
+    .ddi-arrow {
+      color: var(--primary);
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    /* Summary Quote Box */
+    .summary-box {
+      background: linear-gradient(135deg, #0277A8 0%, #00577E 100%);
+      color: white;
+      border-radius: var(--radius-md);
+      padding: 26px 30px;
+      margin-top: 36px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+    }
+
+    .summary-badge {
+      display: inline-block;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 11.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    .summary-quote {
+      font-size: 17.5px;
+      font-weight: 700;
+      line-height: 1.5;
+      font-style: italic;
+      color: #FFFFFF;
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--slate-200);
+      margin-top: 36px;
+      padding-top: 20px;
+      font-size: 13px;
+      color: var(--slate-500);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    /* Print View */
+    @media print {
+      .navbar, .btn-outline, .btn-copy { display: none !important; }
+      body { background: white; font-size: 13px; }
+      .container { max-width: 100%; margin: 0; padding: 0; }
+      .main-card { border: none; box-shadow: none; padding: 0; }
+      .step-card { break-inside: avoid; margin-bottom: 20px; }
+      .summary-box { color: black; background: #eee; border: 1px solid #ccc; }
+      .summary-quote { color: black; }
+      .example-content { background: #f4f4f4; color: black; }
+      .prefix-tag { color: #0277A8; }
+    }
+
+    @media (max-width: 768px) {
+      .comparison-grid { grid-template-columns: 1fr; }
+      .gauge-details { grid-template-columns: 1fr; }
+      .main-card { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation Bar -->
+  <header class="navbar">
+    <a href="#" class="nav-brand">
+      <span class="nav-logo-badge">CAREFLOW RAG</span>
+      <span class="nav-title">Chuẩn Mực Phân Đoạn Tri Thức Lâm Sàng</span>
+    </a>
+    <div class="nav-actions">
+      <button class="btn btn-outline" onclick="window.print()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        In / Xuất PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- Container -->
+  <div class="container">
+    <main class="main-card">
+      
+      <!-- Hero -->
+      <section class="hero">
+        <div class="badge-row">
+          <span class="tag tag-blue">Phân hệ AI Lâm Sàng</span>
+          <span class="tag tag-teal">Semantic Chunking</span>
+          <span class="tag tag-purple">Bảo toàn Bảng Y Khoa</span>
+        </div>
+        <h1 class="hero-title">
+          Contextual Document-Structure Chunking
+        </h1>
+        <p class="hero-desc">
+          <strong>(Phân đoạn theo cấu trúc tài liệu kết hợp tiêm ngữ cảnh)</strong> — Kỹ thuật bóc tách tri thức y khoa chuyên biệt của CareFlow, thay thế hoàn toàn phương pháp cắt thô theo ký tự để bảo toàn 100% ngữ nghĩa bảng thuốc và triệt tiêu hội chứng <em>"mù ngữ cảnh"</em> (Context Blindness).
+        </p>
+
+        <!-- Problem vs Solution Comparison -->
+        <div class="comparison-grid">
+          <div class="comp-card comp-danger">
+            <h4>❌ Cắt thô theo ký tự (Naive Chunking)</h4>
+            <p>Dễ dàng chém đôi một bảng liều dùng thuốc (nửa trên ở Chunk 1, nửa liều lượng ở Chunk 2) ➔ Dẫn tới trích dẫn sai liều gây nguy hiểm lâm sàng.</p>
+          </div>
+          <div class="comp-card comp-success">
+            <h4>✅ Contextual Document-Structure Chunking</h4>
+            <p>Tôn trọng cấu trúc phân cấp y khoa (#, ##, ###), giữ nguyên vẹn 100% bảng thuốc trong 1 chunk và luôn tiêm phả hệ bệnh lý vào đầu đoạn.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4 Core Pillars -->
+      <section class="steps-section">
+        
+        <!-- Step 1 -->
+        <article class="step-card">
+          <div class="step-header">
+            <span class="step-badge">1</span>
+            <div class="step-header-text">
+              <h3>Cắt theo Cấu trúc Tiêu đề & Giữ nguyên Bảng</h3>
+              <div class="subtitle">STRUCTURE & TABLE INTEGRITY</div>
+            </div>
+          </div>
+          <div class="step-body">
+            <ul>
+              <li><strong>Phân đoạn ngữ nghĩa:</strong> Tách văn bản bám sát các đề mục phân cấp y khoa chuẩn hóa của Bộ Y Tế (<code>#</code>, <code>##</code>, <code>###</code>).</li>
+              <li><strong>Nguyên tắc sống còn:</strong> <strong>Tuyệt đối không bao giờ cắt đôi một bảng thuốc.</strong> Toàn bộ bảng liều lượng hoặc phác đồ điều trị luôn nằm trọn vẹn trong <strong>1 chunk duy nhất</strong>.</li>
+            </ul>
+            <div class="rule-highlight">
+              🛡️ <strong>Bảo vệ lâm sàng:</strong> Không để xảy ra tình trạng "Tên thuốc" nằm ở một chunk còn "Chỉ định liều lượng" lại rơi vào chunk khác.
+            </div>
+          </div>
+        </article>
+
+        <!-- Step 2 -->
+        <article class="step-card">
+          <div class="step-header">
+            <span class="step-badge">2</span>
+            <div class="step-header-text">
+              <h3>Kiểm soát Kích thước Thông minh</h3>
+              <div class="subtitle">WINDOW GUARD: 400 – 800 TOKENS</div>
+            </div>
+          </div>
+          <div class="step-body">
+            <p>Để đảm bảo hiệu quả tối ưu cho mô hình Embedding (Gemini 768 chiều), kích thước chunk được điều phối tự động:</p>
+            
+            <div class="gauge-wrapper">
+              <div class="gauge-labels">
+                <span>&lt; 150 Tokens</span>
+                <span style="color: var(--emerald-600);">400 – 600 Tokens (Vàng)</span>
+                <span>&gt; 800 Tokens</span>
+              </div>
+              <div class="gauge-bar">
+                <div class="gauge-zone-low"></div>
+                <div class="gauge-zone-ideal"></div>
+                <div class="gauge-zone-high"></div>
+              </div>
+              <div class="gauge-details">
+                <div class="gauge-col" style="border-left: 3px solid var(--amber-500);">
+                  <strong style="color: var(--amber-500);">Quá ngắn (&lt; 150)</strong>
+                  Tự động gộp với đoạn liền kề, tránh làm loãng kết quả tìm kiếm.
+                </div>
+                <div class="gauge-col" style="border-left: 3px solid var(--emerald-600); background: #F0FDF4;">
+                  <strong style="color: var(--emerald-600);">Lý tưởng (400 – 600)</strong>
+                  Khoảng 300 – 450 từ tiếng Việt, kích thước vừa vặn cho 1 đơn thuốc.
+                </div>
+                <div class="gauge-col" style="border-left: 3px solid var(--rose-600);">
+                  <strong style="color: var(--rose-600);">Quá dài (&gt; 800)</strong>
+                  Tách đệ quy theo đoạn văn (<code>\n\n</code>) kèm độ gối đầu 50 tokens overlap.
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Step 3 -->
+        <article class="step-card">
+          <div class="step-header">
+            <span class="step-badge">3</span>
+            <div class="step-header-text">
+              <h3>Tiêm Ngữ Cảnh Phả Hệ (Chống "Mù Ngữ Cảnh")</h3>
+              <div class="subtitle">BREADCRUMBS INJECTION</div>
+            </div>
+          </div>
+          <div class="step-body">
+            <p>Nếu một đoạn chỉ ghi cụt ngủn: <em>"Kháng sinh: Amoxicillin 1g x 3 lần/ngày"</em>, hệ thống vector search sẽ không thể biết đây là kháng sinh dùng cho bệnh gì (Viêm phổi, Viêm họng hay Viêm tai giữa).</p>
+            <p>👉 Kỹ thuật này tự động chèn thêm một dòng <strong>tiền tố ngữ cảnh phả hệ</strong> vào đầu mỗi chunk:</p>
+
+            <div class="example-box">
+              <div class="example-header">
+                <span>VÍ DỤ CHUNK ĐÃ ĐƯỢC TIÊM NGỮ CẢNH (INJECTED CHUNK)</span>
+                <button class="btn-copy" onclick="copyExample(this)">Sao chép</button>
+              </div>
+              <div class="example-content">
+                <span class="prefix-tag">[NGỮ CẢNH Y KHOA: Bộ Y Tế &gt; Hô hấp &gt; Viêm phổi cộng đồng &gt; Ngoại trú]</span>
+                <span class="payload-text">Kháng sinh đầu tay: Amoxicillin 1g x 3 lần/ngày uống kèm Clarithromycin 500mg x 2 lần/ngày...</span>
+              </div>
+            </div>
+
+            <p style="font-size: 13.5px; color: var(--slate-600); margin-top: 10px;">
+              ✨ <strong>Hiệu quả:</strong> Vector search lập tức tìm trúng phác đồ điều trị ngay cả khi bác sĩ chỉ gõ câu hỏi ngắn hoặc thiếu từ khóa chẩn đoán trực tiếp.
+            </p>
+          </div>
+        </article>
+
+        <!-- Step 4 -->
+        <article class="step-card">
+          <div class="step-header">
+            <span class="step-badge">4</span>
+            <div class="step-header-text">
+              <h3>Biến Bảng DDI thành Câu Văn Tự Nhiên</h3>
+              <div class="subtitle">NARRATIVE SERIALIZATION</div>
+            </div>
+          </div>
+          <div class="step-body">
+            <p>Với bảng dữ liệu <strong>701 cặp tương tác thuốc (DDI)</strong> từ Dược thư Quốc gia, hệ thống tuyệt đối không nạp thô dưới dạng cột/dòng rời rạc.</p>
+            <p>Kỹ thuật <strong>Narrative Serialization</strong> tự động biên dịch từng dòng CSV thành một đoạn văn lâm sàng hoàn chỉnh và mạch lạc:</p>
+
+            <div class="ddi-flow">
+              <span style="font-weight: 700; color: var(--slate-900);">Chuỗi bóc tách lâm sàng tuần tự:</span>
+              <div class="ddi-chain">
+                <span class="ddi-pill" style="border-color: #CBD5E1;">💊 Cặp thuốc tương tác</span>
+                <span class="ddi-arrow">➔</span>
+                <span class="ddi-pill" style="background: var(--rose-50); color: var(--rose-600); border-color: #FECDD3;">⚠️ Mức độ nguy hiểm</span>
+                <span class="ddi-arrow">➔</span>
+                <span class="ddi-pill" style="background: var(--indigo-50); color: var(--indigo-600); border-color: #C7D2FE;">🔬 Cơ chế ức chế men gan</span>
+                <span class="ddi-arrow">➔</span>
+                <span class="ddi-pill" style="background: var(--emerald-50); color: var(--emerald-600); border-color: #A7F3D0;">🛡️ Thuốc thay thế an toàn</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- 1-Sentence Summary Banner -->
+      <section class="summary-box">
+        <span class="summary-badge">Tóm tắt trong 1 câu</span>
+        <blockquote class="summary-quote">
+          “Cắt đúng đề mục y khoa, không làm đứt bảng thuốc, giới hạn 400–800 tokens và luôn gắn thêm phả hệ bệnh lý vào đầu đoạn.”
+        </blockquote>
+      </section>
+
+      <!-- Footer -->
+      <footer class="footer">
+        <span>CareFlow — Phân hệ AI Lâm Sàng & Clinical RAG</span>
+        <span>Phát triển theo chuẩn SJD Barcelona & BYT</span>
+      </footer>
+
+    </main>
+  </div>
+
+  <script>
+    function copyExample(btn) {
+      const code = btn.closest('.example-box').querySelector('.example-content').innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const orig = btn.innerText;
+        btn.innerText = '✓ Đã chép!';
+        setTimeout(() => { btn.innerText = orig; }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

@@ -67,6 +67,9 @@ export const aiApi = {
     return api.post<ClinicalSuggestionResponse>(`${AI_BASE_URL}/api/ai/clinical-suggestions`, {
       consultationId,
       question: question || "Gợi ý chẩn đoán phân biệt và dữ liệu còn thiếu",
+      pageRoute: context?.pageRoute,
+      pageTitle: context?.pageTitle,
+      pageData: context?.pageData,
     });
   },
 
@@ -82,6 +85,9 @@ export const aiApi = {
       consultationId,
       message,
       parentInteractionId: parentId,
+      pageRoute: context?.pageRoute,
+      pageTitle: context?.pageTitle,
+      pageData: context?.pageData,
     });
   },
 
