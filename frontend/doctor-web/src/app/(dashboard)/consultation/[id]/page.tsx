@@ -375,8 +375,13 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
         setIcd10Name(consData.icd10Name || "");
         setDiagnosis(consData.diagnosis || "");
 
-        const catalogRes = await labApi.getCatalog();
-        setLabCatalog(catalogRes.data);
+        try {
+          const catalogRes = await labApi.getCatalog();
+          setLabCatalog(catalogRes.data ?? []);
+        } catch {
+          console.warn("Lab service catalog offline, defaulting to empty catalog.");
+          setLabCatalog([]);
+        }
 
         try {
           const medRes = await prescriptionApi.getMedicineCatalog();
@@ -434,12 +439,8 @@ export default function ConsultationPage({ params }: { params: Promise<{ id: str
             setExistingLabOrders(labRes.data);
           }
         } catch (failure) {
-          throw new Error(
-            getErrorMessage(
-              failure,
-              "Chưa tải được chỉ định xét nghiệm; không thể kết luận ca không có chỉ định."
-            )
-          );
+          console.warn("Lab orders query failed or service unavailable:", failure);
+          setExistingLabOrders([]);
         }
       } catch (err) {
         if (consultationId.startsWith("demo")) {

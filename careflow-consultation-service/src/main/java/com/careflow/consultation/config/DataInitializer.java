@@ -1,9 +1,5 @@
 package com.careflow.consultation.config;
 
-import com.careflow.consultation.model.Consultation;
-import com.careflow.consultation.model.ConsultationStatus;
-import com.careflow.consultation.repository.ConsultationRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -18,11 +14,9 @@ import java.util.UUID;
 @org.springframework.context.annotation.Profile("demo | test")
 public class DataInitializer implements CommandLineRunner {
 
-    private final ConsultationRepository consultationRepository;
     private final JdbcTemplate jdbcTemplate;
 
-    public DataInitializer(ConsultationRepository consultationRepository, JdbcTemplate jdbcTemplate) {
-        this.consultationRepository = consultationRepository;
+    public DataInitializer(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
 
@@ -32,86 +26,81 @@ public class DataInitializer implements CommandLineRunner {
         alignStatusConstraint();
 
         UUID c1Id = UUID.fromString("c0000001-0000-0000-0000-000000000001");
-        if (!consultationRepository.existsById(c1Id)) {
-            Consultation c1 = Consultation.builder()
-                    .patientId(UUID.fromString("f0000001-0000-0000-0000-000000000004")) // Phạm Đức Anh
-                    .doctorId(UUID.fromString("d0000001-0000-0000-0000-000000000001"))
-                    .appointmentId(UUID.fromString("a0000001-0000-0000-0000-000000000001"))
-                    .temperature(new BigDecimal("38.2"))
-                    .bloodPressure("110/70")
-                    .heartRate(95)
-                    .spo2(98)
-                    .height(new BigDecimal("110.0"))
-                    .weight(new BigDecimal("18.5"))
-                    .symptoms("Sốt 38.2C, ho hắng nhẹ, đau họng khi nuốt 2 ngày")
-                    .clinicalNotes("Họng đỏ, sưng nhẹ 2 amydal, phổi thông khí rõ không rale")
-                    .icd10Code("J00")
-                    .icd10Name("Viêm mũi họng cấp (cảm thường)")
-                    .diagnosis("Viêm mũi họng cấp / Sốt siêu vi")
-                    .status(ConsultationStatus.COMPLETED)
-                    .startedAt(LocalDateTime.now().minusHours(2))
-                    .completedAt(LocalDateTime.now().minusHours(1))
-                    .build();
-            c1.setId(c1Id);
-            consultationRepository.save(c1);
-            log.info("Seeded historical completed consultation for Phạm Đức Anh (J00)");
+        Integer c1Count = jdbcTemplate.queryForObject("SELECT count(*) FROM consultations WHERE id=?", Integer.class, c1Id);
+        if (c1Count == null || c1Count == 0) {
+            jdbcTemplate.update("""
+                INSERT INTO consultations (
+                    id, patient_id, patient_name, doctor_id, doctor_name, department_code, department_name,
+                    appointment_id, temperature, blood_pressure, heart_rate, spo2, height, weight,
+                    symptoms, clinical_notes, icd10_code, icd10_name, diagnosis, status,
+                    started_at, completed_at, version, created_at, updated_at
+                ) VALUES (
+                    ?, ?, 'Phạm Đức Anh', ?, 'BS. CKI Nguyễn Văn An', 'NOI_TONG_QUAT', 'Khoa Nội Tổng Quát',
+                    ?, 38.2, '110/70', 95, 98, 110.0, 18.5,
+                    'Sốt 38.2C, ho hắng nhẹ, đau họng khi nuốt 2 ngày',
+                    'Họng đỏ, sưng nhẹ 2 amydal, phổi thông khí rõ không rale',
+                    'J00', 'Viêm mũi họng cấp (cảm thường)', 'Viêm mũi họng cấp / Sốt siêu vi', 'COMPLETED',
+                    now() - interval '2 hours', now() - interval '1 hour', 0, now(), now()
+                )
+                """,
+                c1Id,
+                UUID.fromString("f0000001-0000-0000-0000-000000000004"),
+                UUID.fromString("d0000001-0000-0000-0000-000000000001"),
+                UUID.fromString("a0000001-0000-0000-0000-000000000001")
+            );
+            log.info("Seeded historical completed consultation for Phạm Đức Anh via JdbcTemplate");
         }
 
         UUID c2Id = UUID.fromString("c0000001-0000-0000-0000-000000000002");
-        if (!consultationRepository.existsById(c2Id)) {
-            Consultation c2 = Consultation.builder()
-                    .patientId(UUID.fromString("f0000001-0000-0000-0000-000000000001")) // Nguyễn Thị Mai
-                    .doctorId(UUID.fromString("d0000001-0000-0000-0000-000000000001"))
-                    .appointmentId(UUID.fromString("a0000001-0000-0000-0000-000000000002"))
-                    .temperature(new BigDecimal("36.6"))
-                    .bloodPressure("125/82")
-                    .heartRate(76)
-                    .spo2(99)
-                    .height(new BigDecimal("158.0"))
-                    .weight(new BigDecimal("54.0"))
-                    .symptoms("Ợ chua, nóng rát vùng sau xương ức, đau thượng vị nhẹ sau ăn")
-                    .clinicalNotes("Ấn đau nhẹ vùng thượng vị, không phản ứng thành bụng")
-                    .icd10Code("K21.9")
-                    .icd10Name("Bệnh trào ngược dạ dày - thực quản không có viêm thực quản")
-                    .diagnosis("Trào ngược dạ dày thực quản (GERD) / Viêm dạ dày nhẹ")
-                    .status(ConsultationStatus.COMPLETED)
-                    .startedAt(LocalDateTime.now().minusHours(3))
-                    .completedAt(LocalDateTime.now().minusHours(2))
-                    .build();
-            c2.setId(c2Id);
-            consultationRepository.save(c2);
-            log.info("Seeded historical completed consultation for Nguyễn Thị Mai (K21.9)");
+        Integer c2Count = jdbcTemplate.queryForObject("SELECT count(*) FROM consultations WHERE id=?", Integer.class, c2Id);
+        if (c2Count == null || c2Count == 0) {
+            jdbcTemplate.update("""
+                INSERT INTO consultations (
+                    id, patient_id, patient_name, doctor_id, doctor_name, department_code, department_name,
+                    appointment_id, temperature, blood_pressure, heart_rate, spo2, height, weight,
+                    symptoms, clinical_notes, icd10_code, icd10_name, diagnosis, status,
+                    started_at, completed_at, version, created_at, updated_at
+                ) VALUES (
+                    ?, ?, 'Nguyễn Thị Mai', ?, 'BS. CKI Nguyễn Văn An', 'NOI_TONG_QUAT', 'Khoa Nội Tổng Quát',
+                    ?, 36.6, '125/82', 76, 99, 158.0, 54.0,
+                    'Ợ chua, nóng rát vùng sau xương ức, đau thượng vị nhẹ sau ăn',
+                    'Ấn đau nhẹ vùng thượng vị, không phản ứng thành bụng',
+                    'K21.9', 'Bệnh trào ngược dạ dày - thực quản không có viêm thực quản', 'Trào ngược dạ dày thực quản (GERD) / Viêm dạ dày nhẹ', 'COMPLETED',
+                    now() - interval '3 hours', now() - interval '2 hours', 0, now(), now()
+                )
+                """,
+                c2Id,
+                UUID.fromString("f0000001-0000-0000-0000-000000000001"),
+                UUID.fromString("d0000001-0000-0000-0000-000000000001"),
+                UUID.fromString("a0000001-0000-0000-0000-000000000002")
+            );
+            log.info("Seeded historical completed consultation for Nguyễn Thị Mai via JdbcTemplate");
         }
 
         // 3. Ca khám mẫu CỐ ĐỊNH ở trạng thái IN_PROGRESS phục vụ kiểm thử AI lâm sàng & Voice
         UUID aiTestConsultationId = UUID.fromString("c0000001-0000-0000-0000-000000000099");
-        Consultation aiConsultation = consultationRepository.findById(aiTestConsultationId)
-                .orElseGet(() -> {
-                    Consultation c = new Consultation();
-                    c.setId(aiTestConsultationId);
-                    return c;
-                });
-
-        aiConsultation.setPatientId(UUID.fromString("f0000001-0000-0000-0000-000000000004")); // Phạm Đức Anh
-        aiConsultation.setDoctorId(UUID.fromString("d0000001-0000-0000-0000-000000000001"));
-        aiConsultation.setAppointmentId(UUID.fromString("a0000001-0000-0000-0000-000000000001"));
-        aiConsultation.setTemperature(new BigDecimal("37.8"));
-        aiConsultation.setBloodPressure("135/85");
-        aiConsultation.setHeartRate(88);
-        aiConsultation.setSpo2(97);
-        aiConsultation.setHeight(new BigDecimal("168.0"));
-        aiConsultation.setWeight(new BigDecimal("65.0"));
-        aiConsultation.setSymptoms("Bệnh nhân đau tức ngực trái âm ỉ 2 ngày nay, khó thở nhẹ khi gắng sức, hồi hộp đánh trống ngực.");
-        aiConsultation.setClinicalNotes("Tim đều, T1 T2 rõ, chưa nghe âm thổi bệnh lý. Phổi trong không rale. Huyết áp hơi cao.");
-        aiConsultation.setDiagnosis(null);
-        aiConsultation.setIcd10Code(null);
-        aiConsultation.setIcd10Name(null);
-        aiConsultation.setStatus(ConsultationStatus.IN_PROGRESS);
-        aiConsultation.setStartedAt(LocalDateTime.now().minusMinutes(15));
-        aiConsultation.setCompletedAt(null);
-
-        consultationRepository.save(aiConsultation);
-        log.info("Seeded/Ensured active IN_PROGRESS consultation for AI Testing: {}", aiTestConsultationId);
+        Integer aiCount = jdbcTemplate.queryForObject("SELECT count(*) FROM consultations WHERE id=?", Integer.class, aiTestConsultationId);
+        if (aiCount == null || aiCount == 0) {
+            jdbcTemplate.update("""
+                INSERT INTO consultations (
+                    id, patient_id, patient_name, doctor_id, doctor_name, department_code, department_name,
+                    appointment_id, temperature, blood_pressure, heart_rate, spo2, height, weight,
+                    symptoms, clinical_notes, status, started_at, version, created_at, updated_at
+                ) VALUES (
+                    ?, ?, 'Phạm Đức Anh', ?, 'BS. CKI Nguyễn Văn An', 'NOI_TONG_QUAT', 'Khoa Nội Tổng Quát',
+                    ?, 37.8, '135/85', 88, 97, 168.0, 65.0,
+                    'Bệnh nhân đau tức ngực trái âm ỉ 2 ngày nay, khó thở nhẹ khi gắng sức, hồi hộp đánh trống ngực.',
+                    'Tim đều, T1 T2 rõ, chưa nghe âm thổi bệnh lý. Phổi trong không rale. Huyết áp hơi cao.',
+                    'IN_PROGRESS', now() - interval '15 minutes', 0, now(), now()
+                )
+                """,
+                aiTestConsultationId,
+                UUID.fromString("f0000001-0000-0000-0000-000000000004"),
+                UUID.fromString("d0000001-0000-0000-0000-000000000001"),
+                UUID.fromString("a0000001-0000-0000-0000-000000000001")
+            );
+            log.info("Seeded active IN_PROGRESS consultation for AI Testing via JdbcTemplate: {}", aiTestConsultationId);
+        }
     }
 
     private void alignStatusConstraint() {

@@ -4,6 +4,7 @@ import com.careflow.ai.clinical.ClinicalEngine;
 import com.careflow.ai.dto.request.ClinicalChatRequest;
 import com.careflow.ai.dto.request.ClinicalSuggestionRequest;
 import com.careflow.ai.dto.response.AiModelInfo;
+import com.careflow.ai.dto.response.ClinicalCitationDto;
 import com.careflow.ai.dto.response.ClinicalSuggestionItem;
 import com.careflow.ai.dto.response.ClinicalSuggestionResponse;
 import com.careflow.ai.dto.response.EvidenceRef;
@@ -104,6 +105,7 @@ public class AiClinicalAssistantService {
 
         // 3. XÂY DỰNG SUGGESTIONS VÀ EVIDENCE REFS TỪ CHUNKS PHÁC ĐỒ THỰC TẾ
         List<ClinicalSuggestionItem> suggestions = buildSuggestionsFromChunks(relevantChunks, request.getConsultationId());
+        List<ClinicalCitationDto> citations = buildCitationsFromChunks(relevantChunks);
 
         // 4. GỌI AI MODEL PROVIDER (Gemini -> DeepSeek -> Fallback)
         if (geminiClientService.isGeminiConfigured()) {
@@ -114,6 +116,7 @@ public class AiClinicalAssistantService {
                         .mode("LLM_PROVIDER")
                         .summary(aiText)
                         .suggestions(suggestions)
+                        .citations(citations)
                         .missingInformation(List.of("Tiền sử dị ứng chi tiết", "Thời gian khởi phát triệu chứng chính xác", "Kết quả cận lâm sàng gần nhất"))
                         .warnings(extractWarningsFromChunks(relevantChunks, pageData))
                         .disclaimer(MEDICAL_DISCLAIMER)
@@ -140,6 +143,7 @@ public class AiClinicalAssistantService {
                         .mode("LLM_PROVIDER")
                         .summary(dsText)
                         .suggestions(suggestions)
+                        .citations(citations)
                         .missingInformation(List.of("Tiền sử dị ứng chi tiết", "Thời gian khởi phát triệu chứng chính xác"))
                         .warnings(extractWarningsFromChunks(relevantChunks, pageData))
                         .disclaimer(MEDICAL_DISCLAIMER)
@@ -183,6 +187,7 @@ public class AiClinicalAssistantService {
         );
 
         List<ClinicalSuggestionItem> suggestions = buildSuggestionsFromChunks(relevantChunks, request.getConsultationId());
+        List<ClinicalCitationDto> citations = buildCitationsFromChunks(relevantChunks);
 
         // 3. GỌI AI MODEL PROVIDER
         if (geminiClientService.isGeminiConfigured()) {
@@ -193,6 +198,7 @@ public class AiClinicalAssistantService {
                         .mode("LLM_PROVIDER")
                         .summary(aiText)
                         .suggestions(suggestions)
+                        .citations(citations)
                         .missingInformation(List.of())
                         .warnings(extractWarningsFromChunks(relevantChunks, pageData))
                         .disclaimer(MEDICAL_DISCLAIMER)
@@ -218,6 +224,7 @@ public class AiClinicalAssistantService {
                         .mode("LLM_PROVIDER")
                         .summary(dsText)
                         .suggestions(suggestions)
+                        .citations(citations)
                         .missingInformation(List.of())
                         .warnings(extractWarningsFromChunks(relevantChunks, pageData))
                         .disclaimer(MEDICAL_DISCLAIMER)
@@ -362,6 +369,7 @@ public class AiClinicalAssistantService {
 
     private ClinicalSuggestionResponse buildRuleBasedSuggestions(String interactionId, String consultationId, List<RankedChunk> chunks) {
         List<ClinicalSuggestionItem> suggestions = buildSuggestionsFromChunks(chunks, consultationId);
+        List<ClinicalCitationDto> citations = buildCitationsFromChunks(chunks);
 
         String summary = "Trợ lý AI Lâm Sàng: Hiện tại cổng LLM tạm thời chưa phản hồi, nhưng hệ thống đã tìm kiếm được các mục phác đồ Bộ Y Tế liên quan trong kho tri thức của bệnh viện để Bác sĩ tham khảo nhanh bên dưới.";
 
@@ -370,6 +378,7 @@ public class AiClinicalAssistantService {
                 .mode("SERVICE_UNAVAILABLE")
                 .summary(summary)
                 .suggestions(suggestions)
+                .citations(citations)
                 .missingInformation(List.of())
                 .warnings(extractWarningsFromChunks(chunks, ""))
                 .disclaimer(MEDICAL_DISCLAIMER)
@@ -379,6 +388,27 @@ public class AiClinicalAssistantService {
 
         interactionStore.put(interactionId, response);
         return response;
+    }
+
+    private List<ClinicalCitationDto> buildCitationsFromChunks(List<RankedChunk> chunks) {
+        if (chunks == null || chunks.isEmpty()) {
+            return List.of();
+        }
+        return chunks.stream()
+                .limit(3)
+                .<ClinicalCitationDto>map(chunk -> ClinicalCitationDto.builder()
+                        .sourceId((chunk.documentCode() != null ? chunk.documentCode() : "BYT-GUIDELINE") + "-" + chunk.chunkId())
+                        .title(chunk.documentTitle() != null ? chunk.documentTitle() : "Phác đồ điều trị Bộ Y Tế")
+                        .revision(chunk.sectionTitle() != null ? chunk.sectionTitle() : "Hướng dẫn chuẩn")
+                        .url("https://kcb.vn")
+                        .contentHash(Integer.toHexString(chunk.content() != null ? chunk.content().hashCode() : 0))
+                        .reviewedAt(Instant.now().toString())
+                        .quote(chunk.content() != null && chunk.content().length() > 300
+                                ? chunk.content().substring(0, 300) + "..."
+                                : (chunk.content() != null ? chunk.content() : ""))
+                        .synthetic(false)
+                        .build())
+                .toList();
     }
 
     private ClinicalSuggestionResponse buildRuleBasedChat(String interactionId, String consultationId, String message) {

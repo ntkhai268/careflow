@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hướng Dẫn Nạp CSDL RAG & Kịch Bản Demo CareFlow AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #6E2582;
+      --primary-dark: #521961;
+      --primary-light: #F6EDF8;
+      --teal: #087F6A;
+      --teal-light: #D9F3EC;
+      --blue: #0277A8;
+      --blue-light: #EBF6FC;
+      --slate-900: #0F172A;
+      --slate-800: #1E293B;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748B;
+      --slate-200: #E2E8F0;
+      --slate-100: #F1F5F9;
+      --slate-50: #F8FAFC;
+      --amber-500: #D97706;
+      --amber-50: #FFFBEB;
+      --amber-200: #FDE68A;
+      --emerald-600: #059669;
+      --emerald-50: #ECFDF5;
+      --rose-600: #E11D48;
+      --rose-50: #FFF1F2;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 25px -5px rgba(110,37,130,0.1), 0 8px 10px -6px rgba(0,0,0,0.04);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Be Vietnam Pro', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #F8FAFC;
+      color: var(--slate-800);
+      line-height: 1.6;
+      font-size: 15px;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Top Navbar */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--slate-200);
+      padding: 12px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: var(--slate-900);
+    }
+
+    .nav-logo-badge {
+      background: linear-gradient(135deg, var(--primary) 0%, #9030A8 100%);
+      color: white;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      letter-spacing: 0.5px;
+    }
+
+    .nav-title {
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--slate-900);
+    }
+
+    .nav-badge {
+      font-size: 11px;
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+
+    /* Main Container Layout */
+    .layout-container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 30px 24px 80px 24px;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 32px;
+      align-items: start;
+    }
+
+    /* Sticky Sidebar Navigation */
+    .sidebar {
+      position: sticky;
+      top: 80px;
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .sidebar-title {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--slate-500);
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .sidebar-menu {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .sidebar-link {
+      display: block;
+      padding: 8px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--slate-700);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 500;
+      transition: all 0.15s ease;
+    }
+
+    .sidebar-link:hover {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    /* Content Area */
+    .content {
+      background: white;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-lg);
+      padding: 40px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .header-section {
+      border-bottom: 1px solid var(--slate-200);
+      padding-bottom: 24px;
+      margin-bottom: 32px;
+    }
+
+    .header-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #EDE9FE;
+      color: #6D28D9;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 20px;
+      margin-bottom: 12px;
+    }
+
+    h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--slate-900);
+      line-height: 1.3;
+      margin-bottom: 12px;
+    }
+
+    p.lead {
+      font-size: 16px;
+      color: var(--slate-600);
+      line-height: 1.6;
+    }
+
+    /* Section Styling */
+    section {
+      margin-bottom: 48px;
+      scroll-margin-top: 90px;
+    }
+
+    h2 {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--slate-900);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    h2 .num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--slate-800);
+      margin: 20px 0 10px 0;
+    }
+
+    /* Cards & Boxes */
+    .highlight-card {
+      background: linear-gradient(135deg, #FAF5FF 0%, #F5F3FF 100%);
+      border: 1px solid #DDD6FE;
+      border-radius: var(--radius-md);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .method-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .method-box {
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      background: white;
+      transition: all 0.2s ease;
+    }
+
+    .method-box.primary {
+      border: 2px solid var(--emerald-600);
+      background: #F0FDF4;
+    }
+
+    .method-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+    }
+
+    .badge-green { background: #DCFCE7; color: #166534; }
+    .badge-blue { background: #E0F2FE; color: #0369A1; }
+
+    /* Code Blocks */
+    .code-block {
+      background: var(--slate-900);
+      color: #E2E8F0;
+      border-radius: var(--radius-sm);
+      padding: 16px 20px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      position: relative;
+      margin: 12px 0;
+      overflow-x: auto;
+    }
+
+    .code-block code {
+      font-family: inherit;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: white;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* Tables */
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 13.5px;
+    }
+
+    .custom-table th {
+      background: var(--slate-100);
+      color: var(--slate-700);
+      text-align: left;
+      padding: 10px 14px;
+      font-weight: 700;
+      border: 1px solid var(--slate-200);
+    }
+
+    .custom-table td {
+      padding: 10px 14px;
+      border: 1px solid var(--slate-200);
+      color: var(--slate-700);
+    }
+
+    .custom-table tr:nth-child(even) {
+      background: var(--slate-50);
+    }
+
+    .port-badge {
+      font-family: 'JetBrains Mono', monospace;
+      background: #E2E8F0;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    /* Step flow */
+    .step-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin: 20px 0;
+    }
+
+    .step-card {
+      display: flex;
+      gap: 16px;
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: 16px 20px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      width: 32px;
+      height: 32px;
+      background: var(--primary);
+      color: white;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .step-body h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 4px;
+    }
+
+    .step-body p {
+      font-size: 13.5px;
+      color: var(--slate-600);
+    }
+
+    /* Callouts */
+    .callout {
+      border-left: 4px solid var(--primary);
+      background: var(--primary-light);
+      padding: 14px 18px;
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      margin: 16px 0;
+      font-size: 13.5px;
+    }
+
+    .callout.warning {
+      border-left-color: var(--amber-500);
+      background: var(--amber-50);
+    }
+
+    @media (max-width: 900px) {
+      .layout-container { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .method-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-logo-badge">CAREFLOW AI</span>
+      <span class="nav-title">Sổ Tay Kỹ Thuật: Nạp RAG & Kịch Bản Demo</span>
+    </div>
+    <div class="nav-badge">Phiên bản Cục bộ (Local Test)</div>
+  </nav>
+
+  <!-- Container -->
+  <div class="layout-container">
+    
+    <!-- Left Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-title">MỤC LỤC TRUY CẬP NHANH</div>
+      <ul class="sidebar-menu">
+        <li><a href="#quick-import" class="sidebar-link">1. Nạp CSDL RAG (SQL vs JSON)</a></li>
+        <li><a href="#services" class="sidebar-link">2. Các Dịch Vụ Cần Chạy</a></li>
+        <li><a href="#start-all" class="sidebar-link">3. Lệnh Bật Hệ Thống (1 Click)</a></li>
+        <li><a href="#demo-walkthrough" class="sidebar-link">4. Kịch Bản Demo 3 Luồng</a></li>
+        <li><a href="#test-questions" class="sidebar-link">5. Bộ Câu Hỏi Test RAG Chuẩn</a></li>
+      </ul>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content">
+
+      <!-- Header -->
+      <div class="header-section">
+        <div class="header-badge">🚀 HƯỚNG DẪN DÀNH CHO THUYẾT TRÌNH & LÀM SLIDE</div>
+        <h1>Nạp CSDL Clinical RAG & Kịch Bản Demo Khám Bệnh</h1>
+        <p class="lead">Tài liệu súc tích, trực diện dành cho nhóm CareFlow để thiết lập CSDL Vector trong 2 giây, khởi chạy đúng các microservice và tự tin trình diễn toàn bộ tính năng AI (Voice STT + RAG Bộ Y Tế + Tương tác thuốc DDI).</p>
+      </div>
+
+      <!-- Section 1: DB Import -->
+      <section id="quick-import">
+        <h2><span class="num">1</span> Cách Nạp CSDL RAG: Dùng SQL Dump vs. JSON File</h2>
+        <p>Kho tri thức RAG của CareFlow gồm <strong>4 phác đồ Bộ Y Tế</strong> được chia thành <strong>1.095 chunks</strong> với vector 768 chiều. Có 2 cách để nạp:</p>
+
+        <div class="method-grid">
+          <!-- Cách 1 -->
+          <div class="method-box primary">
+            <span class="method-badge badge-green">CÁCH 1: KHUYÊN DÙNG (2 GIÂY)</span>
+            <h3>Dùng Tệp SQL Dump</h3>
+            <p style="font-size: 13px; color: var(--slate-600); margin-bottom: 12px;">
+              Tệp <code>scripts/careflow_ai_schema_and_data.sql</code> (~9.5 MB) đã chứa trọn vẹn cả bảng, chỉ mục HNSW/GIN và 1.095 vector nhúng sẵn.
+            </p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <code>docker exec -i careflow-ai-postgres psql -U careflow -d careflow_ai &lt; scripts/careflow_ai_schema_and_data.sql</code>
+            </div>
+            <p style="font-size: 12px; color: #15803D; font-weight: 600;">✓ Nạp 1 phát ăn ngay, không cần cài Python hay token API.</p>
+          </div>
+
+          <!-- Cách 2 -->
+          <div class="method-box">
+            <span class="method-badge badge-blue">CÁCH 2: DỰ PHÒNG DEV</span>
+            <h3>Dùng Tệp JSON Embeddings Cache</h3>
+            <p style="font-size: 13px; color: var(--slate-600); margin-bottom: 12px;">
+              Tệp <code>scripts/.rag_embeddings_cache_v2.json</code> (13 MB) lưu sẵn 1.095 vector thô, dùng khi chạy script Python để không tốn tiền API Google.
+            </p>
+            <div class="code-block">
+              <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+              <code>python3 scripts/ingest_clinical_rag.py</code>
+            </div>
+            <p style="font-size: 12px; color: var(--slate-500);">Script tự đọc file cache JSON và bơm vào Postgres trong 3 giây.</p>
+          </div>
+        </div>
+
+        <div class="callout">
+          <strong>Ý nghĩa của tệp JSON trong thư mục scripts:</strong> Đó là bộ nhớ đệm (Cache) lưu trước vector embedding của toàn bộ 1.095 đoạn phác đồ. Nhờ tệp này mà khi chạy nạp dữ liệu, hệ thống không phải gọi Google API tính toán lại từng đoạn, tránh bị lỗi Rate Limit (429) và không tốn chi phí.
+        </div>
+      </section>
+
+      <!-- Section 2: Services Involved -->
+      <section id="services">
+        <h2><span class="num">2</span> Các Dịch Vụ Tham Gia Luồng Demo (Services Involved)</h2>
+        <p>Để demo trọn vẹn luồng khám từ hàng đợi đến AI, hệ thống cần các dịch vụ sau cùng chạy đồng bộ:</p>
+
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th style="width: 28%;">Tên Microservice</th>
+              <th style="width: 15%;">Cổng (Port)</th>
+              <th>Vai trò trong buổi Demo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>careflow-ai-postgres</strong></td>
+              <td><span class="port-badge">5433</span></td>
+              <td>PostgreSQL 16 + <code>pgvector</code> (Chứa 1.095 chunks phác đồ BYT & vector HNSW)</td>
+            </tr>
+            <tr>
+              <td><strong>eureka-server</strong></td>
+              <td><span class="port-badge">8761</span></td>
+              <td>Trung tâm điều phối Service Discovery cho toàn bộ hệ thống</td>
+            </tr>
+            <tr>
+              <td><strong>careflow-api-gateway</strong></td>
+              <td><span class="port-badge">8080</span></td>
+              <td>Cổng API duy nhất, xử lý DPoP, CORS tập trung và chuyển tiếp request</td>
+            </tr>
+            <tr>
+              <td><strong>identity-service</strong></td>
+              <td><span class="port-badge">8081</span></td>
+              <td>Xác thực đăng nhập Bác sĩ bằng mật khẩu + DPoP token bảo mật</td>
+            </tr>
+            <tr>
+              <td><strong>patient-service</strong></td>
+              <td><span class="port-badge">8082</span></td>
+              <td>Hồ sơ bệnh nhân mẫu, tiền sử dị ứng thuốc (Penicillin), thẻ BHYT</td>
+            </tr>
+            <tr>
+              <td><strong>queue-service</strong></td>
+              <td><span class="port-badge">8084</span></td>
+              <td>Hàng đợi lượt khám active trong ngày tại phòng <code>ROOM-01</code> (NOI-001...NOI-005)</td>
+            </tr>
+            <tr>
+              <td><strong>consultation-service</strong></td>
+              <td><span class="port-badge">8086</span></td>
+              <td>Quản lý phiên khám lâm sàng, sinh hiệu, chẩn đoán ICD-10</td>
+            </tr>
+            <tr>
+              <td><strong>prescription-service</strong></td>
+              <td><span class="port-badge">8087</span></td>
+              <td>Kê đơn thuốc, danh mục 185 thuốc generic và đối chiếu tương tác DDI</td>
+            </tr>
+            <tr>
+              <td><strong>hospital-directory-service</strong></td>
+              <td><span class="port-badge">8090</span></td>
+              <td>Danh mục chuyên khoa (Nội tổng quát), phòng khám (ROOM-01), Bác sĩ</td>
+            </tr>
+            <tr>
+              <td><strong>careflow-ai-service</strong></td>
+              <td><span class="port-badge">8091</span></td>
+              <td><strong>Trọng tâm AI:</strong> Voice-to-Text STT, Hybrid Search RAG và Gemini 2.5 Flash</td>
+            </tr>
+            <tr>
+              <td><strong>frontend/doctor-web</strong></td>
+              <td><span class="port-badge">3000</span></td>
+              <td>Giao diện Web Bác sĩ Next.js (Dashboard, Khám bệnh, Trợ lý AI widget)</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- Section 3: How to Start -->
+      <section id="start-all">
+        <h2><span class="num">3</span> Cách Khởi Động Toàn Bộ Hệ Thống (What to Start)</h2>
+        <p>Chỉ cần <strong>duy nhất 1 câu lệnh</strong> ở thư mục gốc dự án:</p>
+
+        <div class="code-block">
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          <code>./start-local.sh ai</code>
+        </div>
+
+        <div class="step-flow">
+          <div class="step-card">
+            <div class="step-num">A</div>
+            <div class="step-body">
+              <h4>Tự Động Kích Hoạt</h4>
+              <p>Script sẽ tự khởi động Docker PostgreSQL (cổng 5433), Docker RabbitMQ, biên dịch sinh khóa JWT, và chạy tuần tự tất cả 9 backend microservices + frontend Next.js.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">B</div>
+            <div class="step-body">
+              <h4>Tự Động Nạp Sẵn Dữ Liệu Demo (Seed Data)</h4>
+              <p>Hệ thống tự nạp sẵn 6 bệnh nhân mẫu, 5 lượt chờ khám tại phòng <code>ROOM-01</code>, và hồ sơ Bác sĩ An mà bạn không cần phải nhập tay.</p>
+            </div>
+          </div>
+          <div class="step-card">
+            <div class="step-num">C</div>
+            <div class="step-body">
+              <h4>Lệnh Dọn Dẹp / Dừng Hệ Thống</h4>
+              <p>Khi hoàn tất buổi thuyết trình hoặc muốn giải phóng RAM máy tính: <code>./start-local.sh stop</code></p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Demo Walkthrough -->
+      <section id="demo-walkthrough">
+        <h2><span class="num">4</span> Kịch Bản Demo Thực Chiến Từng Bước (Demo Walkthrough)</h2>
+        <div class="highlight-card">
+          <h3 style="margin-top: 0; color: var(--primary);">Thông Tin Đăng Nhập Bác Sĩ (Demo Credentials)</h3>
+          <p style="font-size: 14px;">• Địa chỉ truy cập: <strong><a href="http://localhost:3000" target="_blank" style="color: var(--primary); text-decoration: underline;">http://localhost:3000</a></strong></p>
+          <p style="font-size: 14px;">• Tài khoản: <strong><code>an@careflow.vn</code></strong></p>
+          <p style="font-size: 14px;">• Mật khẩu: <strong><code>Password123@</code></strong> (Chữ P viết hoa)</p>
+          <p style="font-size: 14px;">• Vai trò: Bác sĩ CKI Nguyễn Văn An — Phòng khám Nội tổng quát (ROOM-01)</p>
+        </div>
+
+        <div class="step-flow">
+          <!-- Bước 1 -->
+          <div class="step-card">
+            <div class="step-num">1</div>
+            <div class="step-body">
+              <h4>Bước 1: Tiếp Nhận Bệnh Nhân Từ Hàng Đợi</h4>
+              <p>Tại trang Tổng quan Bác sĩ, bấm <strong>"Gọi bệnh nhân tiếp theo"</strong> (hoặc mở trực tiếp ca khám mẫu sốt ho: <code>http://localhost:3000/consultation/c0000001-0000-0000-0000-000000000099</code>). Trình duyệt mở ra hồ sơ phiên khám với đầy đủ thông tin hành chính, tiền sử dị ứng (Penicillin) và sinh hiệu.</p>
+            </div>
+          </div>
+
+          <!-- Bước 2 -->
+          <div class="step-card">
+            <div class="step-num">2</div>
+            <div class="step-body">
+              <h4>Bước 2: Demo Nhập Toa Bằng Giọng Nói AI (Voice-to-Clinical-Fields)</h4>
+              <p>Ở thanh công cụ góc trên bên phải của hồ sơ khám, bấm nút <strong>"Bật ghi âm AI"</strong> (hoặc bấm "Nhập transcript" để dán đoạn mẫu):</p>
+              <div class="code-block" style="margin: 8px 0; font-size: 12px;">
+                <code>"Bệnh nhân nam 7 tuổi, sốt 38 độ, ho đờm khó thở nhẹ, nhịp tim 95 lần trên phút, huyết áp 110 trên 70, SpO2 97 phần trăm, nặng 22 ký. Chẩn đoán sơ bộ viêm phổi cấp."</code>
+              </div>
+              <p>👉 <strong>Điểm nhấn cho Slide:</strong> AI tự động bóc tách các con số thành cấu trúc JSON và tự điền vào các ô Sinh hiệu (Mạch, Huyết áp, Thân nhiệt, Cân nặng, SpO2) chỉ sau 1–2 giây.</p>
+            </div>
+          </div>
+
+          <!-- Bước 3 -->
+          <div class="step-card">
+            <div class="step-num">3</div>
+            <div class="step-body">
+              <h4>Bước 3: Demo Trợ Lý AI Lâm Sàng (RAG Hybrid Search + Gemini 2.5 Flash)</h4>
+              <p>Nhấp vào biểu tượng <strong>Chú chồn Ferret AI</strong> nổi ở góc dưới màn hình (hoặc bấm vào <strong>Tab 6: Trợ lý AI [RAG]</strong>):</p>
+              <p style="margin-top: 6px;">Nhập câu hỏi: <em>"Bệnh nhân này ho sốt thì xử trí kháng sinh thế nào theo phác đồ Bộ Y Tế?"</em></p>
+              <p>👉 <strong>Điểm nhấn đắt giá cho Slide:</strong></p>
+              <ul style="margin-left: 20px; font-size: 13.5px; color: var(--slate-700); margin-top: 4px;">
+                <li><strong>Truy xuất chuẩn:</strong> RAG tìm thấy đúng phác đồ Viêm phổi mắc phải cộng đồng (<code>QĐ 4800/QĐ-BYT</code>).</li>
+                <li><strong>Suy luận thông minh (Không ảo hoá):</strong> Gemini nhận diện bệnh nhân <strong>mới 7 tuổi</strong>, lập tức cảnh báo QĐ 4800 là phác đồ cho <em>người lớn</em> và khuyến nghị bác sĩ chuyển sang phác đồ Nhi.</li>
+                <li><strong>Cảnh báo an toàn:</strong> Nhắc nhở bệnh nhân có tiền sử <strong>dị ứng Penicillin</strong> nên tuyệt đối không kê nhóm thuốc này.</li>
+                <li><strong>Minh bạch trích dẫn:</strong> Hiển thị đầy đủ 3 thẻ trích dẫn văn bản Bộ Y Tế có thể nhấn xem chi tiết.</li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Bước 4 -->
+          <div class="step-card">
+            <div class="step-num">4</div>
+            <div class="step-body">
+              <h4>Bước 4: Demo Kê Đơn & Cảnh Báo Tương Tác Thuốc Chống Chỉ Định (DDI)</h4>
+              <p>Chuyển sang khung "Đơn thuốc" bên phải màn hình, bấm "+ Thêm thuốc":</p>
+              <p style="margin-top: 4px;">Kê thử 2 loại thuốc: <strong>Aceclofenac</strong> (giảm đau NSAID) và thêm tiếp <strong>Ketorolac</strong> (hoặc Simvastatin + Clarithromycin).</p>
+              <p>👉 <strong>Điểm nhấn cho Slide:</strong> Hệ thống lập tức kích hoạt <strong>Cảnh báo đỏ: CHỐNG CHỈ ĐỊNH PHỐI HỢP (Theo QĐ 5948/QĐ-BYT)</strong> vì gây tăng mạnh nguy cơ suy thận cấp và xuất huyết tiêu hóa, ngăn chặn Bác sĩ ra quyết định sai lầm.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Test Questions -->
+      <section id="test-questions">
+        <h2><span class="num">5</span> Bộ Câu Hỏi Test RAG Chuẩn (Cho Hội Đồng Xem Thử)</h2>
+        <p>Bạn có thể chuẩn bị sẵn các câu hỏi sau để mời thầy cô hoặc người tham gia gõ thử vào khung chat AI:</p>
+
+        <div style="display: flex; flex-direction: column; gap: 12px; margin-top: 14px;">
+          <div style="background: var(--slate-50); border: 1px solid var(--slate-200); padding: 14px; border-radius: var(--radius-sm);">
+            <strong>Câu 1 (Hỏi phác đồ Đái tháo đường):</strong>
+            <p style="font-size: 13.5px; color: var(--slate-600); margin: 4px 0;"><em>"Thời điểm và tiêu chuẩn chẩn đoán đái tháo đường thai kỳ theo QĐ 5481/QĐ-BYT được quy định thế nào?"</em></p>
+            <span style="font-size: 12px; color: var(--emerald-600); font-weight: 600;">➔ Kỳ vọng: AI trả lời đúng tuần 24 đến 28 của thai kỳ và trích dẫn QĐ 5481/QĐ-BYT.</span>
+          </div>
+
+          <div style="background: var(--slate-50); border: 1px solid var(--slate-200); padding: 14px; border-radius: var(--radius-sm);">
+            <strong>Câu 2 (Hỏi phác đồ Tăng huyết áp):</strong>
+            <p style="font-size: 13.5px; color: var(--slate-600); margin: 4px 0;"><em>"Phân độ tăng huyết áp và phác đồ phối hợp 2 thuốc ban đầu theo QĐ 5968/QĐ-BYT?"</em></p>
+            <span style="font-size: 12px; color: var(--emerald-600); font-weight: 600;">➔ Kỳ vọng: Đúng độ 1, 2, 3; phối hợp liều thấp cố định ACEi/ARB + CCB/Lợi tiểu.</span>
+          </div>
+
+          <div style="background: #FFF1F2; border: 1px solid #FECDD3; padding: 14px; border-radius: var(--radius-sm);">
+            <strong>Câu 3 (Test chống ảo hoá - Hỏi mã bệnh ngoài danh mục):</strong>
+            <p style="font-size: 13.5px; color: #9F1239; margin: 4px 0;"><em>"Cho tôi phác đồ điều trị sốt rét ác tính kháng thuốc theo QĐ 9999/QĐ-BYT?"</em></p>
+            <span style="font-size: 12px; color: #BE123C; font-weight: 700;">➔ Kỳ vọng: AI KHÔNG ĐƯỢC BỊA. AI phải trả lời trung thực là kho dữ liệu hiện tại chưa có văn bản QĐ 9999 và từ chối cung cấp phác đồ không có nguồn duyệt.</span>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    function copyCode(btn) {
+      const code = btn.nextElementSibling.innerText;
+      navigator.clipboard.writeText(code).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = 'Đã chép!';
+        btn.style.background = '#059669';
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.style.background = '';
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

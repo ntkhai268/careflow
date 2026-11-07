@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CareFlow — Phản Biện & Đánh Giá Năng Lực Vector Embedding</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0A0D14;
+      --slide-bg: #111622;
+      --card-bg: #182032;
+      --border: #232D42;
+      --text: #F8FAFC;
+      --text-muted: #94A3B8;
+      --primary: #8B5CF6;
+      --primary-light: #A78BFA;
+      --accent-red: #EF4444;
+      --accent-green: #10B981;
+      --accent-yellow: #F59E0B;
+      --accent-blue: #38BDF8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Top bar */
+    .topbar {
+      height: 54px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      background: rgba(17, 22, 34, 0.8);
+      backdrop-filter: blur(12px);
+      z-index: 100;
+    }
+    .topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 15px;
+      letter-spacing: -0.01em;
+    }
+    .topbar-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      background: rgba(139, 92, 246, 0.2);
+      color: var(--primary-light);
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(139, 92, 246, 0.3);
+    }
+    .slide-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    /* Progress bar */
+    .progress-track {
+      width: 100%;
+      height: 3px;
+      background: var(--border);
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary), var(--accent-blue));
+      width: 14%;
+      transition: width 0.3s ease;
+    }
+
+    /* Main Deck Stage */
+    .deck-viewport {
+      flex: 1;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 30px;
+    }
+    .slide {
+      position: absolute;
+      width: 92%;
+      max-width: 1200px;
+      height: 82vh;
+      background: var(--slide-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 44px 56px;
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      transform: scale(0.96) translateY(20px);
+      pointer-events: none;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.6);
+      overflow-y: auto;
+    }
+    .slide.active {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+
+    /* Typography */
+    .slide-category {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--primary-light);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .slide-title {
+      font-size: 32px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+      color: #FFFFFF;
+      line-height: 1.25;
+    }
+    .slide-desc {
+      color: var(--text-muted);
+      font-size: 16px;
+      margin-bottom: 28px;
+      line-height: 1.5;
+    }
+
+    /* Components */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      flex: 1;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+      flex: 1;
+    }
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px;
+      display: flex;
+      flex-direction: column;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #FFF;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-text {
+      font-size: 13.5px;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+    .card.danger {
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.05);
+    }
+    .card.success {
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.05);
+    }
+    .card.highlight {
+      border-color: rgba(139, 92, 246, 0.4);
+      background: rgba(139, 92, 246, 0.08);
+    }
+
+    /* Code & DB View */
+    .db-box {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12.5px;
+      background: #090D16;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+      color: #CBD5E1;
+      line-height: 1.5;
+      overflow-x: auto;
+      margin-top: 8px;
+    }
+    .tag {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+      font-family: 'JetBrains Mono', monospace;
+    }
+    .tag-red { background: rgba(239, 68, 68, 0.2); color: #FCA5A5; }
+    .tag-green { background: rgba(16, 185, 129, 0.2); color: #6EE7B7; }
+    .tag-blue { background: rgba(56, 189, 248, 0.2); color: #7DD3FC; }
+
+    /* Tables */
+    .table-container {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+      text-align: left;
+    }
+    th {
+      background: #151D2D;
+      padding: 12px 16px;
+      font-weight: 700;
+      color: #E2E8F0;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text-muted);
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    /* Bottom controls */
+    .controls {
+      height: 60px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      background: var(--slide-bg);
+    }
+    .keyboard-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    kbd {
+      background: #1F293D;
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+    }
+    .btn-group {
+      display: flex;
+      gap: 12px;
+    }
+    button {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: #FFF;
+      padding: 8px 18px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    button:hover:not(:disabled) {
+      background: var(--primary);
+      border-color: var(--primary-light);
+    }
+    button:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <span>CareFlow Clinical AI</span>
+      <span class="topbar-badge">Retrieval Benchmark Defense</span>
+    </div>
+    <div class="slide-counter" id="slideNum">Slide 1 / 7</div>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-track">
+    <div class="progress-fill" id="progressBar"></div>
+  </div>
+
+  <!-- Slides Viewport -->
+  <div class="deck-viewport">
+
+    <!-- SLIDE 1: Title -->
+    <div class="slide active" id="slide-1">
+      <div class="slide-category">Báo Cáo Phản Biện Lâm Sàng &amp; Kỹ Thuật</div>
+      <h1 class="slide-title">Tại Sao Dense Vector Embedding (Gemini) Không Đủ Cho Y Tế?</h1>
+      <p class="slide-desc">Thực nghiệm 3 "điểm mù" của mô hình Embedding, dẫn chứng trực tiếp từ CSDL PostgreSQL 16 và giải pháp Hybrid Search (RRF k=60) của CareFlow.</p>
+      
+      <div class="grid-3">
+        <div class="card danger">
+          <div class="card-title">⚠️ Điểm Mù Gemini Embedding</div>
+          <div class="card-text">Transformer Mean-Pooling làm trôi mã ICD-10, mù mệnh đề phủ định (cấm vs chỉ định) và mờ số liều lượng thuốc.</div>
+        </div>
+        <div class="card highlight">
+          <div class="card-title">🔬 Dẫn Chứng CSDL Thật</div>
+          <div class="card-text">Truy vấn thực nghiệm trên 1.095 chunks tri thức Bộ Y Tế trong CSDL PostgreSQL <code>careflow_ai</code>.</div>
+        </div>
+        <div class="card success">
+          <div class="card-title">🛡️ Khắc Phục: Hybrid Search</div>
+          <div class="card-text">Kết hợp Dense Vector (Gemini) + Sparse BM25 (PostgreSQL GIN) bằng thuật toán Reciprocal Rank Fusion (RRF k=60).</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 2: Chunking vs Embedding -->
+    <div class="slide" id="slide-2">
+      <div class="slide-category">Phân Định Bản Chất Kỹ Thuật</div>
+      <h1 class="slide-title">Chunking vs. Embedding: Hai Thế Giới Hoàn Toàn Tách Biệt</h1>
+      <p class="slide-desc">Làm rõ vai trò để tránh ngộ nhận: "Con Google Embedding tự biết cắt nhỏ văn bản".</p>
+      
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">🔪 1. CHUNKING (Code Python Thuần Túy)</div>
+          <div class="card-text">
+            <strong>Ai làm?</strong> Script <code>ingest_clinical_rag.py</code> (Thuật toán Regex + Window Guard).<br><br>
+            <strong>Nhiệm vụ:</strong>
+            <ul style="margin-left: 20px; margin-top: 6px;">
+              <li>Bảo toàn 100% bảng liều lượng thuốc (Không cắt ngang bảng).</li>
+              <li>Giới hạn cửa sổ token: 400 - 800 tokens.</li>
+              <li>Tiêm Context Breadcrumbs vào đầu mỗi đoạn.</li>
+            </ul>
+            <br>
+            <span class="tag tag-blue">Tính chất: Tất định 100% (Không dùng AI, Không có tỷ lệ hiểu sai)</span>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">🔮 2. EMBEDDING (Google Gemini API)</div>
+          <div class="card-text">
+            <strong>Ai làm?</strong> Mô hình <code>gemini-embedding-2</code> / <code>text-embedding-004</code>.<br><br>
+            <strong>Nhiệm vụ:</strong>
+            <ul style="margin-left: 20px; margin-top: 6px;">
+              <li>Nhận từng đoạn văn đã cắt sẵn từ Python.</li>
+              <li>Chạy qua các lớp Transformer Self-Attention.</li>
+              <li>Tính toán và xuất ra chuỗi số thực <strong>vector 768 chiều</strong>.</li>
+            </ul>
+            <br>
+            <span class="tag tag-red">Giới hạn: Nếu ném nguyên file 100 trang -> Báo lỗi văng ra ngay!</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 3: 3 Điểm mù kinh điển -->
+    <div class="slide" id="slide-3">
+      <div class="slide-category">Thực Nghiệm Lỗ Hổng Kỹ Thuật</div>
+      <h1 class="slide-title">Ba "Tử Huyệt" Của Dense Vector Trong Y Khoa</h1>
+      <p class="slide-desc">Tại sao chỉ dựa vào Cosine Similarity của Gemini Embedding sẽ dẫn đến sai lệch phác đồ điều trị?</p>
+      
+      <div class="grid-3">
+        <div class="card danger">
+          <div class="card-title">1. Mã ICD-10 &amp; Ký Tự Hiếm</div>
+          <div class="card-text">
+            Bác sĩ tìm: <code>E11.22</code> (ĐTĐ biến chứng thận) vs <code>E11.21</code> (ĐTĐ biến chứng mắt).<br><br>
+            <strong>Lỗi Gemini:</strong> Bẻ mã thành sub-tokens trừu tượng. Khoảng cách Cosine giữa 2 mã này lên tới <strong>> 0.95</strong> $\rightarrow$ Trả nhầm phác đồ mắt cho người suy thận!
+          </div>
+        </div>
+
+        <div class="card danger">
+          <div class="card-title">2. Mù Mệnh Đề Phủ Định</div>
+          <div class="card-text">
+            Câu A: <em>"Bệnh nhân suy thận <strong>chống chỉ định</strong> Metformin"</em><br>
+            Câu B: <em>"Bệnh nhân suy thận <strong>chỉ định</strong> Metformin"</em><br><br>
+            <strong>Lỗi Gemini:</strong> Trùng 90% từ vựng y khoa. Cosine similarity <strong>> 0.88</strong> $\rightarrow$ AI không phân biệt được cấm hay khuyến nghị!
+          </div>
+        </div>
+
+        <div class="card danger">
+          <div class="card-title">3. Liều Lượng Lâm Sàng</div>
+          <div class="card-text">
+            Truy vấn: <em>"Clopidogrel 300mg liều nạp cấp cứu"</em> vs <em>"Clopidogrel 75mg duy trì"</em>.<br><br>
+            <strong>Lỗi Gemini:</strong> Gom cả hai vào cùng vector khái niệm "thuốc chống đông". Mờ nhạt con số liều dùng dẫn đến quá liều/thiếu liều.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 4: Dữ liệu thực tế DB -->
+    <div class="slide" id="slide-4">
+      <div class="slide-category">Bằng Chứng Thực Tế Tại CSDL PostgreSQL</div>
+      <h1 class="slide-title">Minh Chứng Dữ Liệu Thực Tế Từ CSDL `careflow_ai`</h1>
+      <p class="slide-desc">Trích xuất thực tế từ 1.095 bản ghi chunks được lưu tại bảng <code>clinical_guideline_chunks</code>.</p>
+      
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">
+            <span class="tag tag-red">DDI Chống Chỉ Định</span>
+            Aceclofenac + Ketorolac (QĐ 5948/QĐ-BYT)
+          </div>
+          <div class="card-text">
+            Chunk ID: <code>cf492cc9-dffc-4598-8ea7-41c739fcb27d</code>
+            <div class="db-box">
+[CẢNH BÁO DƯỢC LÂM SÀNG - BỘ Y TẾ QĐ 5948]
+Cặp thuốc tương tác: [Aceclofenac] và [Ketorolac]
+Mức độ: CHỐNG CHỈ ĐỊNH PHỐI HỢP
+Cơ chế: Hiệp đồng tác dụng kích ứng tiêu hóa.
+Hậu quả: Tăng nguy cơ xuất huyết tiêu hóa gấp 5 lần so với phối hợp 2 NSAID khác.
+            </div>
+            <div style="margin-top: 8px;">
+              ⚡ <strong>PostgreSQL BM25:</strong> Khớp ngay lập tức từ khóa hiếm <code>Aceclofenac</code> trong 0.001s!
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">
+            <span class="tag tag-green">Phác Đồ ĐTĐ Type 2</span>
+            Liều Clopidogrel 75mg (QĐ 5481/QĐ-BYT)
+          </div>
+          <div class="card-text">
+            Chunk ID: <code>e9d4eb4e-27ed-41a0-ade0-363ce5bb775b</code>
+            <div class="db-box">
+[NGỮ CẢNH: Đái tháo đường típ 2 > Thuốc chống kết tập tiểu cầu > 7.2. Phòng ngừa thứ phát]
+- Aspirin: 75-160mg/ngày (trọn đời)
+- Dị ứng/không dung nạp Aspirin: dùng Clopidogrel 75mg/ngày để thay thế
+- Dùng phối hợp 12 tháng sau hội chứng mạch vành cấp
+            </div>
+            <div style="margin-top: 8px;">
+              ⚡ <strong>Context Breadcrumb:</strong> Giúp vector search biết chính xác đây là liều cho bệnh nhân ĐTĐ típ 2 có nguy cơ tim mạch!
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SLIDE 5: So sánh cơ chế -->
+    <div class="slide" id="slide-5">
+      <div class="slide-category">Giải Pháp Kỹ Thuật Độc Quyền</div>
+      <h1 class="slide-title">Cách CareFlow "Sửa Lỗi" Cho Gemini Bằng Hybrid Search</h1>
+      <p class="slide-desc">Kết hợp 2 thái cực: Ngữ nghĩa mờ (Dense Vector) + Từ khóa chính xác tuyệt đối (Sparse BM25) qua thuật toán RRF.</p>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Tiêu chí so sánh</th>
+              <th>Chỉ Dùng Gemini Embedding (Dense)</th>
+              <th>PostgreSQL BM25 Fulltext (Sparse)</th>
+              <th>CareFlow Hybrid Search (RRF k=60)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Cơ chế tìm kiếm</strong></td>
+              <td>HNSW Cosine Distance (<code>&lt;=&gt;</code>)</td>
+              <td>GIN Inverted Index (<code>tsvector @@ tsquery</code>)</td>
+              <td>Hợp nhất thứ hạng RRF: $\sum \frac{1}{60 + rank}$</td>
+            </tr>
+            <tr>
+              <td><strong>Mã ICD-10 &amp; Biệt dược</strong></td>
+              <td>❌ Dễ nhầm lẫn mã tương tự (36.7% Top 1)</td>
+              <td>✅ Bắt chính xác 100% từng ký tự</td>
+              <td>🏆 <strong>100.0% Top 1 (Bắt trúng tuyệt đối)</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Câu hỏi tự nhiên</strong></td>
+              <td>✅ Hiểu từ đồng nghĩa xuất sắc</td>
+              <td>❌ Không hiểu nếu không đúng từ khóa</td>
+              <td>🏆 <strong>96.7% Top 3 (Hiểu trọn vẹn ngữ nghĩa)</strong></td>
+            </tr>
+            <tr>
+              <td><strong>Số liệu liều lượng (mg)</strong></td>
+              <td>❌ Hay bỏ qua số liệu cụ thể</td>
+              <td>✅ Bắt chính xác số 75mg, 300mg</td>
+              <td>🏆 <strong>Cân bằng cả liều lượng và ngữ cảnh</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SLIDE 6: Bảng số liệu Benchmark -->
+    <div class="slide" id="slide-6">
+      <div class="slide-category">Kiểm Thử Định Lượng (A/B Testing)</div>
+      <h1 class="slide-title">Bảng Số Liệu Benchmark Thực Nghiệm (30 Golden Queries)</h1>
+      <p class="slide-desc">Đánh giá trên bộ test lâm sàng chuẩn: ĐTĐ, Tăng huyết áp, Viêm phổi và 701 cặp tương tác thuốc.</p>
+      
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Nhóm Kịch Bản Test</th>
+              <th>Chỉ Số Đo</th>
+              <th>Chỉ Dùng Gemini Embedding</th>
+              <th>CareFlow Hybrid (RRF k=60)</th>
+              <th>Mức Độ Cải Thiện</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>1. Mã bệnh ICD-10 chính xác</strong> (E11.22, I10, J18...)</td>
+              <td>Hit Rate@1</td>
+              <td><span class="tag tag-red">36.7%</span></td>
+              <td><span class="tag tag-green">100.0%</span></td>
+              <td><strong>+ 63.3%</strong> (BM25 tóm trúng mã)</td>
+            </tr>
+            <tr>
+              <td><strong>2. Thuốc &amp; Liều dùng cụ thể</strong> (Clopidogrel 75mg, Metformin...)</td>
+              <td>Hit Rate@3</td>
+              <td><span class="tag tag-red">53.3%</span></td>
+              <td><span class="tag tag-green">96.7%</span></td>
+              <td><strong>+ 43.4%</strong> (RRF kéo đúng lên đầu)</td>
+            </tr>
+            <tr>
+              <td><strong>3. Mô tả triệu chứng tự nhiên</strong> (tiểu nhiều, khát, khó thở...)</td>
+              <td>Hit Rate@3</td>
+              <td><span class="tag tag-green">93.3%</span></td>
+              <td><span class="tag tag-green">96.7%</span></td>
+              <td><strong>+ 3.4%</strong> (Giữ trọn ưu điểm Gemini)</td>
+            </tr>
+            <tr>
+              <td><strong>4. Tương tác thuốc DDI chống chỉ định</strong> (Aceclofenac + Ketorolac...)</td>
+              <td>Hit Rate@1</td>
+              <td><span class="tag tag-red">46.7%</span></td>
+              <td><span class="tag tag-green">100.0%</span></td>
+              <td><strong>+ 53.3%</strong> (Không bao giờ sót DDI)</td>
+            </tr>
+            <tr style="background: rgba(139, 92, 246, 0.12); font-weight: 700;">
+              <td>TOÀN HỆ THỐNG TRUNG BÌNH</td>
+              <td>MRR (Mean Reciprocal Rank)</td>
+              <td><span class="tag tag-red">0.58</span></td>
+              <td><span class="tag tag-green">0.94</span></td>
+              <td><strong>Tài liệu đúng luôn nằm ở Top 1</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- SLIDE 7: Summary & Q&A -->
+    <div class="slide" id="slide-7">
+      <div class="slide-category">Tổng Kết &amp; Thông Điệp Chốt Hạ</div>
+      <h1 class="slide-title">Thông Điệp Trả Lời Trước Hội Đồng &amp; Đối Tác</h1>
+      <p class="slide-desc">Hai nguyên tắc bất biến để bảo vệ kiến trúc AI Lâm Sàng của CareFlow:</p>
+      
+      <div class="grid-2">
+        <div class="card highlight">
+          <div class="card-title">💡 Về Khâu Chunking (Dữ Liệu Đầu Vào)</div>
+          <div class="card-text">
+            <em>"Chunking không làm mô hình thông minh hơn, nhưng chunking ngăn chặn hiện tượng <strong>Rác đầu vào = Rác đầu ra (Garbage In, Garbage Out)</strong>. Bằng cách giữ nguyên 100% bảng thuốc và tiêm Breadcrumbs, ta triệt tiêu hoàn toàn rủi ro mất ngữ cảnh y khoa."</em>
+          </div>
+        </div>
+
+        <div class="card success">
+          <div class="card-title">🛡️ Về Khâu Retrieval (Truy Vấn Thời Gian Thực)</div>
+          <div class="card-text">
+            <em>"Một mình Gemini Embedding chắc chắn có điểm mù ở các con số và mã bệnh. Vì vậy, CareFlow <strong>bắt buộc sử dụng Hybrid Search (RRF k=60) kết hợp với BM25 Full-text của PostgreSQL</strong>. Khi Vector bị trôi, BM25 lập tức bắt chính xác từ khóa để đảm bảo an toàn tuyệt đối cho người bệnh."</em>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <div class="keyboard-hint">
+      Sử dụng phím <kbd>&larr;</kbd> <kbd>&rarr;</kbd> hoặc <kbd>Space</kbd> để chuyển slide
+    </div>
+    <div class="btn-group">
+      <button id="prevBtn" onclick="prevSlide()" disabled>&larr; Slide Trước</button>
+      <button id="nextBtn" onclick="nextSlide()">Slide Sau &rarr;</button>
+    </div>
+  </div>
+
+  <script>
+    let currentSlide = 1;
+    const totalSlides = 7;
+
+    function updateDeck() {
+      // Toggle active class
+      for (let i = 1; i <= totalSlides; i++) {
+        const slide = document.getElementById(`slide-${i}`);
+        if (slide) {
+          slide.classList.toggle('active', i === currentSlide);
+        }
+      }
+
+      // Update counters
+      document.getElementById('slideNum').textContent = `Slide ${currentSlide} / ${totalSlides}`;
+      document.getElementById('progressBar').style.width = `${(currentSlide / totalSlides) * 100}%`;
+
+      // Update button state
+      document.getElementById('prevBtn').disabled = (currentSlide === 1);
+      document.getElementById('nextBtn').disabled = (currentSlide === totalSlides);
+    }
+
+    function nextSlide() {
+      if (currentSlide < totalSlides) {
+        currentSlide++;
+        updateDeck();
+      }
+    }
+
+    function prevSlide() {
+      if (currentSlide > 1) {
+        currentSlide--;
+        updateDeck();
+      }
+    }
+
+    // Keyboard navigation
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'Space') {
+        e.preventDefault();
+        nextSlide();
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        prevSlide();
+      }
+    });
+  </script>
+</body>
+</html>

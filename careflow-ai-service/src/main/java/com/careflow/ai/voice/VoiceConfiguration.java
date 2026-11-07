@@ -43,7 +43,7 @@ public class VoiceConfiguration {
             HikariConfig config=new HikariConfig();config.setJdbcUrl(p.getJdbcUrl());config.setUsername(p.getDbUser());config.setPassword(p.getDbPassword());
             config.setMaximumPoolSize(4);config.setConnectionTimeout(5000);config.setPoolName("voice-jobs");
             HikariDataSource source=new HikariDataSource(config);
-            try{Flyway.configure().dataSource(source).locations("classpath:db/voice-migration").load().migrate();}
+            try{Flyway.configure().dataSource(source).locations("classpath:db/voice-migration").baselineOnMigrate(true).load().migrate();}
             catch(RuntimeException e){source.close();throw e;}
             return source;
         }

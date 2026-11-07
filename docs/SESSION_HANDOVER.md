@@ -3,7 +3,7 @@
 > **Tài liệu bàn giao ngữ cảnh liên phiên (Cross-Session Handover & Memory Context)**  
 > **Dự án**: CareFlow — Phân hệ AI Lâm Sàng & Clinical RAG  
 > **Nhánh Git hiện tại**: `feature/vi/ai-service` (Tuyệt đối không push trực tiếp lên `main`)  
-> **Cập nhật lần cuối**: 05/11/2026 (11:55)  
+> **Cập nhật lần cuối**: 07/11/2026 (13:30)  
 > **Mục đích**: Lưu giữ 100% bối cảnh công việc, các quyết định kiến trúc, kinh nghiệm xử lý lỗi và nhiệm vụ tiếp theo để bất kỳ phiên làm việc AI mới nào cũng có thể tiếp tục ngay lập tức mà không bị mất dấu.
 
 ---
@@ -19,6 +19,48 @@
     - Script nạp dữ liệu [`scripts/ingest_clinical_rag.py`](../scripts/ingest_clinical_rag.py) đã nạp thành công **1.095 / 1.095 chunks lâm sàng (100%)** với vector 768 chiều (`models/gemini-embedding-2`) vào CSDL PostgreSQL.
     - Đã lưu cache đĩa an toàn 100% tại [`scripts/.rag_embeddings_cache_v2.json`](../scripts/.rag_embeddings_cache_v2.json).
   - ✅ **Phase 3: Backend RAG Engine & Hybrid Search**: **ĐÃ HOÀN TẤT 100%**:
+    - Maven, DataSource, JPA Entities, Native queries Cosine + BM25, Gemini Embedding, Hybrid Search Service (RRF k=60), Prompt 3 phần với EvidenceRef. Đạt 13/13 tests PASS.
+  - ✅ **Phase 4: Frontend Integration & Clinical Evidence UI**: **ĐÃ HOÀN TẤT 100%**.
+  - ✅ **Phase 5: User Feedback Refinement, Zustand Global Store & Medicine Catalog**: **ĐÃ HOÀN TẤT 100%**.
+  - ✅ **Phase 6: E2E Local Orchestration, Bug Fixes & Full Verification**: **ĐÃ HOÀN TẤT 100%**:
+    - **Sửa lỗi HTTP 500 trên `GET /api/appointments/clinical-context/me`**:
+      - Nguyên nhân: `ServiceTransportIdentity` kiểm tra địa chỉ gọi nội bộ Feign chỉ cho phép loopback (`127.0.0.1`), trong khi Eureka đăng ký IP mạng nội bộ máy phát triển (`192.168.1.62`), dẫn đến từ chối 401 `Caller service cần chứng chỉ mTLS đúng danh tính` và bung lỗi 500.
+      - Khắc phục: Cho phép thêm `addr.isSiteLocalAddress()` trong `ServiceTransportIdentity.java` khi bật cấu hình `allowLoopbackHttp: true`. Recompile và install `careflow-common`. Đã xác thực trả về HTTP 200 kèm context Bác sĩ (`BS. CKI Nguyễn Văn An`) và Phòng khám (`ROOM-01`).
+    - **Nâng cấp Script Điều phối `start-local.sh`**:
+      - Thêm chế độ daemon và lệnh `./start-local.sh stop` để dọn dẹp các tiến trình nền sạch sẽ.
+      - Bổ sung kiểm tra sức khỏe (health checks) cho cả 9 microservices + frontend trước khi thông báo hoàn tất, tránh lỗi 503 "No servers available".
+    - **Sửa lỗi DPoP Origin**: Thêm `http://localhost:8091` vào whitelist DPoP của `identity-service` và trỏ base URL frontend AI qua API Gateway (`http://localhost:8080`).
+    - **Khắc phục lỗi HTTP 503 `Chưa có nguồn chuyên môn được duyệt cho khoa này` trong Clinical AI Assistant**:
+      - Bảng `consultations` có trường `department_code` bị NULL do các ca khám cũ khởi tạo khi chưa kết nối Directory Service. Đã cập nhật `department_code='NOI_TONG_QUAT'`.
+      - Bảng `ai_guideline_sources` chưa có dữ liệu phê duyệt (`APPROVED`). Đã seed 4 phác đồ Bộ Y Tế (Viêm phổi cộng đồng CAP QĐ 4800, Tăng huyết áp QĐ 5968, Đái tháo đường típ 2 QĐ 5481, Tương tác thuốc DDI QĐ 5948) với cơ chế thẩm định độc lập (Maker-Checker constraint).
+    - **Khắc phục lỗi Data Integrity trong `ai_clinical_interactions`**:
+      - Cột `doctor_id`, `user_question`, `prompt_snapshot`, `service_mode` đã được chuyển sang `NULLABLE` và tạo Trigger tự động gán `doctor_id := actor_id`. Tạo Flyway migration `V3__sync_clinical_interactions_and_guidelines.sql`.
+    - **Kích hoạt Profile `demo` tự động seed Bệnh nhân & Hàng đợi**:
+      - Trước đây các service chạy với `-Dspring-boot.run.profiles=local`, khiến các `DataInitializer` đánh dấu `@Profile("demo | test")` không được kích hoạt.
+      - Đã cập nhật `start-local.sh` sang `ACTIVE_PROFILES="local,demo"`, tự động seed 6 bệnh nhân mẫu vào `careflow-patient-service` và 5 lượt chờ khám tại phòng `ROOM-01` (`NOI-001` đến `NOI-005`) vào `careflow-queue-service`.
+      - Khắc phục lỗi `ObjectOptimisticLockingFailureException` ở `consultation-service` và `prescription-service` khi seed dữ liệu có ID cố định bằng cách chuyển sang `JdbcTemplate`.
+      - Bổ sung cấu hình `careflow.voice` (worker-token, caller-key, loopback) và migration schema `voice_prescription_jobs` trong `careflow_ai`.
+    - **Kiểm thử Toàn diện E2E (`scripts/test_e2e_consultation.cjs`)**:
+      - Bước 1 (Gateway): UP (200)
+      - Bước 2 (Đăng nhập Bác sĩ DPoP): Thành công (200)
+      - Bước 3 (Clinical Context Me): Thành công (200)
+      - Bước 4 (Danh sách ca khám trong ngày): Thành công (200 - 3 ca khám)
+      - Bước 5 (Danh mục 15 loại thuốc kê đơn): Thành công (200)
+      - Bước 6 (AI Voice-to-Text & bóc tách sinh hiệu tự động): Thành công (200, bóc tách đầy đủ Mạch, HA, Thân nhiệt, SpO2, Cân nặng)
+      - Bước 7 (Trợ lý AI RAG gợi ý phác đồ Bộ Y Tế): Thành công (200, trích dẫn 3 phác đồ và khuyến nghị lâm sàng chi tiết).
+    - **Sửa triệt để lỗi CORS Duplicate Header trên Voice STT & RAG (`TypeError: Failed to fetch`)**:
+      - **Nguyên nhân**: `careflow-ai-service` có cấu hình `WebConfig.java` riêng thêm CORS header `Access-Control-Allow-Origin: http://localhost:3000`. Khi client frontend gọi qua API Gateway (`http://localhost:8080`), Gateway cũng cấu hình `globalcors`, dẫn đến phản hồi trả về trình duyệt có 2 giá trị: `Access-Control-Allow-Origin: http://localhost:3000, http://localhost:3000`. Trình duyệt lập tức chặn kết nối với lỗi `Failed to fetch`.
+      - **Khắc phục**:
+        1. Xóa `addCorsMappings` trong `careflow-ai-service/src/main/java/com/careflow/ai/config/WebConfig.java` để Gateway quản lý CORS tập trung đồng nhất như các microservice khác.
+        2. Thêm bộ lọc `DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST` vào `default-filters` của `careflow-api-gateway/src/main/resources/application.yml` để chống trùng lặp header từ mọi upstream.
+        3. Viết script kiểm thử mô phỏng trình duyệt `scripts/test_voice_and_rag_browser_sim.cjs`: Xác nhận 100% cả Voice STT upload và Clinical RAG suggestions đều trả về HTTP 200 với duy nhất 1 header `Access-Control-Allow-Origin: http://localhost:3000`.
+    - **Chuyển đổi hoàn toàn sang Pipeline RAG + Gemini 2.5 Flash thực thụ (`mode: LLM_PROVIDER`)**:
+      - **Nguyên nhân**: `AiClinicalController.java` trước đây trỏ vào `ClinicalEngine.java` (`careflow-local-evidence-v1`), đây là module tìm kiếm trích xuất tĩnh (extractive keyword search trong RAM ~5ms), trả về text tóm tắt cố định và không gọi LLM nên không có cảm giác đàm thoại / phân tích ca bệnh thông minh.
+      - **Khắc phục**:
+        1. Đấu nối lại `AiClinicalController.java` sang `AiClinicalAssistantService.getClinicalSuggestions` và `processClinicalChat`.
+        2. Tích hợp `ClinicalCitationDto` vào `ClinicalSuggestionResponse` để Frontend vừa hiển thị phân tích chuyên sâu của Gemini 2.5 Flash dạng Markdown chuẩn, vừa hiển thị thẻ trích dẫn Phác đồ Bộ Y Tế và các nút `+ Áp dụng`.
+        3. Cập nhật `frontend/doctor-web/src/lib/ai-api.ts` tự động truyền `pageRoute`, `pageTitle`, `pageData` (toàn bộ sinh hiệu, triệu chứng, chẩn đoán của ca khám) vào prompt để Gemini suy luận trực tiếp trên ca bệnh cụ thể.
+        4. Tăng `response-timeout` của API Gateway từ 30s lên 90s và tối ưu `generationConfig` cho Gemini 2.5 Flash (phản hồi trong 8-11 giây). Đã kiểm thử thành công 100% đạt `mode: "LLM_PROVIDER"`.
     - ✅ **Task 1: Cấu hình Maven & DataSource**: ĐÃ HOÀN TẤT 100%. Kết nối CSDL PostgreSQL vector port `5433` (`careflow_ai`), cấu hình `spring-boot-starter-data-jpa`, `postgresql` driver và đã pass kiểm thử TDD `DataSourceConnectionTest` (xác thực đủ 1.095 chunks).
     - ✅ **Task 2: Định nghĩa JPA Entities & Projection**: ĐÃ HOÀN TẤT 100%. Tạo xong 3 Entities (`ClinicalGuidelineDocument`, `ClinicalGuidelineChunk`, `AiClinicalInteraction`), `ChunkSearchResultProjection` và 3 JPA Repositories. Đã pass kiểm thử `EntityMappingTest` (xác thực map đúng 4 phác đồ cha và 1.095 chunks).
     - ✅ **Task 3: Xây dựng Native Vector & BM25 Repository Queries**: ĐÃ HOÀN TẤT 100%. Cài đặt thành công 3 Native Queries trong `ClinicalGuidelineChunkRepository`: Cosine `<=>` (HNSW), BM25 Fulltext `tsv_content` (GIN) và JSONB `icd10_codes` filter (`@>`). Đã pass 3/3 tests trong `ClinicalGuidelineChunkRepositoryTest`.
@@ -81,7 +123,7 @@
 ### B. Phiên 24/10/2026 (Phiên tối — Archify Architecture, Header Patient Refinement, Allergy Compact Bar & Manual RAG Import):
 1. **Tích hợp Skill Archify & Tạo Sơ đồ Kiến trúc**:
    - Cài đặt skill `archify` vào dự án (`.agents/skills/archify`).
-   - Thiết kế và xuất bản sơ đồ kiến trúc trực quan độc lập (HTML standalone): [`docs/ai-service/clinical-ai-rag-and-voice-architecture.html`](./ai-service/clinical-ai-rag-and-voice-architecture.html) mô tả chi tiết luồng Voice STT, Hybrid Search RAG và Human-in-the-Loop.
+   - Thiết kế và xuất bản sơ đồ kiến trúc trực quan độc lập (HTML standalone): [`docs/html/01-architecture.html`](./html/01-architecture.html) mô tả chi tiết luồng Voice STT, Hybrid Search RAG và Human-in-the-Loop.
 2. **Chuẩn hóa Header Thông tin Bệnh nhân**:
    - Chỉnh sửa `consultation/[id]/page.tsx`: Tên bệnh nhân hiển thị chữ đen đậm rõ ràng (`Nguyễn Thị Mai`), thông tin tuổi, giới tính và mã ID (`ID: f0000001`) thu gọn chữ nhỏ màu xám ở dòng dưới.
    - Thêm ánh xạ fallback dữ liệu mẫu cho các bệnh nhân hạt giống (`f0000001` đến `f0000006`).
@@ -244,10 +286,71 @@
   4. **GitNexus Impact Analysis**: `bunx gitnexus@latest detect-changes --scope all --repo .` $\rightarrow$ **Risk level: LOW** (0 affected execution flows).
 - **Trạng thái Git & PR**:
   - Nhánh cục bộ: `feature/vi/ai-service`.
-  - Đã commit: `0a06e4a feat(ai,doctor-web): integrate zustand voice prescription store and add pre-merge deploy checklist`.
+  - Đã commit & push:
+    - `0a06e4a`: `feat(ai,doctor-web): integrate zustand voice prescription store and add pre-merge deploy checklist`
+    - `34c3616`: `docs: update session handover with checklist and pr status`
   - Đã push thành công lên: `origin/feature/vi/ai-service`.
-  - **Đường link tạo Pull Request vào `develop`**:
+  - **Đường link Pull Request vào `develop`**:
     `https://github.com/ntkhai268/careflow/compare/develop...feature/vi/ai-service?expand=1`
+
+---
+
+## 12. Cập Nhật Mới: Sửa Lỗi Khởi Chạy Hệ Thống Cục Bộ (`./start-local.sh ai`) & Tài Liệu HTML
+
+- **Vấn đề gặp phải & Giải pháp đã thực hiện (07/11/2026)**:
+  1. **Lỗi R1-R7 Security Baseline (JWT & Caller Key)**:
+     - *Hiện tượng*: Các service backend crash khi khởi động do thiếu RSA key pair và caller key.
+     - *Xử lý*: Đã tự động sinh RSA key pair (`.jwt-keys/jwt-private.pem`, `jwt-public.pem`) trong `start-local.sh`, thêm `.jwt-keys/` vào `.gitignore`, và xuất các biến môi trường `SECURITY_CALLER_KEY`, `SECURITY_CALLERS_JSON`, `SECURITY_JWT_*`, `SECURITY_AUDIT_ALLOW_LOOPBACK_HTTP=true`.
+  2. **Lỗi 401 DPoP (`DPoP proof không hợp lệ hoặc không khớp khóa client/request`)**:
+     - *Hiện tượng*: Frontend web không thể đăng nhập hoặc làm mới phiên.
+     - *Xử lý*: Đã cấu hình `security.dpop.public-origins` trong `application-local.yml` của `careflow-identity-service` và xuất `SECURITY_DPOP_PUBLIC_ORIGINS` trong `start-local.sh` chấp nhận `http://localhost:3000`, `http://localhost:8080`, `http://127.0.0.1:3000`, `https://careflow-demo.online`.
+  3. **Lỗi 503 Appointment Service (RabbitMQ credentials & thiếu service phụ thuộc)**:
+     - *Hiện tượng*: Mode `ai` thiếu `appointment-service` và `prescription-service`; RabbitMQ bị lỗi xác thực `guest:guest`.
+     - *Xử lý*: Đã bổ sung 2 service vào case `"ai"` trong `start-local.sh`, đồng thời xuất `SPRING_RABBITMQ_USERNAME=admin` và `SPRING_RABBITMQ_PASSWORD=admin123`.
+  4. **Lỗi 500 trên `GET /api/appointments/clinical-context/me`**:
+     - *Hiện tượng*: Doctor Dashboard báo Internal Server Error 500 do `appointment-service` gọi Feign sang `hospital-directory-service` thất bại (`UnknownHostException`).
+     - *Nguyên nhân gốc rễ*: `careflow-hospital-directory-service` thiếu file `application-local.yml`, mặc định kết nối DB remote `100.116.233.60:5432` dẫn đến SocketTimeoutException và service không khởi động thành công.
+     - *Xử lý*: Tạo file `careflow-hospital-directory-service/src/main/resources/application-local.yml` trỏ về `localhost:5432/careflow_hospital_directory`, đồng thời export `DIRECTORY_DB_URL` trong `start-local.sh`.
+  5. **Tài liệu hướng dẫn RAG & Chunking dạng HTML**:
+     - Đã tạo trang hướng dẫn chi tiết import CSDL RAG và trang giải thích cơ chế "Contextual Document-Structure Chunking" tại thư mục `docs/html/`.
+
+
+- **Trạng thái hiện tại**:
+  - Phân hệ **AI Service & Clinical RAG** cùng toàn bộ **Zustand Voice Prescription Store** trên `frontend/doctor-web` đã hoàn thành 100%, vượt qua toàn bộ quy trình kiểm định [`docs/DEPLOY_CHECKLIST.md`](./DEPLOY_CHECKLIST.md).
+  - Đã kết nối thành công pipeline RAG + Gemini 2.5 Flash thông minh cho cả Chat Widget và Tab 6 RAG, loại bỏ hoàn toàn tình trạng fallback hardcoded kết quả tĩnh.
+  - Xử lý triệt để lỗi rate limit (429) & timeout của WebClient và cấu hình Gateway `httpclient.response-timeout: 90s`.
+  - Fix lỗi React duplicate key `ClinicalCitations.tsx`.
+
+---
+
+## 13. Sửa Lỗi Tương Tác AI RAG Chat & Timeout LLM (07/11/2026 - 14:50)
+
+- **Hiện tượng**:
+  - Người dùng hỏi trợ lý AI lâm sàng trong widget nổi hoặc Tab 6, hệ thống phản hồi siêu nhanh (~5ms) với câu trả lời tĩnh cố định (`careflow-local-evidence-v1`), không mang tính hội thoại thông minh của LLM.
+  - Khi kích hoạt LLM, widget chat bị treo ở trạng thái *"Đang kiểm tra ngữ cảnh và nguồn..."* rất lâu (>2 phút).
+  - Console báo lỗi React Duplicate Key `Encountered two children with the same key, 'BYT-QD-5948-DDI'` tại `ClinicalCitations.tsx`.
+
+- **Nguyên nhân cốt lõi**:
+  1. `AiClinicalController.java` trỏ vào `ClinicalEngine.java` (extractive in-memory matcher) thay vì gọi `AiClinicalAssistantService.java`.
+  2. Google AI Studio áp dụng rate limit 15 RPM trên Free Tier cho `gemini-2.5-flash`. Khi gặp 429, WebClient gọi cascade tới các model không tồn tại mà không cấu hình timeout, dẫn đến thread bị block tới 166 giây.
+  3. API Gateway cấu hình timeout sai cấp thuộc tính (`server.webflux.httpclient` thay vì `spring.cloud.gateway.httpclient`), làm Gateway rớt kết nối trước khi service kịp hoàn tất.
+  4. `ClinicalCitations.tsx` dùng `c.sourceId` làm key; khi 1 phác đồ được trích nhiều đoạn thì sinh key trùng.
+
+- **Giải pháp đã thực hiện**:
+  1. **Đấu nối `AiClinicalController` vào `AiClinicalAssistantService`**: Lấy dữ liệu ngữ cảnh màn hình và ca khám thực tế truyền vào RAG prompt.
+  2. **Tối ưu Client Gemini**: Đặt timeout 15 giây cho WebClient, cấu hình cơ chế retry sau 1.2s khi gặp 429 tạm thời, chuyển sang model chuẩn `gemini-2.5-flash`.
+  3. **Tối ưu Client DeepSeek & Gateway**: Đặt timeout 10s cho DeepSeek và nâng Gateway `response-timeout: 90s` chuẩn xác.
+  4. **Sửa Key React**: Chuyển key thành `${c.sourceId}-${c.contentHash || idx}` trong `ClinicalCitations.tsx`.
+  5. **Xác minh E2E**: Chạy thử nghiệm thực tế với ca khám `c0000001-0000-0000-0000-000000000099`, AI nhận diện chính xác bệnh nhân 7 tuổi, sốt 37.8°C, dị ứng Penicillin và phân tích khuyến nghị phác đồ Bộ Y Tế trong ~9.1 giây với đầy đủ trích dẫn hợp lệ.
+
+- **Nhiệm vụ cho phiên tiếp theo (Next Session)**:
+  1. **Theo dõi & Merge PR**: Sau khi PR được review và merge vào `develop`, kéo code mới nhất từ `develop` về trước khi mở nhánh mới (`git checkout develop && git pull origin develop`).
+  2. **Kiểm thử Luồng E2E Toàn Diện (End-to-End Clinical Flow)**:
+     - Luồng 1: Bác sĩ bấm "Ghi âm" $\rightarrow$ Built-in STT bóc tách sinh hiệu & triệu chứng $\rightarrow$ tự động điền vào hồ sơ khám.
+     - Luồng 2: Bác sĩ tra cứu Phác đồ Bộ Y Tế $\rightarrow$ Hệ thống truy xuất Hybrid RAG (HNSW Cosine + GIN BM25) $\rightarrow$ Bác sĩ nhấn "+ Áp dụng" phác đồ vào đơn thuốc.
+     - Luồng 3: Bác sĩ chọn thuốc tương tác chống chỉ định (ví dụ Clopidogrel + Omeprazole) $\rightarrow$ Cảnh báo DDI thời gian thực hiển thị rõ ràng.
+  3. **Phát triển Phân hệ Tiếp theo**: Chuyển sang thực hiện các tính năng trên nhánh dịch vụ chuyên trách (ví dụ `feature/vi/prescription-service` hoặc `feature/vi/consultation-service`) theo đúng `AGENTS.md`.
+
 
 
 

@@ -1,14 +1,10 @@
 package com.careflow.prescription.config;
 
 import com.careflow.prescription.model.Drug;
-import com.careflow.prescription.model.Prescription;
-import com.careflow.prescription.model.PrescriptionItem;
-import com.careflow.prescription.model.PrescriptionStatus;
 import com.careflow.prescription.repository.DrugRepository;
-import com.careflow.prescription.repository.PrescriptionRepository;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -20,11 +16,11 @@ import java.util.UUID;
 public class DataInitializer implements CommandLineRunner {
 
     private final DrugRepository drugRepository;
-    private final PrescriptionRepository prescriptionRepository;
+    private final JdbcTemplate jdbcTemplate;
 
-    public DataInitializer(DrugRepository drugRepository, PrescriptionRepository prescriptionRepository) {
+    public DataInitializer(DrugRepository drugRepository, JdbcTemplate jdbcTemplate) {
         this.drugRepository = drugRepository;
-        this.prescriptionRepository = prescriptionRepository;
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
@@ -54,77 +50,55 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         UUID pr1Id = UUID.fromString("e0000001-0000-0000-0000-000000000001");
-        if (!prescriptionRepository.existsById(pr1Id)) {
-            Prescription pr1 = Prescription.builder()
-                    .consultationId(UUID.fromString("c0000001-0000-0000-0000-000000000001"))
-                    .patientId(UUID.fromString("f0000001-0000-0000-0000-000000000004"))
-                    .doctorId(UUID.fromString("d0000001-0000-0000-0000-000000000001"))
-                    .diagnosis("Viêm mũi họng cấp / Sốt siêu vi")
-                    .notes("Uống thuốc đúng liều, uống nhiều nước ấm, tái khám nếu sốt cao liên tục > 3 ngày")
-                    .status(PrescriptionStatus.DISPENSED)
-                    .build();
-            pr1.setId(pr1Id);
-            pr1.addItem(PrescriptionItem.builder()
-                    .medicineName("Paracetamol 500mg")
-                    .medicineCode("MED001")
-                    .unit("viên")
-                    .dosage("1/2 viên / lần")
-                    .frequency("3 lần / ngày")
-                    .timing("Sau khi ăn")
-                    .duration(3)
-                    .quantity(5)
-                    .notes("Uống khi sốt >= 38.5C")
-                    .build());
-            pr1.addItem(PrescriptionItem.builder()
-                    .medicineName("Cetirizine 10mg")
-                    .medicineCode("MED007")
-                    .unit("viên")
-                    .dosage("1/2 viên / lần")
-                    .frequency("1 lần / ngày")
-                    .timing("Tối trước khi đi ngủ")
-                    .duration(5)
-                    .quantity(3)
-                    .notes("Giảm ngứa họng, xì mũi")
-                    .build());
-            prescriptionRepository.save(pr1);
-            log.info("Seeded historical prescription for Phạm Đức Anh");
+        Integer pr1Count = jdbcTemplate.queryForObject("SELECT count(*) FROM prescriptions WHERE id=?", Integer.class, pr1Id);
+        if (pr1Count == null || pr1Count == 0) {
+            jdbcTemplate.update(
+                "INSERT INTO prescriptions(id, consultation_id, patient_id, doctor_id, diagnosis, notes, status, follow_up_status, created_at, updated_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, 'DISPENSED', 'NOT_REQUESTED', now(), now())",
+                pr1Id,
+                UUID.fromString("c0000001-0000-0000-0000-000000000001"),
+                UUID.fromString("f0000001-0000-0000-0000-000000000004"),
+                UUID.fromString("d0000001-0000-0000-0000-000000000001"),
+                "Viêm mũi họng cấp / Sốt siêu vi",
+                "Uống thuốc đúng liều, uống nhiều nước ấm, tái khám nếu sốt cao liên tục > 3 ngày"
+            );
+            jdbcTemplate.update(
+                "INSERT INTO prescription_items(id, prescription_id, medicine_name, medicine_code, unit, dosage, frequency, timing, duration, quantity, notes, created_at, updated_at) " +
+                "VALUES (?, ?, 'Paracetamol 500mg', 'MED001', 'viên', '1/2 viên / lần', '3 lần / ngày', 'Sau khi ăn', 3, 5, 'Uống khi sốt >= 38.5C', now(), now())",
+                UUID.randomUUID(), pr1Id
+            );
+            jdbcTemplate.update(
+                "INSERT INTO prescription_items(id, prescription_id, medicine_name, medicine_code, unit, dosage, frequency, timing, duration, quantity, notes, created_at, updated_at) " +
+                "VALUES (?, ?, 'Cetirizine 10mg', 'MED007', 'viên', '1/2 viên / lần', '1 lần / ngày', 'Tối trước khi đi ngủ', 5, 3, 'Giảm ngứa họng, xì mũi', now(), now())",
+                UUID.randomUUID(), pr1Id
+            );
+            log.info("Seeded historical prescription for Phạm Đức Anh via JdbcTemplate");
         }
 
         UUID pr2Id = UUID.fromString("e0000001-0000-0000-0000-000000000002");
-        if (!prescriptionRepository.existsById(pr2Id)) {
-            Prescription pr2 = Prescription.builder()
-                    .consultationId(UUID.fromString("c0000001-0000-0000-0000-000000000002"))
-                    .patientId(UUID.fromString("f0000001-0000-0000-0000-000000000001"))
-                    .doctorId(UUID.fromString("d0000001-0000-0000-0000-000000000001"))
-                    .diagnosis("Trào ngược dạ dày thực quản (GERD)")
-                    .notes("Tránh ăn đồ chua cay, không nằm ngay sau khi ăn")
-                    .status(PrescriptionStatus.DISPENSED)
-                    .build();
-            pr2.setId(pr2Id);
-            pr2.addItem(PrescriptionItem.builder()
-                    .medicineName("Omeprazole 20mg")
-                    .medicineCode("MED003")
-                    .unit("viên")
-                    .dosage("1 viên / lần")
-                    .frequency("1 lần / ngày")
-                    .timing("Trước bữa ăn sáng 30 phút")
-                    .duration(14)
-                    .quantity(14)
-                    .notes("Uống nguyên viên")
-                    .build());
-            pr2.addItem(PrescriptionItem.builder()
-                    .medicineName("Domperidone 10mg")
-                    .medicineCode("MED015")
-                    .unit("viên")
-                    .dosage("1 viên / lần")
-                    .frequency("2 lần / ngày")
-                    .timing("Trước bữa ăn 15 phút")
-                    .duration(7)
-                    .quantity(14)
-                    .notes("Chống đầy hơi, ợ chua")
-                    .build());
-            prescriptionRepository.save(pr2);
-            log.info("Seeded historical prescription for Nguyễn Thị Mai");
+        Integer pr2Count = jdbcTemplate.queryForObject("SELECT count(*) FROM prescriptions WHERE id=?", Integer.class, pr2Id);
+        if (pr2Count == null || pr2Count == 0) {
+            jdbcTemplate.update(
+                "INSERT INTO prescriptions(id, consultation_id, patient_id, doctor_id, diagnosis, notes, status, follow_up_status, created_at, updated_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, 'DISPENSED', 'NOT_REQUESTED', now(), now())",
+                pr2Id,
+                UUID.fromString("c0000001-0000-0000-0000-000000000002"),
+                UUID.fromString("f0000001-0000-0000-0000-000000000001"),
+                UUID.fromString("d0000001-0000-0000-0000-000000000001"),
+                "Trào ngược dạ dày thực quản (GERD)",
+                "Tránh ăn đồ chua cay, không nằm ngay sau khi ăn"
+            );
+            jdbcTemplate.update(
+                "INSERT INTO prescription_items(id, prescription_id, medicine_name, medicine_code, unit, dosage, frequency, timing, duration, quantity, notes, created_at, updated_at) " +
+                "VALUES (?, ?, 'Omeprazole 20mg', 'MED003', 'viên', '1 viên / lần', '1 lần / ngày', 'Trước bữa ăn sáng 30 phút', 14, 14, 'Uống nguyên viên', now(), now())",
+                UUID.randomUUID(), pr2Id
+            );
+            jdbcTemplate.update(
+                "INSERT INTO prescription_items(id, prescription_id, medicine_name, medicine_code, unit, dosage, frequency, timing, duration, quantity, notes, created_at, updated_at) " +
+                "VALUES (?, ?, 'Domperidone 10mg', 'MED015', 'viên', '1 viên / lần', '2 lần / ngày', 'Trước bữa ăn 15 phút', 7, 14, 'Chống đầy hơi, ợ chua', now(), now())",
+                UUID.randomUUID(), pr2Id
+            );
+            log.info("Seeded historical prescription for Nguyễn Thị Mai via JdbcTemplate");
         }
     }
 }

@@ -21,4 +21,5 @@ public class ClinicalSuggestionResponse {
     private String disclaimer;
     private AiModelInfo model;
     private String generatedAt;
+    private List<ClinicalCitationDto> citations;
 }

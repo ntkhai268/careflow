@@ -36,6 +36,7 @@ build/
 .env.local
 **/.env
 **/.env.*
+.jwt-keys/
 
 # Flutter / Dart
 .dart_tool/
@@ -66,6 +67,7 @@ desktop.ini
 docs/rag-docs/**/*.pdf
 docs/rag-docs/**/*.xlsx
 scripts/.rag_embeddings_cache*.json
+scripts/rag_embeddings_cache*.json
 
 # Archify artifacts scratch
 .archify/
